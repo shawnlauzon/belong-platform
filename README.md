@@ -39,6 +39,7 @@ SUPABASE_SERVICE_KEY=your_supabase_service_key
 VITE_MAPBOX_TOKEN=your_mapbox_token
 VITE_DEFAULT_LOCATION_LAT=30.2672
 VITE_DEFAULT_LOCATION_LNG=-97.7431
+SEED_MEMBER_ID=your_user_id
 ```
 
 ### Installation
@@ -61,13 +62,13 @@ VITE_DEFAULT_LOCATION_LNG=-97.7431
    - Go to Authentication > Users in the Supabase dashboard
    - Click "Create User"
    - Fill in the email and password
-   - Note: This user will be the owner of the seeded resources
-4. Sign in to the application using the created user account
-5. Seed the database with mock data:
+   - Copy the user's ID from the dashboard (you'll need this for seeding)
+4. Add the user's ID to your `.env` file as `SEED_MEMBER_ID`
+5. Seed the database:
    ```bash
    npm run seed
    ```
-   Note: The seed script requires an authenticated user session as the mock resources will be associated with this user.
+   Note: The seed script will create mock resources owned by the user specified in `SEED_MEMBER_ID`
 
 ## Development
 

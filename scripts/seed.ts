@@ -8,9 +8,16 @@ dotenv.config();
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const seedMemberId = process.env.SEED_MEMBER_ID;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing required environment variables');
+  console.error('Missing required environment variables: VITE_SUPABASE_URL and SUPABASE_SERVICE_KEY');
+  process.exit(1);
+}
+
+if (!seedMemberId) {
+  console.error('Missing required environment variable: SEED_MEMBER_ID');
+  console.error('Please add SEED_MEMBER_ID=your_user_id to your .env file');
   process.exit(1);
 }
 
@@ -31,20 +38,12 @@ async function seedResources() {
       return;
     }
 
-    // Get the current user's ID
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.error('Error: No authenticated user found. Please create and sign in with a user account before running the seed script.');
-      process.exit(1);
-    }
-
-    // Insert mock resources - set the current user as the member_id
+    // Insert mock resources using the provided SEED_MEMBER_ID
     const { error } = await supabase
       .from('resources')
       .insert(mockResources.map(({ owner, ...resource }) => ({
         ...resource,
-        member_id: user.id, // Use the authenticated user's ID
+        member_id: seedMemberId,
         location: `POINT(${resource.location.lng} ${resource.location.lat})`,
         created_at: new Date(resource.created_at).toISOString()
       })));
