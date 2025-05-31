@@ -25,6 +25,6 @@ export const Route = createRootRoute({
           </Link>
         </div>
       </div>
-    ),
+    )
   }
 });
