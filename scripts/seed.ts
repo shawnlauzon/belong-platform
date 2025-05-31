@@ -31,11 +31,20 @@ async function seedResources() {
       return;
     }
 
-    // Insert mock resources
+    // Get the current user's ID
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Error: No authenticated user found. Please create and sign in with a user account before running the seed script.');
+      process.exit(1);
+    }
+
+    // Insert mock resources - set the current user as the member_id
     const { error } = await supabase
       .from('resources')
       .insert(mockResources.map(({ owner, ...resource }) => ({
         ...resource,
+        member_id: user.id, // Use the authenticated user's ID
         location: `POINT(${resource.location.lng} ${resource.location.lat})`,
         created_at: new Date(resource.created_at).toISOString()
       })));

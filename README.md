@@ -57,10 +57,17 @@ VITE_DEFAULT_LOCATION_LNG=-97.7431
 
 1. Create a new Supabase project
 2. Run the migrations from `supabase/migrations/`
-3. Seed the database:
+3. Create a user account in your Supabase project:
+   - Go to Authentication > Users in the Supabase dashboard
+   - Click "Create User"
+   - Fill in the email and password
+   - Note: This user will be the owner of the seeded resources
+4. Sign in to the application using the created user account
+5. Seed the database with mock data:
    ```bash
    npm run seed
    ```
+   Note: The seed script requires an authenticated user session as the mock resources will be associated with this user.
 
 ## Development
 
