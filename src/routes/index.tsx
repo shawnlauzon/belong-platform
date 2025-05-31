@@ -1,0 +1,200 @@
+import React, { useState } from 'react';
+import { createFileRoute } from '@tanstack/react-router';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ResourceList } from '@/components/resources/ResourceList';
+import { ThanksFeed } from '@/components/thanks/ThanksFeed';
+import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
+import { mockResources, mockThanks } from '@/api/mockData';
+import { useAppStore } from '@/core/state';
+import { calculateDrivingTime } from '@/lib/mapbox';
+import { Plus, ChevronRight, Users } from 'lucide-react';
+import { ResourceCard } from '@/components/resources/ResourceCard';
+import { Link } from '@tanstack/react-router';
+import { ShareResourceDialog } from '@/components/resources/ShareResourceDialog';
+
+export const Route = createFileRoute('/')({
+  component: HomePage,
+});
+
+function HomePage() {
+  const userLocation = useAppStore(state => state.userLocation);
+  const viewMode = useAppStore(state => state.viewMode);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [nearbyResources, setNearbyResources] = useState<typeof mockResources>([]);
+  
+  // Load resources and calculate distances
+  React.useEffect(() => {
+    const loadResources = async () => {
+      // Calculate driving time for each resource
+      const resourcesWithDistances = await Promise.all(
+        mockResources.map(async (resource) => {
+          const driveMinutes = await calculateDrivingTime(userLocation, resource.location);
+          return {
+            ...resource,
+            distance_minutes: driveMinutes
+          };
+        })
+      );
+      
+      // Filter to those within 8 minutes drive
+      const nearby = resourcesWithDistances.filter(
+        resource => (resource.distance_minutes || 100) <= 8
+      );
+      
+      // Sort by driving time
+      nearby.sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100));
+      
+      setNearbyResources(nearby.slice(0, 3));
+    };
+    
+    loadResources();
+  }, [userLocation]);
+  
+  const handleResourceRequest = (resourceId: string) => {
+    console.log('Resource requested:', resourceId);
+  };
+  
+  return (
+    <AppLayout>
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-2xl font-display font-bold text-warmgray-800">
+          {viewMode === 'member' ? 'My Neighborhood' : 'Community Dashboard'}
+        </h1>
+        <ViewSwitcher />
+      </div>
+      
+      {viewMode === 'member' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card 
+              className="bg-gradient-to-br from-primary-500 to-primary-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setShowShareDialog(true)}
+            >
+              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                <div className="rounded-full bg-white bg-opacity-20 p-4">
+                  <Plus className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Share Something</h3>
+                  <p className="text-primary-100">Tools, skills, or items you'd like to share with neighbors</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card 
+              className="bg-gradient-to-br from-trust-500 to-trust-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                <div className="rounded-full bg-white bg-opacity-20 p-4">
+                  <Plus className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Ask for Something</h3>
+                  <p className="text-trust-100">Need something from your neighbors? Just ask!</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gray-100 hover:bg-gray-50 cursor-pointer hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                <div className="rounded-full bg-white p-4 shadow-sm">
+                  <Users className="h-8 w-8 text-warmgray-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-warmgray-800 mb-2">My Profile</h3>
+                  <p className="text-warmgray-500">View your trust score and sharing history</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {/* Nearby Resources */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-warmgray-800">
+                  Nearby Resources
+                </h2>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/resources" className="flex items-center gap-1">
+                    <span>View All</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              
+              {nearbyResources.length > 0 ? (
+                <div className="space-y-4">
+                  {nearbyResources.map((resource) => (
+                    <ResourceCard
+                      key={resource.id}
+                      resource={resource}
+                      onRequest={handleResourceRequest}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <p className="text-warmgray-500">No nearby resources found</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            
+            {/* Recent Thanks */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-warmgray-800">
+                  Recent Thanks
+                </h2>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/thanks" className="flex items-center gap-1">
+                    <span>View All</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              
+              <ThanksFeed thanks={mockThanks.slice(0, 2)} />
+            </div>
+          </div>
+
+          <ShareResourceDialog 
+            open={showShareDialog} 
+            onOpenChange={setShowShareDialog} 
+          />
+        </>
+      )}
+      
+      {viewMode === 'organizer' && (
+        <div className="space-y-6">
+          <Card>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
+                  <div className="text-2xl font-bold text-primary-600">145</div>
+                  <div className="text-sm text-warmgray-500">Members</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
+                  <div className="text-2xl font-bold text-primary-600">87</div>
+                  <div className="text-sm text-warmgray-500">Active Resources</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
+                  <div className="text-2xl font-bold text-primary-600">32</div>
+                  <div className="text-sm text-warmgray-500">Thanks This Week</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
+                  <div className="text-2xl font-bold text-primary-600">7.2</div>
+                  <div className="text-sm text-warmgray-500">Avg Trust Score</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </AppLayout>
+  );
+}
