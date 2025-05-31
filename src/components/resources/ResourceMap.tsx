@@ -49,6 +49,20 @@ export function ResourceMap({ resources, userLocation, onRequestResource }: Reso
     return colors[category] || 'bg-gray-500';
   };
 
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+  if (!mapboxToken) {
+    return (
+      <div className="h-[500px] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="text-center p-4">
+          <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-600">Map preview not available</p>
+          <p className="text-sm text-gray-500">Please add your Mapbox token to .env</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-[500px] rounded-lg overflow-hidden shadow-md">
       <Map
@@ -56,7 +70,7 @@ export function ResourceMap({ resources, userLocation, onRequestResource }: Reso
         ref={mapRef}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
-        mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN || 'pk.placeholder'}
+        mapboxAccessToken={mapboxToken}
         onMove={evt => setViewport(evt.viewState)}
       >
         {/* User location marker */}

@@ -1,8 +1,13 @@
 import mapboxgl from 'mapbox-gl';
 
 // Set your Mapbox token (ideally from environment variable)
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.placeholder';
-mapboxgl.accessToken = MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+
+if (!MAPBOX_TOKEN) {
+  console.warn('Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file');
+}
+
+mapboxgl.accessToken = MAPBOX_TOKEN || '';
 
 // Default location (Austin, TX)
 export const DEFAULT_LOCATION = {
@@ -16,9 +21,19 @@ export const calculateDrivingTime = async (
   destination: { lat: number; lng: number }
 ): Promise<number> => {
   try {
+    if (!MAPBOX_TOKEN) {
+      // Fallback to approximation if no token
+      return calculateApproximateDrivingTime(origin, destination);
+    }
+
     const response = await fetch(
       `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`
     );
+    
+    if (!response.ok) {
+      throw new Error(`Mapbox API error: ${response.status}`);
+    }
+    
     const data = await response.json();
     
     // Return driving time in minutes
