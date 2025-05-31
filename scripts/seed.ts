@@ -34,7 +34,7 @@ async function seedResources() {
     // Insert mock resources
     const { error } = await supabase
       .from('resources')
-      .insert(mockResources.map(resource => ({
+      .insert(mockResources.map(({ owner, ...resource }) => ({
         ...resource,
         location: `POINT(${resource.location.lng} ${resource.location.lat})`,
         created_at: new Date(resource.created_at).toISOString()
