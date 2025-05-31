@@ -5,11 +5,24 @@ import { locationManager, initializeListeners } from '@/features/app';
 import { routeTree } from './routeTree.gen';
 import './index.css';
 
-// Create a new React query client
-const queryClient = new QueryClient();
+// Create a new React query client with default options
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 // Create a new router instance
-const router = createRouter({ routeTree });
+const router = createRouter({ 
+  routeTree,
+  defaultPreload: 'intent',
+  context: {
+    queryClient,
+  },
+});
 
 // Register router for type safety
 declare module '@tanstack/react-router' {
@@ -21,9 +34,17 @@ declare module '@tanstack/react-router' {
 function App() {
   // Initialize the app
   useEffect(() => {
-    // Get user location and initialize event listeners
-    locationManager.getCurrentLocation();
-    initializeListeners();
+    const init = async () => {
+      try {
+        // Get user location and initialize event listeners
+        await locationManager.getCurrentLocation();
+        initializeListeners();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      }
+    };
+    
+    init();
   }, []);
 
   return (

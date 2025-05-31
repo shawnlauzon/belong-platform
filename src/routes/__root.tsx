@@ -1,10 +1,17 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import { Suspense } from 'react';
 
 export const Route = createRootRoute({
   component: () => (
     <div className="min-h-screen">
-      <Outlet />
+      <Suspense fallback={
+        <div className="min-h-screen bg-amber-50 flex items-center justify-center">
+          <div className="animate-pulse text-warmgray-600">Loading...</div>
+        </div>
+      }>
+        <Outlet />
+      </Suspense>
       {import.meta.env.DEV && <TanStackRouterDevtools />}
     </div>
   ),
