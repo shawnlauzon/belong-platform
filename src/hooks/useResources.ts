@@ -14,10 +14,10 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          profiles:member_id (
+          users:member_id (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('is_active', true);
@@ -58,10 +58,10 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          profiles:member_id (
+          users:member_id (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('id', id)

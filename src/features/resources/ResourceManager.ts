@@ -38,10 +38,10 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          profiles:member_id (
+          users:member_id (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('is_active', true);
@@ -90,10 +90,10 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          profiles:member_id (
+          users:member_id (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .single();
