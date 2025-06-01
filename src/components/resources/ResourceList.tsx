@@ -1,58 +1,62 @@
 import React, { useState } from 'react';
 import { ResourceCard } from './ResourceCard';
-import { Resource, ResourceFilter } from '@/types';
+import { useResources } from '@/hooks/useResources';
+import { ResourceFilter } from '@/types';
 import { Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ResourceListProps {
-  resources: Resource[];
   onRequestResource: (resourceId: string) => void;
 }
 
-export function ResourceList({ resources, onRequestResource }: ResourceListProps) {
+export function ResourceList({ onRequestResource }: ResourceListProps) {
   const [filter, setFilter] = useState<ResourceFilter>({
     category: 'all',
     type: 'all',
-    maxDriveMinutes: 8, // Default to 8 minutes
+    maxDriveMinutes: 8,
     searchTerm: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const { data: resources = [], isLoading } = useResources(filter.maxDriveMinutes);
 
   const handleFilterChange = (key: keyof ResourceFilter, value: any) => {
     setFilter(prev => ({ ...prev, [key]: value }));
   };
 
-  const filteredResources = resources.filter(resource => {
-    // Category filter
-    if (filter.category && filter.category !== 'all' && resource.category !== filter.category) {
-      return false;
-    }
-    
-    // Type filter
-    if (filter.type && filter.type !== 'all' && resource.type !== filter.type) {
-      return false;
-    }
-    
-    // Drive time filter
-    if (
-      filter.maxDriveMinutes && 
-      resource.distance_minutes && 
-      resource.distance_minutes > filter.maxDriveMinutes
-    ) {
-      return false;
-    }
-    
-    // Search term filter
-    if (
-      filter.searchTerm && 
-      !resource.title.toLowerCase().includes(filter.searchTerm.toLowerCase()) &&
-      !resource.description.toLowerCase().includes(filter.searchTerm.toLowerCase())
-    ) {
-      return false;
-    }
-    
-    return true;
-  });
+  const filteredResources = React.useMemo(() => {
+    return resources.filter(resource => {
+      // Category filter
+      if (filter.category && filter.category !== 'all' && resource.category !== filter.category) {
+        return false;
+      }
+      
+      // Type filter
+      if (filter.type && filter.type !== 'all' && resource.type !== filter.type) {
+        return false;
+      }
+      
+      // Search term filter
+      if (
+        filter.searchTerm && 
+        !resource.title.toLowerCase().includes(filter.searchTerm.toLowerCase()) &&
+        !resource.description.toLowerCase().includes(filter.searchTerm.toLowerCase())
+      ) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [resources, filter]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-lg shadow-sm h-[200px] animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
