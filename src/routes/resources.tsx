@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ResourceList } from '@/components/resources/ResourceList';
 import { ResourceMap } from '@/components/resources/ResourceMap';
 import { ResourceForm } from '@/components/resources/ResourceForm';
 import { Button } from '@/components/ui/button';
-import { ResourceManager } from '@/features/resources/ResourceManager';
+import { useResources } from '@/hooks/useResources';
 import { useAppStore } from '@/core/state';
-import { TrustBadge } from '@/components/trust/TrustBadge';
-import { Resource } from '@/types';
 import { Plus, List, MapPin } from 'lucide-react';
 
 export const Route = createFileRoute('/resources')({
@@ -19,30 +17,14 @@ function ResourcesPage() {
   const userLocation = useAppStore(state => state.userLocation);
   const [viewType, setViewType] = useState<'list' | 'map'>('list');
   const [showForm, setShowForm] = useState(false);
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: resources = [], isLoading } = useResources(8);
 
-  // Load resources when user location changes
-  useEffect(() => {
-    const loadResources = async () => {
-      setIsLoading(true);
-      const nearbyResources = await ResourceManager.getNearbyResources(userLocation, 8);
-      setResources(nearbyResources);
-      setIsLoading(false);
-    };
-    
-    loadResources();
-  }, [userLocation]);
-  
   const handleRequestResource = (resourceId: string) => {
-    // In a real implementation, this would open a chat or contact form
     alert(`Requesting resource: ${resourceId}`);
   };
   
   const handleFormComplete = () => {
     setShowForm(false);
-    // Reload resources to include the new one
-    ResourceManager.getNearbyResources(userLocation, 8).then(setResources);
   };
   
   return (
@@ -100,6 +82,7 @@ function ResourcesPage() {
           ) : (
             <ResourceList 
               resources={resources}
+              isLoading={isLoading}
               onRequestResource={handleRequestResource}
             />
           )}

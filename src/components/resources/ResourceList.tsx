@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { ResourceCard } from './ResourceCard';
-import { useResources } from '@/hooks/useResources';
-import { ResourceFilter } from '@/types';
+import { Resource, ResourceFilter } from '@/types';
 import { Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ResourceListProps {
+  resources: Resource[];
+  isLoading: boolean;
   onRequestResource: (resourceId: string) => void;
 }
 
-export function ResourceList({ onRequestResource }: ResourceListProps) {
+export function ResourceList({ resources, isLoading, onRequestResource }: ResourceListProps) {
   const [filter, setFilter] = useState<ResourceFilter>({
     category: 'all',
     type: 'all',
@@ -17,7 +18,6 @@ export function ResourceList({ onRequestResource }: ResourceListProps) {
     searchTerm: '',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const { data: resources = [], isLoading } = useResources(filter.maxDriveMinutes);
 
   const handleFilterChange = (key: keyof ResourceFilter, value: any) => {
     setFilter(prev => ({ ...prev, [key]: value }));
@@ -115,22 +115,6 @@ export function ResourceList({ onRequestResource }: ResourceListProps) {
                 <option value="supplies">Supplies</option>
                 <option value="other">Other</option>
               </select>
-            </div>
-            
-            {/* Max Drive Minutes filter */}
-            <div>
-              <label className="block text-xs font-medium text-warmgray-700 mb-1">
-                Max Drive Time: {filter.maxDriveMinutes} minutes
-              </label>
-              <input 
-                type="range" 
-                min="1" 
-                max="30" 
-                step="1"
-                value={filter.maxDriveMinutes}
-                onChange={(e) => handleFilterChange('maxDriveMinutes', parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
             </div>
           </div>
         )}

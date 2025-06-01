@@ -3,7 +3,7 @@ import { calculateDrivingTime } from '@/lib/mapbox';
 import { eventBus } from '@/core/eventBus';
 import { Resource, Coordinates } from '@/types';
 import { AppEvent } from '@/types/events';
-import { useCreateResource } from '@/hooks/useResources';
+import { useQueryClient } from '@tanstack/react-query';
 
 export class ResourceManager {
   static initialize() {
@@ -12,12 +12,16 @@ export class ResourceManager {
       if (event.type !== 'resource.create.requested') return;
       
       try {
-        // Use the React Query mutation
-        const { mutateAsync } = useCreateResource();
-        const resource = await mutateAsync(event.data);
+        const resource = await ResourceManager.createResource(event.data);
         
         if (!resource) throw new Error('Failed to create resource');
+        
+        // Emit success event
         eventBus.emit('resource.created', resource);
+        
+        // Invalidate the resources query to trigger a refetch
+        const queryClient = useQueryClient();
+        queryClient.invalidateQueries({ queryKey: ['resources'] });
       } catch (error) {
         console.error('Error creating resource:', error);
         eventBus.emit('resource.create.failed', { error });
@@ -84,7 +88,14 @@ export class ResourceManager {
           created_at: new Date().toISOString(),
           times_helped: 0
         }])
-        .select()
+        .select(`
+          *,
+          owner:member_id (
+            id,
+            email,
+            user_metadata
+          )
+        `)
         .single();
 
       if (error) throw error;
