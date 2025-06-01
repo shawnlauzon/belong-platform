@@ -29,7 +29,6 @@ export function Navigation() {
   const getUserDisplayName = () => {
     if (!user) return '';
     const metadata = user.user_metadata;
-    if (metadata?.full_name) return metadata.full_name;
     if (metadata?.first_name) return metadata.first_name;
     return user.email?.split('@')[0] || '';
   };
@@ -80,7 +79,7 @@ export function Navigation() {
             <div className="flex items-center gap-2">
               {/* Notifications */}
               {user && (
-                <Button variant="ghost\" size="icon\" className="relative">
+                <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
                   {notificationCount > 0 && (
                     <span className="absolute top-0 right-0 h-4 w-4 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
@@ -99,6 +98,7 @@ export function Navigation() {
                       <TrustBadge score={5.0} size="xs" />
                     </div>
                     <Avatar className="h-8 w-8 border border-primary-100">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
                       <AvatarFallback>{getAvatarText()}</AvatarFallback>
                     </Avatar>
                   </Link>
