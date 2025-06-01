@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { locationManager, initializeListeners } from '@/features/app';
 import { AuthProvider } from '@/lib/auth';
 import { routeTree } from './routeTree.gen';
@@ -48,6 +49,7 @@ function App() {
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
+      <ReactQueryDevtools />
     </QueryClientProvider>
   );
 }
