@@ -18,8 +18,6 @@ const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(['tools', 'skills', 'food', 'supplies', 'other']),
-  meetup_flexibility: z.enum(['home_only', 'public_meetup_ok', 'delivery_possible']),
-  availability: z.string().optional(),
 });
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
@@ -34,7 +32,6 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       category: 'tools',
-      meetup_flexibility: 'home_only',
     }
   });
   const [images, setImages] = React.useState<string[]>([]);
@@ -116,27 +113,6 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
             <div className="space-y-2">
               <label className="text-sm font-medium">Photos</label>
               <ImageUpload onImagesUploaded={setImages} maxImages={3} />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Meetup Options</label>
-              <select
-                {...register('meetup_flexibility')}
-                className="w-full border rounded-md p-2"
-              >
-                <option value="home_only">Pickup at my location only</option>
-                <option value="public_meetup_ok">Can meet at a public location</option>
-                <option value="delivery_possible">Can deliver</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Availability</label>
-              <input
-                {...register('availability')}
-                className="w-full border rounded-md p-2"
-                placeholder="When is this available? (e.g., 'Weekends only')"
-              />
             </div>
           </div>
 
