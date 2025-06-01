@@ -11,14 +11,7 @@ export class ResourceManager {
       if (event.type !== 'resource.create.requested') return;
       
       try {
-        // Get the current user's ID
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Must be authenticated to create resources');
-
-        const resource = await ResourceManager.createResource({
-          ...event.data,
-          member_id: user.id // Ensure we set the current user's ID
-        });
+        const resource = await ResourceManager.createResource(event.data);
         
         if (!resource) throw new Error('Failed to create resource');
         eventBus.emit('resource.created', resource);
