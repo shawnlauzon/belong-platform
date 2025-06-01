@@ -1,11 +1,10 @@
 import { create } from 'zustand';
-import { mockCommunities, mockMembers, mockResources } from '@/api/mockData';
-import { Community, Coordinates, Member, Resource } from '@/types';
+import { mockCommunities, mockResources } from '@/api/mockData';
+import { Community, Coordinates, Resource } from '@/types';
 import { DEFAULT_LOCATION } from '@/lib/mapbox';
 
 interface AppState {
-  // User & Location
-  currentUser: Member;
+  // User Location
   userLocation: Coordinates;
   setUserLocation: (location: Coordinates) => void;
   
@@ -24,9 +23,6 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  // Default user is the first mock member
-  currentUser: mockMembers[0],
-  
   // Default to Austin, TX coordinates
   userLocation: DEFAULT_LOCATION,
   setUserLocation: (location) => set({ userLocation: location }),

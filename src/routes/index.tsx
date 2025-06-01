@@ -13,6 +13,8 @@ import { Plus, ChevronRight, Users } from 'lucide-react';
 import { ResourceCard } from '@/components/resources/ResourceCard';
 import { Link } from '@tanstack/react-router';
 import { ShareResourceDialog } from '@/components/resources/ShareResourceDialog';
+import { AuthDialog } from '@/components/auth/AuthDialog';
+import { useAuth } from '@/lib/auth';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -22,12 +24,12 @@ function HomePage() {
   const userLocation = useAppStore(state => state.userLocation);
   const viewMode = useAppStore(state => state.viewMode);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [nearbyResources, setNearbyResources] = useState<typeof mockResources>([]);
+  const { user } = useAuth();
   
-  // Load resources and calculate distances
   React.useEffect(() => {
     const loadResources = async () => {
-      // Calculate driving time for each resource
       const resourcesWithDistances = await Promise.all(
         mockResources.map(async (resource) => {
           const driveMinutes = await calculateDrivingTime(userLocation, resource.location);
@@ -38,12 +40,10 @@ function HomePage() {
         })
       );
       
-      // Filter to those within 8 minutes drive
       const nearby = resourcesWithDistances.filter(
         resource => (resource.distance_minutes || 100) <= 8
       );
       
-      // Sort by driving time
       nearby.sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100));
       
       setNearbyResources(nearby.slice(0, 3));
@@ -53,7 +53,19 @@ function HomePage() {
   }, [userLocation]);
   
   const handleResourceRequest = (resourceId: string) => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
     console.log('Resource requested:', resourceId);
+  };
+
+  const handleShareClick = () => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
+    setShowShareDialog(true);
   };
   
   return (
@@ -70,7 +82,7 @@ function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card 
               className="bg-gradient-to-br from-primary-500 to-primary-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setShowShareDialog(true)}
+              onClick={handleShareClick}
             >
               <CardContent className="p-6 flex flex-col items-center text-center gap-4">
                 <div className="rounded-full bg-white bg-opacity-20 p-4">
@@ -85,6 +97,7 @@ function HomePage() {
             
             <Card 
               className="bg-gradient-to-br from-trust-500 to-trust-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={handleShareClick}
             >
               <CardContent className="p-6 flex flex-col items-center text-center gap-4">
                 <div className="rounded-full bg-white bg-opacity-20 p-4">
@@ -97,16 +110,21 @@ function HomePage() {
               </CardContent>
             </Card>
             
-            <Card className="bg-gray-100 hover:bg-gray-50 cursor-pointer hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                <div className="rounded-full bg-white p-4 shadow-sm">
-                  <Users className="h-8 w-8 text-warmgray-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-warmgray-800 mb-2">My Profile</h3>
-                  <p className="text-warmgray-500">View your trust score and sharing history</p>
-                </div>
-              </CardContent>
+            <Card 
+              className="bg-gray-100 hover:bg-gray-50 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => user ? undefined : setShowAuthDialog(true)}
+            >
+              <Link to={user ? "/profile/me" : "#"}>
+                <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                  <div className="rounded-full bg-white p-4 shadow-sm">
+                    <Users className="h-8 w-8 text-warmgray-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-warmgray-800 mb-2">My Profile</h3>
+                    <p className="text-warmgray-500">View your trust score and sharing history</p>
+                  </div>
+                </CardContent>
+              </Link>
             </Card>
           </div>
           
@@ -165,6 +183,11 @@ function HomePage() {
           <ShareResourceDialog 
             open={showShareDialog} 
             onOpenChange={setShowShareDialog} 
+          />
+
+          <AuthDialog
+            open={showAuthDialog}
+            onOpenChange={setShowAuthDialog}
           />
         </>
       )}
