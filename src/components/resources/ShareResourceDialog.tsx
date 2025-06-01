@@ -18,8 +18,6 @@ const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(['tools', 'skills', 'food', 'supplies', 'other']),
-  pickup_instructions: z.string().optional(),
-  parking_info: z.string().optional(),
   meetup_flexibility: z.enum(['home_only', 'public_meetup_ok', 'delivery_possible']),
   availability: z.string().optional(),
 });
@@ -70,7 +68,7 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px] bg-white">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Share Something with Your Community</DialogTitle>
@@ -118,24 +116,6 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
             <div className="space-y-2">
               <label className="text-sm font-medium">Photos</label>
               <ImageUpload onImagesUploaded={setImages} maxImages={3} />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Pickup Instructions</label>
-              <textarea
-                {...register('pickup_instructions')}
-                className="w-full border rounded-md p-2"
-                placeholder="How should people pick this up?"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Parking Information</label>
-              <input
-                {...register('parking_info')}
-                className="w-full border rounded-md p-2"
-                placeholder="Where can people park?"
-              />
             </div>
 
             <div className="space-y-2">
