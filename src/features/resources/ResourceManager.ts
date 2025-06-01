@@ -38,7 +38,7 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          owner:member_id (
+          profiles:member_id (
             id,
             email,
             user_metadata
@@ -90,7 +90,7 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          owner:member_id (
+          profiles:member_id (
             id,
             email,
             user_metadata

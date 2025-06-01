@@ -14,7 +14,7 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          owner:member_id (
+          profiles:member_id (
             id,
             email,
             user_metadata
@@ -58,7 +58,7 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          owner:member_id (
+          profiles:member_id (
             id,
             email,
             user_metadata
