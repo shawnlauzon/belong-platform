@@ -3,14 +3,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ResourceList } from '@/components/resources/ResourceList';
+import { ResourceCard } from '@/components/resources/ResourceCard';
 import { ThanksFeed } from '@/components/thanks/ThanksFeed';
 import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
-import { mockResources, mockThanks } from '@/api/mockData';
+import { mockThanks } from '@/api/mockData';
 import { useAppStore } from '@/core/state';
-import { calculateDrivingTime } from '@/lib/mapbox';
+import { useResources } from '@/hooks/useResources';
 import { Plus, ChevronRight, Users } from 'lucide-react';
-import { ResourceCard } from '@/components/resources/ResourceCard';
 import { Link } from '@tanstack/react-router';
 import { ShareResourceDialog } from '@/components/resources/ShareResourceDialog';
 import { AuthDialog } from '@/components/auth/AuthDialog';
@@ -25,32 +24,17 @@ function HomePage() {
   const viewMode = useAppStore(state => state.viewMode);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [nearbyResources, setNearbyResources] = useState<typeof mockResources>([]);
   const { user } = useAuth();
   
-  React.useEffect(() => {
-    const loadResources = async () => {
-      const resourcesWithDistances = await Promise.all(
-        mockResources.map(async (resource) => {
-          const driveMinutes = await calculateDrivingTime(userLocation, resource.location);
-          return {
-            ...resource,
-            distance_minutes: driveMinutes
-          };
-        })
-      );
-      
-      const nearby = resourcesWithDistances.filter(
-        resource => (resource.distance_minutes || 100) <= 8
-      );
-      
-      nearby.sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100));
-      
-      setNearbyResources(nearby.slice(0, 3));
-    };
-    
-    loadResources();
-  }, [userLocation]);
+  // Use React Query to fetch resources
+  const { data: resources = [], isLoading } = useResources(8);
+  
+  // Get the 3 closest resources
+  const nearbyResources = React.useMemo(() => {
+    return [...resources]
+      .sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100))
+      .slice(0, 3);
+  }, [resources]);
   
   const handleResourceRequest = (resourceId: string) => {
     if (!user) {
@@ -59,7 +43,7 @@ function HomePage() {
     }
     console.log('Resource requested:', resourceId);
   };
-
+  
   const handleShareClick = () => {
     if (!user) {
       setShowAuthDialog(true);
@@ -143,7 +127,13 @@ function HomePage() {
                 </Button>
               </div>
               
-              {nearbyResources.length > 0 ? (
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-sm h-[200px] animate-pulse" />
+                  ))}
+                </div>
+              ) : nearbyResources.length > 0 ? (
                 <div className="space-y-4">
                   {nearbyResources.map((resource) => (
                     <ResourceCard
@@ -185,9 +175,9 @@ function HomePage() {
             onOpenChange={setShowShareDialog} 
           />
 
-          <AuthDialog
-            open={showAuthDialog}
-            onOpenChange={setShowAuthDialog}
+          <AuthDialog 
+            open={showAuthDialog} 
+            onOpenChange={setShowAuthDialog} 
           />
         </>
       )}
