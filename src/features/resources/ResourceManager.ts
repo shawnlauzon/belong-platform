@@ -33,7 +33,7 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          users!resources_member_id_fkey (
+          creator:member_id (
             id,
             email,
             raw_user_meta_data
@@ -47,23 +47,23 @@ export class ResourceManager {
       // Calculate driving times and filter by distance
       const resourcesWithDistances = await Promise.all(
         resources.map(async (resource) => {
-          const location = {
+          const location = resource.location ? {
             lat: resource.location.coordinates[1],
             lng: resource.location.coordinates[0]
-          };
+          } : null;
           
-          const driveMinutes = await calculateDrivingTime(userLocation, location);
+          const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
           return {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: resource.users ? {
-              id: resource.users.id,
-              name: resource.users.raw_user_meta_data?.full_name || resource.users.email?.split('@')[0] || 'Anonymous',
-              avatar_url: resource.users.raw_user_meta_data?.avatar_url,
+            owner: resource.creator ? {
+              id: resource.creator.id,
+              name: resource.creator.raw_user_meta_data?.full_name || resource.creator.email?.split('@')[0] || 'Anonymous',
+              avatar_url: resource.creator.raw_user_meta_data?.avatar_url,
               trust_score: 5.0, // Default until trust system is implemented
-              location: resource.users.raw_user_meta_data?.location || null,
+              location: resource.creator.raw_user_meta_data?.location || null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -73,7 +73,7 @@ export class ResourceManager {
       );
 
       return resourcesWithDistances.filter(
-        resource => resource.distance_minutes <= maxDriveMinutes
+        resource => !maxDriveMinutes || !resource.distance_minutes || resource.distance_minutes <= maxDriveMinutes
       );
     } catch (error) {
       console.error('Error getting nearby resources:', error);
@@ -95,7 +95,7 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          users!resources_member_id_fkey (
+          creator:member_id (
             id,
             email,
             raw_user_meta_data
@@ -112,12 +112,12 @@ export class ResourceManager {
           lat: createdResource.location.coordinates[1],
           lng: createdResource.location.coordinates[0]
         } : null,
-        owner: createdResource.users ? {
-          id: createdResource.users.id,
-          name: createdResource.users.raw_user_meta_data?.full_name || createdResource.users.email?.split('@')[0] || 'Anonymous',
-          avatar_url: createdResource.users.raw_user_meta_data?.avatar_url,
+        owner: createdResource.creator ? {
+          id: createdResource.creator.id,
+          name: createdResource.creator.raw_user_meta_data?.full_name || createdResource.creator.email?.split('@')[0] || 'Anonymous',
+          avatar_url: createdResource.creator.raw_user_meta_data?.avatar_url,
           trust_score: 5.0,
-          location: createdResource.users.raw_user_meta_data?.location || null,
+          location: createdResource.creator.raw_user_meta_data?.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0
