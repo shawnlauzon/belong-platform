@@ -26,6 +26,19 @@ export function Navigation() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    const metadata = user.user_metadata;
+    if (metadata?.full_name) return metadata.full_name;
+    if (metadata?.first_name) return metadata.first_name;
+    return user.email?.split('@')[0] || '';
+  };
+
+  const getAvatarText = () => {
+    const name = getUserDisplayName();
+    return name.charAt(0).toUpperCase();
+  };
+
   const NavLink = ({ to, icon, children }: { to: string; icon: React.ReactNode; children: React.ReactNode }) => (
     <Link
       to={to}
@@ -67,7 +80,7 @@ export function Navigation() {
             <div className="flex items-center gap-2">
               {/* Notifications */}
               {user && (
-                <Button variant="ghost\" size="icon\" className="relative">
+                <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
                   {notificationCount > 0 && (
                     <span className="absolute top-0 right-0 h-4 w-4 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
@@ -82,11 +95,11 @@ export function Navigation() {
                 <div className="flex items-center gap-2">
                   <Link to="/profile/me" className="flex items-center gap-2">
                     <div className="hidden sm:flex flex-col items-end">
-                      <span className="text-sm font-medium text-warmgray-800">{user.email}</span>
+                      <span className="text-sm font-medium text-warmgray-800">{getUserDisplayName()}</span>
                       <TrustBadge score={5.0} size="xs" />
                     </div>
                     <Avatar className="h-8 w-8 border border-primary-100">
-                      <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>{getAvatarText()}</AvatarFallback>
                     </Avatar>
                   </Link>
                   <Button variant="ghost" size="sm" onClick={() => signOut()}>
