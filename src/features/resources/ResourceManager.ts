@@ -33,9 +33,10 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          profiles (
+          profiles!resources_member_id_fkey (
             id,
-            email
+            email,
+            user_metadata
           )
         `)
         .eq('is_active', true);
@@ -53,19 +54,22 @@ export class ResourceManager {
           
           const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
+          const profile = resource.profiles;
+          const metadata = profile?.user_metadata || {};
+          
           return {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: resource.profiles ? {
-              id: resource.profiles.id,
-              name: resource.profiles.email?.split('@')[0] || 'Anonymous',
-              avatar_url: null, // Default to null since we don't have this data
-              trust_score: 5.0,
-              location: null,
-              community_tenure_months: 0,
-              thanks_received: 0,
-              resources_shared: 0
+            owner: profile ? {
+              id: profile.id,
+              name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+              avatar_url: metadata.avatar_url || null,
+              trust_score: 5.0, // Default until we implement trust scoring
+              location: metadata.location || null,
+              community_tenure_months: 0, // Default until we implement tenure tracking
+              thanks_received: 0, // Default until we implement thanks
+              resources_shared: 0 // Will be calculated from resources table
             } : null
           };
         })
@@ -94,9 +98,10 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          profiles (
+          profiles!resources_member_id_fkey (
             id,
-            email
+            email,
+            user_metadata
           )
         `)
         .single();
@@ -104,18 +109,21 @@ export class ResourceManager {
       if (error) throw error;
       if (!createdResource) return null;
 
+      const profile = createdResource.profiles;
+      const metadata = profile?.user_metadata || {};
+
       return {
         ...createdResource,
         location: createdResource.location ? {
           lat: createdResource.location.coordinates[1],
           lng: createdResource.location.coordinates[0]
         } : null,
-        owner: createdResource.profiles ? {
-          id: createdResource.profiles.id,
-          name: createdResource.profiles.email?.split('@')[0] || 'Anonymous',
-          avatar_url: null, // Default to null since we don't have this data
+        owner: profile ? {
+          id: profile.id,
+          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+          avatar_url: metadata.avatar_url || null,
           trust_score: 5.0,
-          location: null,
+          location: metadata.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0

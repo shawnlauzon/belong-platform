@@ -13,16 +13,19 @@ export function useMembers() {
       if (error) throw error;
       if (!profiles) return [];
 
-      return profiles.map(profile => ({
-        id: profile.id,
-        name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
-        avatar_url: profile.user_metadata?.avatar_url,
-        trust_score: 5.0, // Default score until we implement trust scoring
-        location: profile.user_metadata?.location || null,
-        community_tenure_months: 0, // Default until we implement tenure tracking
-        thanks_received: 0, // Default until we implement thanks
-        resources_shared: 0 // Will be calculated from resources table
-      }));
+      return profiles.map(profile => {
+        const metadata = profile.user_metadata || {};
+        return {
+          id: profile.id,
+          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+          avatar_url: metadata.avatar_url || null,
+          trust_score: 5.0, // Default score until we implement trust scoring
+          location: metadata.location || null,
+          community_tenure_months: 0, // Default until we implement tenure tracking
+          thanks_received: 0, // Default until we implement thanks
+          resources_shared: 0 // Will be calculated from resources table
+        };
+      });
     }
   });
 }
@@ -47,12 +50,14 @@ export function useMember(id: string) {
         .eq('member_id', id)
         .eq('type', 'offer');
 
+      const metadata = profile.user_metadata || {};
+
       return {
         id: profile.id,
-        name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
-        avatar_url: profile.user_metadata?.avatar_url,
+        name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        avatar_url: metadata.avatar_url || null,
         trust_score: 5.0, // Default score until we implement trust scoring
-        location: profile.user_metadata?.location || null,
+        location: metadata.location || null,
         community_tenure_months: 0, // Default until we implement tenure tracking
         thanks_received: 0, // Default until we implement thanks
         resources_shared: resourcesShared || 0
