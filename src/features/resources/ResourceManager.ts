@@ -35,8 +35,7 @@ export class ResourceManager {
           *,
           profiles (
             id,
-            email,
-            user_metadata
+            email
           )
         `)
         .eq('is_active', true);
@@ -60,10 +59,10 @@ export class ResourceManager {
             distance_minutes: driveMinutes,
             owner: resource.profiles ? {
               id: resource.profiles.id,
-              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
-              avatar_url: resource.profiles.user_metadata?.avatar_url,
-              trust_score: 5.0, // Default until trust system is implemented
-              location: resource.profiles.user_metadata?.location || null,
+              name: resource.profiles.email?.split('@')[0] || 'Anonymous',
+              avatar_url: null, // Default to null since we don't have this data
+              trust_score: 5.0,
+              location: null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -97,8 +96,7 @@ export class ResourceManager {
           *,
           profiles (
             id,
-            email,
-            user_metadata
+            email
           )
         `)
         .single();
@@ -114,10 +112,10 @@ export class ResourceManager {
         } : null,
         owner: createdResource.profiles ? {
           id: createdResource.profiles.id,
-          name: createdResource.profiles.user_metadata?.full_name || createdResource.profiles.email?.split('@')[0] || 'Anonymous',
-          avatar_url: createdResource.profiles.user_metadata?.avatar_url,
+          name: createdResource.profiles.email?.split('@')[0] || 'Anonymous',
+          avatar_url: null, // Default to null since we don't have this data
           trust_score: 5.0,
-          location: createdResource.profiles.user_metadata?.location || null,
+          location: null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0

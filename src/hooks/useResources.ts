@@ -14,10 +14,9 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-            profiles (
-              id,
-              email,
-              user_metadata
+          profiles (
+            id,
+            email
           )
         `)
         .eq('is_active', true);
@@ -43,10 +42,10 @@ export function useResources(maxDriveMinutes = 8) {
             distance_minutes: driveMinutes,
             owner: profile ? {
               id: profile.id,
-              name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
-              avatar_url: profile.user_metadata?.avatar_url,
+              name: profile.email?.split('@')[0] || 'Anonymous',
+              avatar_url: null, // Default to null since we don't have this data
               trust_score: 5.0,
-              location: profile.user_metadata?.location || null,
+              location: null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -70,10 +69,9 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-            profiles (
-              id,
-              email,
-              user_metadata
+          profiles (
+            id,
+            email
           )
         `)
         .eq('id', id)
@@ -92,10 +90,10 @@ export function useResource(id: string) {
         } : null,
         owner: profile ? {
           id: profile.id,
-          name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
-          avatar_url: profile.user_metadata?.avatar_url,
+          name: profile.email?.split('@')[0] || 'Anonymous',
+          avatar_url: null, // Default to null since we don't have this data
           trust_score: 5.0,
-          location: profile.user_metadata?.location || null,
+          location: null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0
