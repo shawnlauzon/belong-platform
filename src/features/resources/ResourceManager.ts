@@ -33,10 +33,10 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          profiles:member_id (
+          users!resources_member_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('is_active', true);
@@ -58,12 +58,12 @@ export class ResourceManager {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: resource.profiles ? {
-              id: resource.profiles.id,
-              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
-              avatar_url: resource.profiles.user_metadata?.avatar_url,
+            owner: resource.users ? {
+              id: resource.users.id,
+              name: resource.users.raw_user_meta_data?.full_name || resource.users.email?.split('@')[0] || 'Anonymous',
+              avatar_url: resource.users.raw_user_meta_data?.avatar_url,
               trust_score: 5.0, // Default until trust system is implemented
-              location: resource.profiles.user_metadata?.location || null,
+              location: resource.users.raw_user_meta_data?.location || null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -95,10 +95,10 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          profiles:member_id (
+          users!resources_member_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .single();
@@ -112,12 +112,12 @@ export class ResourceManager {
           lat: createdResource.location.coordinates[1],
           lng: createdResource.location.coordinates[0]
         } : null,
-        owner: createdResource.profiles ? {
-          id: createdResource.profiles.id,
-          name: createdResource.profiles.user_metadata?.full_name || createdResource.profiles.email?.split('@')[0] || 'Anonymous',
-          avatar_url: createdResource.profiles.user_metadata?.avatar_url,
+        owner: createdResource.users ? {
+          id: createdResource.users.id,
+          name: createdResource.users.raw_user_meta_data?.full_name || createdResource.users.email?.split('@')[0] || 'Anonymous',
+          avatar_url: createdResource.users.raw_user_meta_data?.avatar_url,
           trust_score: 5.0,
-          location: createdResource.profiles.user_metadata?.location || null,
+          location: createdResource.users.raw_user_meta_data?.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0
