@@ -14,10 +14,14 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          profiles!resources_member_id_fkey (
+          creator:member_id (
             id,
             email,
-            user_metadata
+            profiles (
+              id,
+              email,
+              user_metadata
+            )
           )
         `)
         .eq('is_active', true);
@@ -35,16 +39,18 @@ export function useResources(maxDriveMinutes = 8) {
           
           const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
+          const profile = resource.creator?.profiles?.[0];
+          
           return {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: resource.profiles ? {
-              id: resource.profiles.id,
-              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
-              avatar_url: resource.profiles.user_metadata?.avatar_url,
+            owner: profile ? {
+              id: profile.id,
+              name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
+              avatar_url: profile.user_metadata?.avatar_url,
               trust_score: 5.0,
-              location: resource.profiles.user_metadata?.location || null,
+              location: profile.user_metadata?.location || null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -68,10 +74,14 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          profiles!resources_member_id_fkey (
+          creator:member_id (
             id,
             email,
-            user_metadata
+            profiles (
+              id,
+              email,
+              user_metadata
+            )
           )
         `)
         .eq('id', id)
@@ -80,18 +90,20 @@ export function useResource(id: string) {
       if (error) throw error;
       if (!data) throw new Error('Resource not found');
 
+      const profile = data.creator?.profiles?.[0];
+
       return {
         ...data,
         location: data.location ? {
           lat: data.location.coordinates[1],
           lng: data.location.coordinates[0]
         } : null,
-        owner: data.profiles ? {
-          id: data.profiles.id,
-          name: data.profiles.user_metadata?.full_name || data.profiles.email?.split('@')[0] || 'Anonymous',
-          avatar_url: data.profiles.user_metadata?.avatar_url,
+        owner: profile ? {
+          id: profile.id,
+          name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
+          avatar_url: profile.user_metadata?.avatar_url,
           trust_score: 5.0,
-          location: data.profiles.user_metadata?.location || null,
+          location: profile.user_metadata?.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0
