@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { locationManager, initializeListeners } from '@/features/app';
+import { AuthProvider } from '@/lib/auth';
 import { routeTree } from './routeTree.gen';
 import './index.css';
 
-// Create a new React query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -15,7 +15,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create a new router instance
 const router = createRouter({ 
   routeTree,
   defaultPreload: 'intent',
@@ -24,7 +23,6 @@ const router = createRouter({
   },
 });
 
-// Register router for type safety
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
@@ -32,11 +30,9 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  // Initialize the app
   useEffect(() => {
     const init = async () => {
       try {
-        // Get user location and initialize event listeners
         await locationManager.getCurrentLocation();
         initializeListeners();
       } catch (error) {
@@ -49,7 +45,9 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
