@@ -67,7 +67,7 @@ export function Navigation() {
             <div className="flex items-center gap-2">
               {/* Notifications */}
               {user && (
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost\" size="icon\" className="relative">
                   <Bell className="h-5 w-5" />
                   {notificationCount > 0 && (
                     <span className="absolute top-0 right-0 h-4 w-4 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
