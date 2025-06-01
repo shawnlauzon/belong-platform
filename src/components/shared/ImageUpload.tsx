@@ -7,35 +7,32 @@ interface ImageUploadProps {
   maxImages?: number;
 }
 
-// In a real implementation, this would upload to Supabase Storage
-// For the MVP, we'll use local state and sample images
 export function ImageUpload({ onImagesUploaded, maxImages = 3 }: ImageUploadProps) {
   const [images, setImages] = useState<string[]>([]);
 
-  // Placeholder image URLs (in a real app, we would upload to storage)
-  const sampleImageUrls = [
-    'https://images.pexels.com/photos/4117524/pexels-photo-4117524.jpeg',
-    'https://images.pexels.com/photos/8186421/pexels-photo-8186421.jpeg',
-    'https://images.pexels.com/photos/3943882/pexels-photo-3943882.jpeg',
-    'https://images.pexels.com/photos/6647120/pexels-photo-6647120.jpeg',
-    'https://images.pexels.com/photos/4226891/pexels-photo-4226891.jpeg'
-  ];
-  
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (images.length >= maxImages) return;
+
+    // Process only up to the maximum allowed number of images
+    const filesToProcess = acceptedFiles.slice(0, maxImages - images.length);
+
+    // Create object URLs for the images
+    const newImageUrls = filesToProcess.map(file => URL.createObjectURL(file));
+    const updatedImages = [...images, ...newImageUrls];
     
-    const newImages = acceptedFiles.slice(0, maxImages - images.length).map(() => {
-      // Get a random image from our sample URLs
-      return sampleImageUrls[Math.floor(Math.random() * sampleImageUrls.length)];
-    });
-    
-    const updatedImages = [...images, ...newImages];
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
+
+    // Clean up object URLs when component unmounts
+    return () => {
+      newImageUrls.forEach(url => URL.revokeObjectURL(url));
+    };
   }, [images, maxImages, onImagesUploaded]);
 
   const removeImage = (index: number) => {
     const updatedImages = [...images];
+    // Revoke the object URL before removing it
+    URL.revokeObjectURL(updatedImages[index]);
     updatedImages.splice(index, 1);
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
