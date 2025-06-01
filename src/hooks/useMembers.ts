@@ -6,19 +6,19 @@ export function useMembers() {
   return useQuery({
     queryKey: ['members'],
     queryFn: async () => {
-      const { data: users, error } = await supabase
-        .from('users')
+      const { data: profiles, error } = await supabase
+        .from('profiles')
         .select('*');
 
       if (error) throw error;
-      if (!users) return [];
+      if (!profiles) return [];
 
-      return users.map(user => ({
-        id: user.id,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
-        avatar_url: user.user_metadata?.avatar_url,
+      return profiles.map(profile => ({
+        id: profile.id,
+        name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        avatar_url: profile.user_metadata?.avatar_url,
         trust_score: 5.0, // Default score until we implement trust scoring
-        location: user.user_metadata?.location || null,
+        location: profile.user_metadata?.location || null,
         community_tenure_months: 0, // Default until we implement tenure tracking
         thanks_received: 0, // Default until we implement thanks
         resources_shared: 0 // Will be calculated from resources table
@@ -31,14 +31,14 @@ export function useMember(id: string) {
   return useQuery({
     queryKey: ['members', id],
     queryFn: async () => {
-      const { data: user, error } = await supabase
-        .from('users')
+      const { data: profile, error } = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      if (!user) throw new Error('User not found');
+      if (!profile) throw new Error('User not found');
 
       // Get the user's shared resources count
       const { count: resourcesShared } = await supabase
@@ -48,11 +48,11 @@ export function useMember(id: string) {
         .eq('type', 'offer');
 
       return {
-        id: user.id,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
-        avatar_url: user.user_metadata?.avatar_url,
+        id: profile.id,
+        name: profile.user_metadata?.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        avatar_url: profile.user_metadata?.avatar_url,
         trust_score: 5.0, // Default score until we implement trust scoring
-        location: user.user_metadata?.location || null,
+        location: profile.user_metadata?.location || null,
         community_tenure_months: 0, // Default until we implement tenure tracking
         thanks_received: 0, // Default until we implement thanks
         resources_shared: resourcesShared || 0

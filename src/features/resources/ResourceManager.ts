@@ -3,7 +3,6 @@ import { calculateDrivingTime } from '@/lib/mapbox';
 import { eventBus } from '@/core/eventBus';
 import { Resource, Coordinates } from '@/types';
 import { AppEvent } from '@/types/events';
-import { useQueryClient } from '@tanstack/react-query';
 
 export class ResourceManager {
   static initialize() {
@@ -18,10 +17,6 @@ export class ResourceManager {
         
         // Emit success event
         eventBus.emit('resource.created', resource);
-        
-        // Invalidate the resources query to trigger a refetch
-        const queryClient = useQueryClient();
-        queryClient.invalidateQueries({ queryKey: ['resources'] });
       } catch (error) {
         console.error('Error creating resource:', error);
         eventBus.emit('resource.create.failed', { error });
@@ -38,10 +33,10 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          users:member_id (
+          profiles:member_id (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .eq('is_active', true);
@@ -62,7 +57,17 @@ export class ResourceManager {
           return {
             ...resource,
             location,
-            distance_minutes: driveMinutes
+            distance_minutes: driveMinutes,
+            owner: resource.profiles ? {
+              id: resource.profiles.id,
+              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
+              avatar_url: resource.profiles.user_metadata?.avatar_url,
+              trust_score: 5.0, // Default until trust system is implemented
+              location: resource.profiles.user_metadata?.location || null,
+              community_tenure_months: 0,
+              thanks_received: 0,
+              resources_shared: 0
+            } : null
           };
         })
       );
@@ -90,10 +95,10 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          users:member_id (
+          profiles:member_id (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .single();
@@ -106,6 +111,16 @@ export class ResourceManager {
         location: createdResource.location ? {
           lat: createdResource.location.coordinates[1],
           lng: createdResource.location.coordinates[0]
+        } : null,
+        owner: createdResource.profiles ? {
+          id: createdResource.profiles.id,
+          name: createdResource.profiles.user_metadata?.full_name || createdResource.profiles.email?.split('@')[0] || 'Anonymous',
+          avatar_url: createdResource.profiles.user_metadata?.avatar_url,
+          trust_score: 5.0,
+          location: createdResource.profiles.user_metadata?.location || null,
+          community_tenure_months: 0,
+          thanks_received: 0,
+          resources_shared: 0
         } : null
       };
     } catch (error) {

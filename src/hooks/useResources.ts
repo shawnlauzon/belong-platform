@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Resource } from '@/types';
 import { calculateDrivingTime } from '@/lib/mapbox';
@@ -14,10 +14,10 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          users:member_id (
+          profiles:member_id (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .eq('is_active', true);
@@ -28,23 +28,33 @@ export function useResources(maxDriveMinutes = 8) {
       // Calculate driving times and filter by distance
       const resourcesWithDistances = await Promise.all(
         resources.map(async (resource) => {
-          const location = {
+          const location = resource.location ? {
             lat: resource.location.coordinates[1],
             lng: resource.location.coordinates[0]
-          };
+          } : null;
           
-          const driveMinutes = await calculateDrivingTime(userLocation, location);
+          const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
           return {
             ...resource,
             location,
-            distance_minutes: driveMinutes
+            distance_minutes: driveMinutes,
+            owner: resource.profiles ? {
+              id: resource.profiles.id,
+              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
+              avatar_url: resource.profiles.user_metadata?.avatar_url,
+              trust_score: 5.0,
+              location: resource.profiles.user_metadata?.location || null,
+              community_tenure_months: 0,
+              thanks_received: 0,
+              resources_shared: 0
+            } : null
           };
         })
       );
 
       return resourcesWithDistances.filter(
-        resource => resource.distance_minutes <= maxDriveMinutes
+        resource => !maxDriveMinutes || !resource.distance_minutes || resource.distance_minutes <= maxDriveMinutes
       );
     }
   });
@@ -58,10 +68,10 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          users:member_id (
+          profiles:member_id (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .eq('id', id)
@@ -72,63 +82,21 @@ export function useResource(id: string) {
 
       return {
         ...data,
-        location: {
+        location: data.location ? {
           lat: data.location.coordinates[1],
           lng: data.location.coordinates[0]
-        }
+        } : null,
+        owner: data.profiles ? {
+          id: data.profiles.id,
+          name: data.profiles.user_metadata?.full_name || data.profiles.email?.split('@')[0] || 'Anonymous',
+          avatar_url: data.profiles.user_metadata?.avatar_url,
+          trust_score: 5.0,
+          location: data.profiles.user_metadata?.location || null,
+          community_tenure_months: 0,
+          thanks_received: 0,
+          resources_shared: 0
+        } : null
       };
-    }
-  });
-}
-
-export function useCreateResource() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (resource: Partial<Resource>) => {
-      const { data, error } = await supabase
-        .from('resources')
-        .insert([{
-          ...resource,
-          location: `POINT(${resource.location?.lng} ${resource.location?.lat})`,
-          created_at: new Date().toISOString(),
-          times_helped: 0
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['resources'] });
-    }
-  });
-}
-
-export function useUpdateResource() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Resource> }) => {
-      const { data, error } = await supabase
-        .from('resources')
-        .update({
-          ...updates,
-          location: updates.location 
-            ? `POINT(${updates.location.lng} ${updates.location.lat})`
-            : undefined
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['resources'] });
-      queryClient.invalidateQueries({ queryKey: ['resources', data.id] });
     }
   });
 }
