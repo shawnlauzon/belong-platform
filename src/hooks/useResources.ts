@@ -14,10 +14,10 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          users!resources_member_id_fkey (
+          profiles!resources_member_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .eq('is_active', true);
@@ -39,12 +39,12 @@ export function useResources(maxDriveMinutes = 8) {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: resource.users ? {
-              id: resource.users.id,
-              name: resource.users.raw_user_meta_data?.full_name || resource.users.email?.split('@')[0] || 'Anonymous',
-              avatar_url: resource.users.raw_user_meta_data?.avatar_url,
+            owner: resource.profiles ? {
+              id: resource.profiles.id,
+              name: resource.profiles.user_metadata?.full_name || resource.profiles.email?.split('@')[0] || 'Anonymous',
+              avatar_url: resource.profiles.user_metadata?.avatar_url,
               trust_score: 5.0,
-              location: resource.users.raw_user_meta_data?.location || null,
+              location: resource.profiles.user_metadata?.location || null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -68,10 +68,10 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          users!resources_member_id_fkey (
+          profiles!resources_member_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `)
         .eq('id', id)
@@ -86,12 +86,12 @@ export function useResource(id: string) {
           lat: data.location.coordinates[1],
           lng: data.location.coordinates[0]
         } : null,
-        owner: data.users ? {
-          id: data.users.id,
-          name: data.users.raw_user_meta_data?.full_name || data.users.email?.split('@')[0] || 'Anonymous',
-          avatar_url: data.users.raw_user_meta_data?.avatar_url,
+        owner: data.profiles ? {
+          id: data.profiles.id,
+          name: data.profiles.user_metadata?.full_name || data.profiles.email?.split('@')[0] || 'Anonymous',
+          avatar_url: data.profiles.user_metadata?.avatar_url,
           trust_score: 5.0,
-          location: data.users.raw_user_meta_data?.location || null,
+          location: data.profiles.user_metadata?.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0
