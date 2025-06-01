@@ -20,6 +20,7 @@ const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(['tools', 'skills', 'food', 'supplies', 'other']),
+  meetup_flexibility: z.enum(['home_only', 'public_meetup_ok', 'delivery_possible']),
 });
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
@@ -34,6 +35,7 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       category: 'tools',
+      meetup_flexibility: 'home_only',
     }
   });
   const [images, setImages] = useState<string[]>([]);
@@ -112,6 +114,21 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
                 />
                 {errors.description && (
                   <p className="text-xs text-red-500">{errors.description.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Meetup Preference</label>
+                <select
+                  {...register('meetup_flexibility')}
+                  className="w-full border rounded-md p-2"
+                >
+                  <option value="home_only">Pickup at my location only</option>
+                  <option value="public_meetup_ok">Can meet at a public location</option>
+                  <option value="delivery_possible">Delivery possible</option>
+                </select>
+                {errors.meetup_flexibility && (
+                  <p className="text-xs text-red-500">{errors.meetup_flexibility.message}</p>
                 )}
               </div>
 
