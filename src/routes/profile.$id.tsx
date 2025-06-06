@@ -10,6 +10,7 @@ import { ThanksCard } from '@/components/thanks/ThanksCard';
 import { ProfileEditor } from '@/components/profile/ProfileEditor';
 import { useAuth } from '@/lib/auth';
 import { useMember } from '@/hooks/useMembers';
+import { formatTenure, getInitials } from '@/lib/utils';
 import { MapPin, Calendar, MessageCircle, Heart, User, Edit } from 'lucide-react';
 
 export const Route = createFileRoute('/profile/$id')({
@@ -57,6 +58,10 @@ function ProfilePage() {
     );
   }
 
+  const getAvatarInitials = () => {
+    return getInitials(member.first_name, member.last_name, member.name);
+  };
+
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto">
@@ -66,7 +71,7 @@ function ProfilePage() {
             <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
               <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
                 <AvatarImage src={member.avatar_url || undefined} alt={member.name} />
-                <AvatarFallback className="text-3xl">{member.name[0]}</AvatarFallback>
+                <AvatarFallback className="text-3xl">{getAvatarInitials()}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1 text-center sm:text-left">
@@ -80,7 +85,7 @@ function ProfilePage() {
                   )}
                   <div className="flex items-center text-sm text-warmgray-500">
                     <Calendar className="h-4 w-4 mr-1" />
-                    <span>Member for {member.community_tenure_months} months</span>
+                    <span>{formatTenure(member.created_at)}</span>
                   </div>
                 </div>
               </div>
@@ -170,7 +175,17 @@ function ProfilePage() {
         </div>
         
         {/* Resources and Thanks tabs content */}
-        {/* This will be implemented in the next iteration */}
+        {activeTab === 'resources' && (
+          <div className="bg-white rounded-lg p-6 text-center">
+            <p className="text-warmgray-500">Resources will be displayed here in a future update.</p>
+          </div>
+        )}
+        
+        {activeTab === 'thanks' && (
+          <div className="bg-white rounded-lg p-6 text-center">
+            <p className="text-warmgray-500">Thanks will be displayed here in a future update.</p>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

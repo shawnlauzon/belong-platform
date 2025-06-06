@@ -34,7 +34,45 @@ export const formatTimeAgo = (date: string | Date) => {
   }
 };
 
+export const formatTenure = (createdAt: string | Date) => {
+  const now = new Date();
+  const created = new Date(createdAt);
+  const diffInMs = now.getTime() - created.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const diffInMonths = Math.floor(diffInDays / 30);
+  const diffInYears = Math.floor(diffInDays / 365);
+
+  if (diffInDays === 0) {
+    return 'Member created today';
+  } else if (diffInDays === 1) {
+    return 'Member for 1 day';
+  } else if (diffInDays < 30) {
+    return `Member for ${diffInDays} days`;
+  } else if (diffInMonths === 1) {
+    return 'Member for 1 month';
+  } else if (diffInMonths < 12) {
+    return `Member for ${diffInMonths} months`;
+  } else if (diffInYears === 1) {
+    return 'Member for 1 year';
+  } else {
+    return `Member for ${diffInYears} years`;
+  }
+};
+
 export const truncateText = (text: string, maxLength: number) => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+};
+
+export const getInitials = (firstName?: string, lastName?: string, fallbackText?: string) => {
+  if (firstName && lastName) {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  } else if (firstName) {
+    return firstName.charAt(0).toUpperCase();
+  } else if (lastName) {
+    return lastName.charAt(0).toUpperCase();
+  } else if (fallbackText) {
+    return fallbackText.charAt(0).toUpperCase();
+  }
+  return 'U';
 };

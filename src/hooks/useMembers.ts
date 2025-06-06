@@ -18,12 +18,15 @@ export function useMembers() {
         return {
           id: profile.id,
           name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+          first_name: metadata.first_name || '',
+          last_name: metadata.last_name || '',
           avatar_url: metadata.avatar_url || null,
           trust_score: 5.0, // Default score until we implement trust scoring
           location: metadata.location || null,
           community_tenure_months: 0, // Default until we implement tenure tracking
           thanks_received: 0, // Default until we implement thanks
-          resources_shared: 0 // Will be calculated from resources table
+          resources_shared: 0, // Will be calculated from resources table
+          created_at: profile.created_at
         };
       });
     }
@@ -55,12 +58,15 @@ export function useMember(id: string) {
       return {
         id: profile.id,
         name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        first_name: metadata.first_name || '',
+        last_name: metadata.last_name || '',
         avatar_url: metadata.avatar_url || null,
         trust_score: 5.0, // Default score until we implement trust scoring
         location: metadata.location || null,
         community_tenure_months: 0, // Default until we implement tenure tracking
         thanks_received: 0, // Default until we implement thanks
-        resources_shared: resourcesShared || 0
+        resources_shared: resourcesShared || 0,
+        created_at: profile.created_at
       } as Member;
     }
   });

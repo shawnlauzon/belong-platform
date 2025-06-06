@@ -36,12 +36,15 @@ export interface Resource {
 export interface Member {
   id: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   avatar_url?: string;
   trust_score: number;
   location: Coordinates;
   community_tenure_months: number;
   thanks_received: number;
   resources_shared: number;
+  created_at: string;
 }
 
 export interface Thanks {
