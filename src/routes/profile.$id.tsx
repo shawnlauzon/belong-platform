@@ -62,6 +62,17 @@ function ProfilePage() {
     return getInitials(member.first_name, member.last_name, member.name);
   };
 
+  const getDisplayName = () => {
+    if (member.first_name && member.last_name) {
+      return `${member.first_name} ${member.last_name}`;
+    } else if (member.first_name) {
+      return member.first_name;
+    } else if (member.last_name) {
+      return member.last_name;
+    }
+    return member.name; // Fallback to the name field
+  };
+
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto">
@@ -70,12 +81,12 @@ function ProfilePage() {
           <div className="px-6 pb-6 -mt-16">
             <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
               <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                <AvatarImage src={member.avatar_url || undefined} alt={member.name} />
+                <AvatarImage src={member.avatar_url || undefined} alt={getDisplayName()} />
                 <AvatarFallback className="text-3xl">{getAvatarInitials()}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl font-bold text-warmgray-900">{member.name}</h1>
+                <h1 className="text-2xl font-bold text-warmgray-900">{getDisplayName()}</h1>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1">
                   {member.location && (
                     <div className="flex items-center text-sm text-warmgray-500">
