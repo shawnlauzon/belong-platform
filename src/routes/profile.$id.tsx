@@ -29,6 +29,24 @@ function ProfilePage() {
   const { data: member, isLoading } = useMember(id === 'me' ? user?.id || '' : id);
   const isSelf = id === 'me' || user?.id === id;
 
+  // Define helper functions early to avoid hoisting issues
+  const getAvatarInitials = () => {
+    if (!member) return '';
+    return getInitials(member.first_name, member.last_name, member.name);
+  };
+
+  const getDisplayName = () => {
+    if (!member) return '';
+    if (member.first_name && member.last_name) {
+      return `${member.first_name} ${member.last_name}`;
+    } else if (member.first_name) {
+      return member.first_name;
+    } else if (member.last_name) {
+      return member.last_name;
+    }
+    return member.name; // Fallback to the name field
+  };
+
   // Log member data when it's loaded
   React.useEffect(() => {
     if (member) {
@@ -117,21 +135,6 @@ function ProfilePage() {
       </AppLayout>
     );
   }
-
-  const getAvatarInitials = () => {
-    return getInitials(member.first_name, member.last_name, member.name);
-  };
-
-  const getDisplayName = () => {
-    if (member.first_name && member.last_name) {
-      return `${member.first_name} ${member.last_name}`;
-    } else if (member.first_name) {
-      return member.first_name;
-    } else if (member.last_name) {
-      return member.last_name;
-    }
-    return member.name; // Fallback to the name field
-  };
 
   logger.debug('👤 ProfilePage: Rendering profile view for:', {
     displayName: getDisplayName(),
