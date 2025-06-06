@@ -47,6 +47,12 @@ function ProfilePage() {
     return member.name; // Fallback to the name field
   };
 
+  // Handle save completion - return to view mode
+  const handleSaveComplete = () => {
+    logger.info('👤 ProfilePage: Profile save completed, returning to view mode');
+    setIsEditing(false);
+  };
+
   // Log member data when it's loaded
   React.useEffect(() => {
     if (member) {
@@ -130,7 +136,7 @@ function ProfilePage() {
               Cancel
             </Button>
           </div>
-          <ProfileEditor />
+          <ProfileEditor onSaveComplete={handleSaveComplete} />
         </div>
       </AppLayout>
     );
