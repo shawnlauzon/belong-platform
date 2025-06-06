@@ -15,12 +15,27 @@ export const DEFAULT_LOCATION = {
   lng: parseFloat(import.meta.env.VITE_DEFAULT_LOCATION_LNG || '-97.7431')
 };
 
+// Helper function to validate coordinates
+const isValidCoordinate = (value: number): boolean => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
+
 // Calculate driving time between two points (using Mapbox Directions API)
 export const calculateDrivingTime = async (
   origin: { lat: number; lng: number }, 
   destination: { lat: number; lng: number }
 ): Promise<number> => {
   try {
+    // Validate all coordinates before making API call
+    if (!isValidCoordinate(origin.lat) || !isValidCoordinate(origin.lng) || 
+        !isValidCoordinate(destination.lat) || !isValidCoordinate(destination.lng)) {
+      console.warn('Invalid coordinates detected, falling back to approximation:', {
+        origin: { lat: origin.lat, lng: origin.lng },
+        destination: { lat: destination.lat, lng: destination.lng }
+      });
+      return calculateApproximateDrivingTime(origin, destination);
+    }
+
     if (!MAPBOX_TOKEN) {
       // Fallback to approximation if no token
       return calculateApproximateDrivingTime(origin, destination);
@@ -31,7 +46,8 @@ export const calculateDrivingTime = async (
     );
     
     if (!response.ok) {
-      throw new Error(`Mapbox API error: ${response.status}`);
+      console.warn(`Mapbox API error: ${response.status}, falling back to approximation`);
+      return calculateApproximateDrivingTime(origin, destination);
     }
     
     const data = await response.json();
@@ -55,6 +71,13 @@ const calculateApproximateDrivingTime = (
   origin: { lat: number; lng: number }, 
   destination: { lat: number; lng: number }
 ): number => {
+  // Validate coordinates for approximation as well
+  if (!isValidCoordinate(origin.lat) || !isValidCoordinate(origin.lng) || 
+      !isValidCoordinate(destination.lat) || !isValidCoordinate(destination.lng)) {
+    console.warn('Invalid coordinates for approximation, returning default time');
+    return 15; // Return a reasonable default time in minutes
+  }
+
   // Simple approximation using Haversine formula with a 1.3x factor for road vs. direct distance
   const R = 6371; // Earth's radius in km
   const dLat = (destination.lat - origin.lat) * Math.PI / 180;
