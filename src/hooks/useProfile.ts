@@ -25,15 +25,40 @@ export function useProfile(userId: string | undefined) {
     mutationFn: async (metadata: any) => {
       if (!userId) throw new Error('User ID is required');
 
+      // First, fetch the current profile to get existing user_metadata
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('user_metadata')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Merge the new metadata with existing user_metadata
+      const existingMetadata = currentProfile?.user_metadata || {};
+      const mergedMetadata = {
+        ...existingMetadata,
+        ...metadata
+      };
+
+      console.log('🔄 Updating profile metadata:', {
+        userId,
+        existingMetadata,
+        newMetadata: metadata,
+        mergedMetadata
+      });
+
       const { error } = await supabase
         .from('profiles')
-        .update({ user_metadata: metadata })
+        .update({ user_metadata: mergedMetadata })
         .eq('id', userId);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+      queryClient.invalidateQueries({ queryKey: ['members', userId] });
+      queryClient.invalidateQueries({ queryKey: ['members'] });
     },
   });
 
