@@ -12,12 +12,15 @@ import { useAuth } from '@/lib/auth';
 import { useMember } from '@/hooks/useMembers';
 import { formatTenure, getInitials } from '@/lib/utils';
 import { MapPin, Calendar, MessageCircle, Heart, User, Edit } from 'lucide-react';
+import { logger, logComponentRender } from '@/lib/logger';
 
 export const Route = createFileRoute('/profile/$id')({
   component: ProfilePage,
 });
 
 function ProfilePage() {
+  logComponentRender('ProfilePage');
+  
   const { id } = Route.useParams();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
@@ -26,7 +29,63 @@ function ProfilePage() {
   const { data: member, isLoading } = useMember(id === 'me' ? user?.id || '' : id);
   const isSelf = id === 'me' || user?.id === id;
 
+  // Log member data when it's loaded
+  React.useEffect(() => {
+    if (member) {
+      logger.debug('👤 ProfilePage: Member data loaded:', {
+        memberId: member.id,
+        displayName: member.name,
+        firstName: member.first_name,
+        lastName: member.last_name,
+        email: member.email || 'Not available',
+        trustScore: member.trust_score,
+        resourcesShared: member.resources_shared,
+        thanksReceived: member.thanks_received,
+        hasAvatar: !!member.avatar_url,
+        avatarUrl: member.avatar_url,
+        hasLocation: !!member.location,
+        location: member.location,
+        createdAt: member.created_at,
+        communityTenureMonths: member.community_tenure_months,
+        isSelfProfile: isSelf,
+        isEditing: isEditing,
+        activeTab: activeTab
+      });
+
+      // Log detailed name information
+      logger.debug('👤 ProfilePage: Name breakdown:', {
+        fullName: member.name,
+        firstName: member.first_name || 'Not set',
+        lastName: member.last_name || 'Not set',
+        displayName: getDisplayName(),
+        avatarInitials: getAvatarInitials()
+      });
+
+      // Log trust and activity metrics
+      logger.debug('👤 ProfilePage: Activity metrics:', {
+        trustScore: member.trust_score,
+        resourcesShared: member.resources_shared,
+        thanksReceived: member.thanks_received,
+        communityTenure: `${member.community_tenure_months} months`,
+        formattedTenure: formatTenure(member.created_at),
+        accountAge: new Date().getTime() - new Date(member.created_at).getTime()
+      });
+    }
+  }, [member, isSelf, isEditing, activeTab]);
+
+  // Log loading state
+  React.useEffect(() => {
+    logger.debug('👤 ProfilePage: Loading state changed:', {
+      isLoading,
+      hasMember: !!member,
+      userId: user?.id,
+      profileId: id,
+      isSelf
+    });
+  }, [isLoading, member, user?.id, id, isSelf]);
+
   if (isLoading || !member) {
+    logger.debug('👤 ProfilePage: Showing loading state');
     return (
       <AppLayout>
         <div className="flex justify-center items-center h-64">
@@ -41,6 +100,7 @@ function ProfilePage() {
   }
 
   if (isEditing && isSelf) {
+    logger.debug('👤 ProfilePage: Showing edit mode');
     return (
       <AppLayout>
         <div className="max-w-2xl mx-auto">
@@ -72,6 +132,13 @@ function ProfilePage() {
     }
     return member.name; // Fallback to the name field
   };
+
+  logger.debug('👤 ProfilePage: Rendering profile view for:', {
+    displayName: getDisplayName(),
+    isSelf,
+    isEditing,
+    activeTab
+  });
 
   return (
     <AppLayout>
