@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { logger, logComponentRender, logUserAction, logApiCall, logApiResponse } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -17,18 +18,20 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  logComponentRender('AuthProvider');
+  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔐 AuthProvider: Initializing auth state...');
+    logger.info('🔐 AuthProvider: Initializing auth state...');
     
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('❌ AuthProvider: Error getting initial session:', error);
+        logger.error('❌ AuthProvider: Error getting initial session:', error);
       } else {
-        console.log('✅ AuthProvider: Initial session loaded:', !!session);
+        logger.info('✅ AuthProvider: Initial session loaded:', { hasSession: !!session });
         setUser(session?.user ?? null);
       }
       setLoading(false);
@@ -36,18 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 AuthProvider: Auth state changed:', event, !!session);
+      logger.info('🔐 AuthProvider: Auth state changed:', { event, hasSession: !!session });
       setUser(session?.user ?? null);
     });
 
     return () => {
-      console.log('🔐 AuthProvider: Cleaning up auth listener');
+      logger.debug('🔐 AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 AuthProvider: signIn called for:', email);
+    logUserAction('signIn', { email });
+    logApiCall('POST', '/auth/signin', { email });
     
     const { data, error } = await supabase.auth.signInWithPassword({ 
       email, 
@@ -55,16 +59,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     
     if (error) {
-      console.error('❌ AuthProvider: signIn error:', error);
+      logApiResponse('POST', '/auth/signin', null, error);
       throw error;
     }
     
-    console.log('✅ AuthProvider: signIn successful:', !!data.user);
+    logApiResponse('POST', '/auth/signin', { hasUser: !!data.user });
+    logger.info('✅ AuthProvider: signIn successful');
   };
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => {
-    console.log('🔐 AuthProvider: signUp called for:', email);
-    console.log('  Metadata:', metadata);
+    logUserAction('signUp', { email, hasMetadata: !!metadata });
+    logApiCall('POST', '/auth/signup', { email, metadata });
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -79,28 +84,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     
     if (error) {
-      console.error('❌ AuthProvider: signUp error:', error);
+      logApiResponse('POST', '/auth/signup', null, error);
       throw error;
     }
     
-    console.log('✅ AuthProvider: signUp successful:', !!data.user);
+    logApiResponse('POST', '/auth/signup', { hasUser: !!data.user, needsConfirmation: !data.session });
     
     if (data.user && !data.session) {
-      console.log('📧 AuthProvider: User created but needs email confirmation');
+      logger.info('📧 AuthProvider: User created but needs email confirmation');
     }
   };
 
   const signOut = async () => {
-    console.log('🔐 AuthProvider: signOut called');
+    logUserAction('signOut');
+    logApiCall('POST', '/auth/signout');
     
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      console.error('❌ AuthProvider: signOut error:', error);
+      logApiResponse('POST', '/auth/signout', null, error);
       throw error;
     }
     
-    console.log('✅ AuthProvider: signOut successful');
+    logApiResponse('POST', '/auth/signout');
+    logger.info('✅ AuthProvider: signOut successful');
   };
 
   return (

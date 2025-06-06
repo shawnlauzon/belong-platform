@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { locationManager, initializeListeners } from '@/features/app';
 import { AuthProvider } from '@/lib/auth';
 import { routeTree } from './routeTree.gen';
+import { logger, logComponentRender } from '@/lib/logger';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -31,13 +32,17 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
+  logComponentRender('App');
+
   useEffect(() => {
     const init = async () => {
       try {
+        logger.info('🚀 Initializing application...');
         await locationManager.getCurrentLocation();
         initializeListeners();
+        logger.info('✅ Application initialized successfully');
       } catch (error) {
-        console.error('Error initializing app:', error);
+        logger.error('❌ Error initializing app:', error);
       }
     };
     

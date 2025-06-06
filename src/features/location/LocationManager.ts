@@ -1,9 +1,12 @@
 import { eventBus } from '@/core/eventBus';
 import { DEFAULT_LOCATION } from '@/lib/mapbox';
 import { Coordinates } from '@/types';
+import { logger, logUserAction } from '@/lib/logger';
 
 export class LocationManager {
   static async getCurrentLocation(): Promise<Coordinates> {
+    logger.debug('📍 LocationManager: Getting current location...');
+    
     try {
       // Try to get the user's location from the browser
       if (navigator.geolocation) {
@@ -15,13 +18,20 @@ export class LocationManager {
                 lng: position.coords.longitude
               };
               
+              logger.info('📍 LocationManager: Got user location from GPS:', location);
+              logUserAction('location_granted', location);
+              
               // Emit location change event
               eventBus.emit('location.updated', location);
               
               resolve(location);
             },
-            () => {
+            (error) => {
+              logger.warn('📍 LocationManager: Geolocation permission denied or failed:', error);
+              logUserAction('location_denied', { error: error.message });
+              
               // Fallback to default location if permission denied
+              logger.info('📍 LocationManager: Using default location:', DEFAULT_LOCATION);
               resolve(DEFAULT_LOCATION);
             }
           );
@@ -29,15 +39,18 @@ export class LocationManager {
       }
       
       // Fallback to default location if geolocation not available
+      logger.warn('📍 LocationManager: Geolocation not available, using default location');
       return DEFAULT_LOCATION;
     } catch (error) {
-      console.error('Error getting current location:', error);
+      logger.error('❌ LocationManager: Error getting current location:', error);
       return DEFAULT_LOCATION;
     }
   }
   
   // Get random location within 8 minutes of driving
   static getRandomNearbyLocation(center: Coordinates): Coordinates {
+    logger.trace('📍 LocationManager: Generating random nearby location:', { center });
+    
     // Generate a random angle (in radians)
     const angle = Math.random() * 2 * Math.PI;
     
@@ -50,13 +63,19 @@ export class LocationManager {
     const latOffset = (distance / 111) * Math.sin(angle);
     const lngOffset = (distance / (111 * Math.cos(center.lat * Math.PI / 180))) * Math.cos(angle);
     
-    return {
+    const randomLocation = {
       lat: center.lat + latOffset,
       lng: center.lng + lngOffset
     };
+    
+    logger.trace('📍 LocationManager: Generated random location:', { randomLocation, distance });
+    
+    return randomLocation;
   }
   
   static calculateDistance(point1: Coordinates, point2: Coordinates): number {
+    logger.trace('📍 LocationManager: Calculating distance between points:', { point1, point2 });
+    
     // Simple haversine formula implementation
     const R = 6371; // Earth's radius in km
     const dLat = (point2.lat - point1.lat) * Math.PI / 180;
@@ -66,6 +85,10 @@ export class LocationManager {
       Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) * 
       Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+    const distance = R * c;
+    
+    logger.trace('📍 LocationManager: Distance calculated:', { distance });
+    
+    return distance;
   }
 }

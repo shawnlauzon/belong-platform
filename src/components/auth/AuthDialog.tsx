@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 const authSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,6 +27,8 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+  logComponentRender('AuthDialog', { open });
+  
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const { signIn, signUp } = useAuth();
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<AuthFormData>({
@@ -33,37 +36,43 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   });
 
   const onSubmit = async (data: AuthFormData) => {
+    logger.debug('🔐 Auth form submitted:', {
+      mode,
+      email: data.email,
+      hasFirstName: !!data.firstName,
+      hasLastName: !!data.lastName
+    });
+    
     try {
-      console.log(`🔐 Starting ${mode} process for:`, data.email);
-      console.log('  Mode:', mode);
-      console.log('  Has metadata:', !!(data.firstName || data.lastName));
+      logUserAction(`auth_${mode}_attempt`, { email: data.email });
       
       if (mode === 'signin') {
-        console.log('📝 Attempting sign in...');
+        logger.debug('📝 Attempting sign in...');
         await signIn(data.email, data.password);
-        console.log('✅ Sign in successful');
+        logger.info('✅ Sign in successful');
       } else {
-        console.log('📝 Attempting sign up...');
+        logger.debug('📝 Attempting sign up...');
         await signUp(data.email, data.password, {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
         });
-        console.log('✅ Sign up successful');
+        logger.info('✅ Sign up successful');
       }
+      
+      logUserAction(`auth_${mode}_success`, { email: data.email });
       onOpenChange(false);
     } catch (error) {
-      console.error(`❌ ${mode} failed:`, error);
+      logger.error(`❌ ${mode} failed:`, error);
       
       // Log detailed error information
       if (error && typeof error === 'object') {
-        console.error('  Error details:', {
+        logger.error('  Error details:', {
           message: (error as any).message,
           status: (error as any).status,
           statusText: (error as any).statusText,
           code: (error as any).code,
           details: (error as any).details,
-          hint: (error as any).hint,
-          stack: (error as any).stack
+          hint: (error as any).hint
         });
       }
       
@@ -80,12 +89,18 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           errorMessage = 'An account with this email already exists. Try signing in instead.';
         } else if (message.includes('No API key found')) {
           errorMessage = 'Configuration error. Please contact support.';
-          console.error('🚨 API Key Error - This suggests an Edge Function is being called without proper headers');
+          logger.error('🚨 API Key Error - This suggests an Edge Function is being called without proper headers');
         }
       }
       
+      logUserAction(`auth_${mode}_error`, { email: data.email, errorMessage });
       setError('root', { message: errorMessage });
     }
+  };
+
+  const handleModeChange = (newMode: 'signin' | 'signup') => {
+    logUserAction('auth_mode_change', { from: mode, to: newMode });
+    setMode(newMode);
   };
 
   return (
@@ -167,7 +182,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+              onClick={() => handleModeChange(mode === 'signin' ? 'signup' : 'signin')}
             >
               {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </Button>

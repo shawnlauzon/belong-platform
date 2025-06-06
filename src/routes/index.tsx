@@ -14,12 +14,15 @@ import { Link } from '@tanstack/react-router';
 import { ShareResourceDialog } from '@/components/resources/ShareResourceDialog';
 import { AuthDialog } from '@/components/auth/AuthDialog';
 import { useAuth } from '@/lib/auth';
+import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 });
 
 function HomePage() {
+  logComponentRender('HomePage');
+  
   const userLocation = useAppStore(state => state.userLocation);
   const viewMode = useAppStore(state => state.viewMode);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -37,18 +40,27 @@ function HomePage() {
   }, [resources]);
   
   const handleResourceRequest = (resourceId: string) => {
+    logUserAction('resource_request_clicked', { resourceId, hasUser: !!user });
+    
     if (!user) {
+      logger.debug('👤 User not authenticated, showing auth dialog');
       setShowAuthDialog(true);
       return;
     }
-    console.log('Resource requested:', resourceId);
+    
+    logger.info('📦 Resource requested:', { resourceId });
   };
   
   const handleShareClick = () => {
+    logUserAction('share_resource_clicked', { hasUser: !!user });
+    
     if (!user) {
+      logger.debug('👤 User not authenticated, showing auth dialog');
       setShowAuthDialog(true);
       return;
     }
+    
+    logger.debug('📦 Opening share resource dialog');
     setShowShareDialog(true);
   };
   

@@ -1,15 +1,23 @@
 import { supabase } from '@/lib/supabase';
 import { mockMembers, mockThanks, mockResources } from '@/api/mockData';
+import { logger, logApiCall, logApiResponse } from '@/lib/logger';
 
 export class TrustCalculator {
   static async calculateScore(memberId: string): Promise<number> {
+    logger.debug('🛡️ TrustCalculator: Calculating score for member:', { memberId });
+    
     try {
+      logApiCall('GET', `/trust/calculate/${memberId}`, { memberId });
+      
       // In a real implementation, we would use Supabase for this
       // For the MVP, we'll use mock data
       
       // Get the member
       const member = mockMembers.find(m => m.id === memberId);
-      if (!member) return 5.0; // Default score
+      if (!member) {
+        logger.warn('🛡️ TrustCalculator: Member not found, returning default score');
+        return 5.0; // Default score
+      }
       
       // Get thanks received count
       const thanksReceived = mockThanks.filter(t => t.to_member_id === memberId).length;
@@ -30,15 +38,33 @@ export class TrustCalculator {
       
       // Base score of 5.0 + bonuses, capped at 10.0
       const totalScore = Math.min(5.0 + tenureBonus + thanksBonus + sharingBonus, 10.0);
+      const roundedScore = Math.round(totalScore * 10) / 10; // Round to 1 decimal place
       
-      return Math.round(totalScore * 10) / 10; // Round to 1 decimal place
+      const scoreBreakdown = {
+        baseScore: 5.0,
+        tenureBonus,
+        thanksBonus,
+        sharingBonus,
+        totalScore: roundedScore,
+        thanksReceived,
+        resourcesShared,
+        tenureMonths: member.community_tenure_months
+      };
+      
+      logApiResponse('GET', `/trust/calculate/${memberId}`, scoreBreakdown);
+      logger.info('🛡️ TrustCalculator: Score calculated:', scoreBreakdown);
+      
+      return roundedScore;
     } catch (error) {
-      console.error('Error calculating trust score:', error);
+      logger.error('❌ TrustCalculator: Error calculating trust score:', error);
+      logApiResponse('GET', `/trust/calculate/${memberId}`, null, error);
       return 5.0; // Default score
     }
   }
   
   static getTrustTier(score: number): 'New' | 'Building' | 'Established' | 'Exemplary' {
+    logger.trace('🛡️ TrustCalculator: Getting trust tier for score:', { score });
+    
     if (score < 4) return 'New';
     if (score < 6) return 'Building';
     if (score < 8) return 'Established';
@@ -46,10 +72,17 @@ export class TrustCalculator {
   }
   
   static async getBreakdown(memberId: string) {
+    logger.debug('🛡️ TrustCalculator: Getting breakdown for member:', { memberId });
+    
     try {
+      logApiCall('GET', `/trust/breakdown/${memberId}`, { memberId });
+      
       // Get the member
       const member = mockMembers.find(m => m.id === memberId);
-      if (!member) return null;
+      if (!member) {
+        logger.warn('🛡️ TrustCalculator: Member not found for breakdown');
+        return null;
+      }
       
       // Get thanks received count
       const thanksReceived = mockThanks.filter(t => t.to_member_id === memberId).length;
@@ -59,7 +92,7 @@ export class TrustCalculator {
         r => r.creator_id === memberId && r.type === 'offer'
       ).length;
       
-      return {
+      const breakdown = {
         thanksReceived,
         resourcesShared,
         tenureMonths: member.community_tenure_months,
@@ -70,8 +103,14 @@ export class TrustCalculator {
         sharingContribution: Math.min(resourcesShared * 0.1, 1.5),
         baseContribution: 5.0,
       };
+      
+      logApiResponse('GET', `/trust/breakdown/${memberId}`, breakdown);
+      logger.debug('🛡️ TrustCalculator: Breakdown calculated:', breakdown);
+      
+      return breakdown;
     } catch (error) {
-      console.error('Error getting trust breakdown:', error);
+      logger.error('❌ TrustCalculator: Error getting trust breakdown:', error);
+      logApiResponse('GET', `/trust/breakdown/${memberId}`, null, error);
       return null;
     }
   }

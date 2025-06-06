@@ -1,10 +1,11 @@
 import mapboxgl from 'mapbox-gl';
+import { logger, logApiCall, logApiResponse } from '@/lib/logger';
 
 // Set your Mapbox token (ideally from environment variable)
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 if (!MAPBOX_TOKEN) {
-  console.warn('Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file');
+  logger.warn('Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file');
 }
 
 mapboxgl.accessToken = MAPBOX_TOKEN || '';
@@ -14,6 +15,11 @@ export const DEFAULT_LOCATION = {
   lat: parseFloat(import.meta.env.VITE_DEFAULT_LOCATION_LAT || '30.2672'),
   lng: parseFloat(import.meta.env.VITE_DEFAULT_LOCATION_LNG || '-97.7431')
 };
+
+logger.debug('🗺️ Mapbox configuration:', {
+  hasToken: !!MAPBOX_TOKEN,
+  defaultLocation: DEFAULT_LOCATION
+});
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
@@ -25,11 +31,13 @@ export const calculateDrivingTime = async (
   origin: { lat: number; lng: number }, 
   destination: { lat: number; lng: number }
 ): Promise<number> => {
+  logger.trace('🗺️ Calculating driving time:', { origin, destination });
+  
   try {
     // Validate all coordinates before making API call
     if (!isValidCoordinate(origin.lat) || !isValidCoordinate(origin.lng) || 
         !isValidCoordinate(destination.lat) || !isValidCoordinate(destination.lng)) {
-      console.warn('Invalid coordinates detected, falling back to approximation:', {
+      logger.warn('Invalid coordinates detected, falling back to approximation:', {
         origin: { lat: origin.lat, lng: origin.lng },
         destination: { lat: destination.lat, lng: destination.lng }
       });
@@ -37,16 +45,19 @@ export const calculateDrivingTime = async (
     }
 
     if (!MAPBOX_TOKEN) {
-      // Fallback to approximation if no token
+      logger.debug('No Mapbox token available, using approximation');
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    const response = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`
-    );
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`;
+    
+    logApiCall('GET', 'mapbox/directions', { origin, destination });
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      console.warn(`Mapbox API error: ${response.status}, falling back to approximation`);
+      logger.warn(`Mapbox API error: ${response.status}, falling back to approximation`);
+      logApiResponse('GET', 'mapbox/directions', null, { status: response.status });
       return calculateApproximateDrivingTime(origin, destination);
     }
     
@@ -54,13 +65,18 @@ export const calculateDrivingTime = async (
     
     // Return driving time in minutes
     if (data.routes && data.routes.length > 0) {
-      return Math.round(data.routes[0].duration / 60);
+      const drivingTimeMinutes = Math.round(data.routes[0].duration / 60);
+      logApiResponse('GET', 'mapbox/directions', { drivingTimeMinutes });
+      logger.trace('🗺️ Mapbox driving time calculated:', { drivingTimeMinutes });
+      return drivingTimeMinutes;
     }
     
     // Fallback calculation if API fails (direct distance calculation)
+    logger.debug('No routes returned from Mapbox, using approximation');
     return calculateApproximateDrivingTime(origin, destination);
   } catch (error) {
-    console.error('Error calculating driving time:', error);
+    logger.error('Error calculating driving time:', error);
+    logApiResponse('GET', 'mapbox/directions', null, error);
     // Fallback to approximation
     return calculateApproximateDrivingTime(origin, destination);
   }
@@ -71,10 +87,12 @@ const calculateApproximateDrivingTime = (
   origin: { lat: number; lng: number }, 
   destination: { lat: number; lng: number }
 ): number => {
+  logger.trace('🗺️ Using approximate driving time calculation');
+  
   // Validate coordinates for approximation as well
   if (!isValidCoordinate(origin.lat) || !isValidCoordinate(origin.lng) || 
       !isValidCoordinate(destination.lat) || !isValidCoordinate(destination.lng)) {
-    console.warn('Invalid coordinates for approximation, returning default time');
+    logger.warn('Invalid coordinates for approximation, returning default time');
     return 15; // Return a reasonable default time in minutes
   }
 
@@ -94,5 +112,8 @@ const calculateApproximateDrivingTime = (
   // Multiply by 1.3 to account for road distance vs. direct distance
   const drivingTime = (distance * 1.3) / 50 * 60;
   
-  return Math.round(drivingTime);
+  const approximateTime = Math.round(drivingTime);
+  logger.trace('🗺️ Approximate driving time calculated:', { distance, approximateTime });
+  
+  return approximateTime;
 };

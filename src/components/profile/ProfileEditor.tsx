@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
 import { Coordinates } from '@/types';
+import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -19,6 +20,8 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function ProfileEditor() {
+  logComponentRender('ProfileEditor');
+  
   const { user } = useAuth();
   const { data: profile, updateProfile } = useProfile(user?.id);
   const [location, setLocation] = React.useState<Coordinates | null>(
@@ -34,8 +37,23 @@ export function ProfileEditor() {
     }
   });
 
+  React.useEffect(() => {
+    logger.debug('👤 ProfileEditor: Profile data loaded:', {
+      hasProfile: !!profile,
+      hasMetadata: !!profile?.user_metadata,
+      firstName: profile?.user_metadata?.first_name,
+      lastName: profile?.user_metadata?.last_name
+    });
+  }, [profile]);
+
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
+
+    logger.debug('👤 ProfileEditor: Form submitted:', data);
+    logUserAction('profile_update_attempt', {
+      userId: user.id,
+      hasLocation: !!location
+    });
 
     await updateProfile({
       first_name: data.firstName,
@@ -44,15 +62,21 @@ export function ProfileEditor() {
       avatar_url: data.avatar_url,
       location,
     });
+    
+    logUserAction('profile_update_success', { userId: user.id });
   };
 
   const handleImageUploaded = (urls: string[]) => {
+    logger.debug('👤 ProfileEditor: Images uploaded:', { count: urls.length });
+    
     if (urls.length > 0) {
       // In a real app, we would upload to storage and get a permanent URL
       // For now, we'll just use the first URL
       register('avatar_url').onChange({
         target: { value: urls[0] }
       });
+      
+      logUserAction('profile_image_uploaded', { url: urls[0] });
     }
   };
 
