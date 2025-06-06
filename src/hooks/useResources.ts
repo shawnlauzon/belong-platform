@@ -14,9 +14,10 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          profiles (
+          profiles!resources_creator_id_fkey (
             id,
-            email
+            email,
+            user_metadata
           )
         `)
         .eq('is_active', true);
@@ -34,7 +35,8 @@ export function useResources(maxDriveMinutes = 8) {
           
           const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
-          const profile = resource.creator?.profiles?.[0];
+          const profile = resource.profiles;
+          const metadata = profile?.user_metadata || {};
           
           return {
             ...resource,
@@ -42,10 +44,10 @@ export function useResources(maxDriveMinutes = 8) {
             distance_minutes: driveMinutes,
             owner: profile ? {
               id: profile.id,
-              name: profile.email?.split('@')[0] || 'Anonymous',
-              avatar_url: null, // Default to null since we don't have this data
+              name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+              avatar_url: metadata.avatar_url || null,
               trust_score: 5.0,
-              location: null,
+              location: metadata.location || null,
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0
@@ -69,9 +71,10 @@ export function useResource(id: string) {
         .from('resources')
         .select(`
           *,
-          profiles (
+          profiles!resources_creator_id_fkey (
             id,
-            email
+            email,
+            user_metadata
           )
         `)
         .eq('id', id)
@@ -80,7 +83,8 @@ export function useResource(id: string) {
       if (error) throw error;
       if (!data) throw new Error('Resource not found');
 
-      const profile = data.creator?.profiles?.[0];
+      const profile = data.profiles;
+      const metadata = profile?.user_metadata || {};
 
       return {
         ...data,
@@ -90,10 +94,10 @@ export function useResource(id: string) {
         } : null,
         owner: profile ? {
           id: profile.id,
-          name: profile.email?.split('@')[0] || 'Anonymous',
-          avatar_url: null, // Default to null since we don't have this data
+          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+          avatar_url: metadata.avatar_url || null,
           trust_score: 5.0,
-          location: null,
+          location: metadata.location || null,
           community_tenure_months: 0,
           thanks_received: 0,
           resources_shared: 0

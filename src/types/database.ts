@@ -4,7 +4,7 @@ export interface Database {
       resources: {
         Row: {
           id: string;
-          member_id: string;
+          creator_id: string;
           type: 'offer' | 'request';
           category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
           title: string;

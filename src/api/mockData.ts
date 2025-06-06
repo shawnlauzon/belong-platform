@@ -106,7 +106,7 @@ export const mockMembers: Member[] = [
 export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174010',
-    member_id: '123e4567-e89b-12d3-a456-426614174005',
+    creator_id: '123e4567-e89b-12d3-a456-426614174005',
     owner: mockMembers[0],
     type: 'offer',
     category: 'tools',
@@ -124,7 +124,7 @@ export const mockResources: Resource[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174011',
-    member_id: '123e4567-e89b-12d3-a456-426614174007',
+    creator_id: '123e4567-e89b-12d3-a456-426614174007',
     owner: mockMembers[2],
     type: 'offer',
     category: 'skills',
@@ -142,7 +142,7 @@ export const mockResources: Resource[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174012',
-    member_id: '123e4567-e89b-12d3-a456-426614174009',
+    creator_id: '123e4567-e89b-12d3-a456-426614174009',
     owner: mockMembers[4],
     type: 'offer',
     category: 'food',
@@ -160,7 +160,7 @@ export const mockResources: Resource[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174013',
-    member_id: '123e4567-e89b-12d3-a456-426614174006',
+    creator_id: '123e4567-e89b-12d3-a456-426614174006',
     owner: mockMembers[1],
     type: 'request',
     category: 'supplies',
@@ -178,7 +178,7 @@ export const mockResources: Resource[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174014',
-    member_id: '123e4567-e89b-12d3-a456-426614174008',
+    creator_id: '123e4567-e89b-12d3-a456-426614174008',
     owner: mockMembers[3],
     type: 'offer',
     category: 'tools',

@@ -26,7 +26,7 @@ interface ResourceFormData {
 }
 
 export function ResourceForm({ onComplete, initialType = 'offer' }: ResourceFormProps) {
-  const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<ResourceFormData>({
+  const { register, handleSubmit, formState: { isSubmitting, errors }, watch } = useForm<ResourceFormData>({
     defaultValues: {
       type: initialType,
       category: 'tools',
@@ -35,6 +35,7 @@ export function ResourceForm({ onComplete, initialType = 'offer' }: ResourceForm
   });
   const [images, setImages] = useState<string[]>([]);
   const userLocation = useAppStore(state => state.userLocation);
+  const data = watch();
   
   const onSubmit = async (data: ResourceFormData) => {
     try {

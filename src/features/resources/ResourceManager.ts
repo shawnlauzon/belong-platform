@@ -33,7 +33,7 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          profiles!resources_member_id_fkey (
+          profiles!resources_creator_id_fkey (
             id,
             email,
             user_metadata
@@ -98,7 +98,7 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          profiles!resources_member_id_fkey (
+          profiles!resources_creator_id_fkey (
             id,
             email,
             user_metadata

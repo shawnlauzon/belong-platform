@@ -11,7 +11,7 @@ export interface Member {
 
 export interface Resource {
   id: string;
-  member_id: string;
+  creator_id: string;
   owner: Member;
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';

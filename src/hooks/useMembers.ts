@@ -47,7 +47,7 @@ export function useMember(id: string) {
       const { count: resourcesShared } = await supabase
         .from('resources')
         .select('*', { count: 'exact', head: true })
-        .eq('member_id', id)
+        .eq('creator_id', id)
         .eq('type', 'offer');
 
       const metadata = profile.user_metadata || {};

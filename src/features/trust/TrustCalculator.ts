@@ -16,7 +16,7 @@ export class TrustCalculator {
       
       // Get resources shared count
       const resourcesShared = mockResources.filter(
-        r => r.member_id === memberId && r.type === 'offer'
+        r => r.creator_id === memberId && r.type === 'offer'
       ).length;
       
       // Calculate tenure bonus (0.5 points per year, max 1.5)
@@ -56,7 +56,7 @@ export class TrustCalculator {
       
       // Get resources shared count
       const resourcesShared = mockResources.filter(
-        r => r.member_id === memberId && r.type === 'offer'
+        r => r.creator_id === memberId && r.type === 'offer'
       ).length;
       
       return {

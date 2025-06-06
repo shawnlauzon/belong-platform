@@ -43,7 +43,7 @@ async function seedResources() {
       .from('resources')
       .insert(mockResources.map(({ owner, ...resource }) => ({
         ...resource,
-        member_id: seedMemberId,
+        creator_id: seedMemberId,
         location: `POINT(${resource.location.lng} ${resource.location.lat})`,
         created_at: new Date(resource.created_at).toISOString()
       })));

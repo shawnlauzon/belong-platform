@@ -62,7 +62,7 @@ export function ShareResourceDialog({ open, onOpenChange }: ShareResourceDialogP
     eventBus.emit('resource.create.requested', {
       ...data,
       type: 'offer',
-      member_id: user.id,
+      creator_id: user.id,
       image_urls: images,
       location: userLocation,
       is_active: true,
