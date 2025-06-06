@@ -34,17 +34,57 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   const onSubmit = async (data: AuthFormData) => {
     try {
+      console.log(`🔐 Starting ${mode} process for:`, data.email);
+      console.log('  Mode:', mode);
+      console.log('  Has metadata:', !!(data.firstName || data.lastName));
+      
       if (mode === 'signin') {
+        console.log('📝 Attempting sign in...');
         await signIn(data.email, data.password);
+        console.log('✅ Sign in successful');
       } else {
+        console.log('📝 Attempting sign up...');
         await signUp(data.email, data.password, {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
         });
+        console.log('✅ Sign up successful');
       }
       onOpenChange(false);
     } catch (error) {
-      setError('root', { message: 'Authentication failed. Please try again.' });
+      console.error(`❌ ${mode} failed:`, error);
+      
+      // Log detailed error information
+      if (error && typeof error === 'object') {
+        console.error('  Error details:', {
+          message: (error as any).message,
+          status: (error as any).status,
+          statusText: (error as any).statusText,
+          code: (error as any).code,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          stack: (error as any).stack
+        });
+      }
+      
+      // Set user-friendly error message
+      let errorMessage = 'Authentication failed. Please try again.';
+      
+      if (error && typeof error === 'object' && (error as any).message) {
+        const message = (error as any).message;
+        if (message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link.';
+        } else if (message.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists. Try signing in instead.';
+        } else if (message.includes('No API key found')) {
+          errorMessage = 'Configuration error. Please contact support.';
+          console.error('🚨 API Key Error - This suggests an Edge Function is being called without proper headers');
+        }
+      }
+      
+      setError('root', { message: errorMessage });
     }
   };
 
@@ -115,7 +155,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </div>
 
           {errors.root && (
-            <p className="text-xs text-red-500">{errors.root.message}</p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{errors.root.message}</p>
+            </div>
           )}
 
           <div className="flex flex-col gap-2">

@@ -21,27 +21,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔐 AuthProvider: Initializing auth state...');
+    
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ AuthProvider: Error getting initial session:', error);
+      } else {
+        console.log('✅ AuthProvider: Initial session loaded:', !!session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 AuthProvider: Auth state changed:', event, !!session);
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🔐 AuthProvider: Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    console.log('🔐 AuthProvider: signIn called for:', email);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    });
+    
+    if (error) {
+      console.error('❌ AuthProvider: signIn error:', error);
+      throw error;
+    }
+    
+    console.log('✅ AuthProvider: signIn successful:', !!data.user);
   };
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string }) => {
-    const { error } = await supabase.auth.signUp({
+    console.log('🔐 AuthProvider: signUp called for:', email);
+    console.log('  Metadata:', metadata);
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -52,12 +77,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     });
-    if (error) throw error;
+    
+    if (error) {
+      console.error('❌ AuthProvider: signUp error:', error);
+      throw error;
+    }
+    
+    console.log('✅ AuthProvider: signUp successful:', !!data.user);
+    
+    if (data.user && !data.session) {
+      console.log('📧 AuthProvider: User created but needs email confirmation');
+    }
   };
 
   const signOut = async () => {
+    console.log('🔐 AuthProvider: signOut called');
+    
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    
+    if (error) {
+      console.error('❌ AuthProvider: signOut error:', error);
+      throw error;
+    }
+    
+    console.log('✅ AuthProvider: signOut successful');
   };
 
   return (
