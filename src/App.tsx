@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { locationManager, initializeListeners } from '@/features/app';
 import { AuthProvider } from '@/lib/auth';
-import { Toaster } from '@/components/ui/toaster';
 import { routeTree } from './routeTree.gen';
 import './index.css';
 
@@ -49,7 +48,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RouterProvider router={router} />
-        <Toaster />
       </AuthProvider>
       <ReactQueryDevtools />
     </QueryClientProvider>

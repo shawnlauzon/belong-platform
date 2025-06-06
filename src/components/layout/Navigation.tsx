@@ -29,6 +29,7 @@ export function Navigation() {
   const getUserDisplayName = () => {
     if (!user) return '';
     const metadata = user.user_metadata;
+    if (metadata?.full_name) return metadata.full_name;
     if (metadata?.first_name) return metadata.first_name;
     return user.email?.split('@')[0] || '';
   };
@@ -98,7 +99,6 @@ export function Navigation() {
                       <TrustBadge score={5.0} size="xs" />
                     </div>
                     <Avatar className="h-8 w-8 border border-primary-100">
-                      <AvatarImage src={user.user_metadata?.avatar_url} />
                       <AvatarFallback>{getAvatarText()}</AvatarFallback>
                     </Avatar>
                   </Link>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,14 +9,11 @@ import { useAuth } from '@/lib/auth';
 import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
 import { Coordinates } from '@/types';
-import { useNavigate } from '@tanstack/react-router';
-import { useToast } from '@/components/ui/use-toast';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   avatar_url: z.string().optional(),
-  zipCode: z.string().regex(/^\d{5}$/, 'Please enter a valid 5-digit zip code'),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -27,8 +24,6 @@ export function ProfileEditor() {
   const [location, setLocation] = React.useState<Coordinates | null>(
     profile?.user_metadata?.location || null
   );
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -36,35 +31,25 @@ export function ProfileEditor() {
       firstName: profile?.user_metadata?.first_name || '',
       lastName: profile?.user_metadata?.last_name || '',
       avatar_url: profile?.user_metadata?.avatar_url || '',
-      zipCode: profile?.user_metadata?.zip_code || '',
     }
   });
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
-    try {
-      await updateProfile({
-        first_name: data.firstName,
-        last_name: data.lastName,
-        full_name: `${data.firstName} ${data.lastName}`,
-        avatar_url: data.avatar_url,
-        location,
-        zip_code: data.zipCode,
-      });
-      
-      navigate({ to: '/' });
-    } catch (error) {
-      toast({
-        title: "Error saving profile",
-        description: "There was a problem saving your profile. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await updateProfile({
+      first_name: data.firstName,
+      last_name: data.lastName,
+      full_name: `${data.firstName} ${data.lastName}`,
+      avatar_url: data.avatar_url,
+      location,
+    });
   };
 
   const handleImageUploaded = (urls: string[]) => {
     if (urls.length > 0) {
+      // In a real app, we would upload to storage and get a permanent URL
+      // For now, we'll just use the first URL
       register('avatar_url').onChange({
         target: { value: urls[0] }
       });
@@ -113,20 +98,7 @@ export function ProfileEditor() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Zip Code</label>
-            <input
-              type="text"
-              {...register('zipCode')}
-              className="w-full border rounded-md p-2"
-              placeholder="Enter your zip code"
-            />
-            {errors.zipCode && (
-              <p className="text-xs text-red-500">{errors.zipCode.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Location (Optional)</label>
+            <label className="text-sm font-medium">Location</label>
             <LocationPicker 
               value={location}
               onChange={setLocation}
@@ -136,14 +108,7 @@ export function ProfileEditor() {
             </p>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => navigate({ to: '/' })}
-            >
-              Cancel
-            </Button>
+          <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
