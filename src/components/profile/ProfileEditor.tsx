@@ -4,11 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { useAuth } from '@/lib/auth';
 import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
 import { Coordinates } from '@/types';
+import { getInitials } from '@/lib/utils';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 const profileSchema = z.object({
@@ -33,8 +35,16 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     profile?.user_metadata?.location || null
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [hasChanges, setHasChanges] = React.useState(false);
+  const [initialValues, setInitialValues] = React.useState<ProfileFormData>({
+    firstName: '',
+    lastName: '',
+    avatar_url: '',
+    zipCode: '',
+  });
+  const [initialLocation, setInitialLocation] = React.useState<Coordinates | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProfileFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       firstName: '',
@@ -44,62 +54,92 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     }
   });
 
-  const zipCode = watch('zipCode');
+  const watchedValues = watch();
 
   // Set default values when profile loads
   React.useEffect(() => {
     if (profile?.user_metadata) {
       const metadata = profile.user_metadata;
       
+      const defaultValues = {
+        firstName: metadata.first_name || '',
+        lastName: metadata.last_name || '',
+        avatar_url: metadata.avatar_url || '',
+        zipCode: metadata.zip_code || '',
+      };
+
+      const defaultLocation = metadata.location || null;
+      
       logger.debug('👤 ProfileEditor: Setting default values from profile:', {
-        firstName: metadata.first_name,
-        lastName: metadata.last_name,
-        avatarUrl: metadata.avatar_url,
-        location: metadata.location
+        ...defaultValues,
+        location: defaultLocation
       });
 
-      setValue('firstName', metadata.first_name || '');
-      setValue('lastName', metadata.last_name || '');
-      setValue('avatar_url', metadata.avatar_url || '');
-      setLocation(metadata.location || null);
+      // Set form values
+      setValue('firstName', defaultValues.firstName);
+      setValue('lastName', defaultValues.lastName);
+      setValue('avatar_url', defaultValues.avatar_url);
+      setValue('zipCode', defaultValues.zipCode);
+      
+      // Set location
+      setLocation(defaultLocation);
+      
+      // Store initial values for change detection
+      setInitialValues(defaultValues);
+      setInitialLocation(defaultLocation);
     }
   }, [profile, setValue]);
 
-  // Handle zip code changes to update map location
+  // Check for changes whenever form values or location change
   React.useEffect(() => {
-    const updateLocationFromZipCode = async () => {
+    const currentValues = getValues();
+    
+    const formHasChanges = 
+      currentValues.firstName !== initialValues.firstName ||
+      currentValues.lastName !== initialValues.lastName ||
+      currentValues.avatar_url !== initialValues.avatar_url ||
+      currentValues.zipCode !== initialValues.zipCode;
+    
+    const locationHasChanges = JSON.stringify(location) !== JSON.stringify(initialLocation);
+    
+    const totalHasChanges = formHasChanges || locationHasChanges;
+    
+    if (totalHasChanges !== hasChanges) {
+      setHasChanges(totalHasChanges);
+      logger.debug('👤 ProfileEditor: Changes detected:', {
+        formHasChanges,
+        locationHasChanges,
+        totalHasChanges,
+        currentValues,
+        initialValues,
+        currentLocation: location,
+        initialLocation
+      });
+    }
+  }, [watchedValues, location, initialValues, initialLocation, hasChanges, getValues]);
+
+  const handleZipCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const zipCode = (e.target as HTMLInputElement).value;
+      
       if (zipCode && zipCode.length === 5) {
-        try {
-          logger.debug('📍 ProfileEditor: Looking up zip code:', { zipCode });
-          
-          // Use a geocoding service to convert zip code to coordinates
-          // For now, we'll use a simple approximation for common zip codes
-          const zipCodeCoordinates = getCoordinatesFromZipCode(zipCode);
-          
-          if (zipCodeCoordinates) {
-            logger.info('📍 ProfileEditor: Updated location from zip code:', {
-              zipCode,
-              coordinates: zipCodeCoordinates
-            });
-            setLocation(zipCodeCoordinates);
-          }
-        } catch (error) {
-          logger.error('❌ ProfileEditor: Error looking up zip code:', error);
+        logger.debug('📍 ProfileEditor: Processing zip code on Enter:', { zipCode });
+        
+        const coordinates = getCoordinatesFromZipCode(zipCode);
+        if (coordinates) {
+          logger.info('📍 ProfileEditor: Updated location from zip code:', {
+            zipCode,
+            coordinates
+          });
+          setLocation(coordinates);
+          logUserAction('zip_code_location_set', { zipCode, coordinates });
+        } else {
+          logger.warn('📍 ProfileEditor: Unknown zip code:', { zipCode });
         }
       }
-    };
-
-    updateLocationFromZipCode();
-  }, [zipCode]);
-
-  React.useEffect(() => {
-    logger.debug('👤 ProfileEditor: Profile data loaded:', {
-      hasProfile: !!profile,
-      hasMetadata: !!profile?.user_metadata,
-      firstName: profile?.user_metadata?.first_name,
-      lastName: profile?.user_metadata?.last_name
-    });
-  }, [profile]);
+    }
+  };
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
@@ -151,6 +191,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     logUserAction('location_request_from_profile_editor');
     
     if ('geolocation' in navigator) {
+      logger.debug('📍 ProfileEditor: Requesting geolocation permission...');
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newLocation = {
@@ -164,13 +206,58 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
           setLocation(newLocation);
         },
         (error) => {
-          logger.error('❌ ProfileEditor: Error getting location:', error);
-          logUserAction('location_denied_from_profile_editor', { error: error.message });
+          logger.error('❌ ProfileEditor: Geolocation error:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3
+          });
+          
+          let userMessage = 'Unable to get your location. ';
+          if (error.code === 1) {
+            userMessage += 'Please enable location permissions in your browser settings and try again.';
+          } else if (error.code === 2) {
+            userMessage += 'Location information is unavailable.';
+          } else if (error.code === 3) {
+            userMessage += 'Location request timed out.';
+          }
+          
+          logUserAction('location_denied_from_profile_editor', { 
+            error: error.message,
+            code: error.code,
+            userMessage 
+          });
+          
+          // You could show a toast notification here with the userMessage
+          alert(userMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
       logger.warn('📍 ProfileEditor: Geolocation not available');
+      alert('Geolocation is not supported by this browser.');
     }
+  };
+
+  const getCurrentAvatarUrl = () => {
+    return watchedValues.avatar_url || initialValues.avatar_url;
+  };
+
+  const getDisplayName = () => {
+    const firstName = watchedValues.firstName || initialValues.firstName;
+    const lastName = watchedValues.lastName || initialValues.lastName;
+    return `${firstName} ${lastName}`.trim() || 'User';
+  };
+
+  const getAvatarInitials = () => {
+    const firstName = watchedValues.firstName || initialValues.firstName;
+    const lastName = watchedValues.lastName || initialValues.lastName;
+    return getInitials(firstName, lastName, 'User');
   };
 
   return (
@@ -208,12 +295,25 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             <label className="text-sm font-medium">Profile Picture</label>
-            <ImageUpload 
-              onImagesUploaded={handleImageUploaded} 
-              maxImages={1} 
-            />
+            
+            {/* Current Avatar Display */}
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 border-2 border-gray-200">
+                <AvatarImage src={getCurrentAvatarUrl()} alt={getDisplayName()} />
+                <AvatarFallback className="text-lg">{getAvatarInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm text-warmgray-600 mb-2">
+                  {getCurrentAvatarUrl() ? 'Current profile picture' : 'No profile picture set'}
+                </p>
+                <ImageUpload 
+                  onImagesUploaded={handleImageUploaded} 
+                  maxImages={1} 
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -227,9 +327,10 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                 className="w-full border rounded-md p-2"
                 placeholder="Enter your zip code (e.g., 78701)"
                 maxLength={5}
+                onKeyPress={handleZipCodeKeyPress}
               />
               <p className="text-xs text-warmgray-500">
-                Enter your zip code to set your approximate location
+                Enter your zip code and press Enter to set your approximate location
               </p>
             </div>
 
@@ -265,7 +366,10 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !hasChanges}
+            >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
