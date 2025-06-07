@@ -1,5 +1,7 @@
 # Belong Network
 
+@belongnetwork/belong-bolt
+
 A hyper-local community platform that helps neighbors share resources, skills, and gratitude.
 
 ## Features
