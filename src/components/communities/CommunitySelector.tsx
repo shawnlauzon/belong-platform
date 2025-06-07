@@ -75,23 +75,45 @@ export function CommunitySelector() {
 
   return (
     <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 hover:bg-gray-50 shadow-sm"
-      >
-        <span className="hidden sm:flex items-center gap-1">
+      <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 hover:bg-gray-50 shadow-sm">
+        {/* Display active community chain - each part separately clickable */}
+        <div className="hidden sm:flex items-center gap-1">
           {activeCommunityChain.map((community, i) => (
             <React.Fragment key={community.id}>
               {i > 0 && <span className="text-warmgray-400 mx-1">›</span>}
-              <span className={i === activeCommunityChain.length - 1 ? 'font-medium' : 'text-warmgray-500'}>
+              <button
+                onClick={() => {
+                  setBrowseCommunityId(community.id);
+                  setIsOpen(true);
+                }}
+                className={`hover:text-primary-600 transition-colors ${
+                  i === activeCommunityChain.length - 1 
+                    ? 'font-medium text-warmgray-800' 
+                    : 'text-warmgray-500 hover:text-warmgray-700'
+                }`}
+              >
                 {community.name}
-              </span>
+              </button>
             </React.Fragment>
           ))}
-        </span>
-        <span className="sm:hidden font-medium">{activeCommunity.name}</span>
-        <ChevronDown className="h-4 w-4 text-warmgray-400" />
-      </button>
+        </div>
+        
+        {/* Mobile view - just show current community name */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="sm:hidden font-medium"
+        >
+          {activeCommunity.name}
+        </button>
+        
+        {/* Dropdown arrow */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center"
+        >
+          <ChevronDown className="h-4 w-4 text-warmgray-400" />
+        </button>
+      </div>
       
       {isOpen && (
         <div className="absolute z-10 w-full max-w-md mt-1 bg-white rounded-lg border border-gray-200 shadow-lg animate-fade-in">
