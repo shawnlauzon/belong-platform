@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
 import { useAuth } from '@/lib/auth';
 import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
@@ -17,7 +18,7 @@ const profileSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   avatar_url: z.string().optional(),
-  zipCode: z.string().optional(),
+  address: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -34,17 +35,18 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   const [location, setLocation] = React.useState<Coordinates | null>(
     profile?.user_metadata?.location || null
   );
+  const [addressBbox, setAddressBbox] = React.useState<[number, number, number, number] | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [hasChanges, setHasChanges] = React.useState(false);
-  const [currentZipCode, setCurrentZipCode] = React.useState<string>('');
-  const [displayedZipCode, setDisplayedZipCode] = React.useState<string>('');
+  const [currentAddress, setCurrentAddress] = React.useState<string>('');
   const [initialValues, setInitialValues] = React.useState<ProfileFormData>({
     firstName: '',
     lastName: '',
     avatar_url: '',
-    zipCode: '',
+    address: '',
   });
   const [initialLocation, setInitialLocation] = React.useState<Coordinates | null>(null);
+  const [initialAddress, setInitialAddress] = React.useState<string>('');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -52,7 +54,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       firstName: '',
       lastName: '',
       avatar_url: '',
-      zipCode: '',
+      address: '',
     }
   });
 
@@ -67,7 +69,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         firstName: metadata.first_name || '',
         lastName: metadata.last_name || '',
         avatar_url: metadata.avatar_url || '',
-        zipCode: metadata.zip_code || '',
+        address: metadata.address || '',
       };
 
       const defaultLocation = metadata.location || null;
@@ -81,16 +83,16 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       setValue('firstName', defaultValues.firstName);
       setValue('lastName', defaultValues.lastName);
       setValue('avatar_url', defaultValues.avatar_url);
-      setValue('zipCode', defaultValues.zipCode);
+      setValue('address', defaultValues.address);
       
-      // Set location and zip code display
+      // Set location and address
       setLocation(defaultLocation);
-      setCurrentZipCode(defaultValues.zipCode);
-      setDisplayedZipCode(defaultValues.zipCode);
+      setCurrentAddress(defaultValues.address);
       
       // Store initial values for change detection
       setInitialValues(defaultValues);
       setInitialLocation(defaultLocation);
+      setInitialAddress(defaultValues.address);
     }
   }, [profile, setValue]);
 
@@ -101,60 +103,41 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     const formHasChanges = 
       currentValues.firstName !== initialValues.firstName ||
       currentValues.lastName !== initialValues.lastName ||
-      currentValues.avatar_url !== initialValues.avatar_url ||
-      displayedZipCode !== initialValues.zipCode;
+      currentValues.avatar_url !== initialValues.avatar_url;
     
+    const addressHasChanges = currentAddress !== initialAddress;
     const locationHasChanges = JSON.stringify(location) !== JSON.stringify(initialLocation);
     
-    const totalHasChanges = formHasChanges || locationHasChanges;
+    const totalHasChanges = formHasChanges || addressHasChanges || locationHasChanges;
     
     if (totalHasChanges !== hasChanges) {
       setHasChanges(totalHasChanges);
       logger.debug('👤 ProfileEditor: Changes detected:', {
         formHasChanges,
+        addressHasChanges,
         locationHasChanges,
         totalHasChanges,
         currentValues,
         initialValues,
+        currentAddress,
+        initialAddress,
         currentLocation: location,
-        initialLocation,
-        displayedZipCode,
-        initialZipCode: initialValues.zipCode
+        initialLocation
       });
     }
-  }, [watchedValues, location, displayedZipCode, initialValues, initialLocation, hasChanges, getValues]);
+  }, [watchedValues, location, currentAddress, initialValues, initialLocation, initialAddress, hasChanges, getValues]);
 
-  const handleZipCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const zipCode = (e.target as HTMLInputElement).value.trim();
+  const handleAddressChange = (address: string, coordinates: Coordinates | null, bbox?: [number, number, number, number]) => {
+    logger.debug('📍 ProfileEditor: Address changed:', { address, coordinates, bbox });
+    
+    setCurrentAddress(address);
+    setValue('address', address);
+    
+    if (coordinates) {
+      setLocation(coordinates);
+      setAddressBbox(bbox || null);
       
-      if (zipCode && zipCode.length === 5) {
-        logger.debug('📍 ProfileEditor: Processing zip code on Enter:', { zipCode });
-        
-        const coordinates = getCoordinatesFromZipCode(zipCode);
-        if (coordinates) {
-          logger.info('📍 ProfileEditor: Updated location from zip code:', {
-            zipCode,
-            coordinates
-          });
-          
-          // Update the displayed zip code and location
-          setDisplayedZipCode(zipCode);
-          setCurrentZipCode(zipCode);
-          setLocation(coordinates);
-          
-          // Update the form value to match
-          setValue('zipCode', zipCode);
-          
-          logUserAction('zip_code_location_set', { zipCode, coordinates });
-        } else {
-          logger.warn('📍 ProfileEditor: Unknown zip code:', { zipCode });
-          alert(`Sorry, we don't have location data for zip code ${zipCode}. Please try a different zip code or use the "Use Current Location" button.`);
-        }
-      } else if (zipCode.length > 0 && zipCode.length !== 5) {
-        alert('Please enter a valid 5-digit zip code.');
-      }
+      logUserAction('address_location_set', { address, coordinates, hasBbox: !!bbox });
     }
   };
 
@@ -165,7 +148,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     logUserAction('profile_update_attempt', {
       userId: user.id,
       hasLocation: !!location,
-      hasZipCode: !!displayedZipCode
+      hasAddress: !!currentAddress
     });
 
     setIsSubmitting(true);
@@ -177,7 +160,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         full_name: `${data.firstName} ${data.lastName}`,
         avatar_url: data.avatar_url,
         location,
-        zip_code: displayedZipCode, // Use the displayed zip code, not the form input
+        address: currentAddress,
+        address_bbox: addressBbox,
       });
       
       logUserAction('profile_update_success', { userId: user.id });
@@ -213,7 +197,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       logger.debug('📍 ProfileEditor: Requesting geolocation permission...');
       
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -224,17 +208,17 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
           
           setLocation(newLocation);
           
-          // Reverse geocode to get zip code
-          reverseGeocodeToZipCode(newLocation).then(zipCode => {
-            if (zipCode) {
-              logger.info('📍 ProfileEditor: Reverse geocoded zip code:', { zipCode });
-              setDisplayedZipCode(zipCode);
-              setCurrentZipCode(zipCode);
-              setValue('zipCode', zipCode);
+          // Reverse geocode to get address
+          try {
+            const address = await reverseGeocodeToAddress(newLocation);
+            if (address) {
+              logger.info('📍 ProfileEditor: Reverse geocoded address:', { address });
+              setCurrentAddress(address);
+              setValue('address', address);
             }
-          }).catch(error => {
+          } catch (error) {
             logger.warn('📍 ProfileEditor: Reverse geocoding failed:', error);
-          });
+          }
         },
         (error) => {
           logger.error('❌ ProfileEditor: Geolocation error:', {
@@ -352,23 +336,21 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-warmgray-600">Zip Code</label>
-                {displayedZipCode && (
+                <label className="text-xs font-medium text-warmgray-600">Address</label>
+                {currentAddress && (
                   <span className="text-sm text-warmgray-600">
-                    Current: {displayedZipCode}
+                    Current: {currentAddress}
                   </span>
                 )}
               </div>
-              <input
-                type="text"
-                {...register('zipCode')}
-                className="w-full border rounded-md p-2"
-                placeholder="Enter your zip code (e.g., 78701)"
-                maxLength={5}
-                onKeyPress={handleZipCodeKeyPress}
+              <AddressAutocomplete
+                value={currentAddress}
+                onChange={handleAddressChange}
+                placeholder="Start typing your address (e.g., 5305 Oak St...)"
+                className="w-full"
               />
               <p className="text-xs text-warmgray-500">
-                Enter your zip code and press Enter to set your approximate location
+                Start typing your address to see suggestions. This helps us show you nearby resources and neighbors.
               </p>
             </div>
 
@@ -388,10 +370,11 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
               <LocationPicker 
                 value={location}
                 onChange={setLocation}
-                zipCode={displayedZipCode}
+                address={currentAddress}
+                addressBbox={addressBbox}
               />
               <p className="text-xs text-warmgray-500">
-                This helps us show you nearby resources and neighbors. You can also just use your zip code above.
+                Click on the map to fine-tune your exact location, or use the "Use Current Location" button.
               </p>
             </div>
           </div>
@@ -418,88 +401,41 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   );
 }
 
-// Simple zip code to coordinates mapping for common areas
-// In a production app, you'd use a proper geocoding service
-function getCoordinatesFromZipCode(zipCode: string): Coordinates | null {
-  const zipCodeMap: Record<string, Coordinates> = {
-    // Austin, TX area
-    '78701': { lat: 30.2672, lng: -97.7431 },
-    '78702': { lat: 30.2500, lng: -97.7300 },
-    '78703': { lat: 30.2800, lng: -97.7600 },
-    '78704': { lat: 30.2400, lng: -97.7500 },
-    '78705': { lat: 30.2900, lng: -97.7400 },
-    '78731': { lat: 30.3200, lng: -97.7800 },
-    '78732': { lat: 30.3500, lng: -97.8200 },
-    '78745': { lat: 30.2200, lng: -97.7800 },
-    '78746': { lat: 30.2700, lng: -97.8000 },
-    '78748': { lat: 30.2000, lng: -97.8000 },
-    '78749': { lat: 30.2300, lng: -97.8200 },
-    '78750': { lat: 30.4000, lng: -97.7500 },
-    '78751': { lat: 30.3100, lng: -97.7200 },
-    '78752': { lat: 30.3000, lng: -97.7000 },
-    '78753': { lat: 30.3300, lng: -97.6800 },
-    '78754': { lat: 30.3400, lng: -97.6500 },
-    '78756': { lat: 30.3200, lng: -97.7300 },
-    '78757': { lat: 30.3500, lng: -97.7300 },
-    '78758': { lat: 30.3800, lng: -97.7000 },
-    '78759': { lat: 30.4000, lng: -97.7200 },
-    
-    // Add more zip codes as needed
-    // Major cities
-    '10001': { lat: 40.7505, lng: -73.9934 }, // NYC
-    '90210': { lat: 34.0901, lng: -118.4065 }, // Beverly Hills
-    '94102': { lat: 37.7849, lng: -122.4094 }, // San Francisco
-    '60601': { lat: 41.8827, lng: -87.6233 }, // Chicago
-    '33101': { lat: 25.7743, lng: -80.1937 }, // Miami
-  };
-
-  return zipCodeMap[zipCode] || null;
-}
-
-// Reverse geocoding function to get zip code from coordinates
-async function reverseGeocodeToZipCode(coordinates: Coordinates): Promise<string | null> {
-  // Simple reverse lookup using our zip code map
-  // In a production app, you'd use a proper reverse geocoding service
-  const zipCodeMap: Record<string, Coordinates> = {
-    // Austin, TX area
-    '78701': { lat: 30.2672, lng: -97.7431 },
-    '78702': { lat: 30.2500, lng: -97.7300 },
-    '78703': { lat: 30.2800, lng: -97.7600 },
-    '78704': { lat: 30.2400, lng: -97.7500 },
-    '78705': { lat: 30.2900, lng: -97.7400 },
-    '78731': { lat: 30.3200, lng: -97.7800 },
-    '78732': { lat: 30.3500, lng: -97.8200 },
-    '78745': { lat: 30.2200, lng: -97.7800 },
-    '78746': { lat: 30.2700, lng: -97.8000 },
-    '78748': { lat: 30.2000, lng: -97.8000 },
-    '78749': { lat: 30.2300, lng: -97.8200 },
-    '78750': { lat: 30.4000, lng: -97.7500 },
-    '78751': { lat: 30.3100, lng: -97.7200 },
-    '78752': { lat: 30.3000, lng: -97.7000 },
-    '78753': { lat: 30.3300, lng: -97.6800 },
-    '78754': { lat: 30.3400, lng: -97.6500 },
-    '78756': { lat: 30.3200, lng: -97.7300 },
-    '78757': { lat: 30.3500, lng: -97.7300 },
-    '78758': { lat: 30.3800, lng: -97.7000 },
-    '78759': { lat: 30.4000, lng: -97.7200 },
-  };
-
-  // Find the closest zip code
-  let closestZip = null;
-  let minDistance = Infinity;
-
-  for (const [zipCode, zipCoords] of Object.entries(zipCodeMap)) {
-    const distance = Math.sqrt(
-      Math.pow(coordinates.lat - zipCoords.lat, 2) + 
-      Math.pow(coordinates.lng - zipCoords.lng, 2)
-    );
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestZip = zipCode;
-    }
+// Reverse geocoding function to get address from coordinates
+async function reverseGeocodeToAddress(coordinates: Coordinates): Promise<string | null> {
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
+  
+  if (!mapboxToken) {
+    logger.warn('📍 reverseGeocodeToAddress: No Mapbox token available');
+    return null;
   }
 
-  // Only return if we're reasonably close (within ~0.05 degrees, roughly 3-4 miles)
-  return minDistance < 0.05 ? closestZip : null;
+  try {
+    logger.debug('📍 reverseGeocodeToAddress: Reverse geocoding coordinates:', coordinates);
+    
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.lng},${coordinates.lat}.json?` +
+      `access_token=${mapboxToken}&` +
+      `types=address&` +
+      `limit=1`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Reverse geocoding API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      const address = data.features[0].place_name;
+      logger.debug('📍 reverseGeocodeToAddress: Found address:', { address });
+      return address;
+    }
+    
+    logger.debug('📍 reverseGeocodeToAddress: No address found for coordinates');
+    return null;
+  } catch (error) {
+    logger.error('❌ reverseGeocodeToAddress: Error:', error);
+    return null;
+  }
 }

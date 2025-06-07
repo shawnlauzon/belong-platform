@@ -8,27 +8,54 @@ import { DEFAULT_LOCATION } from '@/lib/mapbox';
 interface LocationPickerProps {
   value: Coordinates | null;
   onChange: (location: Coordinates | null) => void;
-  zipCode?: string;
+  address?: string;
+  addressBbox?: [number, number, number, number] | null;
 }
 
-export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, address, addressBbox }: LocationPickerProps) {
   const [viewport, setViewport] = React.useState({
     latitude: value?.lat || DEFAULT_LOCATION.lat,
     longitude: value?.lng || DEFAULT_LOCATION.lng,
     zoom: 12
   });
 
-  // Update viewport when value changes (e.g., from zip code)
+  // Update viewport when value changes (e.g., from address selection)
   React.useEffect(() => {
     if (value) {
       setViewport(prev => ({
         ...prev,
         latitude: value.lat,
         longitude: value.lng,
-        zoom: 13 // Zoom in a bit when location is set
+        zoom: 15 // Zoom in more when location is set
       }));
     }
   }, [value]);
+
+  // Fit to address bbox if available
+  React.useEffect(() => {
+    if (addressBbox && value) {
+      // Calculate center and zoom to fit the bounding box
+      const [minLng, minLat, maxLng, maxLat] = addressBbox;
+      const centerLat = (minLat + maxLat) / 2;
+      const centerLng = (minLng + maxLng) / 2;
+      
+      // Calculate appropriate zoom level based on bbox size
+      const latDiff = maxLat - minLat;
+      const lngDiff = maxLng - minLng;
+      const maxDiff = Math.max(latDiff, lngDiff);
+      
+      let zoom = 15;
+      if (maxDiff > 0.1) zoom = 10;
+      else if (maxDiff > 0.05) zoom = 12;
+      else if (maxDiff > 0.01) zoom = 14;
+      
+      setViewport({
+        latitude: centerLat,
+        longitude: centerLng,
+        zoom
+      });
+    }
+  }, [addressBbox, value]);
 
   const handleMapClick = (event: any) => {
     const { lat, lng } = event.lngLat;
@@ -47,7 +74,7 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
           setViewport({
             latitude: newLocation.lat,
             longitude: newLocation.lng,
-            zoom: 13
+            zoom: 15
           });
         },
         (error) => {
@@ -57,21 +84,21 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
     }
   };
 
-  // Create a simple polygon for zip code area (approximate)
-  const getZipCodePolygon = (center: Coordinates) => {
-    // Create a rough square around the center point
-    // In a real app, you'd use actual zip code boundary data
-    const offset = 0.02; // Roughly 1-2 miles
+  // Create a polygon for the address area if bbox is available
+  const getAddressPolygon = () => {
+    if (!addressBbox) return null;
+    
+    const [minLng, minLat, maxLng, maxLat] = addressBbox;
     return {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          [center.lng - offset, center.lat - offset],
-          [center.lng + offset, center.lat - offset],
-          [center.lng + offset, center.lat + offset],
-          [center.lng - offset, center.lat + offset],
-          [center.lng - offset, center.lat - offset]
+          [minLng, minLat],
+          [maxLng, minLat],
+          [maxLng, maxLat],
+          [minLng, maxLat],
+          [minLng, minLat]
         ]]
       }
     };
@@ -91,6 +118,8 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
     );
   }
 
+  const addressPolygon = getAddressPolygon();
+
   return (
     <div className="space-y-2">
       <div className="h-[200px] rounded-lg overflow-hidden border border-gray-200">
@@ -102,15 +131,15 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
           onClick={handleMapClick}
           onMove={evt => setViewport(evt.viewState)}
         >
-          {/* Zip code area outline */}
-          {zipCode && value && (
+          {/* Address area outline */}
+          {addressPolygon && (
             <Source
-              id="zipcode-area"
+              id="address-area"
               type="geojson"
-              data={getZipCodePolygon(value)}
+              data={addressPolygon}
             >
               <Layer
-                id="zipcode-fill"
+                id="address-fill"
                 type="fill"
                 paint={{
                   'fill-color': '#f97316',
@@ -118,7 +147,7 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
                 }}
               />
               <Layer
-                id="zipcode-outline"
+                id="address-outline"
                 type="line"
                 paint={{
                   'line-color': '#f97316',
@@ -138,9 +167,9 @@ export function LocationPicker({ value, onChange, zipCode }: LocationPickerProps
             >
               <div className="relative">
                 <MapPin className="h-6 w-6 text-primary-500" />
-                {zipCode && (
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                    {zipCode}
+                {address && (
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap max-w-48 truncate">
+                    {address.split(',')[0]} {/* Show just the street address */}
                   </div>
                 )}
               </div>
