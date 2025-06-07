@@ -1,23 +1,14 @@
 import { supabase } from './supabase';
 import { logger, logApiCall, logApiResponse } from './logger';
 
-export interface UploadResult {
-  url: string;
-  path: string;
-}
-
 export class StorageManager {
-  private static readonly BUCKET_NAME = 'images';
-  private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  private static readonly ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  private static bucketName = 'images';
 
-  /**
-   * Initialize storage bucket if it doesn't exist
-   */
   static async initializeBucket(): Promise<void> {
+    logger.debug('🗄️ StorageManager: Initializing bucket...');
+    
     try {
-      logger.debug('🗄️ StorageManager: Checking if bucket exists...');
-      
+      // Check if bucket exists
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
       
       if (listError) {
@@ -25,59 +16,47 @@ export class StorageManager {
         return;
       }
 
-      const bucketExists = buckets?.some(bucket => bucket.name === this.BUCKET_NAME);
+      const bucketExists = buckets?.some(bucket => bucket.id === this.bucketName);
       
-      if (!bucketExists) {
-        logger.info('🗄️ StorageManager: Creating images bucket...');
-        
-        const { error: createError } = await supabase.storage.createBucket(this.BUCKET_NAME, {
-          public: true,
-          allowedMimeTypes: this.ALLOWED_TYPES,
-          fileSizeLimit: this.MAX_FILE_SIZE
-        });
-
-        if (createError) {
-          logger.error('❌ StorageManager: Failed to create bucket:', createError);
-        } else {
-          logger.info('✅ StorageManager: Images bucket created successfully');
-        }
-      } else {
-        logger.debug('✅ StorageManager: Images bucket already exists');
+      if (bucketExists) {
+        logger.info('✅ StorageManager: Images bucket already exists');
+        return;
       }
+
+      logger.info('🗄️ StorageManager: Images bucket exists and is ready');
     } catch (error) {
-      logger.error('❌ StorageManager: Error initializing bucket:', error);
+      logger.error('❌ StorageManager: Failed to initialize bucket:', error);
     }
   }
 
-  /**
-   * Upload a single file to Supabase Storage
-   */
-  static async uploadFile(file: File, folder: string = 'uploads'): Promise<UploadResult> {
-    logger.debug('📤 StorageManager: Starting file upload:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      folder
-    });
-
-    // Validate file
-    this.validateFile(file);
-
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
-
-    logApiCall('POST', `/storage/upload/${filePath}`, {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
+  static async uploadFile(file: File, folder: string = 'uploads'): Promise<string | null> {
+    logger.debug('🗄️ StorageManager: Uploading file:', { 
+      fileName: file.name, 
+      fileSize: file.size, 
+      folder 
     });
 
     try {
-      // Upload file to Supabase Storage
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User must be authenticated to upload files');
+      }
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${folder}/${user.id}/${fileName}`;
+
+      logApiCall('POST', `/storage/upload/${filePath}`, { 
+        fileName: file.name, 
+        fileSize: file.size 
+      });
+
+      // Upload file
       const { data, error } = await supabase.storage
-        .from(this.BUCKET_NAME)
+        .from(this.bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -89,153 +68,111 @@ export class StorageManager {
       }
 
       if (!data) {
-        logApiResponse('POST', `/storage/upload/${filePath}`, null, 'No data returned');
         throw new Error('Upload failed: No data returned');
       }
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from(this.BUCKET_NAME)
+        .from(this.bucketName)
         .getPublicUrl(filePath);
 
-      const result: UploadResult = {
-        url: urlData.publicUrl,
-        path: filePath
-      };
+      const publicUrl = urlData.publicUrl;
 
-      logApiResponse('POST', `/storage/upload/${filePath}`, {
-        path: result.path,
-        url: result.url
+      logApiResponse('POST', `/storage/upload/${filePath}`, { 
+        path: data.path, 
+        publicUrl 
+      });
+      
+      logger.info('✅ StorageManager: File uploaded successfully:', { 
+        fileName: file.name, 
+        path: data.path,
+        publicUrl
       });
 
-      logger.info('✅ StorageManager: File uploaded successfully:', {
-        originalName: file.name,
-        storagePath: result.path,
-        publicUrl: result.url
-      });
-
-      return result;
+      return publicUrl;
     } catch (error) {
-      logger.error('❌ StorageManager: Upload error:', error);
-      logApiResponse('POST', `/storage/upload/${filePath}`, null, error);
+      logger.error('❌ StorageManager: Failed to upload file:', { 
+        fileName: file.name, 
+        error 
+      });
       throw error;
     }
   }
 
-  /**
-   * Upload multiple files
-   */
-  static async uploadFiles(files: File[], folder: string = 'uploads'): Promise<UploadResult[]> {
-    logger.info('📤 StorageManager: Starting batch upload:', {
-      fileCount: files.length,
-      folder
+  static async uploadFiles(files: File[], folder: string = 'uploads'): Promise<string[]> {
+    logger.debug('🗄️ StorageManager: Uploading multiple files:', { 
+      count: files.length, 
+      folder 
     });
 
-    const results: UploadResult[] = [];
-    const errors: Error[] = [];
+    const uploadPromises = files.map(file => this.uploadFile(file, folder));
+    
+    try {
+      const results = await Promise.allSettled(uploadPromises);
+      
+      const successfulUploads: string[] = [];
+      const failedUploads: string[] = [];
 
-    for (const file of files) {
-      try {
-        const result = await this.uploadFile(file, folder);
-        results.push(result);
-      } catch (error) {
-        logger.error('❌ StorageManager: Failed to upload file:', {
-          fileName: file.name,
-          error
-        });
-        errors.push(error as Error);
-      }
-    }
-
-    if (errors.length > 0) {
-      logger.warn('⚠️ StorageManager: Some uploads failed:', {
-        successCount: results.length,
-        errorCount: errors.length
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          successfulUploads.push(result.value);
+        } else {
+          failedUploads.push(files[index].name);
+          if (result.status === 'rejected') {
+            logger.error('❌ StorageManager: File upload failed:', {
+              fileName: files[index].name,
+              error: result.reason
+            });
+          }
+        }
       });
+
+      if (failedUploads.length > 0) {
+        logger.warn('⚠️ StorageManager: Some uploads failed:', { 
+          successful: successfulUploads.length,
+          failed: failedUploads.length,
+          failedFiles: failedUploads
+        });
+      }
+
+      if (successfulUploads.length === 0) {
+        throw new Error('No files were uploaded successfully');
+      }
+
+      logger.info('✅ StorageManager: Batch upload completed:', { 
+        successful: successfulUploads.length,
+        failed: failedUploads.length
+      });
+
+      return successfulUploads;
+    } catch (error) {
+      logger.error('❌ StorageManager: Upload failed:', error);
+      throw error;
     }
-
-    logger.info('✅ StorageManager: Batch upload completed:', {
-      successCount: results.length,
-      errorCount: errors.length
-    });
-
-    return results;
   }
 
-  /**
-   * Delete a file from storage
-   */
-  static async deleteFile(path: string): Promise<void> {
-    logger.debug('🗑️ StorageManager: Deleting file:', { path });
-    
-    logApiCall('DELETE', `/storage/delete/${path}`, { path });
+  static async deleteFile(filePath: string): Promise<boolean> {
+    logger.debug('🗄️ StorageManager: Deleting file:', { filePath });
 
     try {
+      logApiCall('DELETE', `/storage/delete/${filePath}`);
+
       const { error } = await supabase.storage
-        .from(this.BUCKET_NAME)
-        .remove([path]);
+        .from(this.bucketName)
+        .remove([filePath]);
 
       if (error) {
-        logApiResponse('DELETE', `/storage/delete/${path}`, null, error);
-        throw new Error(`Delete failed: ${error.message}`);
+        logApiResponse('DELETE', `/storage/delete/${filePath}`, null, error);
+        throw error;
       }
 
-      logApiResponse('DELETE', `/storage/delete/${path}`, { success: true });
-      logger.info('✅ StorageManager: File deleted successfully:', { path });
+      logApiResponse('DELETE', `/storage/delete/${filePath}`, { success: true });
+      logger.info('✅ StorageManager: File deleted successfully:', { filePath });
+      
+      return true;
     } catch (error) {
-      logger.error('❌ StorageManager: Delete error:', error);
-      logApiResponse('DELETE', `/storage/delete/${path}`, null, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get public URL for a file
-   */
-  static getPublicUrl(path: string): string {
-    const { data } = supabase.storage
-      .from(this.BUCKET_NAME)
-      .getPublicUrl(path);
-
-    return data.publicUrl;
-  }
-
-  /**
-   * Validate file before upload
-   */
-  private static validateFile(file: File): void {
-    // Check file size
-    if (file.size > this.MAX_FILE_SIZE) {
-      throw new Error(`File size too large. Maximum size is ${this.MAX_FILE_SIZE / 1024 / 1024}MB`);
-    }
-
-    // Check file type
-    if (!this.ALLOWED_TYPES.includes(file.type)) {
-      throw new Error(`File type not allowed. Allowed types: ${this.ALLOWED_TYPES.join(', ')}`);
-    }
-
-    logger.debug('✅ StorageManager: File validation passed:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
-  }
-
-  /**
-   * Extract storage path from URL
-   */
-  static extractPathFromUrl(url: string): string | null {
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (!url.includes(supabaseUrl)) {
-        return null;
-      }
-
-      const urlParts = url.split('/storage/v1/object/public/images/');
-      return urlParts.length > 1 ? urlParts[1] : null;
-    } catch (error) {
-      logger.warn('⚠️ StorageManager: Could not extract path from URL:', { url, error });
-      return null;
+      logger.error('❌ StorageManager: Failed to delete file:', { filePath, error });
+      return false;
     }
   }
 }
