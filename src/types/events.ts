@@ -66,8 +66,8 @@ export interface CommunityCreateRequestedEvent extends BaseEvent {
     level: Community['level'];
     description: string;
     country: string;
-    state: string;
-    city?: string;
+    state?: string;
+    city: string;
     center?: { lat: number; lng: number };
     radius_km?: number;
   };

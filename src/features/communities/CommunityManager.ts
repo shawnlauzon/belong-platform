@@ -33,8 +33,8 @@ export class CommunityManager {
     level: Community['level'];
     description: string;
     country: string;
-    state: string;
-    city?: string;
+    state?: string;
+    city: string;
     center?: Coordinates;
     radius_km?: number;
   }): Promise<Community> {
@@ -58,7 +58,7 @@ export class CommunityManager {
 
     const communities = existingCommunities || [];
 
-    // Find or create the hierarchy: Worldwide -> Country -> State -> City/Neighborhood
+    // Find or create the hierarchy: Worldwide -> Country -> State (optional) -> City/Neighborhood
     let worldwideId = communities.find(c => c.level === 'global')?.id;
     if (!worldwideId) {
       const { data: worldwide, error: worldwideError } = await supabase
@@ -107,39 +107,45 @@ export class CommunityManager {
       });
     }
 
-    // Find or create state
-    let stateId = communities.find(c => 
-      c.level === 'state' && 
-      c.name === communityData.state &&
-      c.parent_id === countryId
-    )?.id;
+    // Find or create state (only if provided)
+    let stateId = countryId; // Default parent is country
+    
+    if (communityData.state) {
+      let existingStateId = communities.find(c => 
+        c.level === 'state' && 
+        c.name === communityData.state &&
+        c.parent_id === countryId
+      )?.id;
 
-    if (!stateId) {
-      const { data: state, error: stateError } = await supabase
-        .from('communities')
-        .insert([{
-          name: communityData.state,
-          level: 'state',
-          description: `${communityData.state} communities`,
-          parent_id: countryId,
-          member_count: 1,
-          creator_id: user.id,
-        }])
-        .select()
-        .single();
+      if (!existingStateId) {
+        const { data: state, error: stateError } = await supabase
+          .from('communities')
+          .insert([{
+            name: communityData.state,
+            level: 'state',
+            description: `${communityData.state} communities`,
+            parent_id: countryId,
+            member_count: 1,
+            creator_id: user.id,
+          }])
+          .select()
+          .single();
 
-      if (stateError) throw stateError;
-      stateId = state.id;
-      logger.info('🏘️ Created state community:', { 
-        id: stateId, 
-        name: communityData.state 
-      });
+        if (stateError) throw stateError;
+        existingStateId = state.id;
+        logger.info('🏘️ Created state community:', { 
+          id: existingStateId, 
+          name: communityData.state 
+        });
+      }
+      
+      stateId = existingStateId;
     }
 
     // Find or create city if we're creating a neighborhood
-    let cityId = stateId; // Default parent is state
+    let cityId = stateId; // Default parent is state (or country if no state)
     
-    if (communityData.level === 'neighborhood' && communityData.city) {
+    if (communityData.level === 'neighborhood') {
       let existingCityId = communities.find(c => 
         c.level === 'city' && 
         c.name === communityData.city &&

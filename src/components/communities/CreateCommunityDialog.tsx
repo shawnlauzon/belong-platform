@@ -21,7 +21,7 @@ import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 const communitySchema = z.object({
   country: z.string().min(2, 'Country is required'),
-  state: z.string().min(2, 'State/Province is required'),
+  state: z.string().optional(),
   city: z.string().min(2, 'City is required'),
   neighborhood: z.string().optional(),
   description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -275,9 +275,6 @@ export function CreateCommunityDialog({
     });
   };
 
-  // Show state field only for US
-  const showStateField = selectedCountry === 'United States';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-white max-h-[90vh] overflow-y-auto">
@@ -312,36 +309,20 @@ export function CreateCommunityDialog({
                   )}
                 </div>
 
-                {showStateField && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">State</label>
-                    <StateAutocomplete
-                      value={selectedState}
-                      onChange={handleStateChange}
-                      country={selectedCountry}
-                      disabled={isSubmitting || !selectedCountry}
-                    />
-                    {errors.state && (
-                      <p className="text-xs text-red-500">{errors.state.message}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {!showStateField && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">State / Province</label>
+                  <label className="text-sm font-medium">State / Province (Optional)</label>
                   <StateAutocomplete
                     value={selectedState}
                     onChange={handleStateChange}
                     country={selectedCountry}
                     disabled={isSubmitting || !selectedCountry}
+                    placeholder="Enter state/province (optional)"
                   />
                   {errors.state && (
                     <p className="text-xs text-red-500">{errors.state.message}</p>
                   )}
                 </div>
-              )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
