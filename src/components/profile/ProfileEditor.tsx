@@ -196,7 +196,6 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         avatar_url: data.avatar_url,
         location,
         address: currentAddress,
-        address_bbox: addressBbox,
       },
     });
   };

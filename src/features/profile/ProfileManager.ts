@@ -38,7 +38,6 @@ export class ProfileManager {
           avatar_url: metadata.avatar_url,
           location: metadata.location,
           address: metadata.address,
-          address_bbox: metadata.address_bbox,
         };
 
         // Merge the new metadata with existing user_metadata
@@ -76,7 +75,6 @@ export class ProfileManager {
           avatar_url: mergedMetadata.avatar_url,
           location: mergedMetadata.location,
           address: mergedMetadata.address,
-          address_bbox: mergedMetadata.address_bbox,
         };
 
         eventBus.emit('profile.updated', { userId, updatedProfile: updatedProfileMetadata });

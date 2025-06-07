@@ -20,7 +20,6 @@ export interface ProfileMetadata {
   avatar_url?: string;
   location?: Coordinates;
   address?: string;
-  address_bbox?: [number, number, number, number];
 }
 
 export interface Resource {
