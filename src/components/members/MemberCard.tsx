@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Member } from '@/types';
 import { Link } from '@tanstack/react-router';
 import { TrustCalculator } from '@/features/trust/TrustCalculator';
-import { Heart, Map, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, User } from 'lucide-react';
 
 interface MemberCardProps {
   member: Member;
@@ -20,12 +20,29 @@ export function MemberCard({ member, showActions = true }: MemberCardProps) {
     <Card className="overflow-hidden animate-fade-in">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-            <AvatarImage src={member.avatar_url} alt={member.name} />
-            <AvatarFallback>{member.name[0]}</AvatarFallback>
-          </Avatar>
+          {/* Clickable Avatar */}
+          <Link 
+            to="/profile/$id" 
+            params={{ id: member.id }}
+            className="hover:opacity-80 transition-opacity"
+            title={`View ${member.name}'s profile`}
+          >
+            <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+              <AvatarImage src={member.avatar_url} alt={member.name} />
+              <AvatarFallback>{member.name[0]}</AvatarFallback>
+            </Avatar>
+          </Link>
           <div>
-            <div className="font-medium text-warmgray-900">{member.name}</div>
+            <div className="font-medium text-warmgray-900">
+              <Link 
+                to="/profile/$id" 
+                params={{ id: member.id }}
+                className="hover:text-primary-600 transition-colors"
+                title={`View ${member.name}'s profile`}
+              >
+                {member.name}
+              </Link>
+            </div>
             <div className="flex items-center gap-2">
               <TrustBadge score={member.trust_score} showLabel />
             </div>

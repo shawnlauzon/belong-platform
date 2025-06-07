@@ -111,14 +111,24 @@ export function ResourceCard({ resource, onRequest, onEdit }: ResourceCardProps)
       
       <CardFooter className="border-t border-gray-100 pt-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={resource.owner?.avatar_url} />
-            <AvatarFallback>{resource.owner?.name?.[0] || 'U'}</AvatarFallback>
-          </Avatar>
-          <div className="text-xs">
-            <span className="text-warmgray-700 font-medium">{resource.owner?.name}</span>
-            <p className="text-warmgray-500">{formatTimeAgo(resource.created_at)}</p>
-          </div>
+          {/* Clickable Avatar */}
+          <Link 
+            to="/profile/$id" 
+            params={{ id: resource.owner?.id || '' }}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            title={`View ${resource.owner?.name}'s profile`}
+          >
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={resource.owner?.avatar_url} />
+              <AvatarFallback>{resource.owner?.name?.[0] || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="text-xs">
+              <span className="text-warmgray-700 font-medium hover:text-primary-600 transition-colors">
+                {resource.owner?.name}
+              </span>
+              <p className="text-warmgray-500">{formatTimeAgo(resource.created_at)}</p>
+            </div>
+          </Link>
         </div>
         
         {!isOwner && onRequest && (

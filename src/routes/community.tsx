@@ -9,6 +9,7 @@ import { mockMembers, mockEvents } from '@/api/mockData';
 import { useAppStore } from '@/core/state';
 import { User, Users, Calendar, Map as MapIcon, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/community')({
   component: CommunityPage,
@@ -230,11 +231,25 @@ function CommunityPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
                     <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src="https://randomuser.me/api/portraits/women/22.jpg" />
-                        <AvatarFallback>JD</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">Jamie Davis</span>
+                      <Link 
+                        to="/profile/$id" 
+                        params={{ id: 'jamie-davis' }}
+                        className="hover:opacity-80 transition-opacity"
+                        title="View Jamie Davis's profile"
+                      >
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src="https://randomuser.me/api/portraits/women/22.jpg" />
+                          <AvatarFallback>JD</AvatarFallback>
+                        </Avatar>
+                      </Link>
+                      <Link 
+                        to="/profile/$id" 
+                        params={{ id: 'jamie-davis' }}
+                        className="text-sm hover:text-primary-600 transition-colors"
+                        title="View Jamie Davis's profile"
+                      >
+                        Jamie Davis
+                      </Link>
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-7 px-2">✓</Button>
@@ -243,11 +258,25 @@ function CommunityPage() {
                   </div>
                   <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
                     <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src="https://randomuser.me/api/portraits/men/22.jpg" />
-                        <AvatarFallback>TM</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">Thomas Miller</span>
+                      <Link 
+                        to="/profile/$id" 
+                        params={{ id: 'thomas-miller' }}
+                        className="hover:opacity-80 transition-opacity"
+                        title="View Thomas Miller's profile"
+                      >
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src="https://randomuser.me/api/portraits/men/22.jpg" />
+                          <AvatarFallback>TM</AvatarFallback>
+                        </Avatar>
+                      </Link>
+                      <Link 
+                        to="/profile/$id" 
+                        params={{ id: 'thomas-miller' }}
+                        className="text-sm hover:text-primary-600 transition-colors"
+                        title="View Thomas Miller's profile"
+                      >
+                        Thomas Miller
+                      </Link>
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-7 px-2">✓</Button>

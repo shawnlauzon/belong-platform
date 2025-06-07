@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TrustBadge } from '@/components/trust/TrustBadge';
 import { formatTimeAgo } from '@/lib/utils';
 import { Thanks } from '@/types';
+import { Link } from '@tanstack/react-router';
 
 interface ThanksCardProps {
   thanks: Thanks;
@@ -15,21 +16,52 @@ export function ThanksCard({ thanks }: ThanksCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={thanks.from_member?.avatar_url} alt={thanks.from_member?.name} />
-              <AvatarFallback>{thanks.from_member?.name?.[0]}</AvatarFallback>
-            </Avatar>
+            {/* Clickable Avatar for the person giving thanks */}
+            <Link 
+              to="/profile/$id" 
+              params={{ id: thanks.from_member?.id || '' }}
+              className="hover:opacity-80 transition-opacity"
+              title={`View ${thanks.from_member?.name}'s profile`}
+            >
+              <Avatar>
+                <AvatarImage src={thanks.from_member?.avatar_url} alt={thanks.from_member?.name} />
+                <AvatarFallback>{thanks.from_member?.name?.[0]}</AvatarFallback>
+              </Avatar>
+            </Link>
             <div>
-              <div className="font-medium text-warmgray-900">{thanks.from_member?.name}</div>
+              <div className="font-medium text-warmgray-900">
+                <Link 
+                  to="/profile/$id" 
+                  params={{ id: thanks.from_member?.id || '' }}
+                  className="hover:text-primary-600 transition-colors"
+                  title={`View ${thanks.from_member?.name}'s profile`}
+                >
+                  {thanks.from_member?.name}
+                </Link>
+              </div>
               <div className="text-xs text-warmgray-500 flex items-center gap-1">
                 <span>thanked</span>
-                <span className="font-medium text-warmgray-700">{thanks.to_member?.name}</span>
+                <Link 
+                  to="/profile/$id" 
+                  params={{ id: thanks.to_member?.id || '' }}
+                  className="font-medium text-warmgray-700 hover:text-primary-600 transition-colors"
+                  title={`View ${thanks.to_member?.name}'s profile`}
+                >
+                  {thanks.to_member?.name}
+                </Link>
                 <span className="text-warmgray-400">•</span>
                 <span>{formatTimeAgo(thanks.created_at)}</span>
               </div>
             </div>
           </div>
-          <TrustBadge score={thanks.to_member?.trust_score || 0} showLabel size="sm" />
+          <Link 
+            to="/profile/$id" 
+            params={{ id: thanks.to_member?.id || '' }}
+            className="hover:opacity-80 transition-opacity"
+            title={`View ${thanks.to_member?.name}'s profile`}
+          >
+            <TrustBadge score={thanks.to_member?.trust_score || 0} showLabel size="sm" />
+          </Link>
         </div>
       </CardHeader>
       
