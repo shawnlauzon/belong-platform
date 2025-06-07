@@ -15,15 +15,15 @@ export function useThanks() {
         .select(
           `
           *,
-          from_user:auth.users!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
-          to_user:auth.users!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -34,10 +34,10 @@ export function useThanks() {
             image_urls,
             location,
             creator_id,
-            creator:auth.users!resources_creator_id_fkey (
+            creator:profiles!resources_creator_id_fkey (
               id,
               email,
-              raw_user_meta_data
+              user_metadata
             )
           )
         `
@@ -56,10 +56,10 @@ export function useThanks() {
 
       // Transform the data to match our Thanks interface
       const transformedThanks: Thanks[] = thanks.map((thank) => {
-        const fromUserMetadata = thank.from_user?.raw_user_meta_data || {};
-        const toUserMetadata = thank.to_user?.raw_user_meta_data || {};
+        const fromUserMetadata = thank.from_user?.user_metadata || {};
+        const toUserMetadata = thank.to_user?.user_metadata || {};
         const resourceOwnerMetadata =
-          thank.resource?.creator?.raw_user_meta_data || {};
+          thank.resource?.creator?.user_metadata || {};
 
         return {
           id: thank.id,
@@ -183,15 +183,15 @@ export function useThanksByMember(memberId: string) {
         .select(
           `
           *,
-          from_user:users!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
-          to_user:users!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -202,10 +202,10 @@ export function useThanksByMember(memberId: string) {
             image_urls,
             location,
             creator_id,
-            creator:auth.users!resources_creator_id_fkey (
+            creator:profiles!resources_creator_id_fkey (
               id,
               email,
-              raw_user_meta_data
+              user_metadata
             )
           )
         `
@@ -225,10 +225,10 @@ export function useThanksByMember(memberId: string) {
 
       // Transform the data (same logic as above)
       const transformedThanks: Thanks[] = thanks.map((thank) => {
-        const fromUserMetadata = thank.from_user?.raw_user_meta_data || {};
-        const toUserMetadata = thank.to_user?.raw_user_meta_data || {};
+        const fromUserMetadata = thank.from_user?.user_metadata || {};
+        const toUserMetadata = thank.to_user?.user_metadata || {};
         const resourceOwnerMetadata =
-          thank.resource?.creator?.raw_user_meta_data || {};
+          thank.resource?.creator?.user_metadata || {};
 
         return {
           id: thank.id,
@@ -380,15 +380,15 @@ export function useCreateThanks() {
         .select(
           `
           *,
-          from_user:users!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
-          to_user:users!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -399,10 +399,10 @@ export function useCreateThanks() {
             image_urls,
             location,
             creator_id,
-            creator:auth.users!resources_creator_id_fkey (
+            creator:profiles!resources_creator_id_fkey (
               id,
               email,
-              raw_user_meta_data
+              user_metadata
             )
           )
         `
@@ -420,10 +420,10 @@ export function useCreateThanks() {
 
       // Transform the data
       const fromUserMetadata =
-        createdThanks.from_user?.raw_user_meta_data || {};
-      const toUserMetadata = createdThanks.to_user?.raw_user_meta_data || {};
+        createdThanks.from_user?.user_metadata || {};
+      const toUserMetadata = createdThanks.to_user?.user_metadata || {};
       const resourceOwnerMetadata =
-        createdThanks.resource?.creator?.raw_user_meta_data || {};
+        createdThanks.resource?.creator?.user_metadata || {};
 
       const transformedThanks: Thanks = {
         id: createdThanks.id,

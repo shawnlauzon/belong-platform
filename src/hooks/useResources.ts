@@ -16,10 +16,10 @@ export function useResources(maxDriveMinutes = 8) {
         .select(
           `
           *,
-          creator:auth.users!resources_creator_id_fkey (
+          creator:profiles!resources_creator_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `
         )
@@ -43,7 +43,7 @@ export function useResources(maxDriveMinutes = 8) {
             : null;
 
           const creator = resource.creator;
-          const metadata = creator?.raw_user_meta_data || {};
+          const metadata = creator?.user_metadata || {};
 
           return {
             ...resource,
@@ -91,10 +91,10 @@ export function useResource(id: string | undefined) {
         .select(
           `
           *,
-          creator:auth.users!resources_creator_id_fkey (
+          creator:profiles!resources_creator_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `
         )
@@ -105,7 +105,7 @@ export function useResource(id: string | undefined) {
       if (!data) throw new Error('Resource not found');
 
       const creator = data.creator;
-      const metadata = creator?.raw_user_meta_data || {};
+      const metadata = creator?.user_metadata || {};
 
       return {
         ...data,
@@ -187,10 +187,10 @@ export function useUpdateResource() {
         .select(
           `
           *,
-          creator:auth.users!resources_creator_id_fkey (
+          creator:profiles!resources_creator_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `
         )
@@ -206,7 +206,7 @@ export function useUpdateResource() {
       }
 
       const creator = updatedResource.creator;
-      const metadata = creator?.raw_user_meta_data || {};
+      const metadata = creator?.user_metadata || {};
 
       const transformedResource: Resource = {
         ...updatedResource,

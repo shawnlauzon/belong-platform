@@ -55,10 +55,10 @@ export class ResourceManager {
         .select(
           `
           *,
-          creator:auth.users!resources_creator_id_fkey (
+          creator:profiles!resources_creator_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `
         )
@@ -93,7 +93,7 @@ export class ResourceManager {
             : null;
 
           const creator = resource.creator;
-          const metadata = creator?.raw_user_meta_data || {};
+          const metadata = creator?.user_metadata || {};
 
           return {
             ...resource,
@@ -169,10 +169,10 @@ export class ResourceManager {
         .select(
           `
           *,
-          creator:auth.users!resources_creator_id_fkey (
+          creator:profiles!resources_creator_id_fkey (
             id,
             email,
-            raw_user_meta_data
+            user_metadata
           )
         `
         )
@@ -189,7 +189,7 @@ export class ResourceManager {
       }
 
       const creator = createdResource.creator;
-      const metadata = creator?.raw_user_meta_data || {};
+      const metadata = creator?.user_metadata || {};
 
       const resource = {
         ...createdResource,
