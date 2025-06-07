@@ -15,12 +15,12 @@ export function useThanks() {
         .select(
           `
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey1 (
             id,
             email,
             user_metadata
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey1 (
             id,
             email,
             user_metadata
@@ -183,12 +183,12 @@ export function useThanksByMember(memberId: string) {
         .select(
           `
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey1 (
             id,
             email,
             user_metadata
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey1 (
             id,
             email,
             user_metadata
@@ -380,12 +380,12 @@ export function useCreateThanks() {
         .select(
           `
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:profiles!thanks_from_user_id_fkey1 (
             id,
             email,
             user_metadata
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:profiles!thanks_to_user_id_fkey1 (
             id,
             email,
             user_metadata
@@ -419,8 +419,7 @@ export function useCreateThanks() {
       }
 
       // Transform the data
-      const fromUserMetadata =
-        createdThanks.from_user?.user_metadata || {};
+      const fromUserMetadata = createdThanks.from_user?.user_metadata || {};
       const toUserMetadata = createdThanks.to_user?.user_metadata || {};
       const resourceOwnerMetadata =
         createdThanks.resource?.creator?.user_metadata || {};
