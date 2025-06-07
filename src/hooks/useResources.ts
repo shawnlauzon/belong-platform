@@ -64,10 +64,14 @@ export function useResources(maxDriveMinutes = 8) {
   });
 }
 
-export function useResource(id: string) {
+export function useResource(id: string | undefined) {
   return useQuery({
     queryKey: ['resources', id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error('Resource ID is required');
+      }
+
       const { data, error } = await supabase
         .from('resources')
         .select(`
@@ -104,7 +108,8 @@ export function useResource(id: string) {
           resources_shared: 0
         } : null
       };
-    }
+    },
+    enabled: !!id, // Only run the query when id is truthy
   });
 }
 

@@ -24,7 +24,7 @@ function ResourcesPage() {
   const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
   
   const { data: resources = [], isLoading } = useResources(8);
-  const { data: editingResource } = useResource(editingResourceId || '');
+  const { data: editingResource } = useResource(editingResourceId ?? undefined);
 
   const handleRequestResource = (resourceId: string) => {
     logger.info('📦 ResourcesPage: Resource request clicked:', { resourceId });
