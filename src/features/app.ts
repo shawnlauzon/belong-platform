@@ -25,15 +25,10 @@ export function initializeListeners() {
   // Listen for community changes
   eventBus.on('community.changed', (event) => {
     const { communityId } = event.data;
-    const community = useAppStore.getState().currentCommunity;
+    logger.debug('🏘️ Community change requested:', { communityId });
     
-    logger.debug('🏘️ Community change requested:', { communityId, currentCommunityId: community.id });
-    
-    if (community.id !== communityId) {
-      const { currentCommunity } = useAppStore.getState();
-      useAppStore.getState().setCurrentCommunity(community);
-      logger.info('🏘️ Community changed:', { from: currentCommunity.id, to: communityId });
-    }
+    // Note: The actual community object will be set by the CommunitySelector component
+    // since it has access to the communities data from the hook
   });
   
   // Listen for view mode changes

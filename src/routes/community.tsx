@@ -7,7 +7,8 @@ import { MemberCard } from '@/components/members/MemberCard';
 import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
 import { mockMembers, mockEvents } from '@/api/mockData';
 import { useAppStore } from '@/core/state';
-import { User, Users, Calendar, Map as MapIcon } from 'lucide-react';
+import { User, Users, Calendar, Map as MapIcon, Heart } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export const Route = createFileRoute('/community')({
   component: CommunityPage,
@@ -17,6 +18,19 @@ function CommunityPage() {
   const currentCommunity = useAppStore(state => state.currentCommunity);
   const viewMode = useAppStore(state => state.viewMode);
   const [activeTab, setActiveTab] = useState<'members' | 'events'>('members');
+  
+  if (!currentCommunity) {
+    return (
+      <AppLayout showCommunitySelector={false}>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <p className="text-warmgray-500 mb-4">No community selected</p>
+            <p className="text-sm text-warmgray-400">Please select a community from the selector above</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
   
   return (
     <AppLayout showCommunitySelector={false}>

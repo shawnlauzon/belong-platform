@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { mockCommunities, mockResources } from '@/api/mockData';
 import { Community, Coordinates, Resource } from '@/types';
 import { DEFAULT_LOCATION } from '@/lib/mapbox';
 
@@ -9,7 +8,7 @@ interface AppState {
   setUserLocation: (location: Coordinates) => void;
   
   // Community
-  currentCommunity: Community;
+  currentCommunity: Community | null;
   setCurrentCommunity: (community: Community) => void;
   
   // Resources
@@ -27,12 +26,12 @@ export const useAppStore = create<AppState>((set) => ({
   userLocation: DEFAULT_LOCATION,
   setUserLocation: (location) => set({ userLocation: location }),
   
-  // Default to South Austin community
-  currentCommunity: mockCommunities.find(c => c.id === 'south-austin') || mockCommunities[0],
+  // No default community - will be set when communities load
+  currentCommunity: null,
   setCurrentCommunity: (community) => set({ currentCommunity: community }),
   
-  // Initialize with mock resources
-  resources: mockResources,
+  // Initialize with empty resources - will be loaded from API
+  resources: [],
   addResource: (resource) => set((state) => ({ 
     resources: [...state.resources, resource] 
   })),

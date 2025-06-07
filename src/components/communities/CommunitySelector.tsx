@@ -1,22 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
-import { mockCommunities } from '@/api/mockData';
 import { eventBus } from '@/core/eventBus';
 import { Community } from '@/types';
 import { Button } from '@/components/ui/button';
 import { CreateCommunityDialog } from './CreateCommunityDialog';
+import { useCommunities } from '@/hooks/useCommunities';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 export function CommunitySelector() {
   logComponentRender('CommunitySelector');
   
-  const [activeCommunity, setActiveCommunity] = useState<Community>(
-    mockCommunities.find(c => c.id === 'south-austin') || mockCommunities[0]
-  );
+  const { data: communities = [], isLoading } = useCommunities();
+  
+  const [activeCommunity, setActiveCommunity] = useState<Community | null>(null);
   const [browseCommunityId, setBrowseCommunityId] = useState<string>('worldwide');
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Set default active community when communities load
+  useEffect(() => {
+    if (communities.length > 0 && !activeCommunity) {
+      const defaultCommunity = communities.find(c => c.id === 'south-austin') || communities[0];
+      setActiveCommunity(defaultCommunity);
+      logger.debug('🏘️ CommunitySelector: Set default active community:', { 
+        communityId: defaultCommunity.id,
+        communityName: defaultCommunity.name 
+      });
+    }
+  }, [communities, activeCommunity]);
 
   // Get the breadcrumb chain from worldwide down to the browse community
   const getBreadcrumbChain = () => {
@@ -24,7 +36,7 @@ export function CommunitySelector() {
     let currentId = browseCommunityId;
     
     while (currentId) {
-      const community = mockCommunities.find(c => c.id === currentId);
+      const community = communities.find(c => c.id === currentId);
       if (community) {
         chain.unshift(community);
         currentId = community.parent_id;
@@ -38,11 +50,13 @@ export function CommunitySelector() {
 
   // Get the active community's full chain for display
   const getActiveCommunityChain = () => {
+    if (!activeCommunity) return [];
+    
     const chain: Community[] = [];
     let currentId = activeCommunity.id;
     
     while (currentId) {
-      const community = mockCommunities.find(c => c.id === currentId);
+      const community = communities.find(c => c.id === currentId);
       if (community) {
         chain.unshift(community);
         currentId = community.parent_id;
@@ -56,7 +70,7 @@ export function CommunitySelector() {
 
   // Get children of the current browse community
   const getChildCommunities = () => {
-    return mockCommunities.filter(c => c.parent_id === browseCommunityId);
+    return communities.filter(c => c.parent_id === browseCommunityId);
   };
 
   const breadcrumbChain = getBreadcrumbChain();
@@ -103,10 +117,6 @@ export function CommunitySelector() {
   const handleCommunityCreated = (newCommunity: Community) => {
     logger.info('🏘️ CommunitySelector: New community created:', newCommunity);
     
-    // In a real app, we would add this to the backend and refresh the data
-    // For now, we'll just add it to the mock data
-    mockCommunities.push(newCommunity);
-    
     // Select the newly created community
     setActiveCommunity(newCommunity);
     eventBus.emit('community.changed', { communityId: newCommunity.id });
@@ -134,6 +144,22 @@ export function CommunitySelector() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 shadow-sm">
+        <div className="animate-pulse">Loading communities...</div>
+      </div>
+    );
+  }
+
+  if (!activeCommunity) {
+    return (
+      <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 shadow-sm">
+        <span>No community selected</span>
+      </div>
+    );
+  }
 
   return (
     <>
