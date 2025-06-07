@@ -13,6 +13,16 @@ export interface Coordinates {
   lng: number;
 }
 
+export interface ProfileMetadata {
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  avatar_url?: string;
+  location?: Coordinates;
+  address?: string;
+  address_bbox?: [number, number, number, number];
+}
+
 export interface Resource {
   id: string;
   creator_id: string;

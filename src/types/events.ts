@@ -1,6 +1,5 @@
-import { Resource, Community, Member } from './index';
+import { Resource, Community, Member, ProfileMetadata } from './index';
 import { User } from '@supabase/supabase-js';
-import { Database } from './database';
 
 export interface BaseEvent {
   id: string;
@@ -98,7 +97,7 @@ export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
   data: {
     userId: string;
-    metadata: Database['public']['Tables']['profiles']['Row']['user_metadata'];
+    metadata: ProfileMetadata;
   };
 }
 
@@ -106,7 +105,7 @@ export interface ProfileUpdatedEvent extends BaseEvent {
   type: 'profile.updated';
   data: {
     userId: string;
-    updatedProfile: Database['public']['Tables']['profiles']['Row']['user_metadata'];
+    updatedProfile: ProfileMetadata;
   };
 }
 
