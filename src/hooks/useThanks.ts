@@ -14,15 +14,15 @@ export function useThanks() {
         .from('thanks')
         .select(`
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:users!thanks_from_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:users!thanks_to_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -33,10 +33,10 @@ export function useThanks() {
             image_urls,
             location,
             creator_id,
-            profiles!resources_creator_id_fkey (
+            creator:users!resources_creator_id_fkey (
               id,
               email,
-              user_metadata
+              raw_user_meta_data
             )
           )
         `)
@@ -54,9 +54,9 @@ export function useThanks() {
 
       // Transform the data to match our Thanks interface
       const transformedThanks: Thanks[] = thanks.map(thank => {
-        const fromUserMetadata = thank.from_user?.user_metadata || {};
-        const toUserMetadata = thank.to_user?.user_metadata || {};
-        const resourceOwnerMetadata = thank.resource?.profiles?.user_metadata || {};
+        const fromUserMetadata = thank.from_user?.raw_user_meta_data || {};
+        const toUserMetadata = thank.to_user?.raw_user_meta_data || {};
+        const resourceOwnerMetadata = thank.resource?.creator?.raw_user_meta_data || {};
 
         return {
           id: thank.id,
@@ -108,9 +108,9 @@ export function useThanks() {
             is_active: true,
             times_helped: 0,
             created_at: thank.resource.created_at || new Date().toISOString(),
-            owner: thank.resource.profiles ? {
-              id: thank.resource.profiles.id,
-              name: resourceOwnerMetadata.full_name || thank.resource.profiles.email?.split('@')[0] || 'Anonymous',
+            owner: thank.resource.creator ? {
+              id: thank.resource.creator.id,
+              name: resourceOwnerMetadata.full_name || thank.resource.creator.email?.split('@')[0] || 'Anonymous',
               first_name: resourceOwnerMetadata.first_name || '',
               last_name: resourceOwnerMetadata.last_name || '',
               avatar_url: resourceOwnerMetadata.avatar_url || null,
@@ -119,7 +119,7 @@ export function useThanks() {
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0,
-              created_at: thank.resource.profiles.created_at || new Date().toISOString()
+              created_at: thank.resource.creator.created_at || new Date().toISOString()
             } : undefined
           } : undefined,
           message: thank.message,
@@ -150,15 +150,15 @@ export function useThanksByMember(memberId: string) {
         .from('thanks')
         .select(`
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:users!thanks_from_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:users!thanks_to_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -169,10 +169,10 @@ export function useThanksByMember(memberId: string) {
             image_urls,
             location,
             creator_id,
-            profiles!resources_creator_id_fkey (
+            creator:users!resources_creator_id_fkey (
               id,
               email,
-              user_metadata
+              raw_user_meta_data
             )
           )
         `)
@@ -191,9 +191,9 @@ export function useThanksByMember(memberId: string) {
 
       // Transform the data (same logic as above)
       const transformedThanks: Thanks[] = thanks.map(thank => {
-        const fromUserMetadata = thank.from_user?.user_metadata || {};
-        const toUserMetadata = thank.to_user?.user_metadata || {};
-        const resourceOwnerMetadata = thank.resource?.profiles?.user_metadata || {};
+        const fromUserMetadata = thank.from_user?.raw_user_meta_data || {};
+        const toUserMetadata = thank.to_user?.raw_user_meta_data || {};
+        const resourceOwnerMetadata = thank.resource?.creator?.raw_user_meta_data || {};
 
         return {
           id: thank.id,
@@ -245,9 +245,9 @@ export function useThanksByMember(memberId: string) {
             is_active: true,
             times_helped: 0,
             created_at: thank.resource.created_at || new Date().toISOString(),
-            owner: thank.resource.profiles ? {
-              id: thank.resource.profiles.id,
-              name: resourceOwnerMetadata.full_name || thank.resource.profiles.email?.split('@')[0] || 'Anonymous',
+            owner: thank.resource.creator ? {
+              id: thank.resource.creator.id,
+              name: resourceOwnerMetadata.full_name || thank.resource.creator.email?.split('@')[0] || 'Anonymous',
               first_name: resourceOwnerMetadata.first_name || '',
               last_name: resourceOwnerMetadata.last_name || '',
               avatar_url: resourceOwnerMetadata.avatar_url || null,
@@ -256,7 +256,7 @@ export function useThanksByMember(memberId: string) {
               community_tenure_months: 0,
               thanks_received: 0,
               resources_shared: 0,
-              created_at: thank.resource.profiles.created_at || new Date().toISOString()
+              created_at: thank.resource.creator.created_at || new Date().toISOString()
             } : undefined
           } : undefined,
           message: thank.message,
@@ -310,15 +310,15 @@ export function useCreateThanks() {
         }])
         .select(`
           *,
-          from_user:profiles!thanks_from_user_id_fkey (
+          from_user:users!thanks_from_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
-          to_user:profiles!thanks_to_user_id_fkey (
+          to_user:users!thanks_to_user_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -329,10 +329,10 @@ export function useCreateThanks() {
             image_urls,
             location,
             creator_id,
-            profiles!resources_creator_id_fkey (
+            creator:users!resources_creator_id_fkey (
               id,
               email,
-              user_metadata
+              raw_user_meta_data
             )
           )
         `)
@@ -348,9 +348,9 @@ export function useCreateThanks() {
       }
 
       // Transform the data
-      const fromUserMetadata = createdThanks.from_user?.user_metadata || {};
-      const toUserMetadata = createdThanks.to_user?.user_metadata || {};
-      const resourceOwnerMetadata = createdThanks.resource?.profiles?.user_metadata || {};
+      const fromUserMetadata = createdThanks.from_user?.raw_user_meta_data || {};
+      const toUserMetadata = createdThanks.to_user?.raw_user_meta_data || {};
+      const resourceOwnerMetadata = createdThanks.resource?.creator?.raw_user_meta_data || {};
 
       const transformedThanks: Thanks = {
         id: createdThanks.id,
@@ -402,9 +402,9 @@ export function useCreateThanks() {
           is_active: true,
           times_helped: 0,
           created_at: createdThanks.resource.created_at || new Date().toISOString(),
-          owner: createdThanks.resource.profiles ? {
-            id: createdThanks.resource.profiles.id,
-            name: resourceOwnerMetadata.full_name || createdThanks.resource.profiles.email?.split('@')[0] || 'Anonymous',
+          owner: createdThanks.resource.creator ? {
+            id: createdThanks.resource.creator.id,
+            name: resourceOwnerMetadata.full_name || createdThanks.resource.creator.email?.split('@')[0] || 'Anonymous',
             first_name: resourceOwnerMetadata.first_name || '',
             last_name: resourceOwnerMetadata.last_name || '',
             avatar_url: resourceOwnerMetadata.avatar_url || null,
@@ -413,7 +413,7 @@ export function useCreateThanks() {
             community_tenure_months: 0,
             thanks_received: 0,
             resources_shared: 0,
-            created_at: createdThanks.resource.profiles.created_at || new Date().toISOString()
+            created_at: createdThanks.resource.creator.created_at || new Date().toISOString()
           } : undefined
         } : undefined,
         message: createdThanks.message,

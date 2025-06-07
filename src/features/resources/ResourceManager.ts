@@ -46,10 +46,10 @@ export class ResourceManager {
         .from('resources')
         .select(`
           *,
-          profiles!resources_creator_id_fkey (
+          creator:users!resources_creator_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('is_active', true);
@@ -76,16 +76,16 @@ export class ResourceManager {
           
           const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
-          const profile = resource.profiles;
-          const metadata = profile?.user_metadata || {};
+          const creator = resource.creator;
+          const metadata = creator?.raw_user_meta_data || {};
           
           return {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: profile ? {
-              id: profile.id,
-              name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+            owner: creator ? {
+              id: creator.id,
+              name: metadata.full_name || creator.email?.split('@')[0] || 'Anonymous',
               avatar_url: metadata.avatar_url || null,
               trust_score: 5.0, // Default until we implement trust scoring
               location: metadata.location || null,
@@ -137,10 +137,10 @@ export class ResourceManager {
         }])
         .select(`
           *,
-          profiles!resources_creator_id_fkey (
+          creator:users!resources_creator_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .single();
@@ -155,8 +155,8 @@ export class ResourceManager {
         return null;
       }
 
-      const profile = createdResource.profiles;
-      const metadata = profile?.user_metadata || {};
+      const creator = createdResource.creator;
+      const metadata = creator?.raw_user_meta_data || {};
 
       const resource = {
         ...createdResource,
@@ -164,9 +164,9 @@ export class ResourceManager {
           lat: createdResource.location.coordinates[1],
           lng: createdResource.location.coordinates[0]
         } : null,
-        owner: profile ? {
-          id: profile.id,
-          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        owner: creator ? {
+          id: creator.id,
+          name: metadata.full_name || creator.email?.split('@')[0] || 'Anonymous',
           avatar_url: metadata.avatar_url || null,
           trust_score: 5.0,
           location: metadata.location || null,

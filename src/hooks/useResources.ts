@@ -15,10 +15,10 @@ export function useResources(maxDriveMinutes = 8) {
         .from('resources')
         .select(`
           *,
-          profiles!resources_creator_id_fkey (
+          creator:users!resources_creator_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('is_active', true);
@@ -36,16 +36,16 @@ export function useResources(maxDriveMinutes = 8) {
           
           const driveMinutes = location ? await calculateDrivingTime(userLocation, location) : null;
           
-          const profile = resource.profiles;
-          const metadata = profile?.user_metadata || {};
+          const creator = resource.creator;
+          const metadata = creator?.raw_user_meta_data || {};
           
           return {
             ...resource,
             location,
             distance_minutes: driveMinutes,
-            owner: profile ? {
-              id: profile.id,
-              name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+            owner: creator ? {
+              id: creator.id,
+              name: metadata.full_name || creator.email?.split('@')[0] || 'Anonymous',
               avatar_url: metadata.avatar_url || null,
               trust_score: 5.0,
               location: metadata.location || null,
@@ -76,10 +76,10 @@ export function useResource(id: string | undefined) {
         .from('resources')
         .select(`
           *,
-          profiles!resources_creator_id_fkey (
+          creator:users!resources_creator_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .eq('id', id)
@@ -88,8 +88,8 @@ export function useResource(id: string | undefined) {
       if (error) throw error;
       if (!data) throw new Error('Resource not found');
 
-      const profile = data.profiles;
-      const metadata = profile?.user_metadata || {};
+      const creator = data.creator;
+      const metadata = creator?.raw_user_meta_data || {};
 
       return {
         ...data,
@@ -97,9 +97,9 @@ export function useResource(id: string | undefined) {
           lat: data.location.coordinates[1],
           lng: data.location.coordinates[0]
         } : null,
-        owner: profile ? {
-          id: profile.id,
-          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        owner: creator ? {
+          id: creator.id,
+          name: metadata.full_name || creator.email?.split('@')[0] || 'Anonymous',
           avatar_url: metadata.avatar_url || null,
           trust_score: 5.0,
           location: metadata.location || null,
@@ -155,10 +155,10 @@ export function useUpdateResource() {
         .eq('creator_id', user.id) // Ensure user can only update their own resources
         .select(`
           *,
-          profiles!resources_creator_id_fkey (
+          creator:users!resources_creator_id_fkey (
             id,
             email,
-            user_metadata
+            raw_user_meta_data
           )
         `)
         .single();
@@ -172,8 +172,8 @@ export function useUpdateResource() {
         throw new Error('Failed to update resource');
       }
 
-      const profile = updatedResource.profiles;
-      const metadata = profile?.user_metadata || {};
+      const creator = updatedResource.creator;
+      const metadata = creator?.raw_user_meta_data || {};
 
       const transformedResource: Resource = {
         ...updatedResource,
@@ -181,9 +181,9 @@ export function useUpdateResource() {
           lat: updatedResource.location.coordinates[1],
           lng: updatedResource.location.coordinates[0]
         } : null,
-        owner: profile ? {
-          id: profile.id,
-          name: metadata.full_name || profile.email?.split('@')[0] || 'Anonymous',
+        owner: creator ? {
+          id: creator.id,
+          name: metadata.full_name || creator.email?.split('@')[0] || 'Anonymous',
           avatar_url: metadata.avatar_url || null,
           trust_score: 5.0,
           location: metadata.location || null,
