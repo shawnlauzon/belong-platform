@@ -4,4 +4,7 @@ By default, this template supports JSX syntax with Tailwind CSS classes, React h
 
 Use icons from lucide-react for logos.
 
-The UI components should never make changes to the model or to the database. Components only emit events, and Features read these events to make model / supabase changes and then emit events when complete. The UI listens to events to make real-time changes.
+Events Trigger Mutations - Never call mutations directly from UI components
+Mutations Emit Completion Events - Use React Query's onSuccess/onError callbacks
+Centralized Cache Invalidation - Event handlers coordinate React Query invalidation
+Direct Cache Updates - For immediate feedback, use queryClient.setQueryData()
