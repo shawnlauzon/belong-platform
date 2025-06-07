@@ -199,6 +199,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     logger.debug('👤 ProfileEditor: Images uploaded:', { count: urls.length });
     
     if (urls.length > 0) {
+      // For now, we'll store the blob URL directly
+      // In a production app, you would upload to Supabase Storage first
       setValue('avatar_url', urls[0]);
       logUserAction('profile_image_uploaded', { url: urls[0] });
     }
@@ -222,13 +224,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
           
           setLocation(newLocation);
           
-          // Try to reverse geocode to get zip code
-          const estimatedZipCode = getZipCodeFromCoordinates(newLocation);
-          if (estimatedZipCode) {
-            setDisplayedZipCode(estimatedZipCode);
-            setCurrentZipCode(estimatedZipCode);
-            setValue('zipCode', estimatedZipCode);
-          }
+          // Don't estimate zip code anymore - removed as requested
         },
         (error) => {
           logger.error('❌ ProfileEditor: Geolocation error:', {
@@ -334,7 +330,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                 </p>
                 <ImageUpload 
                   onImagesUploaded={handleImageUploaded} 
-                  maxImages={1} 
+                  maxImages={1}
+                  existingImages={getCurrentAvatarUrl() ? [getCurrentAvatarUrl()] : []}
                 />
               </div>
             </div>
@@ -447,50 +444,4 @@ function getCoordinatesFromZipCode(zipCode: string): Coordinates | null {
   };
 
   return zipCodeMap[zipCode] || null;
-}
-
-// Reverse geocoding - estimate zip code from coordinates
-function getZipCodeFromCoordinates(coordinates: Coordinates): string | null {
-  const zipCodeMap: Record<string, Coordinates> = {
-    // Austin, TX area
-    '78701': { lat: 30.2672, lng: -97.7431 },
-    '78702': { lat: 30.2500, lng: -97.7300 },
-    '78703': { lat: 30.2800, lng: -97.7600 },
-    '78704': { lat: 30.2400, lng: -97.7500 },
-    '78705': { lat: 30.2900, lng: -97.7400 },
-    '78731': { lat: 30.3200, lng: -97.7800 },
-    '78732': { lat: 30.3500, lng: -97.8200 },
-    '78745': { lat: 30.2200, lng: -97.7800 },
-    '78746': { lat: 30.2700, lng: -97.8000 },
-    '78748': { lat: 30.2000, lng: -97.8000 },
-    '78749': { lat: 30.2300, lng: -97.8200 },
-    '78750': { lat: 30.4000, lng: -97.7500 },
-    '78751': { lat: 30.3100, lng: -97.7200 },
-    '78752': { lat: 30.3000, lng: -97.7000 },
-    '78753': { lat: 30.3300, lng: -97.6800 },
-    '78754': { lat: 30.3400, lng: -97.6500 },
-    '78756': { lat: 30.3200, lng: -97.7300 },
-    '78757': { lat: 30.3500, lng: -97.7300 },
-    '78758': { lat: 30.3800, lng: -97.7000 },
-    '78759': { lat: 30.4000, lng: -97.7200 },
-  };
-
-  // Find the closest zip code
-  let closestZip = null;
-  let minDistance = Infinity;
-
-  for (const [zipCode, zipCoords] of Object.entries(zipCodeMap)) {
-    const distance = Math.sqrt(
-      Math.pow(coordinates.lat - zipCoords.lat, 2) + 
-      Math.pow(coordinates.lng - zipCoords.lng, 2)
-    );
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestZip = zipCode;
-    }
-  }
-
-  // Only return if within reasonable distance (about 0.05 degrees ~ 3 miles)
-  return minDistance < 0.05 ? closestZip : null;
 }

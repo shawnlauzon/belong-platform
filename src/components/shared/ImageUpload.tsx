@@ -10,15 +10,19 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = [] }: ImageUploadProps) {
-  const [images, setImages] = useState<string[]>(existingImages);
+  const [images, setImages] = useState<string[]>([]);
 
   // Update images when existingImages prop changes
   React.useEffect(() => {
-    if (existingImages.length > 0 && images.length === 0) {
-      setImages(existingImages);
-      logger.debug('📷 ImageUpload: Set existing images:', { count: existingImages.length });
+    if (existingImages.length > 0) {
+      // Filter out any invalid URLs
+      const validImages = existingImages.filter(url => url && url.trim() !== '');
+      if (validImages.length > 0) {
+        setImages(validImages);
+        logger.debug('📷 ImageUpload: Set existing images:', { count: validImages.length });
+      }
     }
-  }, [existingImages, images.length]);
+  }, [existingImages]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (images.length >= maxImages) return;
@@ -32,13 +36,11 @@ export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = 
     // Process only up to the maximum allowed number of images
     const filesToProcess = acceptedFiles.slice(0, maxImages - images.length);
 
-    // In a real application, you would upload these files to a storage service
-    // For now, we'll create object URLs for preview and simulate upload
+    // Create object URLs for preview
+    // In a production app, you would upload these to Supabase Storage
     const newImageUrls = filesToProcess.map(file => {
       const objectUrl = URL.createObjectURL(file);
       
-      // Simulate upload process - in production, you'd upload to Supabase Storage
-      // and get back permanent URLs
       logger.debug('📷 ImageUpload: Processing file:', {
         fileName: file.name,
         fileSize: file.size,
@@ -46,12 +48,11 @@ export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = 
         objectUrl
       });
       
-      // For demo purposes, we'll use the object URL
-      // In production, this would be replaced with the uploaded file URL
       return objectUrl;
     });
 
-    const updatedImages = [...images, ...newImageUrls];
+    // Replace existing images with new ones (for single image uploads like avatars)
+    const updatedImages = maxImages === 1 ? newImageUrls : [...images, ...newImageUrls];
     
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
@@ -59,12 +60,14 @@ export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = 
     logUserAction('images_uploaded', {
       newImageCount: newImageUrls.length,
       totalImageCount: updatedImages.length,
-      fileNames: filesToProcess.map(f => f.name)
+      fileNames: filesToProcess.map(f => f.name),
+      isReplacement: maxImages === 1
     });
 
     logger.info('📷 ImageUpload: Images uploaded successfully:', {
       newCount: newImageUrls.length,
-      totalCount: updatedImages.length
+      totalCount: updatedImages.length,
+      isReplacement: maxImages === 1
     });
 
     // Clean up object URLs when component unmounts
@@ -130,7 +133,9 @@ export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = 
             <p className="text-sm text-warmgray-600">
               {images.length >= maxImages 
                 ? `Maximum of ${maxImages} images reached` 
-                : `Drag & drop images or click to select (${images.length}/${maxImages})`}
+                : maxImages === 1 
+                  ? 'Drag & drop an image or click to select'
+                  : `Drag & drop images or click to select (${images.length}/${maxImages})`}
             </p>
           )}
           <p className="text-xs text-warmgray-500">
@@ -141,17 +146,19 @@ export function ImageUpload({ onImagesUploaded, maxImages = 3, existingImages = 
       
       {/* Image preview */}
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className={`grid gap-3 ${maxImages === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
           {images.map((url, index) => (
             <div key={index} className="relative group">
               <img 
                 src={url} 
                 alt={`Preview ${index + 1}`} 
-                className="w-full h-20 object-cover rounded-md" 
+                className={`w-full object-cover rounded-md ${maxImages === 1 ? 'h-32' : 'h-20'}`}
                 onError={(e) => {
                   logger.warn('📷 ImageUpload: Image failed to load:', { url, index });
                   // Handle broken images gracefully
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  const target = e.target as HTMLImageElement;
+                  target.style.opacity = '0.5';
+                  target.alt = 'Failed to load image';
                 }}
               />
               <button 
