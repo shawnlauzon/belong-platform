@@ -151,6 +151,41 @@ export class StorageManager {
     }
   }
 
+  static extractPathFromUrl(url: string): string | null {
+    logger.debug('🗄️ StorageManager: Extracting path from URL:', { url });
+
+    try {
+      // Parse the URL to extract the path
+      const urlObj = new URL(url);
+      
+      // Supabase storage URLs typically follow this pattern:
+      // https://[project-ref].supabase.co/storage/v1/object/public/[bucket-name]/[file-path]
+      const pathSegments = urlObj.pathname.split('/');
+      
+      // Find the bucket name in the path
+      const bucketIndex = pathSegments.findIndex(segment => segment === this.bucketName);
+      
+      if (bucketIndex === -1 || bucketIndex === pathSegments.length - 1) {
+        logger.warn('🗄️ StorageManager: Could not find bucket in URL path:', { url, bucketName: this.bucketName });
+        return null;
+      }
+      
+      // Extract the file path after the bucket name
+      const filePath = pathSegments.slice(bucketIndex + 1).join('/');
+      
+      if (!filePath) {
+        logger.warn('🗄️ StorageManager: No file path found in URL:', { url });
+        return null;
+      }
+      
+      logger.debug('✅ StorageManager: Extracted file path:', { url, filePath });
+      return filePath;
+    } catch (error) {
+      logger.error('❌ StorageManager: Failed to extract path from URL:', { url, error });
+      return null;
+    }
+  }
+
   static async deleteFile(filePath: string): Promise<boolean> {
     logger.debug('🗄️ StorageManager: Deleting file:', { filePath });
 
