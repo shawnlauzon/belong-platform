@@ -86,6 +86,13 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
   };
 }
 
+export interface CommunityChangedEvent extends BaseEvent {
+  type: 'community.changed';
+  data: {
+    communityId: string;
+  };
+}
+
 // Profile Events
 export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
@@ -179,7 +186,7 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
   };
 }
 
-export type AppEvent = 
+export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
   | AuthSignInSuccessEvent
@@ -189,6 +196,7 @@ export type AppEvent =
   | CommunityCreateRequestedEvent
   | CommunityCreatedEvent
   | CommunityCreateFailedEvent
+  | CommunityChangedEvent
   | ProfileUpdateRequestedEvent
   | ProfileUpdatedEvent
   | ProfileUpdateFailedEvent
