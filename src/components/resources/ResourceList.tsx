@@ -8,9 +8,10 @@ interface ResourceListProps {
   resources: Resource[];
   isLoading: boolean;
   onRequestResource: (resourceId: string) => void;
+  onEditResource?: (resourceId: string) => void;
 }
 
-export function ResourceList({ resources, isLoading, onRequestResource }: ResourceListProps) {
+export function ResourceList({ resources, isLoading, onRequestResource, onEditResource }: ResourceListProps) {
   const [filter, setFilter] = useState<ResourceFilter>({
     category: 'all',
     type: 'all',
@@ -128,6 +129,7 @@ export function ResourceList({ resources, isLoading, onRequestResource }: Resour
               key={resource.id} 
               resource={resource}
               onRequest={onRequestResource}
+              onEdit={onEditResource}
             />
           ))}
         </div>

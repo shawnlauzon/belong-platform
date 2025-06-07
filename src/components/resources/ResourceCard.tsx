@@ -5,16 +5,21 @@ import { Badge } from '@/components/ui/badge';
 import { TrustBadge } from '@/components/trust/TrustBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatTimeAgo, truncateText } from '@/lib/utils';
-import { MapPin, Clock, CarFront } from 'lucide-react';
+import { MapPin, Clock, CarFront, Edit } from 'lucide-react';
 import { Resource } from '@/types';
 import { Link } from '@tanstack/react-router';
+import { useAuth } from '@/lib/auth';
 
 interface ResourceCardProps {
   resource: Resource;
   onRequest?: (resourceId: string) => void;
+  onEdit?: (resourceId: string) => void;
 }
 
-export function ResourceCard({ resource, onRequest }: ResourceCardProps) {
+export function ResourceCard({ resource, onRequest, onEdit }: ResourceCardProps) {
+  const { user } = useAuth();
+  const isOwner = user?.id === resource.creator_id;
+
   const getCategoryVariant = (category: string) => {
     const variants: Record<string, any> = {
       tools: 'tools',
@@ -51,6 +56,21 @@ export function ResourceCard({ resource, onRequest }: ResourceCardProps) {
         <div className="absolute top-2 right-2">
           <TrustBadge score={resource.owner?.trust_score || 0} />
         </div>
+
+        {/* Edit button for resource owner */}
+        {isOwner && onEdit && (
+          <div className="absolute bottom-2 right-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onEdit(resource.id)}
+              className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm"
+              title="Edit resource"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
       
       <CardHeader className="pb-2">
@@ -101,13 +121,15 @@ export function ResourceCard({ resource, onRequest }: ResourceCardProps) {
           </div>
         </div>
         
-        <Button 
-          size="sm" 
-          onClick={() => onRequest?.(resource.id)}
-          className="whitespace-nowrap"
-        >
-          {resource.type === 'offer' ? 'Request' : 'Offer Help'}
-        </Button>
+        {!isOwner && onRequest && (
+          <Button 
+            size="sm" 
+            onClick={() => onRequest(resource.id)}
+            className="whitespace-nowrap"
+          >
+            {resource.type === 'offer' ? 'Request' : 'Offer Help'}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

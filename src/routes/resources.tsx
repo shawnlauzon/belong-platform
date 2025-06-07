@@ -4,10 +4,13 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { ResourceList } from '@/components/resources/ResourceList';
 import { ResourceMap } from '@/components/resources/ResourceMap';
 import { ResourceForm } from '@/components/resources/ResourceForm';
+import { EditResourceDialog } from '@/components/resources/EditResourceDialog';
 import { Button } from '@/components/ui/button';
-import { useResources } from '@/hooks/useResources';
+import { useResources, useResource } from '@/hooks/useResources';
 import { useAppStore } from '@/core/state';
+import { Resource } from '@/types';
 import { Plus, List, MapPin } from 'lucide-react';
+import { logger, logUserAction } from '@/lib/logger';
 
 export const Route = createFileRoute('/resources')({
   component: ResourcesPage,
@@ -17,14 +20,45 @@ function ResourcesPage() {
   const userLocation = useAppStore(state => state.userLocation);
   const [viewType, setViewType] = useState<'list' | 'map'>('list');
   const [showForm, setShowForm] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
+  
   const { data: resources = [], isLoading } = useResources(8);
+  const { data: editingResource } = useResource(editingResourceId || '');
 
   const handleRequestResource = (resourceId: string) => {
+    logger.info('📦 ResourcesPage: Resource request clicked:', { resourceId });
+    logUserAction('resource_request_clicked', { resourceId });
     alert(`Requesting resource: ${resourceId}`);
   };
   
+  const handleEditResource = (resourceId: string) => {
+    logger.info('📦 ResourcesPage: Edit resource clicked:', { resourceId });
+    logUserAction('resource_edit_clicked', { resourceId });
+    
+    setEditingResourceId(resourceId);
+    setShowEditDialog(true);
+  };
+  
   const handleFormComplete = () => {
+    logger.debug('📦 ResourcesPage: Form completed');
     setShowForm(false);
+  };
+
+  const handleEditComplete = (updatedResource: Resource) => {
+    logger.info('📦 ResourcesPage: Resource edit completed:', { 
+      resourceId: updatedResource.id,
+      title: updatedResource.title 
+    });
+    
+    setShowEditDialog(false);
+    setEditingResourceId(null);
+  };
+
+  const handleEditDialogClose = () => {
+    logger.debug('📦 ResourcesPage: Edit dialog closed');
+    setShowEditDialog(false);
+    setEditingResourceId(null);
   };
   
   return (
@@ -84,10 +118,19 @@ function ResourcesPage() {
               resources={resources}
               isLoading={isLoading}
               onRequestResource={handleRequestResource}
+              onEditResource={handleEditResource}
             />
           )}
         </>
       )}
+
+      {/* Edit Resource Dialog */}
+      <EditResourceDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        resource={editingResource || null}
+        onResourceUpdated={handleEditComplete}
+      />
     </AppLayout>
   );
 }
