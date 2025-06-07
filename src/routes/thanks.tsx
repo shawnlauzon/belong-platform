@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ThanksFeed } from '@/components/thanks/ThanksFeed';
-import { ThanksManager } from '@/features/thanks/ThanksManager';
+import { useThanks } from '@/hooks/useThanks';
+import { useAuth } from '@/lib/auth';
 import { useAppStore } from '@/core/state';
 import { Thanks } from '@/types';
 import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
@@ -14,31 +15,22 @@ export const Route = createFileRoute('/thanks')({
 });
 
 function ThanksPage() {
-  const [thanks, setThanks] = useState<Thanks[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'given' | 'received'>('all');
-  const currentCommunity = useAppStore(state => state.currentCommunity);
+  const { user } = useAuth();
   const viewMode = useAppStore(state => state.viewMode);
   
-  // Load thanks on community change
-  React.useEffect(() => {
-    const loadThanks = async () => {
-      setIsLoading(true);
-      const feed = await ThanksManager.getThanksFeed(currentCommunity.id);
-      setThanks(feed);
-      setIsLoading(false);
-    };
-    
-    loadThanks();
-  }, [currentCommunity.id]);
+  // Use the new hook to fetch thanks from the database
+  const { data: thanks = [], isLoading } = useThanks();
   
   // Filter the thanks based on the selected filter
   const filteredThanks = React.useMemo(() => {
+    if (!user) return thanks;
+    
     if (filter === 'all') return thanks;
-    if (filter === 'given') return thanks.filter(t => t.from_member_id === '1'); // Current user ID
-    if (filter === 'received') return thanks.filter(t => t.to_member_id === '1'); // Current user ID
+    if (filter === 'given') return thanks.filter(t => t.from_member_id === user.id);
+    if (filter === 'received') return thanks.filter(t => t.to_member_id === user.id);
     return thanks;
-  }, [thanks, filter]);
+  }, [thanks, filter, user]);
   
   return (
     <AppLayout>
@@ -53,7 +45,7 @@ function ThanksPage() {
         </div>
         
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          {viewMode === 'member' && (
+          {viewMode === 'member' && user && (
             <div className="bg-white rounded-lg shadow-sm flex p-1">
               <Button
                 variant={filter === 'all' ? 'default' : 'ghost'}

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceCard } from '@/components/resources/ResourceCard';
 import { ThanksFeed } from '@/components/thanks/ThanksFeed';
 import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
-import { mockThanks } from '@/api/mockData';
+import { useThanks } from '@/hooks/useThanks';
 import { useAppStore } from '@/core/state';
 import { useResources } from '@/hooks/useResources';
 import { Plus, ChevronRight, Users } from 'lucide-react';
@@ -29,8 +29,9 @@ function HomePage() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { user } = useAuth();
   
-  // Use React Query to fetch resources
-  const { data: resources = [], isLoading } = useResources(8);
+  // Use React Query to fetch resources and thanks
+  const { data: resources = [], isLoading: resourcesLoading } = useResources(8);
+  const { data: thanks = [], isLoading: thanksLoading } = useThanks();
   
   // Get the 3 closest resources
   const nearbyResources = React.useMemo(() => {
@@ -38,6 +39,11 @@ function HomePage() {
       .sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100))
       .slice(0, 3);
   }, [resources]);
+
+  // Get the 2 most recent thanks
+  const recentThanks = React.useMemo(() => {
+    return thanks.slice(0, 2);
+  }, [thanks]);
   
   const handleResourceRequest = (resourceId: string) => {
     logUserAction('resource_request_clicked', { resourceId, hasUser: !!user });
@@ -139,7 +145,7 @@ function HomePage() {
                 </Button>
               </div>
               
-              {isLoading ? (
+              {resourcesLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="bg-white rounded-lg shadow-sm h-[200px] animate-pulse" />
@@ -178,7 +184,7 @@ function HomePage() {
                 </Button>
               </div>
               
-              <ThanksFeed thanks={mockThanks.slice(0, 2)} />
+              <ThanksFeed thanks={recentThanks} isLoading={thanksLoading} />
             </div>
           </div>
 
@@ -204,12 +210,12 @@ function HomePage() {
                   <div className="text-sm text-warmgray-500">Members</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">87</div>
+                  <div className="text-2xl font-bold text-primary-600">{resources.length}</div>
                   <div className="text-sm text-warmgray-500">Active Resources</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">32</div>
-                  <div className="text-sm text-warmgray-500">Thanks This Week</div>
+                  <div className="text-2xl font-bold text-primary-600">{thanks.length}</div>
+                  <div className="text-sm text-warmgray-500">Total Thanks</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
                   <div className="text-2xl font-bold text-primary-600">7.2</div>
