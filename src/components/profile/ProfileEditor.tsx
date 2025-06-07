@@ -10,6 +10,7 @@ import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
 import { useAuth } from '@/lib/auth';
 import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
+import { StorageManager } from '@/lib/storage';
 import { Coordinates } from '@/types';
 import { getInitials } from '@/lib/utils';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
@@ -59,6 +60,13 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   });
 
   const watchedValues = watch();
+
+  // Initialize storage bucket on component mount
+  React.useEffect(() => {
+    StorageManager.initializeBucket().catch(error => {
+      logger.warn('⚠️ ProfileEditor: Failed to initialize storage bucket:', error);
+    });
+  }, []);
 
   // Set default values when profile loads
   React.useEffect(() => {
@@ -148,7 +156,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     logUserAction('profile_update_attempt', {
       userId: user.id,
       hasLocation: !!location,
-      hasAddress: !!currentAddress
+      hasAddress: !!currentAddress,
+      hasAvatar: !!data.avatar_url
     });
 
     setIsSubmitting(true);
@@ -180,13 +189,22 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   };
 
   const handleImageUploaded = (urls: string[]) => {
-    logger.debug('👤 ProfileEditor: Images uploaded:', { count: urls.length });
+    logger.debug('👤 ProfileEditor: Images uploaded to storage:', { count: urls.length });
     
     if (urls.length > 0) {
-      // For now, we'll store the blob URL directly
-      // In a production app, you would upload to Supabase Storage first
+      // Delete old avatar from storage if it exists
+      const oldAvatarUrl = watchedValues.avatar_url || initialValues.avatar_url;
+      if (oldAvatarUrl) {
+        const oldPath = StorageManager.extractPathFromUrl(oldAvatarUrl);
+        if (oldPath) {
+          StorageManager.deleteFile(oldPath).catch(error => {
+            logger.warn('⚠️ ProfileEditor: Failed to delete old avatar:', error);
+          });
+        }
+      }
+
       setValue('avatar_url', urls[0]);
-      logUserAction('profile_image_uploaded', { url: urls[0] });
+      logUserAction('profile_image_uploaded_to_storage', { url: urls[0] });
     }
   };
 
@@ -326,6 +344,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                   onImagesUploaded={handleImageUploaded} 
                   maxImages={1}
                   existingImages={getCurrentAvatarUrl() ? [getCurrentAvatarUrl()] : []}
+                  folder="avatars"
                 />
               </div>
             </div>
