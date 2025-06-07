@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/ImageUpload';
-import { useCreateThanks } from '@/hooks/useThanks';
+import { eventBus } from '@/core/eventBus';
 import { useAuth } from '@/lib/auth';
 import { Member } from '@/types';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
@@ -37,11 +37,41 @@ export function ThanksForm({
   
   const { user } = useAuth();
   const [images, setImages] = useState<string[]>([]);
-  const createThanksMutation = useCreateThanks();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ThanksFormData>({
     resolver: zodResolver(thanksSchema),
   });
+
+  // Listen for thanks events
+  useEffect(() => {
+    const unsubscribeCreated = eventBus.on('thanks.created', () => {
+      logger.info('✅ ThanksForm: Thanks created successfully');
+      setIsSubmitting(false);
+      setError(null);
+      
+      // Reset form
+      reset();
+      setImages([]);
+      
+      // Call completion callback
+      if (onComplete) {
+        onComplete();
+      }
+    });
+
+    const unsubscribeFailed = eventBus.on('thanks.create.failed', (event) => {
+      logger.error('❌ ThanksForm: Thanks creation failed:', event.data.error);
+      setIsSubmitting(false);
+      setError(event.data.error);
+    });
+
+    return () => {
+      unsubscribeCreated();
+      unsubscribeFailed();
+    };
+  }, [onComplete, reset]);
   
   const onSubmit = async (data: ThanksFormData) => {
     if (!user) {
@@ -65,40 +95,18 @@ export function ThanksForm({
       hasImpact: !!data.impact_description,
       imageCount: images.length
     });
+
+    setIsSubmitting(true);
+    setError(null);
     
-    try {
-      await createThanksMutation.mutateAsync({
-        to_user_id: recipientId,
-        resource_id: resourceId,
-        message: data.message,
-        image_urls: images,
-        impact_description: data.impact_description,
-      });
-      
-      logUserAction('thanks_create_success', {
-        resourceId,
-        recipientId,
-        resourceTitle
-      });
-      
-      logger.info('✅ ThanksForm: Thanks created successfully');
-      
-      // Reset form
-      reset();
-      setImages([]);
-      
-      // Call completion callback
-      if (onComplete) {
-        onComplete();
-      }
-    } catch (error) {
-      logger.error('❌ ThanksForm: Error creating thanks:', error);
-      logUserAction('thanks_create_error', {
-        resourceId,
-        recipientId,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+    // Emit thanks creation request
+    eventBus.emit('thanks.create.requested', {
+      to_user_id: recipientId,
+      resource_id: resourceId,
+      message: data.message,
+      image_urls: images,
+      impact_description: data.impact_description,
+    });
   };
   
   return (
@@ -131,7 +139,7 @@ export function ThanksForm({
               {...register('message')}
               className={`w-full border ${errors.message ? 'border-red-300' : 'border-gray-200'} rounded-md p-2 text-sm min-h-[100px]`}
               placeholder="Express how this helped you or made you feel..."
-              disabled={createThanksMutation.isPending}
+              disabled={isSubmitting}
             />
             {errors.message && (
               <p className="text-xs text-red-500">{errors.message.message}</p>
@@ -146,7 +154,7 @@ export function ThanksForm({
               {...register('impact_description')}
               className="w-full border border-gray-200 rounded-md p-2 text-sm"
               placeholder="Optional: Share how this made a difference for you..."
-              disabled={createThanksMutation.isPending}
+              disabled={isSubmitting}
             />
           </div>
           
@@ -161,6 +169,13 @@ export function ThanksForm({
               folder="thanks"
             />
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
         </CardContent>
         
         <CardFooter className="flex justify-end gap-2">
@@ -168,15 +183,15 @@ export function ThanksForm({
             type="button" 
             variant="outline" 
             onClick={onComplete}
-            disabled={createThanksMutation.isPending}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
-            disabled={createThanksMutation.isPending}
+            disabled={isSubmitting}
           >
-            {createThanksMutation.isPending ? 'Sending...' : 'Send Thanks'}
+            {isSubmitting ? 'Sending...' : 'Send Thanks'}
           </Button>
         </CardFooter>
       </form>

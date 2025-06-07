@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
-import { useAuth } from '@/lib/auth';
-import { useProfile } from '@/hooks/useProfile';
 import { LocationPicker } from '@/components/shared/LocationPicker';
 import { StorageManager } from '@/lib/storage';
+import { eventBus } from '@/core/eventBus';
+import { useAuth } from '@/lib/auth';
+import { useProfile } from '@/hooks/useProfile';
 import { Coordinates } from '@/types';
 import { getInitials } from '@/lib/utils';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
@@ -32,7 +33,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   logComponentRender('ProfileEditor');
   
   const { user } = useAuth();
-  const { data: profile, updateProfile } = useProfile(user?.id);
+  const { data: profile } = useProfile(user?.id);
   const [location, setLocation] = React.useState<Coordinates | null>(
     profile?.user_metadata?.location || null
   );
@@ -48,6 +49,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   });
   const [initialLocation, setInitialLocation] = React.useState<Coordinates | null>(null);
   const [initialAddress, setInitialAddress] = React.useState<string>('');
+  const [error, setError] = React.useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -60,6 +62,34 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   });
 
   const watchedValues = watch();
+
+  // Listen for profile events
+  useEffect(() => {
+    const unsubscribeUpdated = eventBus.on('profile.updated', (event) => {
+      if (event.data.userId === user?.id) {
+        logger.info('✅ ProfileEditor: Profile updated successfully');
+        setIsSubmitting(false);
+        setError(null);
+        
+        if (onSaveComplete) {
+          onSaveComplete();
+        }
+      }
+    });
+
+    const unsubscribeFailed = eventBus.on('profile.update.failed', (event) => {
+      if (event.data.userId === user?.id) {
+        logger.error('❌ ProfileEditor: Profile update failed:', event.data.error);
+        setIsSubmitting(false);
+        setError(event.data.error);
+      }
+    });
+
+    return () => {
+      unsubscribeUpdated();
+      unsubscribeFailed();
+    };
+  }, [user?.id, onSaveComplete]);
 
   // Set default values when profile loads
   React.useEffect(() => {
@@ -154,9 +184,12 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     });
 
     setIsSubmitting(true);
+    setError(null);
 
-    try {
-      await updateProfile({
+    // Emit profile update request
+    eventBus.emit('profile.update.requested', {
+      userId: user.id,
+      metadata: {
         first_name: data.firstName,
         last_name: data.lastName,
         full_name: `${data.firstName} ${data.lastName}`,
@@ -164,21 +197,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         location,
         address: currentAddress,
         address_bbox: addressBbox,
-      });
-      
-      logUserAction('profile_update_success', { userId: user.id });
-      logger.info('✅ ProfileEditor: Profile updated successfully');
-      
-      // Call the completion callback to return to view mode
-      if (onSaveComplete) {
-        onSaveComplete();
-      }
-    } catch (error) {
-      logger.error('❌ ProfileEditor: Error updating profile:', error);
-      logUserAction('profile_update_error', { userId: user.id, error: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+      },
+    });
   };
 
   const handleImageUploaded = (urls: string[]) => {
@@ -300,6 +320,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                 {...register('firstName')}
                 className="w-full border rounded-md p-2"
                 placeholder="Enter your first name"
+                disabled={isSubmitting}
               />
               {errors.firstName && (
                 <p className="text-xs text-red-500">{errors.firstName.message}</p>
@@ -313,6 +334,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                 {...register('lastName')}
                 className="w-full border rounded-md p-2"
                 placeholder="Enter your last name"
+                disabled={isSubmitting}
               />
               {errors.lastName && (
                 <p className="text-xs text-red-500">{errors.lastName.message}</p>
@@ -374,6 +396,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                   variant="outline"
                   size="sm"
                   onClick={handleUseCurrentLocation}
+                  disabled={isSubmitting}
                 >
                   Use Current Location
                 </Button>
@@ -390,6 +413,13 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
               </p>
             </div>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button 

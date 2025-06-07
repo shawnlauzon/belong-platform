@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/lib/auth';
+import { eventBus } from '@/core/eventBus';
 import {
   Dialog,
   DialogContent,
@@ -30,10 +30,48 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   logComponentRender('AuthDialog', { open });
   
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const { signIn, signUp } = useAuth();
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<AuthFormData>({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const { register, handleSubmit, formState: { errors }, setError: setFormError } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   });
+
+  // Listen for auth events
+  useEffect(() => {
+    const unsubscribeSignInSuccess = eventBus.on('auth.signIn.success', () => {
+      logger.info('✅ AuthDialog: Sign in successful');
+      setIsSubmitting(false);
+      setError(null);
+      onOpenChange(false);
+    });
+
+    const unsubscribeSignUpSuccess = eventBus.on('auth.signUp.success', () => {
+      logger.info('✅ AuthDialog: Sign up successful');
+      setIsSubmitting(false);
+      setError(null);
+      onOpenChange(false);
+    });
+
+    const unsubscribeSignInFailed = eventBus.on('auth.signIn.failed', (event) => {
+      logger.error('❌ AuthDialog: Sign in failed:', event.data.error);
+      setIsSubmitting(false);
+      setError(event.data.error);
+    });
+
+    const unsubscribeSignUpFailed = eventBus.on('auth.signUp.failed', (event) => {
+      logger.error('❌ AuthDialog: Sign up failed:', event.data.error);
+      setIsSubmitting(false);
+      setError(event.data.error);
+    });
+
+    return () => {
+      unsubscribeSignInSuccess();
+      unsubscribeSignUpSuccess();
+      unsubscribeSignInFailed();
+      unsubscribeSignUpFailed();
+    };
+  }, [onOpenChange]);
 
   const onSubmit = async (data: AuthFormData) => {
     logger.debug('🔐 Auth form submitted:', {
@@ -43,64 +81,34 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       hasLastName: !!data.lastName
     });
     
-    try {
-      logUserAction(`auth_${mode}_attempt`, { email: data.email });
-      
-      if (mode === 'signin') {
-        logger.debug('📝 Attempting sign in...');
-        await signIn(data.email, data.password);
-        logger.info('✅ Sign in successful');
-      } else {
-        logger.debug('📝 Attempting sign up...');
-        await signUp(data.email, data.password, {
+    setIsSubmitting(true);
+    setError(null);
+    
+    logUserAction(`auth_${mode}_attempt`, { email: data.email });
+    
+    if (mode === 'signin') {
+      logger.debug('📝 Emitting sign in request...');
+      eventBus.emit('auth.signIn.requested', {
+        email: data.email,
+        password: data.password,
+      });
+    } else {
+      logger.debug('📝 Emitting sign up request...');
+      eventBus.emit('auth.signUp.requested', {
+        email: data.email,
+        password: data.password,
+        metadata: {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
-        });
-        logger.info('✅ Sign up successful');
-      }
-      
-      logUserAction(`auth_${mode}_success`, { email: data.email });
-      onOpenChange(false);
-    } catch (error) {
-      logger.error(`❌ ${mode} failed:`, error);
-      
-      // Log detailed error information
-      if (error && typeof error === 'object') {
-        logger.error('  Error details:', {
-          message: (error as any).message,
-          status: (error as any).status,
-          statusText: (error as any).statusText,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint
-        });
-      }
-      
-      // Set user-friendly error message
-      let errorMessage = 'Authentication failed. Please try again.';
-      
-      if (error && typeof error === 'object' && (error as any).message) {
-        const message = (error as any).message;
-        if (message.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.';
-        } else if (message.includes('Email not confirmed')) {
-          errorMessage = 'Please check your email and click the confirmation link.';
-        } else if (message.includes('User already registered')) {
-          errorMessage = 'An account with this email already exists. Try signing in instead.';
-        } else if (message.includes('No API key found')) {
-          errorMessage = 'Configuration error. Please contact support.';
-          logger.error('🚨 API Key Error - This suggests an Edge Function is being called without proper headers');
-        }
-      }
-      
-      logUserAction(`auth_${mode}_error`, { email: data.email, errorMessage });
-      setError('root', { message: errorMessage });
+        },
+      });
     }
   };
 
   const handleModeChange = (newMode: 'signin' | 'signup') => {
     logUserAction('auth_mode_change', { from: mode, to: newMode });
     setMode(newMode);
+    setError(null);
   };
 
   return (
@@ -122,6 +130,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   {...register('firstName')}
                   className="w-full border rounded-md p-2"
                   placeholder="Enter your first name"
+                  disabled={isSubmitting}
                 />
                 {errors.firstName && (
                   <p className="text-xs text-red-500">{errors.firstName.message}</p>
@@ -135,6 +144,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   {...register('lastName')}
                   className="w-full border rounded-md p-2"
                   placeholder="Enter your last name"
+                  disabled={isSubmitting}
                 />
                 {errors.lastName && (
                   <p className="text-xs text-red-500">{errors.lastName.message}</p>
@@ -150,6 +160,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               {...register('email')}
               className="w-full border rounded-md p-2"
               placeholder="Enter your email"
+              disabled={isSubmitting}
             />
             {errors.email && (
               <p className="text-xs text-red-500">{errors.email.message}</p>
@@ -163,15 +174,16 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               {...register('password')}
               className="w-full border rounded-md p-2"
               placeholder="Enter your password"
+              disabled={isSubmitting}
             />
             {errors.password && (
               <p className="text-xs text-red-500">{errors.password.message}</p>
             )}
           </div>
 
-          {errors.root && (
+          {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{errors.root.message}</p>
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
@@ -183,6 +195,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               type="button"
               variant="ghost"
               onClick={() => handleModeChange(mode === 'signin' ? 'signup' : 'signin')}
+              disabled={isSubmitting}
             >
               {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </Button>

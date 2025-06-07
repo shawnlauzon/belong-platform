@@ -31,7 +31,32 @@ export class ResourceManager {
         });
       } catch (error) {
         logger.error('❌ ResourceManager: Error creating resource:', error);
-        eventBus.emit('resource.create.failed', { error });
+        eventBus.emit('resource.create.failed', { 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    });
+
+    // Listen for resource update requests
+    eventBus.on('resource.update.requested', async (event: AppEvent) => {
+      if (event.type !== 'resource.update.requested') return;
+
+      logger.debug('📦 ResourceManager: Resource update requested:', event.data);
+
+      try {
+        const updatedResource = await ResourceManager.updateResource(event.data);
+
+        if (!updatedResource) throw new Error('Failed to update resource');
+
+        eventBus.emit('resource.updated', updatedResource);
+        logger.info('✅ ResourceManager: Resource updated successfully:', {
+          id: updatedResource.id,
+        });
+      } catch (error) {
+        logger.error('❌ ResourceManager: Error updating resource:', error);
+        eventBus.emit('resource.update.failed', { 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
     });
 
@@ -226,6 +251,117 @@ export class ResourceManager {
     } catch (error) {
       logger.error('❌ ResourceManager: Error creating resource:', error);
       logApiResponse('POST', '/resources', null, error);
+      return null;
+    }
+  }
+
+  static async updateResource(
+    resourceData: Partial<Resource> & { id: string }
+  ): Promise<Resource | null> {
+    const { id, ...updateData } = resourceData;
+
+    logger.debug('📦 ResourceManager: Updating resource:', {
+      id,
+      updateData,
+    });
+
+    try {
+      logApiCall('PATCH', `/resources/${id}`, updateData);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error('User must be authenticated to update resources');
+      }
+
+      // Prepare the update data
+      const dbUpdateData: any = {
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Convert location to PostGIS format if provided
+      if (updateData.location) {
+        dbUpdateData.location = `POINT(${updateData.location.lng} ${updateData.location.lat})`;
+      }
+
+      // Remove fields that shouldn't be updated directly
+      delete dbUpdateData.id;
+      delete dbUpdateData.creator_id;
+      delete dbUpdateData.created_at;
+      delete dbUpdateData.times_helped;
+      delete dbUpdateData.owner;
+      delete dbUpdateData.distance_minutes;
+
+      const { data: updatedResource, error } = await supabase
+        .from('resources')
+        .update(dbUpdateData)
+        .eq('id', id)
+        .eq('creator_id', user.id) // Ensure user can only update their own resources
+        .select(
+          `
+          *,
+          creator:profiles!resources_creator_id_fkey (
+            id,
+            email,
+            user_metadata
+          )
+        `
+        )
+        .single();
+
+      if (error) {
+        logApiResponse('PATCH', `/resources/${id}`, null, error);
+        throw error;
+      }
+
+      if (!updatedResource) {
+        throw new Error('Failed to update resource');
+      }
+
+      const creator = updatedResource.creator;
+      const metadata = creator?.user_metadata || {};
+
+      const transformedResource: Resource = {
+        ...updatedResource,
+        location: updatedResource.location
+          ? {
+              lat: updatedResource.location.coordinates[1],
+              lng: updatedResource.location.coordinates[0],
+            }
+          : null,
+        owner: creator
+          ? {
+              id: creator.id,
+              name:
+                metadata.full_name ||
+                creator.email?.split('@')[0] ||
+                'Anonymous',
+              avatar_url: metadata.avatar_url || null,
+              trust_score: 5.0,
+              location: metadata.location || null,
+              community_tenure_months: 0,
+              thanks_received: 0,
+              resources_shared: 0,
+            }
+          : null,
+      };
+
+      logApiResponse('PATCH', `/resources/${id}`, {
+        id: transformedResource.id,
+      });
+      logger.info('✅ ResourceManager: Resource updated successfully:', {
+        id: transformedResource.id,
+        title: transformedResource.title,
+      });
+
+      return transformedResource;
+    } catch (error) {
+      logger.error('❌ ResourceManager: Error updating resource:', error);
+      logApiResponse('PATCH', `/resources/${id}`, null, error);
       return null;
     }
   }

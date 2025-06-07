@@ -1,8 +1,12 @@
 import { LocationManager } from './location/LocationManager';
+import { AuthManager } from './auth/AuthManager';
+import { CommunityManager } from './communities/CommunityManager';
+import { ProfileManager } from './profile/ProfileManager';
+import { ResourceManager } from './resources/ResourceManager';
+import { ThanksManager } from './thanks/ThanksManager';
 import { eventBus } from '@/core/eventBus';
 import { useAppStore } from '@/core/state';
 import { TrustCalculator } from './trust/TrustCalculator';
-import { ResourceManager } from './resources/ResourceManager';
 import { logger, logEvent } from '@/lib/logger';
 
 // Export managers for use in the app
@@ -13,8 +17,12 @@ export const trustCalculator = TrustCalculator;
 export function initializeListeners() {
   logger.info('🎯 Initializing application event listeners...');
   
-  // Initialize resource manager
+  // Initialize all managers
+  AuthManager.initialize();
+  CommunityManager.initialize();
+  ProfileManager.initialize();
   ResourceManager.initialize();
+  ThanksManager.initialize();
 
   // Listen for location updates
   eventBus.on('location.updated', (event) => {

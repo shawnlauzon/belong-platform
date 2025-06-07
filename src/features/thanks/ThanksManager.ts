@@ -5,6 +5,45 @@ import { TrustCalculator } from '@/features/trust/TrustCalculator';
 import { logger, logApiCall, logApiResponse } from '@/lib/logger';
 
 export class ThanksManager {
+  static initialize() {
+    logger.info('🙏 ThanksManager: Initializing...');
+
+    // Listen for thanks creation requests
+    eventBus.on('thanks.create.requested', async (event) => {
+      if (event.type !== 'thanks.create.requested') return;
+
+      logger.debug('🙏 ThanksManager: Thanks creation requested:', event.data);
+
+      try {
+        const newThanks = await ThanksManager.createThanks(event.data);
+
+        if (!newThanks) throw new Error('Failed to create thanks');
+
+        eventBus.emit('thanks.created', {
+          id: newThanks.id,
+          to_member_id: newThanks.to_member_id,
+          from_member_id: newThanks.from_member_id,
+          resource_id: newThanks.resource_id,
+          message: newThanks.message,
+          image_urls: newThanks.image_urls,
+          impact_description: newThanks.impact_description,
+          created_at: newThanks.created_at,
+        });
+
+        logger.info('✅ ThanksManager: Thanks created successfully:', {
+          id: newThanks.id,
+        });
+      } catch (error) {
+        logger.error('❌ ThanksManager: Error creating thanks:', error);
+        eventBus.emit('thanks.create.failed', { 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    });
+
+    logger.info('✅ ThanksManager: Initialized');
+  }
+
   static async getThanksFeed(communityId?: string): Promise<Thanks[]> {
     logger.debug('🙏 ThanksManager: Getting thanks feed:', { communityId });
 
@@ -369,9 +408,6 @@ export class ThanksManager {
           newScore,
         });
       }
-
-      // Emit thanks created event
-      eventBus.emit('thanks.created', newThanks);
 
       logApiResponse('POST', '/thanks', { id: newThanks.id });
       logger.info('✅ ThanksManager: Thanks created:', {

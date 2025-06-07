@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { eventBus } from '@/core/eventBus';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
 import { LocationPicker } from '@/components/shared/LocationPicker';
-import { useUpdateResource } from '@/hooks/useResources';
 import { Resource, Coordinates } from '@/types';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
@@ -50,8 +50,8 @@ export function EditResourceDialog({
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [addressBbox, setAddressBbox] = useState<[number, number, number, number] | null>(null);
   const [currentAddress, setCurrentAddress] = useState<string>('');
-  
-  const updateResourceMutation = useUpdateResource();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<ResourceFormData>({
     resolver: zodResolver(resourceSchema),
@@ -69,6 +69,32 @@ export function EditResourceDialog({
   });
 
   const watchedType = watch('type');
+
+  // Listen for resource events
+  useEffect(() => {
+    const unsubscribeUpdated = eventBus.on('resource.updated', (event) => {
+      logger.info('✅ EditResourceDialog: Resource updated successfully:', event.data);
+      setIsSubmitting(false);
+      setError(null);
+      
+      if (onResourceUpdated) {
+        onResourceUpdated(event.data);
+      }
+      
+      onOpenChange(false);
+    });
+
+    const unsubscribeFailed = eventBus.on('resource.update.failed', (event) => {
+      logger.error('❌ EditResourceDialog: Resource update failed:', event.data.error);
+      setIsSubmitting(false);
+      setError(event.data.error);
+    });
+
+    return () => {
+      unsubscribeUpdated();
+      unsubscribeFailed();
+    };
+  }, [onResourceUpdated, onOpenChange]);
 
   // Set form values when resource changes
   useEffect(() => {
@@ -106,6 +132,8 @@ export function EditResourceDialog({
       setLocation(null);
       setAddressBbox(null);
       setCurrentAddress('');
+      setIsSubmitting(false);
+      setError(null);
     }
   }, [open, reset]);
 
@@ -140,38 +168,17 @@ export function EditResourceDialog({
       newCategory: data.category
     });
 
-    try {
-      const updatedResource = await updateResourceMutation.mutateAsync({
-        id: resource.id,
-        ...data,
-        image_urls: images,
-        location: location || undefined,
-      });
+    setIsSubmitting(true);
+    setError(null);
 
-      logger.info('✅ EditResourceDialog: Resource updated successfully:', updatedResource);
-      logUserAction('resource_update_success', {
-        resourceId: resource.id,
-        title: updatedResource.title
-      });
-
-      // Call the callback if provided
-      if (onResourceUpdated) {
-        onResourceUpdated(updatedResource);
-      }
-
-      // Close dialog
-      onOpenChange(false);
-
-    } catch (error) {
-      logger.error('❌ EditResourceDialog: Error updating resource:', error);
-      logUserAction('resource_update_error', { 
-        resourceId: resource.id,
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      });
-    }
+    // Emit resource update request
+    eventBus.emit('resource.update.requested', {
+      id: resource.id,
+      ...data,
+      image_urls: images,
+      location: location || undefined,
+    });
   };
-
-  const isSubmitting = updateResourceMutation.isPending;
 
   if (!resource) {
     return null;
@@ -386,6 +393,13 @@ export function EditResourceDialog({
                 Resource is active and available
               </label>
             </div>
+
+            {/* Error Display */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
