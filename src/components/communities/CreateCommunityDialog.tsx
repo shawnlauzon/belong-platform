@@ -70,6 +70,7 @@ export function CreateCommunityDialog({
   });
 
   const watchedLevel = watch('level');
+  const watchedName = watch('name');
 
   const handleAddressChange = (address: string, coordinates: Coordinates | null, bbox?: [number, number, number, number]) => {
     logger.debug('🏘️ CreateCommunityDialog: Address changed:', { address, coordinates, bbox });
@@ -302,7 +303,7 @@ export function CreateCommunityDialog({
             </div>
 
             {/* Preview */}
-            {(selectedCountry || selectedState || data.name) && (
+            {(selectedCountry || selectedState || watchedName) && (
               <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-warmgray-700">Community Hierarchy Preview</h4>
                 <div className="text-sm text-warmgray-600">
@@ -327,10 +328,10 @@ export function CreateCommunityDialog({
                         </span>
                       </>
                     )}
-                    {data.name && (
+                    {watchedName && (
                       <>
                         <span className="text-warmgray-400">›</span>
-                        <span className="font-medium text-primary-600">{data.name}</span>
+                        <span className="font-medium text-primary-600">{watchedName}</span>
                         <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">new</span>
                       </>
                     )}
