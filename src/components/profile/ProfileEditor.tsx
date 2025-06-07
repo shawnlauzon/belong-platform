@@ -36,6 +36,8 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [hasChanges, setHasChanges] = React.useState(false);
+  const [currentZipCode, setCurrentZipCode] = React.useState<string>('');
+  const [displayedZipCode, setDisplayedZipCode] = React.useState<string>('');
   const [initialValues, setInitialValues] = React.useState<ProfileFormData>({
     firstName: '',
     lastName: '',
@@ -81,8 +83,10 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       setValue('avatar_url', defaultValues.avatar_url);
       setValue('zipCode', defaultValues.zipCode);
       
-      // Set location
+      // Set location and zip code display
       setLocation(defaultLocation);
+      setCurrentZipCode(defaultValues.zipCode);
+      setDisplayedZipCode(defaultValues.zipCode);
       
       // Store initial values for change detection
       setInitialValues(defaultValues);
@@ -98,7 +102,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       currentValues.firstName !== initialValues.firstName ||
       currentValues.lastName !== initialValues.lastName ||
       currentValues.avatar_url !== initialValues.avatar_url ||
-      currentValues.zipCode !== initialValues.zipCode;
+      displayedZipCode !== initialValues.zipCode;
     
     const locationHasChanges = JSON.stringify(location) !== JSON.stringify(initialLocation);
     
@@ -113,15 +117,17 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         currentValues,
         initialValues,
         currentLocation: location,
-        initialLocation
+        initialLocation,
+        displayedZipCode,
+        initialZipCode: initialValues.zipCode
       });
     }
-  }, [watchedValues, location, initialValues, initialLocation, hasChanges, getValues]);
+  }, [watchedValues, location, displayedZipCode, initialValues, initialLocation, hasChanges, getValues]);
 
   const handleZipCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const zipCode = (e.target as HTMLInputElement).value;
+      const zipCode = (e.target as HTMLInputElement).value.trim();
       
       if (zipCode && zipCode.length === 5) {
         logger.debug('📍 ProfileEditor: Processing zip code on Enter:', { zipCode });
@@ -132,11 +138,22 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             zipCode,
             coordinates
           });
+          
+          // Update the displayed zip code and location
+          setDisplayedZipCode(zipCode);
+          setCurrentZipCode(zipCode);
           setLocation(coordinates);
+          
+          // Update the form value to match
+          setValue('zipCode', zipCode);
+          
           logUserAction('zip_code_location_set', { zipCode, coordinates });
         } else {
           logger.warn('📍 ProfileEditor: Unknown zip code:', { zipCode });
+          alert(`Sorry, we don't have location data for zip code ${zipCode}. Please try a different zip code or use the "Use Current Location" button.`);
         }
+      } else if (zipCode.length > 0 && zipCode.length !== 5) {
+        alert('Please enter a valid 5-digit zip code.');
       }
     }
   };
@@ -148,7 +165,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     logUserAction('profile_update_attempt', {
       userId: user.id,
       hasLocation: !!location,
-      hasZipCode: !!data.zipCode
+      hasZipCode: !!displayedZipCode
     });
 
     setIsSubmitting(true);
@@ -160,7 +177,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         full_name: `${data.firstName} ${data.lastName}`,
         avatar_url: data.avatar_url,
         location,
-        zip_code: data.zipCode,
+        zip_code: displayedZipCode, // Use the displayed zip code, not the form input
       });
       
       logUserAction('profile_update_success', { userId: user.id });
@@ -204,6 +221,14 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
           logUserAction('location_granted_from_profile_editor', newLocation);
           
           setLocation(newLocation);
+          
+          // Try to reverse geocode to get zip code
+          const estimatedZipCode = getZipCodeFromCoordinates(newLocation);
+          if (estimatedZipCode) {
+            setDisplayedZipCode(estimatedZipCode);
+            setCurrentZipCode(estimatedZipCode);
+            setValue('zipCode', estimatedZipCode);
+          }
         },
         (error) => {
           logger.error('❌ ProfileEditor: Geolocation error:', {
@@ -229,7 +254,6 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             userMessage 
           });
           
-          // You could show a toast notification here with the userMessage
           alert(userMessage);
         },
         {
@@ -320,7 +344,14 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
             <label className="text-sm font-medium">Location</label>
             
             <div className="space-y-2">
-              <label className="text-xs font-medium text-warmgray-600">Zip Code</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-warmgray-600">Zip Code</label>
+                {displayedZipCode && (
+                  <div className="text-sm font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded">
+                    Current: {displayedZipCode}
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 {...register('zipCode')}
@@ -350,6 +381,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
               <LocationPicker 
                 value={location}
                 onChange={setLocation}
+                zipCode={displayedZipCode}
               />
               <p className="text-xs text-warmgray-500">
                 This helps us show you nearby resources and neighbors. You can also just use your zip code above.
@@ -415,4 +447,50 @@ function getCoordinatesFromZipCode(zipCode: string): Coordinates | null {
   };
 
   return zipCodeMap[zipCode] || null;
+}
+
+// Reverse geocoding - estimate zip code from coordinates
+function getZipCodeFromCoordinates(coordinates: Coordinates): string | null {
+  const zipCodeMap: Record<string, Coordinates> = {
+    // Austin, TX area
+    '78701': { lat: 30.2672, lng: -97.7431 },
+    '78702': { lat: 30.2500, lng: -97.7300 },
+    '78703': { lat: 30.2800, lng: -97.7600 },
+    '78704': { lat: 30.2400, lng: -97.7500 },
+    '78705': { lat: 30.2900, lng: -97.7400 },
+    '78731': { lat: 30.3200, lng: -97.7800 },
+    '78732': { lat: 30.3500, lng: -97.8200 },
+    '78745': { lat: 30.2200, lng: -97.7800 },
+    '78746': { lat: 30.2700, lng: -97.8000 },
+    '78748': { lat: 30.2000, lng: -97.8000 },
+    '78749': { lat: 30.2300, lng: -97.8200 },
+    '78750': { lat: 30.4000, lng: -97.7500 },
+    '78751': { lat: 30.3100, lng: -97.7200 },
+    '78752': { lat: 30.3000, lng: -97.7000 },
+    '78753': { lat: 30.3300, lng: -97.6800 },
+    '78754': { lat: 30.3400, lng: -97.6500 },
+    '78756': { lat: 30.3200, lng: -97.7300 },
+    '78757': { lat: 30.3500, lng: -97.7300 },
+    '78758': { lat: 30.3800, lng: -97.7000 },
+    '78759': { lat: 30.4000, lng: -97.7200 },
+  };
+
+  // Find the closest zip code
+  let closestZip = null;
+  let minDistance = Infinity;
+
+  for (const [zipCode, zipCoords] of Object.entries(zipCodeMap)) {
+    const distance = Math.sqrt(
+      Math.pow(coordinates.lat - zipCoords.lat, 2) + 
+      Math.pow(coordinates.lng - zipCoords.lng, 2)
+    );
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestZip = zipCode;
+    }
+  }
+
+  // Only return if within reasonable distance (about 0.05 degrees ~ 3 miles)
+  return minDistance < 0.05 ? closestZip : null;
 }
