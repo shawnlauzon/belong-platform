@@ -1,50 +1,67 @@
 import { Community, Event, Member, MeetupSpot, Resource, Thanks } from './mockApi';
 
-// Mock Communities
+// Mock Communities - Updated 4-layer hierarchy
 export const mockCommunities: Community[] = [
+  // Level 1: Worldwide (root)
   {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    name: 'South Austin',
-    level: 'neighborhood',
-    parent_id: '123e4567-e89b-12d3-a456-426614174001',
-    center: { lat: 30.2500, lng: -97.7500 },
-    radius_km: 8, // ~8 minute drive radius
-    member_count: 145,
-    description: 'South Austin neighbors helping neighbors'
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174001', 
-    name: 'Austin',
-    level: 'city',
-    parent_id: '123e4567-e89b-12d3-a456-426614174002',
-    center: { lat: 30.2672, lng: -97.7431 },
-    radius_km: 25, // Greater Austin area
-    member_count: 1240,
-    description: 'Keep Austin helping'
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174002',
-    name: 'Texas',
-    level: 'state',
-    parent_id: '123e4567-e89b-12d3-a456-426614174003',
-    member_count: 5600,
-    description: 'Lone Star neighbors'
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174003',
-    name: 'United States',
-    level: 'country', 
-    parent_id: '123e4567-e89b-12d3-a456-426614174004',
-    member_count: 45000,
-    description: 'Coast to coast community'
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174004',
+    id: 'worldwide',
     name: 'Worldwide',
     level: 'global',
     parent_id: null,
     member_count: 125000,
     description: 'Global neighborhood'
+  },
+  
+  // Level 2: Countries
+  {
+    id: 'us',
+    name: 'United States',
+    level: 'country',
+    parent_id: 'worldwide',
+    member_count: 45000,
+    description: 'Coast to coast community'
+  },
+  {
+    id: 'england',
+    name: 'England',
+    level: 'country',
+    parent_id: 'worldwide',
+    member_count: 8500,
+    description: 'English communities'
+  },
+  
+  // Level 3: Cities
+  {
+    id: 'austin',
+    name: 'Austin',
+    level: 'city',
+    parent_id: 'us',
+    center: { lat: 30.2672, lng: -97.7431 },
+    radius_km: 25,
+    member_count: 1240,
+    description: 'Keep Austin helping'
+  },
+  {
+    id: 'guildford',
+    name: 'Guildford',
+    level: 'city',
+    parent_id: 'england',
+    center: { lat: 51.2362, lng: -0.5704 },
+    radius_km: 15,
+    member_count: 320,
+    description: 'Guildford community'
+  },
+  
+  // Level 4: Neighborhoods
+  {
+    id: 'south-austin',
+    name: 'South Austin',
+    level: 'neighborhood',
+    parent_id: 'austin',
+    center: { lat: 30.2500, lng: -97.7500 },
+    radius_km: 8,
+    member_count: 145,
+    description: 'South Austin neighbors helping neighbors'
   }
 ];
 
@@ -248,11 +265,11 @@ export const mockMeetupSpots: MeetupSpot[] = [
   { name: 'Home Depot (I-35)', lat: 30.2621, lng: -97.7157, type: 'hardware' }
 ];
 
-// Mock Events
+// Mock Events - Updated community IDs
 export const mockEvents: Event[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174018',
-    community_id: '123e4567-e89b-12d3-a456-426614174000',
+    community_id: 'south-austin',
     title: 'South Austin Tool Share',
     date: '2025-02-15T18:00:00',
     location: 'Zilker Park Pavilion',
@@ -262,7 +279,7 @@ export const mockEvents: Event[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174019',
-    community_id: '123e4567-e89b-12d3-a456-426614174000',
+    community_id: 'south-austin',
     title: 'Neighborhood BBQ Potluck',
     date: '2025-02-20T17:30:00',
     location: 'Mueller Lake Park',
@@ -272,7 +289,7 @@ export const mockEvents: Event[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174020',
-    community_id: '123e4567-e89b-12d3-a456-426614174001',
+    community_id: 'austin',
     title: 'Austin Seed Swap',
     date: '2025-02-28T10:00:00',
     location: 'Sustainable Food Center',

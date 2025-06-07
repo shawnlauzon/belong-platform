@@ -28,7 +28,7 @@ export const useAppStore = create<AppState>((set) => ({
   setUserLocation: (location) => set({ userLocation: location }),
   
   // Default to South Austin community
-  currentCommunity: mockCommunities[0],
+  currentCommunity: mockCommunities.find(c => c.id === 'south-austin') || mockCommunities[0],
   setCurrentCommunity: (community) => set({ currentCommunity: community }),
   
   // Initialize with mock resources

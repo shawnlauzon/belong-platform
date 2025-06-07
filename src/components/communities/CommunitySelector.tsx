@@ -1,37 +1,91 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { mockCommunities } from '@/api/mockData';
 import { eventBus } from '@/core/eventBus';
 import { Community } from '@/types';
+import { Button } from '@/components/ui/button';
 
 export function CommunitySelector() {
-  const [activeCommunity, setActiveCommunity] = useState<Community>(mockCommunities[0]);
+  const [activeCommunity, setActiveCommunity] = useState<Community>(
+    mockCommunities.find(c => c.id === 'south-austin') || mockCommunities[0]
+  );
+  const [browseCommunityId, setBrowseCommunityId] = useState<string>('worldwide');
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get the nested community chain
-  const getCommunityChain = () => {
-    const chain: Community[] = [activeCommunity];
-    let currentId = activeCommunity.parent_id;
+  // Get the breadcrumb chain from worldwide down to the browse community
+  const getBreadcrumbChain = () => {
+    const chain: Community[] = [];
+    let currentId = browseCommunityId;
     
     while (currentId) {
-      const parent = mockCommunities.find(c => c.id === currentId);
-      if (parent) {
-        chain.push(parent);
-        currentId = parent.parent_id;
+      const community = mockCommunities.find(c => c.id === currentId);
+      if (community) {
+        chain.unshift(community);
+        currentId = community.parent_id;
       } else {
         break;
       }
     }
     
-    return chain.reverse();
+    return chain;
   };
-  
-  const communityChain = getCommunityChain();
+
+  // Get the active community's full chain for display
+  const getActiveCommunityChain = () => {
+    const chain: Community[] = [];
+    let currentId = activeCommunity.id;
+    
+    while (currentId) {
+      const community = mockCommunities.find(c => c.id === currentId);
+      if (community) {
+        chain.unshift(community);
+        currentId = community.parent_id;
+      } else {
+        break;
+      }
+    }
+    
+    return chain;
+  };
+
+  // Get children of the current browse community
+  const getChildCommunities = () => {
+    return mockCommunities.filter(c => c.parent_id === browseCommunityId);
+  };
+
+  // Get the next level name for "Create New" button
+  const getNextLevelName = () => {
+    const browseCommunity = mockCommunities.find(c => c.id === browseCommunityId);
+    if (!browseCommunity) return 'Community';
+    
+    switch (browseCommunity.level) {
+      case 'global': return 'Country';
+      case 'country': return 'City';
+      case 'city': return 'Neighborhood';
+      case 'neighborhood': return 'Community';
+      default: return 'Community';
+    }
+  };
+
+  const breadcrumbChain = getBreadcrumbChain();
+  const activeCommunityChain = getActiveCommunityChain();
+  const childCommunities = getChildCommunities();
+  const nextLevelName = getNextLevelName();
 
   const handleCommunitySelect = (community: Community) => {
     setActiveCommunity(community);
     setIsOpen(false);
     eventBus.emit('community.changed', { communityId: community.id });
+  };
+
+  const handleBreadcrumbClick = (communityId: string) => {
+    setBrowseCommunityId(communityId);
+  };
+
+  const handleCreateNew = () => {
+    // TODO: Open create community dialog
+    console.log('Create new', nextLevelName);
+    setIsOpen(false);
   };
 
   return (
@@ -41,10 +95,10 @@ export function CommunitySelector() {
         className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 hover:bg-gray-50 shadow-sm"
       >
         <span className="hidden sm:flex items-center gap-1">
-          {communityChain.map((community, i) => (
+          {activeCommunityChain.map((community, i) => (
             <React.Fragment key={community.id}>
               {i > 0 && <span className="text-warmgray-400 mx-1">›</span>}
-              <span className={i === communityChain.length - 1 ? 'font-medium' : 'text-warmgray-500'}>
+              <span className={i === activeCommunityChain.length - 1 ? 'font-medium' : 'text-warmgray-500'}>
                 {community.name}
               </span>
             </React.Fragment>
@@ -56,12 +110,42 @@ export function CommunitySelector() {
       
       {isOpen && (
         <div className="absolute z-10 w-full max-w-md mt-1 bg-white rounded-lg border border-gray-200 shadow-lg animate-fade-in">
-          <ul className="py-2 divide-y divide-gray-100">
-            {mockCommunities.map((community) => (
-              <li key={community.id}>
+          {/* Breadcrumb navigation */}
+          <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+            <div className="flex items-center gap-1 text-xs">
+              {breadcrumbChain.map((community, i) => (
+                <React.Fragment key={community.id}>
+                  {i > 0 && <span className="text-warmgray-400 mx-1">›</span>}
+                  <button
+                    onClick={() => handleBreadcrumbClick(community.id)}
+                    className={`hover:text-primary-600 transition-colors ${
+                      i === breadcrumbChain.length - 1 
+                        ? 'font-medium text-warmgray-800' 
+                        : 'text-warmgray-500 hover:text-warmgray-700'
+                    }`}
+                  >
+                    {community.name}
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          <div className="py-2 max-h-64 overflow-y-auto">
+            {/* Child communities */}
+            {childCommunities.map((community) => (
+              <div key={community.id} className="flex items-center">
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex justify-between items-center"
-                  onClick={() => handleCommunitySelect(community)}
+                  className="flex-1 px-4 py-2 text-left hover:bg-gray-50 flex justify-between items-center"
+                  onClick={() => {
+                    if (community.level === 'neighborhood') {
+                      // If it's a neighborhood, select it as active
+                      handleCommunitySelect(community);
+                    } else {
+                      // Otherwise, browse into it
+                      setBrowseCommunityId(community.id);
+                    }
+                  }}
                 >
                   <div>
                     <span className="font-medium">{community.name}</span>
@@ -71,9 +155,29 @@ export function CommunitySelector() {
                     {community.member_count} members
                   </div>
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+
+            {/* Create New button */}
+            <div className="border-t border-gray-100 mt-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCreateNew}
+                className="w-full justify-start gap-2 mx-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create New</span>
+              </Button>
+            </div>
+
+            {/* No communities message */}
+            {childCommunities.length === 0 && (
+              <div className="px-4 py-3 text-center text-sm text-warmgray-500">
+                No communities found at this level
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
