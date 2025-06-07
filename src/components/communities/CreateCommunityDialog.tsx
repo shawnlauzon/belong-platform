@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -72,6 +72,106 @@ export function CreateCommunityDialog({
   const watchedLevel = watch('level');
   const watchedName = watch('name');
 
+  // Get the full hierarchy chain for the parent community
+  const getParentHierarchy = () => {
+    if (!parentCommunity) return { country: '', state: '', city: '' };
+
+    const hierarchy = { country: '', state: '', city: '' };
+    
+    // Build the chain from parent to root
+    const chain: Community[] = [];
+    let currentId = parentCommunity.id;
+    
+    while (currentId) {
+      const community = communities.find(c => c.id === currentId);
+      if (community) {
+        chain.unshift(community);
+        currentId = community.parent_id;
+      } else {
+        break;
+      }
+    }
+
+    // Extract country, state, and city from the chain
+    for (const community of chain) {
+      if (community.level === 'country') {
+        hierarchy.country = community.name;
+      } else if (community.level === 'state') {
+        hierarchy.state = community.name;
+      } else if (community.level === 'city') {
+        hierarchy.city = community.name;
+      }
+    }
+
+    // If the parent itself is a city, include it
+    if (parentCommunity.level === 'city') {
+      hierarchy.city = parentCommunity.name;
+    }
+
+    return hierarchy;
+  };
+
+  // Prefill form when dialog opens or parent changes
+  useEffect(() => {
+    if (open && parentCommunity) {
+      const hierarchy = getParentHierarchy();
+      
+      logger.debug('🏘️ CreateCommunityDialog: Prefilling form based on parent:', {
+        parentId: parentCommunity.id,
+        parentName: parentCommunity.name,
+        parentLevel: parentCommunity.level,
+        hierarchy
+      });
+
+      // Set country and state
+      if (hierarchy.country) {
+        setSelectedCountry(hierarchy.country);
+        setValue('country', hierarchy.country);
+      }
+      
+      if (hierarchy.state) {
+        setSelectedState(hierarchy.state);
+        setValue('state', hierarchy.state);
+      }
+
+      // Set default level based on parent
+      let defaultLevel: 'neighborhood' | 'city' = 'neighborhood';
+      if (parentCommunity.level === 'state') {
+        defaultLevel = 'city';
+      } else if (parentCommunity.level === 'city') {
+        defaultLevel = 'neighborhood';
+      }
+      
+      setValue('level', defaultLevel);
+
+      // If parent has a location, use it as a starting point
+      if (parentCommunity.center) {
+        setLocation(parentCommunity.center);
+      }
+
+      logUserAction('community_dialog_prefilled', {
+        parentId: parentCommunity.id,
+        parentLevel: parentCommunity.level,
+        country: hierarchy.country,
+        state: hierarchy.state,
+        city: hierarchy.city,
+        defaultLevel
+      });
+    }
+  }, [open, parentCommunity, communities, setValue]);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      reset();
+      setLocation(null);
+      setAddressBbox(null);
+      setCurrentAddress('');
+      setSelectedCountry('');
+      setSelectedState('');
+    }
+  }, [open, reset]);
+
   const handleAddressChange = (address: string, coordinates: Coordinates | null, bbox?: [number, number, number, number]) => {
     logger.debug('🏘️ CreateCommunityDialog: Address changed:', { address, coordinates, bbox });
     
@@ -142,13 +242,7 @@ export function CreateCommunityDialog({
         onCommunityCreated(newCommunity);
       }
 
-      // Reset form and close dialog
-      reset();
-      setLocation(null);
-      setAddressBbox(null);
-      setCurrentAddress('');
-      setSelectedCountry('');
-      setSelectedState('');
+      // Close dialog (form will be reset by useEffect)
       onOpenChange(false);
 
     } catch (error) {
@@ -186,6 +280,11 @@ export function CreateCommunityDialog({
             <p className="text-sm text-warmgray-600">
               Create a new community with all necessary geographic levels. Missing intermediate levels will be created automatically.
             </p>
+            {parentCommunity && (
+              <p className="text-sm text-primary-600 bg-primary-50 p-2 rounded">
+                Creating under: <strong>{parentCommunity.name}</strong> ({parentCommunity.level})
+              </p>
+            )}
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
@@ -307,7 +406,7 @@ export function CreateCommunityDialog({
               <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-warmgray-700">Community Hierarchy Preview</h4>
                 <div className="text-sm text-warmgray-600">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-warmgray-400">🌍</span>
                     <span>Worldwide</span>
                     {selectedCountry && (
