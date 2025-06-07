@@ -1,6 +1,11 @@
 import { supabase } from './supabase';
 import { logger, logApiCall, logApiResponse } from './logger';
 
+export interface UploadResult {
+  url: string;
+  path: string;
+}
+
 export class StorageManager {
   private static bucketName = 'images';
 
@@ -29,7 +34,7 @@ export class StorageManager {
     }
   }
 
-  static async uploadFile(file: File, folder: string = 'uploads'): Promise<string | null> {
+  static async uploadFile(file: File, folder: string = 'uploads'): Promise<UploadResult> {
     logger.debug('🗄️ StorageManager: Uploading file:', { 
       fileName: file.name, 
       fileSize: file.size, 
@@ -89,7 +94,10 @@ export class StorageManager {
         publicUrl
       });
 
-      return publicUrl;
+      return {
+        url: publicUrl,
+        path: data.path
+      };
     } catch (error) {
       logger.error('❌ StorageManager: Failed to upload file:', { 
         fileName: file.name, 
@@ -115,7 +123,7 @@ export class StorageManager {
 
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value) {
-          successfulUploads.push(result.value);
+          successfulUploads.push(result.value.url);
         } else {
           failedUploads.push(files[index].name);
           if (result.status === 'rejected') {

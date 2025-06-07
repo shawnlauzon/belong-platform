@@ -63,28 +63,26 @@ export function ImageUpload({
         throw new Error('No files were uploaded successfully');
       }
 
-      const newImageUrls = uploadResults.map(result => result.url);
-
       // Replace existing images with new ones (for single image uploads like avatars)
-      const updatedImages = maxImages === 1 ? newImageUrls : [...images, ...newImageUrls];
+      const updatedImages = maxImages === 1 ? uploadResults : [...images, ...uploadResults];
       
       setImages(updatedImages);
       onImagesUploaded(updatedImages);
       
       logUserAction('images_uploaded_to_storage', {
-        newImageCount: newImageUrls.length,
+        newImageCount: uploadResults.length,
         totalImageCount: updatedImages.length,
         fileNames: filesToProcess.map(f => f.name),
         isReplacement: maxImages === 1,
         folder,
-        urls: newImageUrls
+        urls: uploadResults
       });
 
       logger.info('✅ ImageUpload: Images uploaded successfully to storage:', {
-        newCount: newImageUrls.length,
+        newCount: uploadResults.length,
         totalCount: updatedImages.length,
         isReplacement: maxImages === 1,
-        urls: newImageUrls
+        urls: uploadResults
       });
 
     } catch (error) {
