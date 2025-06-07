@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { locationManager, initializeListeners } from '@/features/app';
 import { AuthProvider } from '@/lib/auth';
-import { StorageManager } from '@/lib/storage';
 import { routeTree } from './routeTree.gen';
 import { logger, logComponentRender } from '@/lib/logger';
 import './index.css';
@@ -39,9 +38,6 @@ function App() {
     const init = async () => {
       try {
         logger.info('🚀 Initializing application...');
-        
-        // Initialize storage bucket
-        await StorageManager.initializeBucket();
         
         // Initialize location services
         await locationManager.getCurrentLocation();

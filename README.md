@@ -58,13 +58,19 @@ SEED_MEMBER_ID=your_user_id
 
 1. Create a new Supabase project
 2. Run the migrations from `supabase/migrations/`
-3. Create a user account in your Supabase project:
+3. **Create a storage bucket for images:**
+   - Go to Storage in your Supabase dashboard
+   - Click "Create a new bucket"
+   - Name it `images`
+   - Make it public (toggle "Public bucket" to ON)
+   - Click "Create bucket"
+4. Create a user account in your Supabase project:
    - Go to Authentication > Users in the Supabase dashboard
    - Click "Create User"
    - Fill in the email and password
    - Copy the user's ID from the dashboard (you'll need this for seeding)
-4. Add the user's ID to your `.env` file as `SEED_MEMBER_ID`
-5. Seed the database:
+5. Add the user's ID to your `.env` file as `SEED_MEMBER_ID`
+6. Seed the database:
    ```bash
    npm run seed
    ```

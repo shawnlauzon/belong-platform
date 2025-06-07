@@ -61,13 +61,6 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
 
   const watchedValues = watch();
 
-  // Initialize storage bucket on component mount
-  React.useEffect(() => {
-    StorageManager.initializeBucket().catch(error => {
-      logger.warn('⚠️ ProfileEditor: Failed to initialize storage bucket:', error);
-    });
-  }, []);
-
   // Set default values when profile loads
   React.useEffect(() => {
     if (profile?.user_metadata) {
