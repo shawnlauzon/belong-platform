@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
 import { LocationPicker } from '@/components/shared/LocationPicker';
+import { CountryAutocomplete } from './CountryAutocomplete';
+import { StateAutocomplete } from './StateAutocomplete';
 import { useCreateCommunity, useCommunities } from '@/hooks/useCommunities';
 import { Community, Coordinates } from '@/types';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
@@ -19,7 +21,9 @@ import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 const communitySchema = z.object({
   name: z.string().min(2, 'Community name must be at least 2 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  level: z.enum(['neighborhood', 'city', 'state', 'country']),
+  level: z.enum(['neighborhood', 'city']),
+  country: z.string().min(2, 'Country is required'),
+  state: z.string().min(2, 'State/Province is required'),
   address: z.string().optional(),
 });
 
@@ -43,6 +47,8 @@ export function CreateCommunityDialog({
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [addressBbox, setAddressBbox] = useState<[number, number, number, number] | null>(null);
   const [currentAddress, setCurrentAddress] = useState<string>('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [selectedState, setSelectedState] = useState<string>('');
   
   const { data: communities = [] } = useCommunities();
   const createCommunityMutation = useCreateCommunity();
@@ -51,15 +57,19 @@ export function CreateCommunityDialog({
     ? communities.find(c => c.id === parentCommunityId)
     : null;
 
-  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<CommunityFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CommunityFormData>({
     resolver: zodResolver(communitySchema),
     defaultValues: {
       name: '',
       description: '',
       level: 'neighborhood',
+      country: '',
+      state: '',
       address: '',
     }
   });
+
+  const watchedLevel = watch('level');
 
   const handleAddressChange = (address: string, coordinates: Coordinates | null, bbox?: [number, number, number, number]) => {
     logger.debug('🏘️ CreateCommunityDialog: Address changed:', { address, coordinates, bbox });
@@ -75,22 +85,46 @@ export function CreateCommunityDialog({
     }
   };
 
+  const handleCountryChange = (country: string) => {
+    logger.debug('🏘️ CreateCommunityDialog: Country changed:', { country });
+    setSelectedCountry(country);
+    setValue('country', country);
+    
+    // Reset state when country changes
+    setSelectedState('');
+    setValue('state', '');
+    
+    logUserAction('community_country_set', { country });
+  };
+
+  const handleStateChange = (state: string) => {
+    logger.debug('🏘️ CreateCommunityDialog: State changed:', { state });
+    setSelectedState(state);
+    setValue('state', state);
+    
+    logUserAction('community_state_set', { state, country: selectedCountry });
+  };
+
   const onSubmit = async (data: CommunityFormData) => {
     logger.debug('🏘️ CreateCommunityDialog: Form submitted:', data);
     logUserAction('community_create_attempt', {
       name: data.name,
       level: data.level,
+      country: data.country,
+      state: data.state,
       hasParent: !!parentCommunityId,
       hasLocation: !!location,
       hasAddress: !!currentAddress
     });
 
     try {
+      // Create the community with full hierarchy
       const newCommunity = await createCommunityMutation.mutateAsync({
         name: data.name,
         description: data.description,
         level: data.level,
-        parent_id: parentCommunityId,
+        country: data.country,
+        state: data.state,
         center: location || undefined,
         radius_km: getDefaultRadius(data.level),
       });
@@ -112,6 +146,8 @@ export function CreateCommunityDialog({
       setLocation(null);
       setAddressBbox(null);
       setCurrentAddress('');
+      setSelectedCountry('');
+      setSelectedState('');
       onOpenChange(false);
 
     } catch (error) {
@@ -126,8 +162,6 @@ export function CreateCommunityDialog({
     switch (level) {
       case 'neighborhood': return 5;
       case 'city': return 25;
-      case 'state': return 200;
-      case 'country': return 1000;
       default: return 25;
     }
   };
@@ -136,8 +170,6 @@ export function CreateCommunityDialog({
     switch (level) {
       case 'neighborhood': return 'A local area within a city (5km radius)';
       case 'city': return 'A city or town (25km radius)';
-      case 'state': return 'A state or province (200km radius)';
-      case 'country': return 'A country (1000km radius)';
       default: return '';
     }
   };
@@ -146,65 +178,105 @@ export function CreateCommunityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-white">
+      <DialogContent className="sm:max-w-[600px] bg-white max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Create New Community</DialogTitle>
-            {parentCommunity && (
-              <p className="text-sm text-warmgray-600">
-                Creating a new community under <span className="font-medium">{parentCommunity.name}</span>
-              </p>
-            )}
+            <p className="text-sm text-warmgray-600">
+              Create a new community with all necessary geographic levels. Missing intermediate levels will be created automatically.
+            </p>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Community Name</label>
-              <input
-                {...register('name')}
-                className="w-full border rounded-md p-2"
-                placeholder="Enter community name"
-                disabled={isSubmitting}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Level</label>
-              <select
-                {...register('level')}
-                className="w-full border rounded-md p-2"
-                disabled={isSubmitting}
-              >
-                <option value="neighborhood">Neighborhood</option>
-                <option value="city">City</option>
-                <option value="state">State/Province</option>
-                <option value="country">Country</option>
-              </select>
-              <p className="text-xs text-warmgray-500">
-                {getLevelDescription(register('level').value || 'neighborhood')}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                {...register('description')}
-                className="w-full border rounded-md p-2 min-h-[80px]"
-                placeholder="Describe your community..."
-                disabled={isSubmitting}
-              />
-              {errors.description && (
-                <p className="text-xs text-red-500">{errors.description.message}</p>
-              )}
-            </div>
-
+          <div className="grid gap-6 py-4">
+            {/* Community Details */}
             <div className="space-y-4">
-              <label className="text-sm font-medium">Location (Optional)</label>
+              <h3 className="text-lg font-medium text-warmgray-800">Community Details</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Community Name</label>
+                  <input
+                    {...register('name')}
+                    className="w-full border rounded-md p-2"
+                    placeholder="Enter community name"
+                    disabled={isSubmitting}
+                  />
+                  {errors.name && (
+                    <p className="text-xs text-red-500">{errors.name.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Level</label>
+                  <select
+                    {...register('level')}
+                    className="w-full border rounded-md p-2"
+                    disabled={isSubmitting}
+                  >
+                    <option value="neighborhood">Neighborhood</option>
+                    <option value="city">City</option>
+                  </select>
+                  <p className="text-xs text-warmgray-500">
+                    {getLevelDescription(watchedLevel)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  {...register('description')}
+                  className="w-full border rounded-md p-2 min-h-[80px]"
+                  placeholder="Describe your community..."
+                  disabled={isSubmitting}
+                />
+                {errors.description && (
+                  <p className="text-xs text-red-500">{errors.description.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Geographic Hierarchy */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-warmgray-800">Geographic Location</h3>
+              <p className="text-sm text-warmgray-600">
+                Specify the geographic hierarchy. If any level doesn't exist, it will be created automatically.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Country</label>
+                  <CountryAutocomplete
+                    value={selectedCountry}
+                    onChange={handleCountryChange}
+                    disabled={isSubmitting}
+                  />
+                  {errors.country && (
+                    <p className="text-xs text-red-500">{errors.country.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">State / Province</label>
+                  <StateAutocomplete
+                    value={selectedState}
+                    onChange={handleStateChange}
+                    country={selectedCountry}
+                    disabled={isSubmitting || !selectedCountry}
+                  />
+                  {errors.state && (
+                    <p className="text-xs text-red-500">{errors.state.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Specific Location */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-warmgray-800">Specific Location (Optional)</h3>
               
               <div className="space-y-2">
+                <label className="text-sm font-medium">Address</label>
                 <AddressAutocomplete
                   value={currentAddress}
                   onChange={handleAddressChange}
@@ -218,6 +290,7 @@ export function CreateCommunityDialog({
 
               {(location || currentAddress) && (
                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Fine-tune Location</label>
                   <LocationPicker 
                     value={location}
                     onChange={setLocation}
@@ -227,6 +300,44 @@ export function CreateCommunityDialog({
                 </div>
               )}
             </div>
+
+            {/* Preview */}
+            {(selectedCountry || selectedState || data.name) && (
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-medium text-warmgray-700">Community Hierarchy Preview</h4>
+                <div className="text-sm text-warmgray-600">
+                  <div className="flex items-center gap-2">
+                    <span className="text-warmgray-400">🌍</span>
+                    <span>Worldwide</span>
+                    {selectedCountry && (
+                      <>
+                        <span className="text-warmgray-400">›</span>
+                        <span className="font-medium">{selectedCountry}</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                          {communities.find(c => c.name === selectedCountry) ? 'exists' : 'will create'}
+                        </span>
+                      </>
+                    )}
+                    {selectedState && (
+                      <>
+                        <span className="text-warmgray-400">›</span>
+                        <span className="font-medium">{selectedState}</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                          {communities.find(c => c.name === selectedState) ? 'exists' : 'will create'}
+                        </span>
+                      </>
+                    )}
+                    {data.name && (
+                      <>
+                        <span className="text-warmgray-400">›</span>
+                        <span className="font-medium text-primary-600">{data.name}</span>
+                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">new</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

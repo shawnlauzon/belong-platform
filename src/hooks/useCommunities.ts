@@ -107,12 +107,13 @@ export function useCreateCommunity() {
       name: string;
       level: Community['level'];
       description: string;
-      parent_id?: string;
+      country: string;
+      state: string;
       center?: Coordinates;
       radius_km?: number;
     }): Promise<Community> => {
-      logger.debug('🏘️ useCreateCommunity: Creating community:', communityData);
-      logApiCall('POST', '/communities', communityData);
+      logger.debug('🏘️ useCreateCommunity: Creating community with hierarchy:', communityData);
+      logApiCall('POST', '/communities/create-with-hierarchy', communityData);
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
@@ -120,13 +121,104 @@ export function useCreateCommunity() {
         throw new Error('User must be authenticated to create communities');
       }
 
+      // Get existing communities to check what already exists
+      const { data: existingCommunities, error: fetchError } = await supabase
+        .from('communities')
+        .select('*');
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const communities = existingCommunities || [];
+
+      // Find or create the hierarchy: Worldwide -> Country -> State -> City/Neighborhood
+      let worldwideId = communities.find(c => c.level === 'global')?.id;
+      if (!worldwideId) {
+        // This should exist from migration, but just in case
+        const { data: worldwide, error: worldwideError } = await supabase
+          .from('communities')
+          .insert([{
+            name: 'Worldwide',
+            level: 'global',
+            description: 'Global neighborhood connecting communities worldwide',
+            parent_id: null,
+            member_count: 1,
+            creator_id: user.id,
+          }])
+          .select()
+          .single();
+
+        if (worldwideError) throw worldwideError;
+        worldwideId = worldwide.id;
+        logger.info('🏘️ Created Worldwide community:', { id: worldwideId });
+      }
+
+      // Find or create country
+      let countryId = communities.find(c => 
+        c.level === 'country' && 
+        c.name === communityData.country
+      )?.id;
+
+      if (!countryId) {
+        const { data: country, error: countryError } = await supabase
+          .from('communities')
+          .insert([{
+            name: communityData.country,
+            level: 'country',
+            description: `${communityData.country} communities`,
+            parent_id: worldwideId,
+            member_count: 1,
+            creator_id: user.id,
+          }])
+          .select()
+          .single();
+
+        if (countryError) throw countryError;
+        countryId = country.id;
+        logger.info('🏘️ Created country community:', { 
+          id: countryId, 
+          name: communityData.country 
+        });
+      }
+
+      // Find or create state
+      let stateId = communities.find(c => 
+        c.level === 'state' && 
+        c.name === communityData.state &&
+        c.parent_id === countryId
+      )?.id;
+
+      if (!stateId) {
+        const { data: state, error: stateError } = await supabase
+          .from('communities')
+          .insert([{
+            name: communityData.state,
+            level: 'state',
+            description: `${communityData.state} communities`,
+            parent_id: countryId,
+            member_count: 1,
+            creator_id: user.id,
+          }])
+          .select()
+          .single();
+
+        if (stateError) throw stateError;
+        stateId = state.id;
+        logger.info('🏘️ Created state community:', { 
+          id: stateId, 
+          name: communityData.state 
+        });
+      }
+
+      // Create the actual community (city or neighborhood)
       const { data: community, error } = await supabase
         .from('communities')
         .insert([{
           name: communityData.name,
           level: communityData.level,
           description: communityData.description,
-          parent_id: communityData.parent_id || null,
+          parent_id: stateId,
           center: communityData.center 
             ? `POINT(${communityData.center.lng} ${communityData.center.lat})`
             : null,
@@ -138,7 +230,7 @@ export function useCreateCommunity() {
         .single();
 
       if (error) {
-        logApiResponse('POST', '/communities', null, error);
+        logApiResponse('POST', '/communities/create-with-hierarchy', null, error);
         throw error;
       }
 
@@ -160,10 +252,12 @@ export function useCreateCommunity() {
         member_count: community.member_count,
       };
 
-      logApiResponse('POST', '/communities', transformedCommunity);
-      logger.info('✅ useCreateCommunity: Community created successfully:', { 
+      logApiResponse('POST', '/communities/create-with-hierarchy', transformedCommunity);
+      logger.info('✅ useCreateCommunity: Community created successfully with full hierarchy:', { 
         id: transformedCommunity.id, 
-        name: transformedCommunity.name 
+        name: transformedCommunity.name,
+        country: communityData.country,
+        state: communityData.state
       });
 
       return transformedCommunity;
