@@ -37,18 +37,14 @@ export function useMember(id: string) {
   return useQuery({
     queryKey: ['members', id],
     queryFn: async () => {
-      const { data: profiles, error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
-        .limit(1);
+        .single();
 
       if (error) throw error;
-      
-      const profile = profiles?.[0];
-      if (!profile) {
-        throw new Error('User not found');
-      }
+      if (!profile) throw new Error('User not found');
 
       // Get the user's shared resources count
       const { count: resourcesShared } = await supabase
