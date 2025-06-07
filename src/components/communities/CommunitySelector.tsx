@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { mockCommunities } from '@/api/mockData';
 import { eventBus } from '@/core/eventBus';
@@ -11,6 +11,7 @@ export function CommunitySelector() {
   );
   const [browseCommunityId, setBrowseCommunityId] = useState<string>('worldwide');
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get the breadcrumb chain from worldwide down to the browse community
   const getBreadcrumbChain = () => {
@@ -73,8 +74,25 @@ export function CommunitySelector() {
     setIsOpen(false);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 hover:bg-gray-50 shadow-sm">
         {/* Display active community chain - each part separately clickable */}
         <div className="hidden sm:flex items-center gap-1">
