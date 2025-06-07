@@ -144,15 +144,7 @@ export function CommunitySelector() {
               <div key={community.id} className="flex items-center">
                 <button
                   className="flex-1 px-4 py-2 text-left hover:bg-gray-50 flex justify-between items-center"
-                  onClick={() => {
-                    if (community.level === 'neighborhood') {
-                      // If it's a neighborhood, select it as active
-                      handleCommunitySelect(community);
-                    } else {
-                      // Otherwise, browse into it
-                      setBrowseCommunityId(community.id);
-                    }
-                  }}
+                  onClick={() => handleCommunitySelect(community)}
                 >
                   <div>
                     <span className="font-medium">{community.name}</span>
