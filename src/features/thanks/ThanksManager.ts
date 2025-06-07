@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { eventBus } from '@/core/eventBus';
 import { Thanks } from '@/types';
+import { AppEvent } from '@/types/events';
 import { TrustCalculator } from '@/features/trust/TrustCalculator';
 import { logger, logApiCall, logApiResponse } from '@/lib/logger';
 
@@ -9,7 +10,7 @@ export class ThanksManager {
     logger.info('🙏 ThanksManager: Initializing...');
 
     // Listen for thanks creation requests
-    eventBus.on('thanks.create.requested', async (event) => {
+    eventBus.on('thanks.create.requested', async (event: AppEvent) => {
       if (event.type !== 'thanks.create.requested') return;
 
       logger.debug('🙏 ThanksManager: Thanks creation requested:', event.data);

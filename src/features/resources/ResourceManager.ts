@@ -3,6 +3,7 @@ import { calculateDrivingTime } from '@/lib/mapbox';
 import { eventBus } from '@/core/eventBus';
 import { Resource, Coordinates } from '@/types';
 import { AppEvent } from '@/types/events';
+import { Database } from '@/types/database';
 import { logger, logApiCall, logApiResponse, logEvent } from '@/lib/logger';
 
 export class ResourceManager {
@@ -278,23 +279,23 @@ export class ResourceManager {
       }
 
       // Prepare the update data
-      const dbUpdateData: any = {
+      const dbUpdateData: Partial<Database['public']['Tables']['resources']['Update']> = {
         ...updateData,
         updated_at: new Date().toISOString(),
       };
 
       // Convert location to PostGIS format if provided
       if (updateData.location) {
-        dbUpdateData.location = `POINT(${updateData.location.lng} ${updateData.location.lat})`;
+        dbUpdateData.location = `POINT(${updateData.location.lng} ${updateData.location.lat})` as any;
       }
 
       // Remove fields that shouldn't be updated directly
-      delete dbUpdateData.id;
-      delete dbUpdateData.creator_id;
-      delete dbUpdateData.created_at;
-      delete dbUpdateData.times_helped;
-      delete dbUpdateData.owner;
-      delete dbUpdateData.distance_minutes;
+      delete (dbUpdateData as any).id;
+      delete (dbUpdateData as any).creator_id;
+      delete (dbUpdateData as any).created_at;
+      delete (dbUpdateData as any).times_helped;
+      delete (dbUpdateData as any).owner;
+      delete (dbUpdateData as any).distance_minutes;
 
       const { data: updatedResource, error } = await supabase
         .from('resources')

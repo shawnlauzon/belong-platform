@@ -1,4 +1,6 @@
 import { Resource, Community, Member } from './index';
+import { User } from '@supabase/supabase-js';
+import { Database } from './database';
 
 export interface BaseEvent {
   id: string;
@@ -32,14 +34,14 @@ export interface AuthSignUpRequestedEvent extends BaseEvent {
 export interface AuthSignInSuccessEvent extends BaseEvent {
   type: 'auth.signIn.success';
   data: {
-    user: any;
+    user: User | null;
   };
 }
 
 export interface AuthSignUpSuccessEvent extends BaseEvent {
   type: 'auth.signUp.success';
   data: {
-    user: any;
+    user: User | null;
   };
 }
 
@@ -89,7 +91,7 @@ export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
   data: {
     userId: string;
-    metadata: any;
+    metadata: Database['public']['Tables']['profiles']['Row']['user_metadata'];
   };
 }
 
@@ -97,7 +99,7 @@ export interface ProfileUpdatedEvent extends BaseEvent {
   type: 'profile.updated';
   data: {
     userId: string;
-    updatedProfile: any;
+    updatedProfile: Database['public']['Tables']['profiles']['Row']['user_metadata'];
   };
 }
 
