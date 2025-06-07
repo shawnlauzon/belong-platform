@@ -53,24 +53,9 @@ export function CommunitySelector() {
     return mockCommunities.filter(c => c.parent_id === browseCommunityId);
   };
 
-  // Get the next level name for "Create New" button
-  const getNextLevelName = () => {
-    const browseCommunity = mockCommunities.find(c => c.id === browseCommunityId);
-    if (!browseCommunity) return 'Community';
-    
-    switch (browseCommunity.level) {
-      case 'global': return 'Country';
-      case 'country': return 'City';
-      case 'city': return 'Neighborhood';
-      case 'neighborhood': return 'Community';
-      default: return 'Community';
-    }
-  };
-
   const breadcrumbChain = getBreadcrumbChain();
   const activeCommunityChain = getActiveCommunityChain();
   const childCommunities = getChildCommunities();
-  const nextLevelName = getNextLevelName();
 
   const handleCommunitySelect = (community: Community) => {
     setActiveCommunity(community);
@@ -84,7 +69,7 @@ export function CommunitySelector() {
 
   const handleCreateNew = () => {
     // TODO: Open create community dialog
-    console.log('Create new', nextLevelName);
+    console.log('Create new community');
     setIsOpen(false);
   };
 
