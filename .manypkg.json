@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Thinkmill/manypkg/main/packages/manypkg/schema/1.0.0/schema.json",
+  "packages": ["packages/*"],
+  "dependencyConstraints": {
+    "enforceWorkspaceDependencies": true,
+    "enforceWorkspaceDependenciesOptions": {
+      "allowDependencies": ["react", "react-dom", "react-router-dom", "@tanstack/react-query"]
+    }
+  }
+}
