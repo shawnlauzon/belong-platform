@@ -109,6 +109,7 @@ export function useCreateCommunity() {
       description: string;
       country: string;
       state: string;
+      city?: string;
       center?: Coordinates;
       radius_km?: number;
     }): Promise<Community> => {
@@ -211,6 +212,42 @@ export function useCreateCommunity() {
         });
       }
 
+      // Find or create city if we're creating a neighborhood
+      let cityId = stateId; // Default parent is state
+      
+      if (communityData.level === 'neighborhood' && communityData.city) {
+        let existingCityId = communities.find(c => 
+          c.level === 'city' && 
+          c.name === communityData.city &&
+          c.parent_id === stateId
+        )?.id;
+
+        if (!existingCityId) {
+          const { data: city, error: cityError } = await supabase
+            .from('communities')
+            .insert([{
+              name: communityData.city,
+              level: 'city',
+              description: `${communityData.city} community`,
+              parent_id: stateId,
+              member_count: 1,
+              creator_id: user.id,
+              radius_km: 25,
+            }])
+            .select()
+            .single();
+
+          if (cityError) throw cityError;
+          existingCityId = city.id;
+          logger.info('🏘️ Created city community:', { 
+            id: existingCityId, 
+            name: communityData.city 
+          });
+        }
+        
+        cityId = existingCityId;
+      }
+
       // Create the actual community (city or neighborhood)
       const { data: community, error } = await supabase
         .from('communities')
@@ -218,7 +255,7 @@ export function useCreateCommunity() {
           name: communityData.name,
           level: communityData.level,
           description: communityData.description,
-          parent_id: stateId,
+          parent_id: cityId,
           center: communityData.center 
             ? `POINT(${communityData.center.lng} ${communityData.center.lat})`
             : null,
@@ -257,7 +294,8 @@ export function useCreateCommunity() {
         id: transformedCommunity.id, 
         name: transformedCommunity.name,
         country: communityData.country,
-        state: communityData.state
+        state: communityData.state,
+        city: communityData.city
       });
 
       return transformedCommunity;

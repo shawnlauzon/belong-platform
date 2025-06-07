@@ -19,11 +19,11 @@ import { Community, Coordinates } from '@/types';
 import { logger, logComponentRender, logUserAction } from '@/lib/logger';
 
 const communitySchema = z.object({
-  name: z.string().min(2, 'Community name must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  level: z.enum(['neighborhood', 'city']),
   country: z.string().min(2, 'Country is required'),
   state: z.string().min(2, 'State/Province is required'),
+  city: z.string().min(2, 'City is required'),
+  neighborhood: z.string().optional(),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
   address: z.string().optional(),
 });
 
@@ -60,17 +60,17 @@ export function CreateCommunityDialog({
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CommunityFormData>({
     resolver: zodResolver(communitySchema),
     defaultValues: {
-      name: '',
-      description: '',
-      level: 'neighborhood',
       country: '',
       state: '',
+      city: '',
+      neighborhood: '',
+      description: '',
       address: '',
     }
   });
 
-  const watchedLevel = watch('level');
-  const watchedName = watch('name');
+  const watchedCity = watch('city');
+  const watchedNeighborhood = watch('neighborhood');
 
   // Get the full hierarchy chain for the parent community
   const getParentHierarchy = () => {
@@ -134,15 +134,10 @@ export function CreateCommunityDialog({
         setValue('state', hierarchy.state);
       }
 
-      // Set default level based on parent
-      let defaultLevel: 'neighborhood' | 'city' = 'neighborhood';
-      if (parentCommunity.level === 'state') {
-        defaultLevel = 'city';
-      } else if (parentCommunity.level === 'city') {
-        defaultLevel = 'neighborhood';
+      // Set city if parent is a city
+      if (hierarchy.city) {
+        setValue('city', hierarchy.city);
       }
-      
-      setValue('level', defaultLevel);
 
       // If parent has a location, use it as a starting point
       if (parentCommunity.center) {
@@ -154,8 +149,7 @@ export function CreateCommunityDialog({
         parentLevel: parentCommunity.level,
         country: hierarchy.country,
         state: hierarchy.state,
-        city: hierarchy.city,
-        defaultLevel
+        city: hierarchy.city
       });
     }
   }, [open, parentCommunity, communities, setValue]);
@@ -209,25 +203,43 @@ export function CreateCommunityDialog({
   const onSubmit = async (data: CommunityFormData) => {
     logger.debug('🏘️ CreateCommunityDialog: Form submitted:', data);
     logUserAction('community_create_attempt', {
-      name: data.name,
-      level: data.level,
       country: data.country,
       state: data.state,
+      city: data.city,
+      neighborhood: data.neighborhood,
       hasParent: !!parentCommunityId,
       hasLocation: !!location,
       hasAddress: !!currentAddress
     });
 
     try {
+      // Determine what we're creating based on what's filled in
+      let communityName: string;
+      let communityLevel: Community['level'];
+      let radius: number;
+
+      if (data.neighborhood) {
+        // Creating a neighborhood
+        communityName = data.neighborhood;
+        communityLevel = 'neighborhood';
+        radius = 5;
+      } else {
+        // Creating a city
+        communityName = data.city;
+        communityLevel = 'city';
+        radius = 25;
+      }
+
       // Create the community with full hierarchy
       const newCommunity = await createCommunityMutation.mutateAsync({
-        name: data.name,
+        name: communityName,
         description: data.description,
-        level: data.level,
+        level: communityLevel,
         country: data.country,
         state: data.state,
+        city: data.city,
         center: location || undefined,
-        radius_km: getDefaultRadius(data.level),
+        radius_km: radius,
       });
 
       logger.info('✅ CreateCommunityDialog: Community created:', newCommunity);
@@ -253,23 +265,10 @@ export function CreateCommunityDialog({
     }
   };
 
-  const getDefaultRadius = (level: string): number => {
-    switch (level) {
-      case 'neighborhood': return 5;
-      case 'city': return 25;
-      default: return 25;
-    }
-  };
-
-  const getLevelDescription = (level: string): string => {
-    switch (level) {
-      case 'neighborhood': return 'A local area within a city (5km radius)';
-      case 'city': return 'A city or town (25km radius)';
-      default: return '';
-    }
-  };
-
   const isSubmitting = createCommunityMutation.isPending;
+
+  // Show state field only for US
+  const showStateField = selectedCountry === 'United States';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -278,7 +277,7 @@ export function CreateCommunityDialog({
           <DialogHeader>
             <DialogTitle>Create New Community</DialogTitle>
             <p className="text-sm text-warmgray-600">
-              Create a new community with all necessary geographic levels. Missing intermediate levels will be created automatically.
+              Create a new community by specifying the geographic hierarchy. Missing intermediate levels will be created automatically.
             </p>
             {parentCommunity && (
               <p className="text-sm text-primary-600 bg-primary-50 p-2 rounded">
@@ -288,60 +287,9 @@ export function CreateCommunityDialog({
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
-            {/* Community Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-warmgray-800">Community Details</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Community Name</label>
-                  <input
-                    {...register('name')}
-                    className="w-full border rounded-md p-2"
-                    placeholder="Enter community name"
-                    disabled={isSubmitting}
-                  />
-                  {errors.name && (
-                    <p className="text-xs text-red-500">{errors.name.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Level</label>
-                  <select
-                    {...register('level')}
-                    className="w-full border rounded-md p-2"
-                    disabled={isSubmitting}
-                  >
-                    <option value="neighborhood">Neighborhood</option>
-                    <option value="city">City</option>
-                  </select>
-                  <p className="text-xs text-warmgray-500">
-                    {getLevelDescription(watchedLevel)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <textarea
-                  {...register('description')}
-                  className="w-full border rounded-md p-2 min-h-[80px]"
-                  placeholder="Describe your community..."
-                  disabled={isSubmitting}
-                />
-                {errors.description && (
-                  <p className="text-xs text-red-500">{errors.description.message}</p>
-                )}
-              </div>
-            </div>
-
             {/* Geographic Hierarchy */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-warmgray-800">Geographic Location</h3>
-              <p className="text-sm text-warmgray-600">
-                Specify the geographic hierarchy. If any level doesn't exist, it will be created automatically.
-              </p>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -356,6 +304,23 @@ export function CreateCommunityDialog({
                   )}
                 </div>
 
+                {showStateField && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">State</label>
+                    <StateAutocomplete
+                      value={selectedState}
+                      onChange={handleStateChange}
+                      country={selectedCountry}
+                      disabled={isSubmitting || !selectedCountry}
+                    />
+                    {errors.state && (
+                      <p className="text-xs text-red-500">{errors.state.message}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {!showStateField && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">State / Province</label>
                   <StateAutocomplete
@@ -368,7 +333,49 @@ export function CreateCommunityDialog({
                     <p className="text-xs text-red-500">{errors.state.message}</p>
                   )}
                 </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">City</label>
+                  <input
+                    {...register('city')}
+                    className="w-full border rounded-md p-2"
+                    placeholder="Enter city name"
+                    disabled={isSubmitting}
+                  />
+                  {errors.city && (
+                    <p className="text-xs text-red-500">{errors.city.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Neighborhood (Optional)</label>
+                  <input
+                    {...register('neighborhood')}
+                    className="w-full border rounded-md p-2"
+                    placeholder="Enter neighborhood name"
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs text-warmgray-500">
+                    Leave empty to create a city-level community
+                  </p>
+                </div>
               </div>
+            </div>
+
+            {/* Community Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                {...register('description')}
+                className="w-full border rounded-md p-2 min-h-[80px]"
+                placeholder="Describe your community..."
+                disabled={isSubmitting}
+              />
+              {errors.description && (
+                <p className="text-xs text-red-500">{errors.description.message}</p>
+              )}
             </div>
 
             {/* Specific Location */}
@@ -402,7 +409,7 @@ export function CreateCommunityDialog({
             </div>
 
             {/* Preview */}
-            {(selectedCountry || selectedState || watchedName) && (
+            {(selectedCountry || selectedState || watchedCity || watchedNeighborhood) && (
               <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-warmgray-700">Community Hierarchy Preview</h4>
                 <div className="text-sm text-warmgray-600">
@@ -427,13 +434,30 @@ export function CreateCommunityDialog({
                         </span>
                       </>
                     )}
-                    {watchedName && (
+                    {watchedCity && (
                       <>
                         <span className="text-warmgray-400">›</span>
-                        <span className="font-medium text-primary-600">{watchedName}</span>
+                        <span className="font-medium">{watchedCity}</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                          {communities.find(c => c.name === watchedCity) ? 'exists' : 'will create'}
+                        </span>
+                      </>
+                    )}
+                    {watchedNeighborhood && (
+                      <>
+                        <span className="text-warmgray-400">›</span>
+                        <span className="font-medium text-primary-600">{watchedNeighborhood}</span>
                         <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">new</span>
                       </>
                     )}
+                  </div>
+                  <div className="mt-2 text-xs text-warmgray-500">
+                    {watchedNeighborhood 
+                      ? `Creating neighborhood "${watchedNeighborhood}" in ${watchedCity}`
+                      : watchedCity 
+                        ? `Creating city "${watchedCity}"`
+                        : 'Fill in the fields above to see what will be created'
+                    }
                   </div>
                 </div>
               </div>
