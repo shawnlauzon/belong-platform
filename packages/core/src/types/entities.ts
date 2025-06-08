@@ -117,3 +117,5 @@ export interface ResourceFilter {
   searchTerm?: string;
   minTrustScore?: number;
 }
+
+export type SupabaseUser = import('@supabase/supabase-js').User;

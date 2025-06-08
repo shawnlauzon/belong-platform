@@ -5,10 +5,10 @@ export * from './eventBus/eventRegistry';
 // Types
 export * from './types/events';
 export * from './types/entities';
+export * from './types/database';
 
 // Utils
 export * from './utils/distance';
-export * from './utils/formatters';
 export * from './utils/logger';
 
 // Config
