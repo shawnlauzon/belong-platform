@@ -1,0 +1,21 @@
+{
+  "name": "@belongnetwork/app",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@belongnetwork/user-services": "workspace:*",
+    "@belongnetwork/community-services": "workspace:*",
+    "@belongnetwork/core": "workspace:*",
+    "@belongnetwork/resource-services": "workspace:*",
+    "@belongnetwork/trust-services": "workspace:*",
+    "@belongnetwork/components": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

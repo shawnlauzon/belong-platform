@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { ResourceList } from '@/components/resources/ResourceList';
-import { ResourceMap } from '@/components/resources/ResourceMap';
-import { ResourceForm } from '@/components/resources/ResourceForm';
-import { EditResourceDialog } from '@/components/resources/EditResourceDialog';
-import { Button } from '@/components/ui/button';
+import { AppLayout } from '@belongnetwork/components';
+import { ResourceList } from '@belongnetwork/components/resources/ResourceList';
+import { ResourceMap } from '@belongnetwork/components/resources/ResourceMap';
+import { ResourceForm } from '@belongnetwork/components/resources/ResourceForm';
+import { EditResourceDialog } from '@belongnetwork/components/resources/EditResourceDialog';
+import { Button } from '@belongnetwork/components';
 import { useResources, useResource } from '@/hooks/useResources';
-import { useAppStore } from '@/core/state';
-import { Resource } from '@/types';
+import { useAppStore } from '@belongnetwork/core';
+import { Resource } from '@belongnetwork/core';
 import { Plus, List, MapPin } from 'lucide-react';
-import { logger, logUserAction } from '@/lib/logger';
+import { logger, logUserAction } from '@belongnetwork/core';
 
 export const Route = createFileRoute('/resources')({
   component: ResourcesPage,
 });
 
 function ResourcesPage() {
-  const userLocation = useAppStore(state => state.userLocation);
+  const userLocation = useAppStore((state) => state.userLocation);
   const [viewType, setViewType] = useState<'list' | 'map'>('list');
   const [showForm, setShowForm] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
-  
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(
+    null
+  );
+
   const { data: resources = [], isLoading } = useResources(8);
   const { data: editingResource } = useResource(editingResourceId ?? undefined);
 
@@ -31,26 +33,26 @@ function ResourcesPage() {
     logUserAction('resource_request_clicked', { resourceId });
     alert(`Requesting resource: ${resourceId}`);
   };
-  
+
   const handleEditResource = (resourceId: string) => {
     logger.info('📦 ResourcesPage: Edit resource clicked:', { resourceId });
     logUserAction('resource_edit_clicked', { resourceId });
-    
+
     setEditingResourceId(resourceId);
     setShowEditDialog(true);
   };
-  
+
   const handleFormComplete = () => {
     logger.debug('📦 ResourcesPage: Form completed');
     setShowForm(false);
   };
 
   const handleEditComplete = (updatedResource: Resource) => {
-    logger.info('📦 ResourcesPage: Resource edit completed:', { 
+    logger.info('📦 ResourcesPage: Resource edit completed:', {
       resourceId: updatedResource.id,
-      title: updatedResource.title 
+      title: updatedResource.title,
     });
-    
+
     setShowEditDialog(false);
     setEditingResourceId(null);
   };
@@ -60,17 +62,19 @@ function ResourcesPage() {
     setShowEditDialog(false);
     setEditingResourceId(null);
   };
-  
+
   return (
     <AppLayout>
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-display font-bold text-warmgray-800">Resources Near You</h1>
+          <h1 className="text-2xl font-display font-bold text-warmgray-800">
+            Resources Near You
+          </h1>
           <p className="text-warmgray-500">
             {resources.length} resources within an 8-minute drive
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <div className="bg-white rounded-lg shadow-sm flex p-1">
             <Button
@@ -92,7 +96,7 @@ function ResourcesPage() {
               <span>Map</span>
             </Button>
           </div>
-          
+
           <Button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1"
@@ -102,19 +106,19 @@ function ResourcesPage() {
           </Button>
         </div>
       </div>
-      
+
       {showForm ? (
         <ResourceForm onComplete={handleFormComplete} />
       ) : (
         <>
           {viewType === 'map' ? (
-            <ResourceMap 
-              resources={resources} 
-              userLocation={userLocation} 
+            <ResourceMap
+              resources={resources}
+              userLocation={userLocation}
               onRequestResource={handleRequestResource}
             />
           ) : (
-            <ResourceList 
+            <ResourceList
               resources={resources}
               isLoading={isLoading}
               onRequestResource={handleRequestResource}
