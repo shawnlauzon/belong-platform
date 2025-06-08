@@ -1,10 +1,15 @@
-import { supabase } from '@/lib/supabase';
-import { calculateDrivingTime } from '@/lib/mapbox';
-import { eventBus } from '@/core/eventBus';
-import { Resource, Coordinates } from '@/types';
-import { AppEvent } from '@/types/events';
-import { Database } from '@/types/database';
-import { logger, logApiCall, logApiResponse, logEvent } from '@/lib/logger';
+import { supabase } from '@belongnetwork/core';
+import { calculateDrivingTime } from '@belongnetwork/core';
+import { eventBus } from '@belongnetwork/core';
+import { Resource, Coordinates } from '@belongnetwork/core';
+import { AppEvent } from '@belongnetwork/core';
+import { Database } from '@belongnetwork/core';
+import {
+  logger,
+  logApiCall,
+  logApiResponse,
+  logEvent,
+} from '@belongnetwork/core';
 
 export class ResourceManager {
   static initialize() {
@@ -32,8 +37,8 @@ export class ResourceManager {
         });
       } catch (error) {
         logger.error('❌ ResourceManager: Error creating resource:', error);
-        eventBus.emit('resource.create.failed', { 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        eventBus.emit('resource.create.failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });
@@ -42,10 +47,15 @@ export class ResourceManager {
     eventBus.on('resource.update.requested', async (event: AppEvent) => {
       if (event.type !== 'resource.update.requested') return;
 
-      logger.debug('📦 ResourceManager: Resource update requested:', event.data);
+      logger.debug(
+        '📦 ResourceManager: Resource update requested:',
+        event.data
+      );
 
       try {
-        const updatedResource = await ResourceManager.updateResource(event.data);
+        const updatedResource = await ResourceManager.updateResource(
+          event.data
+        );
 
         if (!updatedResource) throw new Error('Failed to update resource');
 
@@ -55,8 +65,8 @@ export class ResourceManager {
         });
       } catch (error) {
         logger.error('❌ ResourceManager: Error updating resource:', error);
-        eventBus.emit('resource.update.failed', { 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        eventBus.emit('resource.update.failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });
@@ -279,14 +289,17 @@ export class ResourceManager {
       }
 
       // Prepare the update data
-      const dbUpdateData: Partial<Database['public']['Tables']['resources']['Update']> = {
+      const dbUpdateData: Partial<
+        Database['public']['Tables']['resources']['Update']
+      > = {
         ...updateData,
         updated_at: new Date().toISOString(),
       };
 
       // Convert location to PostGIS format if provided
       if (updateData.location) {
-        dbUpdateData.location = `POINT(${updateData.location.lng} ${updateData.location.lat})` as any;
+        dbUpdateData.location =
+          `POINT(${updateData.location.lng} ${updateData.location.lat})` as any;
       }
 
       // Remove fields that shouldn't be updated directly

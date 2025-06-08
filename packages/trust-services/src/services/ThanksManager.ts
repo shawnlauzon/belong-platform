@@ -1,9 +1,9 @@
-import { supabase } from '@/lib/supabase';
-import { eventBus } from '@/core/eventBus';
-import { Thanks } from '@/types';
-import { AppEvent } from '@/types/events';
-import { TrustCalculator } from '@/features/trust/TrustCalculator';
-import { logger, logApiCall, logApiResponse } from '@/lib/logger';
+import { supabase } from '@belongnetwork/core';
+import { eventBus } from '@belongnetwork/core';
+import { Thanks } from '@belongnetwork/core';
+import { AppEvent } from '@belongnetwork/core';
+import { TrustCalculator } from '~/services/TrustCalculator';
+import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export class ThanksManager {
   static initialize() {
@@ -36,8 +36,8 @@ export class ThanksManager {
         });
       } catch (error) {
         logger.error('❌ ThanksManager: Error creating thanks:', error);
-        eventBus.emit('thanks.create.failed', { 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        eventBus.emit('thanks.create.failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });

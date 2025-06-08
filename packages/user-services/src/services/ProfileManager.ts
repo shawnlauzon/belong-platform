@@ -1,8 +1,8 @@
-import { eventBus } from '@/core/eventBus';
-import { supabase } from '@/lib/supabase';
-import { ProfileMetadata } from '@/types';
-import { Database } from '@/types/database';
-import { logger, logApiCall, logApiResponse } from '@/lib/logger';
+import { eventBus } from '@belongnetwork/core';
+import { supabase } from '@belongnetwork/core';
+import { ProfileMetadata } from '@belongnetwork/core';
+import { Database } from '@belongnetwork/core';
+import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export class ProfileManager {
   static initialize() {
@@ -13,8 +13,11 @@ export class ProfileManager {
       if (event.type !== 'profile.update.requested') return;
 
       const { userId, metadata } = event.data;
-      logger.debug('👤 ProfileManager: Profile update requested:', { userId, metadata });
-      
+      logger.debug('👤 ProfileManager: Profile update requested:', {
+        userId,
+        metadata,
+      });
+
       try {
         logApiCall('PATCH', `/profiles/${userId}`, { metadata });
 
@@ -26,32 +29,38 @@ export class ProfileManager {
           .single();
 
         if (fetchError) {
-          logApiResponse('GET', `/profiles/${userId}/metadata`, null, fetchError);
+          logApiResponse(
+            'GET',
+            `/profiles/${userId}/metadata`,
+            null,
+            fetchError
+          );
           throw fetchError;
         }
 
         // Convert ProfileMetadata to database format
-        const dbMetadata: Database['public']['Tables']['profiles']['Row']['user_metadata'] = {
-          first_name: metadata.first_name,
-          last_name: metadata.last_name,
-          full_name: metadata.full_name,
-          avatar_url: metadata.avatar_url,
-          location: metadata.location,
-          address: metadata.address,
-        };
+        const dbMetadata: Database['public']['Tables']['profiles']['Row']['user_metadata'] =
+          {
+            first_name: metadata.first_name,
+            last_name: metadata.last_name,
+            full_name: metadata.full_name,
+            avatar_url: metadata.avatar_url,
+            location: metadata.location,
+            address: metadata.address,
+          };
 
         // Merge the new metadata with existing user_metadata
         const existingMetadata = currentProfile?.user_metadata || {};
         const mergedMetadata = {
           ...existingMetadata,
-          ...dbMetadata
+          ...dbMetadata,
         };
 
         logger.debug('👤 ProfileManager: Merging metadata:', {
           userId,
           existingMetadata,
           newMetadata: dbMetadata,
-          mergedMetadata
+          mergedMetadata,
         });
 
         const { error } = await supabase
@@ -63,9 +72,11 @@ export class ProfileManager {
           logApiResponse('PATCH', `/profiles/${userId}`, null, error);
           throw error;
         }
-        
+
         logApiResponse('PATCH', `/profiles/${userId}`, { success: true });
-        logger.info('✅ ProfileManager: Profile updated successfully:', { userId });
+        logger.info('✅ ProfileManager: Profile updated successfully:', {
+          userId,
+        });
 
         // Convert back to ProfileMetadata for the event
         const updatedProfileMetadata: ProfileMetadata = {
@@ -77,12 +88,15 @@ export class ProfileManager {
           address: mergedMetadata.address,
         };
 
-        eventBus.emit('profile.updated', { userId, updatedProfile: updatedProfileMetadata });
+        eventBus.emit('profile.updated', {
+          userId,
+          updatedProfile: updatedProfileMetadata,
+        });
       } catch (error) {
         logger.error('❌ ProfileManager: Error updating profile:', error);
-        eventBus.emit('profile.update.failed', { 
-          userId, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        eventBus.emit('profile.update.failed', {
+          userId,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });

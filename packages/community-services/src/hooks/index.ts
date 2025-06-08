@@ -1,2 +1,1 @@
-export * from './useMembers';
-export * from './useProfile';
+export * from './useCommunities';
