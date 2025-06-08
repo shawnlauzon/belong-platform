@@ -1,42 +1,46 @@
-import type { BelongState } from '../types/store';
+import type { AppState } from '../types/store';
 
-export const initialState: BelongState = {
+export const initialState: AppState = {
+  // Auth state
   auth: {
     user: null,
     session: null,
     isLoading: false,
     error: null,
   },
-  profile: {
-    // Profile data
-    id: '',
-    first_name: '',
-    last_name: '',
-    avatar_url: '',
-    bio: '',
-    location: { lat: 0, lng: 0 },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    
-    // UI state
-    isLoading: false,
-    isUpdating: false,
-    error: null,
-  },
-  community: {
-    currentCommunity: null,
-    communities: {},
+  
+  // Communities state
+  communities: {
+    list: [],
+    currentId: null,
     isLoading: false,
     error: null,
   },
-  resource: {
-    resources: {},
-    currentResource: null,
+  
+  // Resources state
+  resources: {
+    list: [],
+    currentId: null,
+    filters: {
+      category: 'all',
+      type: 'all',
+      searchTerm: '',
+    },
     isLoading: false,
     error: null,
   },
-  thank: {
-    thanks: {},
+  
+  // Users state
+  users: {
+    current: null,
+    profiles: {},
+    isLoading: false,
+    error: null,
+  },
+  
+  // Thanks state
+  thanks: {
+    list: [],
     isLoading: false,
     error: null,
   },

@@ -2,16 +2,16 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { initialState } from './initialState';
-import type { BelongState, BelongStore } from '../types/store';
+import type { AppState, BelongStore } from '../types/store';
 
 // Create the store with just the state
 const createBelongStore = (
   set: (
     partial:
-      | Partial<BelongState>
-      | ((state: BelongState) => Partial<BelongState>)
+      | Partial<AppState>
+      | ((state: AppState) => Partial<AppState>)
   ) => void,
-  get: () => BelongState
+  get: () => AppState
 ): Omit<BelongStore, keyof typeof initialState> => {
   return {
     // No actions for now
@@ -34,20 +34,13 @@ export const useBelongStore = create<BelongStore>()(
           user: state.auth.user,
           session: state.auth.session,
         },
-        profile: {
-          id: state.profile.id,
-          email: state.profile.email,
-          first_name: state.profile.first_name,
-          last_name: state.profile.last_name,
-          avatar_url: state.profile.avatar_url,
-          bio: state.profile.bio,
-          location: state.profile.location,
-          created_at: state.profile.created_at,
-          updated_at: state.profile.updated_at,
+        users: {
+          current: state.users.current,
+          profiles: state.users.profiles,
         },
-        community: {
-          currentCommunity: state.community.currentCommunity,
-          communities: state.community.communities,
+        communities: {
+          list: state.communities.list,
+          currentId: state.communities.currentId,
         },
       }),
     }

@@ -1,24 +1,6 @@
-import { User, Community, Resource, Thanks, Coordinates } from './entities';
+import { User, Community, Resource, Thanks, Coordinates, ResourceFilter } from './entities';
 
-// Extended types with additional UI state
-export interface ProfileState {
-  // Profile data
-  id: string;
-  email?: string;
-  first_name: string;
-  last_name: string;
-  avatar_url: string;
-  bio: string;
-  location: Coordinates;
-  created_at: string;
-  updated_at: string;
-
-  // UI state
-  isLoading: boolean;
-  isUpdating: boolean;
-  error: string | null;
-}
-
+// Auth State
 export interface AuthState {
   user: User | null;
   session: any | null;
@@ -26,33 +8,45 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface ResourceState {
-  resources: Record<string, Resource>;
-  currentResource: Resource | null;
+// Communities State
+export interface CommunitiesState {
+  list: Community[];
+  currentId: string | null;
   isLoading: boolean;
   error: string | null;
 }
 
-export interface CommunityState {
-  currentCommunity: Community | null;
-  communities: Record<string, Community>;
+// Resources State
+export interface ResourcesState {
+  list: Resource[];
+  currentId: string | null;
+  filters: ResourceFilter;
   isLoading: boolean;
   error: string | null;
 }
 
-export interface ThankState {
-  thanks: Record<string, Thanks>;
+// Users State
+export interface UsersState {
+  current: User | null;
+  profiles: Record<string, User>;
   isLoading: boolean;
   error: string | null;
 }
 
-// Store state interface
-export interface BelongState {
+// Thanks State
+export interface ThanksState {
+  list: Thanks[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+// Main App State
+export interface AppState {
   auth: AuthState;
-  profile: ProfileState;
-  community: CommunityState;
-  resource: ResourceState;
-  thank: ThankState;
+  communities: CommunitiesState;
+  resources: ResourcesState;
+  users: UsersState;
+  thanks: ThanksState;
 }
 
-export type BelongStore = BelongState;
+export type BelongStore = AppState;
