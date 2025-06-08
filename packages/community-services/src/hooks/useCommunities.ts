@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { Community, Coordinates } from '@/types';
-import { logger, logApiCall, logApiResponse } from '@/lib/logger';
+import { supabase, Community, Coordinates } from '@belongnetwork/core';
+import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export function useCommunities() {
   return useQuery({
@@ -27,27 +26,33 @@ export function useCommunities() {
       }
 
       // Transform the data to match our Community interface
-      const transformedCommunities: Community[] = communities.map(community => ({
-        id: community.id,
-        name: community.name,
-        level: community.level as Community['level'],
-        parent_id: community.parent_id,
-        description: community.description,
-        center: community.center ? {
-          lat: community.center.coordinates[1],
-          lng: community.center.coordinates[0]
-        } : undefined,
-        radius_km: community.radius_km,
-        member_count: community.member_count,
-      }));
+      const transformedCommunities: Community[] = communities.map(
+        (community) => ({
+          id: community.id,
+          name: community.name,
+          level: community.level as Community['level'],
+          parent_id: community.parent_id,
+          description: community.description,
+          center: community.center
+            ? {
+                lat: community.center.coordinates[1],
+                lng: community.center.coordinates[0],
+              }
+            : undefined,
+          radius_km: community.radius_km,
+          member_count: community.member_count,
+        })
+      );
 
-      logApiResponse('GET', '/communities', { count: transformedCommunities.length });
-      logger.info('🏘️ useCommunities: Communities fetched successfully:', { 
-        count: transformedCommunities.length 
+      logApiResponse('GET', '/communities', {
+        count: transformedCommunities.length,
+      });
+      logger.info('🏘️ useCommunities: Communities fetched successfully:', {
+        count: transformedCommunities.length,
       });
 
       return transformedCommunities;
-    }
+    },
   });
 }
 
@@ -79,18 +84,20 @@ export function useCommunity(id: string) {
         level: community.level as Community['level'],
         parent_id: community.parent_id,
         description: community.description,
-        center: community.center ? {
-          lat: community.center.coordinates[1],
-          lng: community.center.coordinates[0]
-        } : undefined,
+        center: community.center
+          ? {
+              lat: community.center.coordinates[1],
+              lng: community.center.coordinates[0],
+            }
+          : undefined,
         radius_km: community.radius_km,
         member_count: community.member_count,
       };
 
       logApiResponse('GET', `/communities/${id}`, transformedCommunity);
-      logger.info('🏘️ useCommunity: Community fetched successfully:', { 
-        id, 
-        name: transformedCommunity.name 
+      logger.info('🏘️ useCommunity: Community fetched successfully:', {
+        id,
+        name: transformedCommunity.name,
       });
 
       return transformedCommunity;
@@ -113,11 +120,17 @@ export function useCreateCommunity() {
       center?: Coordinates;
       radius_km?: number;
     }): Promise<Community> => {
-      logger.debug('🏘️ useCreateCommunity: Creating community with hierarchy:', communityData);
+      logger.debug(
+        '🏘️ useCreateCommunity: Creating community with hierarchy:',
+        communityData
+      );
       logApiCall('POST', '/communities/create-with-hierarchy', communityData);
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError || !user) {
         throw new Error('User must be authenticated to create communities');
       }
@@ -134,19 +147,22 @@ export function useCreateCommunity() {
       const communities = existingCommunities || [];
 
       // Find or create the hierarchy: Worldwide -> Country -> State -> City/Neighborhood
-      let worldwideId = communities.find(c => c.level === 'global')?.id;
+      let worldwideId = communities.find((c) => c.level === 'global')?.id;
       if (!worldwideId) {
         // This should exist from migration, but just in case
         const { data: worldwide, error: worldwideError } = await supabase
           .from('communities')
-          .insert([{
-            name: 'Worldwide',
-            level: 'global',
-            description: 'Global neighborhood connecting communities worldwide',
-            parent_id: null,
-            member_count: 1,
-            creator_id: user.id,
-          }])
+          .insert([
+            {
+              name: 'Worldwide',
+              level: 'global',
+              description:
+                'Global neighborhood connecting communities worldwide',
+              parent_id: null,
+              member_count: 1,
+              creator_id: user.id,
+            },
+          ])
           .select()
           .single();
 
@@ -156,118 +172,132 @@ export function useCreateCommunity() {
       }
 
       // Find or create country
-      let countryId = communities.find(c => 
-        c.level === 'country' && 
-        c.name === communityData.country
+      let countryId = communities.find(
+        (c) => c.level === 'country' && c.name === communityData.country
       )?.id;
 
       if (!countryId) {
         const { data: country, error: countryError } = await supabase
           .from('communities')
-          .insert([{
-            name: communityData.country,
-            level: 'country',
-            description: `${communityData.country} communities`,
-            parent_id: worldwideId,
-            member_count: 1,
-            creator_id: user.id,
-          }])
+          .insert([
+            {
+              name: communityData.country,
+              level: 'country',
+              description: `${communityData.country} communities`,
+              parent_id: worldwideId,
+              member_count: 1,
+              creator_id: user.id,
+            },
+          ])
           .select()
           .single();
 
         if (countryError) throw countryError;
         countryId = country.id;
-        logger.info('🏘️ Created country community:', { 
-          id: countryId, 
-          name: communityData.country 
+        logger.info('🏘️ Created country community:', {
+          id: countryId,
+          name: communityData.country,
         });
       }
 
       // Find or create state
-      let stateId = communities.find(c => 
-        c.level === 'state' && 
-        c.name === communityData.state &&
-        c.parent_id === countryId
+      let stateId = communities.find(
+        (c) =>
+          c.level === 'state' &&
+          c.name === communityData.state &&
+          c.parent_id === countryId
       )?.id;
 
       if (!stateId) {
         const { data: state, error: stateError } = await supabase
           .from('communities')
-          .insert([{
-            name: communityData.state,
-            level: 'state',
-            description: `${communityData.state} communities`,
-            parent_id: countryId,
-            member_count: 1,
-            creator_id: user.id,
-          }])
+          .insert([
+            {
+              name: communityData.state,
+              level: 'state',
+              description: `${communityData.state} communities`,
+              parent_id: countryId,
+              member_count: 1,
+              creator_id: user.id,
+            },
+          ])
           .select()
           .single();
 
         if (stateError) throw stateError;
         stateId = state.id;
-        logger.info('🏘️ Created state community:', { 
-          id: stateId, 
-          name: communityData.state 
+        logger.info('🏘️ Created state community:', {
+          id: stateId,
+          name: communityData.state,
         });
       }
 
       // Find or create city if we're creating a neighborhood
       let cityId = stateId; // Default parent is state
-      
+
       if (communityData.level === 'neighborhood' && communityData.city) {
-        let existingCityId = communities.find(c => 
-          c.level === 'city' && 
-          c.name === communityData.city &&
-          c.parent_id === stateId
+        let existingCityId = communities.find(
+          (c) =>
+            c.level === 'city' &&
+            c.name === communityData.city &&
+            c.parent_id === stateId
         )?.id;
 
         if (!existingCityId) {
           const { data: city, error: cityError } = await supabase
             .from('communities')
-            .insert([{
-              name: communityData.city,
-              level: 'city',
-              description: `${communityData.city} community`,
-              parent_id: stateId,
-              member_count: 1,
-              creator_id: user.id,
-              radius_km: 25,
-            }])
+            .insert([
+              {
+                name: communityData.city,
+                level: 'city',
+                description: `${communityData.city} community`,
+                parent_id: stateId,
+                member_count: 1,
+                creator_id: user.id,
+                radius_km: 25,
+              },
+            ])
             .select()
             .single();
 
           if (cityError) throw cityError;
           existingCityId = city.id;
-          logger.info('🏘️ Created city community:', { 
-            id: existingCityId, 
-            name: communityData.city 
+          logger.info('🏘️ Created city community:', {
+            id: existingCityId,
+            name: communityData.city,
           });
         }
-        
+
         cityId = existingCityId;
       }
 
       // Create the actual community (city or neighborhood)
       const { data: community, error } = await supabase
         .from('communities')
-        .insert([{
-          name: communityData.name,
-          level: communityData.level,
-          description: communityData.description,
-          parent_id: cityId,
-          center: communityData.center 
-            ? `POINT(${communityData.center.lng} ${communityData.center.lat})`
-            : null,
-          radius_km: communityData.radius_km,
-          creator_id: user.id,
-          member_count: 1,
-        }])
+        .insert([
+          {
+            name: communityData.name,
+            level: communityData.level,
+            description: communityData.description,
+            parent_id: cityId,
+            center: communityData.center
+              ? `POINT(${communityData.center.lng} ${communityData.center.lat})`
+              : null,
+            radius_km: communityData.radius_km,
+            creator_id: user.id,
+            member_count: 1,
+          },
+        ])
         .select()
         .single();
 
       if (error) {
-        logApiResponse('POST', '/communities/create-with-hierarchy', null, error);
+        logApiResponse(
+          'POST',
+          '/communities/create-with-hierarchy',
+          null,
+          error
+        );
         throw error;
       }
 
@@ -281,22 +311,31 @@ export function useCreateCommunity() {
         level: community.level as Community['level'],
         parent_id: community.parent_id,
         description: community.description,
-        center: community.center ? {
-          lat: community.center.coordinates[1],
-          lng: community.center.coordinates[0]
-        } : undefined,
+        center: community.center
+          ? {
+              lat: community.center.coordinates[1],
+              lng: community.center.coordinates[0],
+            }
+          : undefined,
         radius_km: community.radius_km,
         member_count: community.member_count,
       };
 
-      logApiResponse('POST', '/communities/create-with-hierarchy', transformedCommunity);
-      logger.info('✅ useCreateCommunity: Community created successfully with full hierarchy:', { 
-        id: transformedCommunity.id, 
-        name: transformedCommunity.name,
-        country: communityData.country,
-        state: communityData.state,
-        city: communityData.city
-      });
+      logApiResponse(
+        'POST',
+        '/communities/create-with-hierarchy',
+        transformedCommunity
+      );
+      logger.info(
+        '✅ useCreateCommunity: Community created successfully with full hierarchy:',
+        {
+          id: transformedCommunity.id,
+          name: transformedCommunity.name,
+          country: communityData.country,
+          state: communityData.state,
+          city: communityData.city,
+        }
+      );
 
       return transformedCommunity;
     },

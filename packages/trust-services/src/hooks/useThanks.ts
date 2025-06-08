@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { Thanks } from '@/types';
-import { logger, logApiCall, logApiResponse } from '@/lib/logger';
+import { supabase, Thanks } from '@belongnetwork/core';
+import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export function useThanks() {
   return useQuery({

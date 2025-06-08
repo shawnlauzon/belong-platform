@@ -1,10 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { logger, logComponentRender, logApiCall, logApiResponse } from '@/lib/logger';
+import { supabase } from '@belongnetwork/core';
+import {
+  logger,
+  logComponentRender,
+  logApiCall,
+  logApiResponse,
+} from '@belongnetwork/core';
 
 export function useProfile(userId: string | undefined) {
   logComponentRender('useProfile', { userId });
-  
+
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -25,18 +30,18 @@ export function useProfile(userId: string | undefined) {
         logApiResponse('GET', `/profiles/${userId}`, null, error);
         throw error;
       }
-      
-      logApiResponse('GET', `/profiles/${userId}`, { 
+
+      logApiResponse('GET', `/profiles/${userId}`, {
         hasProfile: !!profile,
-        hasMetadata: !!profile?.user_metadata 
+        hasMetadata: !!profile?.user_metadata,
       });
-      
-      logger.debug('👤 useProfile: Profile fetched:', { 
-        userId, 
+
+      logger.debug('👤 useProfile: Profile fetched:', {
+        userId,
         email: profile?.email,
-        hasMetadata: !!profile?.user_metadata 
+        hasMetadata: !!profile?.user_metadata,
       });
-      
+
       return profile;
     },
     enabled: !!userId,
@@ -46,7 +51,10 @@ export function useProfile(userId: string | undefined) {
     mutationFn: async (metadata: any) => {
       if (!userId) throw new Error('User ID is required');
 
-      logger.debug('👤 useProfile: Updating profile metadata:', { userId, metadata });
+      logger.debug('👤 useProfile: Updating profile metadata:', {
+        userId,
+        metadata,
+      });
       logApiCall('PATCH', `/profiles/${userId}`, { metadata });
 
       // First, fetch the current profile to get existing user_metadata
@@ -65,14 +73,14 @@ export function useProfile(userId: string | undefined) {
       const existingMetadata = currentProfile?.user_metadata || {};
       const mergedMetadata = {
         ...existingMetadata,
-        ...metadata
+        ...metadata,
       };
 
       logger.debug('👤 useProfile: Merging metadata:', {
         userId,
         existingMetadata,
         newMetadata: metadata,
-        mergedMetadata
+        mergedMetadata,
       });
 
       const { error } = await supabase
@@ -84,12 +92,14 @@ export function useProfile(userId: string | undefined) {
         logApiResponse('PATCH', `/profiles/${userId}`, null, error);
         throw error;
       }
-      
+
       logApiResponse('PATCH', `/profiles/${userId}`, { success: true });
       logger.info('✅ useProfile: Profile updated successfully:', { userId });
     },
     onSuccess: () => {
-      logger.debug('👤 useProfile: Invalidating queries after successful update');
+      logger.debug(
+        '👤 useProfile: Invalidating queries after successful update'
+      );
       queryClient.invalidateQueries({ queryKey: ['profile', userId] });
       queryClient.invalidateQueries({ queryKey: ['members', userId] });
       queryClient.invalidateQueries({ queryKey: ['members'] });
