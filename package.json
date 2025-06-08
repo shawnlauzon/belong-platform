@@ -7,12 +7,13 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/app dev",
-    "build": "pnpm -r build",
+    "build": "pnpm db:types && pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > packages/core/src/types/database.ts && echo '✅ Successfully updated database types'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
