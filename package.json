@@ -24,7 +24,6 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
-    "@supabase/supabase-js": "^2.39.7",
     "@tanstack/react-query": "^5.28.4",
     "@tanstack/react-query-devtools": "^5.28.4",
     "@tanstack/react-router": "^1.22.1",
@@ -35,7 +34,6 @@
     "dotenv": "^16.4.5",
     "loglevel": "^1.9.1",
     "lucide-react": "^0.344.0",
-    "mapbox-gl": "^2.15.0",
     "nanoid": "^5.0.6",
     "next-themes": "^0.2.1",
     "react": "^18.3.1",
@@ -45,7 +43,6 @@
     "react-map-gl": "^7.1.7",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.22.4",
     "zustand": "^4.5.2"
   },
   "devDependencies": {

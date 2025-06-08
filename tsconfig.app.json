@@ -18,8 +18,11 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
+      "@belongnetwork/core": [
+        "packages/core/src"
+      ],
+      "@belongnetwork/core/*": [
+        "packages/core/src/*"
       ]
     },
     /* Linting */

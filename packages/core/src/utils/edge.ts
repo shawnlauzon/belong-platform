@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '../config/supabase';
 
 interface GetApiKeyResponse {
   key: string;
@@ -10,12 +10,10 @@ interface SetApiKeyResponse {
 
 export async function getApiKey(service: string): Promise<string> {
   try {
-    const { data: functionData, error: functionError } = await supabase.functions.invoke<GetApiKeyResponse>(
-      'get-api-key',
-      {
+    const { data: functionData, error: functionError } =
+      await supabase.functions.invoke<GetApiKeyResponse>('get-api-key', {
         body: { service },
-      }
-    );
+      });
 
     if (functionError) throw functionError;
     if (!functionData?.key) throw new Error('API key not found');
@@ -29,12 +27,10 @@ export async function getApiKey(service: string): Promise<string> {
 
 export async function setApiKey(service: string, key: string): Promise<void> {
   try {
-    const { data: functionData, error: functionError } = await supabase.functions.invoke<SetApiKeyResponse>(
-      'set-api-key',
-      {
+    const { data: functionData, error: functionError } =
+      await supabase.functions.invoke<SetApiKeyResponse>('set-api-key', {
         body: { service, key },
-      }
-    );
+      });
 
     if (functionError) throw functionError;
     if (!functionData?.success) throw new Error('Failed to set API key');

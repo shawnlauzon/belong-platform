@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@belongnetwork/core": [
+        "./packages/core/src"
+      ],
+      "@belongnetwork/core/*": [
+        "./packages/core/src/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

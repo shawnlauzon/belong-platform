@@ -1,4 +1,4 @@
-import { Resource, Community, Member, ProfileMetadata } from './index';
+import { Resource, Community, Member, ProfileMetadata } from './entities';
 import { User } from '@supabase/supabase-js';
 
 export interface BaseEvent {
