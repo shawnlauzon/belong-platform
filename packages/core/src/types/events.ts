@@ -63,6 +63,30 @@ export interface AuthSignOutRequestedEvent extends BaseEvent {
   data: void;
 }
 
+export interface AuthSignOutSuccessEvent extends BaseEvent {
+  type: 'auth.signOut.success';
+  data: {
+    userId?: string;
+    sessionId?: string;
+    timestamp: number;
+  };
+}
+
+export interface AuthSignOutFailedEvent extends BaseEvent {
+  type: 'auth.signOut.failed';
+  data: {
+    error: string;
+    errorCode?: string;
+    userId?: string;
+    retryable: boolean;
+    details?: {
+      sessionExpired?: boolean;
+      networkError?: boolean;
+      serverError?: boolean;
+    };
+  };
+}
+
 // Community Events
 export interface CommunityCreateRequestedEvent extends BaseEvent {
   type: 'community.create.requested';
@@ -204,6 +228,31 @@ export interface TrustUpdatedEvent extends BaseEvent {
   };
 }
 
+// Notification Events
+export interface NotificationShowEvent extends BaseEvent {
+  type: 'notification.show';
+  data: {
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+    duration?: number;
+    action?: {
+      label: string;
+      callback: () => void;
+    };
+  };
+}
+
+// Navigation Events
+export interface NavigationRedirectEvent extends BaseEvent {
+  type: 'navigation.redirect';
+  data: {
+    path: string;
+    replace?: boolean;
+    state?: any;
+  };
+}
+
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
@@ -212,6 +261,8 @@ export type AppEvent =
   | AuthSignUpSuccessEvent
   | AuthSignInFailedEvent
   | AuthSignUpFailedEvent
+  | AuthSignOutSuccessEvent
+  | AuthSignOutFailedEvent
   | CommunityCreateRequestedEvent
   | CommunityCreatedEvent
   | CommunityCreateFailedEvent
@@ -229,4 +280,6 @@ export type AppEvent =
   | ThanksCreateRequestedEvent
   | ThanksCreatedEvent
   | ThanksCreateFailedEvent
-  | TrustUpdatedEvent;
+  | TrustUpdatedEvent
+  | NotificationShowEvent
+  | NavigationRedirectEvent;

@@ -23,7 +23,11 @@ function isAuthSignUpFailedEvent(event: AppEvent): event is import('../types/eve
   return event.type === 'auth.signUp.failed';
 }
 
-function isAuthSignOutFailedEvent(event: AppEvent): event is import('../types/events').AuthSignOutRequestedEvent {
+function isAuthSignOutSuccessEvent(event: AppEvent): event is import('../types/events').AuthSignOutSuccessEvent {
+  return event.type === 'auth.signOut.success';
+}
+
+function isAuthSignOutFailedEvent(event: AppEvent): event is import('../types/events').AuthSignOutFailedEvent {
   return event.type === 'auth.signOut.failed';
 }
 
@@ -116,29 +120,128 @@ function initializeAuthListeners(
 
   // Handle successful sign out
   eventBus.on('auth.signOut.success', (event: AppEvent) => {
-    // Sign out success events don't have specific data, just verify the type
-    if (event.type !== 'auth.signOut.success') {
+    if (!isAuthSignOutSuccessEvent(event)) {
       logger.error('🔐 Store: Received invalid auth.signOut.success event', { event });
       return;
     }
 
-    logger.debug('🔐 Store: Handling successful sign out');
+    logger.info('🔐 Store: Handling successful sign out', { 
+      userId: event.data.userId,
+      sessionId: event.data.sessionId,
+      timestamp: event.data.timestamp 
+    });
+
+    // Clear authentication state
     setAuthLoading(false);
     clearAuthSession();
+
+    // Log successful sign out for analytics/security monitoring
+    logger.info('📊 Analytics: User signed out successfully', {
+      userId: event.data.userId,
+      sessionId: event.data.sessionId,
+      timestamp: event.data.timestamp,
+      duration: event.data.timestamp - (event.timestamp || 0)
+    });
+
+    // Show success notification
+    eventBus.emit('notification.show', {
+      type: 'success',
+      title: 'Signed Out',
+      message: 'You have been successfully signed out.',
+      duration: 3000
+    });
+
+    // Redirect to home/login page
+    eventBus.emit('navigation.redirect', {
+      path: '/',
+      replace: true
+    });
   });
 
   // Handle failed sign out
   eventBus.on('auth.signOut.failed', (event: AppEvent) => {
-    // For sign out failed, we need to check if it has error data
-    if (event.type !== 'auth.signOut.failed') {
+    if (!isAuthSignOutFailedEvent(event)) {
       logger.error('🔐 Store: Received invalid auth.signOut.failed event', { event });
       return;
     }
 
-    const errorMessage = (event.data as any)?.error || 'Sign out failed';
-    logger.debug('🔐 Store: Handling failed sign out', { error: errorMessage });
+    logger.error('🔐 Store: Handling failed sign out', { 
+      error: event.data.error,
+      errorCode: event.data.errorCode,
+      userId: event.data.userId,
+      retryable: event.data.retryable,
+      details: event.data.details
+    });
+
     setAuthLoading(false);
-    setAuthError(errorMessage);
+
+    // Log the error details for debugging and security monitoring
+    logger.error('🚨 Security: Sign out failed', {
+      error: event.data.error,
+      errorCode: event.data.errorCode,
+      userId: event.data.userId,
+      retryable: event.data.retryable,
+      details: event.data.details,
+      timestamp: event.timestamp
+    });
+
+    // Determine appropriate error message based on error type
+    let userMessage = 'Failed to sign out. Please try again.';
+    let showRetry = event.data.retryable;
+
+    if (event.data.details?.sessionExpired) {
+      userMessage = 'Your session has expired. You have been automatically signed out.';
+      showRetry = false;
+      // Force clear session if it's expired
+      clearAuthSession();
+      
+      // Redirect to login page
+      eventBus.emit('navigation.redirect', {
+        path: '/',
+        replace: true
+      });
+    } else if (event.data.details?.networkError) {
+      userMessage = 'Network error occurred during sign out. Please check your connection and try again.';
+    } else if (event.data.details?.serverError) {
+      userMessage = 'Server error occurred during sign out. Please try again in a moment.';
+    }
+
+    // Set error state only if session is still valid
+    if (!event.data.details?.sessionExpired) {
+      setAuthError(event.data.error);
+    }
+
+    // Show error notification with optional retry
+    const notificationData: any = {
+      type: 'error' as const,
+      title: 'Sign Out Failed',
+      message: userMessage,
+      duration: showRetry ? 0 : 5000 // Persistent if retryable, auto-dismiss if not
+    };
+
+    // Add retry action if the error is retryable
+    if (showRetry) {
+      notificationData.action = {
+        label: 'Retry',
+        callback: () => {
+          logger.info('🔄 User retrying sign out');
+          eventBus.emit('auth.signOut.requested', void 0);
+        }
+      };
+    }
+
+    eventBus.emit('notification.show', notificationData);
+
+    // For critical security scenarios, force local session cleanup
+    if (event.data.errorCode === 'FORCE_LOGOUT' || event.data.details?.sessionExpired) {
+      logger.warn('🚨 Security: Forcing local session cleanup due to critical error');
+      clearAuthSession();
+      
+      eventBus.emit('navigation.redirect', {
+        path: '/',
+        replace: true
+      });
+    }
   });
 
   // Handle sign in/up/out requests to set loading state
