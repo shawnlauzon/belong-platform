@@ -5,7 +5,7 @@ import { TrustBadge } from '../trust';
 import { Button } from '../ui/button';
 import { User } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
-import { Heart, MessageCircle, User as UserIcon } from 'lucide-react';
+import { MessageCircle, User as UserIcon } from 'lucide-react';
 
 interface MemberCardProps {
   member: User;

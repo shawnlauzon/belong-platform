@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@belongnetwork/components';
 import { ThanksFeed } from '@belongnetwork/components';
-import { Thanks, useBelongStore } from '@belongnetwork/core';
+import { useBelongStore } from '@belongnetwork/core';
 import { ViewSwitcher } from '@belongnetwork/components';
 import { Button } from '@belongnetwork/components';
 import { Heart, User } from 'lucide-react';
