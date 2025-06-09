@@ -12,11 +12,11 @@ const getEnvVar = (key: string, fallback?: string): string => {
 };
 
 // Set your Mapbox token (ideally from environment variable)
-export const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_TOKEN') || getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
+export const MAPBOX_PUBLIC_TOKEN = getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
 
-if (!MAPBOX_TOKEN) {
+if (!MAPBOX_PUBLIC_TOKEN) {
   logger.warn(
-    'Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file'
+    'Mapbox token not found. Please add VITE_MAPBOX_PUBLIC_TOKEN to your .env file'
   );
 }
 

@@ -11,7 +11,7 @@ const getEnvVar = (key: string, fallback?: string): string => {
 };
 
 // Set your Mapbox token (ideally from environment variable)
-const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_TOKEN') || getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
+const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
