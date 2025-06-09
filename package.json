@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/app dev",
-    "build": "pnpm db:types && pnpm -r build",
+    "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",

@@ -11,7 +11,7 @@ const getEnvVar = (key: string, fallback?: string): string => {
 };
 
 // Set your Mapbox token (ideally from environment variable)
-const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
+const MAPBOX_PUBLIC_TOKEN = getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
@@ -43,12 +43,12 @@ export const calculateDrivingTime = async (
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    if (!MAPBOX_TOKEN) {
+    if (!MAPBOX_PUBLIC_TOKEN) {
       logger.debug('No Mapbox token available, using approximation');
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_PUBLIC_TOKEN}`;
 
     logApiCall('GET', 'mapbox/directions', { origin, destination });
 

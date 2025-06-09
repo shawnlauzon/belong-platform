@@ -2,7 +2,7 @@ import React from 'react';
 import { Map, Marker, Source, Layer } from 'react-map-gl';
 import { Button } from '../ui/button';
 import { MapPin } from 'lucide-react';
-import { Coordinates, MAPBOX_TOKEN } from '@belongnetwork/core';
+import { Coordinates, MAPBOX_PUBLIC_TOKEN } from '@belongnetwork/core';
 import { Feature, Polygon } from 'geojson';
 
 interface LocationPickerProps {
@@ -112,7 +112,7 @@ export function LocationPicker({
     };
   };
 
-  if (!MAPBOX_TOKEN) {
+  if (!MAPBOX_PUBLIC_TOKEN) {
     return (
       <div className="h-[200px] rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
         <div className="text-center p-4">
@@ -135,7 +135,7 @@ export function LocationPicker({
           {...viewport}
           style={{ width: '100%', height: '100%' }}
           mapStyle="mapbox://styles/mapbox/streets-v12"
-          mapboxAccessToken={MAPBOX_TOKEN}
+          mapboxAccessToken={MAPBOX_PUBLIC_TOKEN}
           onClick={handleMapClick}
           onMove={(evt) => setViewport(evt.viewState)}
         >
