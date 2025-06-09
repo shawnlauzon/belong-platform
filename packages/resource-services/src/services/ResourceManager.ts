@@ -1,4 +1,4 @@
-import { logger } from '@belongnetwork/core/utils/logger';
+import { logger } from '@belongnetwork/core';
 import { ResourceFetcher } from './ResourceFetcher';
 import { ResourceCreator } from './ResourceCreator';
 import { ResourceUpdater } from './ResourceUpdater';
@@ -17,7 +17,9 @@ export class ResourceManager {
       return;
     }
 
-    logger.info('🚀 ResourceManager: Initializing resource management system...');
+    logger.info(
+      '🚀 ResourceManager: Initializing resource management system...'
+    );
 
     try {
       // Initialize all CRUD service modules
@@ -27,9 +29,14 @@ export class ResourceManager {
       ResourceDeleter.initialize();
 
       this.initialized = true;
-      logger.info('✅ ResourceManager: All resource services initialized successfully');
+      logger.info(
+        '✅ ResourceManager: All resource services initialized successfully'
+      );
     } catch (error) {
-      logger.error('❌ ResourceManager: Failed to initialize resource services', { error });
+      logger.error(
+        '❌ ResourceManager: Failed to initialize resource services',
+        { error }
+      );
       throw error;
     }
   }
@@ -52,10 +59,10 @@ export class ResourceManager {
       initialized: this.initialized,
       services: [
         'ResourceFetcher',
-        'ResourceCreator', 
+        'ResourceCreator',
         'ResourceUpdater',
-        'ResourceDeleter'
-      ]
+        'ResourceDeleter',
+      ],
     };
   }
 }
