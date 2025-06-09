@@ -127,6 +127,7 @@ export interface CommunityActiveChangedEvent extends BaseEvent {
     communityId: string;
   };
 }
+
 // Profile Events
 export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
@@ -153,6 +154,27 @@ export interface ProfileUpdateFailedEvent extends BaseEvent {
 }
 
 // Resource Events
+export interface ResourceFetchRequestedEvent extends BaseEvent {
+  type: 'resource.fetch.requested';
+  data: {
+    filters?: import('./entities').ResourceFilter;
+  };
+}
+
+export interface ResourceFetchSuccessEvent extends BaseEvent {
+  type: 'resource.fetch.success';
+  data: {
+    resources: Resource[];
+  };
+}
+
+export interface ResourceFetchFailedEvent extends BaseEvent {
+  type: 'resource.fetch.failed';
+  data: {
+    error: string;
+  };
+}
+
 export interface ResourceCreateRequestedEvent extends BaseEvent {
   type: 'resource.create.requested';
   data: Omit<Resource, 'id' | 'created_at' | 'times_helped'>;
@@ -183,6 +205,28 @@ export interface ResourceUpdatedEvent extends BaseEvent {
 export interface ResourceUpdateFailedEvent extends BaseEvent {
   type: 'resource.update.failed';
   data: {
+    error: string;
+  };
+}
+
+export interface ResourceDeleteRequestedEvent extends BaseEvent {
+  type: 'resource.delete.requested';
+  data: {
+    resourceId: string;
+  };
+}
+
+export interface ResourceDeletedEvent extends BaseEvent {
+  type: 'resource.deleted';
+  data: {
+    resourceId: string;
+  };
+}
+
+export interface ResourceDeleteFailedEvent extends BaseEvent {
+  type: 'resource.delete.failed';
+  data: {
+    resourceId: string;
     error: string;
   };
 }
@@ -271,12 +315,18 @@ export type AppEvent =
   | ProfileUpdateRequestedEvent
   | ProfileUpdatedEvent
   | ProfileUpdateFailedEvent
+  | ResourceFetchRequestedEvent
+  | ResourceFetchSuccessEvent
+  | ResourceFetchFailedEvent
   | ResourceCreateRequestedEvent
   | ResourceCreatedEvent
   | ResourceCreateFailedEvent
   | ResourceUpdateRequestedEvent
   | ResourceUpdatedEvent
   | ResourceUpdateFailedEvent
+  | ResourceDeleteRequestedEvent
+  | ResourceDeletedEvent
+  | ResourceDeleteFailedEvent
   | ThanksCreateRequestedEvent
   | ThanksCreatedEvent
   | ThanksCreateFailedEvent

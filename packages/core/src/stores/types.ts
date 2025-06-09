@@ -87,6 +87,14 @@ export interface StoreActions {
   setAuthError: (error: string) => void;
   setAuthLoading: (loading: boolean) => void;
 
+  // Resource state management actions
+  setResourcesLoading: (isLoading: boolean) => void;
+  setResourcesError: (error: string | null) => void;
+  setResources: (resources: Resource[]) => void;
+  addResource: (resource: Resource) => void;
+  updateResourceInList: (resource: Resource) => void;
+  removeResource: (resourceId: string) => void;
+
   // Add other action types here as needed
 }
 

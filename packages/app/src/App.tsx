@@ -1,13 +1,27 @@
 import React, { useEffect } from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AuthProvider } from './providers/AuthProvider';
 import { routeTree } from './routeTree.gen';
-import { logger, logComponentRender } from '@belongnetwork/core';
-import './index.css';
+import { AuthProvider } from './providers/AuthProvider';
 import { EventProvider } from './providers/EventProvider';
+import { eventBus } from '@belongnetwork/core/eventBus/eventBus';
+import { logger } from '@belongnetwork/core/utils/logger';
+import './index.css';
 
+// Import resource services to initialize them
+import '@belongnetwork/resource-services';
+
+// Create a new router instance
+const router = createRouter({ routeTree });
+
+// Register the router instance for type safety
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -17,35 +31,17 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  context: {
-    queryClient,
-  },
-});
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router;
-  }
-}
-
 function App() {
-  logComponentRender('App');
-
   useEffect(() => {
-    const init = async () => {
-      try {
-        logger.info('🚀 Initializing application...');
+    logger.info('🚀 App: Application starting up');
 
-        logger.info('✅ Application initialized successfully');
-      } catch (error) {
-        logger.error('❌ Error initializing app:', error);
-      }
+    // Trigger initial resource fetch when the app loads
+    logger.debug('📦 App: Triggering initial resource fetch');
+    eventBus.emit('resource.fetch.requested', {});
+
+    return () => {
+      logger.info('🛑 App: Application shutting down');
     };
-
-    init();
   }, []);
 
   return (
@@ -55,7 +51,6 @@ function App() {
           <RouterProvider router={router} />
         </AuthProvider>
       </EventProvider>
-      <ReactQueryDevtools />
     </QueryClientProvider>
   );
 }
