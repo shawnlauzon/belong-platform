@@ -5,12 +5,12 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '~/ui/card';
-import { Button } from '~/ui/button';
-import { Badge } from '~/ui/badge';
-import { TrustBadge } from '~/trust/TrustBadge';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { formatTimeAgo, truncateText } from '~/utils/formatters';
+} from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { TrustBadge } from '../trust/TrustBadge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { formatTimeAgo, truncateText } from '../utils/formatters';
 import { MapPin, Clock, CarFront, Edit } from 'lucide-react';
 import { Resource } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';

@@ -9,10 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '~/ui/dialog';
-import { Button } from '~/ui/button';
-import { AddressAutocomplete } from '~/shared/AddressAutocomplete';
-import { LocationPicker } from '~/shared/LocationPicker';
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { AddressAutocomplete } from '../shared/AddressAutocomplete';
+import { LocationPicker } from '../shared/LocationPicker';
 import { CountryAutocomplete } from './CountryAutocomplete';
 import { StateAutocomplete } from './StateAutocomplete';
 import { Community, Coordinates } from '@belongnetwork/core';

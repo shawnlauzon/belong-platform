@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@belongnetwork/core/src/config/supabase';
+import { supabase } from '@belongnetwork/core';
 import {
   logger,
   logComponentRender,
   logUserAction,
   logApiCall,
   logApiResponse,
-} from '@belongnetwork/core/src/utils/logger';
-import { SupabaseUser } from '@belongnetwork/core/src/types/entities';
+} from '@belongnetwork/core';
+import { SupabaseUser } from '@belongnetwork/core';
 
 interface AuthContextType {
   user: SupabaseUser | null;

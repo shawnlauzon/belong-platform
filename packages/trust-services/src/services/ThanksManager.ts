@@ -2,7 +2,7 @@ import { supabase } from '@belongnetwork/core';
 import { eventBus } from '@belongnetwork/core';
 import { Thanks } from '@belongnetwork/core';
 import { AppEvent } from '@belongnetwork/core';
-import { TrustCalculator } from '~/services/TrustCalculator';
+import { TrustCalculator } from '../services/TrustCalculator';
 import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export class ThanksManager {

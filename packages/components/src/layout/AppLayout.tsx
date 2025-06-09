@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import { Navigation } from '~/layout/Navigation';
-import { CommunitySelector } from '~/communities/CommunitySelector';
+import { Navigation } from './Navigation';
+import { CommunitySelector } from '../communities/CommunitySelector';
 
 interface AppLayoutProps {
   children: ReactNode;

@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { eventBus } from '@belongnetwork/core';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/ui/dialog';
-import { Button } from '~/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/button';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 
 const authSchema = z.object({

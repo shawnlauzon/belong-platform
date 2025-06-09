@@ -6,35 +6,34 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: './', // Serve from the root directory
+  publicDir: 'public',
   plugins: [
     tsconfigPaths({
       // Explicitly tell vite-tsconfig-paths to use our tsconfig
       projects: [
         path.resolve(__dirname, './tsconfig.app.json'),
         path.resolve(__dirname, './tsconfig.node.json'),
-        path.resolve(__dirname, './tsconfig.base.json')
-      ]
+        path.resolve(__dirname, './tsconfig.base.json'),
+      ],
     }),
     react(),
-    TanStackRouterVite()
+    TanStackRouterVite(),
   ],
+  server: {
+    port: 5173,
+    open: true,
+  },
   resolve: {
     alias: [
       {
-        find: '~',
-        replacement: path.resolve(__dirname, './packages/core/src')
+        // This will make ~ resolve to the src directory of the current package
+        find: /^~\/(.*)/,
+        replacement: path.resolve(process.cwd(), 'src') + '/$1',
       },
-      {
-        find: '@',
-        replacement: path.resolve(__dirname, './packages/core/src')
-      },
-      {
-        find: '@belongnetwork/core',
-        replacement: path.resolve(__dirname, './packages/core/src')
-      }
-    ]
+    ],
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-  }
+  },
 });

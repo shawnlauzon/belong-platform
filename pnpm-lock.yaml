@@ -136,7 +136,7 @@ importers:
         specifier: ^3.5.3
         version: 3.5.3
       supabase:
-        specifier: ^1.145.4
+        specifier: ^1.142.0
         version: 1.226.4
       tailwindcss:
         specifier: ^3.4.1
@@ -177,10 +177,37 @@ importers:
       '@belongnetwork/user-services':
         specifier: workspace:*
         version: link:../user-services
+      '@tanstack/react-query':
+        specifier: ^5.28.4
+        version: 5.80.6(react@18.3.1)
+      '@tanstack/react-router':
+        specifier: ^1.22.1
+        version: 1.120.18(react-dom@18.3.1)(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@types/react':
+        specifier: ^18.3.3
+        version: 18.3.23
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.7(@types/react@18.3.23)
+      '@vitejs/plugin-react':
+        specifier: ^4.2.1
+        version: 4.5.1(vite@5.4.19)
       typescript:
         specifier: ^5.0.0
         version: 5.8.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.19
+      vite-tsconfig-paths:
+        specifier: ^4.3.2
+        version: 4.3.2(typescript@5.8.3)(vite@5.4.19)
 
   packages/community-services:
     dependencies:
@@ -200,9 +227,36 @@ importers:
       '@belongnetwork/core':
         specifier: workspace:*
         version: link:../core
+      '@radix-ui/react-avatar':
+        specifier: ^1.0.4
+        version: 1.1.10(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-dialog':
+        specifier: ^1.0.5
+        version: 1.1.14(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-dropdown-menu':
+        specifier: ^2.0.6
+        version: 2.1.15(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-label':
+        specifier: ^2.0.2
+        version: 2.1.7(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-navigation-menu':
+        specifier: ^1.1.4
+        version: 1.2.13(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-select':
+        specifier: ^2.0.0
+        version: 2.2.5(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
+      '@radix-ui/react-slot':
+        specifier: ^1.0.2
+        version: 1.2.3(@types/react@18.3.23)(react@18.3.1)
+      '@radix-ui/react-tabs':
+        specifier: ^1.0.4
+        version: 1.1.12(@types/react-dom@18.3.7)(@types/react@18.3.23)(react-dom@18.3.1)(react@18.3.1)
       geojson:
         specifier: ^0.5.0
         version: 0.5.0
+      mapbox-gl:
+        specifier: ^2.15.0
+        version: 2.15.0
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -5001,6 +5055,23 @@ packages:
   /validate-npm-package-name@6.0.1:
     resolution: {integrity: sha512-OaI//3H0J7ZkR1OqlhGA8cA+Cbk/2xFOQpJOt5+s27/ta9eZwpeervh4Mxh4w0im/kdgktowaqVNR7QOrUd7Yg==}
     engines: {node: ^18.17.0 || >=20.5.0}
+    dev: true
+
+  /vite-tsconfig-paths@4.3.2(typescript@5.8.3)(vite@5.4.19):
+    resolution: {integrity: sha512-0Vd/a6po6Q+86rPlntHye7F31zA2URZMbH8M3saAZ/xR9QoGN/L21bxEGfXdWmFdNkqPpRdxFT7nmNe12e9/uA==}
+    peerDependencies:
+      vite: '*'
+    peerDependenciesMeta:
+      vite:
+        optional: true
+    dependencies:
+      debug: 4.4.1
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@5.8.3)
+      vite: 5.4.19
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
     dev: true
 
   /vite-tsconfig-paths@5.1.4(typescript@5.8.3)(vite@5.4.19):

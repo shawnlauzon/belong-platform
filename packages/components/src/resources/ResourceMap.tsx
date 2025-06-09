@@ -7,7 +7,7 @@ import {
   mapbox,
   MAPBOX_TOKEN,
 } from '@belongnetwork/core';
-import { TrustBadge } from '~/trust/TrustBadge';
+import { TrustBadge } from '../trust/TrustBadge';
 import { MapPin, User } from 'lucide-react';
 
 import 'mapbox-gl/dist/mapbox-gl.css';

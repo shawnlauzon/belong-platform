@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '~/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { ImageUpload } from '~/shared/ImageUpload';
+} from '../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ImageUpload } from '../shared/ImageUpload';
 import {
   eventBus,
   logComponentRender,

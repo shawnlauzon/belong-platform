@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from '~/ui';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { TrustBadge } from '~/trust';
-import { Button } from '~/ui/button';
+import { Card, CardContent, CardHeader } from '../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { TrustBadge } from '../trust';
+import { Button } from '../ui/button';
 import { User } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
 import { Heart, MessageCircle, User as UserIcon } from 'lucide-react';

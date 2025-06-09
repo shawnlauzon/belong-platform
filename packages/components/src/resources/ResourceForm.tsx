@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '~/ui/card';
-import { ImageUpload } from '~/shared/ImageUpload';
+} from '../ui/card';
+import { ImageUpload } from '../shared/ImageUpload';
 import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { logger, logUserAction } from '@belongnetwork/core';
 

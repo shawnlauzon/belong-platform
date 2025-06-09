@@ -1,6 +1,6 @@
 // useBelongStore.ts
 import { create, SetState } from 'zustand';
-import { eventBus } from '~/eventBus/eventBus';
+import { eventBus } from '../eventBus/eventBus';
 import { initialState } from './initialState';
 import type { BelongState, BelongStore } from './types';
 

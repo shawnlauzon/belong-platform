@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ImageUpload } from '~/shared/ImageUpload';
-import { AuthDialog } from '~/users/AuthDialog';
+import { ImageUpload } from '../shared/ImageUpload';
+import { AuthDialog } from '../users/AuthDialog';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '~/ui/dialog';
-import { Button } from '~/ui/button';
+} from '../ui/dialog';
+import { Button } from '../ui/button';
 import { eventBus, useBelongStore } from '@belongnetwork/core';
 
 const resourceSchema = z.object({

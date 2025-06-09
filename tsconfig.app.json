@@ -18,20 +18,27 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@belongnetwork/core": [
-        "packages/core/src"
+      "@belongnetwork/*": [
+        "packages/*/src"
       ],
-      "@belongnetwork/core/*": [
-        "packages/core/src/*"
-      ]
     },
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "include": [
-    "src"
+    "packages/app/src/**/*.ts",
+    "packages/app/src/**/*.tsx",
+    "packages/core/src/**/*.ts",
+    "packages/core/src/**/*.tsx"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
   ]
 }

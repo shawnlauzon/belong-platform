@@ -1,11 +1,13 @@
 {
   "name": "@belongnetwork/app",
   "version": "0.1.0",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@belongnetwork/user-services": "workspace:*",
@@ -13,9 +15,18 @@
     "@belongnetwork/core": "workspace:*",
     "@belongnetwork/resource-services": "workspace:*",
     "@belongnetwork/trust-services": "workspace:*",
-    "@belongnetwork/components": "workspace:*"
+    "@belongnetwork/components": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-query": "^5.28.4",
+    "@tanstack/react-router": "^1.22.1"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }

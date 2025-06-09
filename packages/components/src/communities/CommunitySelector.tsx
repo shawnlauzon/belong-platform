@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { Community } from '@belongnetwork/core';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 import { CreateCommunityDialog } from './CreateCommunityDialog';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 

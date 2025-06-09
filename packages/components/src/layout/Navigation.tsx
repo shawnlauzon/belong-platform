@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Link, LinkProps } from '@tanstack/react-router';
-import { cn } from '~/utils';
-import { Button } from '~/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { TrustBadge } from '~/trust/TrustBadge';
-import { AuthDialog } from '~/users/AuthDialog';
-import { getInitials } from '~/utils';
+import { Link } from '@tanstack/react-router';
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { TrustBadge } from '../trust/TrustBadge';
+import { AuthDialog } from '../users/AuthDialog';
+import { getInitials } from '../utils';
 import { eventBus } from '@belongnetwork/core';
 import {
   Home,

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader } from '~/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { TrustBadge } from '~/trust/TrustBadge';
-import { formatTimeAgo } from '~/utils/formatters';
+import { Card, CardContent, CardFooter, CardHeader } from '../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { TrustBadge } from './TrustBadge';
+import { formatTimeAgo } from '../utils/formatters';
 import { Thanks } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
 

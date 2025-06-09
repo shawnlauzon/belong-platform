@@ -9,11 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '~/ui/dialog';
-import { Button } from '~/ui/button';
-import { ImageUpload } from '~/shared/ImageUpload';
-import { AddressAutocomplete } from '~/shared/AddressAutocomplete';
-import { LocationPicker } from '~/shared/LocationPicker';
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { ImageUpload } from '../shared/ImageUpload';
+import { AddressAutocomplete } from '../shared/AddressAutocomplete';
+import { LocationPicker } from '../shared/LocationPicker';
 import { Resource, Coordinates } from '@belongnetwork/core';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 

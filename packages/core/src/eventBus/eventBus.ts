@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
-import { AppEvent } from '~/types/events';
-import { logger, logEvent } from '~/utils/logger';
+import { AppEvent } from '../types/events';
+import { logger, logEvent } from '../utils/logger';
 
 type EventCallback = (event: AppEvent) => void;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Map, Marker, Source, Layer } from 'react-map-gl';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 import { MapPin } from 'lucide-react';
 import { Coordinates, MAPBOX_TOKEN } from '@belongnetwork/core';
 import { Feature, Polygon } from 'geojson';

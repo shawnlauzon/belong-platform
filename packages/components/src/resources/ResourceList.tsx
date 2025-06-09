@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ResourceCard } from './ResourceCard';
 import { Resource, ResourceFilter } from '@belongnetwork/core';
 import { Filter, Search } from 'lucide-react';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 
 interface ResourceListProps {
   resources: Resource[];

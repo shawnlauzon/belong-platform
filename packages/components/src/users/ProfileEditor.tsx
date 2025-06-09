@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '~/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '~/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
-import { ImageUpload } from '~/shared/ImageUpload';
-import { AddressAutocomplete } from '~/shared/AddressAutocomplete';
-import { LocationPicker } from '~/shared/LocationPicker';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ImageUpload } from '../shared/ImageUpload';
+import { AddressAutocomplete } from '../shared/AddressAutocomplete';
+import { LocationPicker } from '../shared/LocationPicker';
 import { StorageManager } from '@belongnetwork/core';
 import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { Coordinates } from '@belongnetwork/core';
-import { getInitials } from '~/utils';
+import { getInitials } from '../utils';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 import { mapbox } from '@belongnetwork/core'; // Import the new mapboxService
 

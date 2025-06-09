@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AuthProvider } from '~/providers/AuthProvider';
+import { AuthProvider } from './providers/AuthProvider';
 import { routeTree } from './routeTree.gen';
 import { logger, logComponentRender } from '@belongnetwork/core';
 import './index.css';
-import { EventProvider } from '~/providers/EventProvider';
+import { EventProvider } from './providers/EventProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {

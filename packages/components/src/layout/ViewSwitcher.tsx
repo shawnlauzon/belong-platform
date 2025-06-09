@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '~/ui/button';
+import { Button } from '../ui/button';
 import { Users, User } from 'lucide-react';
 import { eventBus } from '@belongnetwork/core';
 
