@@ -304,6 +304,92 @@ export function isResourceFetchRequestedEvent(
   return event.type === 'resource.fetch.requested';
 }
 
+// Type guard functions for event type checking
+export function isAuthSignInSuccessEvent(
+  event: AppEvent
+): event is AuthSignInSuccessEvent {
+  return event.type === 'auth.signIn.success';
+}
+
+export function isAuthSignInFailedEvent(
+  event: AppEvent
+): event is AuthSignInFailedEvent {
+  return event.type === 'auth.signIn.failed';
+}
+
+export function isAuthSignUpSuccessEvent(
+  event: AppEvent
+): event is AuthSignUpSuccessEvent {
+  return event.type === 'auth.signUp.success';
+}
+
+export function isAuthSignUpFailedEvent(
+  event: AppEvent
+): event is AuthSignUpFailedEvent {
+  return event.type === 'auth.signUp.failed';
+}
+
+export function isAuthSignOutSuccessEvent(
+  event: AppEvent
+): event is AuthSignOutSuccessEvent {
+  return event.type === 'auth.signOut.success';
+}
+
+export function isAuthSignOutFailedEvent(
+  event: AppEvent
+): event is AuthSignOutFailedEvent {
+  return event.type === 'auth.signOut.failed';
+}
+
+// Resource event type guards
+export function isResourceFetchSuccessEvent(
+  event: AppEvent
+): event is ResourceFetchSuccessEvent {
+  return event.type === 'resource.fetch.success';
+}
+
+export function isResourceFetchFailedEvent(
+  event: AppEvent
+): event is ResourceFetchFailedEvent {
+  return event.type === 'resource.fetch.failed';
+}
+
+export function isResourceCreatedEvent(
+  event: AppEvent
+): event is ResourceCreatedEvent {
+  return event.type === 'resource.created';
+}
+
+export function isResourceCreateFailedEvent(
+  event: AppEvent
+): event is ResourceCreateFailedEvent {
+  return event.type === 'resource.create.failed';
+}
+
+export function isResourceUpdatedEvent(
+  event: AppEvent
+): event is ResourceUpdatedEvent {
+  return event.type === 'resource.updated';
+}
+
+export function isResourceUpdateFailedEvent(
+  event: AppEvent
+): event is ResourceUpdateFailedEvent {
+  return event.type === 'resource.update.failed';
+}
+
+export function isResourceDeletedEvent(
+  event: AppEvent
+): event is ResourceDeletedEvent {
+  return event.type === 'resource.deleted';
+}
+
+export function isResourceDeleteFailedEvent(
+  event: AppEvent
+): event is ResourceDeleteFailedEvent {
+  return event.type === 'resource.delete.failed';
+}
+
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
