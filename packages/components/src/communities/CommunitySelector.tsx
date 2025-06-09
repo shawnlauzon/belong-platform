@@ -9,11 +9,11 @@ import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 export function CommunitySelector() {
   logComponentRender('CommunitySelector');
 
-  const {
-    list: communities = [],
-    activeId: activeCommunityId,
-    isLoading,
-  } = useBelongStore((state) => state.communities);
+  const { list: communities = [], isLoading } = useBelongStore(
+    (state) => state.communities
+  );
+
+  const { activeCommunityId } = useBelongStore((state) => state.app);
 
   const [isOpen, setIsOpen] = useState(false);
   const [browseCommunityId, setBrowseCommunityId] = useState(
