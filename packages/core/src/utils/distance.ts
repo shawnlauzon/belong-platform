@@ -1,7 +1,5 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
-
-// Set your Mapbox token (ideally from environment variable)
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+import { getPublicToken } from '../config/mapbox';
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
@@ -33,12 +31,12 @@ export const calculateDrivingTime = async (
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    if (!MAPBOX_TOKEN) {
+    if (!getPublicToken()) {
       logger.debug('No Mapbox token available, using approximation');
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${getPublicToken()}`;
 
     logApiCall('GET', 'mapbox/directions', { origin, destination });
 
