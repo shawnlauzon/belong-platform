@@ -243,7 +243,8 @@ export const useBelongStore = create<BelongStore>()(
         setCommunitiesLoading,
         setCommunitiesError,
         setCommunities,
-        setActiveCommunityInternal
+        setActiveCommunityInternal,
+        get
       );
       initializeResourceListeners(
         setResourcesLoading,

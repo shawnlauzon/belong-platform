@@ -12,7 +12,8 @@ export function initializeCommunityListeners(
   setCommunitiesLoading: (isLoading: boolean) => void,
   setCommunitiesError: (error: string | null) => void,
   setCommunities: (communities: Community[]) => void,
-  setActiveCommunity: (communityId: string) => void
+  setActiveCommunity: (communityId: string) => void,
+  getStore: () => any
 ) {
   logger.info('🏘️ Store: Initializing community event listeners');
 
@@ -46,6 +47,24 @@ export function initializeCommunityListeners(
     setCommunities(event.data.communities);
     setCommunitiesLoading(false);
     setCommunitiesError(null);
+
+    // Check if active community is not set and set it to global community
+    const currentState = getStore();
+    if (!currentState.app.activeCommunityId) {
+      const globalCommunity = event.data.communities.find(
+        (community: Community) => community.level === 'global'
+      );
+      
+      if (globalCommunity) {
+        logger.debug('🏘️ Store: Setting active community to global community', {
+          communityId: globalCommunity.id,
+          communityName: globalCommunity.name,
+        });
+        setActiveCommunity(globalCommunity.id);
+      } else {
+        logger.warn('🏘️ Store: No global community found in fetched communities');
+      }
+    }
   });
 
   // Handle failed community operations
