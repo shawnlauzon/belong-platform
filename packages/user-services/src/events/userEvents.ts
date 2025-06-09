@@ -89,7 +89,9 @@ export function initializeAuthEventHandlers() {
           error: result.error,
         });
       } else {
-        eventBus.emit('auth.signOut.success', void 0);
+        eventBus.emit('auth.signOut.success', {
+          timestamp: Date.now(),
+        });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error during sign out';
