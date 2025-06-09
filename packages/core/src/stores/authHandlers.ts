@@ -1,4 +1,4 @@
-import { logger } from 'src/utils';
+import { logger } from '../utils';
 import {
   isAuthSignInSuccessEvent,
   isAuthSignInFailedEvent,
@@ -8,7 +8,7 @@ import {
   isAuthSignOutFailedEvent,
   type AppEvent,
 } from '../types/events';
-import { eventBus } from 'src/eventBus/eventBus';
+import { eventBus } from '../eventBus/eventBus';
 import type { Session } from '@supabase/supabase-js';
 // Initialize authentication event listeners
 export default function initializeAuthListeners(

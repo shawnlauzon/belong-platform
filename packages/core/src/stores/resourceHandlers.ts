@@ -1,6 +1,6 @@
-import { eventBus } from 'src/eventBus/eventBus';
-import { AppEvent, Resource } from 'src/types';
-import { logger } from 'src/utils';
+import { eventBus } from '../eventBus/eventBus';
+import { AppEvent, Resource } from '../types';
+import { logger } from '../utils';
 import {
   isResourceFetchSuccessEvent,
   isResourceFetchFailedEvent,
