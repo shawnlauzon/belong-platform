@@ -200,7 +200,7 @@ export const useBelongStore = create<BelongStore>()(
         );
       };
 
-      const updateResourceInList = (updatedResource: Resource) => {
+      const updateResource = (updatedResource: Resource) => {
         set(
           (state) => ({
             ...state,
@@ -251,7 +251,7 @@ export const useBelongStore = create<BelongStore>()(
         setResourcesError,
         setResources,
         addResource,
-        updateResourceInList,
+        updateResource,
         removeResource
       );
 
@@ -296,7 +296,7 @@ export const useBelongStore = create<BelongStore>()(
         setResourcesError,
         setResources,
         addResource,
-        updateResourceInList,
+        updateResource,
         removeResource,
 
         // Selectors and state updaters

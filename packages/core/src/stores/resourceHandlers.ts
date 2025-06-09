@@ -18,7 +18,7 @@ export function initializeResourceListeners(
   setResourcesError: (error: string | null) => void,
   setResources: (resources: Resource[]) => void,
   addResource: (resource: Resource) => void,
-  updateResourceInList: (resource: Resource) => void,
+  updateResource: (resource: Resource) => void,
   removeResource: (resourceId: string) => void
 ) {
   logger.info('📦 Store: Initializing resource event listeners');
@@ -130,7 +130,7 @@ export function initializeResourceListeners(
       resourceId: event.data.id,
       title: event.data.title,
     });
-    updateResourceInList(event.data);
+    updateResource(event.data);
     setResourcesLoading(false);
     setResourcesError(null);
   });
