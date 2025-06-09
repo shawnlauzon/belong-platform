@@ -142,6 +142,45 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
   };
 }
 
+export interface CommunityUpdateRequestedEvent extends BaseEvent {
+  type: 'community.update.requested';
+  data: Partial<Community> & { id: string };
+}
+
+export interface CommunityUpdatedEvent extends BaseEvent {
+  type: 'community.updated';
+  data: Community;
+}
+
+export interface CommunityUpdateFailedEvent extends BaseEvent {
+  type: 'community.update.failed';
+  data: {
+    error: string;
+  };
+}
+
+export interface CommunityDeleteRequestedEvent extends BaseEvent {
+  type: 'community.delete.requested';
+  data: {
+    communityId: string;
+  };
+}
+
+export interface CommunityDeletedEvent extends BaseEvent {
+  type: 'community.deleted';
+  data: {
+    communityId: string;
+  };
+}
+
+export interface CommunityDeleteFailedEvent extends BaseEvent {
+  type: 'community.delete.failed';
+  data: {
+    communityId: string;
+    error: string;
+  };
+}
+
 export interface CommunityActiveChangeRequestedEvent extends BaseEvent {
   type: 'community.active.change.requested';
   data: {
@@ -381,6 +420,42 @@ export function isCommunityFetchFailedEvent(
   return event.type === 'community.fetch.failed';
 }
 
+export function isCommunityCreatedEvent(
+  event: AppEvent
+): event is CommunityCreatedEvent {
+  return event.type === 'community.created';
+}
+
+export function isCommunityCreateFailedEvent(
+  event: AppEvent
+): event is CommunityCreateFailedEvent {
+  return event.type === 'community.create.failed';
+}
+
+export function isCommunityUpdatedEvent(
+  event: AppEvent
+): event is CommunityUpdatedEvent {
+  return event.type === 'community.updated';
+}
+
+export function isCommunityUpdateFailedEvent(
+  event: AppEvent
+): event is CommunityUpdateFailedEvent {
+  return event.type === 'community.update.failed';
+}
+
+export function isCommunityDeletedEvent(
+  event: AppEvent
+): event is CommunityDeletedEvent {
+  return event.type === 'community.deleted';
+}
+
+export function isCommunityDeleteFailedEvent(
+  event: AppEvent
+): event is CommunityDeleteFailedEvent {
+  return event.type === 'community.delete.failed';
+}
+
 export function isCommunityActiveChangeRequestedEvent(
   event: AppEvent
 ): event is CommunityActiveChangeRequestedEvent {
@@ -458,6 +533,12 @@ export type AppEvent =
   | CommunityCreateRequestedEvent
   | CommunityCreatedEvent
   | CommunityCreateFailedEvent
+  | CommunityUpdateRequestedEvent
+  | CommunityUpdatedEvent
+  | CommunityUpdateFailedEvent
+  | CommunityDeleteRequestedEvent
+  | CommunityDeletedEvent
+  | CommunityDeleteFailedEvent
   | CommunityActiveChangeRequestedEvent
   | CommunityActiveChangedEvent
   | ProfileUpdateRequestedEvent

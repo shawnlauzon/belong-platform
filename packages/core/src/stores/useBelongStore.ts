@@ -124,6 +124,52 @@ export const useBelongStore = create<BelongStore>()(
         );
       };
 
+      const addCommunity = (community: Community) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              list: [community, ...state.communities.list],
+            },
+          }),
+          false,
+          'communities/add'
+        );
+      };
+
+      const updateCommunity = (updatedCommunity: Community) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              list: state.communities.list.map((community) =>
+                community.id === updatedCommunity.id ? updatedCommunity : community
+              ),
+            },
+          }),
+          false,
+          'communities/update'
+        );
+      };
+
+      const removeCommunity = (communityId: string) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              list: state.communities.list.filter(
+                (community) => community.id !== communityId
+              ),
+            },
+          }),
+          false,
+          'communities/remove'
+        );
+      };
+
       const setActiveCommunityInternal = (communityId: string) => {
         set(
           (state) => ({
@@ -243,6 +289,9 @@ export const useBelongStore = create<BelongStore>()(
         setCommunitiesLoading,
         setCommunitiesError,
         setCommunities,
+        addCommunity,
+        updateCommunity,
+        removeCommunity,
         setActiveCommunityInternal,
         get
       );
@@ -290,6 +339,9 @@ export const useBelongStore = create<BelongStore>()(
         setCommunitiesLoading,
         setCommunitiesError,
         setCommunities,
+        addCommunity,
+        updateCommunity,
+        removeCommunity,
 
         // Resource state management actions
         setResourcesLoading,

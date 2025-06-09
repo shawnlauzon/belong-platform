@@ -88,6 +88,9 @@ export interface StoreActions {
   setCommunitiesLoading: (isLoading: boolean) => void;
   setCommunitiesError: (error: string | null) => void;
   setCommunities: (communities: Community[]) => void;
+  addCommunity: (community: Community) => void;
+  updateCommunity: (community: Community) => void;
+  removeCommunity: (communityId: string) => void;
   setActiveCommunity: (communityId: string) => void;
 
   // Internal resource state management actions
