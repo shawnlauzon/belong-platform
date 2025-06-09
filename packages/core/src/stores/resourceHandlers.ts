@@ -10,7 +10,7 @@ import {
   isResourceUpdateFailedEvent,
   isResourceDeletedEvent,
   isResourceDeleteFailedEvent,
-} from 'src/types/events';
+} from '../types/events';
 
 // Initialize resource event listeners
 export function initializeResourceListeners(
