@@ -9,6 +9,8 @@ export const initialState: BelongState = {
     user: null,
     session: null,
     location: null,
+    isAuthenticated: false,
+    token: null,
     isLoading: false,
     error: null,
   },

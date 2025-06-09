@@ -7,6 +7,7 @@ import {
   ResourceFilter,
   Me,
 } from '../types/entities';
+import type { Session } from '@supabase/supabase-js';
 
 // App State
 export interface AppState {
@@ -16,8 +17,10 @@ export interface AppState {
 // Auth State
 export interface AuthState {
   user: Me | null;
-  session: any | null;
+  session: Session | null;
   location: Coordinates | null;
+  isAuthenticated: boolean;
+  token: string | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -77,6 +80,12 @@ export interface StoreActions {
     metadata?: { firstName?: string; lastName?: string }
   ) => void;
   signOut: () => void;
+
+  // Internal auth state management actions
+  setAuthSession: (user: any, session: Session | null) => void;
+  clearAuthSession: () => void;
+  setAuthError: (error: string) => void;
+  setAuthLoading: (loading: boolean) => void;
 
   // Add other action types here as needed
 }
