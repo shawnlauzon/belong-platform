@@ -1,22 +1,12 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
 import { Coordinates } from '../types/entities';
 
-// Helper function to get environment variables across different contexts
-const getEnvVar = (key: string, fallback?: string): string => {
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env[key] || fallback || '';
-  } else if (typeof process !== 'undefined' && process.env) {
-    return process.env[key] || fallback || '';
-  }
-  return fallback || '';
-};
-
 // Set your Mapbox token (ideally from environment variable)
-export const MAPBOX_PUBLIC_TOKEN = getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
+export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-if (!MAPBOX_PUBLIC_TOKEN) {
+if (!MAPBOX_TOKEN) {
   logger.warn(
-    'Mapbox token not found. Please add VITE_MAPBOX_PUBLIC_TOKEN to your .env file'
+    'Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file'
   );
 }
 
@@ -35,7 +25,7 @@ export const mapbox = {
    * Search for addresses using Mapbox Geocoding API
    */
   async searchAddresses(query: string): Promise<AddressSuggestion[]> {
-    if (!MAPBOX_PUBLIC_TOKEN || query.length < 3) {
+    if (!MAPBOX_TOKEN || query.length < 3) {
       return [];
     }
 
@@ -44,7 +34,7 @@ export const mapbox = {
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
-          `access_token=${MAPBOX_PUBLIC_TOKEN}&` +
+          `access_token=${MAPBOX_TOKEN}&` +
           `country=US&` +
           `types=address,poi&` +
           `limit=5&` +
@@ -69,7 +59,7 @@ export const mapbox = {
    * Reverse geocode coordinates to get an address
    */
   async reverseGeocode(coordinates: Coordinates): Promise<string | null> {
-    if (!MAPBOX_PUBLIC_TOKEN) {
+    if (!MAPBOX_TOKEN) {
       logger.warn('📍 reverseGeocode: No Mapbox token available');
       return null;
     }
@@ -79,7 +69,7 @@ export const mapbox = {
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.lng},${coordinates.lat}.json?` +
-          `access_token=${MAPBOX_PUBLIC_TOKEN}&` +
+          `access_token=${MAPBOX_TOKEN}&` +
           `types=address&` +
           `limit=1`
       );
@@ -132,7 +122,7 @@ export const mapbox = {
     const centerPart = `${center.lng},${center.lat},${zoom}`;
     const sizePart = `${width}x${height}`;
 
-    return `${baseUrl}/${markerPart}${centerPart}/${sizePart}?access_token=${MAPBOX_PUBLIC_TOKEN}`;
+    return `${baseUrl}/${markerPart}${centerPart}/${sizePart}?access_token=${MAPBOX_TOKEN}`;
   },
 
   /**
@@ -142,7 +132,7 @@ export const mapbox = {
     origin: Coordinates,
     destination: Coordinates
   ): Promise<number | null> {
-    if (!MAPBOX_PUBLIC_TOKEN) {
+    if (!MAPBOX_TOKEN) {
       logger.warn('No Mapbox token available for driving time calculation');
       return null;
     }
@@ -150,7 +140,7 @@ export const mapbox = {
     logApiCall('GET', 'mapbox/directions', { origin, destination });
 
     try {
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_PUBLIC_TOKEN}`;
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${MAPBOX_TOKEN}`;
       const response = await fetch(url);
 
       if (!response.ok) {

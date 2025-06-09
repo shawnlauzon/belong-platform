@@ -38,7 +38,7 @@ Create a `.env` file in the root directory with the following variables:
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_KEY=your_supabase_service_key
-VITE_MAPBOX_PUBLIC_TOKEN=your_public_mapbox_token
+VITE_MAPBOX_TOKEN=your_mapbox_token
 VITE_DEFAULT_LOCATION_LAT=30.2672
 VITE_DEFAULT_LOCATION_LNG=-97.7431
 SEED_MEMBER_ID=your_user_id
