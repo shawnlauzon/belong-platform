@@ -4,12 +4,28 @@ import { initialState } from './initialState';
 import { logger } from '../utils/logger';
 import type { BelongState, BelongStore } from './types';
 import type { Session } from '@supabase/supabase-js';
-import type {
-  AuthSignInSuccessEvent,
-  AuthSignInFailedEvent,
-  AuthSignUpSuccessEvent,
-  AuthSignUpFailedEvent,
-} from '../types/events';
+import type { AppEvent } from '../types/events';
+
+// Type guard functions for event type checking
+function isAuthSignInSuccessEvent(event: AppEvent): event is import('../types/events').AuthSignInSuccessEvent {
+  return event.type === 'auth.signIn.success';
+}
+
+function isAuthSignInFailedEvent(event: AppEvent): event is import('../types/events').AuthSignInFailedEvent {
+  return event.type === 'auth.signIn.failed';
+}
+
+function isAuthSignUpSuccessEvent(event: AppEvent): event is import('../types/events').AuthSignUpSuccessEvent {
+  return event.type === 'auth.signUp.success';
+}
+
+function isAuthSignUpFailedEvent(event: AppEvent): event is import('../types/events').AuthSignUpFailedEvent {
+  return event.type === 'auth.signUp.failed';
+}
+
+function isAuthSignOutFailedEvent(event: AppEvent): event is import('../types/events').AuthSignOutRequestedEvent {
+  return event.type === 'auth.signOut.failed';
+}
 
 // Initialize authentication event listeners
 function initializeAuthListeners(
@@ -21,9 +37,15 @@ function initializeAuthListeners(
   logger.info('🔐 Store: Initializing authentication event listeners');
 
   // Handle successful sign in
-  eventBus.on('auth.signIn.success', (event: AuthSignInSuccessEvent) => {
+  eventBus.on('auth.signIn.success', (event: AppEvent) => {
+    if (!isAuthSignInSuccessEvent(event)) {
+      logger.error('🔐 Store: Received invalid auth.signIn.success event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Handling successful sign in', { userId: event.data.user?.id });
     setAuthLoading(false);
+    
     if (event.data.user) {
       // Convert Supabase user to our Me type
       const meUser = {
@@ -34,11 +56,19 @@ function initializeAuthListeners(
         avatar_url: event.data.user.user_metadata?.avatar_url,
       };
       setAuthSession(meUser, null); // Session will be handled separately if needed
+    } else {
+      logger.warn('🔐 Store: Sign in success event received but no user data provided');
+      setAuthError('Authentication succeeded but no user data received');
     }
   });
 
   // Handle failed sign in
-  eventBus.on('auth.signIn.failed', (event: AuthSignInFailedEvent) => {
+  eventBus.on('auth.signIn.failed', (event: AppEvent) => {
+    if (!isAuthSignInFailedEvent(event)) {
+      logger.error('🔐 Store: Received invalid auth.signIn.failed event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Handling failed sign in', { error: event.data.error });
     setAuthLoading(false);
     setAuthError(event.data.error);
@@ -46,9 +76,15 @@ function initializeAuthListeners(
   });
 
   // Handle successful sign up
-  eventBus.on('auth.signUp.success', (event: AuthSignUpSuccessEvent) => {
+  eventBus.on('auth.signUp.success', (event: AppEvent) => {
+    if (!isAuthSignUpSuccessEvent(event)) {
+      logger.error('🔐 Store: Received invalid auth.signUp.success event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Handling successful sign up', { userId: event.data.user?.id });
     setAuthLoading(false);
+    
     if (event.data.user) {
       // Convert Supabase user to our Me type
       const meUser = {
@@ -59,11 +95,19 @@ function initializeAuthListeners(
         avatar_url: event.data.user.user_metadata?.avatar_url,
       };
       setAuthSession(meUser, null);
+    } else {
+      logger.warn('🔐 Store: Sign up success event received but no user data provided');
+      setAuthError('Registration succeeded but no user data received');
     }
   });
 
   // Handle failed sign up
-  eventBus.on('auth.signUp.failed', (event: AuthSignUpFailedEvent) => {
+  eventBus.on('auth.signUp.failed', (event: AppEvent) => {
+    if (!isAuthSignUpFailedEvent(event)) {
+      logger.error('🔐 Store: Received invalid auth.signUp.failed event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Handling failed sign up', { error: event.data.error });
     setAuthLoading(false);
     setAuthError(event.data.error);
@@ -71,33 +115,61 @@ function initializeAuthListeners(
   });
 
   // Handle successful sign out
-  eventBus.on('auth.signOut.success', () => {
+  eventBus.on('auth.signOut.success', (event: AppEvent) => {
+    // Sign out success events don't have specific data, just verify the type
+    if (event.type !== 'auth.signOut.success') {
+      logger.error('🔐 Store: Received invalid auth.signOut.success event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Handling successful sign out');
     setAuthLoading(false);
     clearAuthSession();
   });
 
   // Handle failed sign out
-  eventBus.on('auth.signOut.failed', (event: any) => {
-    logger.debug('🔐 Store: Handling failed sign out', { error: event.data?.error });
+  eventBus.on('auth.signOut.failed', (event: AppEvent) => {
+    // For sign out failed, we need to check if it has error data
+    if (event.type !== 'auth.signOut.failed') {
+      logger.error('🔐 Store: Received invalid auth.signOut.failed event', { event });
+      return;
+    }
+
+    const errorMessage = (event.data as any)?.error || 'Sign out failed';
+    logger.debug('🔐 Store: Handling failed sign out', { error: errorMessage });
     setAuthLoading(false);
-    setAuthError(event.data?.error || 'Sign out failed');
+    setAuthError(errorMessage);
   });
 
   // Handle sign in/up/out requests to set loading state
-  eventBus.on('auth.signIn.requested', () => {
+  eventBus.on('auth.signIn.requested', (event: AppEvent) => {
+    if (event.type !== 'auth.signIn.requested') {
+      logger.error('🔐 Store: Received invalid auth.signIn.requested event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Sign in requested, setting loading state');
     setAuthLoading(true);
     setAuthError(''); // Clear previous errors
   });
 
-  eventBus.on('auth.signUp.requested', () => {
+  eventBus.on('auth.signUp.requested', (event: AppEvent) => {
+    if (event.type !== 'auth.signUp.requested') {
+      logger.error('🔐 Store: Received invalid auth.signUp.requested event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Sign up requested, setting loading state');
     setAuthLoading(true);
     setAuthError(''); // Clear previous errors
   });
 
-  eventBus.on('auth.signOut.requested', () => {
+  eventBus.on('auth.signOut.requested', (event: AppEvent) => {
+    if (event.type !== 'auth.signOut.requested') {
+      logger.error('🔐 Store: Received invalid auth.signOut.requested event', { event });
+      return;
+    }
+
     logger.debug('🔐 Store: Sign out requested, setting loading state');
     setAuthLoading(true);
     setAuthError(''); // Clear previous errors
