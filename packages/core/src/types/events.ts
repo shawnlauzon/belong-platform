@@ -58,6 +58,11 @@ export interface AuthSignUpFailedEvent extends BaseEvent {
   };
 }
 
+export interface AuthSignOutRequestedEvent extends BaseEvent {
+  type: 'auth.signOut.requested';
+  data: {};
+}
+
 // Community Events
 export interface CommunityCreateRequestedEvent extends BaseEvent {
   type: 'community.create.requested';
@@ -85,13 +90,19 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
   };
 }
 
-export interface CommunityChangedEvent extends BaseEvent {
-  type: 'community.changed';
+export interface CommunityActiveChangeRequestedEvent extends BaseEvent {
+  type: 'community.active.change.requested';
   data: {
     communityId: string;
   };
 }
 
+export interface CommunityActiveChangedEvent extends BaseEvent {
+  type: 'community.active.changed';
+  data: {
+    communityId: string;
+  };
+}
 // Profile Events
 export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
@@ -188,6 +199,7 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
+  | AuthSignOutRequestedEvent
   | AuthSignInSuccessEvent
   | AuthSignUpSuccessEvent
   | AuthSignInFailedEvent
@@ -195,7 +207,8 @@ export type AppEvent =
   | CommunityCreateRequestedEvent
   | CommunityCreatedEvent
   | CommunityCreateFailedEvent
-  | CommunityChangedEvent
+  | CommunityActiveChangeRequestedEvent
+  | CommunityActiveChangedEvent
   | ProfileUpdateRequestedEvent
   | ProfileUpdatedEvent
   | ProfileUpdateFailedEvent

@@ -27,7 +27,10 @@
       "dom.iterable",
       "esnext"
     ],
-    "target": "es2017"
+    "target": "es2017",
+    "types": [
+      "vite/client"
+    ],
   },
   "include": [
     "src/**/*"

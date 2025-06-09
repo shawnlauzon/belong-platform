@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ImagePlus, X, Upload, AlertCircle } from 'lucide-react';
-import { StorageManager } from '@/lib/storage';
-import { logger, logUserAction } from '@/lib/logger';
+import { StorageManager } from '@belongnetwork/core';
+import { logger, logUserAction } from '@belongnetwork/core';
 
 interface ImageUploadProps {
   onImagesUploaded: (urls: string[]) => void;
@@ -11,11 +11,11 @@ interface ImageUploadProps {
   folder?: string;
 }
 
-export function ImageUpload({ 
-  onImagesUploaded, 
-  maxImages = 3, 
+export function ImageUpload({
+  onImagesUploaded,
+  maxImages = 3,
   existingImages = [],
-  folder = 'uploads'
+  folder = 'uploads',
 }: ImageUploadProps) {
   const [images, setImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,127 +25,149 @@ export function ImageUpload({
   React.useEffect(() => {
     if (existingImages.length > 0) {
       // Filter out any invalid URLs
-      const validImages = existingImages.filter(url => url && url.trim() !== '');
+      const validImages = existingImages.filter(
+        (url) => url && url.trim() !== ''
+      );
       if (validImages.length > 0) {
         setImages(validImages);
-        logger.debug('📷 ImageUpload: Set existing images:', { count: validImages.length });
+        logger.debug('📷 ImageUpload: Set existing images:', {
+          count: validImages.length,
+        });
       }
     }
   }, [existingImages]);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (images.length >= maxImages) return;
-    if (isUploading) return;
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (images.length >= maxImages) return;
+      if (isUploading) return;
 
-    logger.debug('📷 ImageUpload: Files dropped:', { 
-      fileCount: acceptedFiles.length, 
-      currentImageCount: images.length,
-      maxImages 
-    });
-
-    setUploadError(null);
-    setIsUploading(true);
-
-    try {
-      // Process only up to the maximum allowed number of images
-      const filesToProcess = acceptedFiles.slice(0, maxImages - images.length);
-
-      logger.info('📷 ImageUpload: Starting upload process:', {
-        filesToUpload: filesToProcess.length,
-        fileNames: filesToProcess.map(f => f.name),
-        folder
-      });
-
-      // Upload files to Supabase Storage
-      const uploadResults = await StorageManager.uploadFiles(filesToProcess, folder);
-
-      if (uploadResults.length === 0) {
-        throw new Error('No files were uploaded successfully');
-      }
-
-      // Replace existing images with new ones (for single image uploads like avatars)
-      const updatedImages = maxImages === 1 ? uploadResults : [...images, ...uploadResults];
-      
-      setImages(updatedImages);
-      onImagesUploaded(updatedImages);
-      
-      logUserAction('images_uploaded_to_storage', {
-        newImageCount: uploadResults.length,
-        totalImageCount: updatedImages.length,
-        fileNames: filesToProcess.map(f => f.name),
-        isReplacement: maxImages === 1,
-        folder,
-        urls: uploadResults
-      });
-
-      logger.info('✅ ImageUpload: Images uploaded successfully to storage:', {
-        newCount: uploadResults.length,
-        totalCount: updatedImages.length,
-        isReplacement: maxImages === 1,
-        urls: uploadResults
-      });
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      logger.error('❌ ImageUpload: Upload failed:', error);
-      
-      setUploadError(errorMessage);
-      logUserAction('image_upload_failed', {
-        error: errorMessage,
+      logger.debug('📷 ImageUpload: Files dropped:', {
         fileCount: acceptedFiles.length,
-        folder
+        currentImageCount: images.length,
+        maxImages,
       });
-    } finally {
-      setIsUploading(false);
-    }
-  }, [images, maxImages, onImagesUploaded, folder, isUploading]);
+
+      setUploadError(null);
+      setIsUploading(true);
+
+      try {
+        // Process only up to the maximum allowed number of images
+        const filesToProcess = acceptedFiles.slice(
+          0,
+          maxImages - images.length
+        );
+
+        logger.info('📷 ImageUpload: Starting upload process:', {
+          filesToUpload: filesToProcess.length,
+          fileNames: filesToProcess.map((f) => f.name),
+          folder,
+        });
+
+        // Upload files to Supabase Storage
+        const uploadResults = await StorageManager.uploadFiles(
+          filesToProcess,
+          folder
+        );
+
+        if (uploadResults.length === 0) {
+          throw new Error('No files were uploaded successfully');
+        }
+
+        // Replace existing images with new ones (for single image uploads like avatars)
+        const updatedImages =
+          maxImages === 1 ? uploadResults : [...images, ...uploadResults];
+
+        setImages(updatedImages);
+        onImagesUploaded(updatedImages);
+
+        logUserAction('images_uploaded_to_storage', {
+          newImageCount: uploadResults.length,
+          totalImageCount: updatedImages.length,
+          fileNames: filesToProcess.map((f) => f.name),
+          isReplacement: maxImages === 1,
+          folder,
+          urls: uploadResults,
+        });
+
+        logger.info(
+          '✅ ImageUpload: Images uploaded successfully to storage:',
+          {
+            newCount: uploadResults.length,
+            totalCount: updatedImages.length,
+            isReplacement: maxImages === 1,
+            urls: uploadResults,
+          }
+        );
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Upload failed';
+        logger.error('❌ ImageUpload: Upload failed:', error);
+
+        setUploadError(errorMessage);
+        logUserAction('image_upload_failed', {
+          error: errorMessage,
+          fileCount: acceptedFiles.length,
+          folder,
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [images, maxImages, onImagesUploaded, folder, isUploading]
+  );
 
   const removeImage = async (index: number) => {
     const updatedImages = [...images];
     const removedUrl = updatedImages[index];
-    
+
     // Try to delete from storage if it's a Supabase URL
     try {
       const storagePath = StorageManager.extractPathFromUrl(removedUrl);
       if (storagePath) {
-        logger.debug('🗑️ ImageUpload: Deleting image from storage:', { storagePath });
+        logger.debug('🗑️ ImageUpload: Deleting image from storage:', {
+          storagePath,
+        });
         await StorageManager.deleteFile(storagePath);
         logger.info('✅ ImageUpload: Image deleted from storage successfully');
       }
     } catch (error) {
-      logger.warn('⚠️ ImageUpload: Failed to delete image from storage:', error);
+      logger.warn(
+        '⚠️ ImageUpload: Failed to delete image from storage:',
+        error
+      );
       // Continue with removal from UI even if storage deletion fails
     }
-    
+
     updatedImages.splice(index, 1);
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
-    
+
     logUserAction('image_removed_from_storage', {
       removedIndex: index,
       remainingCount: updatedImages.length,
-      removedUrl
+      removedUrl,
     });
-    
+
     logger.debug('📷 ImageUpload: Image removed:', {
       index,
-      remainingCount: updatedImages.length
+      remainingCount: updatedImages.length,
     });
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
     },
     maxFiles: maxImages,
-    disabled: images.length >= maxImages || isUploading
+    disabled: images.length >= maxImages || isUploading,
   });
 
   return (
     <div className="space-y-3">
-      <div 
-        {...getRootProps()} 
+      <div
+        {...getRootProps()}
         className={`
           border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors
           ${isDragActive ? 'border-primary-400 bg-primary-50' : 'border-gray-300 hover:border-primary-300'}
@@ -157,18 +179,22 @@ export function ImageUpload({
           {isUploading ? (
             <>
               <Upload className="h-6 w-6 text-primary-500 animate-bounce" />
-              <p className="text-sm text-primary-600 font-medium">Uploading...</p>
+              <p className="text-sm text-primary-600 font-medium">
+                Uploading...
+              </p>
             </>
           ) : (
             <>
               <ImagePlus className="h-6 w-6 text-warmgray-400" />
               {isDragActive ? (
-                <p className="text-sm text-warmgray-600">Drop the images here...</p>
+                <p className="text-sm text-warmgray-600">
+                  Drop the images here...
+                </p>
               ) : (
                 <p className="text-sm text-warmgray-600">
-                  {images.length >= maxImages 
-                    ? `Maximum of ${maxImages} images reached` 
-                    : maxImages === 1 
+                  {images.length >= maxImages
+                    ? `Maximum of ${maxImages} images reached`
+                    : maxImages === 1
                       ? 'Drag & drop an image or click to select'
                       : `Drag & drop images or click to select (${images.length}/${maxImages})`}
                 </p>
@@ -195,25 +221,30 @@ export function ImageUpload({
           </button>
         </div>
       )}
-      
+
       {/* Image preview */}
       {images.length > 0 && (
-        <div className={`grid gap-3 ${maxImages === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        <div
+          className={`grid gap-3 ${maxImages === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}
+        >
           {images.map((url, index) => (
             <div key={index} className="relative group">
-              <img 
-                src={url} 
-                alt={`Preview ${index + 1}`} 
+              <img
+                src={url}
+                alt={`Preview ${index + 1}`}
                 className={`w-full object-cover rounded-md ${maxImages === 1 ? 'h-32' : 'h-20'}`}
                 onError={(e) => {
-                  logger.warn('📷 ImageUpload: Image failed to load:', { url, index });
+                  logger.warn('📷 ImageUpload: Image failed to load:', {
+                    url,
+                    index,
+                  });
                   // Handle broken images gracefully
                   const target = e.target as HTMLImageElement;
                   target.style.opacity = '0.5';
                   target.alt = 'Failed to load image';
                 }}
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => removeImage(index)}
                 disabled={isUploading}

@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '~/ui/dialog';
 import { Button } from '~/ui/button';
-import { eventBus } from '@belongnetwork/core';
+import { eventBus, useBelongStore } from '@belongnetwork/core';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -49,8 +49,8 @@ export function ShareResourceDialog({
     },
   });
   const [images, setImages] = useState<string[]>([]);
-  const userLocation = useAppStore((state) => state.userLocation);
-  const { user } = useAuth();
+  const userLocation = useBelongStore((state) => state.auth.location);
+  const user = useBelongStore((state) => state.auth.user);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   React.useEffect(() => {

@@ -15,7 +15,7 @@ class EventBus {
       source: 'user',
       type,
       data,
-    } as T;
+    } as unknown as T;
 
     logEvent(`emit_${type}`, event.data);
 

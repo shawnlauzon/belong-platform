@@ -2,14 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ImageUpload } from '@/components/shared/ImageUpload';
-import { eventBus } from '@/core/eventBus';
-import { useAuth } from '@/lib/auth';
-import { Member } from '@/types';
-import { logger, logComponentRender, logUserAction } from '@/lib/logger';
+import { Button } from '~/ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '~/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
+import { ImageUpload } from '~/shared/ImageUpload';
+import {
+  eventBus,
+  logComponentRender,
+  logger,
+  useBelongStore,
+  User,
+} from '@belongnetwork/core';
+import { logUserAction } from '@belongnetwork/core';
 
 const thanksSchema = z.object({
   message: z.string().min(5, 'Message must be at least 5 characters'),
@@ -21,26 +31,31 @@ type ThanksFormData = z.infer<typeof thanksSchema>;
 interface ThanksFormProps {
   resourceId: string;
   recipientId: string;
-  recipient?: Member;
+  recipient?: User;
   onComplete?: () => void;
   resourceTitle?: string;
 }
 
-export function ThanksForm({ 
-  resourceId, 
-  recipientId, 
+export function ThanksForm({
+  resourceId,
+  recipientId,
   recipient,
-  onComplete, 
-  resourceTitle 
+  onComplete,
+  resourceTitle,
 }: ThanksFormProps) {
   logComponentRender('ThanksForm', { resourceId, recipientId, resourceTitle });
-  
-  const { user } = useAuth();
+
+  const currentUser = useBelongStore((state) => state.auth.user);
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ThanksFormData>({
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ThanksFormData>({
     resolver: zodResolver(thanksSchema),
   });
 
@@ -50,11 +65,11 @@ export function ThanksForm({
       logger.info('✅ ThanksForm: Thanks created successfully');
       setIsSubmitting(false);
       setError(null);
-      
+
       // Reset form
       reset();
       setImages([]);
-      
+
       // Call completion callback
       if (onComplete) {
         onComplete();
@@ -72,9 +87,9 @@ export function ThanksForm({
       unsubscribeFailed();
     };
   }, [onComplete, reset]);
-  
+
   const onSubmit = async (data: ThanksFormData) => {
-    if (!user) {
+    if (!currentUser) {
       logger.error('❌ ThanksForm: User not authenticated');
       return;
     }
@@ -84,7 +99,7 @@ export function ThanksForm({
       recipientId,
       message: data.message,
       hasImpact: !!data.impact_description,
-      imageCount: images.length
+      imageCount: images.length,
     });
 
     logUserAction('thanks_create_attempt', {
@@ -93,12 +108,12 @@ export function ThanksForm({
       resourceTitle,
       messageLength: data.message.length,
       hasImpact: !!data.impact_description,
-      imageCount: images.length
+      imageCount: images.length,
     });
 
     setIsSubmitting(true);
     setError(null);
-    
+
     // Emit thanks creation request
     eventBus.emit('thanks.create.requested', {
       to_user_id: recipientId,
@@ -108,7 +123,7 @@ export function ThanksForm({
       impact_description: data.impact_description,
     });
   };
-  
+
   return (
     <Card className="animate-slide-up">
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -118,18 +133,20 @@ export function ThanksForm({
             <div className="flex items-center gap-2 mt-2">
               <Avatar>
                 <AvatarImage src={recipient.avatar_url || undefined} />
-                <AvatarFallback>{recipient.name?.[0] || 'U'}</AvatarFallback>
+                <AvatarFallback>{recipient.first_name}</AvatarFallback>
               </Avatar>
               <div className="text-sm">
-                <div className="font-medium">{recipient.name}</div>
+                <div className="font-medium">{recipient.first_name}</div>
                 {resourceTitle && (
-                  <div className="text-xs text-warmgray-500">for "{resourceTitle}"</div>
+                  <div className="text-xs text-warmgray-500">
+                    for "{resourceTitle}"
+                  </div>
                 )}
               </div>
             </div>
           )}
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-warmgray-700">
@@ -145,7 +162,7 @@ export function ThanksForm({
               <p className="text-xs text-red-500">{errors.message.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-warmgray-700">
               How did this impact you?
@@ -157,13 +174,13 @@ export function ThanksForm({
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-warmgray-700">
               Add photos (optional)
             </label>
-            <ImageUpload 
-              onImagesUploaded={setImages} 
+            <ImageUpload
+              onImagesUploaded={setImages}
               existingImages={images}
               maxImages={3}
               folder="thanks"
@@ -177,20 +194,17 @@ export function ThanksForm({
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-end gap-2">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={onComplete}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-          >
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Sending...' : 'Send Thanks'}
           </Button>
         </CardFooter>

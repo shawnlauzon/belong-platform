@@ -200,6 +200,9 @@ importers:
       '@belongnetwork/core':
         specifier: workspace:*
         version: link:../core
+      geojson:
+        specifier: ^0.5.0
+        version: 0.5.0
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -213,6 +216,9 @@ importers:
         specifier: ^3.22.0
         version: 3.25.56
     devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
       '@types/react':
         specifier: ^18.2.0
         version: 18.3.23
@@ -3514,6 +3520,11 @@ packages:
 
   /geojson-vt@3.2.1:
     resolution: {integrity: sha512-EvGQQi/zPrDA6zr6BnJD/YhwAkBP8nnJ9emh3EnHQKVMfg/MRVtPbMYdgVy/IaEmn4UfagD2a6fafPDL5hbtwg==}
+    dev: false
+
+  /geojson@0.5.0:
+    resolution: {integrity: sha512-/Bx5lEn+qRF4TfQ5aLu6NH+UKtvIv7Lhc487y/c8BdludrCTpiWf9wyI0RTyqg49MFefIAvFDuEi5Dfd/zgNxQ==}
+    engines: {node: '>= 0.10'}
     dev: false
 
   /get-nonce@1.0.1:

@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@belongnetwork/components';
-import { ResourceList } from '@belongnetwork/components/resources/ResourceList';
-import { ResourceMap } from '@belongnetwork/components/resources/ResourceMap';
-import { ResourceForm } from '@belongnetwork/components/resources/ResourceForm';
-import { EditResourceDialog } from '@belongnetwork/components/resources/EditResourceDialog';
+import { ResourceList } from '@belongnetwork/components';
+import { ResourceMap } from '@belongnetwork/components';
+import { ResourceForm } from '@belongnetwork/components';
+import { EditResourceDialog } from '@belongnetwork/components';
 import { Button } from '@belongnetwork/components';
-import { useResources, useResource } from '@/hooks/useResources';
-import { useAppStore } from '@belongnetwork/core';
-import { Resource } from '@belongnetwork/core';
+import { Resource, useBelongStore } from '@belongnetwork/core';
 import { Plus, List, MapPin } from 'lucide-react';
 import { logger, logUserAction } from '@belongnetwork/core';
 
@@ -17,7 +15,7 @@ export const Route = createFileRoute('/resources')({
 });
 
 function ResourcesPage() {
-  const userLocation = useAppStore((state) => state.userLocation);
+  const userLocation = useBelongStore((state) => state.auth.user?.location);
   const [viewType, setViewType] = useState<'list' | 'map'>('list');
   const [showForm, setShowForm] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -25,8 +23,12 @@ function ResourcesPage() {
     null
   );
 
-  const { data: resources = [], isLoading } = useResources(8);
-  const { data: editingResource } = useResource(editingResourceId ?? undefined);
+  const { list: resources, isLoading } = useBelongStore(
+    (state) => state.resources
+  );
+  const editingResource = useBelongStore((state) =>
+    state.resources.list.find((r) => r.id === editingResourceId)
+  );
 
   const handleRequestResource = (resourceId: string) => {
     logger.info('📦 ResourcesPage: Resource request clicked:', { resourceId });
@@ -111,7 +113,7 @@ function ResourcesPage() {
         <ResourceForm onComplete={handleFormComplete} />
       ) : (
         <>
-          {viewType === 'map' ? (
+          {viewType === 'map' && userLocation ? (
             <ResourceMap
               resources={resources}
               userLocation={userLocation}

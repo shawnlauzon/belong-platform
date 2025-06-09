@@ -8,19 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
 import { ImageUpload } from '~/shared/ImageUpload';
 import { AddressAutocomplete } from '~/shared/AddressAutocomplete';
 import { LocationPicker } from '~/shared/LocationPicker';
-import { StorageManager } from '@belongnetwork/storage';
-import { eventBus } from '@belongnetwork/core';
-import { useAuth } from '@belongnetwork/auth';
-import { useProfile } from '@belongnetwork/profile';
+import { StorageManager } from '@belongnetwork/core';
+import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { Coordinates } from '@belongnetwork/core';
 import { getInitials } from '~/utils';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
+import { mapbox } from '@belongnetwork/core'; // Import the new mapboxService
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   avatar_url: z.string().optional(),
   address: z.string().optional(),
+  location: z.object({ lat: z.number(), lng: z.number() }).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -32,14 +32,8 @@ interface ProfileEditorProps {
 export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   logComponentRender('ProfileEditor');
 
-  const { user } = useAuth();
-  const { data: profile } = useProfile(user?.id);
-  const [location, setLocation] = React.useState<Coordinates | null>(
-    profile?.user_metadata?.location || null
-  );
-  const [addressBbox, setAddressBbox] = React.useState<
-    [number, number, number, number] | null
-  >(null);
+  const { user, location } = useBelongStore((state) => state.auth);
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [hasChanges, setHasChanges] = React.useState(false);
   const [currentAddress, setCurrentAddress] = React.useState<string>('');
@@ -48,6 +42,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     lastName: '',
     avatar_url: '',
     address: '',
+    location: { lat: 0, lng: 0 },
   });
   const [initialLocation, setInitialLocation] =
     React.useState<Coordinates | null>(null);
@@ -68,6 +63,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       lastName: '',
       avatar_url: '',
       address: '',
+      location: { lat: 0, lng: 0 },
     },
   });
 
@@ -106,17 +102,15 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
 
   // Set default values when profile loads
   React.useEffect(() => {
-    if (profile?.user_metadata) {
-      const metadata = profile.user_metadata;
-
+    if (user) {
       const defaultValues = {
-        firstName: metadata.first_name || '',
-        lastName: metadata.last_name || '',
-        avatar_url: metadata.avatar_url || '',
-        address: metadata.address || '',
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        avatar_url: user.avatar_url || '',
+        address: user.address || '',
       };
 
-      const defaultLocation = metadata.location || null;
+      const defaultLocation = user.location || null;
 
       logger.debug('👤 ProfileEditor: Setting default values from profile:', {
         ...defaultValues,
@@ -129,8 +123,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       setValue('avatar_url', defaultValues.avatar_url);
       setValue('address', defaultValues.address);
 
-      // Set location and address
-      setLocation(defaultLocation);
+      // Set address
       setCurrentAddress(defaultValues.address);
 
       // Store initial values for change detection
@@ -138,7 +131,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
       setInitialLocation(defaultLocation);
       setInitialAddress(defaultValues.address);
     }
-  }, [profile, setValue]);
+  }, [user, setValue]);
 
   // Check for changes whenever form values or location change
   React.useEffect(() => {
@@ -197,9 +190,6 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
     setValue('address', address);
 
     if (coordinates) {
-      setLocation(coordinates);
-      setAddressBbox(bbox || null);
-
       logUserAction('address_location_set', {
         address,
         coordinates,
@@ -276,8 +266,6 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
 
           logger.info('📍 ProfileEditor: Got current location:', newLocation);
           logUserAction('location_granted_from_profile_editor', newLocation);
-
-          setLocation(newLocation);
 
           // Reverse geocode to get address
           try {
@@ -413,7 +401,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                   onImagesUploaded={handleImageUploaded}
                   maxImages={1}
                   existingImages={
-                    getCurrentAvatarUrl() ? [getCurrentAvatarUrl()] : []
+                    getCurrentAvatarUrl() ? [getCurrentAvatarUrl()!] : []
                   }
                   folder="avatars"
                 />
@@ -463,7 +451,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
                 </Button>
               </div>
 
-              <LocationPicker
+              {/* <LocationPicker
                 value={location}
                 onChange={setLocation}
                 address={currentAddress}
@@ -472,7 +460,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
               <p className="text-xs text-warmgray-500">
                 Click on the map to fine-tune your exact location, or use the
                 "Use Current Location" button.
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -506,42 +494,23 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
 async function reverseGeocodeToAddress(
   coordinates: Coordinates
 ): Promise<string | null> {
-  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
-
-  if (!mapboxToken) {
-    logger.warn('📍 reverseGeocodeToAddress: No Mapbox token available');
-    return null;
-  }
-
   try {
     logger.debug(
       '📍 reverseGeocodeToAddress: Reverse geocoding coordinates:',
       coordinates
     );
 
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.lng},${coordinates.lat}.json?` +
-        `access_token=${mapboxToken}&` +
-        `types=address&` +
-        `limit=1`
-    );
+    const address = await mapbox.reverseGeocode(coordinates);
 
-    if (!response.ok) {
-      throw new Error(`Reverse geocoding API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data.features && data.features.length > 0) {
-      const address = data.features[0].place_name;
+    if (address) {
       logger.debug('📍 reverseGeocodeToAddress: Found address:', { address });
-      return address;
+    } else {
+      logger.debug(
+        '📍 reverseGeocodeToAddress: No address found for coordinates'
+      );
     }
 
-    logger.debug(
-      '📍 reverseGeocodeToAddress: No address found for coordinates'
-    );
-    return null;
+    return address;
   } catch (error) {
     logger.error('❌ reverseGeocodeToAddress: Error:', error);
     return null;

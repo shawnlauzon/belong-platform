@@ -9,8 +9,7 @@ import {
   CardTitle,
 } from '~/ui/card';
 import { ImageUpload } from '~/shared/ImageUpload';
-import { eventBus } from '@belongnetwork/core';
-import { useAppStore } from '@belongnetwork/core';
+import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { logger, logUserAction } from '@belongnetwork/core';
 
 interface ResourceFormProps {
@@ -48,8 +47,8 @@ export function ResourceForm({
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const userLocation = useAppStore((state) => state.userLocation);
-  const { user } = useAuth();
+  const userLocation = useBelongStore((state) => state.auth.location);
+  const currentUser = useBelongStore((state) => state.auth.user);
   const data = watch();
 
   // Listen for resource events
@@ -80,7 +79,7 @@ export function ResourceForm({
   }, [onComplete]);
 
   const onSubmit = async (data: ResourceFormData) => {
-    if (!user) {
+    if (!currentUser) {
       logger.error('❌ ResourceForm: User not authenticated');
       return;
     }
@@ -100,7 +99,7 @@ export function ResourceForm({
     // Emit resource creation request
     eventBus.emit('resource.create.requested', {
       ...data,
-      creator_id: user.id,
+      creator_id: currentUser.id,
       image_urls: images,
       location: userLocation,
       is_active: true,

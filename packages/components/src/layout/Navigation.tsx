@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, LinkProps } from '@tanstack/react-router';
 import { cn } from '~/utils';
 import { Button } from '~/ui/button';
-import { Avatar, AvatarFallback } from '~/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '~/ui/avatar';
 import { TrustBadge } from '~/trust/TrustBadge';
 import { AuthDialog } from '~/users/AuthDialog';
 import { getInitials } from '~/utils';
-import { useAuth } from '~/hooks/useAuth';
-import { useProfile } from '~/hooks/useProfile';
+import { eventBus } from '@belongnetwork/core';
 import {
   Home,
   Map,
@@ -19,6 +18,7 @@ import {
   X,
   LogIn,
 } from 'lucide-react';
+import { useBelongStore } from '@belongnetwork/core';
 
 type NavLinkProps = {
   to: string;
@@ -27,6 +27,7 @@ type NavLinkProps = {
 };
 
 export function Navigation() {
+  const { user } = useBelongStore((state) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [notificationCount] = useState(2);
@@ -36,17 +37,9 @@ export function Navigation() {
   const getUserDisplayName = () => {
     if (!user) return '';
 
-    // Get user metadata from profile
-    const metadata = profile?.user_metadata || user.user_metadata || {};
-
     // Return first name only if available
-    if (metadata?.first_name) {
-      return metadata.first_name;
-    }
-
-    // Fallback to full name if no first name
-    if (metadata?.full_name) {
-      return metadata.full_name;
+    if (user?.first_name) {
+      return user.first_name;
     }
 
     // Final fallback to email username
@@ -54,39 +47,22 @@ export function Navigation() {
   };
 
   const getAvatarUrl = () => {
-    if (!user) return null;
-
-    // Get avatar from profile metadata
-    const metadata = profile?.user_metadata || user.user_metadata || {};
-    return metadata?.avatar_url || null;
+    return user?.avatar_url;
   };
 
   const getAvatarText = () => {
-    if (!user) return 'U';
+    if (!user) return 'G'; // for Guest
 
-    const metadata = profile?.user_metadata || user.user_metadata || {};
-    return getInitials(
-      metadata?.first_name,
-      metadata?.last_name,
-      user.email?.split('@')[0]
-    );
+    return getInitials(user.first_name, user.last_name);
   };
 
-  const NavLink: React.FC<NavLinkProps> = ({
-    to,
-    icon,
-    children,
-  }) => (
+  const NavLink: React.FC<NavLinkProps> = ({ to, icon, children }) => (
     <Link
       to={to}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2 px-4 py-2 rounded-md transition-colors',
-          isActive
-            ? 'bg-primary-100 text-primary-900'
-            : 'text-warmgray-700 hover:bg-primary-50 hover:text-primary-800'
-        )
-      }
+      className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-warmgray-700 hover:bg-primary-50 hover:text-primary-800"
+      activeProps={{
+        className: 'bg-primary-100 text-primary-900',
+      }}
       onClick={() => setIsOpen(false)}
     >
       {icon}
@@ -155,7 +131,11 @@ export function Navigation() {
                       <AvatarFallback>{getAvatarText()}</AvatarFallback>
                     </Avatar>
                   </Link>
-                  <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => eventBus.emit('sign_out', {})}
+                  >
                     Sign Out
                   </Button>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
-import { eventBus } from '@belongnetwork/core';
+import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { Community } from '@belongnetwork/core';
 import { Button } from '~/ui/button';
 import { CreateCommunityDialog } from './CreateCommunityDialog';
@@ -9,34 +9,38 @@ import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 export function CommunitySelector() {
   logComponentRender('CommunitySelector');
 
-  const { data: communities = [], isLoading } = useCommunities();
+  const {
+    list: communities = [],
+    activeId: activeCommunityId,
+    isLoading,
+  } = useBelongStore((state) => state.communities);
 
-  const [activeCommunity, setActiveCommunity] = useState<Community | null>(
-    null
-  );
-  const [browseCommunityId, setBrowseCommunityId] =
-    useState<string>('worldwide');
   const [isOpen, setIsOpen] = useState(false);
+  const [browseCommunityId, setBrowseCommunityId] = useState(
+    activeCommunityId ?? 'worldwide'
+  );
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const activeCommunity = communities.find((c) => c.id === activeCommunityId);
+
   // Set default active community when communities load
   useEffect(() => {
-    if (communities.length > 0 && !activeCommunity) {
+    if (communities.length > 0 && !activeCommunityId) {
       const defaultCommunity =
         communities.find((c) => c.id === 'south-austin') || communities[0];
-      setActiveCommunity(defaultCommunity);
+      // setActiveCommunity(defaultCommunity);
       logger.debug('🏘️ CommunitySelector: Set default active community:', {
         communityId: defaultCommunity.id,
         communityName: defaultCommunity.name,
       });
     }
-  }, [communities, activeCommunity]);
+  }, [communities, activeCommunityId]);
 
   // Get the breadcrumb chain from worldwide down to the browse community
   const getBreadcrumbChain = () => {
     const chain: Community[] = [];
-    let currentId = browseCommunityId;
+    let currentId: string | null = browseCommunityId;
 
     while (currentId) {
       const community = communities.find((c) => c.id === currentId);
@@ -53,10 +57,10 @@ export function CommunitySelector() {
 
   // Get the active community's full chain for display
   const getActiveCommunityChain = () => {
-    if (!activeCommunity) return [];
+    if (!activeCommunityId) return [];
 
     const chain: Community[] = [];
-    let currentId = activeCommunity.id;
+    let currentId: string | null = activeCommunityId;
 
     while (currentId) {
       const community = communities.find((c) => c.id === currentId);
@@ -86,9 +90,10 @@ export function CommunitySelector() {
       communityName: community.name,
     });
 
-    setActiveCommunity(community);
     setIsOpen(false);
-    eventBus.emit('community.changed', { communityId: community.id });
+    eventBus.emit('community.active.change.requested', {
+      communityId: community.id,
+    });
 
     logUserAction('community_selected', {
       communityId: community.id,
@@ -121,8 +126,9 @@ export function CommunitySelector() {
     logger.info('🏘️ CommunitySelector: New community created:', newCommunity);
 
     // Select the newly created community
-    setActiveCommunity(newCommunity);
-    eventBus.emit('community.changed', { communityId: newCommunity.id });
+    eventBus.emit('community.active.change.requested', {
+      communityId: newCommunity.id,
+    });
 
     logUserAction('community_created_and_selected', {
       communityId: newCommunity.id,
@@ -159,7 +165,7 @@ export function CommunitySelector() {
     );
   }
 
-  if (!activeCommunity) {
+  if (!activeCommunityId) {
     return (
       <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 shadow-sm">
         <span>No community selected</span>
@@ -198,7 +204,7 @@ export function CommunitySelector() {
             onClick={() => setIsOpen(!isOpen)}
             className="sm:hidden font-medium"
           >
-            {activeCommunity.name}
+            {activeCommunity?.name}
           </button>
 
           {/* Dropdown arrow */}

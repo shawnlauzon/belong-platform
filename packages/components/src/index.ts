@@ -8,6 +8,7 @@ export * from './ui';
 export * from './resources';
 export * from './trust';
 export * from './communities';
+export * from './users';
 
 // Layout Components
 export * from './layout';

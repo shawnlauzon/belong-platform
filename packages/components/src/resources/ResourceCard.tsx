@@ -14,6 +14,7 @@ import { formatTimeAgo, truncateText } from '~/utils/formatters';
 import { MapPin, Clock, CarFront, Edit } from 'lucide-react';
 import { Resource } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
+import { useBelongStore } from '@belongnetwork/core';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -26,8 +27,8 @@ export function ResourceCard({
   onRequest,
   onEdit,
 }: ResourceCardProps) {
-  const { user } = useAuth();
-  const isOwner = user?.id === resource.creator_id;
+  const currentUser = useBelongStore((state) => state.auth.user);
+  const isOwner = currentUser?.id === resource.creator_id;
 
   const getCategoryVariant = (category: string) => {
     const variants: Record<string, any> = {
@@ -57,7 +58,7 @@ export function ResourceCard({
         )}
 
         <div className="absolute top-2 left-2">
-          <Badge variant={resource.type === 'offer' ? 'trust' : 'default'}>
+          <Badge variant={resource.type === 'offer' ? 'secondary' : 'default'}>
             {resource.type === 'offer' ? 'Offering' : 'Requesting'}
           </Badge>
         </div>

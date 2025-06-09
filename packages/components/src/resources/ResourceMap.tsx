@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import { ResourceCard } from './ResourceCard';
-import { Resource, Coordinates } from '@belongnetwork/core';
+import {
+  Resource,
+  Coordinates,
+  mapbox,
+  MAPBOX_TOKEN,
+} from '@belongnetwork/core';
 import { TrustBadge } from '~/trust/TrustBadge';
 import { MapPin, User } from 'lucide-react';
 
@@ -54,9 +59,7 @@ export function ResourceMap({
     return colors[category] || 'bg-gray-500';
   };
 
-  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
-
-  if (!mapboxToken) {
+  if (!MAPBOX_TOKEN) {
     return (
       <div className="h-[500px] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
         <div className="text-center p-4">
@@ -77,7 +80,7 @@ export function ResourceMap({
         ref={mapRef}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
-        mapboxAccessToken={mapboxToken}
+        mapboxAccessToken={MAPBOX_TOKEN}
         onMove={(evt) => setViewport(evt.viewState)}
       >
         {/* User location marker */}

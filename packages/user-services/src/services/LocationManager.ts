@@ -1,5 +1,4 @@
 import { eventBus } from '@belongnetwork/core';
-import { DEFAULT_LOCATION } from '@belongnetwork/core';
 import { Coordinates } from '@belongnetwork/core';
 import { logger, logUserAction } from '@belongnetwork/core';
 
@@ -7,58 +6,63 @@ export class LocationManager {
   static async getCurrentLocation(): Promise<Coordinates> {
     logger.debug('📍 LocationManager: Getting current location...');
 
-    try {
-      // Try to get the user's location from the browser
-      if (navigator.geolocation) {
-        return new Promise((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const location = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              };
+    return {
+      lat: 0,
+      lng: 0,
+    };
 
-              logger.info(
-                '📍 LocationManager: Got user location from GPS:',
-                location
-              );
-              logUserAction('location_granted', location);
+    // try {
+    //   // Try to get the user's location from the browser
+    //   if (navigator.geolocation) {
+    //     return new Promise((resolve) => {
+    //       navigator.geolocation.getCurrentPosition(
+    //         (position) => {
+    //           const location = {
+    //             lat: position.coords.latitude,
+    //             lng: position.coords.longitude,
+    //           };
 
-              // Emit location change event
-              eventBus.emit('location.updated', location);
+    //           logger.info(
+    //             '📍 LocationManager: Got user location from GPS:',
+    //             location
+    //           );
+    //           logUserAction('location_granted', location);
 
-              resolve(location);
-            },
-            (error) => {
-              logger.warn(
-                '📍 LocationManager: Geolocation permission denied or failed:',
-                error
-              );
-              logUserAction('location_denied', { error: error.message });
+    //           // Emit location change event
+    //           eventBus.emit('location.updated', location);
 
-              // Fallback to default location if permission denied
-              logger.info(
-                '📍 LocationManager: Using default location:',
-                DEFAULT_LOCATION
-              );
-              resolve(DEFAULT_LOCATION);
-            }
-          );
-        });
-      }
+    //           resolve(location);
+    //         },
+    //         (error) => {
+    //           logger.warn(
+    //             '📍 LocationManager: Geolocation permission denied or failed:',
+    //             error
+    //           );
+    //           logUserAction('location_denied', { error: error.message });
 
-      // Fallback to default location if geolocation not available
-      logger.warn(
-        '📍 LocationManager: Geolocation not available, using default location'
-      );
-      return DEFAULT_LOCATION;
-    } catch (error) {
-      logger.error(
-        '❌ LocationManager: Error getting current location:',
-        error
-      );
-      return DEFAULT_LOCATION;
-    }
+    //           // Fallback to default location if permission denied
+    //           logger.info(
+    //             '📍 LocationManager: Using default location:',
+    //             DEFAULT_LOCATION
+    //           );
+    //           resolve(DEFAULT_LOCATION);
+    //         }
+    //       );
+    //     });
+    //   }
+
+    //   // Fallback to default location if geolocation not available
+    //   logger.warn(
+    //     '📍 LocationManager: Geolocation not available, using default location'
+    //   );
+    //   return DEFAULT_LOCATION;
+    // } catch (error) {
+    //   logger.error(
+    //     '❌ LocationManager: Error getting current location:',
+    //     error
+    //   );
+    //   return DEFAULT_LOCATION;
+    // }
   }
 
   // Get random location within 8 minutes of driving

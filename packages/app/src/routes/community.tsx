@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@belongnetwork/components';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@belongnetwork/components';
 import { Button } from '@belongnetwork/components';
-import { MemberCard } from '@belongnetwork/components/members/MemberCard';
-import { ViewSwitcher } from '@belongnetwork/components/layout/ViewSwitcher';
-import { mockMembers, mockEvents } from '@belongnetwork/core';
-import { useAppStore } from '@belongnetwork/core';
-import { User, Users, Calendar, Map as MapIcon, Heart } from 'lucide-react';
+import { ViewSwitcher } from '@belongnetwork/components';
+import { useBelongStore } from '@belongnetwork/core';
+import { mapbox } from '@belongnetwork/core';
+import { Users, Calendar, Map as MapIcon, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@belongnetwork/components';
 import { Link } from '@tanstack/react-router';
 
@@ -16,11 +20,11 @@ export const Route = createFileRoute('/community')({
 });
 
 function CommunityPage() {
-  const currentCommunity = useAppStore((state) => state.currentCommunity);
-  const viewMode = useAppStore((state) => state.viewMode);
+  const activeCommunity = useBelongStore((state) => state.getActiveCommunity());
+  const viewMode = useBelongStore((state) => state.app.viewMode);
   const [activeTab, setActiveTab] = useState<'members' | 'events'>('members');
 
-  if (!currentCommunity) {
+  if (!activeCommunity) {
     return (
       <AppLayout showCommunitySelector={false}>
         <div className="flex justify-center items-center h-64">
@@ -40,11 +44,11 @@ function CommunityPage() {
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-warmgray-800">
-            {currentCommunity.name} Community
+            {activeCommunity.name} Community
           </h1>
           <p className="text-warmgray-500">
-            {currentCommunity.member_count} members •{' '}
-            {currentCommunity.description}
+            {activeCommunity.member_count} members •{' '}
+            {activeCommunity.description}
           </p>
         </div>
 
@@ -54,23 +58,30 @@ function CommunityPage() {
       </div>
 
       {/* Community map preview */}
-      <div className="mb-6 bg-gray-200 h-48 rounded-lg overflow-hidden relative">
-        <div className="absolute inset-0 flex items-center justify-center">
-          {currentCommunity.center ? (
-            <iframe
-              src={`https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-l+f97316(${currentCommunity.center.lng},${currentCommunity.center.lat})/${currentCommunity.center.lng},${currentCommunity.center.lat},10,0/800x200?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || 'pk.placeholder'}`}
-              title="Community Map"
-              className="w-full h-full border-0"
-            ></iframe>
-          ) : (
-            <div className="flex items-center justify-center">
-              <MapIcon className="h-12 w-12 text-warmgray-400" />
-              <span className="ml-2 text-warmgray-500">
-                Map preview not available
-              </span>
-            </div>
-          )}
-        </div>
+      <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-8">
+        {activeCommunity?.center ? (
+          <img
+            src={mapbox.getStaticMapUrl(
+              {
+                lat: activeCommunity.center.lat,
+                lng: activeCommunity.center.lng,
+              },
+              {
+                width: 800,
+                height: 200,
+                zoom: 10,
+                marker: true,
+                markerColor: 'f97316', // Orange-500
+              }
+            )}
+            alt={`Map of ${activeCommunity.name}`}
+            className="w-full h-48 object-cover"
+          />
+        ) : (
+          <div className="w-full h-48 bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
+            <MapIcon className="h-12 w-12 text-white" />
+          </div>
+        )}
       </div>
 
       {viewMode === 'member' && (
@@ -97,16 +108,18 @@ function CommunityPage() {
           </div>
 
           {activeTab === 'members' && (
+            // TODO Load mock members from API
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockMembers.map((member) => (
+              {/* {mockMembers.map((member) => (
                 <MemberCard key={member.id} member={member} />
-              ))}
+              ))} */}
             </div>
           )}
 
           {activeTab === 'events' && (
             <div className="space-y-4">
-              {mockEvents
+              // TODO load events from API
+              {/* {mockEvents
                 .filter((e) => e.community_id === currentCommunity.id)
                 .map((event) => (
                   <Card key={event.id} className="overflow-hidden">
@@ -173,7 +186,7 @@ function CommunityPage() {
                     <Button size="sm">Suggest an Event</Button>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           )}
         </div>
@@ -189,7 +202,7 @@ function CommunityPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
                   <div className="text-2xl font-bold text-primary-600">
-                    {currentCommunity.member_count}
+                    {activeCommunity?.member_count}
                   </div>
                   <div className="text-sm text-warmgray-500">Members</div>
                 </div>

@@ -1,11 +1,16 @@
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  first_name: string;
+  last_name?: string;
   avatar_url?: string;
-  location: Coordinates;
-  current_community_id: string;
-  is_organizer: boolean;
+  current_community_id?: string;
+  trust_scores?: Record<string, number>; // communityId -> score
+}
+
+export interface Me extends User {
+  email: string;
+  location?: Coordinates;
+  address?: string;
 }
 
 export interface Coordinates {

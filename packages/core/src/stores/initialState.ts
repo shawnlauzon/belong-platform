@@ -1,26 +1,30 @@
-import type { AppState } from '../types/store';
+import type { BelongState } from './types';
 
-export const initialState: AppState = {
+export const initialState: BelongState = {
+  app: {
+    viewMode: 'member',
+  },
   // Auth state
   auth: {
     user: null,
     session: null,
+    location: null,
     isLoading: false,
     error: null,
   },
-  
+
   // Communities state
   communities: {
     list: [],
-    currentId: null,
+    activeId: null,
     isLoading: false,
     error: null,
   },
-  
+
   // Resources state
   resources: {
     list: [],
-    currentId: null,
+    activeId: null,
     filters: {
       category: 'all',
       type: 'all',
@@ -29,15 +33,15 @@ export const initialState: AppState = {
     isLoading: false,
     error: null,
   },
-  
+
   // Users state
   users: {
-    current: null,
-    profiles: {},
+    list: [],
+    activeId: null,
     isLoading: false,
     error: null,
   },
-  
+
   // Thanks state
   thanks: {
     list: [],

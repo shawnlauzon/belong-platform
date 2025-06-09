@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus } from '@belongnetwork/core';
+import { eventBus, useBelongStore } from '@belongnetwork/core';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,6 @@ import { AddressAutocomplete } from '~/shared/AddressAutocomplete';
 import { LocationPicker } from '~/shared/LocationPicker';
 import { CountryAutocomplete } from './CountryAutocomplete';
 import { StateAutocomplete } from './StateAutocomplete';
-import { useCommunities } from '@belongnetwork/community-services';
 import { Community, Coordinates } from '@belongnetwork/core';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 
@@ -45,6 +44,10 @@ export function CreateCommunityDialog({
 }: CreateCommunityDialogProps) {
   logComponentRender('CreateCommunityDialog', { open, parentCommunityId });
 
+  const { list: communities = [] } = useBelongStore(
+    (state) => state.communities
+  );
+
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [addressBbox, setAddressBbox] = useState<
     [number, number, number, number] | null
@@ -54,8 +57,6 @@ export function CreateCommunityDialog({
   const [selectedState, setSelectedState] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { data: communities = [] } = useCommunities();
 
   const parentCommunity = parentCommunityId
     ? communities.find((c) => c.id === parentCommunityId)
@@ -126,7 +127,7 @@ export function CreateCommunityDialog({
 
     // Build the chain from parent to root
     const chain: Community[] = [];
-    let currentId = parentCommunity.id;
+    let currentId: string | null = parentCommunity.id;
 
     while (currentId) {
       const community = communities.find((c) => c.id === currentId);

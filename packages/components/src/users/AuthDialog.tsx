@@ -2,15 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus } from '@/core/eventBus';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { logger, logComponentRender, logUserAction } from '@/lib/logger';
+import { eventBus } from '@belongnetwork/core';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/ui/dialog';
+import { Button } from '~/ui/button';
+import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 
 const authSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -28,12 +23,17 @@ interface AuthDialogProps {
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   logComponentRender('AuthDialog', { open });
-  
+
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { register, handleSubmit, formState: { errors }, setError: setFormError } = useForm<AuthFormData>({
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError: setFormError,
+  } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   });
 
@@ -53,17 +53,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       onOpenChange(false);
     });
 
-    const unsubscribeSignInFailed = eventBus.on('auth.signIn.failed', (event) => {
-      logger.error('❌ AuthDialog: Sign in failed:', event.data.error);
-      setIsSubmitting(false);
-      setError(event.data.error);
-    });
+    const unsubscribeSignInFailed = eventBus.on(
+      'auth.signIn.failed',
+      (event) => {
+        logger.error('❌ AuthDialog: Sign in failed:', event.data.error);
+        setIsSubmitting(false);
+        setError(event.data.error);
+      }
+    );
 
-    const unsubscribeSignUpFailed = eventBus.on('auth.signUp.failed', (event) => {
-      logger.error('❌ AuthDialog: Sign up failed:', event.data.error);
-      setIsSubmitting(false);
-      setError(event.data.error);
-    });
+    const unsubscribeSignUpFailed = eventBus.on(
+      'auth.signUp.failed',
+      (event) => {
+        logger.error('❌ AuthDialog: Sign up failed:', event.data.error);
+        setIsSubmitting(false);
+        setError(event.data.error);
+      }
+    );
 
     return () => {
       unsubscribeSignInSuccess();
@@ -78,14 +84,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       mode,
       email: data.email,
       hasFirstName: !!data.firstName,
-      hasLastName: !!data.lastName
+      hasLastName: !!data.lastName,
     });
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     logUserAction(`auth_${mode}_attempt`, { email: data.email });
-    
+
     if (mode === 'signin') {
       logger.debug('📝 Emitting sign in request...');
       eventBus.emit('auth.signIn.requested', {
@@ -133,7 +139,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   disabled={isSubmitting}
                 />
                 {errors.firstName && (
-                  <p className="text-xs text-red-500">{errors.firstName.message}</p>
+                  <p className="text-xs text-red-500">
+                    {errors.firstName.message}
+                  </p>
                 )}
               </div>
 
@@ -147,7 +155,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   disabled={isSubmitting}
                 />
                 {errors.lastName && (
-                  <p className="text-xs text-red-500">{errors.lastName.message}</p>
+                  <p className="text-xs text-red-500">
+                    {errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -189,15 +199,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
           <div className="flex flex-col gap-2">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+              {isSubmitting
+                ? 'Please wait...'
+                : mode === 'signin'
+                  ? 'Sign In'
+                  : 'Create Account'}
             </Button>
             <Button
               type="button"
               variant="ghost"
-              onClick={() => handleModeChange(mode === 'signin' ? 'signup' : 'signin')}
+              onClick={() =>
+                handleModeChange(mode === 'signin' ? 'signup' : 'signin')
+              }
               disabled={isSubmitting}
             >
-              {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {mode === 'signin'
+                ? "Don't have an account? Sign up"
+                : 'Already have an account? Sign in'}
             </Button>
           </div>
         </form>

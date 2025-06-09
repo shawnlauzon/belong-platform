@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { ThanksFeed } from '@/components/thanks/ThanksFeed';
-import { useThanks } from '@/hooks/useThanks';
-import { useAuth } from '@/lib/auth';
-import { useAppStore } from '@/core/state';
-import { Thanks } from '@/types';
-import { ViewSwitcher } from '@/components/layout/ViewSwitcher';
-import { Button } from '@/components/ui/button';
-import { Heart, User, Filter } from 'lucide-react';
+import { AppLayout } from '@belongnetwork/components';
+import { ThanksFeed } from '@belongnetwork/components';
+import { Thanks, useBelongStore } from '@belongnetwork/core';
+import { ViewSwitcher } from '@belongnetwork/components';
+import { Button } from '@belongnetwork/components';
+import { Heart, User } from 'lucide-react';
 
 export const Route = createFileRoute('/thanks')({
   component: ThanksPage,
@@ -16,22 +13,24 @@ export const Route = createFileRoute('/thanks')({
 
 function ThanksPage() {
   const [filter, setFilter] = useState<'all' | 'given' | 'received'>('all');
-  const { user } = useAuth();
-  const viewMode = useAppStore(state => state.viewMode);
-  
+  const user = useBelongStore((state) => state.auth.user);
+  const viewMode = useBelongStore((state) => state.app.viewMode);
+
   // Use the new hook to fetch thanks from the database
-  const { data: thanks = [], isLoading } = useThanks();
-  
+  const { list: thanks, isLoading } = useBelongStore((state) => state.thanks);
+
   // Filter the thanks based on the selected filter
   const filteredThanks = React.useMemo(() => {
     if (!user) return thanks;
-    
+
     if (filter === 'all') return thanks;
-    if (filter === 'given') return thanks.filter(t => t.from_member_id === user.id);
-    if (filter === 'received') return thanks.filter(t => t.to_member_id === user.id);
+    if (filter === 'given')
+      return thanks.filter((t) => t.from_member_id === user.id);
+    if (filter === 'received')
+      return thanks.filter((t) => t.to_member_id === user.id);
     return thanks;
   }, [thanks, filter, user]);
-  
+
   return (
     <AppLayout>
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -43,7 +42,7 @@ function ThanksPage() {
             See how neighbors are helping each other
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2 self-end sm:self-auto">
           {viewMode === 'member' && user && (
             <div className="bg-white rounded-lg shadow-sm flex p-1">
@@ -76,13 +75,11 @@ function ThanksPage() {
               </Button>
             </div>
           )}
-          
-          {viewMode === 'organizer' && (
-            <ViewSwitcher />
-          )}
+
+          {viewMode === 'organizer' && <ViewSwitcher />}
         </div>
       </div>
-      
+
       <div className="max-w-2xl mx-auto">
         <ThanksFeed thanks={filteredThanks} isLoading={isLoading} />
       </div>

@@ -1,18 +1,28 @@
 import React from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrustScore } from '@/components/trust/TrustScore';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ResourceCard } from '@/components/resources/ResourceCard';
-import { ThanksCard } from '@/components/thanks/ThanksCard';
-import { ProfileEditor } from '@/components/profile/ProfileEditor';
-import { useAuth } from '@/lib/auth';
-import { useMember } from '@/hooks/useMembers';
-import { formatTenure, getInitials } from '@/lib/utils';
-import { MapPin, Calendar, MessageCircle, Heart, User, Edit } from 'lucide-react';
-import { logger, logComponentRender } from '@/lib/logger';
+import { AppLayout } from '@belongnetwork/components';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@belongnetwork/components';
+import { TrustScore } from '@belongnetwork/components';
+import { Button } from '@belongnetwork/components';
+import { Avatar, AvatarFallback, AvatarImage } from '@belongnetwork/components';
+import { ResourceCard } from '@belongnetwork/components';
+import { ThanksCard } from '@belongnetwork/components';
+import { ProfileEditor } from '@belongnetwork/components';
+import { logger, useBelongStore } from '@belongnetwork/core';
+import {
+  MapPin,
+  Calendar,
+  MessageCircle,
+  Heart,
+  User,
+  Edit,
+} from 'lucide-react';
+import { logComponentRender } from '@belongnetwork/core';
 
 export const Route = createFileRoute('/profile/$id')({
   component: ProfilePage,
@@ -20,19 +30,27 @@ export const Route = createFileRoute('/profile/$id')({
 
 function ProfilePage() {
   logComponentRender('ProfilePage');
-  
+
   const { id } = Route.useParams();
-  const { user } = useAuth();
+  const user = useBelongStore((state) => state.auth.user);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<'resources' | 'thanks'>('resources');
-  
-  const { data: member, isLoading } = useMember(id === 'me' ? user?.id || '' : id);
+  const [activeTab, setActiveTab] = React.useState<'resources' | 'thanks'>(
+    'resources'
+  );
+
+  const member = useBelongStore((state) =>
+    state.users.list.find((u) => u.id === id)
+  );
+  const isLoading = useBelongStore((state) => state.users.isLoading);
   const isSelf = id === 'me' || user?.id === id;
 
   // Define helper functions early to avoid hoisting issues
   const getAvatarInitials = () => {
     if (!member) return '';
-    return getInitials(member.first_name, member.last_name, member.name);
+    return (
+      member.first_name?.charAt(0).toUpperCase() +
+      member.last_name?.charAt(0).toUpperCase()
+    );
   };
 
   const getDisplayName = () => {
@@ -44,12 +62,14 @@ function ProfilePage() {
     } else if (member.last_name) {
       return member.last_name;
     }
-    return member.name; // Fallback to the name field
+    return member.first_name; // Fallback to the name field
   };
 
   // Handle save completion - return to view mode
   const handleSaveComplete = () => {
-    logger.info('👤 ProfilePage: Profile save completed, returning to view mode');
+    logger.info(
+      '👤 ProfilePage: Profile save completed, returning to view mode'
+    );
     setIsEditing(false);
   };
 
@@ -58,41 +78,28 @@ function ProfilePage() {
     if (member) {
       logger.debug('👤 ProfilePage: Member data loaded:', {
         memberId: member.id,
-        displayName: member.name,
+        displayName: getDisplayName(),
         firstName: member.first_name,
         lastName: member.last_name,
-        email: member.email || 'Not available',
-        trustScore: member.trust_score,
-        resourcesShared: member.resources_shared,
-        thanksReceived: member.thanks_received,
+        trustScores: member.trust_scores,
         hasAvatar: !!member.avatar_url,
         avatarUrl: member.avatar_url,
-        hasLocation: !!member.location,
-        location: member.location,
-        createdAt: member.created_at,
-        communityTenureMonths: member.community_tenure_months,
         isSelfProfile: isSelf,
         isEditing: isEditing,
-        activeTab: activeTab
+        activeTab: activeTab,
       });
 
       // Log detailed name information
       logger.debug('👤 ProfilePage: Name breakdown:', {
-        fullName: member.name,
         firstName: member.first_name || 'Not set',
         lastName: member.last_name || 'Not set',
         displayName: getDisplayName(),
-        avatarInitials: getAvatarInitials()
+        avatarInitials: getAvatarInitials(),
       });
 
       // Log trust and activity metrics
       logger.debug('👤 ProfilePage: Activity metrics:', {
-        trustScore: member.trust_score,
-        resourcesShared: member.resources_shared,
-        thanksReceived: member.thanks_received,
-        communityTenure: `${member.community_tenure_months} months`,
-        formattedTenure: formatTenure(member.created_at),
-        accountAge: new Date().getTime() - new Date(member.created_at).getTime()
+        trustScores: member.trust_scores,
       });
     }
   }, [member, isSelf, isEditing, activeTab]);
@@ -104,7 +111,7 @@ function ProfilePage() {
       hasMember: !!member,
       userId: user?.id,
       profileId: id,
-      isSelf
+      isSelf,
     });
   }, [isLoading, member, user?.id, id, isSelf]);
 
@@ -146,7 +153,7 @@ function ProfilePage() {
     displayName: getDisplayName(),
     isSelf,
     isEditing,
-    activeTab
+    activeTab,
   });
 
   return (
@@ -157,14 +164,21 @@ function ProfilePage() {
           <div className="px-6 pb-6 -mt-16">
             <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
               <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                <AvatarImage src={member.avatar_url || undefined} alt={getDisplayName()} />
-                <AvatarFallback className="text-3xl">{getAvatarInitials()}</AvatarFallback>
+                <AvatarImage
+                  src={member.avatar_url || undefined}
+                  alt={getDisplayName()}
+                />
+                <AvatarFallback className="text-3xl">
+                  {getAvatarInitials()}
+                </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl font-bold text-warmgray-900">{getDisplayName()}</h1>
+                <h1 className="text-2xl font-bold text-warmgray-900">
+                  {getDisplayName()}
+                </h1>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1">
-                  {member.location && (
+                  {/* {member.location && (
                     <div className="flex items-center text-sm text-warmgray-500">
                       <MapPin className="h-4 w-4 mr-1" />
                       <span>South Austin</span>
@@ -173,14 +187,14 @@ function ProfilePage() {
                   <div className="flex items-center text-sm text-warmgray-500">
                     <Calendar className="h-4 w-4 mr-1" />
                     <span>{formatTenure(member.created_at)}</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
-              
+
               <div className="flex gap-2">
                 {isSelf ? (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="flex items-center gap-1"
                     onClick={() => setIsEditing(true)}
                   >
@@ -189,7 +203,10 @@ function ProfilePage() {
                   </Button>
                 ) : (
                   <>
-                    <Button variant="outline" className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
                       <MessageCircle className="h-4 w-4" />
                       <span>Message</span>
                     </Button>
@@ -203,22 +220,22 @@ function ProfilePage() {
             </div>
           </div>
         </Card>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-center">Trust Score</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <TrustScore 
-                score={member.trust_score} 
-                size="lg" 
-                showBreakdown 
+              {/* <TrustScore
+                score={member.trust_score}
+                size="lg"
+                showBreakdown
                 memberId={member.id}
-              />
+              /> */}
             </CardContent>
           </Card>
-          
+
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>About</CardTitle>
@@ -227,19 +244,27 @@ function ProfilePage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="font-medium text-warmgray-700">Resources Shared</div>
-                    <div className="mt-1 text-warmgray-900">{member.resources_shared}</div>
+                    <div className="font-medium text-warmgray-700">
+                      Resources Shared
+                    </div>
+                    {/* <div className="mt-1 text-warmgray-900">
+                      {member.resources_shared}
+                    </div> */}
                   </div>
                   <div>
-                    <div className="font-medium text-warmgray-700">Thanks Received</div>
-                    <div className="mt-1 text-warmgray-900">{member.thanks_received}</div>
+                    <div className="font-medium text-warmgray-700">
+                      Thanks Received
+                    </div>
+                    {/* <div className="mt-1 text-warmgray-900">
+                      {member.thanks_received}
+                    </div> */}
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="mb-6 bg-white shadow-sm rounded-lg p-1">
           <div className="flex">
             <Button
@@ -260,17 +285,21 @@ function ProfilePage() {
             </Button>
           </div>
         </div>
-        
+
         {/* Resources and Thanks tabs content */}
         {activeTab === 'resources' && (
           <div className="bg-white rounded-lg p-6 text-center">
-            <p className="text-warmgray-500">Resources will be displayed here in a future update.</p>
+            <p className="text-warmgray-500">
+              Resources will be displayed here in a future update.
+            </p>
           </div>
         )}
-        
+
         {activeTab === 'thanks' && (
           <div className="bg-white rounded-lg p-6 text-center">
-            <p className="text-warmgray-500">Thanks will be displayed here in a future update.</p>
+            <p className="text-warmgray-500">
+              Thanks will be displayed here in a future update.
+            </p>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Globe } from 'lucide-react';
-import { logger, logUserAction } from '@belongnetwork/core';
+import { logger, logUserAction, useBelongStore } from '@belongnetwork/core';
 
 // Common countries list for autocomplete
 const COMMON_COUNTRIES = [
@@ -67,7 +67,7 @@ export function CountryAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const { data: communities = [] } = useCommunities();
+  const { list: communities } = useBelongStore((state) => state.communities);
 
   // Get existing countries from communities
   const existingCountries = communities

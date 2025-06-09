@@ -1,6 +1,6 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { Shield, ShieldCheck, ShieldX } from 'lucide-react';
+import { cn } from '~/utils';
+import { Shield, ShieldCheck } from 'lucide-react';
 
 interface TrustBadgeProps {
   score: number;
@@ -9,7 +9,12 @@ interface TrustBadgeProps {
   className?: string;
 }
 
-export function TrustBadge({ score, size = 'md', showLabel = false, className }: TrustBadgeProps) {
+export function TrustBadge({
+  score,
+  size = 'md',
+  showLabel = false,
+  className,
+}: TrustBadgeProps) {
   const getBadgeLabel = (score: number) => {
     if (score < 4) return 'New';
     if (score < 6) return 'Building';
@@ -46,7 +51,7 @@ export function TrustBadge({ score, size = 'md', showLabel = false, className }:
   };
 
   const badgeClasses = cn(
-    'rounded-full flex items-center justify-center', 
+    'rounded-full flex items-center justify-center',
     getBadgeColor(score),
     getSizeClasses(size),
     className
@@ -54,9 +59,7 @@ export function TrustBadge({ score, size = 'md', showLabel = false, className }:
 
   return (
     <div className="flex items-center gap-1">
-      <div className={badgeClasses}>
-        {getBadgeIcon(score)}
-      </div>
+      <div className={badgeClasses}>{getBadgeIcon(score)}</div>
       {showLabel && (
         <div className="flex flex-col">
           <span className="text-xs font-semibold">{getBadgeLabel(score)}</span>

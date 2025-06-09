@@ -3,12 +3,12 @@ import {
   supabase,
   Resource,
   calculateDrivingTime,
-  useAppStore,
+  useBelongStore,
 } from '@belongnetwork/core';
 import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
 
 export function useResources(maxDriveMinutes = 8) {
-  const userLocation = useAppStore((state) => state.userLocation);
+  const userLocation = useBelongStore((state) => state.auth.location);
 
   return useQuery({
     queryKey: ['resources', userLocation, maxDriveMinutes],
@@ -40,9 +40,10 @@ export function useResources(maxDriveMinutes = 8) {
               }
             : null;
 
-          const driveMinutes = location
-            ? await calculateDrivingTime(userLocation, location)
-            : null;
+          const driveMinutes =
+            userLocation && location
+              ? await calculateDrivingTime(userLocation, location)
+              : null;
 
           const creator = resource.creator;
           const metadata = creator?.user_metadata || {};
