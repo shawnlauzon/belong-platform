@@ -1,7 +1,17 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
 
+// Helper function to get environment variables across different contexts
+const getEnvVar = (key: string, fallback?: string): string => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key] || fallback || '';
+  } else if (typeof process !== 'undefined' && process.env) {
+    return process.env[key] || fallback || '';
+  }
+  return fallback || '';
+};
+
 // Set your Mapbox token (ideally from environment variable)
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_TOKEN') || getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {

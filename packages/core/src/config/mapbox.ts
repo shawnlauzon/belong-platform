@@ -1,8 +1,18 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
 import { Coordinates } from '../types/entities';
 
+// Helper function to get environment variables across different contexts
+const getEnvVar = (key: string, fallback?: string): string => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key] || fallback || '';
+  } else if (typeof process !== 'undefined' && process.env) {
+    return process.env[key] || fallback || '';
+  }
+  return fallback || '';
+};
+
 // Set your Mapbox token (ideally from environment variable)
-export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+export const MAPBOX_TOKEN = getEnvVar('VITE_MAPBOX_TOKEN') || getEnvVar('VITE_MAPBOX_PUBLIC_TOKEN');
 
 if (!MAPBOX_TOKEN) {
   logger.warn(
