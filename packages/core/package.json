@@ -13,16 +13,19 @@
     "dev": "tsc --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > src/types/database.ts && echo '✅ Successfully updated database types'"    
+    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > src/types/database.ts && echo '✅ Successfully updated database types'"
   },
   "dependencies": {
-    "zod": "^3.22.4",
     "@supabase/supabase-js": "^2.39.7",
-    "mapbox-gl": "^2.15.0"
+    "loglevel": "^1.9.2",
+    "mapbox-gl": "^2.15.0",
+    "nanoid": "^5.1.5",
+    "zod": "^3.22.4",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@types/mapbox-gl": "^2.7.10",
     "@types/node": "^20.0.0",
-    "@types/mapbox-gl": "^2.7.10"
+    "typescript": "^5.0.0"
   }
 }
