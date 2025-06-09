@@ -7,3 +7,6 @@ import { ResourceManager } from './services/ResourceManager';
 
 // Initialize all resource services when this module is imported
 ResourceManager.initialize();
+
+// Re-export specific functions that may be needed by other modules
+export { initializeResourceEvents } from './events/resourceEvents';
