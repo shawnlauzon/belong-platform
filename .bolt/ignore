@@ -2,3 +2,4 @@ packages/community-services/*
 packages/resource-services/*
 packages/trust-services/*
 packages/components/*
+packages/app/*
