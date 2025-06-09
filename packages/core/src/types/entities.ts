@@ -1,7 +1,7 @@
 export interface User extends UserData {
   id: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserData {
@@ -22,24 +22,35 @@ export interface Coordinates {
   lng: number;
 }
 
-export interface Membership {
+export interface Membership extends MembershipData {
   id: string;
-  user_id: string;
-  community_id: string;
+  user: User;
+  community: Community;
   role: 'member' | 'moderator' | 'admin';
   joined_at: string;
   trust_score: number;
   community_tenure_months: number;
   thanks_received: number;
   resources_shared: number;
-  user: User;
-  community: Community;
 }
 
-export interface Resource {
+export interface MembershipData {
   id: string;
-  creator_id: string;
+  user_id: string;
+  community_id: string;
+}
+
+export interface Resource extends ResourceData {
+  id: string;
   owner: User;
+  is_active: boolean;
+  times_helped: number;
+  created_at: string;
+  updated_at: string;
+  distance_minutes?: number; // Calculated field for driving time
+}
+
+export interface ResourceData {
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
   title: string;
@@ -51,16 +62,13 @@ export interface Resource {
   meetup_flexibility: 'home_only' | 'public_meetup_ok' | 'delivery_possible';
   availability?: string;
   is_active: boolean;
-  times_helped: number;
-  created_at: string;
-  distance_minutes?: number; // Calculated field for driving time
 }
 
 export interface Thanks extends ThanksData {
   id: string;
-  from_user?: User;
-  to_user?: User;
-  resource?: Resource;
+  from_user: User;
+  to_user: User;
+  resource: Resource;
   created_at: string;
   updated_at: string;
 }
@@ -77,17 +85,16 @@ export interface ThanksData {
 export interface Community extends CommunityData {
   id: string;
   name: string;
-  parent?: Community;
   member_count: number;
 }
 
 export interface CommunityData {
   name: string;
   country: string;
+  state?: string;
   city: string;
   neighborhood?: string;
   description: string;
-  parent_id: string | null;
   center?: Coordinates;
 }
 
