@@ -12,6 +12,7 @@ import type { Session } from '@supabase/supabase-js';
 // App State
 export interface AppState {
   viewMode: 'member' | 'organizer';
+  activeCommunityId: string | null;
 }
 
 // Auth State
@@ -28,7 +29,6 @@ export interface AuthState {
 // Communities State
 export interface CommunitiesState {
   list: Community[];
-  activeId: string | null;
   isLoading: boolean;
   error: string | null;
 }

@@ -3,6 +3,7 @@ import type { BelongState } from './types';
 export const initialState: BelongState = {
   app: {
     viewMode: 'member',
+    activeCommunityId: null,
   },
   // Auth state
   auth: {
@@ -18,7 +19,6 @@ export const initialState: BelongState = {
   // Communities state
   communities: {
     list: [],
-    activeId: null,
     isLoading: false,
     error: null,
   },

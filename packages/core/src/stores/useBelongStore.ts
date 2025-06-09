@@ -5,9 +5,10 @@ import { initialState } from './initialState';
 import { logger } from '../utils/logger';
 import type { BelongStore } from './types';
 import type { Session } from '@supabase/supabase-js';
-import type { Resource } from '../types/entities';
+import type { Resource, Community } from '../types/entities';
 import initializeAuthListeners from './authHandlers';
 import { initializeResourceListeners } from './resourceHandlers';
+import { initializeCommunityListeners } from './communityHandlers';
 
 // Create the store with state and actions
 export const useBelongStore = create<BelongStore>()(
@@ -77,6 +78,63 @@ export const useBelongStore = create<BelongStore>()(
           }),
           false,
           'auth/setLoading'
+        );
+      };
+
+      // Define community state management functions
+      const setCommunitiesLoading = (isLoading: boolean) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              isLoading,
+            },
+          }),
+          false,
+          'communities/setLoading'
+        );
+      };
+
+      const setCommunitiesError = (error: string | null) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              error,
+            },
+          }),
+          false,
+          'communities/setError'
+        );
+      };
+
+      const setCommunities = (communities: Community[]) => {
+        set(
+          (state) => ({
+            ...state,
+            communities: {
+              ...state.communities,
+              list: communities,
+            },
+          }),
+          false,
+          'communities/setList'
+        );
+      };
+
+      const setActiveCommunityInternal = (communityId: string) => {
+        set(
+          (state) => ({
+            ...state,
+            app: {
+              ...state.app,
+              activeCommunityId: communityId,
+            },
+          }),
+          false,
+          'app/setActiveCommunity'
         );
       };
 
@@ -181,6 +239,12 @@ export const useBelongStore = create<BelongStore>()(
         setAuthError,
         setAuthLoading
       );
+      initializeCommunityListeners(
+        setCommunitiesLoading,
+        setCommunitiesError,
+        setCommunities,
+        setActiveCommunityInternal
+      );
       initializeResourceListeners(
         setResourcesLoading,
         setResourcesError,
@@ -221,6 +285,11 @@ export const useBelongStore = create<BelongStore>()(
         setAuthError,
         setAuthLoading,
 
+        // Internal community state management actions
+        setCommunitiesLoading,
+        setCommunitiesError,
+        setCommunities,
+
         // Resource state management actions
         setResourcesLoading,
         setResourcesError,
@@ -232,10 +301,10 @@ export const useBelongStore = create<BelongStore>()(
         // Selectors and state updaters
         getActiveCommunity: () => {
           const state = get();
-          if (!state.communities.activeId) return null;
+          if (!state.app.activeCommunityId) return null;
           return (
             state.communities.list.find(
-              (community) => community.id === state.communities.activeId
+              (community) => community.id === state.app.activeCommunityId
             ) || null
           );
         },

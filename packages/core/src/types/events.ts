@@ -88,6 +88,34 @@ export interface AuthSignOutFailedEvent extends BaseEvent {
 }
 
 // Community Events
+export interface CommunityFetchRequestedEvent extends BaseEvent {
+  type: 'community.fetch.requested';
+  data: {
+    filters?: {
+      level?: Community['level'];
+      parent_id?: string;
+      searchTerm?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+    };
+  };
+}
+
+export interface CommunityFetchSuccessEvent extends BaseEvent {
+  type: 'community.fetch.success';
+  data: {
+    communities: Community[];
+  };
+}
+
+export interface CommunityFetchFailedEvent extends BaseEvent {
+  type: 'community.fetch.failed';
+  data: {
+    error: string;
+  };
+}
+
 export interface CommunityCreateRequestedEvent extends BaseEvent {
   type: 'community.create.requested';
   data: {
@@ -297,13 +325,6 @@ export interface NavigationRedirectEvent extends BaseEvent {
   };
 }
 
-// In your core types file
-export function isResourceFetchRequestedEvent(
-  event: AppEvent
-): event is ResourceFetchRequestedEvent {
-  return event.type === 'resource.fetch.requested';
-}
-
 // Type guard functions for event type checking
 export function isAuthSignInSuccessEvent(
   event: AppEvent
@@ -341,7 +362,38 @@ export function isAuthSignOutFailedEvent(
   return event.type === 'auth.signOut.failed';
 }
 
+// Community event type guards
+export function isCommunityFetchRequestedEvent(
+  event: AppEvent
+): event is CommunityFetchRequestedEvent {
+  return event.type === 'community.fetch.requested';
+}
+
+export function isCommunityFetchSuccessEvent(
+  event: AppEvent
+): event is CommunityFetchSuccessEvent {
+  return event.type === 'community.fetch.success';
+}
+
+export function isCommunityFetchFailedEvent(
+  event: AppEvent
+): event is CommunityFetchFailedEvent {
+  return event.type === 'community.fetch.failed';
+}
+
+export function isCommunityActiveChangeRequestedEvent(
+  event: AppEvent
+): event is CommunityActiveChangeRequestedEvent {
+  return event.type === 'community.active.change.requested';
+}
+
 // Resource event type guards
+export function isResourceFetchRequestedEvent(
+  event: AppEvent
+): event is ResourceFetchRequestedEvent {
+  return event.type === 'resource.fetch.requested';
+}
+
 export function isResourceFetchSuccessEvent(
   event: AppEvent
 ): event is ResourceFetchSuccessEvent {
@@ -400,6 +452,9 @@ export type AppEvent =
   | AuthSignUpFailedEvent
   | AuthSignOutSuccessEvent
   | AuthSignOutFailedEvent
+  | CommunityFetchRequestedEvent
+  | CommunityFetchSuccessEvent
+  | CommunityFetchFailedEvent
   | CommunityCreateRequestedEvent
   | CommunityCreatedEvent
   | CommunityCreateFailedEvent
