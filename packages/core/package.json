@@ -12,7 +12,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > packages/core/src/types/database.ts && echo '✅ Successfully updated database types'"    
   },
   "dependencies": {
     "zod": "^3.22.4",
