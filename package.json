@@ -14,7 +14,6 @@
     "format": "prettier --write .",
     "manypkg": "manypkg check",
     "prepare": "husky install",
-    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > packages/core/src/types/database.ts && echo '✅ Successfully updated database types'"
   },
   "dependencies": {
   },
