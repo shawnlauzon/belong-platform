@@ -297,6 +297,13 @@ export interface NavigationRedirectEvent extends BaseEvent {
   };
 }
 
+// In your core types file
+export function isResourceFetchRequestedEvent(
+  event: AppEvent
+): event is ResourceFetchRequestedEvent {
+  return event.type === 'resource.fetch.requested';
+}
+
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent

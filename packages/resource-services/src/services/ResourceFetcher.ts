@@ -1,4 +1,11 @@
-import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
+import {
+  supabase,
+  eventBus,
+  logger,
+  logApiCall,
+  logApiResponse,
+  isResourceFetchRequestedEvent,
+} from '@belongnetwork/core';
 import type { Resource, Coordinates, AppEvent } from '@belongnetwork/core';
 
 export class ResourceFetcher {
@@ -13,13 +20,12 @@ export class ResourceFetcher {
     logger.info('🚀 ResourceFetcher: Initializing...');
 
     eventBus.on('resource.fetch.requested', (event: AppEvent) => {
-      if (event.type !== 'resource.fetch.requested') {
-        logger.error('🔄 ResourceFetcher: Received invalid event type', { event });
-        return;
+      if (isResourceFetchRequestedEvent(event)) {
+        logger.debug('🔄 ResourceFetcher: Fetch requested', {
+          filters: event.data.filters,
+        });
+        this._fetchResources(event.data.filters);
       }
-
-      logger.debug('🔄 ResourceFetcher: Fetch requested', { filters: event.data.filters });
-      this._fetchResources(event.data.filters);
     });
 
     this.initialized = true;
@@ -35,7 +41,8 @@ export class ResourceFetcher {
       // Build the query
       let query = supabase
         .from('resources')
-        .select(`
+        .select(
+          `
           id,
           creator_id,
           type,
@@ -52,7 +59,8 @@ export class ResourceFetcher {
           times_helped,
           created_at,
           updated_at
-        `)
+        `
+        )
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -65,7 +73,9 @@ export class ResourceFetcher {
           query = query.eq('type', filters.type);
         }
         if (filters.searchTerm) {
-          query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+          query = query.or(
+            `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`
+          );
         }
       }
 
@@ -95,15 +105,18 @@ export class ResourceFetcher {
             if (!isNaN(lng) && !isNaN(lat)) {
               location = { lat, lng };
             } else {
-              logger.warn('🔄 ResourceFetcher: Invalid coordinates in location string', {
-                resourceId: row.id,
-                locationString: row.location
-              });
+              logger.warn(
+                '🔄 ResourceFetcher: Invalid coordinates in location string',
+                {
+                  resourceId: row.id,
+                  locationString: row.location,
+                }
+              );
             }
           } else {
             logger.warn('🔄 ResourceFetcher: Could not parse location string', {
               resourceId: row.id,
-              locationString: row.location
+              locationString: row.location,
             });
           }
         } else if (row.location && typeof row.location === 'object') {
@@ -131,15 +144,21 @@ export class ResourceFetcher {
       });
 
       logApiResponse('GET', 'supabase/resources', { count: resources.length });
-      logger.info('✅ ResourceFetcher: Successfully fetched resources', { count: resources.length });
-      logger.debug('🔄 ResourceFetcher: Emitting resource.fetch.success with resources:', resources);
+      logger.info('✅ ResourceFetcher: Successfully fetched resources', {
+        count: resources.length,
+      });
+      logger.debug(
+        '🔄 ResourceFetcher: Emitting resource.fetch.success with resources:',
+        resources
+      );
 
       eventBus.emit('resource.fetch.success', { resources });
     } catch (error) {
       logger.error('❌ ResourceFetcher: Failed to fetch resources', { error });
       logApiResponse('GET', 'supabase/resources', null, error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       eventBus.emit('resource.fetch.failed', { error: errorMessage });
     }
   }
