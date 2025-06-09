@@ -1,8 +1,5 @@
-import { supabase } from '@belongnetwork/core';
-import { eventBus } from '@belongnetwork/core';
-import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
-import type { Resource } from '@belongnetwork/core';
-import type { AppEvent } from '@belongnetwork/core';
+import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
+import type { Resource, AppEvent } from '@belongnetwork/core';
 
 export class ResourceCreator {
   private static initialized = false;

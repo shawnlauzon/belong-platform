@@ -1,10 +1,8 @@
-import { eventBus } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { eventBus, logger } from '@belongnetwork/core';
 import { ResourceFetcher } from '../services/ResourceFetcher';
 import { ResourceCreator } from '../services/ResourceCreator';
 import { ResourceUpdater } from '../services/ResourceUpdater';
 import { ResourceDeleter } from '../services/ResourceDeleter';
-import type { AppEvent } from '@belongnetwork/core';
 
 /**
  * Initialize all resource event handlers

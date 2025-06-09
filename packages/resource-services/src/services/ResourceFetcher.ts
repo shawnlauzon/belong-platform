@@ -1,8 +1,5 @@
-import { supabase } from '@belongnetwork/core';
-import { eventBus } from '@belongnetwork/core';
-import { logger, logApiCall, logApiResponse } from '@belongnetwork/core';
-import type { Resource, Coordinates } from '@belongnetwork/core';
-import type { AppEvent } from '@belongnetwork/core';
+import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
+import type { Resource, Coordinates, AppEvent } from '@belongnetwork/core';
 
 export class ResourceFetcher {
   private static initialized = false;
