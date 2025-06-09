@@ -95,7 +95,7 @@ export interface StoreActions {
   setResourcesError: (error: string | null) => void;
   setResources: (resources: Resource[]) => void;
   addResource: (resource: Resource) => void;
-  updateResourceInList: (resource: Resource) => void;
+  updateResource: (resource: Resource) => void;
   removeResource: (resourceId: string) => void;
 
   // Add other action types here as needed
