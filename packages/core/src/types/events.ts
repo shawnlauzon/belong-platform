@@ -1,4 +1,4 @@
-import { Resource, Community, ProfileMetadata, Thanks } from './entities';
+import { Resource, Community, Thanks } from './entities';
 import { User } from '@supabase/supabase-js';
 
 export interface BaseEvent {
@@ -200,7 +200,7 @@ export interface ProfileUpdateRequestedEvent extends BaseEvent {
   type: 'profile.update.requested';
   data: {
     userId: string;
-    metadata: ProfileMetadata;
+    metadata: Partial<import('./entities').User>;
   };
 }
 
@@ -208,7 +208,7 @@ export interface ProfileUpdatedEvent extends BaseEvent {
   type: 'profile.updated';
   data: {
     userId: string;
-    updatedProfile: ProfileMetadata;
+    updatedProfile: Partial<import('./entities').User>;
   };
 }
 

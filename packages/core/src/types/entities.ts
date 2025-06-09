@@ -1,16 +1,19 @@
 export interface User {
   id: string;
+  email: string;
   first_name: string;
   last_name?: string;
+  full_name?: string;
   avatar_url?: string;
-  current_community_id?: string;
-  trust_scores?: Record<string, number>; // communityId -> score
-}
-
-export interface Me extends User {
-  email: string;
   location?: Coordinates;
   address?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuthUser extends User {
+  // AuthUser extends User with any additional auth-specific fields if needed
+  // Currently no additional fields, but this allows for future extension
 }
 
 export interface Coordinates {
@@ -18,19 +21,24 @@ export interface Coordinates {
   lng: number;
 }
 
-export interface ProfileMetadata {
-  first_name?: string;
-  last_name?: string;
-  full_name?: string;
-  avatar_url?: string;
-  location?: Coordinates;
-  address?: string;
+export interface Membership {
+  id: string;
+  user_id: string;
+  community_id: string;
+  role: 'member' | 'moderator' | 'admin';
+  joined_at: string;
+  trust_score: number;
+  community_tenure_months: number;
+  thanks_received: number;
+  resources_shared: number;
+  user?: User;
+  community?: Community;
 }
 
 export interface Resource {
   id: string;
   creator_id: string;
-  owner?: Member;
+  owner?: User;
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
   title: string;
@@ -47,26 +55,12 @@ export interface Resource {
   distance_minutes?: number; // Calculated field for driving time
 }
 
-export interface Member {
-  id: string;
-  name: string;
-  first_name?: string;
-  last_name?: string;
-  avatar_url?: string;
-  trust_score: number;
-  location: Coordinates;
-  community_tenure_months: number;
-  thanks_received: number;
-  resources_shared: number;
-  created_at: string;
-}
-
 export interface Thanks {
   id: string;
-  from_member_id: string;
-  from_member?: Member;
-  to_member_id: string;
-  to_member?: Member;
+  from_user_id: string;
+  from_user?: User;
+  to_user_id: string;
+  to_user?: User;
   resource_id: string;
   resource?: Resource;
   message: string;

@@ -10,6 +10,8 @@ import {
 } from '../types/events';
 import { eventBus } from '../eventBus/eventBus';
 import type { Session } from '@supabase/supabase-js';
+import type { AuthUser } from '../types/entities';
+
 // Initialize authentication event listeners
 export default function initializeAuthListeners(
   setAuthSession: (user: any, session: Session | null) => void,
@@ -34,15 +36,18 @@ export default function initializeAuthListeners(
     setAuthLoading(false);
 
     if (event.data.user) {
-      // Convert Supabase user to our Me type
-      const meUser = {
+      // Convert Supabase user to our AuthUser type
+      const authUser: AuthUser = {
         id: event.data.user.id,
         email: event.data.user.email || '',
         first_name: event.data.user.user_metadata?.first_name || '',
         last_name: event.data.user.user_metadata?.last_name || '',
+        full_name: event.data.user.user_metadata?.full_name || '',
         avatar_url: event.data.user.user_metadata?.avatar_url,
+        location: event.data.user.user_metadata?.location,
+        address: event.data.user.user_metadata?.address,
       };
-      setAuthSession(meUser, null); // Session will be handled separately if needed
+      setAuthSession(authUser, null); // Session will be handled separately if needed
     } else {
       logger.warn(
         '🔐 Store: Sign in success event received but no user data provided'
@@ -83,15 +88,18 @@ export default function initializeAuthListeners(
     setAuthLoading(false);
 
     if (event.data.user) {
-      // Convert Supabase user to our Me type
-      const meUser = {
+      // Convert Supabase user to our AuthUser type
+      const authUser: AuthUser = {
         id: event.data.user.id,
         email: event.data.user.email || '',
         first_name: event.data.user.user_metadata?.first_name || '',
         last_name: event.data.user.user_metadata?.last_name || '',
+        full_name: event.data.user.user_metadata?.full_name || '',
         avatar_url: event.data.user.user_metadata?.avatar_url,
+        location: event.data.user.user_metadata?.location,
+        address: event.data.user.user_metadata?.address,
       };
-      setAuthSession(meUser, null);
+      setAuthSession(authUser, null);
     } else {
       logger.warn(
         '🔐 Store: Sign up success event received but no user data provided'

@@ -44,15 +44,19 @@ export class ThanksFetcher {
           image_urls,
           impact_description,
           created_at,
-          from_member:profiles!thanks_from_user_id_fkey1 (
+          from_user:profiles!thanks_from_user_id_fkey1 (
             id,
             email,
-            user_metadata
+            user_metadata,
+            created_at,
+            updated_at
           ),
-          to_member:profiles!thanks_to_user_id_fkey1 (
+          to_user:profiles!thanks_to_user_id_fkey1 (
             id,
             email,
-            user_metadata
+            user_metadata,
+            created_at,
+            updated_at
           ),
           resource:resources!thanks_resource_id_fkey (
             id,
@@ -98,43 +102,43 @@ export class ThanksFetcher {
 
       // Transform the data to match our Thanks interface
       const thanks: Thanks[] = data.map((row: any) => {
-        const fromMember = row.from_member;
-        const toMember = row.to_member;
+        const fromUser = row.from_user;
+        const toUser = row.to_user;
         const resource = row.resource;
 
         return {
           id: row.id,
-          from_member_id: row.from_user_id,
-          from_member: fromMember ? {
-            id: fromMember.id,
-            name: fromMember.user_metadata?.full_name || 
-                  fromMember.email?.split('@')[0] || 
-                  'Anonymous',
-            first_name: fromMember.user_metadata?.first_name,
-            last_name: fromMember.user_metadata?.last_name,
-            avatar_url: fromMember.user_metadata?.avatar_url,
-            trust_score: 5.0, // Default trust score
-            location: fromMember.user_metadata?.location || { lat: 0, lng: 0 },
-            community_tenure_months: 0,
-            thanks_received: 0,
-            resources_shared: 0,
-            created_at: new Date().toISOString(),
+          from_user_id: row.from_user_id,
+          from_user: fromUser ? {
+            id: fromUser.id,
+            email: fromUser.email || '',
+            first_name: fromUser.user_metadata?.first_name || '',
+            last_name: fromUser.user_metadata?.last_name || '',
+            full_name: fromUser.user_metadata?.full_name || 
+                      fromUser.user_metadata?.first_name + ' ' + (fromUser.user_metadata?.last_name || '') ||
+                      fromUser.email?.split('@')[0] || 
+                      'Anonymous',
+            avatar_url: fromUser.user_metadata?.avatar_url,
+            location: fromUser.user_metadata?.location,
+            address: fromUser.user_metadata?.address,
+            created_at: fromUser.created_at,
+            updated_at: fromUser.updated_at,
           } : undefined,
-          to_member_id: row.to_user_id,
-          to_member: toMember ? {
-            id: toMember.id,
-            name: toMember.user_metadata?.full_name || 
-                  toMember.email?.split('@')[0] || 
-                  'Anonymous',
-            first_name: toMember.user_metadata?.first_name,
-            last_name: toMember.user_metadata?.last_name,
-            avatar_url: toMember.user_metadata?.avatar_url,
-            trust_score: 5.0, // Default trust score
-            location: toMember.user_metadata?.location || { lat: 0, lng: 0 },
-            community_tenure_months: 0,
-            thanks_received: 0,
-            resources_shared: 0,
-            created_at: new Date().toISOString(),
+          to_user_id: row.to_user_id,
+          to_user: toUser ? {
+            id: toUser.id,
+            email: toUser.email || '',
+            first_name: toUser.user_metadata?.first_name || '',
+            last_name: toUser.user_metadata?.last_name || '',
+            full_name: toUser.user_metadata?.full_name || 
+                      toUser.user_metadata?.first_name + ' ' + (toUser.user_metadata?.last_name || '') ||
+                      toUser.email?.split('@')[0] || 
+                      'Anonymous',
+            avatar_url: toUser.user_metadata?.avatar_url,
+            location: toUser.user_metadata?.location,
+            address: toUser.user_metadata?.address,
+            created_at: toUser.created_at,
+            updated_at: toUser.updated_at,
           } : undefined,
           resource_id: row.resource_id,
           resource: resource ? {

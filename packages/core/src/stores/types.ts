@@ -1,11 +1,11 @@
 import {
   User,
+  AuthUser,
   Community,
   Resource,
   Thanks,
   Coordinates,
   ResourceFilter,
-  Me,
 } from '../types/entities';
 import type { Session } from '@supabase/supabase-js';
 
@@ -17,7 +17,7 @@ export interface AppState {
 
 // Auth State
 export interface AuthState {
-  user: Me | null;
+  user: AuthUser | null;
   session: Session | null;
   location: Coordinates | null;
   isAuthenticated: boolean;

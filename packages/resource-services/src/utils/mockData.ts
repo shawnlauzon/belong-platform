@@ -1,8 +1,6 @@
 import {
   Community,
   Event,
-  Member,
-  MeetupSpot,
   Resource,
   Thanks,
 } from '@belongnetwork/core';
@@ -72,71 +70,11 @@ export const mockCommunities: Community[] = [
   },
 ];
 
-// Mock Members
-export const mockMembers: Member[] = [
-  {
-    id: '123e4567-e89b-12d3-a456-426614174005',
-    name: 'Sarah Chen',
-    avatar_url: 'https://randomuser.me/api/portraits/women/1.jpg',
-    trust_score: 8.5,
-    location: { lat: 30.251, lng: -97.7517 },
-    community_tenure_months: 14,
-    thanks_received: 23,
-    resources_shared: 15,
-    created_at: '2024-01-15T10:30:00Z',
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174006',
-    name: 'Miguel Rodriguez',
-    avatar_url: 'https://randomuser.me/api/portraits/men/2.jpg',
-    trust_score: 7.2,
-    created_at: '2024-03-22T14:15:00Z',
-    location: { lat: 30.248, lng: -97.752 },
-    community_tenure_months: 8,
-    thanks_received: 12,
-    resources_shared: 9,
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174007',
-    name: 'Aisha Johnson',
-    avatar_url: 'https://randomuser.me/api/portraits/women/3.jpg',
-    trust_score: 9.1,
-    location: { lat: 30.258, lng: -97.749 },
-    community_tenure_months: 22,
-    thanks_received: 35,
-    resources_shared: 28,
-    created_at: '2024-02-15T14:30:00Z',
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174008',
-    name: 'David Park',
-    avatar_url: 'https://randomuser.me/api/portraits/men/4.jpg',
-    trust_score: 6.8,
-    location: { lat: 30.253, lng: -97.756 },
-    community_tenure_months: 4,
-    thanks_received: 7,
-    resources_shared: 5,
-    created_at: '2024-02-18T16:45:00Z',
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174009',
-    name: 'Emma Wilson',
-    avatar_url: 'https://randomuser.me/api/portraits/women/5.jpg',
-    trust_score: 8.0,
-    location: { lat: 30.261, lng: -97.753 },
-    community_tenure_months: 11,
-    thanks_received: 19,
-    resources_shared: 13,
-    created_at: '2024-02-25T13:10:00Z',
-  },
-];
-
 // Mock Resources
 export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174010',
     creator_id: '123e4567-e89b-12d3-a456-426614174005',
-    owner: mockMembers[0],
     type: 'offer',
     category: 'tools',
     title: 'Pressure Washer',
@@ -158,7 +96,6 @@ export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174011',
     creator_id: '123e4567-e89b-12d3-a456-426614174007',
-    owner: mockMembers[2],
     type: 'offer',
     category: 'skills',
     title: 'Help with Basic Car Maintenance',
@@ -180,7 +117,6 @@ export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174012',
     creator_id: '123e4567-e89b-12d3-a456-426614174009',
-    owner: mockMembers[4],
     type: 'offer',
     category: 'food',
     title: 'Homemade Sourdough Bread',
@@ -202,7 +138,6 @@ export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174013',
     creator_id: '123e4567-e89b-12d3-a456-426614174006',
-    owner: mockMembers[1],
     type: 'request',
     category: 'supplies',
     title: 'Need Moving Boxes',
@@ -221,7 +156,6 @@ export const mockResources: Resource[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174014',
     creator_id: '123e4567-e89b-12d3-a456-426614174008',
-    owner: mockMembers[3],
     type: 'offer',
     category: 'tools',
     title: 'Ladder and Basic Tools',
@@ -246,12 +180,9 @@ export const mockResources: Resource[] = [
 export const mockThanks: Thanks[] = [
   {
     id: '123e4567-e89b-12d3-a456-426614174015',
-    from_member_id: '123e4567-e89b-12d3-a456-426614174006',
-    from_member: mockMembers[1],
-    to_member_id: '123e4567-e89b-12d3-a456-426614174005',
-    to_member: mockMembers[0],
+    from_user_id: '123e4567-e89b-12d3-a456-426614174006',
+    to_user_id: '123e4567-e89b-12d3-a456-426614174005',
     resource_id: '123e4567-e89b-12d3-a456-426614174010',
-    resource: mockResources[0],
     message:
       'The pressure washer worked perfectly! I was able to clean my entire patio and it looks brand new.',
     image_urls: [
@@ -263,12 +194,9 @@ export const mockThanks: Thanks[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174016',
-    from_member_id: '123e4567-e89b-12d3-a456-426614174008',
-    from_member: mockMembers[3],
-    to_member_id: '123e4567-e89b-12d3-a456-426614174007',
-    to_member: mockMembers[2],
+    from_user_id: '123e4567-e89b-12d3-a456-426614174008',
+    to_user_id: '123e4567-e89b-12d3-a456-426614174007',
     resource_id: '123e4567-e89b-12d3-a456-426614174011',
-    resource: mockResources[1],
     message:
       'Aisha taught me how to change my oil and check other fluids. Great teacher and super helpful!',
     image_urls: [
@@ -280,12 +208,9 @@ export const mockThanks: Thanks[] = [
   },
   {
     id: '123e4567-e89b-12d3-a456-426614174017',
-    from_member_id: '123e4567-e89b-12d3-a456-426614174005',
-    from_member: mockMembers[0],
-    to_member_id: '123e4567-e89b-12d3-a456-426614174009',
-    to_member: mockMembers[4],
+    from_user_id: '123e4567-e89b-12d3-a456-426614174005',
+    to_user_id: '123e4567-e89b-12d3-a456-426614174009',
     resource_id: '123e4567-e89b-12d3-a456-426614174012',
-    resource: mockResources[2],
     message:
       "Emma's sourdough bread is amazing! My family devoured it in one sitting.",
     image_urls: [
@@ -298,7 +223,7 @@ export const mockThanks: Thanks[] = [
 ];
 
 // Popular Austin meetup spots for resource exchange
-export const mockMeetupSpots: MeetupSpot[] = [
+export const mockMeetupSpots = [
   {
     name: 'Central Market (North Lamar)',
     lat: 30.3119,
