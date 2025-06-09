@@ -3,10 +3,10 @@ export * from './events';
 export * from './services';
 
 // Initialize the resource management system
-import { ResourceManager } from './services/ResourceManager';
+import { initializeResourceEvents } from './events/resourceEvents';
 
 // Initialize all resource services when this module is imported
-ResourceManager.initialize();
+initializeResourceEvents();
 
-// Re-export specific functions that may be needed by other modules
+// Re-export the initialization function for manual initialization if needed
 export { initializeResourceEvents } from './events/resourceEvents';

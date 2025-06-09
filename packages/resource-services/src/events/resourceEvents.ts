@@ -1,98 +1,56 @@
-import { Resource, ResourceFilter } from '@belongnetwork/core/types/entities';
-import { BaseEvent } from '@belongnetwork/core/types/events';
+import { eventBus } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
+import { ResourceFetcher } from '../services/ResourceFetcher';
+import { ResourceCreator } from '../services/ResourceCreator';
+import { ResourceUpdater } from '../services/ResourceUpdater';
+import { ResourceDeleter } from '../services/ResourceDeleter';
+import type { AppEvent } from '@belongnetwork/core';
 
-// Resource Fetch Events
-export interface ResourceFetchRequestedEvent extends BaseEvent {
-  type: 'resource.fetch.requested';
-  data: {
-    filters?: ResourceFilter;
-  };
+/**
+ * Initialize all resource event handlers
+ * This function sets up event listeners for all resource-related operations
+ */
+export function initializeResourceEvents(): void {
+  logger.info('📦 ResourceEvents: Initializing resource event handlers...');
+
+  try {
+    // Initialize all CRUD service modules
+    ResourceFetcher.initialize();
+    ResourceCreator.initialize();
+    ResourceUpdater.initialize();
+    ResourceDeleter.initialize();
+
+    logger.info('✅ ResourceEvents: All resource event handlers initialized successfully');
+  } catch (error) {
+    logger.error('❌ ResourceEvents: Failed to initialize resource event handlers', { error });
+    throw error;
+  }
 }
 
-export interface ResourceFetchSuccessEvent extends BaseEvent {
-  type: 'resource.fetch.success';
-  data: {
-    resources: Resource[];
-  };
+/**
+ * Helper function to emit resource fetch request
+ */
+export function fetchResources(filters?: any): void {
+  eventBus.emit('resource.fetch.requested', { filters });
 }
 
-export interface ResourceFetchFailedEvent extends BaseEvent {
-  type: 'resource.fetch.failed';
-  data: {
-    error: string;
-  };
+/**
+ * Helper function to emit resource create request
+ */
+export function createResource(resourceData: any): void {
+  eventBus.emit('resource.create.requested', resourceData);
 }
 
-// Resource Create Events (existing)
-export interface ResourceCreateRequestedEvent extends BaseEvent {
-  type: 'resource.create.requested';
-  data: Omit<Resource, 'id' | 'created_at' | 'times_helped'>;
+/**
+ * Helper function to emit resource update request
+ */
+export function updateResource(resourceData: any): void {
+  eventBus.emit('resource.update.requested', resourceData);
 }
 
-export interface ResourceCreatedEvent extends BaseEvent {
-  type: 'resource.created';
-  data: Resource;
+/**
+ * Helper function to emit resource delete request
+ */
+export function deleteResource(resourceId: string): void {
+  eventBus.emit('resource.delete.requested', { resourceId });
 }
-
-export interface ResourceCreateFailedEvent extends BaseEvent {
-  type: 'resource.create.failed';
-  data: {
-    error: string;
-  };
-}
-
-// Resource Update Events (existing)
-export interface ResourceUpdateRequestedEvent extends BaseEvent {
-  type: 'resource.update.requested';
-  data: Partial<Resource> & { id: string };
-}
-
-export interface ResourceUpdatedEvent extends BaseEvent {
-  type: 'resource.updated';
-  data: Resource;
-}
-
-export interface ResourceUpdateFailedEvent extends BaseEvent {
-  type: 'resource.update.failed';
-  data: {
-    error: string;
-  };
-}
-
-// Resource Delete Events
-export interface ResourceDeleteRequestedEvent extends BaseEvent {
-  type: 'resource.delete.requested';
-  data: {
-    resourceId: string;
-  };
-}
-
-export interface ResourceDeletedEvent extends BaseEvent {
-  type: 'resource.deleted';
-  data: {
-    resourceId: string;
-  };
-}
-
-export interface ResourceDeleteFailedEvent extends BaseEvent {
-  type: 'resource.delete.failed';
-  data: {
-    resourceId: string;
-    error: string;
-  };
-}
-
-// Union type for all resource events
-export type ResourceEvent =
-  | ResourceFetchRequestedEvent
-  | ResourceFetchSuccessEvent
-  | ResourceFetchFailedEvent
-  | ResourceCreateRequestedEvent
-  | ResourceCreatedEvent
-  | ResourceCreateFailedEvent
-  | ResourceUpdateRequestedEvent
-  | ResourceUpdatedEvent
-  | ResourceUpdateFailedEvent
-  | ResourceDeleteRequestedEvent
-  | ResourceDeletedEvent
-  | ResourceDeleteFailedEvent;
