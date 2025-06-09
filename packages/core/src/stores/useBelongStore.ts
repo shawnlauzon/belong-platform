@@ -19,7 +19,7 @@ const createBelongStore = (set: SetState<BelongState>) => {
     getActiveCommunity: () => null,
 
     setViewMode: (mode: 'member' | 'organizer') =>
-      set((_state) => ({ app: { viewMode: mode } })),
+      set(() => ({ app: { viewMode: mode } })),
 
     signIn: (email: string, password: string) => {
       eventBus.emit('auth.signIn.requested', { email, password });
@@ -34,7 +34,7 @@ const createBelongStore = (set: SetState<BelongState>) => {
     },
 
     signOut: () => {
-      eventBus.emit('auth.signOut.requested', {});
+      eventBus.emit('auth.signOut.requested', void 0);
     },
   };
 };

@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus, useBelongStore } from '@belongnetwork/core';
+import {
+  CommunityCreateFailedEvent,
+  eventBus,
+  useBelongStore,
+} from '@belongnetwork/core';
 import {
   Dialog,
   DialogContent,
@@ -95,7 +99,7 @@ export function CreateCommunityDialog({
       setError(null);
 
       if (onCommunityCreated) {
-        onCommunityCreated(event.data);
+        onCommunityCreated(event.data as Community);
       }
 
       onOpenChange(false);
@@ -104,12 +108,13 @@ export function CreateCommunityDialog({
     const unsubscribeFailed = eventBus.on(
       'community.create.failed',
       (event) => {
+        const errorEvent = event as CommunityCreateFailedEvent;
         logger.error(
           '❌ CreateCommunityDialog: Community creation failed:',
-          event.data.error
+          errorEvent.data.error
         );
         setIsSubmitting(false);
-        setError(event.data.error);
+        setError(errorEvent.data.error);
       }
     );
 
@@ -120,46 +125,47 @@ export function CreateCommunityDialog({
   }, [onCommunityCreated, onOpenChange]);
 
   // Get the full hierarchy chain for the parent community
-  const getParentHierarchy = () => {
-    if (!parentCommunity) return { country: '', state: '', city: '' };
-
-    const hierarchy = { country: '', state: '', city: '' };
-
-    // Build the chain from parent to root
-    const chain: Community[] = [];
-    let currentId: string | null = parentCommunity.id;
-
-    while (currentId) {
-      const community = communities.find((c) => c.id === currentId);
-      if (community) {
-        chain.unshift(community);
-        currentId = community.parent_id;
-      } else {
-        break;
-      }
-    }
-
-    // Extract country, state, and city from the chain
-    for (const community of chain) {
-      if (community.level === 'country') {
-        hierarchy.country = community.name;
-      } else if (community.level === 'state') {
-        hierarchy.state = community.name;
-      } else if (community.level === 'city') {
-        hierarchy.city = community.name;
-      }
-    }
-
-    // If the parent itself is a city, include it
-    if (parentCommunity.level === 'city') {
-      hierarchy.city = parentCommunity.name;
-    }
-
-    return hierarchy;
-  };
 
   // Prefill form when dialog opens or parent changes
   useEffect(() => {
+    const getParentHierarchy = () => {
+      if (!parentCommunity) return { country: '', state: '', city: '' };
+
+      const hierarchy = { country: '', state: '', city: '' };
+
+      // Build the chain from parent to root
+      const chain: Community[] = [];
+      let currentId: string | null = parentCommunity.id;
+
+      while (currentId) {
+        const community = communities.find((c) => c.id === currentId);
+        if (community) {
+          chain.unshift(community);
+          currentId = community.parent_id;
+        } else {
+          break;
+        }
+      }
+
+      // Extract country, state, and city from the chain
+      for (const community of chain) {
+        if (community.level === 'country') {
+          hierarchy.country = community.name;
+        } else if (community.level === 'state') {
+          hierarchy.state = community.name;
+        } else if (community.level === 'city') {
+          hierarchy.city = community.name;
+        }
+      }
+
+      // If the parent itself is a city, include it
+      if (parentCommunity.level === 'city') {
+        hierarchy.city = parentCommunity.name;
+      }
+
+      return hierarchy;
+    };
+
     if (open && parentCommunity) {
       const hierarchy = getParentHierarchy();
 

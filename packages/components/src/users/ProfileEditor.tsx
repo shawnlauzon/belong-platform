@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ImageUpload } from '../shared/ImageUpload';
 import { AddressAutocomplete } from '../shared/AddressAutocomplete';
-import { LocationPicker } from '../shared/LocationPicker';
-import { StorageManager } from '@belongnetwork/core';
+import {
+  ProfileUpdatedEvent,
+  ProfileUpdateFailedEvent,
+  StorageManager,
+} from '@belongnetwork/core';
 import { eventBus, useBelongStore } from '@belongnetwork/core';
 import { Coordinates } from '@belongnetwork/core';
 import { getInitials } from '../utils';
@@ -72,25 +75,32 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
   // Listen for profile events
   useEffect(() => {
     const unsubscribeUpdated = eventBus.on('profile.updated', (event) => {
-      if (event.data.userId === user?.id) {
-        logger.info('✅ ProfileEditor: Profile updated successfully');
-        setIsSubmitting(false);
-        setError(null);
+      // Add type guard to ensure we're handling the correct event type
+      if (event.type === 'profile.updated') {
+        const profileEvent = event as ProfileUpdatedEvent;
+        if (profileEvent.data.userId === user?.id) {
+          logger.info('✅ ProfileEditor: Profile updated successfully');
+          setIsSubmitting(false);
+          setError(null);
 
-        if (onSaveComplete) {
-          onSaveComplete();
+          if (onSaveComplete) {
+            onSaveComplete();
+          }
         }
       }
     });
 
     const unsubscribeFailed = eventBus.on('profile.update.failed', (event) => {
-      if (event.data.userId === user?.id) {
-        logger.error(
-          '❌ ProfileEditor: Profile update failed:',
-          event.data.error
-        );
-        setIsSubmitting(false);
-        setError(event.data.error);
+      if (event.type === 'profile.update.failed') {
+        const profileEvent = event as ProfileUpdateFailedEvent;
+        if (profileEvent.data.userId === user?.id) {
+          logger.error(
+            '❌ ProfileEditor: Profile update failed:',
+            profileEvent.data.error
+          );
+          setIsSubmitting(false);
+          setError(profileEvent.data.error);
+        }
       }
     });
 
@@ -220,7 +230,7 @@ export function ProfileEditor({ onSaveComplete }: ProfileEditorProps) {
         last_name: data.lastName,
         full_name: `${data.firstName} ${data.lastName}`,
         avatar_url: data.avatar_url,
-        location,
+        location: location || undefined,
         address: currentAddress,
       },
     });

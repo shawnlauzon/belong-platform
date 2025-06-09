@@ -1,4 +1,4 @@
-import { Resource, Community, Member, ProfileMetadata } from './entities';
+import { Resource, Community, ProfileMetadata } from './entities';
 import { User } from '@supabase/supabase-js';
 
 export interface BaseEvent {
@@ -60,7 +60,7 @@ export interface AuthSignUpFailedEvent extends BaseEvent {
 
 export interface AuthSignOutRequestedEvent extends BaseEvent {
   type: 'auth.signOut.requested';
-  data: {};
+  data: void;
 }
 
 // Community Events
@@ -196,6 +196,14 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
   };
 }
 
+export interface TrustUpdatedEvent extends BaseEvent {
+  type: 'trust.updated';
+  data: {
+    memberId: string;
+    newScore: number;
+  };
+}
+
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
@@ -220,4 +228,5 @@ export type AppEvent =
   | ResourceUpdateFailedEvent
   | ThanksCreateRequestedEvent
   | ThanksCreatedEvent
-  | ThanksCreateFailedEvent;
+  | ThanksCreateFailedEvent
+  | TrustUpdatedEvent;

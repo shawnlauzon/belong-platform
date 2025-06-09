@@ -16,6 +16,7 @@ import {
   eventBus,
   logComponentRender,
   logger,
+  ThanksCreateFailedEvent,
   useBelongStore,
   User,
 } from '@belongnetwork/core';
@@ -77,9 +78,13 @@ export function ThanksForm({
     });
 
     const unsubscribeFailed = eventBus.on('thanks.create.failed', (event) => {
-      logger.error('❌ ThanksForm: Thanks creation failed:', event.data.error);
+      const errorEvent = event as ThanksCreateFailedEvent;
+      logger.error(
+        '❌ ThanksForm: Thanks creation failed:',
+        errorEvent.data.error
+      );
       setIsSubmitting(false);
-      setError(event.data.error);
+      setError(errorEvent.data.error);
     });
 
     return () => {

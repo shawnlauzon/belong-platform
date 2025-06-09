@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Users, User } from 'lucide-react';
-import { eventBus } from '@belongnetwork/core';
 
 interface ViewSwitcherProps {
   initialView?: 'member' | 'organizer';
@@ -14,7 +13,6 @@ export function ViewSwitcher({ initialView = 'member' }: ViewSwitcherProps) {
 
   const handleViewChange = (view: 'member' | 'organizer') => {
     setActiveView(view);
-    eventBus.emit('view.changed', { view });
   };
 
   return (

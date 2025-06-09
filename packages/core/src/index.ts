@@ -2,14 +2,10 @@
 export * from './eventBus/eventBus';
 
 // Types
-export * from './types/events';
-export * from './types/entities';
-export * from './types/database';
+export * from './types';
 
 // Utils
-export * from './utils/distance';
-export * from './utils/logger';
-export * from './utils/storage';
+export * from './utils';
 
 // Config
 export * from './config';

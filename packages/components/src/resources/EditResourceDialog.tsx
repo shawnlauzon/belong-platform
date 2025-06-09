@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus } from '@belongnetwork/core';
+import { eventBus, ResourceUpdateFailedEvent } from '@belongnetwork/core';
 import {
   Dialog,
   DialogContent,
@@ -92,19 +92,20 @@ export function EditResourceDialog({
       setError(null);
 
       if (onResourceUpdated) {
-        onResourceUpdated(event.data);
+        onResourceUpdated(event.data as Resource);
       }
 
       onOpenChange(false);
     });
 
     const unsubscribeFailed = eventBus.on('resource.update.failed', (event) => {
+      const errorEvent = event as ResourceUpdateFailedEvent;
       logger.error(
         '❌ EditResourceDialog: Resource update failed:',
-        event.data.error
+        errorEvent.data.error
       );
       setIsSubmitting(false);
-      setError(event.data.error);
+      setError(errorEvent.data.error);
     });
 
     return () => {

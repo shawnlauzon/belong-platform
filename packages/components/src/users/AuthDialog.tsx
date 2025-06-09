@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus } from '@belongnetwork/core';
+import {
+  AuthSignInFailedEvent,
+  AuthSignUpFailedEvent,
+  eventBus,
+} from '@belongnetwork/core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
@@ -32,7 +36,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     register,
     handleSubmit,
     formState: { errors },
-    setError: setFormError,
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   });
@@ -56,18 +59,20 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     const unsubscribeSignInFailed = eventBus.on(
       'auth.signIn.failed',
       (event) => {
-        logger.error('❌ AuthDialog: Sign in failed:', event.data.error);
+        const errorEvent = event as AuthSignInFailedEvent;
+        logger.error('❌ AuthDialog: Sign in failed:', errorEvent.data.error);
         setIsSubmitting(false);
-        setError(event.data.error);
+        setError(errorEvent.data.error);
       }
     );
 
     const unsubscribeSignUpFailed = eventBus.on(
       'auth.signUp.failed',
       (event) => {
-        logger.error('❌ AuthDialog: Sign up failed:', event.data.error);
+        const errorEvent = event as AuthSignUpFailedEvent;
+        logger.error('❌ AuthDialog: Sign up failed:', errorEvent.data.error);
         setIsSubmitting(false);
-        setError(event.data.error);
+        setError(errorEvent.data.error);
       }
     );
 

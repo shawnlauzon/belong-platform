@@ -45,7 +45,7 @@ export class ProfileManager {
             last_name: metadata.last_name,
             full_name: metadata.full_name,
             avatar_url: metadata.avatar_url,
-            location: metadata.location,
+            location: JSON.stringify(metadata.location),
             address: metadata.address,
           };
 

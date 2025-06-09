@@ -133,7 +133,9 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => eventBus.emit('sign_out', {})}
+                    onClick={() =>
+                      eventBus.emit('auth.signOut.requested', void 0)
+                    }
                   >
                     Sign Out
                   </Button>

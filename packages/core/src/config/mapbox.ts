@@ -1,4 +1,5 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
+import { Coordinates } from '../types/entities';
 
 // Set your Mapbox token (ideally from environment variable)
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -8,17 +9,6 @@ if (!MAPBOX_TOKEN) {
     'Mapbox token not found. Please add VITE_MAPBOX_TOKEN to your .env file'
   );
 }
-
-// Default location (Austin, TX)
-const DEFAULT_LOCATION = {
-  lat: parseFloat(import.meta.env.VITE_DEFAULT_LOCATION_LAT || '30.2672'),
-  lng: parseFloat(import.meta.env.VITE_DEFAULT_LOCATION_LNG || '-97.7431'),
-};
-
-type Coordinates = {
-  lat: number;
-  lng: number;
-};
 
 type BoundingBox = [number, number, number, number];
 

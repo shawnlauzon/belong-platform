@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { eventBus, useBelongStore } from '@belongnetwork/core';
+import { eventBus, Resource, useBelongStore } from '@belongnetwork/core';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -71,12 +71,12 @@ export function ShareResourceDialog({
 
     eventBus.emit('resource.create.requested', {
       ...data,
-      type: 'offer',
       creator_id: user.id,
       image_urls: images,
-      location: userLocation,
+      location: userLocation ?? undefined,
       is_active: true,
-    });
+      times_helped: 0, // Still need this as it's required by the type
+    } as Omit<Resource, 'id' | 'created_at'>);
   };
 
   return (
