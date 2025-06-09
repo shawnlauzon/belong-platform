@@ -69,9 +69,6 @@ export interface BelongState {
 
 // Store Actions - these only emit events
 export interface StoreActions {
-  // Community actions
-  setActiveCommunity: (communityId: string) => void;
-
   // Auth actions
   signIn: (email: string, password: string) => void;
   signUp: (
@@ -87,7 +84,13 @@ export interface StoreActions {
   setAuthError: (error: string) => void;
   setAuthLoading: (loading: boolean) => void;
 
-  // Resource state management actions
+  // Internal community state management actions
+  setCommunitiesLoading: (isLoading: boolean) => void;
+  setCommunitiesError: (error: string | null) => void;
+  setCommunities: (communities: Community[]) => void;
+  setActiveCommunity: (communityId: string) => void;
+
+  // Internal resource state management actions
   setResourcesLoading: (isLoading: boolean) => void;
   setResourcesError: (error: string | null) => void;
   setResources: (resources: Resource[]) => void;
