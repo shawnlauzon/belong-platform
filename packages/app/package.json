@@ -10,18 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@belongnetwork/user-services": "workspace:*",
     "@belongnetwork/community-services": "workspace:*",
+    "@belongnetwork/components": "workspace:*",
     "@belongnetwork/core": "workspace:*",
     "@belongnetwork/resource-services": "workspace:*",
     "@belongnetwork/trust-services": "workspace:*",
-    "@belongnetwork/components": "workspace:*",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@belongnetwork/user-services": "workspace:*",
     "@tanstack/react-query": "^5.28.4",
-    "@tanstack/react-router": "^1.22.1"
+    "@tanstack/react-router": "^1.22.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.2.1",

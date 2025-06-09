@@ -24,16 +24,11 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
-  resolve: {
-    alias: [
-      {
-        // This will make ~ resolve to the src directory of the current package
-        find: /^~\/(.*)/,
-        replacement: path.resolve(process.cwd(), 'src') + '/$1',
-      },
-    ],
+  css: {
+    postcss: './postcss.config.js',
   },
   optimizeDeps: {
+    include: ['mapbox-gl'],
     exclude: ['lucide-react'],
   },
 });
