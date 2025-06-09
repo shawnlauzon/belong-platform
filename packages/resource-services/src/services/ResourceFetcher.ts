@@ -24,9 +24,10 @@ export class ResourceFetcher {
         logger.debug('🔄 ResourceFetcher: Fetch requested', {
           filters: event.data.filters,
         });
-        this._fetchResources(event.data.filters);
       }
     });
+
+    this._fetchResources();
 
     this.initialized = true;
     logger.info('✅ ResourceFetcher: Initialized successfully');
