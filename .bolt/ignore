@@ -1,6 +1,6 @@
-packages/community-services
-packages/resource-services
-packages/trust-services
-packages/user-services
-packages/app
-packages/components
+packages/community-services/*
+packages/resource-services/*
+packages/trust-services/*
+packages/user-services/*
+packages/app/*
+packages/components/*
