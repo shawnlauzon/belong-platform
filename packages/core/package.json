@@ -10,15 +10,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "pnpm db:types && vite build --config vite.config.mts",
+    "build": "vite build --config vite.config.mts",
     "dev": "vite build --watch --config vite.config.mts",
     "test": "vitest run --config vitest.config.mts",
     "test:watch": "vitest --config vitest.config.mts",
     "test:coverage": "vitest run --coverage --config vitest.config.mts",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit",
-    "db:types": "supabase gen types typescript --project-id mhgyzaxhaxrwprtiymhs > src/types/database.ts && echo '✅ Successfully updated database types'"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
@@ -43,7 +42,6 @@
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.5.1",
     "jsdom": "^24.1.3",
-    "supabase": "^2.24.3",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
     "vite-plugin-dts": "^3.8.0",
