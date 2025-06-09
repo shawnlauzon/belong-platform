@@ -10,3 +10,5 @@ Centralized Cache Invalidation - Event handlers coordinate React Query invalidat
 Direct Cache Updates - For immediate feedback, use queryClient.setQueryData()
 
 Always use pnpm commands instead of npm for this project.
+
+When generating code that imports from @belongnetwork/* packages, always use the direct import path import { supabase } from '@belongnetwork/*' without including additional path segments like /config/supabase. The package exports are configured to expose these utilities directly from the root import.
