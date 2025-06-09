@@ -8,3 +8,5 @@ Events Trigger Mutations - Never call mutations directly from UI components
 Mutations Emit Completion Events - Use React Query's onSuccess/onError callbacks
 Centralized Cache Invalidation - Event handlers coordinate React Query invalidation
 Direct Cache Updates - For immediate feedback, use queryClient.setQueryData()
+
+Always use pnpm commands instead of npm for this project.
