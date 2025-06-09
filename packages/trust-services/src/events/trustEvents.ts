@@ -1,38 +1,54 @@
-// In trustEvents.ts
 import { eventBus, logger } from '@belongnetwork/core';
-import { TrustCalculator } from '../services/TrustCalculator';
+import { ThanksFetcher } from '../services/ThanksFetcher';
+import { ThanksCreator } from '../services/ThanksCreator';
+import { ThanksUpdater } from '../services/ThanksUpdater';
+import { ThanksDeleter } from '../services/ThanksDeleter';
 
-// Define the event type for better type safety
-interface ThanksCreatedEvent {
-  data: {
-    to_member_id: string; // or number, depending on your ID type
-    // Add other properties that the event might have
-  };
+/**
+ * Initialize all thanks event handlers
+ * This function sets up event listeners for all thanks-related operations
+ */
+export function initializeThanksEvents(): void {
+  logger.info('🙏 ThanksEvents: Initializing thanks event handlers...');
+
+  try {
+    // Initialize all CRUD service modules
+    ThanksFetcher.initialize();
+    ThanksCreator.initialize();
+    ThanksUpdater.initialize();
+    ThanksDeleter.initialize();
+
+    logger.info('✅ ThanksEvents: All thanks event handlers initialized successfully');
+  } catch (error) {
+    logger.error('❌ ThanksEvents: Failed to initialize thanks event handlers', { error });
+    throw error;
+  }
 }
 
-export function initializeTrustEvents() {
-  // Listen for thanks created (update trust scores)
-  // eventBus.on('thanks.created', (event: AppEvent) => {
-  //   if (event.type !== 'thanks.created') return;
-  //   logger.debug('🙏 Thanks created, updating trust score:', {
-  //     toMemberId: event.data.to_member_id,
-  //   });
-  //   try {
-  //     // Update the recipient's trust score
-  //     const newScore = await TrustCalculator.calculateScore(
-  //       event.data.to_member_id
-  //     );
-  //     // Emit trust updated event with proper typing
-  //     eventBus.emit('trust.updated', {
-  //       memberId: event.data.to_member_id,
-  //       newScore,
-  //     });
-  //     logger.info('✅ Trust score updated:', {
-  //       memberId: event.data.to_member_id,
-  //       newScore,
-  //     });
-  //   } catch (error) {
-  //     logger.error('❌ Error updating trust score:', error);
-  //   }
-  // });
+/**
+ * Helper function to emit thanks fetch request
+ */
+export function fetchThanks(filters?: any): void {
+  eventBus.emit('thanks.fetch.requested', { filters });
+}
+
+/**
+ * Helper function to emit thanks create request
+ */
+export function createThanks(thanksData: any): void {
+  eventBus.emit('thanks.create.requested', thanksData);
+}
+
+/**
+ * Helper function to emit thanks update request
+ */
+export function updateThanks(thanksData: any): void {
+  eventBus.emit('thanks.update.requested', thanksData);
+}
+
+/**
+ * Helper function to emit thanks delete request
+ */
+export function deleteThanks(thanksId: string): void {
+  eventBus.emit('thanks.delete.requested', { thanksId });
 }

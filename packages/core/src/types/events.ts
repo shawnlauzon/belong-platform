@@ -1,4 +1,4 @@
-import { Resource, Community, ProfileMetadata } from './entities';
+import { Resource, Community, ProfileMetadata, Thanks } from './entities';
 import { User } from '@supabase/supabase-js';
 
 export interface BaseEvent {
@@ -299,6 +299,33 @@ export interface ResourceDeleteFailedEvent extends BaseEvent {
 }
 
 // Thanks Events
+export interface ThanksFetchRequestedEvent extends BaseEvent {
+  type: 'thanks.fetch.requested';
+  data: {
+    filters?: {
+      to_user_id?: string;
+      from_user_id?: string;
+      resource_id?: string;
+      limit?: number;
+      offset?: number;
+    };
+  };
+}
+
+export interface ThanksFetchSuccessEvent extends BaseEvent {
+  type: 'thanks.fetch.success';
+  data: {
+    thanks: Thanks[];
+  };
+}
+
+export interface ThanksFetchFailedEvent extends BaseEvent {
+  type: 'thanks.fetch.failed';
+  data: {
+    error: string;
+  };
+}
+
 export interface ThanksCreateRequestedEvent extends BaseEvent {
   type: 'thanks.create.requested';
   data: {
@@ -312,21 +339,51 @@ export interface ThanksCreateRequestedEvent extends BaseEvent {
 
 export interface ThanksCreatedEvent extends BaseEvent {
   type: 'thanks.created';
-  data: {
-    id: string;
-    to_member_id: string;
-    from_member_id: string;
-    resource_id: string;
-    message: string;
-    image_urls: string[];
-    impact_description?: string;
-    created_at: string;
-  };
+  data: Thanks;
 }
 
 export interface ThanksCreateFailedEvent extends BaseEvent {
   type: 'thanks.create.failed';
   data: {
+    error: string;
+  };
+}
+
+export interface ThanksUpdateRequestedEvent extends BaseEvent {
+  type: 'thanks.update.requested';
+  data: Partial<Thanks> & { id: string };
+}
+
+export interface ThanksUpdatedEvent extends BaseEvent {
+  type: 'thanks.updated';
+  data: Thanks;
+}
+
+export interface ThanksUpdateFailedEvent extends BaseEvent {
+  type: 'thanks.update.failed';
+  data: {
+    error: string;
+  };
+}
+
+export interface ThanksDeleteRequestedEvent extends BaseEvent {
+  type: 'thanks.delete.requested';
+  data: {
+    thanksId: string;
+  };
+}
+
+export interface ThanksDeletedEvent extends BaseEvent {
+  type: 'thanks.deleted';
+  data: {
+    thanksId: string;
+  };
+}
+
+export interface ThanksDeleteFailedEvent extends BaseEvent {
+  type: 'thanks.delete.failed';
+  data: {
+    thanksId: string;
     error: string;
   };
 }
@@ -517,6 +574,61 @@ export function isResourceDeleteFailedEvent(
   return event.type === 'resource.delete.failed';
 }
 
+// Thanks event type guards
+export function isThanksFetchRequestedEvent(
+  event: AppEvent
+): event is ThanksFetchRequestedEvent {
+  return event.type === 'thanks.fetch.requested';
+}
+
+export function isThanksFetchSuccessEvent(
+  event: AppEvent
+): event is ThanksFetchSuccessEvent {
+  return event.type === 'thanks.fetch.success';
+}
+
+export function isThanksFetchFailedEvent(
+  event: AppEvent
+): event is ThanksFetchFailedEvent {
+  return event.type === 'thanks.fetch.failed';
+}
+
+export function isThanksCreatedEvent(
+  event: AppEvent
+): event is ThanksCreatedEvent {
+  return event.type === 'thanks.created';
+}
+
+export function isThanksCreateFailedEvent(
+  event: AppEvent
+): event is ThanksCreateFailedEvent {
+  return event.type === 'thanks.create.failed';
+}
+
+export function isThanksUpdatedEvent(
+  event: AppEvent
+): event is ThanksUpdatedEvent {
+  return event.type === 'thanks.updated';
+}
+
+export function isThanksUpdateFailedEvent(
+  event: AppEvent
+): event is ThanksUpdateFailedEvent {
+  return event.type === 'thanks.update.failed';
+}
+
+export function isThanksDeletedEvent(
+  event: AppEvent
+): event is ThanksDeletedEvent {
+  return event.type === 'thanks.deleted';
+}
+
+export function isThanksDeleteFailedEvent(
+  event: AppEvent
+): event is ThanksDeleteFailedEvent {
+  return event.type === 'thanks.delete.failed';
+}
+
 export type AppEvent =
   | AuthSignInRequestedEvent
   | AuthSignUpRequestedEvent
@@ -556,9 +668,18 @@ export type AppEvent =
   | ResourceDeleteRequestedEvent
   | ResourceDeletedEvent
   | ResourceDeleteFailedEvent
+  | ThanksFetchRequestedEvent
+  | ThanksFetchSuccessEvent
+  | ThanksFetchFailedEvent
   | ThanksCreateRequestedEvent
   | ThanksCreatedEvent
   | ThanksCreateFailedEvent
+  | ThanksUpdateRequestedEvent
+  | ThanksUpdatedEvent
+  | ThanksUpdateFailedEvent
+  | ThanksDeleteRequestedEvent
+  | ThanksDeletedEvent
+  | ThanksDeleteFailedEvent
   | TrustUpdatedEvent
   | NotificationShowEvent
   | NavigationRedirectEvent;

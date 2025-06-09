@@ -101,6 +101,14 @@ export interface StoreActions {
   updateResource: (resource: Resource) => void;
   removeResource: (resourceId: string) => void;
 
+  // Internal thanks state management actions
+  setThanksLoading: (isLoading: boolean) => void;
+  setThanksError: (error: string | null) => void;
+  setThanks: (thanks: Thanks[]) => void;
+  addThanks: (thanks: Thanks) => void;
+  updateThanks: (thanks: Thanks) => void;
+  removeThanks: (thanksId: string) => void;
+
   // Add other action types here as needed
 }
 

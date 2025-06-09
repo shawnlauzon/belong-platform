@@ -5,10 +5,11 @@ import { initialState } from './initialState';
 import { logger } from '../utils/logger';
 import type { BelongStore } from './types';
 import type { Session } from '@supabase/supabase-js';
-import type { Resource, Community } from '../types/entities';
+import type { Resource, Community, Thanks } from '../types/entities';
 import initializeAuthListeners from './authHandlers';
 import { initializeResourceListeners } from './resourceHandlers';
 import { initializeCommunityListeners } from './communityHandlers';
+import { initializeThanksListeners } from './thanksHandlers';
 
 // Create the store with state and actions
 export const useBelongStore = create<BelongStore>()(
@@ -278,6 +279,95 @@ export const useBelongStore = create<BelongStore>()(
         );
       };
 
+      // Define thanks state management functions
+      const setThanksLoading = (isLoading: boolean) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              isLoading,
+            },
+          }),
+          false,
+          'thanks/setLoading'
+        );
+      };
+
+      const setThanksError = (error: string | null) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              error,
+            },
+          }),
+          false,
+          'thanks/setError'
+        );
+      };
+
+      const setThanks = (thanks: Thanks[]) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              list: thanks,
+            },
+          }),
+          false,
+          'thanks/setList'
+        );
+      };
+
+      const addThanks = (thanks: Thanks) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              list: [thanks, ...state.thanks.list],
+            },
+          }),
+          false,
+          'thanks/add'
+        );
+      };
+
+      const updateThanks = (updatedThanks: Thanks) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              list: state.thanks.list.map((thanks) =>
+                thanks.id === updatedThanks.id ? updatedThanks : thanks
+              ),
+            },
+          }),
+          false,
+          'thanks/update'
+        );
+      };
+
+      const removeThanks = (thanksId: string) => {
+        set(
+          (state) => ({
+            ...state,
+            thanks: {
+              ...state.thanks,
+              list: state.thanks.list.filter(
+                (thanks) => thanks.id !== thanksId
+              ),
+            },
+          }),
+          false,
+          'thanks/remove'
+        );
+      };
+
       // Initialize event listeners
       initializeAuthListeners(
         setAuthSession,
@@ -302,6 +392,14 @@ export const useBelongStore = create<BelongStore>()(
         addResource,
         updateResource,
         removeResource
+      );
+      initializeThanksListeners(
+        setThanksLoading,
+        setThanksError,
+        setThanks,
+        addThanks,
+        updateThanks,
+        removeThanks
       );
 
       return {
@@ -350,6 +448,14 @@ export const useBelongStore = create<BelongStore>()(
         addResource,
         updateResource,
         removeResource,
+
+        // Thanks state management actions
+        setThanksLoading,
+        setThanksError,
+        setThanks,
+        addThanks,
+        updateThanks,
+        removeThanks,
 
         // Selectors and state updaters
         getActiveCommunity: () => {
