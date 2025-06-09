@@ -1,19 +1,20 @@
-export interface User {
+export interface User extends UserData {
   id: string;
-  email: string;
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
-  avatar_url?: string;
-  location?: Coordinates;
-  address?: string;
   created_at?: string;
   updated_at?: string;
 }
 
+export interface UserData {
+  first_name: string;
+  last_name?: string;
+  full_name?: string;
+  avatar_url?: string;
+  address?: string;
+}
+
 export interface AuthUser extends User {
-  // AuthUser extends User with any additional auth-specific fields if needed
-  // Currently no additional fields, but this allows for future extension
+  email: string;
+  location?: Coordinates;
 }
 
 export interface Coordinates {
@@ -31,14 +32,14 @@ export interface Membership {
   community_tenure_months: number;
   thanks_received: number;
   resources_shared: number;
-  user?: User;
-  community?: Community;
+  user: User;
+  community: Community;
 }
 
 export interface Resource {
   id: string;
   creator_id: string;
-  owner?: User;
+  owner: User;
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
   title: string;
@@ -55,29 +56,39 @@ export interface Resource {
   distance_minutes?: number; // Calculated field for driving time
 }
 
-export interface Thanks {
+export interface Thanks extends ThanksData {
   id: string;
-  from_user_id: string;
   from_user?: User;
-  to_user_id: string;
   to_user?: User;
-  resource_id: string;
   resource?: Resource;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ThanksData {
+  from_user_id: string;
+  to_user_id: string;
+  resource_id: string;
   message: string;
   image_urls: string[];
   impact_description?: string;
-  created_at: string;
 }
 
-export interface Community {
+export interface Community extends CommunityData {
   id: string;
   name: string;
-  level: 'neighborhood' | 'city' | 'state' | 'country' | 'global';
+  parent?: Community;
+  member_count: number;
+}
+
+export interface CommunityData {
+  name: string;
+  country: string;
+  city: string;
+  neighborhood?: string;
+  description: string;
   parent_id: string | null;
   center?: Coordinates;
-  radius_km?: number;
-  member_count: number;
-  description: string;
 }
 
 export interface MeetupSpot {
@@ -87,14 +98,18 @@ export interface MeetupSpot {
   type: string;
 }
 
-export interface Event {
+export interface Event extends EventData {
   id: string;
+  community: Community;
+  attendee_count: number;
+}
+
+export interface EventData {
   community_id: string;
   title: string;
   date: string;
   location: string;
   parking: string;
-  attendee_count: number;
   description: string;
 }
 
@@ -116,5 +131,3 @@ export interface ResourceFilter {
   searchTerm?: string;
   minTrustScore?: number;
 }
-
-export type SupabaseUser = import('@supabase/supabase-js').User;
