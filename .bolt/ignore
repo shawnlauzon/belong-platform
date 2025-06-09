@@ -1,4 +1,3 @@
-packages/community-services/*
 packages/trust-services/*
 packages/user-services/*
 packages/resource-services/*
