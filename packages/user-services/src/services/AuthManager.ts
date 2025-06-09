@@ -1,123 +1,175 @@
-import { eventBus } from '@belongnetwork/core';
-import { supabase } from '@belongnetwork/core';
-import {
-  logger,
-  logApiCall,
-  logApiResponse,
-  logUserAction,
-} from '@belongnetwork/core';
+import { supabase } from '@belongnetwork/core/config/supabase';
+import { logger, logApiCall, logApiResponse } from '@belongnetwork/core/utils/logger';
+import type { User } from '@supabase/supabase-js';
+
+export interface AuthResult {
+  user: User | null;
+  error?: string;
+}
 
 export class AuthManager {
-  static initialize() {
-    logger.info('🔐 AuthManager: Initializing...');
+  /**
+   * Sign in with email and password
+   */
+  static async signInWithPassword(email: string, password: string): Promise<AuthResult> {
+    logger.info('🔐 AuthManager: Attempting sign in', { email });
+    logApiCall('POST', 'auth/signin', { email });
 
-    // Listen for sign in requests
-    eventBus.on('auth.signIn.requested', async (event) => {
-      if (event.type !== 'auth.signIn.requested') return;
-
-      const { email, password } = event.data;
-      logger.debug('🔐 AuthManager: Sign in requested:', { email });
-
-      try {
-        logUserAction('signIn', { email });
-        logApiCall('POST', '/auth/signin', { email });
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          logApiResponse('POST', '/auth/signin', null, error);
-          throw error;
-        }
-
-        logApiResponse('POST', '/auth/signin', { hasUser: !!data.user });
-        logger.info('✅ AuthManager: Sign in successful');
-
-        eventBus.emit('auth.signIn.success', { user: data.user });
-      } catch (error) {
-        logger.error('❌ AuthManager: Sign in failed:', error);
-
-        let errorMessage = 'Authentication failed. Please try again.';
-
-        if (error && typeof error === 'object' && (error as any).message) {
-          const message = (error as any).message;
-          if (message.includes('Invalid login credentials')) {
-            errorMessage =
-              'Invalid email or password. Please check your credentials.';
-          } else if (message.includes('Email not confirmed')) {
-            errorMessage =
-              'Please check your email and click the confirmation link.';
-          }
-        }
-
-        eventBus.emit('auth.signIn.failed', { error: errorMessage });
-      }
-    });
-
-    // Listen for sign up requests
-    eventBus.on('auth.signUp.requested', async (event) => {
-      if (event.type !== 'auth.signUp.requested') return;
-
-      const { email, password, metadata } = event.data;
-      logger.debug('🔐 AuthManager: Sign up requested:', {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        hasMetadata: !!metadata,
+        password,
       });
 
-      try {
-        logUserAction('signUp', { email, hasMetadata: !!metadata });
-        logApiCall('POST', '/auth/signup', { email, metadata });
-
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              first_name: metadata?.firstName || '',
-              last_name: metadata?.lastName || '',
-              full_name: metadata
-                ? `${metadata.firstName} ${metadata.lastName}`.trim()
-                : '',
-            },
-          },
-        });
-
-        if (error) {
-          logApiResponse('POST', '/auth/signup', null, error);
-          throw error;
-        }
-
-        logApiResponse('POST', '/auth/signup', {
-          hasUser: !!data.user,
-          needsConfirmation: !data.session,
-        });
-
-        if (data.user && !data.session) {
-          logger.info(
-            '📧 AuthManager: User created but needs email confirmation'
-          );
-        }
-
-        eventBus.emit('auth.signUp.success', { user: data.user });
-      } catch (error) {
-        logger.error('❌ AuthManager: Sign up failed:', error);
-
-        let errorMessage = 'Account creation failed. Please try again.';
-
-        if (error && typeof error === 'object' && (error as any).message) {
-          const message = (error as any).message;
-          if (message.includes('User already registered')) {
-            errorMessage =
-              'An account with this email already exists. Try signing in instead.';
-          }
-        }
-
-        eventBus.emit('auth.signUp.failed', { error: errorMessage });
+      if (error) {
+        logger.error('❌ AuthManager: Sign in failed', { email, error: error.message });
+        logApiResponse('POST', 'auth/signin', null, error);
+        return { user: null, error: error.message };
       }
-    });
 
-    logger.info('✅ AuthManager: Initialized');
+      if (!data.user) {
+        const errorMsg = 'No user data returned from sign in';
+        logger.error('❌ AuthManager: Sign in failed', { email, error: errorMsg });
+        logApiResponse('POST', 'auth/signin', null, { message: errorMsg });
+        return { user: null, error: errorMsg };
+      }
+
+      logger.info('✅ AuthManager: Sign in successful', { 
+        email, 
+        userId: data.user.id 
+      });
+      logApiResponse('POST', 'auth/signin', { userId: data.user.id });
+
+      return { user: data.user };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error during sign in';
+      logger.error('❌ AuthManager: Sign in exception', { email, error: errorMsg });
+      logApiResponse('POST', 'auth/signin', null, error);
+      return { user: null, error: errorMsg };
+    }
+  }
+
+  /**
+   * Sign up with email and password
+   */
+  static async signUpWithPassword(
+    email: string, 
+    password: string, 
+    metadata?: { firstName?: string; lastName?: string }
+  ): Promise<AuthResult> {
+    logger.info('🔐 AuthManager: Attempting sign up', { email, hasMetadata: !!metadata });
+    logApiCall('POST', 'auth/signup', { email, metadata });
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata ? {
+            first_name: metadata.firstName,
+            last_name: metadata.lastName,
+            full_name: metadata.firstName && metadata.lastName 
+              ? `${metadata.firstName} ${metadata.lastName}` 
+              : metadata.firstName || metadata.lastName || '',
+          } : undefined,
+        },
+      });
+
+      if (error) {
+        logger.error('❌ AuthManager: Sign up failed', { email, error: error.message });
+        logApiResponse('POST', 'auth/signup', null, error);
+        return { user: null, error: error.message };
+      }
+
+      if (!data.user) {
+        const errorMsg = 'No user data returned from sign up';
+        logger.error('❌ AuthManager: Sign up failed', { email, error: errorMsg });
+        logApiResponse('POST', 'auth/signup', null, { message: errorMsg });
+        return { user: null, error: errorMsg };
+      }
+
+      logger.info('✅ AuthManager: Sign up successful', { 
+        email, 
+        userId: data.user.id,
+        needsConfirmation: !data.user.email_confirmed_at
+      });
+      logApiResponse('POST', 'auth/signup', { 
+        userId: data.user.id,
+        needsConfirmation: !data.user.email_confirmed_at
+      });
+
+      return { user: data.user };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error during sign up';
+      logger.error('❌ AuthManager: Sign up exception', { email, error: errorMsg });
+      logApiResponse('POST', 'auth/signup', null, error);
+      return { user: null, error: errorMsg };
+    }
+  }
+
+  /**
+   * Sign out the current user
+   */
+  static async signOut(): Promise<{ error?: string }> {
+    logger.info('🔐 AuthManager: Attempting sign out');
+    logApiCall('POST', 'auth/signout');
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        logger.error('❌ AuthManager: Sign out failed', { error: error.message });
+        logApiResponse('POST', 'auth/signout', null, error);
+        return { error: error.message };
+      }
+
+      logger.info('✅ AuthManager: Sign out successful');
+      logApiResponse('POST', 'auth/signout', { success: true });
+
+      return {};
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error during sign out';
+      logger.error('❌ AuthManager: Sign out exception', { error: errorMsg });
+      logApiResponse('POST', 'auth/signout', null, error);
+      return { error: errorMsg };
+    }
+  }
+
+  /**
+   * Get the current user session
+   */
+  static async getCurrentUser(): Promise<User | null> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        logger.error('❌ AuthManager: Failed to get current user', { error: error.message });
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      logger.error('❌ AuthManager: Exception getting current user', { error });
+      return null;
+    }
+  }
+
+  /**
+   * Get the current session
+   */
+  static async getCurrentSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        logger.error('❌ AuthManager: Failed to get current session', { error: error.message });
+        return null;
+      }
+
+      return session;
+    } catch (error) {
+      logger.error('❌ AuthManager: Exception getting current session', { error });
+      return null;
+    }
   }
 }
