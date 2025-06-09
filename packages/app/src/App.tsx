@@ -1,10 +1,10 @@
 import React from 'react';
-import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 import { AuthProvider } from './providers/AuthProvider';
 import { EventProvider } from './providers/EventProvider';
-import { DevToolsPanel } from '@belongnetwork/components';
 import './index.css';
 
 // Create a new router instance
@@ -30,12 +30,12 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <EventProvider>
+      <EventProvider>
+        <AuthProvider>
           <RouterProvider router={router} />
-          <DevToolsPanel />
-        </EventProvider>
-      </AuthProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </AuthProvider>
+      </EventProvider>
     </QueryClientProvider>
   );
 }
