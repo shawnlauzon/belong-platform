@@ -4,7 +4,10 @@ export interface User extends UserData {
   updated_at: string;
 }
 
+export type NewUser = Omit<UserData, 'id'>;
+
 export interface UserData {
+  id: string;
   first_name: string;
   last_name?: string;
   full_name?: string;
@@ -23,16 +26,26 @@ export interface Coordinates {
 }
 
 export interface Membership extends MembershipData {
-  id: string;
   user: User;
   community: Community;
   role: 'member' | 'moderator' | 'admin';
   joined_at: string;
-  trust_score: number;
+  trust_score: TrustScore;
   community_tenure_months: number;
   thanks_received: number;
   resources_shared: number;
 }
+
+export interface TrustScore {
+  score: number;
+  thanks_received_count: number;
+  thanks_given_count: number;
+  resources_shared_count: number;
+  community_tenure_days: number;
+  last_calculated: string;
+}
+
+export type NewMembership = Omit<MembershipData, 'id'>;
 
 export interface MembershipData {
   id: string;
@@ -41,7 +54,6 @@ export interface MembershipData {
 }
 
 export interface Resource extends ResourceData {
-  id: string;
   owner: User;
   is_active: boolean;
   times_helped: number;
@@ -50,7 +62,10 @@ export interface Resource extends ResourceData {
   distance_minutes?: number; // Calculated field for driving time
 }
 
+export type NewResource = Omit<ResourceData, 'id'>;
+
 export interface ResourceData {
+  id: string;
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
   title: string;
@@ -65,7 +80,6 @@ export interface ResourceData {
 }
 
 export interface Thanks extends ThanksData {
-  id: string;
   from_user: User;
   to_user: User;
   resource: Resource;
@@ -73,7 +87,10 @@ export interface Thanks extends ThanksData {
   updated_at: string;
 }
 
+export type NewThanks = Omit<ThanksData, 'id'>;
+
 export interface ThanksData {
+  id: string;
   from_user_id: string;
   to_user_id: string;
   resource_id: string;
@@ -83,12 +100,14 @@ export interface ThanksData {
 }
 
 export interface Community extends CommunityData {
-  id: string;
   name: string;
   member_count: number;
 }
 
+export type NewCommunity = Omit<CommunityData, 'id'>;
+
 export interface CommunityData {
+  id: string;
   name: string;
   country: string;
   state?: string;
@@ -106,29 +125,20 @@ export interface MeetupSpot {
 }
 
 export interface Event extends EventData {
-  id: string;
   community: Community;
   attendee_count: number;
 }
 
+export type NewEvent = Omit<EventData, 'id'>;
+
 export interface EventData {
+  id: string;
   community_id: string;
   title: string;
   date: string;
   location: string;
   parking: string;
   description: string;
-}
-
-export interface TrustScore {
-  id: string;
-  member_id: string;
-  score: number;
-  thanks_received_count: number;
-  thanks_given_count: number;
-  resources_shared_count: number;
-  community_tenure_days: number;
-  last_calculated: string;
 }
 
 export interface ResourceFilter {
