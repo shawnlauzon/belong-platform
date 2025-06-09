@@ -1,4 +1,10 @@
-import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
+import {
+  supabase,
+  eventBus,
+  logger,
+  logApiCall,
+  logApiResponse,
+} from '@belongnetwork/core';
 import type { Community, Coordinates, AppEvent } from '@belongnetwork/core';
 
 export class CommunityFetcher {
@@ -14,13 +20,18 @@ export class CommunityFetcher {
 
     eventBus.on('community.fetch.requested', (event: AppEvent) => {
       if (event.type !== 'community.fetch.requested') {
-        logger.error('🏘️ CommunityFetcher: Received invalid event type', { event });
+        logger.error('🏘️ CommunityFetcher: Received invalid event type', {
+          event,
+        });
         return;
       }
 
-      logger.debug('🏘️ CommunityFetcher: Fetch requested', { filters: event.data.filters });
-      this._fetchCommunities(event.data.filters);
+      logger.debug('🏘️ CommunityFetcher: Fetch requested', {
+        filters: event.data.filters,
+      });
     });
+
+    this._fetchCommunities();
 
     this.initialized = true;
     logger.info('✅ CommunityFetcher: Initialized successfully');
@@ -35,7 +46,8 @@ export class CommunityFetcher {
       // Build the query
       let query = supabase
         .from('communities')
-        .select(`
+        .select(
+          `
           id,
           name,
           level,
@@ -47,7 +59,8 @@ export class CommunityFetcher {
           creator_id,
           created_at,
           updated_at
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       // Apply filters if provided
@@ -59,14 +72,20 @@ export class CommunityFetcher {
           query = query.eq('parent_id', filters.parent_id);
         }
         if (filters.searchTerm) {
-          query = query.or(`name.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+          query = query.or(
+            `name.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`
+          );
         }
         if (filters.country) {
           // For country filter, we need to find communities with that name and level 'country'
-          query = query.eq('level', 'country').ilike('name', `%${filters.country}%`);
+          query = query
+            .eq('level', 'country')
+            .ilike('name', `%${filters.country}%`);
         }
         if (filters.state) {
-          query = query.eq('level', 'state').ilike('name', `%${filters.state}%`);
+          query = query
+            .eq('level', 'state')
+            .ilike('name', `%${filters.state}%`);
         }
         if (filters.city) {
           query = query.eq('level', 'city').ilike('name', `%${filters.city}%`);
@@ -99,15 +118,18 @@ export class CommunityFetcher {
             if (!isNaN(lng) && !isNaN(lat)) {
               center = { lat, lng };
             } else {
-              logger.warn('🏘️ CommunityFetcher: Invalid coordinates in center string', {
-                communityId: row.id,
-                centerString: row.center
-              });
+              logger.warn(
+                '🏘️ CommunityFetcher: Invalid coordinates in center string',
+                {
+                  communityId: row.id,
+                  centerString: row.center,
+                }
+              );
             }
           } else {
             logger.warn('🏘️ CommunityFetcher: Could not parse center string', {
               communityId: row.id,
-              centerString: row.center
+              centerString: row.center,
             });
           }
         } else if (row.center && typeof row.center === 'object') {
@@ -127,15 +149,22 @@ export class CommunityFetcher {
         };
       });
 
-      logApiResponse('GET', 'supabase/communities', { count: communities.length });
-      logger.info('✅ CommunityFetcher: Successfully fetched communities', { count: communities.length });
+      logApiResponse('GET', 'supabase/communities', {
+        count: communities.length,
+      });
+      logger.info('✅ CommunityFetcher: Successfully fetched communities', {
+        count: communities.length,
+      });
 
       eventBus.emit('community.fetch.success', { communities });
     } catch (error) {
-      logger.error('❌ CommunityFetcher: Failed to fetch communities', { error });
+      logger.error('❌ CommunityFetcher: Failed to fetch communities', {
+        error,
+      });
       logApiResponse('GET', 'supabase/communities', null, error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       eventBus.emit('community.fetch.failed', { error: errorMessage });
     }
   }
