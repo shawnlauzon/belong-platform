@@ -13,6 +13,7 @@ export default defineConfig({
   root: __dirname,
   base: '/',
   publicDir: 'public',
+  envDir: resolve(__dirname, '../../'),
   plugins: [
     tsconfigPaths({
       projects: [
