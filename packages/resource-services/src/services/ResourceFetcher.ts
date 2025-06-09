@@ -132,6 +132,7 @@ export class ResourceFetcher {
 
       logApiResponse('GET', 'supabase/resources', { count: resources.length });
       logger.info('✅ ResourceFetcher: Successfully fetched resources', { count: resources.length });
+      logger.debug('🔄 ResourceFetcher: Emitting resource.fetch.success with resources:', resources);
 
       eventBus.emit('resource.fetch.success', { resources });
     } catch (error) {

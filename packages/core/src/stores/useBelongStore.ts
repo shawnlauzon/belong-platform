@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { eventBus } from '../eventBus/eventBus';
 import { initialState } from './initialState';
 import { logger } from '../utils/logger';
@@ -378,6 +379,7 @@ function initializeResourceListeners(
       return;
     }
 
+    logger.debug('📦 Store: Received resource.fetch.success event, data:', event.data.resources);
     logger.debug('📦 Store: Handling successful resource fetch', { 
       count: event.data.resources.length 
     });
@@ -482,190 +484,200 @@ function initializeResourceListeners(
 }
 
 // Create the store with state and actions
-export const useBelongStore = create<BelongStore>((set, get) => {
-  // Define internal state management functions
-  const setAuthSession = (user: any, session: Session | null) => {
-    set((state) => ({
-      ...state,
-      auth: {
-        ...state.auth,
-        user,
-        session,
-        isAuthenticated: true,
-        token: session?.access_token || null,
-        error: null,
-        isLoading: false,
-      },
-    }));
-  };
+export const useBelongStore = create<BelongStore>()(
+  devtools(
+    (set, get) => {
+      // Define internal state management functions
+      const setAuthSession = (user: any, session: Session | null) => {
+        set((state) => ({
+          ...state,
+          auth: {
+            ...state.auth,
+            user,
+            session,
+            isAuthenticated: true,
+            token: session?.access_token || null,
+            error: null,
+            isLoading: false,
+          },
+        }), false, 'auth/setSession');
+      };
 
-  const clearAuthSession = () => {
-    set((state) => ({
-      ...state,
-      auth: {
-        ...state.auth,
-        user: null,
-        session: null,
-        isAuthenticated: false,
-        token: null,
-        isLoading: false,
-      },
-    }));
-  };
+      const clearAuthSession = () => {
+        set((state) => ({
+          ...state,
+          auth: {
+            ...state.auth,
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            token: null,
+            isLoading: false,
+          },
+        }), false, 'auth/clearSession');
+      };
 
-  const setAuthError = (error: string) => {
-    set((state) => ({
-      ...state,
-      auth: {
-        ...state.auth,
-        error,
-        isLoading: false,
-      },
-    }));
-  };
+      const setAuthError = (error: string) => {
+        set((state) => ({
+          ...state,
+          auth: {
+            ...state.auth,
+            error,
+            isLoading: false,
+          },
+        }), false, 'auth/setError');
+      };
 
-  const setAuthLoading = (loading: boolean) => {
-    set((state) => ({
-      ...state,
-      auth: {
-        ...state.auth,
-        isLoading: loading,
-      },
-    }));
-  };
+      const setAuthLoading = (loading: boolean) => {
+        set((state) => ({
+          ...state,
+          auth: {
+            ...state.auth,
+            isLoading: loading,
+          },
+        }), false, 'auth/setLoading');
+      };
 
-  // Define resource state management functions
-  const setResourcesLoading = (isLoading: boolean) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        isLoading,
-      },
-    }));
-  };
+      // Define resource state management functions
+      const setResourcesLoading = (isLoading: boolean) => {
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            isLoading,
+          },
+        }), false, 'resources/setLoading');
+      };
 
-  const setResourcesError = (error: string | null) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        error,
-      },
-    }));
-  };
+      const setResourcesError = (error: string | null) => {
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            error,
+          },
+        }), false, 'resources/setError');
+      };
 
-  const setResources = (resources: Resource[]) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        list: resources,
-      },
-    }));
-  };
+      const setResources = (resources: Resource[]) => {
+        logger.debug('📦 Store: Setting resources in store:', resources);
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            list: resources,
+          },
+        }), false, 'resources/setList');
+        logger.debug('📦 Store: Resources state updated to:', get().resources.list);
+      };
 
-  const addResource = (resource: Resource) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        list: [resource, ...state.resources.list],
-      },
-    }));
-  };
+      const addResource = (resource: Resource) => {
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            list: [resource, ...state.resources.list],
+          },
+        }), false, 'resources/add');
+      };
 
-  const updateResourceInList = (updatedResource: Resource) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        list: state.resources.list.map((resource) =>
-          resource.id === updatedResource.id ? updatedResource : resource
-        ),
-      },
-    }));
-  };
+      const updateResourceInList = (updatedResource: Resource) => {
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            list: state.resources.list.map((resource) =>
+              resource.id === updatedResource.id ? updatedResource : resource
+            ),
+          },
+        }), false, 'resources/update');
+      };
 
-  const removeResource = (resourceId: string) => {
-    set((state) => ({
-      ...state,
-      resources: {
-        ...state.resources,
-        list: state.resources.list.filter((resource) => resource.id !== resourceId),
-      },
-    }));
-  };
+      const removeResource = (resourceId: string) => {
+        set((state) => ({
+          ...state,
+          resources: {
+            ...state.resources,
+            list: state.resources.list.filter((resource) => resource.id !== resourceId),
+          },
+        }), false, 'resources/remove');
+      };
 
-  // Initialize event listeners
-  initializeAuthListeners(setAuthSession, clearAuthSession, setAuthError, setAuthLoading);
-  initializeResourceListeners(
-    setResourcesLoading,
-    setResourcesError,
-    setResources,
-    addResource,
-    updateResourceInList,
-    removeResource
-  );
-
-  return {
-    // Spread the initial state
-    ...initialState,
-
-    // Actions that only emit events
-    setActiveCommunity: (communityId: string) => {
-      eventBus.emit('community.active.change.requested', { communityId });
-    },
-
-    signIn: (email: string, password: string) => {
-      eventBus.emit('auth.signIn.requested', { email, password });
-    },
-
-    signUp: (
-      email: string,
-      password: string,
-      metadata?: { firstName?: string; lastName?: string }
-    ) => {
-      eventBus.emit('auth.signUp.requested', { email, password, metadata });
-    },
-
-    signOut: () => {
-      eventBus.emit('auth.signOut.requested', void 0);
-    },
-
-    // Internal auth state management actions
-    setAuthSession,
-    clearAuthSession,
-    setAuthError,
-    setAuthLoading,
-
-    // Resource state management actions
-    setResourcesLoading,
-    setResourcesError,
-    setResources,
-    addResource,
-    updateResourceInList,
-    removeResource,
-
-    // Selectors and state updaters
-    getActiveCommunity: () => {
-      const state = get();
-      if (!state.communities.activeId) return null;
-      return (
-        state.communities.list.find(
-          (community) => community.id === state.communities.activeId
-        ) || null
+      // Initialize event listeners
+      initializeAuthListeners(setAuthSession, clearAuthSession, setAuthError, setAuthLoading);
+      initializeResourceListeners(
+        setResourcesLoading,
+        setResourcesError,
+        setResources,
+        addResource,
+        updateResourceInList,
+        removeResource
       );
-    },
 
-    setViewMode: (mode: 'member' | 'organizer') => {
-      set((state) => ({
-        ...state,
-        app: {
-          ...state.app,
-          viewMode: mode,
+      return {
+        // Spread the initial state
+        ...initialState,
+
+        // Actions that only emit events
+        setActiveCommunity: (communityId: string) => {
+          eventBus.emit('community.active.change.requested', { communityId });
         },
-      }));
+
+        signIn: (email: string, password: string) => {
+          eventBus.emit('auth.signIn.requested', { email, password });
+        },
+
+        signUp: (
+          email: string,
+          password: string,
+          metadata?: { firstName?: string; lastName?: string }
+        ) => {
+          eventBus.emit('auth.signUp.requested', { email, password, metadata });
+        },
+
+        signOut: () => {
+          eventBus.emit('auth.signOut.requested', void 0);
+        },
+
+        // Internal auth state management actions
+        setAuthSession,
+        clearAuthSession,
+        setAuthError,
+        setAuthLoading,
+
+        // Resource state management actions
+        setResourcesLoading,
+        setResourcesError,
+        setResources,
+        addResource,
+        updateResourceInList,
+        removeResource,
+
+        // Selectors and state updaters
+        getActiveCommunity: () => {
+          const state = get();
+          if (!state.communities.activeId) return null;
+          return (
+            state.communities.list.find(
+              (community) => community.id === state.communities.activeId
+            ) || null
+          );
+        },
+
+        setViewMode: (mode: 'member' | 'organizer') => {
+          set((state) => ({
+            ...state,
+            app: {
+              ...state.app,
+              viewMode: mode,
+            },
+          }), false, 'app/setViewMode');
+        },
+      };
     },
-  };
-});
+    {
+      name: 'belong-store', // Name that will appear in DevTools
+      enabled: import.meta.env.DEV, // Only enable in development
+    }
+  )
+);
