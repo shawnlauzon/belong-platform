@@ -1,5 +1,5 @@
+packages/trust-services/*
 packages/user-services/*
-packages/community-services/*
 packages/resource-services/*
 packages/components/*
 packages/app/*
