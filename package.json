@@ -15,8 +15,6 @@
     "manypkg": "manypkg check",
     "prepare": "husky install",
   },
-  "dependencies": {
-  },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@manypkg/cli": "^0.24.0",
