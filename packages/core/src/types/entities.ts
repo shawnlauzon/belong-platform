@@ -124,14 +124,14 @@ export interface MeetupSpot {
   type: string;
 }
 
-export interface Gettogether extends GettogetherData {
+export interface Hangout extends HangoutData {
   community: Community;
   attendee_count: number;
 }
 
-export type NewGettogether = Omit<GettogetherData, 'id'>;
+export type NewHangout = Omit<HangoutData, 'id'>;
 
-export interface GettogetherData {
+export interface HangoutData {
   id: string;
   community_id: string;
   title: string;
