@@ -1,5 +1,6 @@
 import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
-import type { Resource, AppEvent } from '@belongnetwork/core';
+import type { AppEvent, Resource } from '@belongnetwork/core';
+import { toDbResource, toDomainResource } from '../transformers/resourceTransformer';
 
 export class ResourceUpdater {
   private static initialized = false;
@@ -26,7 +27,7 @@ export class ResourceUpdater {
     logger.info('✅ ResourceUpdater: Initialized successfully');
   }
 
-  private static async _updateResource(updateData: any): Promise<void> {
+  private static async _updateResource(updateData: Partial<Resource> & { id: string }): Promise<void> {
     logger.debug('✏️ ResourceUpdater: Starting resource update', { 
       resourceId: updateData.id,
       updateData 
@@ -35,38 +36,19 @@ export class ResourceUpdater {
     try {
       const { id, ...fieldsToUpdate } = updateData;
 
-      // Convert location if it's being updated
-      if (fieldsToUpdate.location && typeof fieldsToUpdate.location === 'object') {
-        fieldsToUpdate.location = `POINT(${fieldsToUpdate.location.lng} ${fieldsToUpdate.location.lat})`;
-      }
-
+      // Convert domain model to database model
+      const dbUpdate = toDbResource(fieldsToUpdate, true);
+      
       // Add updated_at timestamp
-      fieldsToUpdate.updated_at = new Date().toISOString();
+      dbUpdate.updated_at = new Date().toISOString();
 
-      logApiCall('PATCH', `supabase/resources/${id}`, fieldsToUpdate);
+      logApiCall('PATCH', `supabase/resources/${id}`, dbUpdate);
 
       const { data, error } = await supabase
         .from('resources')
-        .update(fieldsToUpdate)
+        .update(dbUpdate)
         .eq('id', id)
-        .select(`
-          id,
-          creator_id,
-          type,
-          category,
-          title,
-          description,
-          image_urls,
-          location,
-          pickup_instructions,
-          parking_info,
-          meetup_flexibility,
-          availability,
-          is_active,
-          times_helped,
-          created_at,
-          updated_at
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -79,39 +61,8 @@ export class ResourceUpdater {
         throw new Error('Failed to update resource: No data returned');
       }
 
-      // Transform the response to match our Resource interface
-      let location = { lat: 0, lng: 0 };
-
-      // Parse the PostGIS POINT format: "POINT(lng lat)"
-      if (data.location && typeof data.location === 'string') {
-        const match = data.location.match(/POINT\(([^)]+)\)/);
-        if (match) {
-          const [lng, lat] = match[1].split(' ').map(Number);
-          if (!isNaN(lng) && !isNaN(lat)) {
-            location = { lat, lng };
-          }
-        }
-      } else if (data.location && typeof data.location === 'object') {
-        location = data.location;
-      }
-
-      const updatedResource: Resource = {
-        id: data.id,
-        creator_id: data.creator_id,
-        type: data.type,
-        category: data.category,
-        title: data.title,
-        description: data.description,
-        image_urls: data.image_urls || [],
-        location,
-        pickup_instructions: data.pickup_instructions,
-        parking_info: data.parking_info,
-        meetup_flexibility: data.meetup_flexibility,
-        availability: data.availability,
-        is_active: data.is_active,
-        times_helped: data.times_helped || 0,
-        created_at: data.created_at,
-      };
+      // Convert database model back to domain model
+      const updatedResource = toDomainResource(data);
 
       logApiResponse('PATCH', `supabase/resources/${id}`, { resourceId: updatedResource.id });
       logger.info('✅ ResourceUpdater: Successfully updated resource', { 
@@ -127,8 +78,9 @@ export class ResourceUpdater {
       });
       logApiResponse('PATCH', `supabase/resources/${updateData.id}`, null, error);
       
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      eventBus.emit('resource.update.failed', { error: errorMessage });
+      eventBus.emit('resource.update.failed', { 
+        error: `Failed to update resource ${updateData.id}: ${error instanceof Error ? error.message : String(error)}`
+      });
     }
   }
 }
