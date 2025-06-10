@@ -56,7 +56,6 @@ export interface MembershipData {
 export interface Resource extends ResourceData {
   owner: User;
   is_active: boolean;
-  times_helped: number;
   created_at: string;
   updated_at: string;
   distance_minutes?: number; // Calculated field for driving time

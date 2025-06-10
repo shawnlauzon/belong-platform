@@ -9,8 +9,8 @@ import {
   type AppEvent,
 } from '../types/events';
 import { eventBus } from '../eventBus/eventBus';
+import { toDomainUser } from '../transformers/userTransformer';
 import type { Session } from '@supabase/supabase-js';
-import type { AuthUser } from '../types/entities';
 
 // Initialize authentication event listeners
 export default function initializeAuthListeners(
@@ -36,17 +36,23 @@ export default function initializeAuthListeners(
     setAuthLoading(false);
 
     if (event.data.user) {
-      // Convert Supabase user to our AuthUser type
-      const authUser: AuthUser = {
+      // Convert Supabase user to our AuthUser type using the transformer
+      const userRow = {
         id: event.data.user.id,
         email: event.data.user.email || '',
         first_name: event.data.user.user_metadata?.first_name || '',
         last_name: event.data.user.user_metadata?.last_name || '',
-        full_name: event.data.user.user_metadata?.full_name || '',
-        avatar_url: event.data.user.user_metadata?.avatar_url,
-        location: event.data.user.user_metadata?.location,
-        address: event.data.user.user_metadata?.address,
+        avatar_url: event.data.user.user_metadata?.avatar_url || null,
+        user_metadata: {
+          ...event.data.user.user_metadata,
+          full_name: event.data.user.user_metadata?.full_name,
+          location: event.data.user.user_metadata?.location,
+          address: event.data.user.user_metadata?.address,
+        },
+        created_at: event.data.user.created_at || new Date().toISOString(),
+        updated_at: event.data.user.updated_at || new Date().toISOString(),
       };
+      const authUser = toDomainUser(userRow);
       setAuthSession(authUser, null); // Session will be handled separately if needed
     } else {
       logger.warn(
@@ -88,17 +94,23 @@ export default function initializeAuthListeners(
     setAuthLoading(false);
 
     if (event.data.user) {
-      // Convert Supabase user to our AuthUser type
-      const authUser: AuthUser = {
+      // Convert Supabase user to our AuthUser type using the transformer
+      const userRow = {
         id: event.data.user.id,
         email: event.data.user.email || '',
         first_name: event.data.user.user_metadata?.first_name || '',
         last_name: event.data.user.user_metadata?.last_name || '',
-        full_name: event.data.user.user_metadata?.full_name || '',
-        avatar_url: event.data.user.user_metadata?.avatar_url,
-        location: event.data.user.user_metadata?.location,
-        address: event.data.user.user_metadata?.address,
+        avatar_url: event.data.user.user_metadata?.avatar_url || null,
+        user_metadata: {
+          ...event.data.user.user_metadata,
+          full_name: event.data.user.user_metadata?.full_name,
+          location: event.data.user.user_metadata?.location,
+          address: event.data.user.user_metadata?.address,
+        },
+        created_at: event.data.user.created_at || new Date().toISOString(),
+        updated_at: event.data.user.updated_at || new Date().toISOString(),
       };
+      const authUser = toDomainUser(userRow);
       setAuthSession(authUser, null);
     } else {
       logger.warn(

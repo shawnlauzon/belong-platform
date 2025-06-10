@@ -15,7 +15,8 @@ export const toDomainUser = (dbUser: UserRow): User => {
     throw new Error('Database user is required');
   }
 
-  const { email, user_metadata, first_name, last_name, avatar_url, ...rest } = dbUser;
+  const { email, user_metadata, first_name, last_name, avatar_url, ...rest } =
+    dbUser;
   const metadata = typeof user_metadata === 'object' ? user_metadata : {};
 
   return {
@@ -36,11 +37,11 @@ export const toDbUser = (
 ): Partial<Database['public']['Tables']['profiles']['Insert']> => {
   const { first_name, last_name, avatar_url, ...rest } = user;
   const result: Record<string, unknown> = { ...rest };
-  
+
   // Only include fields that exist in the profiles table
-  if (first_name !== undefined) result.first_name = first_name || '';
-  if (last_name !== undefined) result.last_name = last_name || '';
-  if (avatar_url !== undefined) result.avatar_url = avatar_url || null;
-  
+  result.first_name = first_name || '';
+  result.last_name = last_name || '';
+  result.avatar_url = avatar_url || null;
+
   return result as Partial<Database['public']['Tables']['profiles']['Insert']>;
 };

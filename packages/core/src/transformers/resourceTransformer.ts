@@ -2,7 +2,10 @@ import type { Database } from '../types/database';
 import type { Resource, ResourceData, Coordinates } from '../types/entities';
 import { toDomainUser } from './userTransformer';
 
-export type ResourceRow = Omit<Database['public']['Tables']['resources']['Row'], 'times_helped'> & {
+export type ResourceRow = Omit<
+  Database['public']['Tables']['resources']['Row'],
+  'times_helped'
+> & {
   times_helped?: number;
   owner?: Database['public']['Tables']['profiles']['Row'] & {
     first_name?: string | null;
@@ -20,7 +23,7 @@ export const toDomainResource = (dbResource: ResourceRow): Resource => {
   }
 
   const { owner, location, ...rest } = dbResource;
-  
+
   // Transform PostGIS point to Coordinates
   const coords = location ? parsePostGisPoint(location) : { lat: 0, lng: 0 };
 
@@ -28,13 +31,15 @@ export const toDomainResource = (dbResource: ResourceRow): Resource => {
     ...rest,
     location: coords,
     times_helped: 'times_helped' in dbResource ? dbResource.times_helped : 0,
-    owner: owner ? toDomainUser(owner) : {
-      id: dbResource.creator_id,
-      created_at: dbResource.created_at,
-      updated_at: dbResource.updated_at,
-      email: '',
-      user_metadata: null,
-    },
+    owner: owner
+      ? toDomainUser(owner)
+      : {
+          id: dbResource.creator_id,
+          created_at: dbResource.created_at,
+          updated_at: dbResource.updated_at,
+          email: '',
+          user_metadata: null,
+        },
   } as Resource;
 };
 
@@ -42,11 +47,10 @@ export const toDomainResource = (dbResource: ResourceRow): Resource => {
  * Transforms a domain Resource to a database insert/update object
  */
 export const toDbResource = (
-  resource: Partial<Resource>,
-  isUpdate: boolean = false
+  resource: Partial<Resource>
 ): Partial<Database['public']['Tables']['resources']['Insert']> => {
   const { owner, location, ...rest } = resource;
-  
+
   // Transform Coordinates to PostGIS point
   const dbLocation = location ? toPostGisPoint(location) : undefined;
 
@@ -56,7 +60,7 @@ export const toDbResource = (
   };
 
   // Only include creator_id for new resources
-  if (!isUpdate && owner?.id) {
+  if (owner?.id) {
     return {
       ...base,
       creator_id: owner.id,
@@ -69,9 +73,9 @@ export const toDbResource = (
 /**
  * Helper to parse PostGIS point to { lat, lng } coordinates
  */
-function parsePostGisPoint(point: unknown): Coordinates {
+export function parsePostGisPoint(point: unknown): Coordinates {
   if (!point) return { lat: 0, lng: 0 };
-  
+
   // Handle string format (PostGIS POINT)
   if (typeof point === 'string') {
     const match = point.match(/POINT\(([^ ]+) ([^)]+)\)/);
@@ -82,7 +86,7 @@ function parsePostGisPoint(point: unknown): Coordinates {
       };
     }
   }
-  
+
   // Handle object format ({ x, y } or { lng, lat })
   if (typeof point === 'object' && point !== null) {
     const coords = point as Record<string, unknown>;
@@ -99,14 +103,16 @@ function parsePostGisPoint(point: unknown): Coordinates {
       };
     }
   }
-  
+
   return { lat: 0, lng: 0 };
 }
 
 /**
  * Helper to convert { lat, lng } to PostGIS POINT string
+ *
+ * @internal
  */
-function toPostGisPoint(coords: Coordinates): string {
+export function toPostGisPoint(coords: Coordinates): string {
   return `POINT(${coords.lng} ${coords.lat})`;
 }
 
@@ -117,7 +123,7 @@ export const resourceDataToDb = (
   resourceData: Partial<ResourceData>
 ): Partial<Database['public']['Tables']['resources']['Insert']> => {
   const { location, ...rest } = resourceData;
-  
+
   return {
     ...rest,
     location: location ? toPostGisPoint(location) : undefined,
