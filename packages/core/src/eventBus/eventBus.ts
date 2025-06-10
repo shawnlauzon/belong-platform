@@ -1,85 +1,136 @@
 import { nanoid } from 'nanoid';
-import { AppEvent } from '../types/events';
+import { AppEvent, EventType, EventData } from '../types/events';
 import { logger, logEvent } from '../utils/logger';
 
-type EventCallback = (event: AppEvent) => void;
+type EventSource = 'user' | 'system' | 'api';
 
+// Type-safe event bus implementation
 class EventBus {
-  private events: Map<string, EventCallback[]> = new Map();
+  private handlers = new Map<EventType | '*', Set<(event: AppEvent) => void>>();
   private debug: boolean = import.meta.env.DEV;
 
-  emit<T extends AppEvent>(type: T['type'], data: T['data']) {
+  /**
+   * Emit an event to all registered handlers
+   * @param type The event type (must be a valid AppEvent type or '*' for global handlers)
+   * @param data The event data (must match the expected data for the event type)
+   * @param source The source of the event (defaults to 'system')
+   */
+  emit<T extends EventType>(
+    type: T,
+    data: EventData<T>,
+    source: EventSource = 'system',
+    userId?: string
+  ): void {
+    // Create a well-formed event object
     const event: AppEvent = {
       id: nanoid(),
-      timestamp: Date.now(),
-      source: 'user',
       type,
+      timestamp: Date.now(),
+      source,
+      userId,
       data,
-    } as unknown as T;
+    } as AppEvent;
 
-    logEvent(`emit_${type}`, event.data);
+    logEvent(`emit_${type}`, data);
 
     if (this.debug) {
       logger.debug(`📡 EventBus: Emitting ${type}`, event);
     }
 
-    const callbacks = this.events.get(type) || [];
-    callbacks.forEach((callback) => {
-      try {
-        callback(event);
-      } catch (error) {
-        logger.error(`❌ EventBus: Error in event handler for ${type}:`, error);
+    try {
+      // Call specific handlers for this event type
+      const specificHandlers = this.handlers.get(type);
+      if (specificHandlers) {
+        specificHandlers.forEach(handler => {
+          try {
+            handler(event);
+          } catch (error) {
+            logger.error(`❌ EventBus: Error in event handler for ${type}:`, error);
+          }
+        });
       }
-    });
 
-    // Global listeners
-    const globalCallbacks = this.events.get('*') || [];
-    globalCallbacks.forEach((callback) => {
-      try {
-        callback(event);
-      } catch (error) {
-        logger.error('❌ EventBus: Error in global event handler:', error);
+      // Call global handlers (for all events)
+      const globalHandlers = this.handlers.get('*');
+      if (globalHandlers) {
+        globalHandlers.forEach(handler => {
+          try {
+            handler(event);
+          } catch (error) {
+            logger.error(`❌ EventBus: Error in global event handler for ${type}:`, error);
+          }
+        });
       }
-    });
+    } catch (error) {
+      logger.error(`❌ EventBus: Error processing event ${type}:`, error);
+    }
   }
 
-  on(type: string, callback: EventCallback) {
-    logger.trace(`📡 EventBus: Registering listener for ${type}`);
-
-    const callbacks = this.events.get(type) || [];
-    callbacks.push(callback);
-    this.events.set(type, callbacks);
+  /**
+   * Register an event handler
+   * @param type The event type to listen for (or '*' for all events)
+   * @param handler The handler function
+   * @returns A function to unregister the handler
+   */
+  on<T extends EventType | '*'>(
+    type: T,
+    handler: (event: T extends '*' ? AppEvent : Extract<AppEvent, { type: T }>) => void
+  ): () => void {
+    if (!this.handlers.has(type)) {
+      this.handlers.set(type, new Set());
+    }
+    const handlers = this.handlers.get(type)!;
+    handlers.add(handler as (event: AppEvent) => void);
 
     // Return unsubscribe function
     return () => {
-      logger.trace(`📡 EventBus: Unregistering listener for ${type}`);
-      const updatedCallbacks = (this.events.get(type) || []).filter(
-        (cb) => cb !== callback
-      );
-      this.events.set(type, updatedCallbacks);
+      handlers.delete(handler as (event: AppEvent) => void);
+      if (handlers.size === 0) {
+        this.handlers.delete(type);
+      }
     };
   }
 
-  once(type: string, callback: EventCallback) {
-    logger.trace(`📡 EventBus: Registering one-time listener for ${type}`);
-
-    const onceCallback: EventCallback = (event) => {
-      this.off(type, onceCallback);
-      callback(event);
-    };
-    this.on(type, onceCallback);
-  }
-
-  off(type: string, callback?: EventCallback) {
-    if (callback) {
-      logger.trace(`📡 EventBus: Removing specific listener for ${type}`);
-      const callbacks = this.events.get(type) || [];
-      const filtered = callbacks.filter((cb) => cb !== callback);
-      this.events.set(type, filtered);
-    } else {
-      logger.trace(`📡 EventBus: Removing all listeners for ${type}`);
-      this.events.delete(type);
+  /**
+   * Unregister an event handler
+   * @param type The event type
+   * @param handler The handler function to remove
+   */
+  off<T extends EventType | '*'>(
+    type: T,
+    handler: (event: T extends '*' ? AppEvent : Extract<AppEvent, { type: T }>) => void
+  ): void {
+    const handlers = this.handlers.get(type);
+    if (handlers) {
+      handlers.delete(handler as (event: AppEvent) => void);
+      if (handlers.size === 0) {
+        this.handlers.delete(type);
+      }
     }
+  }
+
+  /**
+   * Register a one-time event handler
+   * @param type The event type to listen for
+   * @param handler The handler function
+   * @returns A function to unregister the handler (which will be called automatically after the first event)
+   */
+  once<T extends EventType>(
+    type: T,
+    handler: (event: Extract<AppEvent, { type: T }>) => void
+  ): () => void {
+    // Create a type-safe wrapper for the handler
+    const wrapper = (event: AppEvent) => {
+      if (event.type === type) {
+        // Remove the handler immediately
+        this.off(type, wrapper as unknown as (event: T extends '*' ? AppEvent : Extract<AppEvent, { type: T }>) => void);
+        // Call the original handler with properly typed event
+        handler(event as Extract<AppEvent, { type: T }>);
+      }
+    };
+    
+    // Register the wrapper with type assertion to satisfy TypeScript
+    return this.on(type, wrapper as unknown as (event: T extends '*' ? AppEvent : Extract<AppEvent, { type: T }>) => void);
   }
 }
 

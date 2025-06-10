@@ -1,12 +1,23 @@
-import { Resource, Community, Thanks } from './entities';
+import {
+  Resource,
+  Community,
+  Thanks,
+  NewCommunity,
+  CommunityData,
+  UserData,
+  ResourceData,
+  NewThanks,
+  ThanksData,
+} from './entities';
 import { User } from '@supabase/supabase-js';
 
 export interface BaseEvent {
   id: string;
+  type: string;
   timestamp: number;
-  userId?: string;
-  communityId?: string;
   source: 'user' | 'system' | 'api';
+  userId?: string;
+  data: unknown;
 }
 
 // Auth Events
@@ -90,16 +101,6 @@ export interface AuthSignOutFailedEvent extends BaseEvent {
 // Community Events
 export interface CommunityFetchRequestedEvent extends BaseEvent {
   type: 'community.fetch.requested';
-  data: {
-    filters?: {
-      level?: Community['level'];
-      parent_id?: string;
-      searchTerm?: string;
-      country?: string;
-      state?: string;
-      city?: string;
-    };
-  };
 }
 
 export interface CommunityFetchSuccessEvent extends BaseEvent {
@@ -118,16 +119,7 @@ export interface CommunityFetchFailedEvent extends BaseEvent {
 
 export interface CommunityCreateRequestedEvent extends BaseEvent {
   type: 'community.create.requested';
-  data: {
-    name: string;
-    level: Community['level'];
-    description: string;
-    country: string;
-    state?: string;
-    city: string;
-    center?: { lat: number; lng: number };
-    radius_km?: number;
-  };
+  data: NewCommunity;
 }
 
 export interface CommunityCreatedEvent extends BaseEvent {
@@ -144,7 +136,7 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
 
 export interface CommunityUpdateRequestedEvent extends BaseEvent {
   type: 'community.update.requested';
-  data: Partial<Community> & { id: string };
+  data: CommunityData;
 }
 
 export interface CommunityUpdatedEvent extends BaseEvent {
@@ -195,25 +187,19 @@ export interface CommunityActiveChangedEvent extends BaseEvent {
   };
 }
 
-// Profile Events
-export interface ProfileUpdateRequestedEvent extends BaseEvent {
-  type: 'profile.update.requested';
-  data: {
-    userId: string;
-    metadata: Partial<import('./entities').User>;
-  };
+// User Events
+export interface UserUpdateRequestedEvent extends BaseEvent {
+  type: 'user.update.requested';
+  data: UserData;
 }
 
-export interface ProfileUpdatedEvent extends BaseEvent {
-  type: 'profile.updated';
-  data: {
-    userId: string;
-    updatedProfile: Partial<import('./entities').User>;
-  };
+export interface UserUpdatedEvent extends BaseEvent {
+  type: 'user.updated';
+  data: UserData;
 }
 
-export interface ProfileUpdateFailedEvent extends BaseEvent {
-  type: 'profile.update.failed';
+export interface UserUpdateFailedEvent extends BaseEvent {
+  type: 'user.update.failed';
   data: {
     userId: string;
     error: string;
@@ -261,7 +247,7 @@ export interface ResourceCreateFailedEvent extends BaseEvent {
 
 export interface ResourceUpdateRequestedEvent extends BaseEvent {
   type: 'resource.update.requested';
-  data: Partial<Resource> & { id: string };
+  data: ResourceData;
 }
 
 export interface ResourceUpdatedEvent extends BaseEvent {
@@ -301,15 +287,6 @@ export interface ResourceDeleteFailedEvent extends BaseEvent {
 // Thanks Events
 export interface ThanksFetchRequestedEvent extends BaseEvent {
   type: 'thanks.fetch.requested';
-  data: {
-    filters?: {
-      to_user_id?: string;
-      from_user_id?: string;
-      resource_id?: string;
-      limit?: number;
-      offset?: number;
-    };
-  };
 }
 
 export interface ThanksFetchSuccessEvent extends BaseEvent {
@@ -328,13 +305,7 @@ export interface ThanksFetchFailedEvent extends BaseEvent {
 
 export interface ThanksCreateRequestedEvent extends BaseEvent {
   type: 'thanks.create.requested';
-  data: {
-    to_user_id: string;
-    resource_id: string;
-    message: string;
-    image_urls?: string[];
-    impact_description?: string;
-  };
+  data: NewThanks;
 }
 
 export interface ThanksCreatedEvent extends BaseEvent {
@@ -351,7 +322,7 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
 
 export interface ThanksUpdateRequestedEvent extends BaseEvent {
   type: 'thanks.update.requested';
-  data: Partial<Thanks> & { id: string };
+  data: ThanksData;
 }
 
 export interface ThanksUpdatedEvent extends BaseEvent {
@@ -412,12 +383,15 @@ export interface NotificationShowEvent extends BaseEvent {
 }
 
 // Navigation Events
+// Define a more specific type for navigation state
+type NavigationState = Record<string, unknown> | null;
+
 export interface NavigationRedirectEvent extends BaseEvent {
   type: 'navigation.redirect';
   data: {
     path: string;
     replace?: boolean;
-    state?: any;
+    state?: NavigationState;
   };
 }
 
@@ -461,7 +435,7 @@ export function isAuthSignOutFailedEvent(
 // Community event type guards
 export function isCommunityFetchRequestedEvent(
   event: AppEvent
-): event is CommunityFetchRequestedEvent {
+): event is Extract<AppEvent, { type: 'community.fetch.requested' }> {
   return event.type === 'community.fetch.requested';
 }
 
@@ -577,7 +551,7 @@ export function isResourceDeleteFailedEvent(
 // Thanks event type guards
 export function isThanksFetchRequestedEvent(
   event: AppEvent
-): event is ThanksFetchRequestedEvent {
+): event is Extract<AppEvent, { type: 'thanks.fetch.requested' }> {
   return event.type === 'thanks.fetch.requested';
 }
 
@@ -629,57 +603,96 @@ export function isThanksDeleteFailedEvent(
   return event.type === 'thanks.delete.failed';
 }
 
-export type AppEvent =
-  | AuthSignInRequestedEvent
-  | AuthSignUpRequestedEvent
-  | AuthSignOutRequestedEvent
-  | AuthSignInSuccessEvent
-  | AuthSignUpSuccessEvent
-  | AuthSignInFailedEvent
-  | AuthSignUpFailedEvent
-  | AuthSignOutSuccessEvent
-  | AuthSignOutFailedEvent
-  | CommunityFetchRequestedEvent
-  | CommunityFetchSuccessEvent
-  | CommunityFetchFailedEvent
-  | CommunityCreateRequestedEvent
-  | CommunityCreatedEvent
-  | CommunityCreateFailedEvent
-  | CommunityUpdateRequestedEvent
-  | CommunityUpdatedEvent
-  | CommunityUpdateFailedEvent
-  | CommunityDeleteRequestedEvent
-  | CommunityDeletedEvent
-  | CommunityDeleteFailedEvent
-  | CommunityActiveChangeRequestedEvent
-  | CommunityActiveChangedEvent
-  | ProfileUpdateRequestedEvent
-  | ProfileUpdatedEvent
-  | ProfileUpdateFailedEvent
-  | ResourceFetchRequestedEvent
-  | ResourceFetchSuccessEvent
-  | ResourceFetchFailedEvent
-  | ResourceCreateRequestedEvent
-  | ResourceCreatedEvent
-  | ResourceCreateFailedEvent
-  | ResourceUpdateRequestedEvent
-  | ResourceUpdatedEvent
-  | ResourceUpdateFailedEvent
-  | ResourceDeleteRequestedEvent
-  | ResourceDeletedEvent
-  | ResourceDeleteFailedEvent
-  | ThanksFetchRequestedEvent
-  | ThanksFetchSuccessEvent
-  | ThanksFetchFailedEvent
-  | ThanksCreateRequestedEvent
-  | ThanksCreatedEvent
-  | ThanksCreateFailedEvent
-  | ThanksUpdateRequestedEvent
-  | ThanksUpdatedEvent
-  | ThanksUpdateFailedEvent
-  | ThanksDeleteRequestedEvent
-  | ThanksDeletedEvent
-  | ThanksDeleteFailedEvent
-  | TrustUpdatedEvent
-  | NotificationShowEvent
-  | NavigationRedirectEvent;
+// Map of event types to their data shapes
+type EventMap = {
+  // Auth Events
+  'auth.signIn.requested': AuthSignInRequestedEvent['data'];
+  'auth.signUp.requested': AuthSignUpRequestedEvent['data'];
+  'auth.signOut.requested': AuthSignOutRequestedEvent['data'];
+  'auth.signIn.success': AuthSignInSuccessEvent['data'];
+  'auth.signUp.success': AuthSignUpSuccessEvent['data'];
+  'auth.signIn.failed': AuthSignInFailedEvent['data'];
+  'auth.signUp.failed': AuthSignUpFailedEvent['data'];
+  'auth.signOut.success': AuthSignOutSuccessEvent['data'];
+  'auth.signOut.failed': AuthSignOutFailedEvent['data'];
+  
+  // Community Events
+  'community.fetch.requested': CommunityFetchRequestedEvent['data'];
+  'community.fetch.success': CommunityFetchSuccessEvent['data'];
+  'community.fetch.failed': CommunityFetchFailedEvent['data'];
+  'community.create.requested': CommunityCreateRequestedEvent['data'];
+  'community.created': CommunityCreatedEvent['data'];
+  'community.create.failed': CommunityCreateFailedEvent['data'];
+  'community.update.requested': CommunityUpdateRequestedEvent['data'];
+  'community.updated': CommunityUpdatedEvent['data'];
+  'community.update.failed': CommunityUpdateFailedEvent['data'];
+  'community.delete.requested': CommunityDeleteRequestedEvent['data'];
+  'community.deleted': CommunityDeletedEvent['data'];
+  'community.delete.failed': CommunityDeleteFailedEvent['data'];
+  'community.active.change.requested': CommunityActiveChangeRequestedEvent['data'];
+  'community.active.changed': CommunityActiveChangedEvent['data'];
+  
+  // User Events
+  'user.update.requested': UserUpdateRequestedEvent['data'];
+  'user.updated': UserUpdatedEvent['data'];
+  'user.update.failed': UserUpdateFailedEvent['data'];
+  
+  // Resource Events
+  'resource.fetch.requested': ResourceFetchRequestedEvent['data'];
+  'resource.fetch.success': ResourceFetchSuccessEvent['data'];
+  'resource.fetch.failed': ResourceFetchFailedEvent['data'];
+  'resource.create.requested': ResourceCreateRequestedEvent['data'];
+  'resource.created': ResourceCreatedEvent['data'];
+  'resource.create.failed': ResourceCreateFailedEvent['data'];
+  'resource.update.requested': ResourceUpdateRequestedEvent['data'];
+  'resource.updated': ResourceUpdatedEvent['data'];
+  'resource.update.failed': ResourceUpdateFailedEvent['data'];
+  'resource.delete.requested': ResourceDeleteRequestedEvent['data'];
+  'resource.deleted': ResourceDeletedEvent['data'];
+  'resource.delete.failed': ResourceDeleteFailedEvent['data'];
+  
+  // Thanks Events
+  'thanks.fetch.requested': ThanksFetchRequestedEvent['data'];
+  'thanks.fetch.success': ThanksFetchSuccessEvent['data'];
+  'thanks.fetch.failed': ThanksFetchFailedEvent['data'];
+  'thanks.create.requested': ThanksCreateRequestedEvent['data'];
+  'thanks.created': ThanksCreatedEvent['data'];
+  'thanks.create.failed': ThanksCreateFailedEvent['data'];
+  'thanks.update.requested': ThanksUpdateRequestedEvent['data'];
+  'thanks.updated': ThanksUpdatedEvent['data'];
+  'thanks.update.failed': ThanksUpdateFailedEvent['data'];
+  'thanks.delete.requested': ThanksDeleteRequestedEvent['data'];
+  'thanks.deleted': ThanksDeletedEvent['data'];
+  'thanks.delete.failed': ThanksDeleteFailedEvent['data'];
+  
+  // Other Events
+  'trust.updated': TrustUpdatedEvent['data'];
+  'notification.show': NotificationShowEvent['data'];
+  'navigation.redirect': NavigationRedirectEvent['data'];
+};
+
+// Union of all event types
+export type EventType = keyof EventMap;
+
+// Main AppEvent type
+export type AppEvent = {
+  [K in keyof EventMap]: {
+    type: K;
+    id: string;
+    timestamp: number;
+    source: 'user' | 'system' | 'api';
+    userId?: string;
+    data: EventMap[K];
+  };
+}[keyof EventMap];
+
+// Type guard for specific event types
+export function isEventType<T extends EventType>(
+  event: AppEvent,
+  type: T
+): event is Extract<AppEvent, { type: T }> {
+  return event.type === type;
+}
+
+// Type to get the data type for a specific event type
+export type EventData<T extends EventType> = EventMap[T];
