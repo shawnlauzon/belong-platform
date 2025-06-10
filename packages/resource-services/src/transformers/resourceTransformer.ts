@@ -1,5 +1,10 @@
-import type { Database } from '@belongnetwork/core';
-import type { Resource, ResourceData, Coordinates, UserRow } from '@belongnetwork/core';
+import type { Community, Database } from '@belongnetwork/core';
+import type {
+  Resource,
+  ResourceData,
+  Coordinates,
+  UserRow,
+} from '@belongnetwork/core';
 import { toDomainUser } from '@belongnetwork/core';
 
 type ResourceRow = Database['public']['Tables']['resources']['Row'] & {
@@ -19,22 +24,11 @@ export const toDomainResource = (dbResource: ResourceRow): Resource => {
   // Transform PostGIS point to Coordinates
   const coords = location ? parsePostGisPoint(location) : { lat: 0, lng: 0 };
 
-  const timesHelped = 'times_helped' in dbResource ? Number(dbResource.times_helped) || 0 : 0;
-  
   return {
     ...rest,
     location: coords,
-    times_helped: timesHelped,
-    owner: owner ? toDomainUser(owner) : toDomainUser({
-      id: dbResource.creator_id,
-      created_at: dbResource.created_at,
-      updated_at: dbResource.updated_at,
-      email: '',
-      user_metadata: null,
-      first_name: null,
-      last_name: null,
-      avatar_url: null,
-    } as UserRow),
+    community: toDomainCommunity(dbResource.community),
+    owner: toDomainUser(owner),
   } as Resource;
 };
 
@@ -123,3 +117,20 @@ export const resourceDataToDb = (
     location: location ? toPostGisPoint(location) : undefined,
   };
 };
+function toDomainCommunity(
+  dbCommunity: Database['public']['Tables']['communities']['Row']
+): Community {
+  return {
+    id: dbCommunity.id,
+    name: dbCommunity.name,
+    country: dbCommunity.country,
+    state: dbCommunity.state,
+    city: dbCommunity.city,
+    neighborhood: dbCommunity.neighborhood,
+    description: dbCommunity.description,
+    center: parsePostGisPoint(dbCommunity.center),
+    created_at: new Date(dbCommunity.created_at),
+    updated_at: new Date(dbCommunity.updated_at),
+    member_count: dbCommunity.member_count,
+  };
+}

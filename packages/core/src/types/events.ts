@@ -8,6 +8,7 @@ import {
   ResourceData,
   NewThanks,
   ThanksData,
+  NewResource,
 } from './entities';
 import { User } from '@supabase/supabase-js';
 
@@ -44,14 +45,14 @@ export interface AuthSignUpRequestedEvent extends BaseEvent {
 export interface AuthSignInSuccessEvent extends BaseEvent {
   type: 'auth.signIn.success';
   data: {
-    user: User | null;
+    user: User;
   };
 }
 
 export interface AuthSignUpSuccessEvent extends BaseEvent {
   type: 'auth.signUp.success';
   data: {
-    user: User | null;
+    user: User;
   };
 }
 
@@ -136,7 +137,7 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
 
 export interface CommunityUpdateRequestedEvent extends BaseEvent {
   type: 'community.update.requested';
-  data: CommunityData;
+  data: Partial<CommunityData>;
 }
 
 export interface CommunityUpdatedEvent extends BaseEvent {
@@ -190,12 +191,12 @@ export interface CommunityActiveChangedEvent extends BaseEvent {
 // User Events
 export interface UserUpdateRequestedEvent extends BaseEvent {
   type: 'user.update.requested';
-  data: UserData;
+  data: Partial<UserData>;
 }
 
 export interface UserUpdatedEvent extends BaseEvent {
   type: 'user.updated';
-  data: UserData;
+  data: User;
 }
 
 export interface UserUpdateFailedEvent extends BaseEvent {
@@ -230,7 +231,7 @@ export interface ResourceFetchFailedEvent extends BaseEvent {
 
 export interface ResourceCreateRequestedEvent extends BaseEvent {
   type: 'resource.create.requested';
-  data: Omit<Resource, 'id' | 'created_at' | 'times_helped'>;
+  data: NewResource;
 }
 
 export interface ResourceCreatedEvent extends BaseEvent {
@@ -247,7 +248,7 @@ export interface ResourceCreateFailedEvent extends BaseEvent {
 
 export interface ResourceUpdateRequestedEvent extends BaseEvent {
   type: 'resource.update.requested';
-  data: ResourceData;
+  data: Partial<ResourceData>;
 }
 
 export interface ResourceUpdatedEvent extends BaseEvent {
@@ -322,7 +323,7 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
 
 export interface ThanksUpdateRequestedEvent extends BaseEvent {
   type: 'thanks.update.requested';
-  data: ThanksData;
+  data: Partial<ThanksData>;
 }
 
 export interface ThanksUpdatedEvent extends BaseEvent {
@@ -615,7 +616,7 @@ type EventMap = {
   'auth.signUp.failed': AuthSignUpFailedEvent['data'];
   'auth.signOut.success': AuthSignOutSuccessEvent['data'];
   'auth.signOut.failed': AuthSignOutFailedEvent['data'];
-  
+
   // Community Events
   'community.fetch.requested': CommunityFetchRequestedEvent['data'];
   'community.fetch.success': CommunityFetchSuccessEvent['data'];
@@ -631,12 +632,12 @@ type EventMap = {
   'community.delete.failed': CommunityDeleteFailedEvent['data'];
   'community.active.change.requested': CommunityActiveChangeRequestedEvent['data'];
   'community.active.changed': CommunityActiveChangedEvent['data'];
-  
+
   // User Events
   'user.update.requested': UserUpdateRequestedEvent['data'];
   'user.updated': UserUpdatedEvent['data'];
   'user.update.failed': UserUpdateFailedEvent['data'];
-  
+
   // Resource Events
   'resource.fetch.requested': ResourceFetchRequestedEvent['data'];
   'resource.fetch.success': ResourceFetchSuccessEvent['data'];
@@ -650,7 +651,7 @@ type EventMap = {
   'resource.delete.requested': ResourceDeleteRequestedEvent['data'];
   'resource.deleted': ResourceDeletedEvent['data'];
   'resource.delete.failed': ResourceDeleteFailedEvent['data'];
-  
+
   // Thanks Events
   'thanks.fetch.requested': ThanksFetchRequestedEvent['data'];
   'thanks.fetch.success': ThanksFetchSuccessEvent['data'];
@@ -664,7 +665,7 @@ type EventMap = {
   'thanks.delete.requested': ThanksDeleteRequestedEvent['data'];
   'thanks.deleted': ThanksDeletedEvent['data'];
   'thanks.delete.failed': ThanksDeleteFailedEvent['data'];
-  
+
   // Other Events
   'trust.updated': TrustUpdatedEvent['data'];
   'notification.show': NotificationShowEvent['data'];

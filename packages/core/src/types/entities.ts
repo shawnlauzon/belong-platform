@@ -1,7 +1,7 @@
 export interface User extends UserData {
   id: string;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export type NewUser = Omit<UserData, 'id'>;
@@ -53,11 +53,13 @@ export interface MembershipData {
   community_id: string;
 }
 
-export interface Resource extends ResourceData {
+export interface Resource
+  extends Omit<ResourceData, 'owner_id' | 'community_id'> {
   owner: User;
+  community: Community;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
   distance_minutes?: number; // Calculated field for driving time
 }
 
@@ -65,12 +67,14 @@ export type NewResource = Omit<ResourceData, 'id'>;
 
 export interface ResourceData {
   id: string;
+  owner_id: string;
+  community_id: string;
   type: 'offer' | 'request';
   category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
   title: string;
   description: string;
   image_urls: string[];
-  location: Coordinates;
+  location?: Coordinates;
   pickup_instructions?: string;
   parking_info?: string;
   meetup_flexibility: 'home_only' | 'public_meetup_ok' | 'delivery_possible';
@@ -82,8 +86,8 @@ export interface Thanks extends ThanksData {
   from_user: User;
   to_user: User;
   resource: Resource;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export type NewThanks = Omit<ThanksData, 'id'>;
@@ -101,6 +105,8 @@ export interface ThanksData {
 export interface Community extends CommunityData {
   name: string;
   member_count: number;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export type NewCommunity = Omit<CommunityData, 'id'>;
