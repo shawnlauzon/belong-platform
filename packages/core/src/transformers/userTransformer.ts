@@ -1,7 +1,7 @@
 import type { Database } from '../types/database';
 import type { User } from '../types/entities';
 
-type UserRow = Database['public']['Tables']['profiles']['Row'] & {
+export type UserRow = Database['public']['Tables']['profiles']['Row'] & {
   first_name?: string | null;
   last_name?: string | null;
   avatar_url?: string | null;
