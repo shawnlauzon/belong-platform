@@ -8,7 +8,7 @@ import { ThanksDeleter } from '../services/ThanksDeleter';
  * Initialize all thanks event handlers
  * This function sets up event listeners for all thanks-related operations
  */
-export function initializeThanksEvents(): void {
+export function initializeTrustEvents(): void {
   logger.info('🙏 ThanksEvents: Initializing thanks event handlers...');
 
   try {
@@ -18,9 +18,14 @@ export function initializeThanksEvents(): void {
     ThanksUpdater.initialize();
     ThanksDeleter.initialize();
 
-    logger.info('✅ ThanksEvents: All thanks event handlers initialized successfully');
+    logger.info(
+      '✅ ThanksEvents: All thanks event handlers initialized successfully'
+    );
   } catch (error) {
-    logger.error('❌ ThanksEvents: Failed to initialize thanks event handlers', { error });
+    logger.error(
+      '❌ ThanksEvents: Failed to initialize thanks event handlers',
+      { error }
+    );
     throw error;
   }
 }
