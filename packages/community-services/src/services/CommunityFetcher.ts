@@ -1,11 +1,6 @@
-import {
-  supabase,
-  eventBus,
-  logger,
-  logApiCall,
-  logApiResponse,
-} from '@belongnetwork/core';
-import type { Community, Coordinates, AppEvent } from '@belongnetwork/core';
+import { supabase, eventBus, logger, logApiCall, logApiResponse } from '@belongnetwork/core';
+import { toDomainCommunity, type CommunityRow } from '@belongnetwork/core/transformers';
+import type { Community, AppEvent } from '@belongnetwork/core';
 
 export class CommunityFetcher {
   private static initialized = false;
@@ -20,34 +15,28 @@ export class CommunityFetcher {
 
     eventBus.on('community.fetch.requested', (event: AppEvent) => {
       if (event.type !== 'community.fetch.requested') {
-        logger.error('🏘️ CommunityFetcher: Received invalid event type', {
-          event,
-        });
+        logger.error('🏘️ CommunityFetcher: Received invalid event type', { event });
         return;
       }
 
-      logger.debug('🏘️ CommunityFetcher: Fetch requested', {
-        filters: event.data.filters,
-      });
+      logger.debug('🏘️ CommunityFetcher: Fetch requested');
+      this._fetchCommunities();
     });
-
-    this._fetchCommunities();
 
     this.initialized = true;
     logger.info('✅ CommunityFetcher: Initialized successfully');
   }
 
-  private static async _fetchCommunities(filters?: any): Promise<void> {
-    logger.debug('🏘️ CommunityFetcher: Starting community fetch', { filters });
+  private static async _fetchCommunities(): Promise<void> {
+    logger.debug('🏘️ CommunityFetcher: Starting community fetch');
 
     try {
-      logApiCall('GET', 'supabase/communities', { filters });
+      logApiCall('GET', 'supabase/communities');
 
-      // Build the query
-      let query = supabase
+      // Fetch all communities from the database
+      const { data, error } = await supabase
         .from('communities')
-        .select(
-          `
+        .select(`
           id,
           name,
           level,
@@ -59,40 +48,8 @@ export class CommunityFetcher {
           creator_id,
           created_at,
           updated_at
-        `
-        )
+        `)
         .order('created_at', { ascending: false });
-
-      // Apply filters if provided
-      if (filters) {
-        if (filters.level) {
-          query = query.eq('level', filters.level);
-        }
-        if (filters.parent_id) {
-          query = query.eq('parent_id', filters.parent_id);
-        }
-        if (filters.searchTerm) {
-          query = query.or(
-            `name.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`
-          );
-        }
-        if (filters.country) {
-          // For country filter, we need to find communities with that name and level 'country'
-          query = query
-            .eq('level', 'country')
-            .ilike('name', `%${filters.country}%`);
-        }
-        if (filters.state) {
-          query = query
-            .eq('level', 'state')
-            .ilike('name', `%${filters.state}%`);
-        }
-        if (filters.city) {
-          query = query.eq('level', 'city').ilike('name', `%${filters.city}%`);
-        }
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         logApiResponse('GET', 'supabase/communities', null, error);
@@ -106,65 +63,28 @@ export class CommunityFetcher {
         return;
       }
 
-      // Transform the data to match our Community interface
-      const communities: Community[] = data.map((row: any) => {
-        let center: Coordinates | undefined;
-
-        // Parse the PostGIS POINT format: "POINT(lng lat)"
-        if (row.center && typeof row.center === 'string') {
-          const match = row.center.match(/POINT\(([^)]+)\)/);
-          if (match) {
-            const [lng, lat] = match[1].split(' ').map(Number);
-            if (!isNaN(lng) && !isNaN(lat)) {
-              center = { lat, lng };
-            } else {
-              logger.warn(
-                '🏘️ CommunityFetcher: Invalid coordinates in center string',
-                {
-                  communityId: row.id,
-                  centerString: row.center,
-                }
-              );
-            }
-          } else {
-            logger.warn('🏘️ CommunityFetcher: Could not parse center string', {
-              communityId: row.id,
-              centerString: row.center,
-            });
-          }
-        } else if (row.center && typeof row.center === 'object') {
-          // Handle if center is already parsed as an object
-          center = row.center;
-        }
-
-        return {
-          id: row.id,
-          name: row.name,
-          level: row.level,
-          parent_id: row.parent_id,
-          description: row.description,
-          center,
-          radius_km: row.radius_km,
-          member_count: row.member_count || 0,
-        };
+      // Create a map of all communities for parent lookup
+      const allCommunitiesMap = new Map<string, CommunityRow>();
+      data.forEach((community) => {
+        allCommunitiesMap.set(community.id, community as CommunityRow);
       });
 
-      logApiResponse('GET', 'supabase/communities', {
-        count: communities.length,
+      // Transform each community using the transformer
+      const communities: Community[] = data.map((row) => {
+        return toDomainCommunity(row as CommunityRow, allCommunitiesMap);
       });
-      logger.info('✅ CommunityFetcher: Successfully fetched communities', {
-        count: communities.length,
+
+      logApiResponse('GET', 'supabase/communities', { count: communities.length });
+      logger.info('✅ CommunityFetcher: Successfully fetched communities', { 
+        count: communities.length 
       });
 
       eventBus.emit('community.fetch.success', { communities });
     } catch (error) {
-      logger.error('❌ CommunityFetcher: Failed to fetch communities', {
-        error,
-      });
+      logger.error('❌ CommunityFetcher: Failed to fetch communities', { error });
       logApiResponse('GET', 'supabase/communities', null, error);
-
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       eventBus.emit('community.fetch.failed', { error: errorMessage });
     }
   }
