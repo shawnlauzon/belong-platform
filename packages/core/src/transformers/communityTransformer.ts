@@ -1,52 +1,58 @@
 import type { Database } from '../types/database';
-import type { Community, Coordinates } from '../types/entities';
+import type {
+  Community,
+  CommunityData,
+  Coordinates,
+  NewCommunity,
+} from '../types/entities';
 
-export type CommunityRow = Database['public']['Tables']['communities']['Row'];
+type CommunityRow = Database['public']['Tables']['communities']['Row'];
+
+const allCommunitiesMap = new Map<string, Community>();
 
 /**
  * Transforms a database community row to a domain Community with hierarchical data
  */
-export const toDomainCommunity = (
-  dbCommunity: CommunityRow,
-  allCommunitiesMap: Map<string, CommunityRow>
-): Community => {
+export const toDomainCommunity = (dbCommunity: CommunityRow): Community => {
   if (!dbCommunity) {
     throw new Error('Database community is required');
   }
 
-  // Get the hierarchical path by traversing parent relationships
-  const hierarchyPath = getHierarchyPath(dbCommunity, allCommunitiesMap);
-
-  return {
-    id: dbCommunity.id,
-    name: dbCommunity.name,
-    description: dbCommunity.description,
-    member_count: dbCommunity.member_count,
-    center: dbCommunity.center ? parsePostGisPoint(dbCommunity.center) : undefined,
-    country: hierarchyPath.country || '',
-    state: hierarchyPath.state,
-    city: hierarchyPath.city || '',
-    neighborhood: hierarchyPath.neighborhood,
-  };
+  // FIXME if it's not here, we should query for it
+  return allCommunitiesMap.get(dbCommunity.id)!;
 };
 
 /**
  * Transforms a domain Community to a database insert/update object
  * Note: This doesn't handle the hierarchical fields as they are derived
  */
-export const toDbCommunity = (
-  community: Partial<Community>
-): Partial<Database['public']['Tables']['communities']['Insert']> => {
+export const toDbCommunity = (community: CommunityData): CommunityRow => {
   const { center, country, state, city, neighborhood, ...rest } = community;
 
   // Transform Coordinates to PostGIS point
   const dbCenter = center ? toPostGisPoint(center) : undefined;
 
+  if (!community.parent_id) {
+    throw new Error('Parent community not found');
+  }
+
+  const parentCommunity = allCommunitiesMap.get(community.parent_id);
+
   // Note: We don't include the hierarchical fields (country, state, city, neighborhood)
   // as they are derived from the parent relationships in the database
   return {
     ...rest,
+    parent_id: community.parent_id,
     center: dbCenter,
+    creator_id: community.creator_id,
+    // FIXME level is set to the lowest level which is not undefined
+    level: 'neighborhood',
+    radius_km: community.radius_km ?? null,
+
+    // FIXME this isn't right
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    member_count: 0,
   };
 };
 
@@ -63,22 +69,22 @@ function getHierarchyPath(
   neighborhood?: string;
 } {
   const hierarchy: Record<string, string> = {};
-  
+
   // Start with the current community
   let current = community;
-  
+
   // Add the current community to the hierarchy based on its level
   hierarchy[current.level] = current.name;
-  
+
   // Traverse up the parent chain
   while (current.parent_id) {
     const parent = allCommunitiesMap.get(current.parent_id);
     if (!parent) break;
-    
+
     hierarchy[parent.level] = parent.name;
     current = parent;
   }
-  
+
   return {
     country: hierarchy.country,
     state: hierarchy.state,

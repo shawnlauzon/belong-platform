@@ -1,7 +1,15 @@
 import type { Database } from '../types/database';
 import type { User } from '../types/entities';
+import type { Json } from '../types/database';
 
 export type UserRow = Database['public']['Tables']['profiles']['Row'];
+
+interface UserMetadata {
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  [key: string]: Json | undefined; // Keep the index signature for other potential properties
+}
 
 /**
  * Transforms a database user row to a domain User
@@ -11,17 +19,21 @@ export const toDomainUser = (dbUser: UserRow): User => {
     throw new Error('Database user is required');
   }
 
-  const { email, user_metadata, ...rest } = dbUser;
-  const metadata = (typeof user_metadata === 'object' && user_metadata !== null) ? user_metadata : {};
+  const { user_metadata, ...rest } = dbUser;
 
-  return {
+  const metadata = user_metadata as UserMetadata;
+
+  // extract the fields in metadata and create an object
+  const user: User = {
     ...rest,
-    email: email || '',
-    first_name: (metadata as any).first_name || '',
-    last_name: (metadata as any).last_name || '',
-    avatar_url: (metadata as any).avatar_url || null,
-    ...(metadata as Record<string, unknown>),
-  } as User;
+    first_name: metadata?.['first_name'] || '',
+    last_name: metadata?.['last_name'],
+    avatar_url: metadata?.['avatar_url'],
+    created_at: new Date(rest.created_at),
+    updated_at: new Date(rest.updated_at),
+  };
+
+  return user;
 };
 
 /**

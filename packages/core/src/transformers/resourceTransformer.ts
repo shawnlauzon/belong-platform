@@ -1,17 +1,10 @@
 import type { Database } from '../types/database';
 import type { Resource, ResourceData, Coordinates } from '../types/entities';
+import { toDomainCommunity } from './communityTransformer';
 import { toDomainUser } from './userTransformer';
 
-export type ResourceRow = Omit<
-  Database['public']['Tables']['resources']['Row'],
-  'times_helped'
-> & {
-  times_helped?: number;
-  owner?: Database['public']['Tables']['profiles']['Row'] & {
-    first_name?: string | null;
-    last_name?: string | null;
-    avatar_url?: string | null;
-  };
+type ResourceRow = Database['public']['Tables']['resources']['Row'] & {
+  owner: Database['public']['Tables']['profiles']['Row'] 
 };
 
 /**
@@ -30,17 +23,10 @@ export const toDomainResource = (dbResource: ResourceRow): Resource => {
   return {
     ...rest,
     location: coords,
-    times_helped: 'times_helped' in dbResource ? dbResource.times_helped : 0,
-    owner: owner
-      ? toDomainUser(owner)
-      : {
-          id: dbResource.creator_id,
-          created_at: dbResource.created_at,
-          updated_at: dbResource.updated_at,
-          email: '',
-          user_metadata: null,
-        },
-  } as Resource;
+    owner: toDomainUser(owner),
+    community: // find community based on community_id
+    toDomainCommunity(dbResource.community_id),
+    
 };
 
 /**

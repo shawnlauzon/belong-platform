@@ -1,17 +1,12 @@
 import { faker } from '@faker-js/faker';
 
-import type {
-  User,
-  Resource,
-  ResourceData,
-  AuthUser,
-} from '@belongnetwork/core';
+import type { User, Resource, ResourceData, AuthUser } from '../';
 
 /**
  * Creates a mock domain User object
  */
 export function createMockUser(overrides: Partial<User> = {}): User {
-  const now = new Date();
+  const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
 
@@ -92,16 +87,7 @@ export function createMockResource(
     created_at: now,
     updated_at: now,
     owner,
-    community: {
-      id: faker.string.uuid(),
-      name: faker.location.city(),
-      description: faker.lorem.sentence(),
-      member_count: faker.number.int({ min: 10, max: 1000 }),
-      country: faker.location.country(),
-      city: faker.location.city(),
-      created_at: now,
-      updated_at: now,
-    },
+    community: createMockCommunity(),
     distance_minutes: faker.number.int({ min: 1, max: 60 }),
     ...overrides,
   };
@@ -118,5 +104,20 @@ export function createMockResourceWithOwner(
   return {
     ...resource,
     owner,
+  };
+}
+
+export function createMockCommunity() {
+  return {
+    id: faker.string.uuid(),
+    name: faker.location.city(),
+    description: faker.lorem.sentence(),
+    member_count: faker.number.int({ min: 10, max: 140 }),
+    country: faker.location.country(),
+    city: faker.location.city(),
+    created_at: faker.date.past(),
+    updated_at: faker.date.past(),
+    parent_id: faker.string.uuid(),
+    creator_id: faker.string.uuid(),
   };
 }

@@ -100,25 +100,25 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string | null
-          email: string
+          created_at: string
+          email: string | null
           id: string
-          updated_at: string | null
-          user_metadata: Json | null
+          updated_at: string
+          user_metadata: Json
         }
         Insert: {
-          created_at?: string | null
-          email: string
+          created_at?: string
+          email?: string | null
           id: string
-          updated_at?: string | null
-          user_metadata?: Json | null
+          updated_at?: string
+          user_metadata: Json
         }
         Update: {
-          created_at?: string | null
-          email?: string
+          created_at?: string
+          email?: string | null
           id?: string
-          updated_at?: string | null
-          user_metadata?: Json | null
+          updated_at?: string
+          user_metadata?: Json
         }
         Relationships: []
       }
@@ -126,6 +126,7 @@ export type Database = {
         Row: {
           availability: string | null
           category: string
+          community_id: string
           created_at: string
           description: string
           id: string
@@ -143,6 +144,7 @@ export type Database = {
         Insert: {
           availability?: string | null
           category: string
+          community_id?: string
           created_at?: string
           description: string
           id?: string
@@ -160,6 +162,7 @@ export type Database = {
         Update: {
           availability?: string | null
           category?: string
+          community_id?: string
           created_at?: string
           description?: string
           id?: string

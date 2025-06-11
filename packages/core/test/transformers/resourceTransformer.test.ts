@@ -5,8 +5,12 @@ import {
   parsePostGisPoint,
   toPostGisPoint,
   resourceDataToDb,
-} from '../src/transformers/resourceTransformer';
-import { createMockResource, createMockDbProfile, createMockDbResourceWithOwner } from '@belongnetwork/test-utils';
+} from '@belongnetwork/core';
+import {
+  createMockResource,
+  createMockDbProfile,
+  createMockDbResourceWithOwner,
+} from '@belongnetwork/core';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');

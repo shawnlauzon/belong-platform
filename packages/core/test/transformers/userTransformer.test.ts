@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { toDomainUser, toDbUser } from '../src/transformers/userTransformer';
-import { createMockUser, createMockDbProfile } from '@belongnetwork/test-utils';
+import { toDomainUser, toDbUser } from '../../src/transformers/userTransformer';
+import { createMockUser, createMockDbProfile } from '@belongnetwork/core';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');

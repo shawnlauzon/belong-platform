@@ -120,6 +120,9 @@ export interface CommunityData {
   neighborhood?: string;
   description: string;
   center?: Coordinates;
+  radius_km?: number;
+  parent_id: string;
+  creator_id: string;
 }
 
 export interface MeetupSpot {
