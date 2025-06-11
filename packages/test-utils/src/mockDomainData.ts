@@ -5,13 +5,13 @@ import type {
   Resource,
   ResourceData,
   AuthUser,
-} from '../../src/types/entities';
+} from '@belongnetwork/core';
 
 /**
  * Creates a mock domain User object
  */
 export function createMockUser(overrides: Partial<User> = {}): User {
-  const now = new Date().toISOString();
+  const now = new Date();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
 
@@ -51,7 +51,7 @@ export function createMockAuthUser(
 export function createMockResource(
   overrides: Partial<Resource> = {}
 ): Resource {
-  const now = new Date().toISOString();
+  const now = new Date();
   const categories: Array<ResourceData['category']> = [
     'tools',
     'skills',
@@ -92,6 +92,16 @@ export function createMockResource(
     created_at: now,
     updated_at: now,
     owner,
+    community: {
+      id: faker.string.uuid(),
+      name: faker.location.city(),
+      description: faker.lorem.sentence(),
+      member_count: faker.number.int({ min: 10, max: 1000 }),
+      country: faker.location.country(),
+      city: faker.location.city(),
+      created_at: now,
+      updated_at: now,
+    },
     distance_minutes: faker.number.int({ min: 1, max: 60 }),
     ...overrides,
   };
@@ -110,8 +120,3 @@ export function createMockResourceWithOwner(
     owner,
   };
 }
-
-// Example usage:
-// const mockUser = createMockUser();
-// const mockResource = createMockResource();
-// const resourceWithCustomOwner = createMockResourceWithOwner(mockUser);

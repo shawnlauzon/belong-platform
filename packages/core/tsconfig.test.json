@@ -3,7 +3,10 @@
   "compilerOptions": {
     "types": ["node", "jsdom", "@testing-library/jest-dom"],
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@belongnetwork/test-utils": ["../test-utils/src"]
+    }
   },
   "include": ["src/**/*", "test/**/*"]
 }

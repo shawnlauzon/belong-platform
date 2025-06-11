@@ -1,12 +1,9 @@
 import { faker } from '@faker-js/faker';
-import type { Database } from '../../src/types/database';
-
-type ResourceRow = Database['public']['Tables']['resources']['Row'];
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+import type { UserRow, ResourceRow } from '@belongnetwork/core/transformers';
 
 export function createMockDbProfile(
-  overrides: Partial<ProfileRow> = {}
-): ProfileRow {
+  overrides: Partial<UserRow> = {}
+): UserRow {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
   const now = new Date().toISOString();
@@ -36,11 +33,9 @@ export function createMockDbResource(
   const now = new Date().toISOString();
   const categories = [
     'tools',
-    'furniture',
-    'clothing',
-    'electronics',
-    'books',
-    'vehicles',
+    'skills',
+    'food',
+    'supplies',
     'other',
   ];
 
@@ -66,26 +61,28 @@ export function createMockDbResource(
       'mornings',
     ]),
     meetup_flexibility: faker.helpers.arrayElement([
-      'flexible',
-      'semi-flexible',
-      'strict',
+      'home_only',
+      'public_meetup_ok',
+      'delivery_possible',
     ]),
     parking_info: faker.lorem.sentence(),
     pickup_instructions: faker.lorem.sentences(2),
+    times_helped: faker.number.int({ min: 0, max: 50 }),
     ...overrides,
   };
 }
 
 /**
- * Creates a mock domain Resource with a custom owner
+ * Creates a mock database Resource with a custom owner
  */
 export function createMockDbResourceWithOwner(
-  owner: ProfileRow,
+  owner: UserRow,
   overrides: Partial<ResourceRow> = {}
-): ResourceRow {
+): ResourceRow & { owner: UserRow } {
   const resource = createMockDbResource(overrides);
   return {
     ...resource,
     creator_id: owner.id,
+    owner,
   };
 }

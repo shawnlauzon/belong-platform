@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { toDomainUser, toDbUser } from '../src/transformers/userTransformer';
-import { createMockUser } from './test-utils/mockDomainData';
-import { createMockDbProfile } from './test-utils/mockDbData';
+import { createMockUser, createMockDbProfile } from '@belongnetwork/test-utils';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');
@@ -62,7 +61,14 @@ describe('User Transformer', () => {
       const result = toDbUser(domainUser);
 
       // Verify the transformation
-      expect(result).toEqual(domainUser);
+      expect(result).toEqual({
+        ...domainUser,
+        user_metadata: {
+          first_name: domainUser.first_name,
+          last_name: domainUser.last_name,
+          avatar_url: domainUser.avatar_url,
+        },
+      });
     });
 
     it('should handle partial updates', () => {
@@ -79,9 +85,10 @@ describe('User Transformer', () => {
       // Verify only the specified fields are included
       expect(result).toEqual({
         id: 'user123',
-        first_name: 'John',
-        last_name: 'Doe',
-        avatar_url: null, // Default for avatar_url when not provided
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
       });
     });
   });

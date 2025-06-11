@@ -1,0 +1,26 @@
+{
+  "name": "@belongnetwork/test-utils",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build --config vite.config.mts",
+    "dev": "vite build --watch --config vite.config.mts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@belongnetwork/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-dts": "^3.9.1"
+  }
+}
