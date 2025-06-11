@@ -4,11 +4,18 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/core",
+    "packages/test-utils",
+    "packages/community-services",
+    "packages/resource-services",
+    "packages/trust-services",
+    "packages/user-services",
+    "packages/components",
+    "packages/app"
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/app dev",
-    "build": "pnpm -r build",
+    "build": "pnpm -r --filter=!@belongnetwork/components build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
