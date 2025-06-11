@@ -55,9 +55,7 @@ export class ResourceFetcher {
           owner:profiles!resources_creator_id_fkey(
             id,
             email,
-            first_name,
-            last_name,
-            avatar_url,
+            user_metadata,
             created_at,
             updated_at
           )
