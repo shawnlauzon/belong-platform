@@ -68,12 +68,16 @@ export function useCommunityTransformers(): {
     }
 
     // A Community can only be neighborhood or city
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       country,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       state,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       city,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       neighborhood,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       creator,
       ...communityWithoutHierarchy
     } = community;
