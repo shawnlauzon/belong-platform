@@ -3,12 +3,11 @@ import {
   Community,
   Thanks,
   NewCommunity,
-  CommunityData,
-  UserData,
-  ResourceData,
   NewThanks,
-  ThanksData,
   NewResource,
+  UpdateCommunity,
+  UpdateUser,
+  UpdateResource,
 } from './entities';
 import { User } from '@supabase/supabase-js';
 
@@ -137,7 +136,7 @@ export interface CommunityCreateFailedEvent extends BaseEvent {
 
 export interface CommunityUpdateRequestedEvent extends BaseEvent {
   type: 'community.update.requested';
-  data: Partial<CommunityData>;
+  data: UpdateCommunity;
 }
 
 export interface CommunityUpdatedEvent extends BaseEvent {
@@ -191,7 +190,7 @@ export interface CommunityActiveChangedEvent extends BaseEvent {
 // User Events
 export interface UserUpdateRequestedEvent extends BaseEvent {
   type: 'user.update.requested';
-  data: Partial<UserData>;
+  data: UpdateUser;
 }
 
 export interface UserUpdatedEvent extends BaseEvent {
@@ -248,7 +247,7 @@ export interface ResourceCreateFailedEvent extends BaseEvent {
 
 export interface ResourceUpdateRequestedEvent extends BaseEvent {
   type: 'resource.update.requested';
-  data: Partial<ResourceData>;
+  data: UpdateResource;
 }
 
 export interface ResourceUpdatedEvent extends BaseEvent {
@@ -323,7 +322,7 @@ export interface ThanksCreateFailedEvent extends BaseEvent {
 
 export interface ThanksUpdateRequestedEvent extends BaseEvent {
   type: 'thanks.update.requested';
-  data: Partial<ThanksData>;
+  data: Partial<Thanks>;
 }
 
 export interface ThanksUpdatedEvent extends BaseEvent {

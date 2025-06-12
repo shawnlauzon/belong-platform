@@ -15,11 +15,8 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@belongnetwork/core": [
-        "./packages/core/src"
-      ],
-      "@belongnetwork/core/*": [
-        "./packages/core/src/*"
+      "@belongnetwork/core/test-utils": [
+        "./packages/core/src/test-utils"
       ]
     },
     "lib": [
@@ -27,7 +24,7 @@
       "dom.iterable",
       "esnext"
     ],
-    "target": "es2017"
+    "target": "es2017",
   },
   "include": [
     "src/**/*",

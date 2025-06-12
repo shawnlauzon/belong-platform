@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import type { Database } from '../types/database';
+import { Community } from 'src/types';
 
 type UserRow = Database['public']['Tables']['profiles']['Row'];
 type ResourceRow = Database['public']['Tables']['resources']['Row'];
@@ -89,8 +90,7 @@ export function createMockDbResourceWithOwner(
  * Creates a mock database Community row
  */
 export function createMockDbCommunity(
-  overrides: Partial<CommunityRow> = {},
-  parent: CommunityRow | null = null
+  overrides: Partial<CommunityRow> = {}
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
   const isTopLevel = faker.datatype.boolean(0.7); // 70% chance of being a top-level community
@@ -103,7 +103,7 @@ export function createMockDbCommunity(
     name: faker.location.country() + ' ' + faker.company.buzzNoun(),
     description: faker.lorem.sentence(),
     center: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
-    parent_id: parent ? parent.id : isTopLevel ? null : faker.string.uuid(),
+    parent_id: faker.string.uuid(),
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
     updated_at: now,

@@ -1,12 +1,15 @@
 export interface User extends UserData {
-  id: string;
   created_at: Date;
   updated_at: Date;
 }
 
+// NewUser
 export type NewUser = Omit<UserData, 'id'>;
 
-export interface UserData {
+// UpdateUser
+export type UpdateUser = Pick<UserData, 'id'> & Partial<UserData>;
+
+interface UserData {
   id: string;
   first_name: string;
   last_name?: string;
@@ -47,8 +50,7 @@ export interface TrustScore {
 
 export type NewMembership = Omit<MembershipData, 'id'>;
 
-export interface MembershipData {
-  id: string;
+interface MembershipData {
   user_id: string;
   community_id: string;
 }
@@ -63,23 +65,41 @@ export interface Resource
   distance_minutes?: number; // Calculated field for driving time
 }
 
+// NewResource
 export type NewResource = Omit<ResourceData, 'id'>;
 
-export interface ResourceData {
+// UpdateResource
+export type UpdateResource = Pick<ResourceData, 'id'> & Partial<ResourceData>;
+
+interface ResourceData {
   id: string;
   owner_id: string;
   community_id: string;
   type: 'offer' | 'request';
-  category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
+  category: ResourceCategory;
   title: string;
   description: string;
   image_urls: string[];
   location?: Coordinates;
   pickup_instructions?: string;
   parking_info?: string;
-  meetup_flexibility: 'home_only' | 'public_meetup_ok' | 'delivery_possible';
+  meetup_flexibility: MeetupFlexibility;
   availability?: string;
   is_active: boolean;
+}
+
+export enum ResourceCategory {
+  TOOLS = 'tools',
+  SKILLS = 'skills',
+  FOOD = 'food',
+  SUPPLIES = 'supplies',
+  OTHER = 'other',
+}
+
+export enum MeetupFlexibility {
+  HOME_ONLY = 'home_only',
+  PUBLIC_MEETUP_OK = 'public_meetup_ok',
+  DELIVERY_POSSIBLE = 'delivery_possible',
 }
 
 export interface Thanks extends ThanksData {
@@ -90,9 +110,13 @@ export interface Thanks extends ThanksData {
   updated_at: Date;
 }
 
+// NewThanks
 export type NewThanks = Omit<ThanksData, 'id'>;
 
-export interface ThanksData {
+// UpdateThanks
+export type UpdateThanks = Pick<ThanksData, 'id'> & Partial<ThanksData>;
+
+interface ThanksData {
   id: string;
   from_user_id: string;
   to_user_id: string;
@@ -102,26 +126,42 @@ export interface ThanksData {
   impact_description?: string;
 }
 
-export interface Community extends CommunityData {
+/**
+ * Community
+ */
+export interface Community extends Omit<CommunityData, 'creator_id'> {
   name: string;
+  creator: User;
+  country: string;
+  state?: string;
+  city: string;
+  neighborhood: string | null;
   member_count: number;
   created_at: Date;
   updated_at: Date;
 }
 
+/**
+ * New community data
+ */
 export type NewCommunity = Omit<CommunityData, 'id'>;
 
-export interface CommunityData {
+/**
+ * Update community data
+ */
+export type UpdateCommunity = Pick<CommunityData, 'id'> &
+  Partial<CommunityData>;
+
+/**
+ * Community data for updating
+ */
+interface CommunityData {
   id: string;
   name: string;
-  country: string;
-  state?: string;
-  city: string;
-  neighborhood?: string;
   description: string;
   center?: Coordinates;
   radius_km?: number;
-  parent_id: string;
+  parent_id: string | null;
   creator_id: string;
 }
 

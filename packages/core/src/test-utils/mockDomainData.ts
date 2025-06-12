@@ -1,6 +1,13 @@
 import { faker } from '@faker-js/faker';
 
-import type { User, Resource, ResourceData, AuthUser } from '../';
+import {
+  type User,
+  type Resource,
+  type AuthUser,
+  type Community,
+  ResourceCategory,
+  MeetupFlexibility,
+} from '../';
 
 /**
  * Creates a mock domain User object
@@ -47,19 +54,13 @@ export function createMockResource(
   overrides: Partial<Resource> = {}
 ): Resource {
   const now = new Date();
-  const categories: Array<ResourceData['category']> = [
-    'tools',
-    'skills',
-    'food',
-    'supplies',
-    'other',
-  ];
+
   const owner = createMockUser();
 
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.arrayElement(categories),
+    category: faker.helpers.enumValue(ResourceCategory),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     image_urls: Array.from(
@@ -72,17 +73,8 @@ export function createMockResource(
     },
     pickup_instructions: faker.lorem.sentence(),
     parking_info: faker.lorem.sentence(),
-    meetup_flexibility: faker.helpers.arrayElement([
-      'home_only',
-      'public_meetup_ok',
-      'delivery_possible',
-    ] as const),
-    availability: faker.helpers.arrayElement([
-      'weekdays',
-      'weekends',
-      'anytime',
-      'mornings',
-    ]),
+    meetup_flexibility: faker.helpers.enumValue(MeetupFlexibility),
+    availability: faker.lorem.word(),
     is_active: true,
     created_at: now,
     updated_at: now,
@@ -98,7 +90,7 @@ export function createMockResource(
  */
 export function createMockResourceWithOwner(
   owner: User,
-  overrides: Partial<ResourceData> = {}
+  overrides: Partial<Resource> = {}
 ): Resource {
   const resource = createMockResource(overrides);
   return {
@@ -107,7 +99,9 @@ export function createMockResourceWithOwner(
   };
 }
 
-export function createMockCommunity() {
+export function createMockCommunity(
+  overrides: Partial<Community> = {}
+): Community {
   return {
     id: faker.string.uuid(),
     name: faker.location.city(),
@@ -118,6 +112,13 @@ export function createMockCommunity() {
     created_at: faker.date.past(),
     updated_at: faker.date.past(),
     parent_id: faker.string.uuid(),
-    creator_id: faker.string.uuid(),
+    creator: createMockUser(),
+    radius_km: faker.number.int({ min: 1, max: 100 }),
+    center: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
+    neighborhood: faker.location.street(),
+    ...overrides,
   };
 }

@@ -99,23 +99,23 @@ export function initializeCommunityListeners(
     setCommunitiesLoading(false);
     setCommunitiesError(null);
 
-    // Check if active community is not set and set it to global community
-    const currentState = getStore();
-    if (!currentState.app.activeCommunityId) {
-      const globalCommunity = event.data.communities.find(
-        (community: Community) => community.level === 'global'
-      );
-      
-      if (globalCommunity) {
-        logger.debug('🏘️ Store: Setting active community to global community', {
-          communityId: globalCommunity.id,
-          communityName: globalCommunity.name,
-        });
-        setActiveCommunity(globalCommunity.id);
-      } else {
-        logger.warn('🏘️ Store: No global community found in fetched communities');
-      }
-    }
+    // TODO Check if active community is not set and set it to global community
+    // const currentState = getStore();
+    // if (!currentState.app.activeCommunityId) {
+    //   const globalCommunity = event.data.communities.find(
+    //     (community: Community) => community.level === 'global'
+    //   );
+
+    //   if (globalCommunity) {
+    //     logger.debug('🏘️ Store: Setting active community to global community', {
+    //       communityId: globalCommunity.id,
+    //       communityName: globalCommunity.name,
+    //     });
+    //     setActiveCommunity(globalCommunity.id);
+    //   } else {
+    //     logger.warn('🏘️ Store: No global community found in fetched communities');
+    //   }
+    // }
   });
 
   eventBus.on('community.created', (event: AppEvent) => {
