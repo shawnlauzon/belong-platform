@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@belongnetwork/core": ["../core/src"],
+      "@belongnetwork/types": ["../types/src"]
+    }
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}
