@@ -4,13 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
-    "packages/core",
-    "packages/community-services",
-    "packages/resource-services",
-    "packages/trust-services",
-    "packages/user-services",
+    "packages/app",
+    "packages/ui", 
+    "packages/api",
+    "packages/types",
     "packages/components",
-    "packages/app"
+    "packages/core"
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/app dev",

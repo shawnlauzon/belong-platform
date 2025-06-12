@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@belongnetwork/api": ["../api/src"],
+      "@belongnetwork/types": ["../types/src"],
+      "@belongnetwork/components": ["../components/src"]
+    }
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}
