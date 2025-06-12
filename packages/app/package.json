@@ -10,12 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@belongnetwork/community-services": "workspace:*",
-    "@belongnetwork/components": "workspace:*",
     "@belongnetwork/core": "workspace:*",
-    "@belongnetwork/resource-services": "workspace:*",
-    "@belongnetwork/trust-services": "workspace:*",
-    "@belongnetwork/user-services": "workspace:*",
     "@tanstack/react-query": "^5.28.4",
     "@tanstack/react-query-devtools": "^5.28.4",
     "@tanstack/react-router": "^1.120.20",
