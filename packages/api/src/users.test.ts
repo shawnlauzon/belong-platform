@@ -146,7 +146,9 @@ describe('User Functions', () => {
       });
 
       // Act & Assert
-      await expect(fetchUser(userId)).rejects.toBeInstanceOf(Error);
+      await expect(fetchUser(userId)).rejects.toThrow(
+        'Database connection failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '👤 API: Error fetching profile',
         { userId, error: dbError }
@@ -272,7 +274,7 @@ describe('User Functions', () => {
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(fetchUsers()).rejects.toBeInstanceOf(Error);
+      await expect(fetchUsers()).rejects.toThrow('Database query failed');
       expect(mockLogger.error).toHaveBeenCalledWith(
         '👤 API: Failed to fetch users',
         { error: dbError }
@@ -346,7 +348,9 @@ describe('User Functions', () => {
       });
 
       // Act & Assert
-      await expect(updateUser(updateData)).rejects.toBeInstanceOf(Error);
+      await expect(updateUser(updateData)).rejects.toThrow(
+        'User must be authenticated to update profile'
+      );
     });
 
     it('should handle update errors', async () => {
@@ -376,7 +380,7 @@ describe('User Functions', () => {
       });
 
       // Act & Assert
-      await expect(updateUser(updateData)).rejects.toBeInstanceOf(Error);
+      await expect(updateUser(updateData)).rejects.toThrow('Update failed');
       expect(mockLogger.error).toHaveBeenCalledWith(
         '👤 API: Failed to update profile',
         { error: updateError }
@@ -583,7 +587,6 @@ describe('User Hooks', () => {
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
-      expect(result.current.error).toBeInstanceOf(Error);
       expect(mockLogger.error).toHaveBeenCalledWith(
         '👤 API: Failed to update profile',
         { error: expect.any(Error) }

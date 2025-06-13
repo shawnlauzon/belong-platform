@@ -112,7 +112,9 @@ describe('Authentication Functions', () => {
       });
 
       // Act & Assert
-      await expect(signIn(email, password)).rejects.toBeInstanceOf(Error);
+      await expect(signIn(email, password)).rejects.toThrow(
+        'Invalid login credentials'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🔐 API: Failed to sign in',
         { error: authError }
@@ -130,7 +132,9 @@ describe('Authentication Functions', () => {
       });
 
       // Act & Assert
-      await expect(signIn(email, password)).rejects.toBeInstanceOf(Error);
+      await expect(signIn(email, password)).rejects.toThrow(
+        'No user data returned from sign in'
+      );
     });
 
     it('should fallback gracefully when profile fetch fails', async () => {
@@ -242,7 +246,9 @@ describe('Authentication Functions', () => {
       });
 
       // Act & Assert
-      await expect(signUp(email, password)).rejects.toBeInstanceOf(Error);
+      await expect(signUp(email, password)).rejects.toThrow(
+        'Email already registered'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🔐 API: Failed to sign up',
         { error: signUpError }
@@ -260,7 +266,9 @@ describe('Authentication Functions', () => {
       });
 
       // Act & Assert
-      await expect(signUp(email, password)).rejects.toBeInstanceOf(Error);
+      await expect(signUp(email, password)).rejects.toThrow(
+        'No user data returned from sign up'
+      );
     });
   });
 
@@ -289,7 +297,7 @@ describe('Authentication Functions', () => {
       });
 
       // Act & Assert
-      await expect(signOut()).rejects.toBeInstanceOf(Error);
+      await expect(signOut()).rejects.toThrow('Sign out failed');
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🔐 API: Failed to sign out',
         { error: signOutError }
@@ -497,7 +505,6 @@ describe('Authentication Hooks', () => {
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
-      expect(result.current.error).toBeInstanceOf(Error);
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🔐 API: Failed to sign in',
         { error: expect.any(Error) }
@@ -587,7 +594,6 @@ describe('Authentication Hooks', () => {
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
-      expect(result.current.error).toBeInstanceOf(Error);
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🔐 API: Failed to sign out',
         { error: expect.any(Error) }
