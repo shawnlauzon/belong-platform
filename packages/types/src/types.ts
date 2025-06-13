@@ -114,6 +114,12 @@ export interface CreateUserData
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AuthUser extends User {}
 
+export interface UserFilter {
+  searchTerm?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export enum ResourceCategory {
   TOOLS = 'tools',
   SKILLS = 'skills',

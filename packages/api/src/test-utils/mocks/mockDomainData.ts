@@ -1,4 +1,4 @@
-import { Community, Resource, User } from '@belongnetwork/types';
+import { Community, Resource, User, ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
 import { faker } from '@faker-js/faker';
 
 /**

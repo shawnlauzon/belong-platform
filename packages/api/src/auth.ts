@@ -177,7 +177,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         location: profile.user_metadata?.location,
       };
     } else {
-      // Fallback if no profile exists
+      // Fallback if no profile exists - ensure email is included
       authUser = {
         id: user.id,
         email: user.email!,

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import type { User, UpdateUserData } from '@belongnetwork/types';
+import type { User, UpdateUserData, UserFilter, PaginatedResponse } from '@belongnetwork/types';
 import { toDomainUser, toDbUser } from './transformers/userTransformers';
 
 // Data functions (pure async functions)
@@ -32,6 +32,59 @@ export async function fetchUser(userId: string): Promise<User | null> {
     return user;
   } catch (error) {
     logger.error('👤 API: Error fetching profile', { userId, error });
+    throw error;
+  }
+}
+
+export async function fetchUsers(filters: UserFilter = {}): Promise<PaginatedResponse<User>> {
+  logger.debug('👤 API: Fetching users', { filters });
+
+  try {
+    const { searchTerm, page = 1, pageSize = 20 } = filters;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('profiles')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    // Apply search filter if provided
+    if (searchTerm && searchTerm.trim()) {
+      const searchPattern = `%${searchTerm.trim()}%`;
+      query = query.or(
+        `user_metadata->>first_name.ilike.${searchPattern},user_metadata->>last_name.ilike.${searchPattern},email.ilike.${searchPattern}`
+      );
+    }
+
+    // Apply pagination
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      logger.error('👤 API: Failed to fetch users', { error });
+      throw error;
+    }
+
+    // Transform database records to domain objects
+    const users: User[] = (data || []).map(toDomainUser);
+
+    const result: PaginatedResponse<User> = {
+      data: users,
+      count: count || 0,
+      page,
+      pageSize,
+    };
+
+    logger.debug('👤 API: Successfully fetched users', {
+      count: users.length,
+      total: count,
+      page,
+    });
+    return result;
+  } catch (error) {
+    logger.error('👤 API: Error fetching users', { error });
     throw error;
   }
 }
@@ -83,23 +136,34 @@ export async function updateUser(data: UpdateUserData): Promise<User> {
 }
 
 // React Query hooks
-export function useProfile(userId: string) {
+export function useUser(userId: string) {
   return useQuery({
-    queryKey: ['profiles', userId],
+    queryKey: ['users', userId],
     queryFn: () => fetchUser(userId),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
-export function useUpdateProfile() {
+export function useUsers(filters: UserFilter = {}) {
+  return useQuery({
+    queryKey: ['users', 'list', filters],
+    queryFn: () => fetchUsers(filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updateUser,
     onSuccess: (updatedProfile) => {
       // Update the profile in cache
-      queryClient.setQueryData(['profiles', updatedProfile.id], updatedProfile);
+      queryClient.setQueryData(['users', updatedProfile.id], updatedProfile);
+
+      // Invalidate users list to refresh any cached lists
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'] });
 
       // Also update current user if it's the same user
       const currentUser = queryClient.getQueryData(['auth', 'currentUser']);
