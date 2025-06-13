@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createMockDbProfile, createMockUser } from '../test-utils/mocks';
-import { toDomainUser, toDbUser } from './userTransformers';
+import { toDomainUser, toDbUser, ERROR_MESSAGES } from './userTransformers';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');
@@ -53,10 +53,10 @@ describe('User Transformer', () => {
 
     it('should throw error for null/undefined input', () => {
       expect(() => toDomainUser(null as any)).toThrow(
-        'Database user is required'
+        ERROR_MESSAGES.DATABASE_USER_REQUIRED
       );
       expect(() => toDomainUser(undefined as any)).toThrow(
-        'Database user is required'
+        ERROR_MESSAGES.DATABASE_USER_REQUIRED
       );
     });
   });

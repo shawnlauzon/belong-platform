@@ -3,12 +3,18 @@ import type { User } from '@belongnetwork/types';
 
 export type UserRow = Database['public']['Tables']['profiles']['Row'];
 
+// Error message constants
+const ERROR_MESSAGES = {
+  /** Error thrown when database user parameter is null or undefined */
+  DATABASE_USER_REQUIRED: 'Database user is required',
+} as const;
+
 /**
  * Transform a database user record to a domain user object
  */
 export function toDomainUser(dbUser: UserRow): User {
   if (!dbUser) {
-    throw new Error('Database user is required');
+    throw new Error(ERROR_MESSAGES.DATABASE_USER_REQUIRED);
   }
 
   const { user_metadata, email, ...rest } = dbUser;
@@ -43,3 +49,6 @@ export function toDbUser(user: Partial<User>): Partial<UserRow> {
     updated_at: user.updated_at?.toISOString(),
   };
 }
+
+// Export error messages for use in tests
+export { ERROR_MESSAGES };
