@@ -11,13 +11,14 @@ export function toDomainUser(dbUser: UserRow): User {
     throw new Error('Database user is required');
   }
 
-  const { user_metadata, ...rest } = dbUser;
+  const { user_metadata, email, ...rest } = dbUser;
   const metadata = user_metadata as Record<string, unknown>;
 
   return {
     ...rest,
     first_name: (metadata?.first_name as string) || '',
     last_name: metadata?.last_name as string | undefined,
+    email: email ?? undefined,
     full_name: metadata?.full_name as string | undefined,
     avatar_url: metadata?.avatar_url as string | undefined,
     created_at: new Date(rest.created_at),
