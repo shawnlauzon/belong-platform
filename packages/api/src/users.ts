@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type { User, UpdateUserData } from '@belongnetwork/types';
+import { toDomainUser, toDbUser } from './transformers/userTransformers';
 
 // Data functions (pure async functions)
 export async function fetchUser(userId: string): Promise<User | null> {
@@ -21,16 +22,8 @@ export async function fetchUser(userId: string): Promise<User | null> {
       throw error;
     }
 
-    const user: User = {
-      id: data.id,
-      email: data.email,
-      first_name: data.user_metadata?.first_name || '',
-      last_name: data.user_metadata?.last_name || '',
-      full_name: data.user_metadata?.full_name || '',
-      avatar_url: data.user_metadata?.avatar_url,
-      created_at: new Date(data.created_at),
-      updated_at: new Date(data.updated_at),
-    };
+    // Transform using the pure transformer function
+    const user = toDomainUser(data);
 
     logger.debug('👤 API: Successfully fetched profile', {
       userId,
@@ -78,15 +71,8 @@ export async function updateUser(data: UpdateUserData): Promise<User> {
       throw error;
     }
 
-    const profile: User = {
-      id: updatedProfile.id,
-      first_name: updatedProfile.user_metadata?.first_name || '',
-      last_name: updatedProfile.user_metadata?.last_name || '',
-      full_name: updatedProfile.user_metadata?.full_name || '',
-      avatar_url: updatedProfile.user_metadata?.avatar_url,
-      created_at: new Date(updatedProfile.created_at),
-      updated_at: new Date(updatedProfile.updated_at),
-    };
+    // Transform using the pure transformer function
+    const profile = toDomainUser(updatedProfile);
 
     logger.info('👤 API: Successfully updated profile', { userId: profile.id });
     return profile;

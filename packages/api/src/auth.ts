@@ -2,6 +2,7 @@ import { logger } from '@belongnetwork/core';
 import { supabase } from '@belongnetwork/core';
 import { AuthUser } from '@belongnetwork/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toDomainUser } from './transformers/userTransformers';
 
 // Data functions (pure async functions)
 export async function signIn(
@@ -36,17 +37,30 @@ export async function signIn(
       logger.warn('🔐 API: Could not fetch user profile', { profileError });
     }
 
-    const authUser: AuthUser = {
-      id: data.user.id,
-      email: data.user.email!,
-      first_name: profile?.user_metadata?.first_name || '',
-      last_name: profile?.user_metadata?.last_name || '',
-      full_name: profile?.user_metadata?.full_name || '',
-      avatar_url: profile?.user_metadata?.avatar_url,
-      location: profile?.user_metadata?.location,
-      created_at: new Date(data.user.created_at!),
-      updated_at: new Date(data.user.updated_at!),
-    };
+    let authUser: AuthUser;
+    
+    if (profile) {
+      // Transform the profile using the pure transformer function
+      const domainUser = toDomainUser(profile);
+      authUser = {
+        ...domainUser,
+        email: data.user.email!,
+        location: profile.user_metadata?.location,
+      };
+    } else {
+      // Fallback if no profile exists
+      authUser = {
+        id: data.user.id,
+        email: data.user.email!,
+        first_name: data.user.user_metadata?.first_name || '',
+        last_name: data.user.user_metadata?.last_name || '',
+        full_name: data.user.user_metadata?.full_name || '',
+        avatar_url: data.user.user_metadata?.avatar_url,
+        location: data.user.user_metadata?.location,
+        created_at: new Date(data.user.created_at!),
+        updated_at: new Date(data.user.updated_at!),
+      };
+    }
 
     logger.info('🔐 API: Successfully signed in', { userId: authUser.id });
     return authUser;
@@ -152,17 +166,30 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       logger.warn('🔐 API: Could not fetch user profile', { profileError });
     }
 
-    const authUser: AuthUser = {
-      id: user.id,
-      email: user.email!,
-      first_name: profile?.user_metadata?.first_name || '',
-      last_name: profile?.user_metadata?.last_name || '',
-      full_name: profile?.user_metadata?.full_name || '',
-      avatar_url: profile?.user_metadata?.avatar_url,
-      location: profile?.user_metadata?.location,
-      created_at: new Date(user.created_at!),
-      updated_at: new Date(user.updated_at!),
-    };
+    let authUser: AuthUser;
+    
+    if (profile) {
+      // Transform the profile using the pure transformer function
+      const domainUser = toDomainUser(profile);
+      authUser = {
+        ...domainUser,
+        email: user.email!,
+        location: profile.user_metadata?.location,
+      };
+    } else {
+      // Fallback if no profile exists
+      authUser = {
+        id: user.id,
+        email: user.email!,
+        first_name: user.user_metadata?.first_name || '',
+        last_name: user.user_metadata?.last_name || '',
+        full_name: user.user_metadata?.full_name || '',
+        avatar_url: user.user_metadata?.avatar_url,
+        location: user.user_metadata?.location,
+        created_at: new Date(user.created_at!),
+        updated_at: new Date(user.updated_at!),
+      };
+    }
 
     return authUser;
   } catch (error) {
