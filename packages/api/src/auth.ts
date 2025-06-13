@@ -4,6 +4,16 @@ import { AuthUser } from '@belongnetwork/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toDomainUser } from './transformers/userTransformers';
 
+// Authentication error message constants
+export const AUTH_ERROR_MESSAGES = {
+  /** Error thrown when no user data is returned from sign in */
+  NO_USER_DATA_SIGN_IN: 'No user data returned from sign in',
+  /** Error thrown when no user data is returned from sign up */
+  NO_USER_DATA_SIGN_UP: 'No user data returned from sign up',
+  /** Error thrown when user must be authenticated for an operation */
+  AUTHENTICATION_REQUIRED: 'User must be authenticated to perform this operation',
+} as const;
+
 // Data functions (pure async functions)
 export async function signIn(
   email: string,
@@ -23,7 +33,7 @@ export async function signIn(
     }
 
     if (!data.user) {
-      throw new Error('No user data returned from sign in');
+      throw new Error(AUTH_ERROR_MESSAGES.NO_USER_DATA_SIGN_IN);
     }
 
     // Get user profile
@@ -48,7 +58,7 @@ export async function signIn(
         location: profile.user_metadata?.location,
       };
     } else {
-      // Fallback if no profile exists
+      // Fallback if no profile exists - ensure email is included
       authUser = {
         id: data.user.id,
         email: data.user.email!,
@@ -97,7 +107,7 @@ export async function signUp(
     }
 
     if (!data.user) {
-      throw new Error('No user data returned from sign up');
+      throw new Error(AUTH_ERROR_MESSAGES.NO_USER_DATA_SIGN_UP);
     }
 
     const authUser: AuthUser = {
@@ -177,7 +187,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         location: profile.user_metadata?.location,
       };
     } else {
-      // Fallback if no profile exists - ensure email is included
+      // Fallback if no profile exists
       authUser = {
         id: user.id,
         email: user.email!,

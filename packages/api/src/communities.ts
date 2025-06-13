@@ -7,6 +7,17 @@ import type {
   UpdateCommunityData,
   User,
 } from '@belongnetwork/types';
+import { AUTH_ERROR_MESSAGES } from './auth';
+
+// Community service error message constants
+export const COMMUNITY_ERROR_MESSAGES = {
+  /** Error thrown when user must be authenticated to create communities */
+  AUTHENTICATION_REQUIRED_CREATE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+  /** Error thrown when user must be authenticated to update communities */
+  AUTHENTICATION_REQUIRED_UPDATE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+  /** Error thrown when user must be authenticated to delete communities */
+  AUTHENTICATION_REQUIRED_DELETE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+} as const;
 
 // Data functions (pure async functions)
 export async function fetchCommunities(): Promise<Community[]> {
@@ -78,7 +89,7 @@ export async function createCommunity(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to create communities');
+      throw new Error(COMMUNITY_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_CREATE);
     }
 
     const communityData = {
@@ -124,7 +135,7 @@ export async function updateCommunity(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to update communities');
+      throw new Error(COMMUNITY_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_UPDATE);
     }
 
     const updateData = {
@@ -168,7 +179,7 @@ export async function deleteCommunity(id: string): Promise<void> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to delete communities');
+      throw new Error(COMMUNITY_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_DELETE);
     }
 
     const { error } = await supabase

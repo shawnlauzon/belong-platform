@@ -3,6 +3,13 @@ import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type { User, UpdateUserData, UserFilter, PaginatedResponse } from '@belongnetwork/types';
 import { toDomainUser, toDbUser } from './transformers/userTransformers';
+import { AUTH_ERROR_MESSAGES } from './auth';
+
+// User service error message constants
+export const USER_ERROR_MESSAGES = {
+  /** Error thrown when user must be authenticated to update profile */
+  AUTHENTICATION_REQUIRED_UPDATE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+} as const;
 
 // Data functions (pure async functions)
 export async function fetchUser(userId: string): Promise<User | null> {
@@ -97,7 +104,7 @@ export async function updateUser(data: UpdateUserData): Promise<User> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to update profile');
+      throw new Error(USER_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_UPDATE);
     }
 
     const updateData = {
