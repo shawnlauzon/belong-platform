@@ -159,7 +159,9 @@ describe('User Functions', () => {
   describe('fetchUsers', () => {
     it('should successfully fetch users with default pagination', async () => {
       // Arrange
-      const mockProfiles = Array.from({ length: 3 }, () => createMockDbProfile());
+      const mockProfiles = Array.from({ length: 3 }, () =>
+        createMockDbProfile()
+      );
       const totalCount = 10;
 
       const mockQuery = {
@@ -231,7 +233,9 @@ describe('User Functions', () => {
     it('should handle custom pagination parameters', async () => {
       // Arrange
       const filters: UserFilter = { page: 3, pageSize: 5 };
-      const mockProfiles = Array.from({ length: 5 }, () => createMockDbProfile());
+      const mockProfiles = Array.from({ length: 5 }, () =>
+        createMockDbProfile()
+      );
 
       const mockQuery = {
         select: vi.fn().mockReturnValue({
@@ -349,7 +353,7 @@ describe('User Functions', () => {
 
       // Act & Assert
       await expect(updateUser(updateData)).rejects.toThrow(
-        'User must be authenticated to update profile'
+        'User must be authenticated to perform this operation'
       );
     });
 
@@ -437,7 +441,7 @@ describe('User Hooks', () => {
       });
 
       // Assert
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.isPending).toBe(true);
       expect(mockSupabase.from).not.toHaveBeenCalled();
     });
   });
@@ -445,7 +449,9 @@ describe('User Hooks', () => {
   describe('useUsers', () => {
     it('should fetch users list successfully', async () => {
       // Arrange
-      const mockProfiles = Array.from({ length: 3 }, () => createMockDbProfile());
+      const mockProfiles = Array.from({ length: 3 }, () =>
+        createMockDbProfile()
+      );
       const filters: UserFilter = { page: 1, pageSize: 10 };
 
       const mockQuery = {
