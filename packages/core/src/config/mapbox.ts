@@ -1,5 +1,10 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
-import { Coordinates } from '../types/entities';
+
+// Types
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 // Set your Mapbox token (ideally from environment variable)
 const MAPBOX_PUBLIC_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;

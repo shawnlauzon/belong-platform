@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import type { Database } from '../types/database';
-import { Community } from 'src/types';
+import { Community } from 'src/types/types';
 
 type UserRow = Database['public']['Tables']['profiles']['Row'];
 type ResourceRow = Database['public']['Tables']['resources']['Row'];

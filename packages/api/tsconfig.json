@@ -3,11 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./dist",
-    "rootDir": "./src",
-    "paths": {
-      "@belongnetwork/core": ["../core/src"],
-      "@belongnetwork/types": ["../types/src"]
-    }
+    "rootDir": "./src"
   },
   "include": [
     "./src/**/*"

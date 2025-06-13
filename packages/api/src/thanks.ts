@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import type { 
-  Thanks, 
-  CreateThanksData, 
-  UpdateThanksData 
+import type {
+  Thanks,
+  CreateThanksData,
+  UpdateThanksData,
 } from '@belongnetwork/types';
 
 // Data functions (pure async functions)
@@ -14,7 +14,8 @@ export async function fetchThanks(): Promise<Thanks[]> {
   try {
     const { data, error } = await supabase
       .from('thanks')
-      .select(`
+      .select(
+        `
         *,
         from_user:profiles!thanks_from_user_id_fkey1(
           id,
@@ -32,7 +33,8 @@ export async function fetchThanks(): Promise<Thanks[]> {
           type,
           category
         )
-      `)
+      `
+      )
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -41,8 +43,10 @@ export async function fetchThanks(): Promise<Thanks[]> {
     }
 
     const thanks: Thanks[] = (data || []).map(transformDbThanksToDomain);
-    
-    logger.debug('🙏 API: Successfully fetched thanks', { count: thanks.length });
+
+    logger.debug('🙏 API: Successfully fetched thanks', {
+      count: thanks.length,
+    });
     return thanks;
   } catch (error) {
     logger.error('🙏 API: Error fetching thanks', { error });
@@ -56,7 +60,8 @@ export async function fetchThanksById(id: string): Promise<Thanks | null> {
   try {
     const { data, error } = await supabase
       .from('thanks')
-      .select(`
+      .select(
+        `
         *,
         from_user:profiles!thanks_from_user_id_fkey1(
           id,
@@ -74,7 +79,8 @@ export async function fetchThanksById(id: string): Promise<Thanks | null> {
           type,
           category
         )
-      `)
+      `
+      )
       .eq('id', id)
       .single();
 
@@ -98,20 +104,23 @@ export async function createThanks(data: CreateThanksData): Promise<Thanks> {
   logger.debug('🙏 API: Creating thanks', { to_user_id: data.to_user_id });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to create thanks');
     }
 
     const thanksData = {
       ...data,
-      from_user_id: user.id
+      from_user_id: user.id,
     };
 
     const { data: newThanks, error } = await supabase
       .from('thanks')
       .insert(thanksData)
-      .select(`
+      .select(
+        `
         *,
         from_user:profiles!thanks_from_user_id_fkey1(
           id,
@@ -129,7 +138,8 @@ export async function createThanks(data: CreateThanksData): Promise<Thanks> {
           type,
           category
         )
-      `)
+      `
+      )
       .single();
 
     if (error) {
@@ -150,14 +160,16 @@ export async function updateThanks(data: UpdateThanksData): Promise<Thanks> {
   logger.debug('🙏 API: Updating thanks', { id: data.id });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to update thanks');
     }
 
     const updateData = {
       ...data,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const { data: updatedThanks, error } = await supabase
@@ -165,7 +177,8 @@ export async function updateThanks(data: UpdateThanksData): Promise<Thanks> {
       .update(updateData)
       .eq('id', data.id)
       .eq('from_user_id', user.id) // Ensure user owns the thanks
-      .select(`
+      .select(
+        `
         *,
         from_user:profiles!thanks_from_user_id_fkey1(
           id,
@@ -183,7 +196,8 @@ export async function updateThanks(data: UpdateThanksData): Promise<Thanks> {
           type,
           category
         )
-      `)
+      `
+      )
       .single();
 
     if (error) {
@@ -204,7 +218,9 @@ export async function deleteThanks(id: string): Promise<void> {
   logger.debug('🙏 API: Deleting thanks', { id });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to delete thanks');
     }
@@ -229,34 +245,31 @@ export async function deleteThanks(id: string): Promise<void> {
 
 // Helper function to transform database records to domain objects
 function transformDbThanksToDomain(dbThanks: any): Thanks {
-  const from_user = dbThanks.from_user ? {
-    id: dbThanks.from_user.id,
-    email: dbThanks.from_user.email,
-    first_name: dbThanks.from_user.user_metadata?.first_name || '',
-    last_name: dbThanks.from_user.user_metadata?.last_name || '',
-    full_name: dbThanks.from_user.user_metadata?.full_name || '',
-    avatar_url: dbThanks.from_user.user_metadata?.avatar_url,
-    created_at: new Date(),
-    updated_at: new Date()
-  } : null;
+  const from_user = dbThanks.from_user
+    ? {
+        id: dbThanks.from_user.id,
+        email: dbThanks.from_user.email,
+        first_name: dbThanks.from_user.user_metadata?.first_name || '',
+        last_name: dbThanks.from_user.user_metadata?.last_name || '',
+        full_name: dbThanks.from_user.user_metadata?.full_name || '',
+        avatar_url: dbThanks.from_user.user_metadata?.avatar_url,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+    : null;
 
-  const to_user = dbThanks.to_user ? {
-    id: dbThanks.to_user.id,
-    email: dbThanks.to_user.email,
-    first_name: dbThanks.to_user.user_metadata?.first_name || '',
-    last_name: dbThanks.to_user.user_metadata?.last_name || '',
-    full_name: dbThanks.to_user.user_metadata?.full_name || '',
-    avatar_url: dbThanks.to_user.user_metadata?.avatar_url,
-    created_at: new Date(),
-    updated_at: new Date()
-  } : null;
-
-  const resource = dbThanks.resource ? {
-    id: dbThanks.resource.id,
-    title: dbThanks.resource.title,
-    type: dbThanks.resource.type,
-    category: dbThanks.resource.category
-  } : null;
+  const to_user = dbThanks.to_user
+    ? {
+        id: dbThanks.to_user.id,
+        email: dbThanks.to_user.email,
+        first_name: dbThanks.to_user.user_metadata?.first_name || '',
+        last_name: dbThanks.to_user.user_metadata?.last_name || '',
+        full_name: dbThanks.to_user.user_metadata?.full_name || '',
+        avatar_url: dbThanks.to_user.user_metadata?.avatar_url,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+    : null;
 
   return {
     id: dbThanks.id,
@@ -265,9 +278,9 @@ function transformDbThanksToDomain(dbThanks: any): Thanks {
     impact_description: dbThanks.impact_description,
     created_at: new Date(dbThanks.created_at),
     updated_at: new Date(dbThanks.updated_at || dbThanks.created_at),
-    from_user: from_user!,
-    to_user: to_user!,
-    resource: resource as any // TODO: Fix resource type
+    from_user_id: dbThanks.from_user_id,
+    to_user_id: dbThanks.to_user_id,
+    resource_id: dbThanks.resource_id,
   };
 }
 
@@ -285,8 +298,9 @@ export function useThanksByUser(userId: string) {
     queryKey: ['thanks', 'user', userId],
     queryFn: async () => {
       const allThanks = await fetchThanks();
-      return allThanks.filter(thanks => 
-        thanks.from_user.id === userId || thanks.to_user.id === userId
+      return allThanks.filter(
+        (thanks) =>
+          thanks.from_user_id === userId || thanks.to_user_id === userId
       );
     },
     enabled: !!userId,
@@ -295,60 +309,62 @@ export function useThanksByUser(userId: string) {
 
 export function useCreateThanks() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: createThanks,
     onSuccess: (newThanks) => {
       // Invalidate and refetch thanks list
       queryClient.invalidateQueries({ queryKey: ['thanks'] });
-      
+
       // Add the new thanks to the cache
       queryClient.setQueryData(['thanks', newThanks.id], newThanks);
-      
+
       logger.info('🙏 API: Thanks created successfully', { id: newThanks.id });
     },
     onError: (error) => {
       logger.error('🙏 API: Failed to create thanks', { error });
-    }
+    },
   });
 }
 
 export function useUpdateThanks() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: updateThanks,
     onSuccess: (updatedThanks) => {
       // Invalidate and refetch thanks list
       queryClient.invalidateQueries({ queryKey: ['thanks'] });
-      
+
       // Update the specific thanks in cache
       queryClient.setQueryData(['thanks', updatedThanks.id], updatedThanks);
-      
-      logger.info('🙏 API: Thanks updated successfully', { id: updatedThanks.id });
+
+      logger.info('🙏 API: Thanks updated successfully', {
+        id: updatedThanks.id,
+      });
     },
     onError: (error) => {
       logger.error('🙏 API: Failed to update thanks', { error });
-    }
+    },
   });
 }
 
 export function useDeleteThanks() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteThanks,
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch thanks list
       queryClient.invalidateQueries({ queryKey: ['thanks'] });
-      
+
       // Remove the thanks from cache
       queryClient.removeQueries({ queryKey: ['thanks', deletedId] });
-      
+
       logger.info('🙏 API: Thanks deleted successfully', { id: deletedId });
     },
     onError: (error) => {
       logger.error('🙏 API: Failed to delete thanks', { error });
-    }
+    },
   });
 }

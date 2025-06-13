@@ -1,8 +1,7 @@
 import type { CommunityRow } from './transformers.types';
-import type { Community } from '../types/entities';
+import type { Community } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from './utils';
-import { useBelongStore } from '../stores';
-import { logger } from '../utils';
+import { logger } from '@belongnetwork/core';
 
 // create type for insert community
 export type InsertCommunity = Omit<

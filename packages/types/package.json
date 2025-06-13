@@ -23,7 +23,11 @@
     "test:watch": "vitest --config vitest.config.mts",
     "test:coverage": "vitest run --coverage --config vitest.config.mts",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen:db-types": "dotenv -e ../../.env supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts"
+  },
+  "dependencies": {
+    "@belongnetwork/core": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

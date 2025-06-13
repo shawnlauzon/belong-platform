@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import type { 
-  Community, 
-  CreateCommunityData, 
-  UpdateCommunityData 
+import type {
+  Community,
+  CreateCommunityData,
+  UpdateCommunityData,
+  User,
 } from '@belongnetwork/types';
 
 // Data functions (pure async functions)
@@ -22,9 +23,13 @@ export async function fetchCommunities(): Promise<Community[]> {
       throw error;
     }
 
-    const communities: Community[] = (data || []).map(transformDbCommunityToDomain);
-    
-    logger.debug('🏘️ API: Successfully fetched communities', { count: communities.length });
+    const communities: Community[] = (data || []).map(
+      transformDbCommunityToDomain
+    );
+
+    logger.debug('🏘️ API: Successfully fetched communities', {
+      count: communities.length,
+    });
     return communities;
   } catch (error) {
     logger.error('🏘️ API: Error fetching communities', { error });
@@ -32,7 +37,9 @@ export async function fetchCommunities(): Promise<Community[]> {
   }
 }
 
-export async function fetchCommunityById(id: string): Promise<Community | null> {
+export async function fetchCommunityById(
+  id: string
+): Promise<Community | null> {
   logger.debug('🏘️ API: Fetching community by ID', { id });
 
   try {
@@ -50,7 +57,10 @@ export async function fetchCommunityById(id: string): Promise<Community | null> 
     }
 
     const community = transformDbCommunityToDomain(data);
-    logger.debug('🏘️ API: Successfully fetched community', { id, name: community.name });
+    logger.debug('🏘️ API: Successfully fetched community', {
+      id,
+      name: community.name,
+    });
     return community;
   } catch (error) {
     logger.error('🏘️ API: Error fetching community by ID', { id, error });
@@ -58,11 +68,15 @@ export async function fetchCommunityById(id: string): Promise<Community | null> 
   }
 }
 
-export async function createCommunity(data: CreateCommunityData): Promise<Community> {
+export async function createCommunity(
+  data: CreateCommunityData
+): Promise<Community> {
   logger.debug('🏘️ API: Creating community', { name: data.name });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to create communities');
     }
@@ -70,9 +84,11 @@ export async function createCommunity(data: CreateCommunityData): Promise<Commun
     const communityData = {
       ...data,
       creator_id: user.id,
-      center: data.center ? `POINT(${data.center.lng} ${data.center.lat})` : null,
+      center: data.center
+        ? `POINT(${data.center.lng} ${data.center.lat})`
+        : null,
       level: 'neighborhood', // Default level
-      member_count: 1
+      member_count: 1,
     };
 
     const { data: newCommunity, error } = await supabase
@@ -87,7 +103,10 @@ export async function createCommunity(data: CreateCommunityData): Promise<Commun
     }
 
     const community = transformDbCommunityToDomain(newCommunity);
-    logger.info('🏘️ API: Successfully created community', { id: community.id, name: community.name });
+    logger.info('🏘️ API: Successfully created community', {
+      id: community.id,
+      name: community.name,
+    });
     return community;
   } catch (error) {
     logger.error('🏘️ API: Error creating community', { error });
@@ -95,19 +114,25 @@ export async function createCommunity(data: CreateCommunityData): Promise<Commun
   }
 }
 
-export async function updateCommunity(data: UpdateCommunityData): Promise<Community> {
+export async function updateCommunity(
+  data: UpdateCommunityData
+): Promise<Community> {
   logger.debug('🏘️ API: Updating community', { id: data.id });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to update communities');
     }
 
     const updateData = {
       ...data,
-      center: data.center ? `POINT(${data.center.lng} ${data.center.lat})` : undefined,
-      updated_at: new Date().toISOString()
+      center: data.center
+        ? `POINT(${data.center.lng} ${data.center.lat})`
+        : undefined,
+      updated_at: new Date().toISOString(),
     };
 
     const { data: updatedCommunity, error } = await supabase
@@ -124,7 +149,10 @@ export async function updateCommunity(data: UpdateCommunityData): Promise<Commun
     }
 
     const community = transformDbCommunityToDomain(updatedCommunity);
-    logger.info('🏘️ API: Successfully updated community', { id: community.id, name: community.name });
+    logger.info('🏘️ API: Successfully updated community', {
+      id: community.id,
+      name: community.name,
+    });
     return community;
   } catch (error) {
     logger.error('🏘️ API: Error updating community', { error });
@@ -136,7 +164,9 @@ export async function deleteCommunity(id: string): Promise<void> {
   logger.debug('🏘️ API: Deleting community', { id });
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User must be authenticated to delete communities');
     }
@@ -168,7 +198,7 @@ function transformDbCommunityToDomain(dbCommunity: any): Community {
     if (match) {
       center = {
         lng: parseFloat(match[1]),
-        lat: parseFloat(match[2])
+        lat: parseFloat(match[2]),
       };
     }
   }
@@ -180,13 +210,17 @@ function transformDbCommunityToDomain(dbCommunity: any): Community {
     member_count: dbCommunity.member_count || 0,
     country: 'United States', // TODO: Get from hierarchy
     city: dbCommunity.name, // Simplified for now
-    neighborhood: dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
+    neighborhood:
+      dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
     created_at: new Date(dbCommunity.created_at),
     updated_at: new Date(dbCommunity.updated_at),
     parent_id: dbCommunity.parent_id,
-    creator: { id: dbCommunity.creator_id || 'unknown', first_name: 'Unknown' } as any, // TODO: Join with profiles
+    creator: {
+      id: dbCommunity.creator_id || 'unknown',
+      first_name: 'Unknown',
+    } as User, // TODO: Join with profiles
     radius_km: dbCommunity.radius_km,
-    center
+    center,
   };
 }
 
@@ -209,60 +243,67 @@ export function useCommunity(id: string) {
 
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: createCommunity,
     onSuccess: (newCommunity) => {
       // Invalidate and refetch communities list
       queryClient.invalidateQueries({ queryKey: ['communities'] });
-      
+
       // Add the new community to the cache
       queryClient.setQueryData(['communities', newCommunity.id], newCommunity);
-      
-      logger.info('🏘️ API: Community created successfully', { id: newCommunity.id });
+
+      logger.info('🏘️ API: Community created successfully', {
+        id: newCommunity.id,
+      });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to create community', { error });
-    }
+    },
   });
 }
 
 export function useUpdateCommunity() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: updateCommunity,
     onSuccess: (updatedCommunity) => {
       // Invalidate and refetch communities list
       queryClient.invalidateQueries({ queryKey: ['communities'] });
-      
+
       // Update the specific community in cache
-      queryClient.setQueryData(['communities', updatedCommunity.id], updatedCommunity);
-      
-      logger.info('🏘️ API: Community updated successfully', { id: updatedCommunity.id });
+      queryClient.setQueryData(
+        ['communities', updatedCommunity.id],
+        updatedCommunity
+      );
+
+      logger.info('🏘️ API: Community updated successfully', {
+        id: updatedCommunity.id,
+      });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to update community', { error });
-    }
+    },
   });
 }
 
 export function useDeleteCommunity() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteCommunity,
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch communities list
       queryClient.invalidateQueries({ queryKey: ['communities'] });
-      
+
       // Remove the community from cache
       queryClient.removeQueries({ queryKey: ['communities', deletedId] });
-      
+
       logger.info('🏘️ API: Community deleted successfully', { id: deletedId });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to delete community', { error });
-    }
+    },
   });
 }

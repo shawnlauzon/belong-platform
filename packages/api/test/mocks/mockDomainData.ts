@@ -1,13 +1,5 @@
+import { Community, Resource, User } from '@belongnetwork/types';
 import { faker } from '@faker-js/faker';
-
-import {
-  type User,
-  type Resource,
-  type AuthUser,
-  type Community,
-  ResourceCategory,
-  MeetupFlexibility,
-} from '../';
 
 /**
  * Creates a mock domain User object
@@ -19,30 +11,12 @@ export function createMockUser(overrides: Partial<User> = {}): User {
 
   return {
     id: faker.string.uuid(),
+    email: faker.internet.email(),
     first_name: firstName,
     last_name: lastName,
-    full_name: `${firstName} ${lastName}`,
     avatar_url: faker.image.avatar(),
     created_at: now,
     updated_at: now,
-    ...overrides,
-  };
-}
-
-/**
- * Creates a mock AuthUser object (extends User with email)
- */
-export function createMockAuthUser(
-  overrides: Partial<AuthUser> = {}
-): AuthUser {
-  const user = createMockUser(overrides);
-  return {
-    ...user,
-    email: faker.internet.email(),
-    location: {
-      lat: faker.location.latitude(),
-      lng: faker.location.longitude(),
-    },
     ...overrides,
   };
 }
