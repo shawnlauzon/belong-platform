@@ -80,7 +80,19 @@ export interface Thanks extends CreateThanksData {
   updated_at: Date;
 }
 
-export interface UpdateUserData {
+export interface User {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  full_name?: string;
+  email: string;
+  avatar_url?: string;
+  location?: { lat: number; lng: number };
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface UpdateUserData extends Partial<User> {
   first_name?: string;
   last_name?: string;
   full_name?: string;
@@ -89,10 +101,14 @@ export interface UpdateUserData {
   location?: { lat: number; lng: number };
 }
 
-export interface User extends UpdateUserData {
-  id: string;
-  created_at: Date;
-  updated_at: Date;
+export interface CreateUserData
+  extends Omit<User, 'id' | 'created_at' | 'updated_at'> {
+  first_name: string;
+  last_name?: string;
+  full_name?: string;
+  email: string;
+  avatar_url?: string;
+  location?: { lat: number; lng: number };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

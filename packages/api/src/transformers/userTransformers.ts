@@ -18,7 +18,7 @@ export function toDomainUser(dbUser: UserRow): User {
     ...rest,
     first_name: (metadata?.first_name as string) || '',
     last_name: metadata?.last_name as string | undefined,
-    email: email ?? undefined,
+    email,
     full_name: metadata?.full_name as string | undefined,
     avatar_url: metadata?.avatar_url as string | undefined,
     created_at: new Date(rest.created_at),

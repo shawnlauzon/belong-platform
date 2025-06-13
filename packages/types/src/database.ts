@@ -9,74 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      communities: {
-        Row: {
-          area_km2: number | null
-          center: unknown
-          created_at: string
-          creator_id: string
-          depth: number
-          description: string
-          id: string
-          is_administrative: boolean
-          level: string
-          level_name: string | null
-          member_count: number
-          name: string
-          parent_id: string | null
-          population_estimate: number | null
-          radius_km: number
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          area_km2?: number | null
-          center: unknown
-          created_at?: string
-          creator_id: string
-          depth?: number
-          description: string
-          id?: string
-          is_administrative?: boolean
-          level: string
-          level_name?: string | null
-          member_count?: number
-          name: string
-          parent_id?: string | null
-          population_estimate?: number | null
-          radius_km: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          area_km2?: number | null
-          center?: unknown
-          created_at?: string
-          creator_id?: string
-          depth?: number
-          description?: string
-          id?: string
-          is_administrative?: boolean
-          level?: string
-          level_name?: string | null
-          member_count?: number
-          name?: string
-          parent_id?: string | null
-          population_estimate?: number | null
-          radius_km?: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "communities_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       community_memberships: {
         Row: {
           community_id: string
@@ -98,13 +30,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "community_memberships_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "community_memberships_user_id_fkey1"
             columns: ["user_id"]
             isOneToOne: false
@@ -116,21 +41,21 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          email: string | null
+          email: string
           id: string
           updated_at: string
           user_metadata: Json
         }
         Insert: {
           created_at?: string
-          email?: string | null
+          email: string
           id: string
           updated_at?: string
           user_metadata: Json
         }
         Update: {
           created_at?: string
-          email?: string | null
+          email?: string
           id?: string
           updated_at?: string
           user_metadata?: Json
@@ -286,21 +211,6 @@ export type Database = {
       }
     }
     Views: {
-      community_hierarchy: {
-        Row: {
-          area_km2: number | null
-          depth: number | null
-          id: string | null
-          level_name: string | null
-          member_count: number | null
-          name: string | null
-          parent_id: string | null
-          path_ids: string[] | null
-          path_names: string[] | null
-          root_name: string | null
-        }
-        Relationships: []
-      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
