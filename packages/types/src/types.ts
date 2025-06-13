@@ -39,10 +39,10 @@ export interface Resource extends CreateResourceData {
 
 export interface CreateCommunityData {
   name: string;
-  description: string;
+  description?: string;
   center?: { lat: number; lng: number };
   radius_km?: number;
-  parent_id?: string;
+  parent_id: string;
 }
 
 export interface UpdateCommunityData extends Partial<CreateCommunityData> {
@@ -55,7 +55,7 @@ export interface Community extends CreateCommunityData {
   country: string;
   state?: string;
   city: string;
-  neighborhood?: string;
+  neighborhood: string | null;
   member_count: number;
   created_at: Date;
   updated_at: Date;
@@ -95,9 +95,8 @@ export interface User extends UpdateUserData {
   updated_at: Date;
 }
 
-export interface AuthUser extends User {
-  email: string;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface AuthUser extends User {}
 
 export enum ResourceCategory {
   TOOLS = 'tools',

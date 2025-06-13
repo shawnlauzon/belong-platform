@@ -11,42 +11,60 @@ export type Database = {
     Tables: {
       communities: {
         Row: {
-          center: unknown | null
+          area_km2: number | null
+          center: unknown
           created_at: string
-          creator_id: string | null
+          creator_id: string
+          depth: number
           description: string
           id: string
+          is_administrative: boolean
           level: string
+          level_name: string | null
           member_count: number
           name: string
           parent_id: string | null
-          radius_km: number | null
+          population_estimate: number | null
+          radius_km: number
+          sort_order: number
           updated_at: string
         }
         Insert: {
-          center?: unknown | null
+          area_km2?: number | null
+          center: unknown
           created_at?: string
-          creator_id?: string | null
+          creator_id: string
+          depth?: number
           description: string
           id?: string
+          is_administrative?: boolean
           level: string
+          level_name?: string | null
           member_count?: number
           name: string
           parent_id?: string | null
-          radius_km?: number | null
+          population_estimate?: number | null
+          radius_km: number
+          sort_order?: number
           updated_at?: string
         }
         Update: {
-          center?: unknown | null
+          area_km2?: number | null
+          center?: unknown
           created_at?: string
-          creator_id?: string | null
+          creator_id?: string
+          depth?: number
           description?: string
           id?: string
+          is_administrative?: boolean
           level?: string
+          level_name?: string | null
           member_count?: number
           name?: string
           parent_id?: string | null
-          radius_km?: number | null
+          population_estimate?: number | null
+          radius_km?: number
+          sort_order?: number
           updated_at?: string
         }
         Relationships: [
@@ -62,21 +80,18 @@ export type Database = {
       community_memberships: {
         Row: {
           community_id: string
-          id: string
           joined_at: string
           role: string
           user_id: string
         }
         Insert: {
           community_id: string
-          id?: string
           joined_at?: string
           role?: string
           user_id: string
         }
         Update: {
           community_id?: string
-          id?: string
           joined_at?: string
           role?: string
           user_id?: string
@@ -271,6 +286,21 @@ export type Database = {
       }
     }
     Views: {
+      community_hierarchy: {
+        Row: {
+          area_km2: number | null
+          depth: number | null
+          id: string | null
+          level_name: string | null
+          member_count: number | null
+          name: string | null
+          parent_id: string | null
+          path_ids: string[] | null
+          path_names: string[] | null
+          root_name: string | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -508,6 +538,22 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
+      calculate_community_area: {
+        Args: { community_id: string }
+        Returns: number
+      }
+      communities_containing_point: {
+        Args: { lat: number; lng: number }
+        Returns: {
+          id: string
+          name: string
+          level_name: string
+          depth: number
+          member_count: number
+          area_km2: number
+          distance_km: number
+        }[]
+      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -538,6 +584,10 @@ export type Database = {
       equals: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
+      }
+      estimate_population: {
+        Args: { lat: number; lng: number; radius_km: number }
+        Returns: number
       }
       geography: {
         Args: { "": string } | { "": unknown }

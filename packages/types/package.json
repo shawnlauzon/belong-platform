@@ -24,7 +24,7 @@
     "test:coverage": "vitest run --coverage --config vitest.config.mts",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
     "typecheck": "tsc --noEmit",
-    "gen:db-types": "dotenv -e ../../.env supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts"
+    "gen:db-types": "dotenv -e ../../.env supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/database.ts"
   },
   "dependencies": {
     "@belongnetwork/core": "workspace:*"
@@ -35,7 +35,9 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^29.5.14",
     "@vitejs/plugin-react": "^4.5.1",
+    "dotenv-cli": "^8.0.0",
     "jsdom": "^24.1.3",
+    "supabase": "^2.24.3",
     "typescript": "^5.8.3",
     "vite": "^5.4.2",
     "vite-plugin-dts": "^3.8.0",
