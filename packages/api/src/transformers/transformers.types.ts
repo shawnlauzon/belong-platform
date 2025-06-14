@@ -9,22 +9,19 @@ export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ToDomainUser = (dbUser: UserRow) => User;
 export type ToDbUser = (user: Partial<User>) => Partial<UserRow>;
 
+// Resource transformer functions (now pure functions)
+export type ToDomainResource = (dbResource: ResourceRow & { owner?: any }) => Resource;
+export type ToDbResource = (resource: Partial<Resource>) => Partial<ResourceRow>;
+
 export interface CommunityTransformers {
   toDomainCommunity: (dbCommunity: CommunityRow) => Community;
   toDbCommunity: (community: Community) => CommunityRow;
 }
 
-export interface ResourceTransformers {
-  toDomainResource: (dbResource: ResourceRow) => Resource;
-  toDbResource: (
-    resource: Partial<Resource>
-  ) => Partial<Database['public']['Tables']['resources']['Insert']>;
-}
-
-export interface Transformers
-  extends CommunityTransformers,
-    ResourceTransformers {
-  // User transformers are now standalone functions
+export interface Transformers extends CommunityTransformers {
+  // User and Resource transformers are now standalone functions
   toDomainUser: ToDomainUser;
   toDbUser: ToDbUser;
+  toDomainResource: ToDomainResource;
+  toDbResource: ToDbResource;
 }

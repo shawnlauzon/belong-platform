@@ -6,8 +6,19 @@ import type {
   CreateResourceData,
   UpdateResourceData,
   ResourceFilter,
-  Community,
 } from '@belongnetwork/types';
+import { toDomainResource } from './transformers/resourceTransformers';
+import { AUTH_ERROR_MESSAGES } from './auth';
+
+// Resource service error message constants
+export const RESOURCE_ERROR_MESSAGES = {
+  /** Error thrown when user must be authenticated to create resources */
+  AUTHENTICATION_REQUIRED_CREATE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+  /** Error thrown when user must be authenticated to update resources */
+  AUTHENTICATION_REQUIRED_UPDATE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+  /** Error thrown when user must be authenticated to delete resources */
+  AUTHENTICATION_REQUIRED_DELETE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
+} as const;
 
 // Data functions (pure async functions)
 export async function fetchResources(
@@ -52,7 +63,7 @@ export async function fetchResources(
     }
 
     // Transform database records to domain objects
-    const resources: Resource[] = (data || []).map(transformDbResourceToDomain);
+    const resources: Resource[] = (data || []).map(toDomainResource);
 
     logger.debug('📦 API: Successfully fetched resources', {
       count: resources.length,
@@ -90,7 +101,7 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
       throw error;
     }
 
-    const resource = transformDbResourceToDomain(data);
+    const resource = toDomainResource(data);
     logger.debug('📦 API: Successfully fetched resource', {
       id,
       title: resource.title,
@@ -112,7 +123,7 @@ export async function createResource(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to create resources');
+      throw new Error(RESOURCE_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_CREATE);
     }
 
     const resourceData = {
@@ -144,7 +155,7 @@ export async function createResource(
       throw error;
     }
 
-    const resource = transformDbResourceToDomain(newResource);
+    const resource = toDomainResource(newResource);
     logger.info('📦 API: Successfully created resource', {
       id: resource.id,
       title: resource.title,
@@ -166,7 +177,7 @@ export async function updateResource(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to update resources');
+      throw new Error(RESOURCE_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_UPDATE);
     }
 
     const updateData = {
@@ -199,7 +210,7 @@ export async function updateResource(
       throw error;
     }
 
-    const resource = transformDbResourceToDomain(updatedResource);
+    const resource = toDomainResource(updatedResource);
     logger.info('📦 API: Successfully updated resource', {
       id: resource.id,
       title: resource.title,
@@ -219,7 +230,7 @@ export async function deleteResource(id: string): Promise<void> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User must be authenticated to delete resources');
+      throw new Error(RESOURCE_ERROR_MESSAGES.AUTHENTICATION_REQUIRED_DELETE);
     }
 
     const { error } = await supabase
@@ -238,53 +249,6 @@ export async function deleteResource(id: string): Promise<void> {
     logger.error('📦 API: Error deleting resource', { error });
     throw error;
   }
-}
-
-// Helper function to transform database records to domain objects
-function transformDbResourceToDomain(dbResource: any): Resource {
-  const owner = dbResource.owner
-    ? {
-        id: dbResource.owner.id,
-        email: dbResource.owner.email,
-        first_name: dbResource.owner.user_metadata?.first_name || '',
-        last_name: dbResource.owner.user_metadata?.last_name || '',
-        full_name: dbResource.owner.user_metadata?.full_name || '',
-        avatar_url: dbResource.owner.user_metadata?.avatar_url,
-        created_at: new Date(dbResource.owner.created_at || Date.now()),
-        updated_at: new Date(dbResource.owner.updated_at || Date.now()),
-      }
-    : null;
-
-  // Parse PostGIS point
-  let location = undefined;
-  if (dbResource.location) {
-    const match = dbResource.location.match(/POINT\(([^ ]+) ([^)]+)\)/);
-    if (match) {
-      location = {
-        lng: parseFloat(match[1]),
-        lat: parseFloat(match[2]),
-      };
-    }
-  }
-
-  return {
-    id: dbResource.id,
-    type: dbResource.type,
-    category: dbResource.category,
-    title: dbResource.title,
-    description: dbResource.description,
-    image_urls: dbResource.image_urls || [],
-    location,
-    pickup_instructions: dbResource.pickup_instructions,
-    parking_info: dbResource.parking_info,
-    meetup_flexibility: dbResource.meetup_flexibility,
-    availability: dbResource.availability,
-    is_active: dbResource.is_active,
-    created_at: new Date(dbResource.created_at),
-    updated_at: new Date(dbResource.updated_at),
-    owner: owner!,
-    community: { id: 'default', name: 'Default Community' } as Community, // TODO: Add community support
-  };
 }
 
 // React Query hooks
