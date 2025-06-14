@@ -162,6 +162,7 @@ export interface HangoutData {
 export interface ResourceFilter {
   category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
   type?: 'offer' | 'request' | 'all';
+  communityId?: string;
   maxDriveMinutes?: number;
   searchTerm?: string;
   minTrustScore?: number;

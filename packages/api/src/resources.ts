@@ -56,6 +56,9 @@ export async function fetchResources(
       .order('created_at', { ascending: false });
 
     // Apply filters
+    if (filters?.communityId) {
+      query = query.eq('community_id', filters.communityId);
+    }
     if (filters?.category && filters.category !== 'all') {
       query = query.eq('category', filters.category);
     }

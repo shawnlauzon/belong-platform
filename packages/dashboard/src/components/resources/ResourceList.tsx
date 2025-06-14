@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useResources, useDeleteResource } from '@belongnetwork/api';
 import { ResourceForm } from './ResourceForm';
-import { Plus, Edit, Trash2, Package, Loader2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Loader2, Search, Eye } from 'lucide-react';
 import type { Resource, ResourceFilter } from '@belongnetwork/types';
 
 interface ResourceListProps {
   communityId?: string;
+  isCompact?: boolean;
+  onViewDetails?: (resource: Resource) => void;
 }
 
-export function ResourceList({ communityId }: ResourceListProps) {
+export function ResourceList({ communityId, isCompact = false, onViewDetails }: ResourceListProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
-  const [filters, setFilters] = useState<ResourceFilter>({});
+  const [filters, setFilters] = useState<ResourceFilter>({
+    ...(communityId && { communityId })
+  });
   
   const { data: resources, isLoading, error } = useResources(filters);
   const deleteMutation = useDeleteResource();
@@ -44,6 +48,12 @@ export function ResourceList({ communityId }: ResourceListProps) {
     }));
   };
 
+  const handleViewDetails = (resource: Resource) => {
+    if (onViewDetails) {
+      onViewDetails(resource);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -65,80 +75,84 @@ export function ResourceList({ communityId }: ResourceListProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header and Filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Resources</h2>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Resource
-        </button>
-      </div>
+      {/* Header and Filters - Hidden in compact mode */}
+      {!isCompact && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">Resources</h2>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Resource
+            </button>
+          </div>
 
-      {/* Filters */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="searchTerm" className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                id="searchTerm"
-                name="searchTerm"
-                value={filters.searchTerm || ''}
-                onChange={handleFilterChange}
-                placeholder="Search resources..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+          {/* Filters */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="searchTerm" className="block text-sm font-medium text-gray-700 mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    id="searchTerm"
+                    name="searchTerm"
+                    value={filters.searchTerm || ''}
+                    onChange={handleFilterChange}
+                    placeholder="Search resources..."
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                  Type
+                </label>
+                <select
+                  id="type"
+                  name="type"
+                  value={filters.type || 'all'}
+                  onChange={handleFilterChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Types</option>
+                  <option value="offer">Offers</option>
+                  <option value="request">Requests</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  value={filters.category || 'all'}
+                  onChange={handleFilterChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="tools">Tools</option>
+                  <option value="skills">Skills</option>
+                  <option value="food">Food</option>
+                  <option value="supplies">Supplies</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
           </div>
-          
-          <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={filters.type || 'all'}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Types</option>
-              <option value="offer">Offers</option>
-              <option value="request">Requests</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              value={filters.category || 'all'}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Categories</option>
-              <option value="tools">Tools</option>
-              <option value="skills">Skills</option>
-              <option value="food">Food</option>
-              <option value="supplies">Supplies</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Create/Edit Form */}
-      {showCreateForm && (
+      {/* Create/Edit Form - Hidden in compact mode */}
+      {!isCompact && showCreateForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">
             {editingResource ? 'Edit Resource' : 'Add New Resource'}
@@ -156,7 +170,7 @@ export function ResourceList({ communityId }: ResourceListProps) {
         {resources?.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No resources found. Add your first resource!</p>
+            <p>No resources found{isCompact ? ' in this community' : '. Add your first resource!'}!</p>
           </div>
         ) : (
           resources?.map((resource) => (
@@ -182,7 +196,7 @@ export function ResourceList({ communityId }: ResourceListProps) {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {resource.title}
                   </h3>
-                  <p className="text-gray-600 mb-3">{resource.description}</p>
+                  <p className="text-gray-600 mb-3 line-clamp-2">{resource.description}</p>
                   
                   <div className="text-sm text-gray-500">
                     <p>By {resource.owner.full_name || resource.owner.first_name}</p>
@@ -193,23 +207,36 @@ export function ResourceList({ communityId }: ResourceListProps) {
                 </div>
                 
                 <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(resource)}
-                    className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(resource)}
-                    disabled={deleteMutation.isPending}
-                    className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-                  >
-                    {deleteMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </button>
+                  {onViewDetails && (
+                    <button
+                      onClick={() => handleViewDetails(resource)}
+                      className="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Details
+                    </button>
+                  )}
+                  {!isCompact && (
+                    <>
+                      <button
+                        onClick={() => handleEdit(resource)}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(resource)}
+                        disabled={deleteMutation.isPending}
+                        className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                      >
+                        {deleteMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

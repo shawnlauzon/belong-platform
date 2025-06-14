@@ -97,6 +97,17 @@ export default {
       },
     },
   },
+  safelist: [
+    'max-h-0',
+    'max-h-screen',
+    'transition-all',
+    'duration-300',
+    'ease-in-out',
+    'opacity-0',
+    'opacity-100',
+    'overflow-hidden',
+    'line-clamp-2',
+  ],
   plugins: [
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useCommunities, useDeleteCommunity } from '@belongnetwork/api';
 import { CommunityForm } from './CommunityForm';
 import { ResourceForm } from '../resources/ResourceForm';
-import { Plus, Edit, Trash2, Users, MapPin, Loader2 } from 'lucide-react';
-import type { Community } from '@belongnetwork/types';
+import { ResourceList } from '../resources/ResourceList';
+import { ResourceDetailModal } from '../resources/ResourceDetailModal';
+import { Plus, Edit, Trash2, Users, MapPin, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import type { Community, Resource } from '@belongnetwork/types';
 
 export function CommunityList() {
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -11,6 +13,8 @@ export function CommunityList() {
   const [showCreateResourceForm, setShowCreateResourceForm] = useState(false);
   const [selectedCommunityForResource, setSelectedCommunityForResource] = useState<Community | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [expandedCommunityId, setExpandedCommunityId] = useState<string | null>(null);
+  const [selectedResourceForDetails, setSelectedResourceForDetails] = useState<Resource | null>(null);
   
   const { data: communities, isLoading, error } = useCommunities();
   const deleteMutation = useDeleteCommunity();
@@ -54,6 +58,18 @@ export function CommunityList() {
     setTimeout(() => {
       setShowSuccessMessage(false);
     }, 3000);
+  };
+
+  const handleToggleResources = (communityId: string) => {
+    setExpandedCommunityId(expandedCommunityId === communityId ? null : communityId);
+  };
+
+  const handleViewResourceDetails = (resource: Resource) => {
+    setSelectedResourceForDetails(resource);
+  };
+
+  const handleCloseResourceDetails = () => {
+    setSelectedResourceForDetails(null);
   };
 
   if (isLoading) {
@@ -133,60 +149,108 @@ export function CommunityList() {
           communities?.map((community) => (
             <div
               key={community.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {community.name}
-                  </h3>
-                  <p className="text-gray-600 mb-3">{community.description}</p>
-                  
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {community.member_count} members
-                    </div>
-                    {community.center && (
+              <div className="p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {community.name}
+                    </h3>
+                    <p className="text-gray-600 mb-3">{community.description}</p>
+                    
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
                       <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {community.city}
+                        <Users className="w-4 h-4 mr-1" />
+                        {community.member_count} members
                       </div>
-                    )}
+                      {community.center && (
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {community.city}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleAddResource(community)}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add New Resource
+                    </button>
+                    <button
+                      onClick={() => handleEdit(community)}
+                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(community)}
+                      disabled={deleteMutation.isPending}
+                      className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                    >
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
-                
-                <div className="flex space-x-2 ml-4">
+
+                {/* Toggle Resources Button */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
                   <button
-                    onClick={() => handleAddResource(community)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    onClick={() => handleToggleResources(community.id)}
+                    className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-2 py-1"
                   >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add New Resource
-                  </button>
-                  <button
-                    onClick={() => handleEdit(community)}
-                    className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(community)}
-                    disabled={deleteMutation.isPending}
-                    className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-                  >
-                    {deleteMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                    {expandedCommunityId === community.id ? (
+                      <>
+                        <ChevronUp className="w-4 h-4 mr-1" />
+                        Hide Resources
+                      </>
                     ) : (
-                      <Trash2 className="w-4 h-4" />
+                      <>
+                        <ChevronDown className="w-4 h-4 mr-1" />
+                        Show Resources
+                      </>
                     )}
                   </button>
+                </div>
+              </div>
+
+              {/* Collapsible Resources Section */}
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                expandedCommunityId === community.id 
+                  ? 'max-h-screen opacity-100' 
+                  : 'max-h-0 opacity-0'
+              }`}>
+                <div className="border-t border-gray-200 bg-gray-50 p-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                    Resources in {community.name}
+                  </h4>
+                  <ResourceList
+                    communityId={community.id}
+                    isCompact={true}
+                    onViewDetails={handleViewResourceDetails}
+                  />
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Resource Detail Modal */}
+      {selectedResourceForDetails && (
+        <ResourceDetailModal
+          resourceId={selectedResourceForDetails.id}
+          onClose={handleCloseResourceDetails}
+        />
+      )}
     </div>
   );
 }
