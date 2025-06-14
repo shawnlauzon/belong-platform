@@ -13,9 +13,13 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as ThanksImport } from './routes/thanks'
 import { Route as ResourcesImport } from './routes/resources'
+import { Route as DashboardImport } from './routes/dashboard'
 import { Route as CommunityImport } from './routes/community'
+import { Route as AuthImport } from './routes/auth'
 import { Route as IndexImport } from './routes/index'
+import { Route as ResourceIdImport } from './routes/resource.$id'
 import { Route as ProfileIdImport } from './routes/profile.$id'
+import { Route as CommunityIdImport } from './routes/community.$id'
 
 // Create/Update Routes
 
@@ -31,9 +35,21 @@ const ResourcesRoute = ResourcesImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const DashboardRoute = DashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const CommunityRoute = CommunityImport.update({
   id: '/community',
   path: '/community',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthRoute = AuthImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -43,10 +59,22 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ResourceIdRoute = ResourceIdImport.update({
+  id: '/resource/$id',
+  path: '/resource/$id',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const ProfileIdRoute = ProfileIdImport.update({
   id: '/profile/$id',
   path: '/profile/$id',
   getParentRoute: () => rootRoute,
+} as any)
+
+const CommunityIdRoute = CommunityIdImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CommunityRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -60,11 +88,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
     '/community': {
       id: '/community'
       path: '/community'
       fullPath: '/community'
       preLoaderRoute: typeof CommunityImport
+      parentRoute: typeof rootRoute
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
     '/resources': {
@@ -81,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThanksImport
       parentRoute: typeof rootRoute
     }
+    '/community/$id': {
+      id: '/community/$id'
+      path: '/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof CommunityIdImport
+      parentRoute: typeof CommunityImport
+    }
     '/profile/$id': {
       id: '/profile/$id'
       path: '/profile/$id'
@@ -88,65 +137,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIdImport
       parentRoute: typeof rootRoute
     }
+    '/resource/$id': {
+      id: '/resource/$id'
+      path: '/resource/$id'
+      fullPath: '/resource/$id'
+      preLoaderRoute: typeof ResourceIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
 // Create and export the route tree
 
+interface CommunityRouteChildren {
+  CommunityIdRoute: typeof CommunityIdRoute
+}
+
+const CommunityRouteChildren: CommunityRouteChildren = {
+  CommunityIdRoute: CommunityIdRoute,
+}
+
+const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
+  CommunityRouteChildren,
+)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
+  '/auth': typeof AuthRoute
+  '/community': typeof CommunityRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
   '/thanks': typeof ThanksRoute
+  '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/resource/$id': typeof ResourceIdRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
+  '/auth': typeof AuthRoute
+  '/community': typeof CommunityRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
   '/thanks': typeof ThanksRoute
+  '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/resource/$id': typeof ResourceIdRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
+  '/auth': typeof AuthRoute
+  '/community': typeof CommunityRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
   '/thanks': typeof ThanksRoute
+  '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/resource/$id': typeof ResourceIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/community' | '/resources' | '/thanks' | '/profile/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/community'
+    | '/dashboard'
+    | '/resources'
+    | '/thanks'
+    | '/community/$id'
+    | '/profile/$id'
+    | '/resource/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/community' | '/resources' | '/thanks' | '/profile/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/community'
+    | '/dashboard'
+    | '/resources'
+    | '/thanks'
+    | '/community/$id'
+    | '/profile/$id'
+    | '/resource/$id'
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/community'
+    | '/dashboard'
     | '/resources'
     | '/thanks'
+    | '/community/$id'
     | '/profile/$id'
+    | '/resource/$id'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CommunityRoute: typeof CommunityRoute
+  AuthRoute: typeof AuthRoute
+  CommunityRoute: typeof CommunityRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   ResourcesRoute: typeof ResourcesRoute
   ThanksRoute: typeof ThanksRoute
   ProfileIdRoute: typeof ProfileIdRoute
+  ResourceIdRoute: typeof ResourceIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CommunityRoute: CommunityRoute,
+  AuthRoute: AuthRoute,
+  CommunityRoute: CommunityRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   ResourcesRoute: ResourcesRoute,
   ThanksRoute: ThanksRoute,
   ProfileIdRoute: ProfileIdRoute,
+  ResourceIdRoute: ResourceIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -160,17 +268,29 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/auth",
         "/community",
+        "/dashboard",
         "/resources",
         "/thanks",
-        "/profile/$id"
+        "/profile/$id",
+        "/resource/$id"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
+    "/auth": {
+      "filePath": "auth.tsx"
+    },
     "/community": {
-      "filePath": "community.tsx"
+      "filePath": "community.tsx",
+      "children": [
+        "/community/$id"
+      ]
+    },
+    "/dashboard": {
+      "filePath": "dashboard.tsx"
     },
     "/resources": {
       "filePath": "resources.tsx"
@@ -178,8 +298,15 @@ export const routeTree = rootRoute
     "/thanks": {
       "filePath": "thanks.tsx"
     },
+    "/community/$id": {
+      "filePath": "community.$id.tsx",
+      "parent": "/community"
+    },
     "/profile/$id": {
       "filePath": "profile.$id.tsx"
+    },
+    "/resource/$id": {
+      "filePath": "resource.$id.tsx"
     }
   }
 }

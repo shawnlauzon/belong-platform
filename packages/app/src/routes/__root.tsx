@@ -1,49 +1,74 @@
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
+import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/router-devtools';
-import { Suspense } from 'react';
-import { logger, logComponentRender } from '@belongnetwork/core';
+import { QueryClient } from '@tanstack/react-query';
+import { AuthStatus } from '../components/auth/AuthStatus';
+import { Home, Users, Package } from 'lucide-react';
+import type { AuthUser } from '@belongnetwork/types';
 
-export const Route = createRootRoute({
-  component: () => {
-    logComponentRender('RootRoute');
+interface RouterContext {
+  queryClient: QueryClient;
+  auth: {
+    user: AuthUser | null;
+  };
+}
 
-    return (
-      <div className="min-h-screen">
-        <Suspense
-          fallback={
-            <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-              <div className="animate-pulse text-warmgray-600">Loading...</div>
-            </div>
-          }
-        >
-          <Outlet />
-        </Suspense>
-        {import.meta.env.DEV && <TanStackRouterDevtools />}
-      </div>
-    );
-  },
-  errorComponent: ({ error }) => {
-    logger.error('🚨 Root route error:', error);
-
-    return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-warmgray-900 mb-4">
-            Oops! Something went wrong
-          </h1>
-          <p className="text-warmgray-600 mb-6">
-            {error instanceof Error
-              ? error.message
-              : 'An unexpected error occurred'}
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600"
-          >
-            Return Home
-          </Link>
-        </div>
-      </div>
-    );
-  },
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: RootComponent,
 });
+
+function RootComponent() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo and Navigation */}
+            <div className="flex items-center space-x-8">
+              <Link to="/" className="flex items-center space-x-2">
+                <Home className="w-6 h-6 text-blue-600" />
+                <span className="text-xl font-bold text-gray-900">
+                  Belong Network
+                </span>
+              </Link>
+              
+              <nav className="hidden md:flex space-x-6">
+                <Link
+                  to="/dashboard"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{
+                    className: "text-blue-600 bg-blue-50"
+                  }}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Communities</span>
+                </Link>
+                <Link
+                  to="/resources"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{
+                    className: "text-blue-600 bg-blue-50"
+                  }}
+                >
+                  <Package className="w-4 h-4" />
+                  <span>Resources</span>
+                </Link>
+              </nav>
+            </div>
+
+            {/* Auth Status */}
+            <AuthStatus />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main>
+        <Outlet />
+      </main>
+
+      {/* Development Tools */}
+      <TanStackRouterDevtools position="bottom-right" />
+    </div>
+  );
+}

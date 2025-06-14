@@ -1,253 +1,128 @@
-import React, { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { AppLayout } from '@belongnetwork/components';
-import { Card, CardContent } from '@belongnetwork/components';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { useCurrentUser } from '@belongnetwork/api';
 import { Button } from '@belongnetwork/components';
-import { ResourceCard } from '@belongnetwork/components';
-import { ThanksFeed } from '@belongnetwork/components';
-import { ViewSwitcher } from '@belongnetwork/components';
-import { Plus, ChevronRight, Users } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
-import { ShareResourceDialog } from '@belongnetwork/components';
-import { AuthDialog } from '@belongnetwork/components';
-import {
-  logger,
-  logComponentRender,
-  logUserAction,
-  useBelongStore,
-} from '@belongnetwork/core';
+import { Users, Package, Heart, ArrowRight } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 });
 
 function HomePage() {
-  logComponentRender('HomePage');
-
-  const userLocation = useBelongStore((state) => state.auth.location);
-  const viewMode = useBelongStore((state) => state.app.viewMode);
-  const [showShareDialog, setShowShareDialog] = useState(false);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const user = useBelongStore((state) => state.auth.user);
-
-  const { list: resources, isLoading: resourcesLoading } = useBelongStore(
-    (state) => state.resources
-  );
-  const { list: thanks, isLoading: thanksLoading } = useBelongStore(
-    (state) => state.thanks
-  );
-
-  // Get the 3 closest resources
-  const nearbyResources = React.useMemo(() => {
-    return [...resources]
-      .sort((a, b) => (a.distance_minutes || 100) - (b.distance_minutes || 100))
-      .slice(0, 3);
-  }, [resources]);
-
-  // Get the 2 most recent thanks
-  const recentThanks = React.useMemo(() => {
-    return thanks.slice(0, 2);
-  }, [thanks]);
-
-  const handleResourceRequest = (resourceId: string) => {
-    logUserAction('resource_request_clicked', { resourceId, hasUser: !!user });
-
-    if (!user) {
-      logger.debug('👤 User not authenticated, showing auth dialog');
-      setShowAuthDialog(true);
-      return;
-    }
-
-    logger.info('📦 Resource requested:', { resourceId });
-  };
-
-  const handleShareClick = () => {
-    logUserAction('share_resource_clicked', { hasUser: !!user });
-
-    if (!user) {
-      logger.debug('👤 User not authenticated, showing auth dialog');
-      setShowAuthDialog(true);
-      return;
-    }
-
-    logger.debug('📦 Opening share resource dialog');
-    setShowShareDialog(true);
-  };
+  const { data: user } = useCurrentUser();
 
   return (
-    <AppLayout>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-display font-bold text-warmgray-800">
-          {viewMode === 'member' ? 'My Neighborhood' : 'Community Dashboard'}
-        </h1>
-        <ViewSwitcher />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Connect with Your
+            <span className="text-blue-600 block">Local Community</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Share resources, build relationships, and strengthen your neighborhood 
+            through the power of community connection.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {user ? (
+              <Link to="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Go to Dashboard
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Get Started
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                    Sign In
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
-      {viewMode === 'member' && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card
-              className="bg-gradient-to-br from-primary-500 to-primary-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={handleShareClick}
-            >
-              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                <div className="rounded-full bg-white bg-opacity-20 p-4">
-                  <Plus className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Share Something</h3>
-                  <p className="text-primary-100">
-                    Tools, skills, or items you'd like to share with neighbors
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Features Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            How Belong Network Works
+          </h2>
+          <p className="text-lg text-gray-600">
+            Simple tools to build stronger communities
+          </p>
+        </div>
 
-            <Card
-              className="bg-gradient-to-br from-trust-500 to-trust-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={handleShareClick}
-            >
-              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                <div className="rounded-full bg-white bg-opacity-20 p-4">
-                  <Plus className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Ask for Something</h3>
-                  <p className="text-trust-100">
-                    Need something from your neighbors? Just ask!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="bg-gray-100 hover:bg-gray-50 cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => (user ? undefined : setShowAuthDialog(true))}
-            >
-              <Link to="/profile/$id" params={{ id: user?.id || '' }}>
-                <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                  <div className="rounded-full bg-white p-4 shadow-sm">
-                    <Users className="h-8 w-8 text-warmgray-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-warmgray-800 mb-2">
-                      My Profile
-                    </h3>
-                    <p className="text-warmgray-500">
-                      View your trust score and sharing history
-                    </p>
-                  </div>
-                </CardContent>
-              </Link>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-lg p-8 shadow-lg text-center">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Join Communities
+            </h3>
+            <p className="text-gray-600">
+              Connect with neighbors in your area and join local communities 
+              based on your interests and location.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            {/* Nearby Resources */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-warmgray-800">
-                  Nearby Resources
-                </h2>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/resources" className="flex items-center gap-1">
-                    <span>View All</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              {resourcesLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded-lg shadow-sm h-[200px] animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : nearbyResources.length > 0 ? (
-                <div className="space-y-4">
-                  {nearbyResources.map((resource) => (
-                    <ResourceCard
-                      key={resource.id}
-                      resource={resource}
-                      onRequest={handleResourceRequest}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <p className="text-warmgray-500">
-                      No nearby resources found
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+          <div className="bg-white rounded-lg p-8 shadow-lg text-center">
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="w-8 h-8 text-green-600" />
             </div>
-
-            {/* Recent Thanks */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-warmgray-800">
-                  Recent Thanks
-                </h2>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/thanks" className="flex items-center gap-1">
-                    <span>View All</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              <ThanksFeed thanks={recentThanks} isLoading={thanksLoading} />
-            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Share Resources
+            </h3>
+            <p className="text-gray-600">
+              Offer tools, skills, and services to your community, or request 
+              help when you need it most.
+            </p>
           </div>
 
-          <ShareResourceDialog
-            open={showShareDialog}
-            onOpenChange={setShowShareDialog}
-          />
+          <div className="bg-white rounded-lg p-8 shadow-lg text-center">
+            <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Heart className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Build Trust
+            </h3>
+            <p className="text-gray-600">
+              Express gratitude and build lasting relationships through our 
+              community trust and thanks system.
+            </p>
+          </div>
+        </div>
+      </div>
 
-          <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
-        </>
-      )}
-
-      {viewMode === 'organizer' && (
-        <div className="space-y-6">
-          <Card>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">145</div>
-                  <div className="text-sm text-warmgray-500">Members</div>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">
-                    {resources.length}
-                  </div>
-                  <div className="text-sm text-warmgray-500">
-                    Active Resources
-                  </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">
-                    {thanks.length}
-                  </div>
-                  <div className="text-sm text-warmgray-500">Total Thanks</div>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
-                  <div className="text-2xl font-bold text-primary-600">7.2</div>
-                  <div className="text-sm text-warmgray-500">
-                    Avg Trust Score
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* CTA Section */}
+      {!user && (
+        <div className="bg-blue-600 py-16">
+          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              Join thousands of neighbors already building stronger communities.
+            </p>
+            <Link to="/auth">
+              <Button size="lg" variant="secondary">
+                Create Your Account
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
-    </AppLayout>
+    </div>
   );
 }
