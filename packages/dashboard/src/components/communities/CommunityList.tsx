@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useCommunities, useDeleteCommunity } from '@belongnetwork/api';
 import { CommunityForm } from './CommunityForm';
+import { ResourceForm } from '../resources/ResourceForm';
 import { Plus, Edit, Trash2, Users, MapPin, Loader2 } from 'lucide-react';
 import type { Community } from '@belongnetwork/types';
 
 export function CommunityList() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCommunity, setEditingCommunity] = useState<Community | null>(null);
+  const [showCreateResourceForm, setShowCreateResourceForm] = useState(false);
+  const [selectedCommunityForResource, setSelectedCommunityForResource] = useState<Community | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
   const { data: communities, isLoading, error } = useCommunities();
   const deleteMutation = useDeleteCommunity();
@@ -29,6 +33,27 @@ export function CommunityList() {
   const handleFormClose = () => {
     setShowCreateForm(false);
     setEditingCommunity(null);
+  };
+
+  const handleAddResource = (community: Community) => {
+    setSelectedCommunityForResource(community);
+    setShowCreateResourceForm(true);
+  };
+
+  const handleResourceFormClose = () => {
+    setShowCreateResourceForm(false);
+    setSelectedCommunityForResource(null);
+  };
+
+  const handleResourceFormSuccess = () => {
+    setShowCreateResourceForm(false);
+    setSelectedCommunityForResource(null);
+    setShowSuccessMessage(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 3000);
   };
 
   if (isLoading) {
@@ -63,6 +88,14 @@ export function CommunityList() {
         </button>
       </div>
 
+      {showSuccessMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <p className="text-green-600">
+            Resource created successfully!
+          </p>
+        </div>
+      )}
+
       {showCreateForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">
@@ -72,6 +105,20 @@ export function CommunityList() {
             initialData={editingCommunity}
             onSuccess={handleFormClose}
             onCancel={handleFormClose}
+          />
+        </div>
+      )}
+
+      {showCreateResourceForm && selectedCommunityForResource && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">
+            Add New Resource to {selectedCommunityForResource.name}
+          </h3>
+          <ResourceForm
+            communityId={selectedCommunityForResource.id}
+            communityName={selectedCommunityForResource.name}
+            onSuccess={handleResourceFormSuccess}
+            onCancel={handleResourceFormClose}
           />
         </div>
       )}
@@ -110,6 +157,13 @@ export function CommunityList() {
                 </div>
                 
                 <div className="flex space-x-2 ml-4">
+                  <button
+                    onClick={() => handleAddResource(community)}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add New Resource
+                  </button>
                   <button
                     onClick={() => handleEdit(community)}
                     className="inline-flex items-center p-2 border border-gray-300 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

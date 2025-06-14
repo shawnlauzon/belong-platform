@@ -16,6 +16,7 @@ export interface CreateResourceData {
   category: ResourceCategory;
   title: string;
   description: string;
+  community_id: string; // Made required
   image_urls?: string[];
   location?: { lat: number; lng: number };
   pickup_instructions?: string;

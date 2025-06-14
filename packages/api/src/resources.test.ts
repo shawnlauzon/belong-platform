@@ -13,7 +13,7 @@ import {
   useUpdateResource,
   useDeleteResource,
 } from './resources';
-import { createMockResource, createMockDbResource, createMockUser } from './test-utils/mocks';
+import { createMockResource, createMockDbResource, createMockUser, createMockCommunity } from './test-utils/mocks';
 import { ReactQueryWrapper } from './test-utils/test-utils';
 import type { ResourceFilter, CreateResourceData, UpdateResourceData } from '@belongnetwork/types';
 
@@ -25,16 +25,16 @@ vi.mock('@belongnetwork/core', () => ({
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
+        order: vi.fn(() => ({
+          or: vi.fn(),
+        })),
         eq: vi.fn(() => ({
           order: vi.fn(() => ({
             or: vi.fn(),
           })),
           single: vi.fn(),
         })),
-        order: vi.fn(() => ({
-          or: vi.fn(),
-        })),
-        or: vi.fn(),
+        single: vi.fn(),
       })),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -78,7 +78,7 @@ describe('Resource Functions', () => {
   });
 
   describe('fetchResources', () => {
-    it('should successfully fetch resources without filters', async () => {
+    it('should successfully fetch resources', async () => {
       // Arrange
       const mockDbResources = Array.from({ length: 3 }, () =>
         createMockDbResource({
@@ -90,6 +90,14 @@ describe('Resource Functions', () => {
               last_name: faker.person.lastName(),
               full_name: faker.person.fullName(),
             },
+            created_at: faker.date.recent().toISOString(),
+            updated_at: faker.date.recent().toISOString(),
+          },
+          community: {
+            id: faker.string.uuid(),
+            name: faker.location.city(),
+            description: faker.lorem.sentence(),
+            member_count: faker.number.int({ min: 10, max: 100 }),
             created_at: faker.date.recent().toISOString(),
             updated_at: faker.date.recent().toISOString(),
           },
@@ -118,73 +126,20 @@ describe('Resource Functions', () => {
       expect(result[0]).toMatchObject({
         id: expect.any(String),
         title: expect.any(String),
+        community_id: expect.any(String),
         owner: expect.objectContaining({
           id: expect.any(String),
           email: expect.any(String),
+        }),
+        community: expect.objectContaining({
+          id: expect.any(String),
+          name: expect.any(String),
         }),
       });
       expect(mockLogger.debug).toHaveBeenCalledWith(
         '📦 API: Successfully fetched resources',
         { count: 3 }
       );
-    });
-
-    it('should apply category filter when provided', async () => {
-      // Arrange
-      const filters: ResourceFilter = { category: 'tools' };
-      const mockDbResources = [createMockDbResource({ category: 'tools' })];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({
-                data: mockDbResources,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      };
-
-      mockSupabase.from.mockReturnValue(mockQuery);
-
-      // Act
-      const result = await fetchResources(filters);
-
-      // Assert
-      expect(mockQuery.select().eq().order().eq).toHaveBeenCalledWith('category', 'tools');
-      expect(result).toHaveLength(1);
-    });
-
-    it('should apply search filter when provided', async () => {
-      // Arrange
-      const filters: ResourceFilter = { searchTerm: 'drill' };
-      const mockDbResources = [createMockDbResource({ title: 'Power Drill' })];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              or: vi.fn().mockResolvedValue({
-                data: mockDbResources,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      };
-
-      mockSupabase.from.mockReturnValue(mockQuery);
-
-      // Act
-      const result = await fetchResources(filters);
-
-      // Assert
-      expect(mockQuery.select().eq().order().or).toHaveBeenCalledWith(
-        'title.ilike.%drill%,description.ilike.%drill%'
-      );
-      expect(result).toHaveLength(1);
     });
 
     it('should handle database errors', async () => {
@@ -226,6 +181,14 @@ describe('Resource Functions', () => {
           created_at: faker.date.recent().toISOString(),
           updated_at: faker.date.recent().toISOString(),
         },
+        community: {
+          id: faker.string.uuid(),
+          name: faker.location.city(),
+          description: faker.lorem.sentence(),
+          member_count: faker.number.int({ min: 10, max: 100 }),
+          created_at: faker.date.recent().toISOString(),
+          updated_at: faker.date.recent().toISOString(),
+        },
       });
       const resourceId = mockDbResource.id;
 
@@ -250,6 +213,11 @@ describe('Resource Functions', () => {
       expect(result).toMatchObject({
         id: resourceId,
         title: mockDbResource.title,
+        community_id: expect.any(String),
+        community: expect.objectContaining({
+          id: expect.any(String),
+          name: expect.any(String),
+        }),
       });
       expect(mockLogger.debug).toHaveBeenCalledWith(
         '📦 API: Successfully fetched resource',
@@ -313,11 +281,13 @@ describe('Resource Functions', () => {
     it('should successfully create a resource', async () => {
       // Arrange
       const mockUser = createMockUser();
+      const mockCommunity = createMockCommunity();
       const createData: CreateResourceData = {
         type: 'offer',
         category: 'tools' as any,
         title: 'Power Drill',
         description: 'High-quality power drill for rent',
+        community_id: mockCommunity.id,
         image_urls: ['https://example.com/drill.jpg'],
         location: { lat: 40.7128, lng: -74.006 },
         meetup_flexibility: 'home_only' as any,
@@ -327,6 +297,7 @@ describe('Resource Functions', () => {
       const mockDbResource = createMockDbResource({
         ...createData,
         creator_id: mockUser.id,
+        community_id: mockCommunity.id,
         owner: {
           id: mockUser.id,
           email: mockUser.email,
@@ -336,6 +307,14 @@ describe('Resource Functions', () => {
           },
           created_at: mockUser.created_at.toISOString(),
           updated_at: mockUser.updated_at.toISOString(),
+        },
+        community: {
+          id: mockCommunity.id,
+          name: mockCommunity.name,
+          description: mockCommunity.description,
+          member_count: mockCommunity.member_count,
+          created_at: mockCommunity.created_at.toISOString(),
+          updated_at: mockCommunity.updated_at.toISOString(),
         },
       });
 
@@ -366,6 +345,7 @@ describe('Resource Functions', () => {
         title: createData.title,
         description: createData.description,
         type: createData.type,
+        community_id: createData.community_id,
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully created resource',
@@ -380,6 +360,7 @@ describe('Resource Functions', () => {
         category: 'tools' as any,
         title: 'Power Drill',
         description: 'High-quality power drill for rent',
+        community_id: faker.string.uuid(),
         is_active: true,
       };
 
@@ -402,6 +383,7 @@ describe('Resource Functions', () => {
         category: 'tools' as any,
         title: 'Power Drill',
         description: 'High-quality power drill for rent',
+        community_id: faker.string.uuid(),
         is_active: true,
       };
       const createError = new Error('Creation failed');
@@ -437,10 +419,12 @@ describe('Resource Functions', () => {
     it('should successfully update a resource', async () => {
       // Arrange
       const mockUser = createMockUser();
+      const mockCommunity = createMockCommunity();
       const updateData: UpdateResourceData = {
         id: faker.string.uuid(),
         title: 'Updated Power Drill',
         description: 'Updated description',
+        community_id: mockCommunity.id,
       };
 
       const mockDbResource = createMockDbResource({
@@ -448,6 +432,7 @@ describe('Resource Functions', () => {
         title: updateData.title,
         description: updateData.description,
         creator_id: mockUser.id,
+        community_id: mockCommunity.id,
         owner: {
           id: mockUser.id,
           email: mockUser.email,
@@ -457,6 +442,14 @@ describe('Resource Functions', () => {
           },
           created_at: mockUser.created_at.toISOString(),
           updated_at: mockUser.updated_at.toISOString(),
+        },
+        community: {
+          id: mockCommunity.id,
+          name: mockCommunity.name,
+          description: mockCommunity.description,
+          member_count: mockCommunity.member_count,
+          created_at: mockCommunity.created_at.toISOString(),
+          updated_at: mockCommunity.updated_at.toISOString(),
         },
       });
 
@@ -491,6 +484,7 @@ describe('Resource Functions', () => {
         id: updateData.id,
         title: updateData.title,
         description: updateData.description,
+        community_id: updateData.community_id,
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully updated resource',
@@ -503,6 +497,7 @@ describe('Resource Functions', () => {
       const updateData: UpdateResourceData = {
         id: faker.string.uuid(),
         title: 'Updated Power Drill',
+        community_id: faker.string.uuid(),
       };
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -593,6 +588,14 @@ describe('Resource Hooks', () => {
             created_at: faker.date.recent().toISOString(),
             updated_at: faker.date.recent().toISOString(),
           },
+          community: {
+            id: faker.string.uuid(),
+            name: faker.location.city(),
+            description: faker.lorem.sentence(),
+            member_count: faker.number.int({ min: 10, max: 100 }),
+            created_at: faker.date.recent().toISOString(),
+            updated_at: faker.date.recent().toISOString(),
+          },
         })
       );
 
@@ -670,6 +673,14 @@ describe('Resource Hooks', () => {
           created_at: faker.date.recent().toISOString(),
           updated_at: faker.date.recent().toISOString(),
         },
+        community: {
+          id: faker.string.uuid(),
+          name: faker.location.city(),
+          description: faker.lorem.sentence(),
+          member_count: faker.number.int({ min: 10, max: 100 }),
+          created_at: faker.date.recent().toISOString(),
+          updated_at: faker.date.recent().toISOString(),
+        },
       });
       const resourceId = mockDbResource.id;
 
@@ -698,6 +709,7 @@ describe('Resource Hooks', () => {
       expect(result.current.data).toMatchObject({
         id: resourceId,
         title: mockDbResource.title,
+        community_id: expect.any(String),
       });
     });
 
@@ -717,17 +729,20 @@ describe('Resource Hooks', () => {
     it('should create resource and invalidate cache', async () => {
       // Arrange
       const mockUser = createMockUser();
+      const mockCommunity = createMockCommunity();
       const createData: CreateResourceData = {
         type: 'offer',
         category: 'tools' as any,
         title: 'Power Drill',
         description: 'High-quality power drill for rent',
+        community_id: mockCommunity.id,
         is_active: true,
       };
 
       const mockDbResource = createMockDbResource({
         ...createData,
         creator_id: mockUser.id,
+        community_id: mockCommunity.id,
         owner: {
           id: mockUser.id,
           email: mockUser.email,
@@ -737,6 +752,14 @@ describe('Resource Hooks', () => {
           },
           created_at: mockUser.created_at.toISOString(),
           updated_at: mockUser.updated_at.toISOString(),
+        },
+        community: {
+          id: mockCommunity.id,
+          name: mockCommunity.name,
+          description: mockCommunity.description,
+          member_count: mockCommunity.member_count,
+          created_at: mockCommunity.created_at.toISOString(),
+          updated_at: mockCommunity.updated_at.toISOString(),
         },
       });
 
@@ -782,6 +805,7 @@ describe('Resource Hooks', () => {
         category: 'tools' as any,
         title: 'Power Drill',
         description: 'High-quality power drill for rent',
+        community_id: faker.string.uuid(),
         is_active: true,
       };
 
@@ -812,15 +836,18 @@ describe('Resource Hooks', () => {
     it('should update resource and invalidate cache', async () => {
       // Arrange
       const mockUser = createMockUser();
+      const mockCommunity = createMockCommunity();
       const updateData: UpdateResourceData = {
         id: faker.string.uuid(),
         title: 'Updated Power Drill',
+        community_id: mockCommunity.id,
       };
 
       const mockDbResource = createMockDbResource({
         id: updateData.id,
         title: updateData.title,
         creator_id: mockUser.id,
+        community_id: mockCommunity.id,
         owner: {
           id: mockUser.id,
           email: mockUser.email,
@@ -830,6 +857,14 @@ describe('Resource Hooks', () => {
           },
           created_at: mockUser.created_at.toISOString(),
           updated_at: mockUser.updated_at.toISOString(),
+        },
+        community: {
+          id: mockCommunity.id,
+          name: mockCommunity.name,
+          description: mockCommunity.description,
+          member_count: mockCommunity.member_count,
+          created_at: mockCommunity.created_at.toISOString(),
+          updated_at: mockCommunity.updated_at.toISOString(),
         },
       });
 

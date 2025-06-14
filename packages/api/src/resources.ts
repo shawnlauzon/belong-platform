@@ -36,6 +36,15 @@ export async function fetchResources(
           id,
           email,
           user_metadata
+        ),
+        community:communities!resources_community_id_fkey(
+          id,
+          name,
+          description,
+          member_count,
+          center,
+          created_at,
+          updated_at
         )
       `
       )
@@ -88,6 +97,15 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
           id,
           email,
           user_metadata
+        ),
+        community:communities!resources_community_id_fkey(
+          id,
+          name,
+          description,
+          member_count,
+          center,
+          created_at,
+          updated_at
         )
       `
       )
@@ -145,6 +163,15 @@ export async function createResource(
           id,
           email,
           user_metadata
+        ),
+        community:communities!resources_community_id_fkey(
+          id,
+          name,
+          description,
+          member_count,
+          center,
+          created_at,
+          updated_at
         )
       `
       )
@@ -200,6 +227,15 @@ export async function updateResource(
           id,
           email,
           user_metadata
+        ),
+        community:communities!resources_community_id_fkey(
+          id,
+          name,
+          description,
+          member_count,
+          center,
+          created_at,
+          updated_at
         )
       `
       )

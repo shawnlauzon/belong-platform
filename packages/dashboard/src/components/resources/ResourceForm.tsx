@@ -5,11 +5,13 @@ import type { Resource, CreateResourceData, UpdateResourceData } from '@belongne
 
 interface ResourceFormProps {
   initialData?: Resource | null;
+  communityId?: string;
+  communityName?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormProps) {
+export function ResourceForm({ initialData, communityId, communityName, onSuccess, onCancel }: ResourceFormProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -20,6 +22,7 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
     pickup_instructions: '',
     parking_info: '',
     meetup_flexibility: 'home_only' as 'home_only' | 'public_meetup_ok' | 'delivery_possible',
+    locationAddress: '',
   });
 
   const createMutation = useCreateResource();
@@ -37,12 +40,29 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
         pickup_instructions: initialData.pickup_instructions || '',
         parking_info: initialData.parking_info || '',
         meetup_flexibility: initialData.meetup_flexibility,
+        locationAddress: '', // This would need to be reverse geocoded from coordinates
       });
     }
   }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation for required fields
+    if (!formData.title.trim()) {
+      alert('Please enter a resource title');
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      alert('Please enter a description');
+      return;
+    }
+    
+    if (!formData.locationAddress.trim()) {
+      alert('Please enter a location/address');
+      return;
+    }
     
     try {
       const imageUrls = formData.image_urls
@@ -62,6 +82,7 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
           pickup_instructions: formData.pickup_instructions || undefined,
           parking_info: formData.parking_info || undefined,
           meetup_flexibility: formData.meetup_flexibility,
+          community_id: initialData.community_id,
         };
         await updateMutation.mutateAsync(updateData);
       } else {
@@ -70,12 +91,15 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
           description: formData.description,
           type: formData.type,
           category: formData.category,
+          community_id: communityId || '', // Required field
           image_urls: imageUrls,
           availability: formData.availability || undefined,
           pickup_instructions: formData.pickup_instructions || undefined,
           parking_info: formData.parking_info || undefined,
           meetup_flexibility: formData.meetup_flexibility,
           is_active: true,
+          // Note: location will be undefined as we don't have geocoding implemented
+          // The locationAddress is collected but not converted to coordinates
         };
         await createMutation.mutateAsync(createData);
       }
@@ -97,10 +121,26 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Community Name (read-only when creating for specific community) */}
+      {communityName && (
+        <div>
+          <label htmlFor="communityName" className="block text-sm font-medium text-gray-700 mb-1">
+            Community
+          </label>
+          <input
+            type="text"
+            id="communityName"
+            value={communityName}
+            readOnly
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 cursor-not-allowed"
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-            Type *
+            Resource Type *
           </label>
           <select
             id="type"
@@ -138,7 +178,7 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
 
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-          Title *
+          Resource Name *
         </label>
         <input
           type="text"
@@ -149,7 +189,7 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
           required
           minLength={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Enter resource title"
+          placeholder="Enter resource name"
         />
       </div>
 
@@ -167,6 +207,22 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Describe your resource"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700 mb-1">
+          Location/Address *
+        </label>
+        <input
+          type="text"
+          id="locationAddress"
+          name="locationAddress"
+          value={formData.locationAddress}
+          onChange={handleInputChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Enter address or location details"
         />
       </div>
 

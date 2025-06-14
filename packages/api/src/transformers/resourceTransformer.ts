@@ -20,13 +20,13 @@ const ERROR_MESSAGES = {
  * Transform a database resource record to a domain resource object
  */
 export function toDomainResource(
-  dbResource: ResourceRow & { owner?: User }
+  dbResource: ResourceRow & { owner?: any; community?: any }
 ): Resource {
   if (!dbResource) {
     throw new Error(ERROR_MESSAGES.DATABASE_RESOURCE_REQUIRED);
   }
 
-  const { owner_id, community_id, location, created_at, updated_at, ...rest } =
+  const { creator_id, community_id, location, created_at, updated_at, ...rest } =
     dbResource;
 
   // Parse PostGIS point to coordinates
@@ -38,15 +38,15 @@ export function toDomainResource(
       ? {
           id: dbResource.owner.id,
           email: dbResource.owner.email,
-          first_name: dbResource.owner.first_name || '',
-          last_name: dbResource.owner.last_name || '',
-          full_name: dbResource.owner.full_name || '',
-          avatar_url: dbResource.owner.avatar_url,
+          first_name: dbResource.owner.user_metadata?.first_name || '',
+          last_name: dbResource.owner.user_metadata?.last_name || '',
+          full_name: dbResource.owner.user_metadata?.full_name || '',
+          avatar_url: dbResource.owner.user_metadata?.avatar_url,
           created_at: new Date(dbResource.owner.created_at || Date.now()),
           updated_at: new Date(dbResource.owner.updated_at || Date.now()),
         }
       : {
-          id: owner_id || 'unknown',
+          id: creator_id || 'unknown',
           email: 'unknown@example.com',
           first_name: 'Unknown',
           last_name: 'User',
@@ -57,21 +57,40 @@ export function toDomainResource(
         }
   ) as User;
 
-  // Create placeholder community since it's not currently joined
-  const community = {
-    id: community_id || 'default',
-    name: 'Default Community',
-    description: 'Default community',
-    member_count: 0,
-    country: 'United States',
-    city: 'Default City',
-    neighborhood: null,
-    created_at: new Date(),
-    updated_at: new Date(),
-    parent_id: 'default',
-    radius_km: undefined,
-    center: undefined,
-  } as Community;
+  // Extract community from joined data or create placeholder
+  const community = (
+    dbResource.community
+      ? {
+          id: dbResource.community.id,
+          name: dbResource.community.name,
+          description: dbResource.community.description,
+          member_count: dbResource.community.member_count,
+          country: 'United States',
+          city: 'Default City',
+          neighborhood: null,
+          created_at: new Date(dbResource.community.created_at),
+          updated_at: new Date(dbResource.community.updated_at),
+          parent_id: 'default',
+          radius_km: undefined,
+          center: dbResource.community.center ? parsePostGisPoint(dbResource.community.center) : undefined,
+          organizer: owner, // Use the resource owner as placeholder organizer
+        }
+      : {
+          id: community_id || 'default',
+          name: 'Default Community',
+          description: 'Default community',
+          member_count: 0,
+          country: 'United States',
+          city: 'Default City',
+          neighborhood: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+          parent_id: 'default',
+          radius_km: undefined,
+          center: undefined,
+          organizer: owner,
+        }
+  ) as Community;
 
   return {
     ...rest,
@@ -80,6 +99,7 @@ export function toDomainResource(
     category: dbResource.category as ResourceCategory,
     title: dbResource.title,
     description: dbResource.description,
+    community_id: community_id || 'default',
     image_urls: dbResource.image_urls || [],
     location: coords,
     pickup_instructions: dbResource.pickup_instructions || undefined,
@@ -104,8 +124,8 @@ export function toDbResource(
 
   return {
     ...rest,
-    owner_id: owner?.id,
-    community_id: community?.id,
+    creator_id: owner?.id,
+    community_id: community?.id || resource.community_id,
     location: location ? toPostGisPoint(location) : null,
     created_at: resource.created_at?.toISOString(),
     updated_at: resource.updated_at?.toISOString(),
