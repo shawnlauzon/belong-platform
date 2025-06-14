@@ -13,9 +13,17 @@ import {
   useUpdateCommunity,
   useDeleteCommunity,
 } from './communities';
-import { createMockCommunity, createMockDbCommunity, createMockUser } from './test-utils/mocks';
+import {
+  createMockCommunity,
+  createMockDbCommunity,
+  createMockUser,
+} from './test-utils/mocks';
 import { ReactQueryWrapper } from './test-utils/test-utils';
-import type { CreateCommunityData, UpdateCommunityData } from '@belongnetwork/types';
+import type {
+  CreateCommunityData,
+  UpdateCommunityData,
+} from '@belongnetwork/types';
+import { supabase, logger } from '@belongnetwork/core';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -65,8 +73,8 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(await import('@belongnetwork/core')).supabase;
-const mockLogger = vi.mocked(await import('@belongnetwork/core')).logger;
+const mockSupabase = vi.mocked(supabase);
+const mockLogger = vi.mocked(logger);
 
 describe('Community Functions', () => {
   beforeEach(() => {
@@ -91,7 +99,7 @@ describe('Community Functions', () => {
             error: null,
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -125,12 +133,14 @@ describe('Community Functions', () => {
             error: dbError,
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(fetchCommunities()).rejects.toThrow('Database connection failed');
+      await expect(fetchCommunities()).rejects.toThrow(
+        'Database connection failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🏘️ API: Failed to fetch communities',
         { error: dbError }
@@ -153,7 +163,7 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -186,7 +196,7 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -211,12 +221,14 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(fetchCommunityById(communityId)).rejects.toThrow('Database query failed');
+      await expect(fetchCommunityById(communityId)).rejects.toThrow(
+        'Database query failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🏘️ API: Error fetching community by ID',
         { id: communityId, error: dbError }
@@ -241,7 +253,7 @@ describe('Community Functions', () => {
         organizer_id: mockUser.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -255,7 +267,7 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -282,7 +294,7 @@ describe('Community Functions', () => {
         parent_id: faker.string.uuid(),
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -303,7 +315,7 @@ describe('Community Functions', () => {
       };
       const createError = new Error('Creation failed');
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -317,12 +329,14 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(createCommunity(createData)).rejects.toThrow('Creation failed');
+      await expect(createCommunity(createData)).rejects.toThrow(
+        'Creation failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '🏘️ API: Failed to create community',
         { error: createError }
@@ -347,7 +361,7 @@ describe('Community Functions', () => {
         organizer_id: mockUser.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -365,7 +379,7 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -392,7 +406,7 @@ describe('Community Functions', () => {
         name: 'Updated Community',
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -410,7 +424,7 @@ describe('Community Functions', () => {
       const mockUser = createMockUser();
       const communityId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -423,7 +437,7 @@ describe('Community Functions', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -432,7 +446,10 @@ describe('Community Functions', () => {
 
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith('organizer_id', mockUser.id);
+      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith(
+        'organizer_id',
+        mockUser.id
+      );
       expect(mockLogger.info).toHaveBeenCalledWith(
         '🏘️ API: Successfully deleted community',
         { id: communityId }
@@ -443,7 +460,7 @@ describe('Community Functions', () => {
       // Arrange
       const communityId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -479,7 +496,7 @@ describe('Community Hooks', () => {
             error: null,
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -511,7 +528,7 @@ describe('Community Hooks', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -557,7 +574,7 @@ describe('Community Hooks', () => {
         organizer_id: mockUser.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -571,7 +588,7 @@ describe('Community Hooks', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -600,7 +617,7 @@ describe('Community Hooks', () => {
         parent_id: faker.string.uuid(),
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -638,7 +655,7 @@ describe('Community Hooks', () => {
         organizer_id: mockUser.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -656,7 +673,7 @@ describe('Community Hooks', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -684,7 +701,7 @@ describe('Community Hooks', () => {
       const mockUser = createMockUser();
       const communityId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -697,7 +714,7 @@ describe('Community Hooks', () => {
             }),
           }),
         }),
-      };
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 

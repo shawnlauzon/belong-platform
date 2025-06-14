@@ -13,6 +13,8 @@ import {
 } from './auth';
 import { createMockUser, createMockDbProfile } from './test-utils/mocks';
 import { ReactQueryWrapper } from './test-utils/test-utils';
+import { supabase, logger } from '@belongnetwork/core';
+import { toDomainUser } from './transformers/userTransformer';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -39,8 +41,8 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(await import('@belongnetwork/core')).supabase;
-const mockLogger = vi.mocked(await import('@belongnetwork/core')).logger;
+const mockSupabase = vi.mocked(supabase);
+const mockLogger = vi.mocked(logger);
 
 describe('Authentication Functions', () => {
   beforeEach(() => {
@@ -57,20 +59,14 @@ describe('Authentication Functions', () => {
       const email = faker.internet.email();
       const password = faker.internet.password();
       const mockProfile = createMockDbProfile({ email });
-      const mockAuthUser = {
-        id: mockProfile.id,
-        email: mockProfile.email,
-        created_at: mockProfile.created_at,
-        updated_at: mockProfile.updated_at,
-        user_metadata: mockProfile.user_metadata,
-      };
+      const mockAuthUser = toDomainUser(mockProfile);
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: mockAuthUser },
         error: null,
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -90,9 +86,9 @@ describe('Authentication Functions', () => {
         password,
       });
       expect(result).toMatchObject({
-        id: mockProfile.id,
-        email: mockProfile.email,
-        first_name: mockProfile.user_metadata?.first_name || '',
+        id: mockAuthUser.id,
+        email: mockAuthUser.email,
+        first_name: mockAuthUser.first_name || '',
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         '🔐 API: Successfully signed in',
@@ -106,7 +102,7 @@ describe('Authentication Functions', () => {
       const password = 'wrongpassword';
       const authError = new Error('Invalid login credentials');
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: null },
         error: authError,
       });
@@ -126,10 +122,10 @@ describe('Authentication Functions', () => {
       const email = faker.internet.email();
       const password = faker.internet.password();
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
-      });
+      } as any);
 
       // Act & Assert
       await expect(signIn(email, password)).rejects.toThrow(
@@ -153,12 +149,12 @@ describe('Authentication Functions', () => {
         },
       };
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: mockAuthUser },
         error: null,
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -199,7 +195,7 @@ describe('Authentication Functions', () => {
         updated_at: faker.date.recent().toISOString(),
       };
 
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSupabase.auth.signUp = vi.fn().mockResolvedValue({
         data: { user: mockAuthUser },
         error: null,
       });
@@ -240,7 +236,7 @@ describe('Authentication Functions', () => {
       const password = faker.internet.password();
       const signUpError = new Error('Email already registered');
 
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSupabase.auth.signUp = vi.fn().mockResolvedValue({
         data: { user: null },
         error: signUpError,
       });
@@ -260,7 +256,7 @@ describe('Authentication Functions', () => {
       const email = faker.internet.email();
       const password = faker.internet.password();
 
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSupabase.auth.signUp = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -275,7 +271,7 @@ describe('Authentication Functions', () => {
   describe('signOut', () => {
     it('should successfully sign out a user', async () => {
       // Arrange
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSupabase.auth.signOut = vi.fn().mockResolvedValue({
         error: null,
       });
 
@@ -292,7 +288,7 @@ describe('Authentication Functions', () => {
     it('should handle sign out failure', async () => {
       // Arrange
       const signOutError = new Error('Sign out failed');
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSupabase.auth.signOut = vi.fn().mockResolvedValue({
         error: signOutError,
       });
 
@@ -309,20 +305,14 @@ describe('Authentication Functions', () => {
     it('should successfully get current user with profile', async () => {
       // Arrange
       const mockProfile = createMockDbProfile();
-      const mockAuthUser = {
-        id: mockProfile.id,
-        email: mockProfile.email,
-        created_at: mockProfile.created_at,
-        updated_at: mockProfile.updated_at,
-        user_metadata: mockProfile.user_metadata,
-      };
+      const mockAuthUser = toDomainUser(mockProfile);
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: mockAuthUser },
         error: null,
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -338,15 +328,15 @@ describe('Authentication Functions', () => {
 
       // Assert
       expect(result).toMatchObject({
-        id: mockProfile.id,
-        email: mockProfile.email,
-        first_name: mockProfile.user_metadata?.first_name || '',
+        id: mockAuthUser.id,
+        email: mockAuthUser.email,
+        first_name: mockAuthUser.first_name || '',
       });
     });
 
     it('should return null when no user is authenticated', async () => {
       // Arrange
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -361,7 +351,7 @@ describe('Authentication Functions', () => {
     it('should handle auth error gracefully', async () => {
       // Arrange
       const authError = new Error('Session expired');
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: authError,
       });
@@ -392,12 +382,12 @@ describe('Authentication Hooks', () => {
     it('should fetch current user successfully', async () => {
       // Arrange
       const mockUser = createMockUser();
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -425,7 +415,7 @@ describe('Authentication Hooks', () => {
 
     it('should handle no current user', async () => {
       // Arrange
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -450,12 +440,12 @@ describe('Authentication Hooks', () => {
       const email = mockUser.email;
       const password = faker.internet.password();
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -489,7 +479,7 @@ describe('Authentication Hooks', () => {
       const password = 'wrongpassword';
       const authError = new Error('Invalid credentials');
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
         data: { user: null },
         error: authError,
       });
@@ -526,7 +516,7 @@ describe('Authentication Hooks', () => {
         updated_at: faker.date.recent().toISOString(),
       };
 
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSupabase.auth.signUp = vi.fn().mockResolvedValue({
         data: { user: mockAuthUser },
         error: null,
       });
@@ -556,7 +546,7 @@ describe('Authentication Hooks', () => {
   describe('useSignOut', () => {
     it('should sign out user and clear cache', async () => {
       // Arrange
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSupabase.auth.signOut = vi.fn().mockResolvedValue({
         error: null,
       });
 
@@ -579,7 +569,7 @@ describe('Authentication Hooks', () => {
     it('should handle sign out error', async () => {
       // Arrange
       const signOutError = new Error('Sign out failed');
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSupabase.auth.signOut = vi.fn().mockResolvedValue({
         error: signOutError,
       });
 

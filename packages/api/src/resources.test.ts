@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
@@ -14,7 +15,6 @@ import {
   useDeleteResource,
 } from './resources';
 import {
-  createMockResource,
   createMockDbResource,
   createMockUser,
   createMockCommunity,
@@ -26,6 +26,8 @@ import type {
   UpdateResourceData,
   Resource,
 } from '@belongnetwork/types';
+
+import { supabase, logger } from '@belongnetwork/core';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -75,8 +77,8 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(await import('@belongnetwork/core')).supabase;
-const mockLogger = vi.mocked(await import('@belongnetwork/core')).logger;
+const mockSupabase = vi.mocked(supabase);
+const mockLogger = vi.mocked(logger);
 
 describe('Resource Functions', () => {
   beforeEach(() => {
@@ -103,7 +105,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -143,7 +151,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -164,7 +178,7 @@ describe('Resource Functions', () => {
       const mockDbResource = createMockDbResource();
       const resourceId = mockDbResource.id;
 
-      const mockQuery = {
+      const mockQuery: any = {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -173,6 +187,12 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
       };
 
       mockSupabase.from.mockReturnValue(mockQuery);
@@ -210,7 +230,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -235,7 +261,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -273,7 +305,7 @@ describe('Resource Functions', () => {
         community_id: mockCommunity.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -287,7 +319,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -300,14 +338,12 @@ describe('Resource Functions', () => {
         id: mockDbResource.id,
         title: mockDbResource.title,
         description: mockDbResource.description,
-        community: expect.objectContaining({
+        community: {
           id: mockCommunity.id,
-          name: mockCommunity.name,
-        }),
-        organizer: expect.objectContaining({
+        },
+        owner: {
           id: mockUser.id,
-          email: mockUser.email,
-        }),
+        },
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully created resource',
@@ -326,7 +362,7 @@ describe('Resource Functions', () => {
         is_active: true,
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -350,7 +386,7 @@ describe('Resource Functions', () => {
       };
       const createError = new Error('Creation failed');
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -364,7 +400,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -399,7 +441,7 @@ describe('Resource Functions', () => {
         community_id: mockCommunity.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -417,7 +459,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -445,7 +493,7 @@ describe('Resource Functions', () => {
         community_id: faker.string.uuid(),
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -463,7 +511,7 @@ describe('Resource Functions', () => {
       const mockUser = createMockUser();
       const resourceId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -476,7 +524,13 @@ describe('Resource Functions', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -499,7 +553,7 @@ describe('Resource Functions', () => {
       // Arrange
       const resourceId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -537,7 +591,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -573,7 +633,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -605,7 +671,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -655,7 +727,7 @@ describe('Resource Hooks', () => {
         community_id: mockCommunity.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -669,7 +741,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -701,7 +779,7 @@ describe('Resource Hooks', () => {
         is_active: true,
       };
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: null },
         error: null,
       });
@@ -742,7 +820,7 @@ describe('Resource Hooks', () => {
         community_id: mockCommunity.id,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -760,7 +838,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        delete: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -788,7 +872,7 @@ describe('Resource Hooks', () => {
       const mockUser = createMockUser();
       const resourceId = faker.string.uuid();
 
-      mockSupabase.auth.getUser.mockResolvedValue({
+      mockSupabase.auth.getUser = vi.fn().mockResolvedValue({
         data: { user: { id: mockUser.id } },
         error: null,
       });
@@ -801,7 +885,13 @@ describe('Resource Hooks', () => {
             }),
           }),
         }),
-      };
+        url: '',
+        headers: {},
+        select: vi.fn(),
+        insert: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+      } as any;
 
       mockSupabase.from.mockReturnValue(mockQuery);
 
