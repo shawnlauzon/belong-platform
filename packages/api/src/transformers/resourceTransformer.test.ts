@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { toDomainResource, toDbResource } from './resourceTransformer';
 import { createMockResource, createMockDbResource } from '../test-utils/mocks';
-import { parsePostGisPoint, toPostGisPoint } from './utils';
+import { parsePostGisPoint, toPostGisPoint } from '../utils';
 import { Community, User } from '@belongnetwork/types';
 
 // Mock the current date for consistent testing

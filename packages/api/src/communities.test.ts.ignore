@@ -7,18 +7,20 @@ import {
   createCommunity,
   updateCommunity,
   deleteCommunity,
+} from './communities/api';
+import {
   useCommunities,
   useCommunity,
   useCreateCommunity,
   useUpdateCommunity,
   useDeleteCommunity,
-} from './communities';
+} from '../hooks/communities';
 import {
   createMockCommunity,
   createMockDbCommunity,
   createMockUser,
-} from './test-utils/mocks';
-import { ReactQueryWrapper } from './test-utils/test-utils';
+} from '../test-utils/mocks';
+import { ReactQueryWrapper } from '../test-utils/test-utils';
 import type {
   CreateCommunityData,
   UpdateCommunityData,

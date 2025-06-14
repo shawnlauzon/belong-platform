@@ -6,7 +6,7 @@ import type {
   User,
 } from '@belongnetwork/types';
 import type { Resource } from '@belongnetwork/types';
-import { parsePostGisPoint, toPostGisPoint } from './utils';
+import { parsePostGisPoint, toPostGisPoint } from '../utils';
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 

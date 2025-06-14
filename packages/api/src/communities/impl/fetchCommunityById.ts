@@ -1,0 +1,35 @@
+import { supabase } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
+import { toDomainCommunity } from './communityTransformer';
+import type { Community } from '@belongnetwork/types';
+
+export async function fetchCommunityById(
+  id: string
+): Promise<Community | null> {
+  logger.debug('🏘️ API: Fetching community by ID', { id });
+
+  try {
+    const { data, error } = await supabase
+      .from('communities')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Community not found
+      }
+      throw error;
+    }
+
+    const community = toDomainCommunity(data);
+    logger.debug('🏘️ API: Successfully fetched community', {
+      id,
+      name: community.name,
+    });
+    return community;
+  } catch (error) {
+    logger.error('🏘️ API: Error fetching community by ID', { id, error });
+    throw error;
+  }
+}

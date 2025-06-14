@@ -1,14 +1,8 @@
 import type { Database } from '@belongnetwork/types';
 import type { Community, User } from '@belongnetwork/types';
-import { parsePostGisPoint, toPostGisPoint } from './utils';
+import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
-
-// Error message constants
-const ERROR_MESSAGES = {
-  /** Error thrown when database community parameter is null or undefined */
-  DATABASE_COMMUNITY_REQUIRED: 'Database community is required',
-} as const;
 
 /**
  * Transform a database community record to a domain community object
@@ -18,10 +12,6 @@ export function toDomainCommunity(
   organizer?: User,
   parent?: Community
 ): Community {
-  if (!dbCommunity) {
-    throw new Error(ERROR_MESSAGES.DATABASE_COMMUNITY_REQUIRED);
-  }
-
   const { organizer_id, parent_id, center, created_at, updated_at, ...rest } =
     dbCommunity;
 

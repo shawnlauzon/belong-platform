@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { toDomainCommunity, toDbCommunity } from './communityTransformer';
+import { toDomainCommunity, toDbCommunity } from '../impl/communityTransformer';
 import {
   createMockCommunity,
   createMockDbCommunity,
   createMockUser,
-} from '../test-utils/mocks';
-import { parsePostGisPoint, toPostGisPoint } from './utils';
+} from '../../test-utils/mocks';
+import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');
