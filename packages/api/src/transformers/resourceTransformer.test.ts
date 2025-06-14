@@ -3,7 +3,7 @@ import {
   toDomainResource,
   toDbResource,
   ERROR_MESSAGES,
-} from './resourceTransformers';
+} from './resourceTransformer';
 import { createMockResource, createMockDbResource } from '../test-utils/mocks';
 import { parsePostGisPoint, toPostGisPoint } from './utils';
 import { Community, User } from '@belongnetwork/types';

@@ -1,8 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import type { User, UpdateUserData, UserFilter, PaginatedResponse } from '@belongnetwork/types';
-import { toDomainUser, toDbUser } from './transformers/userTransformers';
+import type {
+  User,
+  UpdateUserData,
+  UserFilter,
+  PaginatedResponse,
+} from '@belongnetwork/types';
+import { toDomainUser, toDbUser } from './transformers/userTransformer';
 import { AUTH_ERROR_MESSAGES } from './auth';
 
 // User service error message constants
@@ -43,7 +48,9 @@ export async function fetchUser(userId: string): Promise<User | null> {
   }
 }
 
-export async function fetchUsers(filters: UserFilter = {}): Promise<PaginatedResponse<User>> {
+export async function fetchUsers(
+  filters: UserFilter = {}
+): Promise<PaginatedResponse<User>> {
   logger.debug('👤 API: Fetching users', { filters });
 
   try {

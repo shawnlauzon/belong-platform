@@ -2,7 +2,7 @@ import { logger } from '@belongnetwork/core';
 import { supabase } from '@belongnetwork/core';
 import { AuthUser } from '@belongnetwork/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toDomainUser } from './transformers/userTransformers';
+import { toDomainUser } from './transformers/userTransformer';
 
 // Authentication error message constants
 export const AUTH_ERROR_MESSAGES = {
@@ -11,7 +11,8 @@ export const AUTH_ERROR_MESSAGES = {
   /** Error thrown when no user data is returned from sign up */
   NO_USER_DATA_SIGN_UP: 'No user data returned from sign up',
   /** Error thrown when user must be authenticated for an operation */
-  AUTHENTICATION_REQUIRED: 'User must be authenticated to perform this operation',
+  AUTHENTICATION_REQUIRED:
+    'User must be authenticated to perform this operation',
 } as const;
 
 // Data functions (pure async functions)
@@ -48,7 +49,7 @@ export async function signIn(
     }
 
     let authUser: AuthUser;
-    
+
     if (profile) {
       // Transform the profile using the pure transformer function
       const domainUser = toDomainUser(profile);
@@ -177,7 +178,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     }
 
     let authUser: AuthUser;
-    
+
     if (profile) {
       // Transform the profile using the pure transformer function
       const domainUser = toDomainUser(profile);

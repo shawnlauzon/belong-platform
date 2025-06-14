@@ -7,7 +7,7 @@ import type {
   UpdateResourceData,
   ResourceFilter,
 } from '@belongnetwork/types';
-import { toDomainResource } from './transformers/resourceTransformers';
+import { toDomainResource } from './transformers/resourceTransformer';
 import { AUTH_ERROR_MESSAGES } from './auth';
 
 // Resource service error message constants
