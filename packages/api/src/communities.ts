@@ -7,6 +7,7 @@ import type {
   UpdateCommunityData,
   User,
 } from '@belongnetwork/types';
+import { toDomainCommunity } from './transformers/communityTransformer';
 import { AUTH_ERROR_MESSAGES } from './auth';
 
 // Community service error message constants
@@ -34,9 +35,7 @@ export async function fetchCommunities(): Promise<Community[]> {
       throw error;
     }
 
-    const communities: Community[] = (data || []).map(
-      transformDbCommunityToDomain
-    );
+    const communities: Community[] = (data || []).map(toDomainCommunity);
 
     logger.debug('🏘️ API: Successfully fetched communities', {
       count: communities.length,
@@ -67,7 +66,7 @@ export async function fetchCommunityById(
       throw error;
     }
 
-    const community = transformDbCommunityToDomain(data);
+    const community = toDomainCommunity(data);
     logger.debug('🏘️ API: Successfully fetched community', {
       id,
       name: community.name,
@@ -113,7 +112,7 @@ export async function createCommunity(
       throw error;
     }
 
-    const community = transformDbCommunityToDomain(newCommunity);
+    const community = toDomainCommunity(newCommunity);
     logger.info('🏘️ API: Successfully created community', {
       id: community.id,
       name: community.name,
@@ -159,7 +158,7 @@ export async function updateCommunity(
       throw error;
     }
 
-    const community = transformDbCommunityToDomain(updatedCommunity);
+    const community = toDomainCommunity(updatedCommunity);
     logger.info('🏘️ API: Successfully updated community', {
       id: community.id,
       name: community.name,
@@ -198,41 +197,6 @@ export async function deleteCommunity(id: string): Promise<void> {
     logger.error('🏘️ API: Error deleting community', { error });
     throw error;
   }
-}
-
-// Helper function to transform database records to domain objects
-function transformDbCommunityToDomain(dbCommunity: any): Community {
-  // Parse PostGIS point
-  let center = undefined;
-  if (dbCommunity.center) {
-    const match = dbCommunity.center.match(/POINT\(([^ ]+) ([^)]+)\)/);
-    if (match) {
-      center = {
-        lng: parseFloat(match[1]),
-        lat: parseFloat(match[2]),
-      };
-    }
-  }
-
-  return {
-    id: dbCommunity.id,
-    name: dbCommunity.name,
-    description: dbCommunity.description,
-    member_count: dbCommunity.member_count || 0,
-    country: 'United States', // TODO: Get from hierarchy
-    city: dbCommunity.name, // Simplified for now
-    neighborhood:
-      dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
-    created_at: new Date(dbCommunity.created_at),
-    updated_at: new Date(dbCommunity.updated_at),
-    parent_id: dbCommunity.parent_id,
-    creator: {
-      id: dbCommunity.creator_id || 'unknown',
-      first_name: 'Unknown',
-    } as User, // TODO: Join with profiles
-    radius_km: dbCommunity.radius_km,
-    center,
-  };
 }
 
 // React Query hooks

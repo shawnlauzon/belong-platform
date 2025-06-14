@@ -13,15 +13,16 @@ export type ToDbUser = (user: Partial<User>) => Partial<UserRow>;
 export type ToDomainResource = (dbResource: ResourceRow & { owner?: any }) => Resource;
 export type ToDbResource = (resource: Partial<Resource>) => Partial<ResourceRow>;
 
-export interface CommunityTransformers {
-  toDomainCommunity: (dbCommunity: CommunityRow) => Community;
-  toDbCommunity: (community: Community) => CommunityRow;
-}
+// Community transformer functions (now pure functions)
+export type ToDomainCommunity = (dbCommunity: CommunityRow, creator?: User, parent?: Community) => Community;
+export type ToDbCommunity = (community: Community) => Partial<CommunityRow>;
 
-export interface Transformers extends CommunityTransformers {
-  // User and Resource transformers are now standalone functions
+export interface Transformers {
+  // All transformers are now standalone functions
   toDomainUser: ToDomainUser;
   toDbUser: ToDbUser;
   toDomainResource: ToDomainResource;
   toDbResource: ToDbResource;
+  toDomainCommunity: ToDomainCommunity;
+  toDbCommunity: ToDbCommunity;
 }
