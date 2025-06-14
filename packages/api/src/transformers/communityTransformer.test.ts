@@ -4,7 +4,11 @@ import {
   toDbCommunity,
   ERROR_MESSAGES,
 } from './communityTransformer';
-import { createMockCommunity, createMockDbCommunity, createMockUser } from '../test-utils/mocks';
+import {
+  createMockCommunity,
+  createMockDbCommunity,
+  createMockUser,
+} from '../test-utils/mocks';
 import { parsePostGisPoint, toPostGisPoint } from './utils';
 
 // Mock the current date for consistent testing
@@ -28,7 +32,7 @@ describe('Community Transformer', () => {
         description: mockDbCommunity.description,
         member_count: mockDbCommunity.member_count,
         parent_id: mockDbCommunity.parent_id,
-        radius_km: mockDbCommunity.radius_km,
+        radius_km: mockDbCommunity.radius_km ?? undefined,
       });
 
       // Verify coordinates are parsed correctly
@@ -61,7 +65,11 @@ describe('Community Transformer', () => {
       });
 
       // Call the transformer with creator and parent
-      const domainCommunity = toDomainCommunity(mockDbCommunity, mockCreator, mockParent);
+      const domainCommunity = toDomainCommunity(
+        mockDbCommunity,
+        mockCreator,
+        mockParent
+      );
 
       // Verify the provided creator is used
       expect(domainCommunity.creator).toEqual(mockCreator);
@@ -127,7 +135,9 @@ describe('Community Transformer', () => {
         radius_km: domainCommunity.radius_km,
         creator_id: domainCommunity.creator.id,
         level: domainCommunity.neighborhood ? 'neighborhood' : 'city',
-        center: domainCommunity.center ? toPostGisPoint(domainCommunity.center) : undefined,
+        center: domainCommunity.center
+          ? toPostGisPoint(domainCommunity.center)
+          : undefined,
         created_at: domainCommunity.created_at.toISOString(),
         updated_at: domainCommunity.updated_at.toISOString(),
       });
