@@ -26,7 +26,7 @@ export function toDomainResource(
     throw new Error(ERROR_MESSAGES.DATABASE_RESOURCE_REQUIRED);
   }
 
-  const { creator_id, community_id, location, created_at, updated_at, ...rest } =
+  const { owner_id, community_id, location, created_at, updated_at, ...rest } =
     dbResource;
 
   // Parse PostGIS point to coordinates
@@ -46,7 +46,7 @@ export function toDomainResource(
           updated_at: new Date(dbResource.owner.updated_at || Date.now()),
         }
       : {
-          id: creator_id || 'unknown',
+          id: owner_id || 'unknown',
           email: 'unknown@example.com',
           first_name: 'Unknown',
           last_name: 'User',
@@ -72,7 +72,9 @@ export function toDomainResource(
           updated_at: new Date(dbResource.community.updated_at),
           parent_id: 'default',
           radius_km: undefined,
-          center: dbResource.community.center ? parsePostGisPoint(dbResource.community.center) : undefined,
+          center: dbResource.community.center
+            ? parsePostGisPoint(dbResource.community.center)
+            : undefined,
           organizer: owner, // Use the resource owner as placeholder organizer
         }
       : {
@@ -99,7 +101,7 @@ export function toDomainResource(
     category: dbResource.category as ResourceCategory,
     title: dbResource.title,
     description: dbResource.description,
-    community_id: community_id || 'default',
+    community,
     image_urls: dbResource.image_urls || [],
     location: coords,
     pickup_instructions: dbResource.pickup_instructions || undefined,
@@ -109,7 +111,6 @@ export function toDomainResource(
     is_active: dbResource.is_active,
     created_at: new Date(created_at),
     updated_at: new Date(updated_at),
-    community,
     owner,
   };
 }
@@ -124,8 +125,8 @@ export function toDbResource(
 
   return {
     ...rest,
-    creator_id: owner?.id,
-    community_id: community?.id || resource.community_id,
+    owner_id: owner?.id,
+    community_id: community?.id,
     location: location ? toPostGisPoint(location) : null,
     created_at: resource.created_at?.toISOString(),
     updated_at: resource.updated_at?.toISOString(),

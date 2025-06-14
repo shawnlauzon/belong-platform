@@ -7,7 +7,10 @@ import type {
   UpdateCommunityData,
   User,
 } from '@belongnetwork/types';
-import { toDomainCommunity } from './transformers/communityTransformer';
+import {
+  CommunityRow,
+  toDomainCommunity,
+} from './transformers/communityTransformer';
 import { AUTH_ERROR_MESSAGES } from './auth';
 
 // Community service error message constants
@@ -35,7 +38,9 @@ export async function fetchCommunities(): Promise<Community[]> {
       throw error;
     }
 
-    const communities: Community[] = (data || []).map(toDomainCommunity);
+    const communities: Community[] = (data || []).map((dbCommunity) =>
+      toDomainCommunity(dbCommunity)
+    );
 
     logger.debug('🏘️ API: Successfully fetched communities', {
       count: communities.length,

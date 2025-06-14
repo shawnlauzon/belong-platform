@@ -13,20 +13,7 @@ describe('Resource Transformer', () => {
   describe('toDomainResource', () => {
     it('should transform a database resource to a domain resource', () => {
       // Create a mock database resource with owner data
-      const dbResource = createMockDbResource({
-        owner: {
-          id: 'owner-123',
-          email: 'owner@example.com',
-          user_metadata: {
-            first_name: 'John',
-            last_name: 'Doe',
-            full_name: 'John Doe',
-            avatar_url: 'https://example.com/avatar.jpg',
-          },
-          created_at: '2023-01-01T00:00:00Z',
-          updated_at: '2023-01-01T00:00:00Z',
-        },
-      });
+      const dbResource = createMockDbResource();
 
       // Call the transformer
       const domainResource = toDomainResource(dbResource);
@@ -51,7 +38,7 @@ describe('Resource Transformer', () => {
 
       // Verify owner id
       expect(domainResource.owner).toMatchObject({
-        id: 'owner-123',
+        id: dbResource.owner_id,
       });
 
       // Verify community id

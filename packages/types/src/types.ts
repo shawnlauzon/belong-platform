@@ -30,7 +30,7 @@ export interface UpdateResourceData extends Partial<CreateResourceData> {
   id: string;
 }
 
-export interface Resource extends CreateResourceData {
+export interface Resource extends Omit<CreateResourceData, 'community_id'> {
   id: string;
   owner: User;
   community: Community;

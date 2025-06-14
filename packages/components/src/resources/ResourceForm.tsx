@@ -101,7 +101,7 @@ export function ResourceForm({
     // Emit resource creation request
     eventBus.emit('resource.create.requested', {
       ...data,
-      creator_id: currentUser.id,
+      owner_id: currentUser.id,
       image_urls: images,
       location: userLocation ?? undefined,
       is_active: true,

@@ -12,7 +12,9 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { eventBus, Resource, useBelongStore } from '@belongnetwork/core';
+import { Resource } from '../../types/resources';
+import { useBelongStore } from '../../stores/useBelongStore';
+import { eventBus } from '../../lib/eventBus';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -49,8 +51,10 @@ export function ShareResourceDialog({
     },
   });
   const [images, setImages] = useState<string[]>([]);
-  const userLocation = useBelongStore((state) => state.auth.location);
-  const user = useBelongStore((state) => state.auth.user);
+  const userLocation = useBelongStore((state: { auth: { user?: { location?: any } } }) => state.auth.user?.location);
+  const { user } = useBelongStore((state: { auth: { user: any } }) => ({
+    user: state.auth.user,
+  }));
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   React.useEffect(() => {
@@ -69,14 +73,17 @@ export function ShareResourceDialog({
       return;
     }
 
-    eventBus.emit('resource.create.requested', {
+    const sharedResource: Resource = {
       ...data,
-      creator_id: user.id,
+      id: '',
+      owner_id: user.id,
       image_urls: images,
       location: userLocation ?? undefined,
       is_active: true,
       times_helped: 0, // Still need this as it's required by the type
-    } as Omit<Resource, 'id' | 'created_at'>);
+    } as Omit<Resource, 'id' | 'created_at'>;
+
+    eventBus.emit('resource.create.requested', sharedResource);
   };
 
   return (

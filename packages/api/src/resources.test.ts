@@ -13,9 +13,19 @@ import {
   useUpdateResource,
   useDeleteResource,
 } from './resources';
-import { createMockResource, createMockDbResource, createMockUser, createMockCommunity } from './test-utils/mocks';
+import {
+  createMockResource,
+  createMockDbResource,
+  createMockUser,
+  createMockCommunity,
+} from './test-utils/mocks';
 import { ReactQueryWrapper } from './test-utils/test-utils';
-import type { ResourceFilter, CreateResourceData, UpdateResourceData } from '@belongnetwork/types';
+import type {
+  ResourceFilter,
+  CreateResourceData,
+  UpdateResourceData,
+  Resource,
+} from '@belongnetwork/types';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -81,27 +91,7 @@ describe('Resource Functions', () => {
     it('should successfully fetch resources', async () => {
       // Arrange
       const mockDbResources = Array.from({ length: 3 }, () =>
-        createMockDbResource({
-          owner: {
-            id: faker.string.uuid(),
-            email: faker.internet.email(),
-            user_metadata: {
-              first_name: faker.person.firstName(),
-              last_name: faker.person.lastName(),
-              full_name: faker.person.fullName(),
-            },
-            created_at: faker.date.recent().toISOString(),
-            updated_at: faker.date.recent().toISOString(),
-          },
-          community: {
-            id: faker.string.uuid(),
-            name: faker.location.city(),
-            description: faker.lorem.sentence(),
-            member_count: faker.number.int({ min: 10, max: 100 }),
-            created_at: faker.date.recent().toISOString(),
-            updated_at: faker.date.recent().toISOString(),
-          },
-        })
+        createMockDbResource()
       );
 
       const mockQuery = {
@@ -126,7 +116,6 @@ describe('Resource Functions', () => {
       expect(result[0]).toMatchObject({
         id: expect.any(String),
         title: expect.any(String),
-        community_id: expect.any(String),
         owner: expect.objectContaining({
           id: expect.any(String),
           email: expect.any(String),
@@ -159,7 +148,9 @@ describe('Resource Functions', () => {
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(fetchResources()).rejects.toThrow('Database connection failed');
+      await expect(fetchResources()).rejects.toThrow(
+        'Database connection failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '📦 API: Failed to fetch resources',
         { error: dbError }
@@ -170,26 +161,7 @@ describe('Resource Functions', () => {
   describe('fetchResourceById', () => {
     it('should successfully fetch a resource by ID', async () => {
       // Arrange
-      const mockDbResource = createMockDbResource({
-        owner: {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-          user_metadata: {
-            first_name: faker.person.firstName(),
-            last_name: faker.person.lastName(),
-          },
-          created_at: faker.date.recent().toISOString(),
-          updated_at: faker.date.recent().toISOString(),
-        },
-        community: {
-          id: faker.string.uuid(),
-          name: faker.location.city(),
-          description: faker.lorem.sentence(),
-          member_count: faker.number.int({ min: 10, max: 100 }),
-          created_at: faker.date.recent().toISOString(),
-          updated_at: faker.date.recent().toISOString(),
-        },
-      });
+      const mockDbResource = createMockDbResource();
       const resourceId = mockDbResource.id;
 
       const mockQuery = {
@@ -213,7 +185,6 @@ describe('Resource Functions', () => {
       expect(result).toMatchObject({
         id: resourceId,
         title: mockDbResource.title,
-        community_id: expect.any(String),
         community: expect.objectContaining({
           id: expect.any(String),
           name: expect.any(String),
@@ -269,7 +240,9 @@ describe('Resource Functions', () => {
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(fetchResourceById(resourceId)).rejects.toThrow('Database query failed');
+      await expect(fetchResourceById(resourceId)).rejects.toThrow(
+        'Database query failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '📦 API: Error fetching resource by ID',
         { id: resourceId, error: dbError }
@@ -296,26 +269,8 @@ describe('Resource Functions', () => {
 
       const mockDbResource = createMockDbResource({
         ...createData,
-        creator_id: mockUser.id,
+        owner_id: mockUser.id,
         community_id: mockCommunity.id,
-        owner: {
-          id: mockUser.id,
-          email: mockUser.email,
-          user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-          },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
-        },
-        community: {
-          id: mockCommunity.id,
-          name: mockCommunity.name,
-          description: mockCommunity.description,
-          member_count: mockCommunity.member_count,
-          created_at: mockCommunity.created_at.toISOString(),
-          updated_at: mockCommunity.updated_at.toISOString(),
-        },
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -342,10 +297,17 @@ describe('Resource Functions', () => {
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('resources');
       expect(result).toMatchObject({
-        title: createData.title,
-        description: createData.description,
-        type: createData.type,
-        community_id: createData.community_id,
+        id: mockDbResource.id,
+        title: mockDbResource.title,
+        description: mockDbResource.description,
+        community: expect.objectContaining({
+          id: mockCommunity.id,
+          name: mockCommunity.name,
+        }),
+        organizer: expect.objectContaining({
+          id: mockUser.id,
+          email: mockUser.email,
+        }),
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully created resource',
@@ -407,7 +369,9 @@ describe('Resource Functions', () => {
       mockSupabase.from.mockReturnValue(mockQuery);
 
       // Act & Assert
-      await expect(createResource(createData)).rejects.toThrow('Creation failed');
+      await expect(createResource(createData)).rejects.toThrow(
+        'Creation failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         '📦 API: Failed to create resource',
         { error: createError }
@@ -431,26 +395,8 @@ describe('Resource Functions', () => {
         id: updateData.id,
         title: updateData.title,
         description: updateData.description,
-        creator_id: mockUser.id,
+        owner_id: mockUser.id,
         community_id: mockCommunity.id,
-        owner: {
-          id: mockUser.id,
-          email: mockUser.email,
-          user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-          },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
-        },
-        community: {
-          id: mockCommunity.id,
-          name: mockCommunity.name,
-          description: mockCommunity.description,
-          member_count: mockCommunity.member_count,
-          created_at: mockCommunity.created_at.toISOString(),
-          updated_at: mockCommunity.updated_at.toISOString(),
-        },
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -484,8 +430,7 @@ describe('Resource Functions', () => {
         id: updateData.id,
         title: updateData.title,
         description: updateData.description,
-        community_id: updateData.community_id,
-      });
+      } as Partial<Resource>);
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully updated resource',
         { id: result.id, title: result.title }
@@ -540,7 +485,10 @@ describe('Resource Functions', () => {
 
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith('creator_id', mockUser.id);
+      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith(
+        'owner_id',
+        mockUser.id
+      );
       expect(mockLogger.info).toHaveBeenCalledWith(
         '📦 API: Successfully deleted resource',
         { id: resourceId }
@@ -577,26 +525,7 @@ describe('Resource Hooks', () => {
     it('should fetch resources successfully', async () => {
       // Arrange
       const mockDbResources = Array.from({ length: 2 }, () =>
-        createMockDbResource({
-          owner: {
-            id: faker.string.uuid(),
-            email: faker.internet.email(),
-            user_metadata: {
-              first_name: faker.person.firstName(),
-              last_name: faker.person.lastName(),
-            },
-            created_at: faker.date.recent().toISOString(),
-            updated_at: faker.date.recent().toISOString(),
-          },
-          community: {
-            id: faker.string.uuid(),
-            name: faker.location.city(),
-            description: faker.lorem.sentence(),
-            member_count: faker.number.int({ min: 10, max: 100 }),
-            created_at: faker.date.recent().toISOString(),
-            updated_at: faker.date.recent().toISOString(),
-          },
-        })
+        createMockDbResource()
       );
 
       const mockQuery = {
@@ -627,7 +556,9 @@ describe('Resource Hooks', () => {
     it('should handle filters', async () => {
       // Arrange
       const filters: ResourceFilter = { category: 'tools', type: 'offer' };
-      const mockDbResources = [createMockDbResource({ category: 'tools', type: 'offer' })];
+      const mockDbResources = [
+        createMockDbResource({ category: 'tools', type: 'offer' }),
+      ];
 
       const mockQuery = {
         select: vi.fn().mockReturnValue({
@@ -662,26 +593,7 @@ describe('Resource Hooks', () => {
   describe('useResource', () => {
     it('should fetch single resource successfully', async () => {
       // Arrange
-      const mockDbResource = createMockDbResource({
-        owner: {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-          user_metadata: {
-            first_name: faker.person.firstName(),
-            last_name: faker.person.lastName(),
-          },
-          created_at: faker.date.recent().toISOString(),
-          updated_at: faker.date.recent().toISOString(),
-        },
-        community: {
-          id: faker.string.uuid(),
-          name: faker.location.city(),
-          description: faker.lorem.sentence(),
-          member_count: faker.number.int({ min: 10, max: 100 }),
-          created_at: faker.date.recent().toISOString(),
-          updated_at: faker.date.recent().toISOString(),
-        },
-      });
+      const mockDbResource = createMockDbResource();
       const resourceId = mockDbResource.id;
 
       const mockQuery = {
@@ -709,8 +621,7 @@ describe('Resource Hooks', () => {
       expect(result.current.data).toMatchObject({
         id: resourceId,
         title: mockDbResource.title,
-        community_id: expect.any(String),
-      });
+      } as Partial<Resource>);
     });
 
     it('should not fetch when id is empty', () => {
@@ -741,26 +652,7 @@ describe('Resource Hooks', () => {
 
       const mockDbResource = createMockDbResource({
         ...createData,
-        creator_id: mockUser.id,
         community_id: mockCommunity.id,
-        owner: {
-          id: mockUser.id,
-          email: mockUser.email,
-          user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-          },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
-        },
-        community: {
-          id: mockCommunity.id,
-          name: mockCommunity.name,
-          description: mockCommunity.description,
-          member_count: mockCommunity.member_count,
-          created_at: mockCommunity.created_at.toISOString(),
-          updated_at: mockCommunity.updated_at.toISOString(),
-        },
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -846,26 +738,8 @@ describe('Resource Hooks', () => {
       const mockDbResource = createMockDbResource({
         id: updateData.id,
         title: updateData.title,
-        creator_id: mockUser.id,
+        owner_id: mockUser.id,
         community_id: mockCommunity.id,
-        owner: {
-          id: mockUser.id,
-          email: mockUser.email,
-          user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-          },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
-        },
-        community: {
-          id: mockCommunity.id,
-          name: mockCommunity.name,
-          description: mockCommunity.description,
-          member_count: mockCommunity.member_count,
-          created_at: mockCommunity.created_at.toISOString(),
-          updated_at: mockCommunity.updated_at.toISOString(),
-        },
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({

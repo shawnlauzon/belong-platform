@@ -6,6 +6,7 @@ import type {
   CreateResourceData,
   UpdateResourceData,
   ResourceFilter,
+  Database,
 } from '@belongnetwork/types';
 import { toDomainResource } from './transformers/resourceTransformer';
 import { AUTH_ERROR_MESSAGES } from './auth';
@@ -20,6 +21,9 @@ export const RESOURCE_ERROR_MESSAGES = {
   AUTHENTICATION_REQUIRED_DELETE: AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED,
 } as const;
 
+type InsertResourceRow = Database['public']['Tables']['resources']['Insert'];
+type UpdateResourceRow = Database['public']['Tables']['resources']['Update'];
+
 // Data functions (pure async functions)
 export async function fetchResources(
   filters?: ResourceFilter
@@ -32,7 +36,7 @@ export async function fetchResources(
       .select(
         `
         *,
-        owner:profiles!resources_creator_id_fkey(
+        owner:profiles!resources_owner_id_fkey(
           id,
           email,
           user_metadata
@@ -93,7 +97,7 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
       .select(
         `
         *,
-        owner:profiles!resources_creator_id_fkey(
+        owner:profiles!resources_owner_id_fkey(
           id,
           email,
           user_metadata
@@ -146,12 +150,12 @@ export async function createResource(
 
     const resourceData = {
       ...data,
-      creator_id: user.id,
+      owner_id: user.id,
       location: data.location
         ? `POINT(${data.location.lng} ${data.location.lat})`
         : null,
       is_active: true,
-    };
+    } as InsertResourceRow;
 
     const { data: newResource, error } = await supabase
       .from('resources')
@@ -159,7 +163,7 @@ export async function createResource(
       .select(
         `
         *,
-        owner:profiles!resources_creator_id_fkey(
+        owner:profiles!resources_owner_id_fkey(
           id,
           email,
           user_metadata
@@ -209,21 +213,22 @@ export async function updateResource(
 
     const updateData = {
       ...data,
+      owner_id: user.id,
       location: data.location
         ? `POINT(${data.location.lng} ${data.location.lat})`
         : undefined,
       updated_at: new Date().toISOString(),
-    };
+    } as UpdateResourceRow;
 
     const { data: updatedResource, error } = await supabase
       .from('resources')
       .update(updateData)
       .eq('id', data.id)
-      .eq('creator_id', user.id) // Ensure user owns the resource
+      .eq('owner_id', user.id) // Ensure user owns the resource
       .select(
         `
         *,
-        owner:profiles!resources_creator_id_fkey(
+        owner:profiles!resources_owner_id_fkey(
           id,
           email,
           user_metadata
@@ -273,7 +278,7 @@ export async function deleteResource(id: string): Promise<void> {
       .from('resources')
       .delete()
       .eq('id', id)
-      .eq('creator_id', user.id); // Ensure user owns the resource
+      .eq('owner_id', user.id); // Ensure user owns the resource
 
     if (error) {
       logger.error('📦 API: Failed to delete resource', { error });

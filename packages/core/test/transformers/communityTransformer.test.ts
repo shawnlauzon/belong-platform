@@ -47,7 +47,7 @@ describe('Community Transformer', () => {
 
       const mockDbCommunity = createMockDbCommunity({
         parent_id: mockParentCommunity.id,
-        creator_id: mockCreator.id,
+        owner_id: mockCreator.id,
       });
 
       // Add mock data to the store
@@ -202,7 +202,7 @@ describe('Community Transformer', () => {
         description: domainCommunity.description,
         member_count: domainCommunity.member_count,
         parent_id: domainCommunity.parent_id,
-        creator_id: domainCommunity.creator.id,
+        owner_id: domainCommunity.creator.id,
         radius_km: domainCommunity.radius_km,
         center: domainCommunity.center
           ? toPostGisPoint(domainCommunity.center)

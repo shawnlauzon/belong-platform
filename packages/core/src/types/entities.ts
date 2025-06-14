@@ -129,7 +129,7 @@ interface ThanksData {
 /**
  * Community
  */
-export interface Community extends Omit<CommunityData, 'creator_id'> {
+export interface Community extends Omit<CommunityData, 'owner_id'> {
   name: string;
   creator: User;
   country: string;
@@ -162,7 +162,7 @@ interface CommunityData {
   center?: Coordinates;
   radius_km?: number;
   parent_id: string | null;
-  creator_id: string;
+  owner_id: string;
 }
 
 export interface MeetupSpot {

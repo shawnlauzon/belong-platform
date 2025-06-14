@@ -12,9 +12,9 @@ import { TrustBadge } from '../trust/TrustBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { formatTimeAgo, truncateText } from '../utils/formatters';
 import { MapPin, Clock, CarFront, Edit } from 'lucide-react';
-import { Resource } from '@belongnetwork/core';
+import { Resource } from '@belongnetwork/core/types/resources';
 import { Link } from '@tanstack/react-router';
-import { useBelongStore } from '@belongnetwork/core';
+import { useBelongStore } from '@belongnetwork/core/stores/useBelongStore';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -28,10 +28,11 @@ export function ResourceCard({
   onEdit,
 }: ResourceCardProps) {
   const currentUser = useBelongStore((state) => state.auth.user);
-  const isOwner = currentUser?.id === resource.creator_id;
+  const isOwner = currentUser?.id === resource.owner_id;
 
   const getCategoryVariant = (category: string) => {
-    const variants: Record<string, any> = {
+    type CategoryVariant = 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'secondary';
+    const variants: Record<string, CategoryVariant> = {
       tools: 'tools',
       skills: 'skills',
       food: 'food',
