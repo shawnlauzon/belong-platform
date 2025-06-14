@@ -4,15 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
-    "packages/app",
-    "packages/ui", 
+    "packages/dashboard",
     "packages/api",
     "packages/types",
-    "packages/components",
     "packages/core"
   ],
   "scripts": {
-    "dev": "pnpm --filter @belongnetwork/app dev",
+    "dev": "pnpm --filter @belongnetwork/dashboard dev",
     "build": "pnpm -r --filter=!@belongnetwork/components build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
