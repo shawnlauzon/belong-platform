@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createMockDbProfile, createMockUser } from '../test-utils/mocks';
-import { toDomainUser, toDbUser, ERROR_MESSAGES } from './userTransformers';
+import { toDomainUser, toDbUser, ERROR_MESSAGES } from './userTransformer';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');
