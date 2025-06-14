@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useCreateResource, useUpdateResource } from '@belongnetwork/api';
 import { Loader2 } from 'lucide-react';
-import type { Resource, CreateResourceData, UpdateResourceData } from '@belongnetwork/types';
+import type {
+  Resource,
+  CreateResourceData,
+  UpdateResourceData,
+  ResourceCategory,
+  MeetupFlexibility,
+} from '@belongnetwork/types';
 
 interface ResourceFormProps {
   initialData?: Resource | null;
@@ -11,7 +17,13 @@ interface ResourceFormProps {
   onCancel?: () => void;
 }
 
-export function ResourceForm({ initialData, communityId, communityName, onSuccess, onCancel }: ResourceFormProps) {
+export function ResourceForm({
+  initialData,
+  communityId,
+  communityName,
+  onSuccess,
+  onCancel,
+}: ResourceFormProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,7 +33,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
     availability: '',
     pickup_instructions: '',
     parking_info: '',
-    meetup_flexibility: 'home_only' as 'home_only' | 'public_meetup_ok' | 'delivery_possible',
+    meetup_flexibility: 'home_only' as
+      | 'home_only'
+      | 'public_meetup_ok'
+      | 'delivery_possible',
     locationAddress: '',
   });
 
@@ -35,11 +50,11 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
         description: initialData.description,
         type: initialData.type,
         category: initialData.category,
-        image_urls: initialData.image_urls.join(', '),
+        image_urls: initialData.image_urls?.join(', ') || '',
         availability: initialData.availability || '',
         pickup_instructions: initialData.pickup_instructions || '',
         parking_info: initialData.parking_info || '',
-        meetup_flexibility: initialData.meetup_flexibility,
+        meetup_flexibility: initialData.meetup_flexibility || 'home_only',
         locationAddress: '', // This would need to be reverse geocoded from coordinates
       });
     }
@@ -47,28 +62,28 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Client-side validation for required fields
     if (!formData.title.trim()) {
       alert('Please enter a resource title');
       return;
     }
-    
+
     if (!formData.description.trim()) {
       alert('Please enter a description');
       return;
     }
-    
+
     if (!formData.locationAddress.trim()) {
       alert('Please enter a location/address');
       return;
     }
-    
+
     try {
       const imageUrls = formData.image_urls
         .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
+        .map((url) => url.trim())
+        .filter((url) => url.length > 0);
 
       if (initialData) {
         const updateData: UpdateResourceData = {
@@ -76,13 +91,12 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
           title: formData.title,
           description: formData.description,
           type: formData.type,
-          category: formData.category,
+          category: formData.category as ResourceCategory,
           image_urls: imageUrls,
           availability: formData.availability || undefined,
           pickup_instructions: formData.pickup_instructions || undefined,
           parking_info: formData.parking_info || undefined,
-          meetup_flexibility: formData.meetup_flexibility,
-          community_id: initialData.community_id,
+          meetup_flexibility: formData.meetup_flexibility as MeetupFlexibility,
         };
         await updateMutation.mutateAsync(updateData);
       } else {
@@ -90,13 +104,13 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
           title: formData.title,
           description: formData.description,
           type: formData.type,
-          category: formData.category,
+          category: formData.category as ResourceCategory,
           community_id: communityId || '', // Required field
           image_urls: imageUrls,
           availability: formData.availability || undefined,
           pickup_instructions: formData.pickup_instructions || undefined,
           parking_info: formData.parking_info || undefined,
-          meetup_flexibility: formData.meetup_flexibility,
+          meetup_flexibility: formData.meetup_flexibility as MeetupFlexibility,
           is_active: true,
           // Note: location will be undefined as we don't have geocoding implemented
           // The locationAddress is collected but not converted to coordinates
@@ -109,8 +123,12 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -124,7 +142,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       {/* Community Name (read-only when creating for specific community) */}
       {communityName && (
         <div>
-          <label htmlFor="communityName" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="communityName"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Community
           </label>
           <input
@@ -139,7 +160,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="type"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Resource Type *
           </label>
           <select
@@ -156,7 +180,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="category"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Category *
           </label>
           <select
@@ -177,7 +204,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Resource Name *
         </label>
         <input
@@ -194,7 +224,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description *
         </label>
         <textarea
@@ -211,7 +244,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="locationAddress"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Location/Address *
         </label>
         <input
@@ -227,7 +263,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="image_urls" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="image_urls"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Image URLs
         </label>
         <input
@@ -246,7 +285,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="availability" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="availability"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Availability
           </label>
           <input
@@ -261,7 +303,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
         </div>
 
         <div>
-          <label htmlFor="meetup_flexibility" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="meetup_flexibility"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Meetup Flexibility
           </label>
           <select
@@ -279,7 +324,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="pickup_instructions" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="pickup_instructions"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Pickup Instructions
         </label>
         <textarea
@@ -294,7 +342,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
       </div>
 
       <div>
-        <label htmlFor="parking_info" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="parking_info"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Parking Information
         </label>
         <input
@@ -327,8 +378,10 @@ export function ResourceForm({ initialData, communityId, communityName, onSucces
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               {initialData ? 'Updating...' : 'Creating...'}
             </>
+          ) : initialData ? (
+            'Update Resource'
           ) : (
-            initialData ? 'Update Resource' : 'Create Resource'
+            'Create Resource'
           )}
         </button>
         <button

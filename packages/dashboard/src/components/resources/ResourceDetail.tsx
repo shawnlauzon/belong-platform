@@ -21,9 +21,7 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <p className="text-red-600">
-          Error loading resource: {error.message}
-        </p>
+        <p className="text-red-600">Error loading resource: {error.message}</p>
       </div>
     );
   }
@@ -39,11 +37,13 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <div className="flex items-center space-x-2 mb-4">
-        <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-          resource.type === 'offer' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-blue-100 text-blue-800'
-        }`}>
+        <span
+          className={`px-3 py-1 text-sm font-medium rounded-full ${
+            resource.type === 'offer'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}
+        >
           {resource.type}
         </span>
         <span className="px-3 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-full">
@@ -55,12 +55,10 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
         {resource.title}
       </h1>
 
-      <p className="text-gray-600 mb-6 text-lg">
-        {resource.description}
-      </p>
+      <p className="text-gray-600 mb-6 text-lg">{resource.description}</p>
 
       {/* Resource Images */}
-      {resource.image_urls.length > 0 && (
+      {resource.image_urls && resource.image_urls.length > 0 && (
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Images</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -90,12 +88,10 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
                 By {resource.owner.full_name || resource.owner.first_name}
               </span>
             </div>
-            
+
             <div className="flex items-center text-gray-600">
               <Calendar className="w-4 h-4 mr-2" />
-              <span>
-                Created {resource.created_at.toLocaleDateString()}
-              </span>
+              <span>Created {resource.created_at.toLocaleDateString()}</span>
             </div>
 
             {resource.availability && (
@@ -109,7 +105,8 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
               <div className="flex items-center text-gray-600">
                 <MapPin className="w-4 h-4 mr-2" />
                 <span>
-                  {resource.location.lat.toFixed(4)}, {resource.location.lng.toFixed(4)}
+                  {resource.location.lat.toFixed(4)},{' '}
+                  {resource.location.lng.toFixed(4)}
                 </span>
               </div>
             )}
@@ -117,11 +114,15 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Logistics</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            Logistics
+          </h3>
           <div className="space-y-3">
             {resource.pickup_instructions && (
               <div>
-                <h4 className="font-medium text-gray-900">Pickup Instructions</h4>
+                <h4 className="font-medium text-gray-900">
+                  Pickup Instructions
+                </h4>
                 <p className="text-gray-600">{resource.pickup_instructions}</p>
               </div>
             )}
@@ -136,7 +137,10 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
             <div>
               <h4 className="font-medium text-gray-900">Meetup Flexibility</h4>
               <p className="text-gray-600">
-                {resource.meetup_flexibility.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {resource.meetup_flexibility &&
+                  resource.meetup_flexibility
+                    .replace('_', ' ')
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
               </p>
             </div>
           </div>

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useCreateCommunity, useUpdateCommunity } from '@belongnetwork/api';
 import { Loader2 } from 'lucide-react';
-import type { Community, CreateCommunityData, UpdateCommunityData } from '@belongnetwork/types';
+import type {
+  Community,
+  CreateCommunityData,
+  UpdateCommunityData,
+} from '@belongnetwork/types';
 
 interface CommunityFormProps {
   initialData?: Community | null;
@@ -9,7 +13,11 @@ interface CommunityFormProps {
   onCancel?: () => void;
 }
 
-export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFormProps) {
+export function CommunityForm({
+  initialData,
+  onSuccess,
+  onCancel,
+}: CommunityFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,14 +30,14 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
     if (initialData) {
       setFormData({
         name: initialData.name,
-        description: initialData.description,
+        description: initialData.description || '',
       });
     }
   }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (initialData) {
         const updateData: UpdateCommunityData = {
@@ -50,8 +58,10 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -63,7 +73,10 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Community Name *
         </label>
         <input
@@ -80,7 +93,10 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description *
         </label>
         <textarea
@@ -115,8 +131,10 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               {initialData ? 'Updating...' : 'Creating...'}
             </>
+          ) : initialData ? (
+            'Update Community'
           ) : (
-            initialData ? 'Update Community' : 'Create Community'
+            'Create Community'
           )}
         </button>
         <button

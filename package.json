@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/dashboard dev",
-    "build": "pnpm -r --filter=!@belongnetwork/components build",
+    "build": "pnpm -r --filter=!@belongnetwork/components --filter=!@belongnetwork/ui --filter=!@belongnetwork/app build",
     "test": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test",
     "test:coverage": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
