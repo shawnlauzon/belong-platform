@@ -1,7 +1,9 @@
 import type {
+  Community,
   Database,
   MeetupFlexibility,
   ResourceCategory,
+  User,
 } from '@belongnetwork/types';
 import type { Resource } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from './utils';
@@ -18,7 +20,7 @@ const ERROR_MESSAGES = {
  * Transform a database resource record to a domain resource object
  */
 export function toDomainResource(
-  dbResource: ResourceRow & { owner?: any }
+  dbResource: ResourceRow & { owner?: User }
 ): Resource {
   if (!dbResource) {
     throw new Error(ERROR_MESSAGES.DATABASE_RESOURCE_REQUIRED);
@@ -31,27 +33,29 @@ export function toDomainResource(
   const coords = location ? parsePostGisPoint(location) : undefined;
 
   // Extract owner from joined data or create placeholder
-  const owner = dbResource.owner
-    ? {
-        id: dbResource.owner.id,
-        email: dbResource.owner.email,
-        first_name: dbResource.owner.user_metadata?.first_name || '',
-        last_name: dbResource.owner.user_metadata?.last_name || '',
-        full_name: dbResource.owner.user_metadata?.full_name || '',
-        avatar_url: dbResource.owner.user_metadata?.avatar_url,
-        created_at: new Date(dbResource.owner.created_at || Date.now()),
-        updated_at: new Date(dbResource.owner.updated_at || Date.now()),
-      }
-    : {
-        id: owner_id || 'unknown',
-        email: 'unknown@example.com',
-        first_name: 'Unknown',
-        last_name: 'User',
-        full_name: 'Unknown User',
-        avatar_url: undefined,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
+  const owner = (
+    dbResource.owner
+      ? {
+          id: dbResource.owner.id,
+          email: dbResource.owner.email,
+          first_name: dbResource.owner.first_name || '',
+          last_name: dbResource.owner.last_name || '',
+          full_name: dbResource.owner.full_name || '',
+          avatar_url: dbResource.owner.avatar_url,
+          created_at: new Date(dbResource.owner.created_at || Date.now()),
+          updated_at: new Date(dbResource.owner.updated_at || Date.now()),
+        }
+      : {
+          id: owner_id || 'unknown',
+          email: 'unknown@example.com',
+          first_name: 'Unknown',
+          last_name: 'User',
+          full_name: 'Unknown User',
+          avatar_url: undefined,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }
+  ) as User;
 
   // Create placeholder community since it's not currently joined
   const community = {
@@ -64,11 +68,10 @@ export function toDomainResource(
     neighborhood: null,
     created_at: new Date(),
     updated_at: new Date(),
-    parent_id: null,
-    creator: owner,
+    parent_id: 'default',
     radius_km: undefined,
     center: undefined,
-  };
+  } as Community;
 
   return {
     ...rest,
@@ -86,8 +89,8 @@ export function toDomainResource(
     is_active: dbResource.is_active,
     created_at: new Date(created_at),
     updated_at: new Date(updated_at),
-    owner,
     community,
+    owner,
   };
 }
 

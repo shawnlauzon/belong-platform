@@ -62,14 +62,14 @@ export function toDomainCommunity(
     name: dbCommunity.name,
     description: dbCommunity.description,
     member_count: dbCommunity.member_count,
-    parent_id: dbCommunity.parent_id,
+    parent_id: dbCommunity.parent_id || undefined,
     radius_km: dbCommunity.radius_km || undefined,
     center: coords,
     created_at: new Date(created_at),
     updated_at: new Date(updated_at),
     organizer: communityOrganizer,
     ...hierarchy,
-  };
+  } as Community;
 }
 
 /**

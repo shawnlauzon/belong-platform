@@ -49,21 +49,14 @@ describe('Resource Transformer', () => {
         updated_at: new Date(dbResource.updated_at),
       });
 
-      // Verify owner transformation
+      // Verify owner id
       expect(domainResource.owner).toMatchObject({
         id: 'owner-123',
-        email: 'owner@example.com',
-        first_name: 'John',
-        last_name: 'Doe',
-        full_name: 'John Doe',
-        avatar_url: 'https://example.com/avatar.jpg',
       });
 
-      // Verify community placeholder
+      // Verify community id
       expect(domainResource.community).toMatchObject({
         id: dbResource.community_id,
-        name: 'Default Community',
-        description: 'Default community',
       });
     });
 

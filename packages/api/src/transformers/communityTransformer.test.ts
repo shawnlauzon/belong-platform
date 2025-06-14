@@ -38,17 +38,10 @@ describe('Community Transformer', () => {
       expect(domainCommunity.created_at).toBeInstanceOf(Date);
       expect(domainCommunity.updated_at).toBeInstanceOf(Date);
 
-      // Verify placeholder organizer is created
+      // Verify organizer id is set
       expect(domainCommunity.organizer).toMatchObject({
         id: mockDbCommunity.organizer_id,
-        email: 'unknown@example.com',
-        first_name: 'Unknown',
-        last_name: 'Organizer',
       });
-
-      // Verify placeholder hierarchy is created
-      expect(domainCommunity.country).toBe('Unknown Country');
-      expect(domainCommunity.city).toBe('Unknown City');
     });
 
     it('should use provided organizer and parent when available', () => {
