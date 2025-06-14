@@ -7,15 +7,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 // Import route tree
 import { routeTree } from './routeTree.gen';
 
-// Import providers
-import { AuthProvider } from './providers/AuthProvider';
-import { EventProvider } from './providers/EventProvider';
-
 // Import styles
 import './index.css';
-
-// Initialize user services (this will register all event handlers)
-import '@belongnetwork/user-services';
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -40,11 +33,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <EventProvider>
-          <RouterProvider router={router} />
-        </EventProvider>
-      </AuthProvider>
+      <RouterProvider router={router} />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>
