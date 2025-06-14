@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
@@ -25,9 +26,10 @@ export default defineConfig({
     }),
     react(),
     TanStackRouterVite(),
+    tailwindcss(),
   ],
   server: {
-    port: 5173,
+    port: 5174,
     open: true,
     strictPort: true,
     fs: {
@@ -43,6 +45,10 @@ export default defineConfig({
       },
       {
         find: '@',
+        replacement: resolve(__dirname, 'src'),
+      },
+      {
+        find: 'src',
         replacement: resolve(__dirname, 'src'),
       },
       {
