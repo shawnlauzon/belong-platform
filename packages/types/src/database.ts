@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      communities: {
+        Row: {
+          center: unknown | null
+          created_at: string
+          description: string
+          id: string
+          level: string
+          member_count: number
+          name: string
+          organizer_id: string | null
+          parent_id: string | null
+          radius_km: number | null
+          updated_at: string
+        }
+        Insert: {
+          center?: unknown | null
+          created_at?: string
+          description: string
+          id?: string
+          level: string
+          member_count?: number
+          name: string
+          organizer_id?: string | null
+          parent_id?: string | null
+          radius_km?: number | null
+          updated_at?: string
+        }
+        Update: {
+          center?: unknown | null
+          created_at?: string
+          description?: string
+          id?: string
+          level?: string
+          member_count?: number
+          name?: string
+          organizer_id?: string | null
+          parent_id?: string | null
+          radius_km?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communities_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_memberships: {
         Row: {
           community_id: string
