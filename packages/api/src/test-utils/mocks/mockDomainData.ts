@@ -1,4 +1,10 @@
-import { Community, Resource, User, ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
+import {
+  Community,
+  Resource,
+  User,
+  ResourceCategory,
+  MeetupFlexibility,
+} from '@belongnetwork/types';
 import { faker } from '@faker-js/faker';
 
 /**
@@ -54,7 +60,6 @@ export function createMockResource(
     updated_at: now,
     owner,
     community: createMockCommunity(),
-    distance_minutes: faker.number.int({ min: 1, max: 60 }),
     ...overrides,
   };
 }
