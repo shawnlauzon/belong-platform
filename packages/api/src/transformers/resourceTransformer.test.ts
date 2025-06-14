@@ -5,10 +5,8 @@ import {
   ERROR_MESSAGES,
 } from './resourceTransformers';
 import { createMockResource, createMockDbResource } from '../test-utils/mocks';
-import {
-  parsePostGisPoint,
-  toPostGisPoint,
-} from './utils';
+import { parsePostGisPoint, toPostGisPoint } from './utils';
+import { Community, User } from '@belongnetwork/types';
 
 // Mock the current date for consistent testing
 const mockDate = new Date('2023-01-01T00:00:00Z');
@@ -148,8 +146,8 @@ describe('Resource Transformer', () => {
       const partialResource = {
         id: 'resource-123',
         title: 'Test Resource',
-        owner: { id: 'owner-123' },
-        community: { id: 'community-123' },
+        owner: { id: 'owner-123' } as User,
+        community: { id: 'community-123' } as Community,
       };
 
       // Call the transformer
