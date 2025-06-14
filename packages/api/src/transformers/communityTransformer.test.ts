@@ -38,12 +38,12 @@ describe('Community Transformer', () => {
       expect(domainCommunity.created_at).toBeInstanceOf(Date);
       expect(domainCommunity.updated_at).toBeInstanceOf(Date);
 
-      // Verify placeholder creator is created
-      expect(domainCommunity.creator).toMatchObject({
-        id: mockDbCommunity.creator_id,
+      // Verify placeholder organizer is created
+      expect(domainCommunity.organizer).toMatchObject({
+        id: mockDbCommunity.organizer_id,
         email: 'unknown@example.com',
         first_name: 'Unknown',
-        last_name: 'Creator',
+        last_name: 'Organizer',
       });
 
       // Verify placeholder hierarchy is created
@@ -51,24 +51,24 @@ describe('Community Transformer', () => {
       expect(domainCommunity.city).toBe('Unknown City');
     });
 
-    it('should use provided creator and parent when available', () => {
+    it('should use provided organizer and parent when available', () => {
       // Create mock data
-      const mockCreator = createMockUser();
+      const mockOrganizer = createMockUser();
       const mockParent = createMockCommunity();
       const mockDbCommunity = createMockDbCommunity({
-        creator_id: mockCreator.id,
+        organizer_id: mockOrganizer.id,
         parent_id: mockParent.id,
       });
 
-      // Call the transformer with creator and parent
+      // Call the transformer with organizer and parent
       const domainCommunity = toDomainCommunity(
         mockDbCommunity,
-        mockCreator,
+        mockOrganizer,
         mockParent
       );
 
-      // Verify the provided creator is used
-      expect(domainCommunity.creator).toEqual(mockCreator);
+      // Verify the provided organizer is used
+      expect(domainCommunity.organizer).toEqual(mockOrganizer);
 
       // Verify the parent hierarchy is used
       expect(domainCommunity.country).toBe(mockParent.country);
@@ -125,7 +125,7 @@ describe('Community Transformer', () => {
         member_count: domainCommunity.member_count,
         parent_id: domainCommunity.parent_id,
         radius_km: domainCommunity.radius_km,
-        creator_id: domainCommunity.creator.id,
+        organizer_id: domainCommunity.organizer.id,
         level: domainCommunity.neighborhood ? 'neighborhood' : 'city',
         center: domainCommunity.center
           ? toPostGisPoint(domainCommunity.center)

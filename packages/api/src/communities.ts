@@ -93,7 +93,7 @@ export async function createCommunity(
 
     const communityData = {
       ...data,
-      creator_id: user.id,
+      organizer_id: user.id,
       center: data.center
         ? `POINT(${data.center.lng} ${data.center.lat})`
         : null,
@@ -149,7 +149,7 @@ export async function updateCommunity(
       .from('communities')
       .update(updateData)
       .eq('id', data.id)
-      .eq('creator_id', user.id) // Ensure user owns the community
+      .eq('organizer_id', user.id) // Ensure user owns the community
       .select('*')
       .single();
 
@@ -185,7 +185,7 @@ export async function deleteCommunity(id: string): Promise<void> {
       .from('communities')
       .delete()
       .eq('id', id)
-      .eq('creator_id', user.id); // Ensure user owns the community
+      .eq('organizer_id', user.id); // Ensure user owns the community
 
     if (error) {
       logger.error('🏘️ API: Failed to delete community', { error });

@@ -99,7 +99,7 @@ export function createMockDbCommunity(
     id: faker.string.uuid(),
     level: isTopLevel ? 'country' : 'state',
     radius_km: isTopLevel ? null : faker.number.int({ min: 1, max: 100 }),
-    creator_id: faker.string.uuid(),
+    organizer_id: faker.string.uuid(),
     name: faker.location.country() + ' ' + faker.company.buzzNoun(),
     description: faker.lorem.sentence(),
     center: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,

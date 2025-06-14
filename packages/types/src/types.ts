@@ -51,7 +51,7 @@ export interface UpdateCommunityData extends Partial<CreateCommunityData> {
 
 export interface Community extends CreateCommunityData {
   id: string;
-  creator: User;
+  organizer: User;
   country: string;
   state?: string;
   city: string;

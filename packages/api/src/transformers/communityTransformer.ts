@@ -15,26 +15,26 @@ const ERROR_MESSAGES = {
  */
 export function toDomainCommunity(
   dbCommunity: CommunityRow,
-  creator?: User,
+  organizer?: User,
   parent?: Community
 ): Community {
   if (!dbCommunity) {
     throw new Error(ERROR_MESSAGES.DATABASE_COMMUNITY_REQUIRED);
   }
 
-  const { creator_id, parent_id, center, created_at, updated_at, ...rest } =
+  const { organizer_id, parent_id, center, created_at, updated_at, ...rest } =
     dbCommunity;
 
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
 
-  // Use provided creator or create placeholder
-  const communityCreator = creator || {
-    id: creator_id || 'unknown',
+  // Use provided organizer or create placeholder
+  const communityOrganizer = organizer || {
+    id: organizer_id || 'unknown',
     email: 'unknown@example.com',
     first_name: 'Unknown',
-    last_name: 'Creator',
-    full_name: 'Unknown Creator',
+    last_name: 'Organizer',
+    full_name: 'Unknown Organizer',
     avatar_url: undefined,
     created_at: new Date(),
     updated_at: new Date(),
@@ -67,7 +67,7 @@ export function toDomainCommunity(
     center: coords,
     created_at: new Date(created_at),
     updated_at: new Date(updated_at),
-    creator: communityCreator,
+    organizer: communityOrganizer,
     ...hierarchy,
   };
 }
@@ -76,12 +76,12 @@ export function toDomainCommunity(
  * Transform a domain community object to a database community record
  */
 export function toDbCommunity(community: Community): Partial<CommunityRow> {
-  const { creator, country, state, city, neighborhood, center, ...rest } =
+  const { organizer, country, state, city, neighborhood, center, ...rest } =
     community;
 
   return {
     ...rest,
-    creator_id: community.creator.id,
+    organizer_id: community.organizer.id,
     level: community.neighborhood ? 'neighborhood' : 'city',
     center: center ? toPostGisPoint(center) : undefined,
     created_at: community.created_at.toISOString(),

@@ -104,7 +104,7 @@ describe('Community Functions', () => {
       expect(result[0]).toMatchObject({
         id: expect.any(String),
         name: expect.any(String),
-        creator: expect.objectContaining({
+        organizer: expect.objectContaining({
           id: expect.any(String),
           email: expect.any(String),
         }),
@@ -238,7 +238,7 @@ describe('Community Functions', () => {
 
       const mockDbCommunity = createMockDbCommunity({
         ...createData,
-        creator_id: mockUser.id,
+        organizer_id: mockUser.id,
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -344,7 +344,7 @@ describe('Community Functions', () => {
         id: updateData.id,
         name: updateData.name,
         description: updateData.description,
-        creator_id: mockUser.id,
+        organizer_id: mockUser.id,
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -432,7 +432,7 @@ describe('Community Functions', () => {
 
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith('creator_id', mockUser.id);
+      expect(mockQuery.delete().eq().eq).toHaveBeenCalledWith('organizer_id', mockUser.id);
       expect(mockLogger.info).toHaveBeenCalledWith(
         '🏘️ API: Successfully deleted community',
         { id: communityId }
@@ -554,7 +554,7 @@ describe('Community Hooks', () => {
 
       const mockDbCommunity = createMockDbCommunity({
         ...createData,
-        creator_id: mockUser.id,
+        organizer_id: mockUser.id,
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({
@@ -635,7 +635,7 @@ describe('Community Hooks', () => {
       const mockDbCommunity = createMockDbCommunity({
         id: updateData.id,
         name: updateData.name,
-        creator_id: mockUser.id,
+        organizer_id: mockUser.id,
       });
 
       mockSupabase.auth.getUser.mockResolvedValue({

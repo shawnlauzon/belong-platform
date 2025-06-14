@@ -91,7 +91,7 @@ export function createMockCommunity(
     created_at: faker.date.past(),
     updated_at: faker.date.past(),
     parent_id: faker.string.uuid(),
-    creator: createMockUser(),
+    organizer: createMockUser(),
     radius_km: faker.number.int({ min: 1, max: 100 }),
     center: {
       lat: faker.location.latitude(),

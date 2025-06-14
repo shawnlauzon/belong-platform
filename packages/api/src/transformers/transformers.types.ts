@@ -14,7 +14,7 @@ export type ToDomainResource = (dbResource: ResourceRow & { owner?: any }) => Re
 export type ToDbResource = (resource: Partial<Resource>) => Partial<ResourceRow>;
 
 // Community transformer functions (now pure functions)
-export type ToDomainCommunity = (dbCommunity: CommunityRow, creator?: User, parent?: Community) => Community;
+export type ToDomainCommunity = (dbCommunity: CommunityRow, organizer?: User, parent?: Community) => Community;
 export type ToDbCommunity = (community: Community) => Partial<CommunityRow>;
 
 export interface Transformers {
