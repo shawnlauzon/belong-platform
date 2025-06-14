@@ -12,7 +12,9 @@
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/dashboard dev",
     "build": "pnpm -r --filter=!@belongnetwork/components build",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test",
+    "test:coverage": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test:coverage",
+    "test:watch": "pnpm -r --parallel test -- --watch",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",
