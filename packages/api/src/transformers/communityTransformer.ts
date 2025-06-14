@@ -22,8 +22,9 @@ export function toDomainCommunity(
     throw new Error(ERROR_MESSAGES.DATABASE_COMMUNITY_REQUIRED);
   }
 
-  const { creator_id, parent_id, center, created_at, updated_at, ...rest } = dbCommunity;
-  
+  const { creator_id, parent_id, center, created_at, updated_at, ...rest } =
+    dbCommunity;
+
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
 
@@ -40,17 +41,20 @@ export function toDomainCommunity(
   };
 
   // Use provided parent or create placeholder hierarchy
-  const hierarchy = parent ? {
-    country: parent.country,
-    state: parent.state,
-    city: parent.city,
-    neighborhood: parent.neighborhood,
-  } : {
-    country: 'Unknown Country',
-    state: undefined,
-    city: 'Unknown City',
-    neighborhood: dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
-  };
+  const hierarchy = parent
+    ? {
+        country: parent.country,
+        state: parent.state,
+        city: parent.city,
+        neighborhood: parent.neighborhood,
+      }
+    : {
+        country: 'Unknown Country',
+        state: undefined,
+        city: 'Unknown City',
+        neighborhood:
+          dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
+      };
 
   return {
     ...rest,
@@ -72,8 +76,9 @@ export function toDomainCommunity(
  * Transform a domain community object to a database community record
  */
 export function toDbCommunity(community: Community): Partial<CommunityRow> {
-  const { creator, country, state, city, neighborhood, center, ...rest } = community;
-  
+  const { creator, country, state, city, neighborhood, center, ...rest } =
+    community;
+
   return {
     ...rest,
     creator_id: community.creator.id,
@@ -83,6 +88,3 @@ export function toDbCommunity(community: Community): Partial<CommunityRow> {
     updated_at: community.updated_at.toISOString(),
   };
 }
-
-// Export error messages for use in tests
-export { ERROR_MESSAGES };

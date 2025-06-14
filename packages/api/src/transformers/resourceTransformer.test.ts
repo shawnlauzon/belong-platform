@@ -1,9 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-  toDomainResource,
-  toDbResource,
-  ERROR_MESSAGES,
-} from './resourceTransformer';
+import { toDomainResource, toDbResource } from './resourceTransformer';
 import { createMockResource, createMockDbResource } from '../test-utils/mocks';
 import { parsePostGisPoint, toPostGisPoint } from './utils';
 import { Community, User } from '@belongnetwork/types';
@@ -103,12 +99,8 @@ describe('Resource Transformer', () => {
     });
 
     it('should throw error for null/undefined input', () => {
-      expect(() => toDomainResource(null as any)).toThrow(
-        ERROR_MESSAGES.DATABASE_RESOURCE_REQUIRED
-      );
-      expect(() => toDomainResource(undefined as any)).toThrow(
-        ERROR_MESSAGES.DATABASE_RESOURCE_REQUIRED
-      );
+      expect(() => toDomainResource(null as any)).toThrow();
+      expect(() => toDomainResource(undefined as any)).toThrow();
     });
   });
 

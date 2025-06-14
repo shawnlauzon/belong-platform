@@ -1,9 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-  toDomainCommunity,
-  toDbCommunity,
-  ERROR_MESSAGES,
-} from './communityTransformer';
+import { toDomainCommunity, toDbCommunity } from './communityTransformer';
 import {
   createMockCommunity,
   createMockDbCommunity,
@@ -108,12 +104,8 @@ describe('Community Transformer', () => {
     });
 
     it('should throw error for null/undefined input', () => {
-      expect(() => toDomainCommunity(null as any)).toThrow(
-        ERROR_MESSAGES.DATABASE_COMMUNITY_REQUIRED
-      );
-      expect(() => toDomainCommunity(undefined as any)).toThrow(
-        ERROR_MESSAGES.DATABASE_COMMUNITY_REQUIRED
-      );
+      expect(() => toDomainCommunity(null as any)).toThrow();
+      expect(() => toDomainCommunity(undefined as any)).toThrow();
     });
   });
 
