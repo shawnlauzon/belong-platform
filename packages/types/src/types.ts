@@ -34,7 +34,7 @@ export interface ResourceData {
   isActive: boolean;
 }
 
-export interface Resource extends Omit<ResourceData, 'community_id'> {
+export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
   owner: User;
   community: Community;
@@ -95,34 +95,19 @@ export interface Thanks extends CreateThanksData {
 
 export interface User {
   id: string;
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
+  firstName: string;
+  lastName?: string;
+  fullName?: string;
   email: string;
-  avatar_url?: string;
-  location?: { lat: number; lng: number };
-  created_at: Date;
-  updated_at: Date;
+  avatarUrl?: string;
+  location?: Coordinates;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface UpdateUserData extends Partial<User> {
-  first_name?: string;
-  last_name?: string;
-  full_name?: string;
-  email?: string;
-  avatar_url?: string;
-  location?: { lat: number; lng: number };
-}
-
-export interface CreateUserData
-  extends Omit<User, 'id' | 'created_at' | 'updated_at'> {
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
-  email: string;
-  avatar_url?: string;
-  location?: { lat: number; lng: number };
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface UserData
+  extends Omit<User, 'id' | 'createdAt' | 'updatedAt'> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AuthUser extends User {}
