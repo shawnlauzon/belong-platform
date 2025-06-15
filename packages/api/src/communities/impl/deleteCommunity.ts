@@ -1,6 +1,6 @@
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { MESSAGE_AUTHENTICATION_REQUIRED } from 'src/constants';
 
 export async function deleteCommunity(id: string): Promise<void> {
   logger.debug('🏘️ API: Deleting community', { id });
@@ -10,7 +10,7 @@ export async function deleteCommunity(id: string): Promise<void> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error(AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED);
+      throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
     }
 
     const { error } = await supabase.from('communities').delete().eq('id', id);

@@ -1,11 +1,11 @@
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import { toDomainCommunity } from './communityTransformer';
-import type { Community, UpdateCommunityData } from '@belongnetwork/types';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import type { Community, CommunityData } from '@belongnetwork/types';
+import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function updateCommunity(
-  data: UpdateCommunityData
+  data: CommunityData & { id: string }
 ): Promise<Community> {
   logger.debug('🏘️ API: Updating community', { id: data.id });
 
@@ -14,7 +14,7 @@ export async function updateCommunity(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error(AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED);
+      throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
     }
 
     const { id, ...updateData } = data;

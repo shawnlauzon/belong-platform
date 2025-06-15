@@ -1,80 +1,70 @@
-import type { Database } from '@belongnetwork/types';
+import type { CommunityData, Database } from '@belongnetwork/types';
 import type { Community, User } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
+export type CommunityInsertDbData =
+  Database['public']['Tables']['communities']['Insert'];
+export type CommunityUpdateDbData =
+  Database['public']['Tables']['communities']['Update'];
 
 /**
  * Transform a database community record to a domain community object
  */
 export function toDomainCommunity(
   dbCommunity: CommunityRow,
-  organizer?: User,
-  parent?: Community
+  { organizer, parent }: { organizer: User; parent: Community }
 ): Community {
-  const { organizer_id, parent_id, center, created_at, updated_at, ...rest } =
-    dbCommunity;
+  const { center, created_at, updated_at, ...rest } = dbCommunity;
 
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
-
-  // Use provided organizer or create placeholder
-  const communityOrganizer = organizer || {
-    id: organizer_id || 'unknown',
-    email: 'unknown@example.com',
-    first_name: 'Unknown',
-    last_name: 'Organizer',
-    full_name: 'Unknown Organizer',
-    avatar_url: undefined,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-
-  // Use provided parent or create placeholder hierarchy
-  const hierarchy = parent
-    ? {
-        country: parent.country,
-        state: parent.state,
-        city: parent.city,
-        neighborhood: parent.neighborhood,
-      }
-    : {
-        country: 'Unknown Country',
-        state: undefined,
-        city: 'Unknown City',
-        neighborhood:
-          dbCommunity.level === 'neighborhood' ? dbCommunity.name : null,
-      };
 
   return {
     ...rest,
     id: dbCommunity.id,
     name: dbCommunity.name,
-    description: dbCommunity.description,
-    member_count: dbCommunity.member_count,
-    parent_id: dbCommunity.parent_id || undefined,
-    radius_km: dbCommunity.radius_km || undefined,
+    description: dbCommunity.description ?? undefined,
+    memberCount: dbCommunity.member_count,
+    radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
-    created_at: new Date(created_at),
-    updated_at: new Date(updated_at),
-    organizer: communityOrganizer,
-    ...hierarchy,
-  } as Community;
+    createdAt: new Date(created_at),
+    updatedAt: new Date(updated_at),
+    organizer,
+    parentId: parent.id,
+    hierarchyPath: parent.hierarchyPath,
+    level: parent.level,
+    timeZone: parent.timeZone,
+  };
 }
 
 /**
  * Transform a domain community object to a database community record
  */
-export function toDbCommunity(community: Community): Partial<CommunityRow> {
-  const { organizer, country, state, city, neighborhood, center, ...rest } =
-    community;
+export function forDbInsert(community: CommunityData): CommunityInsertDbData {
+  const { organizerId, center, ...rest } = community;
 
   return {
     ...rest,
-    organizer_id: community.organizer.id,
-    level: community.neighborhood ? 'neighborhood' : 'city',
     center: center ? toPostGisPoint(center) : undefined,
-    created_at: community.created_at.toISOString(),
-    updated_at: community.updated_at.toISOString(),
+    organizer_id: organizerId,
+    hierarchy_path: JSON.stringify(community.hierarchyPath),
+    parent_id: community.parentId,
+    time_zone: community.timeZone,
+  };
+}
+
+export function forDbUpdate(
+  community: Partial<CommunityData> & { id: string }
+): CommunityUpdateDbData {
+  const { organizerId, center, ...rest } = community;
+
+  return {
+    ...rest,
+    center: center ? toPostGisPoint(center) : undefined,
+    organizer_id: organizerId,
+    hierarchy_path: JSON.stringify(community.hierarchyPath),
+    parent_id: community.parentId,
+    time_zone: community.timeZone,
   };
 }

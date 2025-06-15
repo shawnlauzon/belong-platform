@@ -1,3 +1,5 @@
+import { Coordinates } from '@belongnetwork/core';
+
 // Additional API-specific types
 export interface ApiResponse<T> {
   data: T;
@@ -11,55 +13,65 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-export interface CreateResourceData {
+// This file contains two types of data:
+// 1. Resource data containing IDs (used for database insert / update operations
+//    and so can omit fields that can't be set by the user)
+// 2. Resource data containing full objects (used for API responses)
+// Everything else can be derived from these two
+
+export interface ResourceData {
   type: 'offer' | 'request';
   category: ResourceCategory;
   title: string;
   description: string;
-  community_id: string; // Made required
-  image_urls?: string[];
+  communityId: string;
+  imageUrls?: string[];
   location?: { lat: number; lng: number };
-  pickup_instructions?: string;
-  parking_info?: string;
-  meetup_flexibility?: MeetupFlexibility;
+  pickupInstructions?: string;
+  parkingInfo?: string;
+  meetupFlexibility?: MeetupFlexibility;
   availability?: string;
-  is_active: boolean;
+  isActive: boolean;
 }
 
-export interface UpdateResourceData extends Partial<CreateResourceData> {
-  id: string;
-}
-
-export interface Resource extends Omit<CreateResourceData, 'community_id'> {
+export interface Resource extends Omit<ResourceData, 'community_id'> {
   id: string;
   owner: User;
   community: Community;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface CreateCommunityData {
-  name: string;
+export interface CommunityData {
+  // Core Identity
+  name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
-  center?: { lat: number; lng: number };
-  radius_km?: number;
-  parent_id: string;
+
+  organizerId: string;
+  parentId: string | null; // Null only for global root
+
+  center?: Coordinates;
+  radiusKm?: number;
+
+  // Geographic Hierarchy (flexible for any administrative structure)
+  hierarchyPath: Array<{
+    level: string; // "country", "state", "borough", "parish", "district", etc.
+    name: string; // "United States", "Manhattan", "Orleans Parish", etc.
+  }>;
+  level: string; // Flexible - can be any administrative level
+
+  // Status & Metadata
+  memberCount: number;
+  timeZone: string;
 }
 
-export interface UpdateCommunityData extends Partial<CreateCommunityData> {
-  id: string;
-}
-
-export interface Community extends CreateCommunityData {
+export interface Community extends Omit<CommunityData, 'organizerId'> {
   id: string;
   organizer: User;
-  country: string;
-  state?: string;
-  city: string;
-  neighborhood: string | null;
-  member_count: number;
-  created_at: Date;
-  updated_at: Date;
+
+  memberCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateThanksData {
@@ -163,6 +175,8 @@ export interface ResourceFilter {
   category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
   type?: 'offer' | 'request' | 'all';
   communityId?: string;
+  ownerId?: string;
+  isActive?: boolean;
   maxDriveMinutes?: number;
   searchTerm?: string;
   minTrustScore?: number;

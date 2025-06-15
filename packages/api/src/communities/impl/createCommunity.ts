@@ -1,11 +1,12 @@
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import { toDomainCommunity } from './communityTransformer';
-import type { Community, CreateCommunityData } from '@belongnetwork/types';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { forDbInsert, toDomainCommunity } from './communityTransformer';
+import type { Community, CommunityData } from '@belongnetwork/types';
+import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function createCommunity(
-  data: CreateCommunityData
+  data: CommunityData,
+  { parent }: { parent: Community }
 ): Promise<Community> {
   logger.debug('🏘️ API: Creating community', { name: data.name });
 
@@ -14,12 +15,12 @@ export async function createCommunity(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error(AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED);
+      throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
     }
 
     const { data: newCommunity, error } = await supabase
       .from('communities')
-      .insert(data)
+      .insert(forDbInsert(data))
       .select('*')
       .single();
 
@@ -28,7 +29,10 @@ export async function createCommunity(
       throw error;
     }
 
-    const community = toDomainCommunity(newCommunity);
+    const community = toDomainCommunity(newCommunity, {
+      organizer: user,
+      parent,
+    });
     logger.info('🏘️ API: Successfully created community', {
       id: community.id,
       name: community.name,

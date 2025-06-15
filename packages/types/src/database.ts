@@ -13,7 +13,8 @@ export type Database = {
         Row: {
           center: unknown | null
           created_at: string
-          description: string
+          description: string | null
+          hierarchy_path: Json
           id: string
           level: string
           member_count: number
@@ -21,12 +22,14 @@ export type Database = {
           organizer_id: string | null
           parent_id: string | null
           radius_km: number | null
+          time_zone: string
           updated_at: string
         }
         Insert: {
           center?: unknown | null
           created_at?: string
-          description: string
+          description?: string | null
+          hierarchy_path: Json
           id?: string
           level: string
           member_count?: number
@@ -34,12 +37,14 @@ export type Database = {
           organizer_id?: string | null
           parent_id?: string | null
           radius_km?: number | null
+          time_zone: string
           updated_at?: string
         }
         Update: {
           center?: unknown | null
           created_at?: string
-          description?: string
+          description?: string | null
+          hierarchy_path?: Json
           id?: string
           level?: string
           member_count?: number
@@ -47,6 +52,7 @@ export type Database = {
           organizer_id?: string | null
           parent_id?: string | null
           radius_km?: number | null
+          time_zone?: string
           updated_at?: string
         }
         Relationships: [
@@ -116,7 +122,7 @@ export type Database = {
         Row: {
           availability: string | null
           category: string
-          community_id: string
+          community_id: string | null
           created_at: string
           description: string
           id: string
@@ -134,7 +140,7 @@ export type Database = {
         Insert: {
           availability?: string | null
           category: string
-          community_id?: string
+          community_id?: string | null
           created_at?: string
           description: string
           id?: string
@@ -152,7 +158,7 @@ export type Database = {
         Update: {
           availability?: string | null
           category?: string
-          community_id?: string
+          community_id?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -168,6 +174,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resources_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resources_owner_id_fkey"
             columns: ["owner_id"]

@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { updateCommunity } from '../impl/updateCommunity';
 import { createMockDbCommunity } from '../../test-utils/mocks';
 import { supabase } from '@belongnetwork/core';
-import { UpdateCommunityData } from '@belongnetwork/types';
+import { CommunityData } from '@belongnetwork/types';
 
 // Mock the supabase client and auth
 vi.mock('@belongnetwork/core', () => ({
@@ -36,7 +36,7 @@ describe('updateCommunity', () => {
     id: communityId,
     name: faker.company.name(),
     description: faker.lorem.sentence(),
-  } as UpdateCommunityData;
+  } as CommunityData;
 
   beforeEach(() => {
     vi.clearAllMocks();
