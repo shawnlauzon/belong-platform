@@ -1,2 +1,8 @@
 packages/components/*
 packages/ui/*
+packages/app/*
+packages/dashboard/*
+
+packages/api/src/transformers/*
+packages/api/src/communities/*
+packages/api/src/resources/*
