@@ -18,11 +18,11 @@ export function createMockUser(overrides: Partial<User> = {}): User {
   return {
     id: faker.string.uuid(),
     email: faker.internet.email(),
-    first_name: firstName,
-    last_name: lastName,
-    avatar_url: faker.image.avatar(),
-    created_at: now,
-    updated_at: now,
+    firstName,
+    lastName,
+    avatarUrl: faker.image.avatar(),
+    createdAt: now,
+    updatedAt: now,
     ...overrides,
   };
 }
@@ -37,13 +37,15 @@ export function createMockResource(
 
   const owner = createMockUser();
 
+  const community = createMockCommunity();
+
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category: faker.helpers.enumValue(ResourceCategory),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    image_urls: Array.from(
+    imageUrls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' })
     ),
@@ -51,15 +53,15 @@ export function createMockResource(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    pickup_instructions: faker.lorem.sentence(),
-    parking_info: faker.lorem.sentence(),
-    meetup_flexibility: faker.helpers.enumValue(MeetupFlexibility),
+    pickupInstructions: faker.lorem.sentence(),
+    parkingInfo: faker.lorem.sentence(),
+    meetupFlexibility: faker.helpers.enumValue(MeetupFlexibility),
     availability: faker.lorem.word(),
-    is_active: true,
-    created_at: now,
-    updated_at: now,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
     owner,
-    community: createMockCommunity(),
+    community,
     ...overrides,
   };
 }
@@ -85,19 +87,19 @@ export function createMockCommunity(
     id: faker.string.uuid(),
     name: faker.location.city(),
     description: faker.lorem.sentence(),
-    member_count: faker.number.int({ min: 10, max: 140 }),
-    country: faker.location.country(),
-    city: faker.location.city(),
-    created_at: faker.date.past(),
-    updated_at: faker.date.past(),
-    parent_id: faker.string.uuid(),
+    hierarchyPath: [],
+    level: faker.helpers.arrayElement(['state', 'city', 'neighborhood']),
+    timeZone: faker.location.timeZone(),
+    memberCount: faker.number.int({ min: 10, max: 140 }),
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
+    parentId: faker.string.uuid(),
     organizer: createMockUser(),
-    radius_km: faker.number.int({ min: 1, max: 100 }),
+    radiusKm: faker.number.int({ min: 1, max: 100 }),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    neighborhood: faker.location.street(),
     ...overrides,
   };
 }

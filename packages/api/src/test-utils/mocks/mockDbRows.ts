@@ -92,12 +92,12 @@ export function createMockDbCommunity(
   overrides: Partial<CommunityRow> = {}
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
-  const isTopLevel = faker.datatype.boolean(0.7); // 70% chance of being a top-level community
+  const isCity = faker.datatype.boolean(0.7); // 70% chance of being a top-level community
 
   return {
     id: faker.string.uuid(),
-    level: isTopLevel ? 'country' : 'state',
-    radius_km: isTopLevel ? null : faker.number.int({ min: 1, max: 100 }),
+    level: isCity ? 'city' : 'neighborhood',
+    radius_km: faker.number.int({ min: 1, max: 140 }),
     organizer_id: faker.string.uuid(),
     name: faker.location.country() + ' ' + faker.company.buzzNoun(),
     description: faker.lorem.sentence(),
@@ -106,6 +106,8 @@ export function createMockDbCommunity(
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
     updated_at: now,
+    hierarchy_path: [],
+    time_zone: faker.location.timeZone(),
     ...overrides,
   };
 }
