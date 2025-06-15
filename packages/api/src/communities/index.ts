@@ -1,21 +1,11 @@
-// Export hooks
-export { useCommunities } from './hooks/useCommunities';
-export { useCommunity } from './hooks/useCommunity';
-export { useCreateCommunity } from './hooks/useCreateCommunity';
-export { useUpdateCommunity } from './hooks/useUpdateCommunity';
-export { useDeleteCommunity } from './hooks/useDeleteCommunity';
+// Core implementations
+export * from './impl';
 
-// Export implementation functions
-export { fetchCommunities } from './impl/fetchCommunities';
-export { fetchCommunityById } from './impl/fetchCommunityById';
-export { createCommunity } from './impl/createCommunity';
-export { updateCommunity } from './impl/updateCommunity';
-export { deleteCommunity } from './impl/deleteCommunity';
+// Hooks
+export * from './hooks';
 
-// Export types and constants
+// Export constants
 export { COMMUNITY_ERROR_MESSAGES } from './constants';
-export type {
-  Community,
-  CreateCommunityData,
-  UpdateCommunityData,
-} from '@belongnetwork/types';
+
+// Export types
+export type { Community, CommunityData } from '@belongnetwork/types';
