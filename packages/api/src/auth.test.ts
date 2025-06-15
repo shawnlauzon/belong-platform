@@ -1,16 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
-import {
-  signIn,
-  signUp,
-  signOut,
-  getCurrentUser,
-  useSignIn,
-  useSignUp,
-  useSignOut,
-  useCurrentUser,
-} from './auth';
+import { signIn } from './auth/impl/signIn';
+import { signUp } from './auth/impl/signUp';
+import { signOut } from './auth/impl/signOut';
+import { getCurrentUser } from './auth/impl/getCurrentUser';
+import { useSignIn } from './auth/hooks/useSignIn';
+import { useSignUp } from './auth/hooks/useSignUp';
+import { useSignOut } from './auth/hooks/useSignOut';
+import { useCurrentUser } from './auth/hooks/useCurrentUser';
 import { createMockUser, createMockDbProfile } from './test-utils/mocks';
 import { ReactQueryWrapper } from './test-utils/test-utils';
 import { supabase, logger } from '@belongnetwork/core';
@@ -143,7 +141,7 @@ describe('Authentication Functions', () => {
         created_at: faker.date.recent().toISOString(),
         updated_at: faker.date.recent().toISOString(),
         user_metadata: {
-          first_name: faker.person.firstName(),
+          firstName: faker.person.firstName(),
           last_name: faker.person.lastName(),
           full_name: faker.person.fullName(),
         },
@@ -172,7 +170,7 @@ describe('Authentication Functions', () => {
       expect(result).toMatchObject({
         id: mockAuthUser.id,
         email: mockAuthUser.email,
-        first_name: mockAuthUser.user_metadata?.first_name || '',
+        firstName: mockAuthUser.user_metadata?.firstName || '',
       });
       expect(mockLogger.warn).toHaveBeenCalledWith(
         '🔐 API: Could not fetch user profile',
@@ -212,7 +210,7 @@ describe('Authentication Functions', () => {
         password,
         options: {
           data: {
-            first_name: firstName,
+            firstName: firstName,
             last_name: lastName,
             full_name: `${firstName} ${lastName}`,
           },
@@ -529,7 +527,8 @@ describe('Authentication Hooks', () => {
       result.current.mutate({
         email,
         password,
-        metadata: { firstName, lastName },
+        firstName,
+        lastName,
       });
 
       // Assert
