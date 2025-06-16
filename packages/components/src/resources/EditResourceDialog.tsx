@@ -15,19 +15,18 @@ import { ImageUpload } from '../shared/ImageUpload';
 import { AddressAutocomplete } from '../shared/AddressAutocomplete';
 import { LocationPicker } from '../shared/LocationPicker';
 import { Resource, Coordinates } from '@belongnetwork/core';
+import { ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.enum(['tools', 'skills', 'food', 'supplies', 'other']),
+  category: z.nativeEnum(ResourceCategory),
   type: z.enum(['offer', 'request']),
-  pickup_instructions: z.string().optional(),
-  parking_info: z.string().optional(),
-  meetup_flexibility: z
-    .enum(['home_only', 'public_meetup_ok', 'delivery_possible'])
-    .optional(),
+  pickupInstructions: z.string().optional(),
+  parkingInfo: z.string().optional(),
+  meetupFlexibility: z.nativeEnum(MeetupFlexibility).optional(),
   availability: z.string().optional(),
-  is_active: z.boolean(),
+  isActive: z.boolean(),
 });
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
@@ -66,13 +65,13 @@ export function EditResourceDialog({
     defaultValues: {
       title: '',
       description: '',
-      category: 'tools',
+      category: ResourceCategory.TOOLS,
       type: 'offer',
-      pickup_instructions: '',
-      parking_info: '',
-      meetup_flexibility: 'home_only',
+      pickupInstructions: '',
+      parkingInfo: '',
+      meetupFlexibility: MeetupFlexibility.HOME_ONLY,
       availability: '',
-      is_active: true,
+      isActive: true,
     },
   });
 
@@ -90,14 +89,14 @@ export function EditResourceDialog({
       setValue('description', resource.description);
       setValue('category', resource.category);
       setValue('type', resource.type);
-      setValue('pickup_instructions', resource.pickupInstructions || '');
-      setValue('parking_info', resource.parkingInfo || '');
+      setValue('pickupInstructions', resource.pickupInstructions || '');
+      setValue('parkingInfo', resource.parkingInfo || '');
       setValue(
-        'meetup_flexibility',
-        resource.meetupFlexibility || 'home_only'
+        'meetupFlexibility',
+        resource.meetupFlexibility || MeetupFlexibility.HOME_ONLY
       );
       setValue('availability', resource.availability || '');
-      setValue('is_active', resource.isActive);
+      setValue('isActive', resource.isActive);
 
       setImages(resource.imageUrls || []);
       setLocation(resource.location || null);
@@ -318,7 +317,7 @@ export function EditResourceDialog({
                 Pickup Instructions
               </label>
               <textarea
-                {...register('pickup_instructions')}
+                {...register('pickupInstructions')}
                 className="w-full border border-gray-200 rounded-md p-2 text-sm"
                 placeholder="How should people pick this up or meet you?"
                 disabled={isSubmitting}
@@ -331,7 +330,7 @@ export function EditResourceDialog({
                 Parking Information
               </label>
               <input
-                {...register('parking_info')}
+                {...register('parkingInfo')}
                 className="w-full border border-gray-200 rounded-md p-2 text-sm"
                 placeholder="Where can people park? (e.g., 'Driveway available', 'Street parking')"
                 disabled={isSubmitting}
@@ -344,15 +343,15 @@ export function EditResourceDialog({
                 Meetup Options
               </label>
               <select
-                {...register('meetup_flexibility')}
+                {...register('meetupFlexibility')}
                 className="w-full border border-gray-200 rounded-md p-2 text-sm"
                 disabled={isSubmitting}
               >
-                <option value="home_only">Pickup at my location only</option>
-                <option value="public_meetup_ok">
+                <option value={MeetupFlexibility.HOME_ONLY}>Pickup at my location only</option>
+                <option value={MeetupFlexibility.PUBLIC_MEETUP_OK}>
                   Can meet at a public location
                 </option>
-                <option value="delivery_possible">Can deliver to you</option>
+                <option value={MeetupFlexibility.DELIVERY_POSSIBLE}>Can deliver to you</option>
               </select>
             </div>
 
@@ -373,7 +372,7 @@ export function EditResourceDialog({
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                {...register('is_active')}
+                {...register('isActive')}
                 className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 disabled={isSubmitting}
               />

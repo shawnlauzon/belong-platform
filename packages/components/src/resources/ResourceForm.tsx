@@ -10,26 +10,30 @@ import {
 } from '../ui/card';
 import { ImageUpload } from '../shared/ImageUpload';
 import { useCurrentUser, useCreateResource } from '@belongnetwork/api';
+import { ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
 
 interface ResourceFormProps {
   onComplete?: () => void;
   initialType?: 'offer' | 'request';
+  communityId: string;
 }
 
 interface ResourceFormData {
   title: string;
   description: string;
-  category: 'tools' | 'skills' | 'food' | 'supplies' | 'other';
+  category: ResourceCategory;
   type: 'offer' | 'request';
-  pickup_instructions: string;
-  parking_info: string;
-  meetup_flexibility: 'home_only' | 'public_meetup_ok' | 'delivery_possible';
-  availability: string;
+  pickupInstructions?: string;
+  parkingInfo?: string;
+  meetupFlexibility?: MeetupFlexibility;
+  availability?: string;
+  communityId: string;
 }
 
 export function ResourceForm({
   onComplete,
   initialType = 'offer',
+  communityId,
 }: ResourceFormProps) {
   const {
     register,
@@ -39,8 +43,8 @@ export function ResourceForm({
   } = useForm<ResourceFormData>({
     defaultValues: {
       type: initialType,
-      category: 'tools',
-      meetup_flexibility: 'home_only',
+      category: ResourceCategory.TOOLS,
+      meetupFlexibility: MeetupFlexibility.HOME_ONLY,
     },
   });
   const [images, setImages] = useState<string[]>([]);
@@ -60,7 +64,7 @@ export function ResourceForm({
     try {
       await createResource.mutateAsync({
         ...data,
-        ownerId: currentUser.id,
+        communityId,
         imageUrls: images,
         location: currentUser.location ?? undefined,
         isActive: true,
@@ -156,11 +160,11 @@ export function ResourceForm({
               className="w-full border border-gray-200 rounded-md p-2 text-sm"
               disabled={isSubmitting}
             >
-              <option value="tools">Tools</option>
-              <option value="skills">Skills</option>
-              <option value="food">Food</option>
-              <option value="supplies">Supplies</option>
-              <option value="other">Other</option>
+              <option value={ResourceCategory.TOOLS}>Tools</option>
+              <option value={ResourceCategory.SKILLS}>Skills</option>
+              <option value={ResourceCategory.FOOD}>Food</option>
+              <option value={ResourceCategory.SUPPLIES}>Supplies</option>
+              <option value={ResourceCategory.OTHER}>Other</option>
             </select>
           </div>
 
@@ -198,7 +202,7 @@ export function ResourceForm({
               Pickup Instructions
             </label>
             <textarea
-              {...register('pickup_instructions')}
+              {...register('pickupInstructions')}
               className="w-full border border-gray-200 rounded-md p-2 text-sm"
               placeholder="How should people pick this up or meet you?"
               disabled={isSubmitting}
@@ -211,7 +215,7 @@ export function ResourceForm({
               Parking Information
             </label>
             <input
-              {...register('parking_info')}
+              {...register('parkingInfo')}
               className="w-full border border-gray-200 rounded-md p-2 text-sm"
               placeholder="Where can people park? (e.g., 'Driveway available', 'Street parking')"
               disabled={isSubmitting}
@@ -224,15 +228,15 @@ export function ResourceForm({
               Meetup Options
             </label>
             <select
-              {...register('meetup_flexibility')}
+              {...register('meetupFlexibility')}
               className="w-full border border-gray-200 rounded-md p-2 text-sm"
               disabled={isSubmitting}
             >
-              <option value="home_only">Pickup at my location only</option>
-              <option value="public_meetup_ok">
+              <option value={MeetupFlexibility.HOME_ONLY}>Pickup at my location only</option>
+              <option value={MeetupFlexibility.PUBLIC_MEETUP_OK}>
                 Can meet at a public location
               </option>
-              <option value="delivery_possible">Can deliver to you</option>
+              <option value={MeetupFlexibility.DELIVERY_POSSIBLE}>Can deliver to you</option>
             </select>
           </div>
 

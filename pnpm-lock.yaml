@@ -209,6 +209,9 @@ importers:
       '@belongnetwork/core':
         specifier: workspace:*
         version: link:../core
+      '@belongnetwork/types':
+        specifier: workspace:*
+        version: link:../types
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.58.0)

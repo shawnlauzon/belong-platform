@@ -13,16 +13,13 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { useCurrentUser, useCreateResource } from '@belongnetwork/api';
+import { ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.enum(['tools', 'skills', 'food', 'supplies', 'other']),
-  meetup_flexibility: z.enum([
-    'home_only',
-    'public_meetup_ok',
-    'delivery_possible',
-  ]),
+  category: z.nativeEnum(ResourceCategory),
+  meetupFlexibility: z.nativeEnum(MeetupFlexibility),
 });
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
@@ -30,11 +27,13 @@ type ResourceFormData = z.infer<typeof resourceSchema>;
 interface ShareResourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  communityId: string;
 }
 
 export function ShareResourceDialog({
   open,
   onOpenChange,
+  communityId,
 }: ShareResourceDialogProps) {
   const {
     register,
@@ -44,8 +43,8 @@ export function ShareResourceDialog({
   } = useForm<ResourceFormData>({
     resolver: zodResolver(resourceSchema),
     defaultValues: {
-      category: 'tools',
-      meetup_flexibility: 'home_only',
+      category: ResourceCategory.TOOLS,
+      meetupFlexibility: MeetupFlexibility.HOME_ONLY,
     },
   });
   const [images, setImages] = useState<string[]>([]);
@@ -62,7 +61,8 @@ export function ShareResourceDialog({
     try {
       await createResource.mutateAsync({
         ...data,
-        ownerId: user.id,
+        type: 'offer', // Default to offer for share dialog
+        communityId,
         imageUrls: images,
         location: user.location ?? undefined,
         isActive: true,
@@ -105,11 +105,11 @@ export function ShareResourceDialog({
                   {...register('category')}
                   className="w-full border rounded-md p-2"
                 >
-                  <option value="tools">Tools</option>
-                  <option value="skills">Skills</option>
-                  <option value="food">Food</option>
-                  <option value="supplies">Supplies</option>
-                  <option value="other">Other</option>
+                  <option value={ResourceCategory.TOOLS}>Tools</option>
+                  <option value={ResourceCategory.SKILLS}>Skills</option>
+                  <option value={ResourceCategory.FOOD}>Food</option>
+                  <option value={ResourceCategory.SUPPLIES}>Supplies</option>
+                  <option value={ResourceCategory.OTHER}>Other</option>
                 </select>
               </div>
 
@@ -130,18 +130,18 @@ export function ShareResourceDialog({
               <div className="space-y-2">
                 <label className="text-sm font-medium">Meetup Preference</label>
                 <select
-                  {...register('meetup_flexibility')}
+                  {...register('meetupFlexibility')}
                   className="w-full border rounded-md p-2"
                 >
-                  <option value="home_only">Pickup at my location only</option>
-                  <option value="public_meetup_ok">
+                  <option value={MeetupFlexibility.HOME_ONLY}>Pickup at my location only</option>
+                  <option value={MeetupFlexibility.PUBLIC_MEETUP_OK}>
                     Can meet at a public location
                   </option>
-                  <option value="delivery_possible">Delivery possible</option>
+                  <option value={MeetupFlexibility.DELIVERY_POSSIBLE}>Delivery possible</option>
                 </select>
-                {errors.meetup_flexibility && (
+                {errors.meetupFlexibility && (
                   <p className="text-xs text-red-500">
-                    {errors.meetup_flexibility.message}
+                    {errors.meetupFlexibility.message}
                   </p>
                 )}
               </div>
