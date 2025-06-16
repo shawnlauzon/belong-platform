@@ -48,6 +48,8 @@ Communities: Use SQL joins for complete data retrieval including joined profile 
 Resources: Use cache assembly pattern - fetch base entity first, then assemble related owner and community
 data through separate cached calls.
 
+Thanks: Use cache assembly pattern like resources - fetch base thanks records, then batch fetch related user and resource data.
+
 Tech Stack
 
 - Frontend: React 18, TypeScript, TanStack Query for data fetching
@@ -72,6 +74,7 @@ Testing
 - Do not validate specific error messages
 - Leverage createMock* utilities from @belongnetwork/api/src/test-utils
 - Follow the transformer testing patterns: mock the transformer functions rather than complex data setup
+- Tests that validate edge cases are ok to skip if necessary
 
 Data Access
 
@@ -86,3 +89,19 @@ Code Patterns
 - Use React Query hooks from @belongnetwork/api for all data fetching
 - Follow component composition patterns established in @belongnetwork/components
 - Import shared types from @belongnetwork/types
+
+Code Safety Guidelines
+
+- Prefer function definition to prevent error conditions rather than checking at runtime. Do not make checks at runtime for conditions which are impossible by the function definition.
+
+Development Principles
+
+- A task is only complete when build and typecheck and tests are all successful
+
+Code Organization Guidelines
+
+- Import only from root features, never from impl. Export necessary functions as needed using the feature index.ts file
+
+## Code Style and Best Practices
+
+- Skipping tests is not an acceptable way to make tests pass

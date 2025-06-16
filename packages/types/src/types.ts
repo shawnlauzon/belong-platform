@@ -79,26 +79,30 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   updatedAt: Date;
 }
 
-export interface CreateThanksData {
-  from_user_id: string;
-  to_user_id: string;
-  resource_id: string;
+export interface ThanksData {
+  fromUserId: string;
+  toUserId: string;
+  resourceId: string;
   message: string;
-  image_urls?: string[];
-  impact_description?: string;
+  imageUrls?: string[];
+  impactDescription?: string;
 }
 
-export interface UpdateThanksData extends Partial<CreateThanksData> {
+export interface Thanks extends Omit<ThanksData, 'fromUserId' | 'toUserId' | 'resourceId'> {
   id: string;
+  fromUser: User;
+  toUser: User;
+  resource: Resource;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Thanks extends CreateThanksData {
-  id: string;
-  created_at: Date;
-  updated_at: Date;
-  from_member: User;
-  to_member: User;
-  resource?: Resource;
+export interface ThanksFilter {
+  sentBy?: string;
+  receivedBy?: string;
+  resourceId?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface User {
