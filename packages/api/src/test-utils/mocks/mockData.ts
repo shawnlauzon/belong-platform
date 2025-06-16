@@ -1,5 +1,7 @@
 import {
   EventData,
+  EventAttendanceData,
+  EventAttendanceStatus,
   MeetupFlexibility,
   ResourceCategory,
   ResourceData,
@@ -131,6 +133,17 @@ export function createMockEventData(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'event' })
     ),
+    ...overrides,
+  };
+}
+
+export function createMockEventAttendanceData(
+  overrides: Partial<EventAttendanceData> = {}
+): EventAttendanceData {
+  return {
+    eventId: faker.string.uuid(),
+    userId: faker.string.uuid(),
+    status: faker.helpers.arrayElement(['attending', 'not_attending', 'maybe']) as EventAttendanceStatus,
     ...overrides,
   };
 }

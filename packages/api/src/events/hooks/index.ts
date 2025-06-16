@@ -3,3 +3,7 @@ export * from './useEvent';
 export * from './useCreateEvent';
 export * from './useUpdateEvent';
 export * from './useDeleteEvent';
+export * from './useJoinEvent';
+export * from './useLeaveEvent';
+export * from './useEventAttendees';
+export * from './useUserEventAttendances';

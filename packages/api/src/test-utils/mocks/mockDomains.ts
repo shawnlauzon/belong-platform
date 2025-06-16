@@ -1,6 +1,8 @@
 import {
   Community,
   Event,
+  EventAttendance,
+  EventAttendanceStatus,
   Resource,
   User,
   ResourceCategory,
@@ -161,5 +163,26 @@ export function createMockEventWithOrganizer(
   return {
     ...event,
     organizer,
+  };
+}
+
+/**
+ * Creates a mock domain EventAttendance object
+ */
+export function createMockEventAttendance(overrides: Partial<EventAttendance> = {}): EventAttendance {
+  const now = new Date();
+  const user = createMockUser();
+  const event = createMockEvent();
+
+  return {
+    id: faker.string.uuid(),
+    eventId: event.id,
+    userId: user.id,
+    status: faker.helpers.arrayElement(['attending', 'not_attending', 'maybe']) as EventAttendanceStatus,
+    createdAt: now,
+    updatedAt: now,
+    user,
+    event,
+    ...overrides,
   };
 }

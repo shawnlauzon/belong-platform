@@ -231,6 +231,8 @@ export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
   imageUrls: string[];
   createdAt: Date;
   updatedAt: Date;
+  // Optional current user's attendance status
+  currentUserAttendance?: EventAttendance;
 }
 
 export interface EventFilter {
@@ -242,6 +244,34 @@ export interface EventFilter {
   tags?: string[];
   maxDriveMinutes?: number;
   searchTerm?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export enum EventAttendanceStatus {
+  ATTENDING = 'attending',
+  NOT_ATTENDING = 'not_attending',
+  MAYBE = 'maybe'
+}
+
+export interface EventAttendanceData {
+  eventId: string;
+  userId: string;
+  status: EventAttendanceStatus;
+}
+
+export interface EventAttendance extends EventAttendanceData {
+  id: string;
+  event: Event;
+  user: User;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventAttendanceFilter {
+  eventId?: string;
+  userId?: string;
+  status?: EventAttendanceStatus;
   page?: number;
   pageSize?: number;
 }
