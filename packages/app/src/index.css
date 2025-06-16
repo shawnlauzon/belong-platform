@@ -1,3 +1,66 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #fff7ed;
+  --color-primary-100: #ffedd5;
+  --color-primary-200: #fed7aa;
+  --color-primary-300: #fdba74;
+  --color-primary-400: #fb923c;
+  --color-primary-500: #f97316;
+  --color-primary-600: #ea580c;
+  --color-primary-700: #c2410c;
+  --color-primary-800: #9a3412;
+  --color-primary-900: #7c2d12;
+  --color-primary-950: #431407;
+  
+  --color-trust-50: #f0fdf4;
+  --color-trust-100: #dcfce7;
+  --color-trust-200: #bbf7d0;
+  --color-trust-300: #86efac;
+  --color-trust-400: #4ade80;
+  --color-trust-500: #22c55e;
+  --color-trust-600: #16a34a;
+  --color-trust-700: #15803d;
+  --color-trust-800: #166534;
+  --color-trust-900: #14532d;
+  --color-trust-950: #052e16;
+  
+  --color-community-50: #eff6ff;
+  --color-community-100: #dbeafe;
+  --color-community-200: #bfdbfe;
+  --color-community-300: #93c5fd;
+  --color-community-400: #60a5fa;
+  --color-community-500: #3b82f6;
+  --color-community-600: #2563eb;
+  --color-community-700: #1d4ed8;
+  --color-community-800: #1e40af;
+  --color-community-900: #1e3a8a;
+  --color-community-950: #172554;
+  
+  --color-resource-50: #f5f3ff;
+  --color-resource-100: #ede9fe;
+  --color-resource-200: #ddd6fe;
+  --color-resource-300: #c4b5fd;
+  --color-resource-400: #a78bfa;
+  --color-resource-500: #8b5cf6;
+  --color-resource-600: #7c3aed;
+  --color-resource-700: #6d28d9;
+  --color-resource-800: #5b21b6;
+  --color-resource-900: #4c1d95;
+  --color-resource-950: #2e1065;
+  
+  --color-warmgray-50: #fafaf9;
+  --color-warmgray-100: #f5f5f4;
+  --color-warmgray-200: #e7e5e4;
+  --color-warmgray-300: #d6d3d1;
+  --color-warmgray-400: #a8a29e;
+  --color-warmgray-500: #78716c;
+  --color-warmgray-600: #57534e;
+  --color-warmgray-700: #44403c;
+  --color-warmgray-800: #292524;
+  --color-warmgray-900: #1c1917;
+  --color-warmgray-950: #0c0a09;
+  
+  --font-family-sans: 'Inter var', sans-serif;
+  --font-family-display: 'Cal Sans', 'Inter var', sans-serif;
+}
