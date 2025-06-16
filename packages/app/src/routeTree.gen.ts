@@ -12,7 +12,6 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as rootSimpleImport } from './routes/__root-simple'
-import { Route as ThanksImport } from './routes/thanks'
 import { Route as ResourcesImport } from './routes/resources'
 import { Route as DashboardImport } from './routes/dashboard'
 import { Route as CommunityImport } from './routes/community'
@@ -26,12 +25,6 @@ import { Route as CommunityIdImport } from './routes/community.$id'
 
 const rootSimpleRoute = rootSimpleImport.update({
   id: '/__root-simple',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ThanksRoute = ThanksImport.update({
-  id: '/thanks',
-  path: '/thanks',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -129,13 +122,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesImport
       parentRoute: typeof rootRoute
     }
-    '/thanks': {
-      id: '/thanks'
-      path: '/thanks'
-      fullPath: '/thanks'
-      preLoaderRoute: typeof ThanksImport
-      parentRoute: typeof rootRoute
-    }
     '/community/$id': {
       id: '/community/$id'
       path: '/$id'
@@ -181,7 +167,6 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
-  '/thanks': typeof ThanksRoute
   '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/resource/$id': typeof ResourceIdRoute
@@ -194,7 +179,6 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
-  '/thanks': typeof ThanksRoute
   '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/resource/$id': typeof ResourceIdRoute
@@ -208,7 +192,6 @@ export interface FileRoutesById {
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/resources': typeof ResourcesRoute
-  '/thanks': typeof ThanksRoute
   '/community/$id': typeof CommunityIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/resource/$id': typeof ResourceIdRoute
@@ -223,7 +206,6 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/resources'
-    | '/thanks'
     | '/community/$id'
     | '/profile/$id'
     | '/resource/$id'
@@ -235,7 +217,6 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/resources'
-    | '/thanks'
     | '/community/$id'
     | '/profile/$id'
     | '/resource/$id'
@@ -247,7 +228,6 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/resources'
-    | '/thanks'
     | '/community/$id'
     | '/profile/$id'
     | '/resource/$id'
@@ -261,7 +241,6 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   ResourcesRoute: typeof ResourcesRoute
-  ThanksRoute: typeof ThanksRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ResourceIdRoute: typeof ResourceIdRoute
 }
@@ -273,7 +252,6 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRouteWithChildren,
   DashboardRoute: DashboardRoute,
   ResourcesRoute: ResourcesRoute,
-  ThanksRoute: ThanksRoute,
   ProfileIdRoute: ProfileIdRoute,
   ResourceIdRoute: ResourceIdRoute,
 }
@@ -294,7 +272,6 @@ export const routeTree = rootRoute
         "/community",
         "/dashboard",
         "/resources",
-        "/thanks",
         "/profile/$id",
         "/resource/$id"
       ]
@@ -319,9 +296,6 @@ export const routeTree = rootRoute
     },
     "/resources": {
       "filePath": "resources.tsx"
-    },
-    "/thanks": {
-      "filePath": "thanks.tsx"
     },
     "/community/$id": {
       "filePath": "community.$id.tsx",

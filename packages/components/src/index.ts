@@ -11,6 +11,3 @@ export * from './users';
 
 // Layout Components
 export * from './layout';
-
-// Trust Components
-export * from './trust';
