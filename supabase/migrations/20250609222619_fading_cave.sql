@@ -44,19 +44,22 @@ CREATE TABLE IF NOT EXISTS thanks (
 -- Enable RLS
 ALTER TABLE thanks ENABLE ROW LEVEL SECURITY;
 
--- Create policies
+-- Create policies (drop existing ones first to handle re-runs)
+DROP POLICY IF EXISTS "Thanks are viewable by everyone" ON thanks;
 CREATE POLICY "Thanks are viewable by everyone"
   ON thanks
   FOR SELECT
   TO public
   USING (true);
 
+DROP POLICY IF EXISTS "Authenticated users can create thanks" ON thanks;
 CREATE POLICY "Authenticated users can create thanks"
   ON thanks
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = from_user_id);
 
+DROP POLICY IF EXISTS "Users can update their own thanks" ON thanks;
 CREATE POLICY "Users can update their own thanks"
   ON thanks
   FOR UPDATE
@@ -64,14 +67,22 @@ CREATE POLICY "Users can update their own thanks"
   USING (auth.uid() = from_user_id)
   WITH CHECK (auth.uid() = from_user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own thanks" ON thanks;
 CREATE POLICY "Users can delete their own thanks"
   ON thanks
   FOR DELETE
   TO authenticated
   USING (auth.uid() = from_user_id);
 
--- Create indexes for better performance
+-- Create indexes for better performance (drop existing ones first to handle re-runs)
+DROP INDEX IF EXISTS thanks_from_user_id_idx;
 CREATE INDEX thanks_from_user_id_idx ON thanks(from_user_id);
+
+DROP INDEX IF EXISTS thanks_to_user_id_idx;
 CREATE INDEX thanks_to_user_id_idx ON thanks(to_user_id);
+
+DROP INDEX IF EXISTS thanks_resource_id_idx;
 CREATE INDEX thanks_resource_id_idx ON thanks(resource_id);
+
+DROP INDEX IF EXISTS thanks_created_at_idx;
 CREATE INDEX thanks_created_at_idx ON thanks(created_at DESC);
