@@ -60,10 +60,10 @@ export function ResourceForm({
     try {
       await createResource.mutateAsync({
         ...data,
-        owner_id: currentUser.id,
-        image_urls: images,
+        ownerId: currentUser.id,
+        imageUrls: images,
         location: currentUser.location ?? undefined,
-        is_active: true,
+        isActive: true,
       });
 
       if (onComplete) {

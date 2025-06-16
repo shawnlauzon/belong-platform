@@ -4,6 +4,7 @@ import { supabase } from '@belongnetwork/core';
 import { createResource } from '../impl/createResource';
 import { createMockDbResource } from './test-utils';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import { ResourceCategory } from '@belongnetwork/types';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
@@ -37,7 +38,7 @@ describe('createResource', () => {
   const mockResourceData = {
     title: 'Test Resource',
     description: 'Test Description',
-    category: 'food' as const,
+    category: ResourceCategory.FOOD,
     type: 'offer' as const,
     communityId: mockCommunity.id,
     isActive: true,
@@ -86,7 +87,7 @@ describe('createResource', () => {
       expect.objectContaining({
         title: 'Test Resource',
         description: 'Test Description',
-        category: 'food',
+        category: ResourceCategory.FOOD,
         type: 'offer',
         owner_id: 'user-123',
         community_id: mockCommunity.id,

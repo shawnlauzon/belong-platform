@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useCurrentUser } from '@belongnetwork/api';
 import { User } from '@belongnetwork/types';
 
 interface AuthContextType {

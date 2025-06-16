@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signUp } from '../impl/signUp';
-import { AuthUser } from '@belongnetwork/types';
+import { Account } from '@belongnetwork/types';
 import { logger } from '@belongnetwork/core';
 
 type SignUpData = {
@@ -17,7 +17,7 @@ type SignUpData = {
 export function useSignUp() {
   const queryClient = useQueryClient();
 
-  return useMutation<AuthUser, Error, SignUpData>({
+  return useMutation<Account, Error, SignUpData>({
     mutationFn: async ({ email, password, firstName, lastName }) => {
       return signUp(email, password, { firstName, lastName });
     },

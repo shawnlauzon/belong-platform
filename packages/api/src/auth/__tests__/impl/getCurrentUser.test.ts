@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { getCurrentUser } from '../../impl/getCurrentUser';
 import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
 import { supabase, logger } from '@belongnetwork/core';
-import { toDomainUser } from '../../../transformers/userTransformer';
+import { toDomainUser } from '../../../users/impl/userTransformer';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -27,8 +27,8 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(supabase);
-const mockLogger = vi.mocked(logger);
+const mockSupabase = supabase as any;
+const mockLogger = logger as any;
 
 describe('getCurrentUser', () => {
   const userId = faker.string.uuid();
@@ -63,10 +63,10 @@ describe('getCurrentUser', () => {
           id: mockAccount.id,
           email: mockAccount.email,
           user_metadata: {
-            first_name: mockAccount.first_name,
-            last_name: mockAccount.last_name,
-            full_name: mockAccount.full_name,
-            avatar_url: mockAccount.avatar_url,
+            first_name: mockAccount.firstName,
+            last_name: mockAccount.lastName,
+            full_name: mockAccount.fullName,
+            avatar_url: mockAccount.avatarUrl,
             location: mockAccount.location,
           },
           created_at: mockAccount.createdAt.toISOString(),
@@ -93,7 +93,7 @@ describe('getCurrentUser', () => {
     expect(result).toMatchObject({
       id: userId,
       email: mockAccount.email,
-      firstName: mockProfile.user_metadata.first_name,
+      firstName: (mockProfile.user_metadata as any).first_name,
     });
     expect(mockLogger.debug).toHaveBeenCalledWith('🔐 API: Successfully retrieved current user', {
       userId: mockAccount.id,
@@ -107,13 +107,7 @@ describe('getCurrentUser', () => {
         user: {
           id: mockAccount.id,
           email: mockAccount.email,
-          user_metadata: {
-            first_name: mockAccount.first_name,
-            last_name: mockAccount.last_name,
-            full_name: mockAccount.full_name,
-            avatar_url: mockAccount.avatar_url,
-            location: mockAccount.location,
-          },
+          user_metadata: {},
           created_at: mockAccount.createdAt.toISOString(),
           updated_at: mockAccount.updatedAt.toISOString(),
         },

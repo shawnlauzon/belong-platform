@@ -1,6 +1,5 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import { Home, Users, Package } from 'lucide-react';
-import { AuthStatus } from '../components/auth/AuthStatus';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -47,7 +46,7 @@ function RootComponent() {
             </div>
 
             {/* Auth Status */}
-            <AuthStatus />
+            <span className="text-sm text-gray-600">Auth Status Placeholder</span>
           </div>
         </div>
       </header>

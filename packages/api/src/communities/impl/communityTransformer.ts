@@ -39,6 +39,9 @@ export function toDomainCommunity(
     updatedAt: new Date(updated_at),
     organizer: toDomainUser(dbCommunity.organizer),
     parent,
+    parentId: dbCommunity.parent_id,
+    hierarchyPath: dbCommunity.hierarchy_path ? JSON.parse(dbCommunity.hierarchy_path as string) : [],
+    timeZone: dbCommunity.time_zone,
   };
 }
 

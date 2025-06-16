@@ -4,4 +4,4 @@ export * from './updateUser';
 export * from './deleteUser';
 export * from './fetchUsers';
 export * from './fetchUserById';
-export * from './userTransformer';
+export { toDomainUser } from './userTransformer';

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ImagePlus, X, Upload, AlertCircle } from 'lucide-react';
 import { StorageManager } from '@belongnetwork/core';
-import { logger, logUserAction } from '@belongnetwork/core';
+import { logger, logEvent } from '@belongnetwork/core';
 
 interface ImageUploadProps {
   onImagesUploaded: (urls: string[]) => void;
@@ -81,7 +81,7 @@ export function ImageUpload({
         setImages(updatedImages);
         onImagesUploaded(updatedImages);
 
-        logUserAction('images_uploaded_to_storage', {
+        logEvent('images_uploaded_to_storage', {
           newImageCount: uploadResults.length,
           totalImageCount: updatedImages.length,
           fileNames: filesToProcess.map((f) => f.name),
@@ -105,7 +105,7 @@ export function ImageUpload({
         logger.error('❌ ImageUpload: Upload failed:', error);
 
         setUploadError(errorMessage);
-        logUserAction('image_upload_failed', {
+        logEvent('image_upload_failed', {
           error: errorMessage,
           fileCount: acceptedFiles.length,
           folder,
@@ -143,7 +143,7 @@ export function ImageUpload({
     setImages(updatedImages);
     onImagesUploaded(updatedImages);
 
-    logUserAction('image_removed_from_storage', {
+    logEvent('image_removed_from_storage', {
       removedIndex: index,
       remainingCount: updatedImages.length,
       removedUrl,

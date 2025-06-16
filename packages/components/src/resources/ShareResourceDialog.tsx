@@ -62,10 +62,10 @@ export function ShareResourceDialog({
     try {
       await createResource.mutateAsync({
         ...data,
-        owner_id: user.id,
-        image_urls: images,
+        ownerId: user.id,
+        imageUrls: images,
         location: user.location ?? undefined,
-        is_active: true,
+        isActive: true,
       });
       
       // Reset form and close dialog on success

@@ -33,10 +33,15 @@ describe('deleteCommunity', () => {
     } as any);
 
     // Mock successful deletion by default
-    vi.mocked(supabase.from('').delete().eq).mockResolvedValue({
-      data: null,
-      error: null,
-    } as any);
+    const mockQuery = {
+      eq: vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      delete: vi.fn().mockReturnValue(mockQuery),
+    });
   });
 
   it('should delete a community successfully', async () => {
@@ -65,10 +70,15 @@ describe('deleteCommunity', () => {
     // Arrange
     const mockError = new Error('Failed to delete community');
 
-    vi.mocked(supabase.from('').delete().eq).mockResolvedValue({
-      data: null,
-      error: mockError,
-    } as any);
+    const mockQuery = {
+      eq: vi.fn().mockResolvedValue({
+        data: null,
+        error: mockError,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      delete: vi.fn().mockReturnValue(mockQuery),
+    });
 
     // Act & Assert
     await expect(deleteCommunity(communityId)).rejects.toThrow(mockError);

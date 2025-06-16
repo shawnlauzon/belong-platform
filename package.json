@@ -22,6 +22,8 @@
     "test": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test",
     "test:coverage": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
+    "typecheck": "pnpm -r typecheck",
+    "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",

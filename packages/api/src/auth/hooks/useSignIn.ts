@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signIn } from '../impl/signIn';
-import { AuthUser } from '@belongnetwork/types';
+import { Account } from '@belongnetwork/types';
 import { logger } from '@belongnetwork/core';
 
 /**
@@ -10,7 +10,7 @@ import { logger } from '@belongnetwork/core';
 export function useSignIn() {
   const queryClient = useQueryClient();
 
-  return useMutation<AuthUser, Error, { email: string; password: string }>({
+  return useMutation<Account, Error, { email: string; password: string }>({
     mutationFn: async ({ email, password }) => {
       return signIn(email, password);
     },

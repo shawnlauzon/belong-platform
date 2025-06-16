@@ -35,7 +35,13 @@ describe('updateCommunity', () => {
     id: communityId,
     name: faker.company.name(),
     description: faker.lorem.sentence(),
-  } as CommunityData;
+    organizerId: faker.string.uuid(),
+    parentId: null,
+    hierarchyPath: [],
+    level: 'city',
+    memberCount: 0,
+    timeZone: 'America/New_York',
+  } as CommunityData & { id: string };
 
   beforeEach(() => {
     vi.clearAllMocks();

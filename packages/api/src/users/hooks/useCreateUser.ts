@@ -16,9 +16,8 @@ export function useCreateUser() {
       const userId = typeof user === 'string' ? user : user.id;
       const email = typeof user === 'string' ? '' : user.email || '';
       
-      return createUser({
+      return createUser(userId, {
         ...userData,
-        id: userId,
         email,
       });
     },

@@ -2,7 +2,7 @@ import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type { Resource, ResourceFilter } from '@belongnetwork/types';
 import { toDomainResource } from './resourceTransformer';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 
@@ -48,8 +48,8 @@ export async function fetchResources(
     }
 
     // Get unique owner and community IDs to fetch
-    const ownerIds = [...new Set(data.map(r => r.owner_id))];
-    const communityIds = [...new Set(data.map(r => r.community_id))];
+    const ownerIds = Array.from(new Set(data.map(r => r.owner_id)));
+    const communityIds = Array.from(new Set(data.map(r => r.community_id)));
 
     // Fetch all required owners and communities
     const [owners, communities] = await Promise.all([

@@ -16,8 +16,8 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(supabase);
-const mockLogger = vi.mocked(logger);
+const mockSupabase = supabase as any;
+const mockLogger = logger as any;
 
 describe('signOut', () => {
   beforeEach(() => {

@@ -106,7 +106,7 @@ export function createMockDbCommunity(
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
     updated_at: now,
-    hierarchy_path: [],
+    hierarchy_path: JSON.stringify([]),
     time_zone: faker.location.timeZone(),
     ...overrides,
   };

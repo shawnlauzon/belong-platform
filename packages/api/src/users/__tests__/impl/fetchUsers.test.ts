@@ -5,10 +5,14 @@ import { createMockUser } from '../../../test-utils/mocks';
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
   supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    ilike: vi.fn().mockReturnThis(),
-    range: vi.fn().mockReturnThis(),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        ilike: vi.fn(() => ({
+          range: vi.fn(),
+        })),
+        range: vi.fn(),
+      })),
+    })),
   },
   logger: {
     debug: vi.fn(),
@@ -36,10 +40,15 @@ describe('fetchUsers', () => {
     const { supabase } = await import('@belongnetwork/core');
     const { toDomainUser } = await import('../../impl/userTransformer');
     
-    (supabase.from('').range as any).mockResolvedValue({
-      data: [mockUser1, mockUser2],
-      error: null,
-      count: 2,
+    const mockQuery = {
+      range: vi.fn().mockResolvedValue({
+        data: [mockUser1, mockUser2],
+        error: null,
+        count: 2,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      select: vi.fn().mockReturnValue(mockQuery),
     });
     
     vi.mocked(toDomainUser)
@@ -59,10 +68,15 @@ describe('fetchUsers', () => {
     // Arrange
     const { supabase } = await import('@belongnetwork/core');
     
-    (supabase.from('').range as any).mockResolvedValue({
-      data: [],
-      error: null,
-      count: 0,
+    const mockQuery = {
+      range: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+        count: 0,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      select: vi.fn().mockReturnValue(mockQuery),
     });
 
     // Act
@@ -77,10 +91,15 @@ describe('fetchUsers', () => {
     const { supabase } = await import('@belongnetwork/core');
     const error = new Error('Database error');
     
-    (supabase.from('').range as any).mockResolvedValue({
-      data: null,
-      error,
-      count: 0,
+    const mockQuery = {
+      range: vi.fn().mockResolvedValue({
+        data: null,
+        error,
+        count: 0,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      select: vi.fn().mockReturnValue(mockQuery),
     });
 
     // Act & Assert

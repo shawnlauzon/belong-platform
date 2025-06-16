@@ -4,4 +4,4 @@ export * from './updateCommunity';
 export * from './deleteCommunity';
 export * from './fetchCommunities';
 export * from './fetchCommunityById';
-export * from './communityTransformer';
+export { toDomainCommunity } from './communityTransformer';

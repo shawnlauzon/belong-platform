@@ -4,7 +4,7 @@ export { supabase } from './config/supabase';
 
 // Utils
 export { calculateDrivingTime } from './utils/distance';
-export { logger, logApiCall, logApiResponse, logComponentRender, logEvent, logStateChange } from './utils/logger';
+export { logger, logApiCall, logApiResponse, logComponentRender, logEvent, logStateChange, logUserAction } from './utils/logger';
 export { StorageManager, type UploadResult } from './utils/storage';
 
 // Types (re-exported from types package)

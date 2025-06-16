@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { signIn } from '../../impl/signIn';
 import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
 import { supabase, logger } from '@belongnetwork/core';
-import { toDomainUser } from '../../../transformers/userTransformer';
+import { toDomainUser } from '../../../users/impl/userTransformer';
 
 // Mock dependencies
 vi.mock('@belongnetwork/core', () => ({
@@ -27,15 +27,15 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockSupabase = vi.mocked(supabase);
-const mockLogger = vi.mocked(logger);
+const mockSupabase = supabase as any;
+const mockLogger = logger as any;
 
 describe('signIn', () => {
   const email = faker.internet.email();
   const password = faker.internet.password();
   const mockAccount = createMockUser({
-    created_at: faker.date.past(),
-    updated_at: faker.date.recent(),
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.recent(),
   });
   const mockProfile = createMockDbProfile({
     id: mockAccount.id,
@@ -54,10 +54,10 @@ describe('signIn', () => {
           id: mockAccount.id,
           email: mockAccount.email,
           user_metadata: {
-            first_name: mockAccount.first_name,
-            last_name: mockAccount.last_name,
-            full_name: mockAccount.full_name,
-            avatar_url: mockAccount.avatar_url,
+            first_name: mockAccount.firstName,
+            last_name: mockAccount.lastName,
+            full_name: mockAccount.fullName,
+            avatar_url: mockAccount.avatarUrl,
             location: mockAccount.location,
           },
           created_at: mockAccount.createdAt.toISOString(),
@@ -89,7 +89,7 @@ describe('signIn', () => {
     expect(result).toMatchObject({
       id: mockAccount.id,
       email: mockAccount.email,
-      first_name: mockProfile.user_metadata.first_name,
+      first_name: (mockProfile.user_metadata as any).first_name,
     });
     expect(mockLogger.info).toHaveBeenCalledWith('🔐 API: Successfully signed in', {
       userId: mockAccount.id,
@@ -127,13 +127,7 @@ describe('signIn', () => {
         user: {
           id: mockAccount.id,
           email: mockAccount.email,
-          user_metadata: {
-            first_name: mockAccount.first_name,
-            last_name: mockAccount.last_name,
-            full_name: mockAccount.full_name,
-            avatar_url: mockAccount.avatar_url,
-            location: mockAccount.location,
-          },
+          user_metadata: {},
           created_at: mockAccount.createdAt.toISOString(),
           updated_at: mockAccount.updatedAt.toISOString(),
         },

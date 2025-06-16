@@ -11,6 +11,10 @@ pnpm install
 # Run tests (API package only)
 pnpm test
 
+# TypeScript type checking
+pnpm typecheck          # Check all packages
+pnpm typecheck:api      # Check API package only
+
 # Build all packages
 pnpm build
 
@@ -20,8 +24,8 @@ pnpm lint
 # Format code
 pnpm format
 
-# Run linting and type checking before committing
-pnpm lint && pnpm build
+# Run comprehensive checks before committing
+pnpm lint && pnpm typecheck && pnpm build
 
 Architecture Overview
 
@@ -82,12 +86,3 @@ Code Patterns
 - Use React Query hooks from @belongnetwork/api for all data fetching
 - Follow component composition patterns established in @belongnetwork/components
 - Import shared types from @belongnetwork/types
-
-This new version:
-- **Eliminates outdated references** to non-existent packages and patterns
-- **Accurately reflects** the actual hybrid data fetching approach we discovered
-- **Strongly emphasizes** avoiding "any" types as you requested
-- **Documents real patterns** found in the working codebase
-- **Provides practical guidance** based on our successful testing experience
-
-```

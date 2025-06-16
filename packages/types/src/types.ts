@@ -72,6 +72,7 @@ export interface CommunityData {
 export interface Community extends Omit<CommunityData, 'organizerId'> {
   id: string;
   organizer: User;
+  parent?: Community;
 
   memberCount: number;
   createdAt: Date;
@@ -95,6 +96,9 @@ export interface Thanks extends CreateThanksData {
   id: string;
   created_at: Date;
   updated_at: Date;
+  from_member: User;
+  to_member: User;
+  resource?: Resource;
 }
 
 export interface User {

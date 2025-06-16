@@ -5,11 +5,15 @@ import { createMockUser } from '../../../test-utils/mocks';
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
   supabase: {
-    from: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
+    from: vi.fn(() => ({
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(),
+          })),
+        })),
+      })),
+    })),
   },
   logger: {
     debug: vi.fn(),
@@ -40,9 +44,18 @@ describe('updateUser', () => {
     vi.mocked(forDbUpdate).mockReturnValue({});
     vi.mocked(toDomainUser).mockReturnValue(mockUser);
     
-    (supabase.from('').single as any).mockResolvedValue({
-      data: mockUser,
-      error: null,
+    const mockQuery = {
+      single: vi.fn().mockResolvedValue({
+        data: mockUser,
+        error: null,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue(mockQuery),
+        }),
+      }),
     });
 
     // Act
@@ -60,9 +73,18 @@ describe('updateUser', () => {
     
     vi.mocked(forDbUpdate).mockReturnValue({});
     
-    (supabase.from('').single as any).mockResolvedValue({
-      data: null,
-      error,
+    const mockQuery = {
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error,
+      }),
+    };
+    (supabase.from as any).mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue(mockQuery),
+        }),
+      }),
     });
 
     // Act & Assert

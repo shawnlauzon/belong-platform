@@ -139,7 +139,7 @@ export function EditResourceDialog({
       const updatedResource = await updateResource.mutateAsync({
         id: resource.id,
         ...data,
-        image_urls: images,
+        imageUrls: images,
         location: location || undefined,
       });
 
