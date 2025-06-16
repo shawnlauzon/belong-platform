@@ -1,5 +1,6 @@
 import {
   Community,
+  Event,
   Resource,
   User,
   ResourceCategory,
@@ -101,5 +102,64 @@ export function createMockCommunity(
       lng: faker.location.longitude(),
     },
     ...overrides,
+  };
+}
+
+/**
+ * Creates a mock domain Event object
+ */
+export function createMockEvent(overrides: Partial<Event> = {}): Event {
+  const now = new Date();
+  const startDateTime = faker.date.future();
+  const endDateTime = faker.datatype.boolean() 
+    ? new Date(startDateTime.getTime() + faker.number.int({ min: 1, max: 8 }) * 60 * 60 * 1000)
+    : undefined;
+
+  const organizer = createMockUser();
+  const community = createMockCommunity();
+
+  return {
+    id: faker.string.uuid(),
+    title: faker.lorem.words({ min: 2, max: 6 }),
+    description: faker.lorem.paragraphs(2),
+    startDateTime,
+    endDateTime,
+    location: faker.location.streetAddress(),
+    coordinates: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
+    parkingInfo: faker.lorem.sentence(),
+    maxAttendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : undefined,
+    registrationRequired: false, // Default to false
+    isActive: true, // Default to true
+    tags: Array.from(
+      { length: faker.number.int({ min: 0, max: 5 }) },
+      () => faker.lorem.word()
+    ),
+    imageUrls: Array.from(
+      { length: faker.number.int({ min: 0, max: 3 }) },
+      () => faker.image.urlLoremFlickr({ category: 'event' })
+    ),
+    attendeeCount: faker.number.int({ min: 0, max: 50 }),
+    createdAt: now,
+    updatedAt: now,
+    organizer,
+    community,
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock domain Event with a custom organizer
+ */
+export function createMockEventWithOrganizer(
+  organizer: User,
+  overrides: Partial<Event> = {}
+): Event {
+  const event = createMockEvent(overrides);
+  return {
+    ...event,
+    organizer,
   };
 }

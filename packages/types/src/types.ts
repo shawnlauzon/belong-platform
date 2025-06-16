@@ -77,6 +77,21 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   memberCount: number;
   createdAt: Date;
   updatedAt: Date;
+  // Optional membership status for current user
+  currentUserMembership?: CommunityMembership;
+}
+
+// Community membership types
+export interface CommunityMembershipData {
+  userId: string;
+  communityId: string;
+  role?: 'member' | 'admin' | 'organizer';
+}
+
+export interface CommunityMembership extends CommunityMembershipData {
+  joinedAt: Date;
+  user?: User;
+  community?: Community;
 }
 
 export interface ThanksData {
@@ -186,4 +201,47 @@ export interface ResourceFilter {
   maxDriveMinutes?: number;
   searchTerm?: string;
   minTrustScore?: number;
+}
+
+export interface EventData {
+  title: string;
+  description: string;
+  communityId: string;
+  organizerId: string;
+  startDateTime: Date;
+  endDateTime?: Date;
+  location: string;
+  coordinates: Coordinates;
+  parkingInfo?: string;
+  maxAttendees?: number;
+  registrationRequired?: boolean;
+  isActive?: boolean;
+  tags?: string[];
+  imageUrls?: string[];
+}
+
+export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
+  id: string;
+  community: Community;
+  organizer: User;
+  attendeeCount: number;
+  registrationRequired: boolean;
+  isActive: boolean;
+  tags: string[];
+  imageUrls: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventFilter {
+  communityId?: string;
+  organizerId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  isActive?: boolean;
+  tags?: string[];
+  maxDriveMinutes?: number;
+  searchTerm?: string;
+  page?: number;
+  pageSize?: number;
 }

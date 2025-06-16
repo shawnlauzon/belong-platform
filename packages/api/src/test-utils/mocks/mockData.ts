@@ -1,4 +1,5 @@
 import {
+  EventData,
   MeetupFlexibility,
   ResourceCategory,
   ResourceData,
@@ -94,6 +95,42 @@ export function createMockResourceData(
       'mornings',
     ]),
     isActive: faker.datatype.boolean(),
+    ...overrides,
+  };
+}
+
+export function createMockEventData(
+  overrides: Partial<EventData> = {}
+): EventData {
+  const startDateTime = faker.date.future();
+  const endDateTime = faker.datatype.boolean() 
+    ? new Date(startDateTime.getTime() + faker.number.int({ min: 1, max: 8 }) * 60 * 60 * 1000)
+    : undefined;
+
+  return {
+    title: faker.lorem.words({ min: 2, max: 6 }),
+    description: faker.lorem.paragraphs(2),
+    communityId: faker.string.uuid(),
+    organizerId: faker.string.uuid(),
+    startDateTime,
+    endDateTime,
+    location: faker.location.streetAddress(),
+    coordinates: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
+    parkingInfo: faker.lorem.sentence(),
+    maxAttendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : undefined,
+    registrationRequired: faker.datatype.boolean(),
+    isActive: faker.datatype.boolean(),
+    tags: Array.from(
+      { length: faker.number.int({ min: 0, max: 5 }) },
+      () => faker.lorem.word()
+    ),
+    imageUrls: Array.from(
+      { length: faker.number.int({ min: 0, max: 3 }) },
+      () => faker.image.urlLoremFlickr({ category: 'event' })
+    ),
     ...overrides,
   };
 }

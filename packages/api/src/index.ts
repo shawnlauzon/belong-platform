@@ -3,3 +3,4 @@ export * from './communities';
 export * from './auth';
 export * from './users';
 export * from './thanks';
+export * from './events';
