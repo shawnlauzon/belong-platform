@@ -8,4 +8,4 @@ export * from './hooks';
 export { COMMUNITY_ERROR_MESSAGES } from './constants';
 
 // Export types
-export type { Community, CommunityData } from '@belongnetwork/types';
+export type { Community, CommunityData, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';

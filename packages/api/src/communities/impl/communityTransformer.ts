@@ -1,5 +1,5 @@
 import type { CommunityData, Database } from '@belongnetwork/types';
-import type { Community, User } from '@belongnetwork/types';
+import type { Community, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 import { toDomainUser } from '../../users/impl/userTransformer';
 
@@ -9,6 +9,11 @@ export type CommunityInsertDbData =
   Database['public']['Tables']['communities']['Insert'];
 export type CommunityUpdateDbData =
   Database['public']['Tables']['communities']['Update'];
+
+// Community membership types
+export type CommunityMembershipRow = Database['public']['Tables']['community_memberships']['Row'];
+export type CommunityMembershipInsertDbData = Database['public']['Tables']['community_memberships']['Insert'];
+export type CommunityMembershipUpdateDbData = Database['public']['Tables']['community_memberships']['Update'];
 
 /**
  * Transform a database community record to a domain community object
@@ -73,5 +78,38 @@ export function forDbUpdate(
     hierarchy_path: JSON.stringify(community.hierarchyPath),
     parent_id: community.parentId,
     time_zone: community.timeZone,
+  };
+}
+
+/**
+ * Transform a database community membership record to a domain membership object
+ */
+export function toDomainMembership(
+  dbMembership: CommunityMembershipRow & {
+    user?: ProfileRow;
+    community?: CommunityRow & { organizer: ProfileRow };
+  }
+): CommunityMembership {
+  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+
+  return {
+    ...rest,
+    userId: user_id,
+    communityId: community_id,
+    role: dbMembership.role as 'member' | 'admin' | 'organizer' | undefined,
+    joinedAt: new Date(joined_at),
+    user: dbMembership.user ? toDomainUser(dbMembership.user) : undefined,
+    community: dbMembership.community ? toDomainCommunity(dbMembership.community) : undefined,
+  };
+}
+
+/**
+ * Transform a domain membership object to a database membership record for insert
+ */
+export function forDbMembershipInsert(membership: CommunityMembershipData): CommunityMembershipInsertDbData {
+  return {
+    user_id: membership.userId,
+    community_id: membership.communityId,
+    role: membership.role || 'member',
   };
 }
