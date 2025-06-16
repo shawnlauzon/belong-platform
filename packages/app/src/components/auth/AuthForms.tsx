@@ -28,10 +28,8 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
         await signUpMutation.mutateAsync({
           email: formData.email,
           password: formData.password,
-          metadata: {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-          },
+          firstName: formData.firstName,
+          lastName: formData.lastName,
         });
       } else {
         await signInMutation.mutateAsync({

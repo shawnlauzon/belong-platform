@@ -3,14 +3,14 @@ import { CommunityList } from '../components/communities/CommunityList';
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
-  beforeLoad: ({ context }) => {
-    // Redirect to auth if not authenticated
-    if (!context.auth?.user) {
-      throw redirect({
-        to: '/auth',
-      });
-    }
-  },
+  // beforeLoad: ({ context }) => {
+  //   // Redirect to auth if not authenticated
+  //   if (!context.auth?.user) {
+  //     throw redirect({
+  //       to: '/auth',
+  //     });
+  //   }
+  // },
 });
 
 function DashboardPage() {

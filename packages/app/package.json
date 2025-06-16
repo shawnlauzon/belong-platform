@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@belongnetwork/api": "workspace:*",
+    "@belongnetwork/components": "workspace:*",
+    "@belongnetwork/core": "workspace:*",
+    "@belongnetwork/types": "workspace:*",
     "@tailwindcss/vite": "^4.1.10",
     "@tanstack/react-query": "^5.28.4",
     "@tanstack/react-query-devtools": "^5.28.4",

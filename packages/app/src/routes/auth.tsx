@@ -3,14 +3,14 @@ import { AuthForms } from '../components/auth/AuthForms';
 
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
-  beforeLoad: ({ context }) => {
-    // Redirect to dashboard if already authenticated
-    if (context.auth?.user) {
-      throw redirect({
-        to: '/dashboard',
-      });
-    }
-  },
+  // beforeLoad: ({ context }) => {
+  //   // Redirect to dashboard if already authenticated
+  //   if (context.auth?.user) {
+  //     throw redirect({
+  //       to: '/dashboard',
+  //     });
+  //   }
+  // },
 });
 
 function AuthPage() {

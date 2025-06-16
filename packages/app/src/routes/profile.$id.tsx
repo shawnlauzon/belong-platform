@@ -7,13 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@belongnetwork/components';
-import { TrustScore } from '@belongnetwork/components';
+// import { TrustScore } from '@belongnetwork/components';
 import { Button } from '@belongnetwork/components';
 import { Avatar, AvatarFallback, AvatarImage } from '@belongnetwork/components';
 import { ResourceCard } from '@belongnetwork/components';
-import { ThanksCard } from '@belongnetwork/components';
+// import { ThanksCard } from '@belongnetwork/components';
 import { ProfileEditor } from '@belongnetwork/components';
-import { logger, useBelongStore } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
+// import { useBelongStore } from '@belongnetwork/core';
 import {
   MapPin,
   Calendar,
@@ -32,24 +33,27 @@ function ProfilePage() {
   logComponentRender('ProfilePage');
 
   const { id } = Route.useParams();
-  const user = useBelongStore((state) => state.auth.user);
+  // const user = useBelongStore((state: any) => state.auth.user);
+  const user: any = null; // TODO: implement auth store
   const [isEditing, setIsEditing] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<'resources' | 'thanks'>(
     'resources'
   );
 
-  const member = useBelongStore((state) =>
-    state.users.list.find((u) => u.id === id)
-  );
-  const isLoading = useBelongStore((state) => state.users.isLoading);
+  // const member = useBelongStore((state: any) =>
+  //   state.users.list.find((u: any) => u.id === id)
+  // );
+  const member: any = null; // TODO: implement user store
+  // const isLoading = useBelongStore((state: any) => state.users.isLoading);
+  const isLoading = false; // TODO: implement loading state
   const isSelf = id === 'me' || user?.id === id;
 
   // Define helper functions early to avoid hoisting issues
   const getAvatarInitials = () => {
     if (!member) return '';
     return (
-      member.first_name?.charAt(0).toUpperCase() +
-      member.last_name?.charAt(0).toUpperCase()
+      (member.first_name?.charAt(0).toUpperCase() || '') +
+      (member.last_name?.charAt(0).toUpperCase() || '')
     );
   };
 
@@ -62,7 +66,7 @@ function ProfilePage() {
     } else if (member.last_name) {
       return member.last_name;
     }
-    return member.first_name; // Fallback to the name field
+    return member.first_name || 'Unknown User'; // Fallback
   };
 
   // Handle save completion - return to view mode
@@ -77,13 +81,13 @@ function ProfilePage() {
   React.useEffect(() => {
     if (member) {
       logger.debug('👤 ProfilePage: Member data loaded:', {
-        memberId: member.id,
+        memberId: member?.id,
         displayName: getDisplayName(),
         firstName: member.first_name,
         lastName: member.last_name,
-        trustScores: member.trust_scores,
+        trustScores: member?.trust_scores,
         hasAvatar: !!member.avatar_url,
-        avatarUrl: member.avatar_url,
+        avatarUrl: member?.avatar_url,
         isSelfProfile: isSelf,
         isEditing: isEditing,
         activeTab: activeTab,
@@ -99,7 +103,7 @@ function ProfilePage() {
 
       // Log trust and activity metrics
       logger.debug('👤 ProfilePage: Activity metrics:', {
-        trustScores: member.trust_scores,
+        trustScores: member?.trust_scores,
       });
     }
   }, [member, isSelf, isEditing, activeTab]);
@@ -165,7 +169,7 @@ function ProfilePage() {
             <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
               <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
                 <AvatarImage
-                  src={member.avatar_url || undefined}
+                  src={member?.avatar_url || undefined}
                   alt={getDisplayName()}
                 />
                 <AvatarFallback className="text-3xl">
@@ -210,7 +214,7 @@ function ProfilePage() {
                       <MessageCircle className="h-4 w-4" />
                       <span>Message</span>
                     </Button>
-                    <Button variant="trust" className="flex items-center gap-1">
+                    <Button variant="outline" className="flex items-center gap-1">
                       <Heart className="h-4 w-4" />
                       <span>Thank</span>
                     </Button>

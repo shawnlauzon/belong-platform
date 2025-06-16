@@ -50,17 +50,17 @@ export function CommunityDetail({ communityId }: CommunityDetailProps) {
         <div className="flex items-center space-x-6 text-sm text-gray-500">
           <div className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
-            {community.member_count} members
+            {community.memberCount} members
           </div>
           {community.center && (
             <div className="flex items-center">
               <MapPin className="w-4 h-4 mr-1" />
-              {community.city}
+              {community.hierarchyPath?.find(h => h.level === 'city')?.name || community.name}
             </div>
           )}
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
-            Created {community.created_at.toLocaleDateString()}
+            Created {community.createdAt.toLocaleDateString()}
           </div>
         </div>
       </div>

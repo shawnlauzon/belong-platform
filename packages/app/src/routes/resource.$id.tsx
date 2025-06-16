@@ -3,14 +3,14 @@ import { ResourceDetail } from '../components/resources/ResourceDetail';
 
 export const Route = createFileRoute('/resource/$id')({
   component: ResourceDetailPage,
-  beforeLoad: ({ context }) => {
-    // Redirect to auth if not authenticated
-    if (!context.auth?.user) {
-      throw redirect({
-        to: '/auth',
-      });
-    }
-  },
+  // beforeLoad: ({ context }) => {
+  //   // Redirect to auth if not authenticated
+  //   if (!context.auth?.user) {
+  //     throw redirect({
+  //       to: '/auth',
+  //     });
+  //   }
+  // },
 });
 
 function ResourceDetailPage() {

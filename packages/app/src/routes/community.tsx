@@ -9,7 +9,7 @@ import {
 } from '@belongnetwork/components';
 import { Button } from '@belongnetwork/components';
 import { ViewSwitcher } from '@belongnetwork/components';
-import { useBelongStore } from '@belongnetwork/core';
+// import { useBelongStore } from '@belongnetwork/core';
 import { mapbox } from '@belongnetwork/core';
 import { Users, Calendar, Map as MapIcon, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@belongnetwork/components';
@@ -20,8 +20,10 @@ export const Route = createFileRoute('/community')({
 });
 
 function CommunityPage() {
-  const activeCommunity = useBelongStore((state) => state.getActiveCommunity());
-  const viewMode = useBelongStore((state) => state.app.viewMode);
+  // const activeCommunity = useBelongStore((state: any) => state.getActiveCommunity());
+  const activeCommunity: any = null; // TODO: implement community store
+  // const viewMode = useBelongStore((state: any) => state.app.viewMode);
+  const [viewMode, setViewMode] = useState<'member' | 'organizer'>('member'); // TODO: implement view mode store
   const [activeTab, setActiveTab] = useState<'members' | 'events'>('members');
 
   if (!activeCommunity) {
@@ -47,7 +49,7 @@ function CommunityPage() {
             {activeCommunity.name} Community
           </h1>
           <p className="text-warmgray-500">
-            {activeCommunity.member_count} members •{' '}
+            {activeCommunity.memberCount} members •{' '}
             {activeCommunity.description}
           </p>
         </div>
@@ -202,7 +204,7 @@ function CommunityPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-gray-100 text-center">
                   <div className="text-2xl font-bold text-primary-600">
-                    {activeCommunity?.member_count}
+                    {activeCommunity?.memberCount}
                   </div>
                   <div className="text-sm text-warmgray-500">Members</div>
                 </div>

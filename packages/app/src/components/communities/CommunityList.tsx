@@ -96,12 +96,12 @@ export function CommunityList() {
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {community.member_count} members
+                      {community.memberCount} members
                     </div>
                     {community.center && (
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
-                        {community.city}
+                        {community.hierarchyPath?.find(h => h.level === 'city')?.name || community.name}
                       </div>
                     )}
                   </div>

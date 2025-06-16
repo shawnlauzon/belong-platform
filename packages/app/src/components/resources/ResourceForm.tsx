@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useCreateResource, useUpdateResource } from '@belongnetwork/api';
 import { Button } from '@belongnetwork/components';
 import { Loader2 } from 'lucide-react';
-import type { Resource, CreateResourceData, UpdateResourceData } from '@belongnetwork/types';
+import type { Resource, ResourceData } from '@belongnetwork/types';
+import { ResourceCategory, MeetupFlexibility } from '@belongnetwork/types';
 
 interface ResourceFormProps {
   initialData?: Resource | null;
@@ -15,12 +16,12 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
     title: '',
     description: '',
     type: 'offer' as 'offer' | 'request',
-    category: 'tools' as 'tools' | 'skills' | 'food' | 'supplies' | 'other',
+    category: ResourceCategory.TOOLS,
     image_urls: '',
     availability: '',
     pickup_instructions: '',
     parking_info: '',
-    meetup_flexibility: 'home_only' as 'home_only' | 'public_meetup_ok' | 'delivery_possible',
+    meetup_flexibility: MeetupFlexibility.HOME_ONLY,
   });
 
   const createMutation = useCreateResource();
@@ -33,11 +34,11 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
         description: initialData.description,
         type: initialData.type,
         category: initialData.category,
-        image_urls: initialData.image_urls.join(', '),
+        image_urls: initialData.imageUrls?.join(', ') || '',
         availability: initialData.availability || '',
-        pickup_instructions: initialData.pickup_instructions || '',
-        parking_info: initialData.parking_info || '',
-        meetup_flexibility: initialData.meetup_flexibility,
+        pickup_instructions: initialData.pickupInstructions || '',
+        parking_info: initialData.parkingInfo || '',
+        meetup_flexibility: initialData.meetupFlexibility || MeetupFlexibility.HOME_ONLY,
       });
     }
   }, [initialData]);
@@ -52,31 +53,32 @@ export function ResourceForm({ initialData, onSuccess, onCancel }: ResourceFormP
         .filter(url => url.length > 0);
 
       if (initialData) {
-        const updateData: UpdateResourceData = {
+        const updateData = {
           id: initialData.id,
           title: formData.title,
           description: formData.description,
           type: formData.type,
-          category: formData.category,
-          image_urls: imageUrls,
+          category: formData.category as ResourceCategory,
+          imageUrls: imageUrls,
           availability: formData.availability || undefined,
-          pickup_instructions: formData.pickup_instructions || undefined,
-          parking_info: formData.parking_info || undefined,
-          meetup_flexibility: formData.meetup_flexibility,
+          pickupInstructions: formData.pickup_instructions || undefined,
+          parkingInfo: formData.parking_info || undefined,
+          meetupFlexibility: formData.meetup_flexibility as MeetupFlexibility,
         };
         await updateMutation.mutateAsync(updateData);
       } else {
-        const createData: CreateResourceData = {
+        const createData: ResourceData = {
+          communityId: '01936b3a-0003-7000-8000-000000000004', // TODO: get current community ID
           title: formData.title,
           description: formData.description,
           type: formData.type,
-          category: formData.category,
-          image_urls: imageUrls,
+          category: formData.category as ResourceCategory,
+          imageUrls: imageUrls,
           availability: formData.availability || undefined,
-          pickup_instructions: formData.pickup_instructions || undefined,
-          parking_info: formData.parking_info || undefined,
-          meetup_flexibility: formData.meetup_flexibility,
-          is_active: true,
+          pickupInstructions: formData.pickup_instructions || undefined,
+          parkingInfo: formData.parking_info || undefined,
+          meetupFlexibility: formData.meetup_flexibility as MeetupFlexibility,
+          isActive: true,
         };
         await createMutation.mutateAsync(createData);
       }

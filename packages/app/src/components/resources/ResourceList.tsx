@@ -39,7 +39,7 @@ export function ResourceList({ communityId }: ResourceListProps) {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
+    setFilters((prev: ResourceFilter) => ({
       ...prev,
       [name]: value === 'all' ? undefined : value,
     }));
@@ -183,7 +183,7 @@ export function ResourceList({ communityId }: ResourceListProps) {
                   <p className="text-gray-600 mb-3">{resource.description}</p>
                   
                   <div className="text-sm text-gray-500">
-                    <p>By {resource.owner.full_name || resource.owner.first_name}</p>
+                    <p>By {resource.owner.fullName || resource.owner.firstName}</p>
                     {resource.availability && (
                       <p>Available: {resource.availability}</p>
                     )}

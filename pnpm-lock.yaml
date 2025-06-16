@@ -142,6 +142,15 @@ importers:
       '@belongnetwork/api':
         specifier: workspace:*
         version: link:../api
+      '@belongnetwork/components':
+        specifier: workspace:*
+        version: link:../components
+      '@belongnetwork/core':
+        specifier: workspace:*
+        version: link:../core
+      '@belongnetwork/types':
+        specifier: workspace:*
+        version: link:../types
       '@tailwindcss/vite':
         specifier: ^4.1.10
         version: 4.1.10(vite@5.4.19)

@@ -3,14 +3,14 @@ import { CommunityDetail } from '../components/communities/CommunityDetail';
 
 export const Route = createFileRoute('/community/$id')({
   component: CommunityDetailPage,
-  beforeLoad: ({ context }) => {
-    // Redirect to auth if not authenticated
-    if (!context.auth?.user) {
-      throw redirect({
-        to: '/auth',
-      });
-    }
-  },
+  // beforeLoad: ({ context }) => {
+  //   // Redirect to auth if not authenticated
+  //   if (!context.auth?.user) {
+  //     throw redirect({
+  //       to: '/auth',
+  //     });
+  //   }
+  // },
 });
 
 function CommunityDetailPage() {

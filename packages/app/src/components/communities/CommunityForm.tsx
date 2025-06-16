@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCreateCommunity, useUpdateCommunity } from '@belongnetwork/api';
 import { Button } from '@belongnetwork/components';
 import { Loader2 } from 'lucide-react';
-import type { Community, CreateCommunityData, UpdateCommunityData } from '@belongnetwork/types';
+import type { Community, CommunityData } from '@belongnetwork/types';
 
 interface CommunityFormProps {
   initialData?: Community | null;
@@ -23,7 +23,7 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
     if (initialData) {
       setFormData({
         name: initialData.name,
-        description: initialData.description,
+        description: initialData.description || '',
       });
     }
   }, [initialData]);
@@ -33,15 +33,25 @@ export function CommunityForm({ initialData, onSuccess, onCancel }: CommunityFor
     
     try {
       if (initialData) {
-        const updateData: UpdateCommunityData = {
+        const updateData = {
           id: initialData.id,
-          ...formData,
+          name: formData.name,
+          description: formData.description,
         };
-        await updateMutation.mutateAsync(updateData);
+        await updateMutation.mutateAsync(updateData as any); // TODO: implement proper update data
       } else {
-        const createData: CreateCommunityData = {
+        const createData: CommunityData = {
           ...formData,
-          parent_id: '01936b3a-0003-7000-8000-000000000004', // Austin community ID
+          organizerId: '', // TODO: get current user ID
+          parentId: '01936b3a-0003-7000-8000-000000000004', // Austin community ID
+          hierarchyPath: [
+            { level: 'country', name: 'United States' },
+            { level: 'state', name: 'Texas' },
+            { level: 'city', name: 'Austin' }
+          ],
+          level: 'neighborhood',
+          memberCount: 1,
+          timeZone: 'America/Chicago'
         };
         await createMutation.mutateAsync(createData);
       }

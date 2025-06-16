@@ -60,11 +60,11 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
       </p>
 
       {/* Resource Images */}
-      {resource.image_urls.length > 0 && (
+      {resource.imageUrls && resource.imageUrls.length > 0 && (
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Images</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {resource.image_urls.map((url, index) => (
+            {resource.imageUrls!.map((url: string, index: number) => (
               <img
                 key={index}
                 src={url}
@@ -87,14 +87,14 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
             <div className="flex items-center text-gray-600">
               <User className="w-4 h-4 mr-2" />
               <span>
-                By {resource.owner.full_name || resource.owner.first_name}
+                By {resource.owner.fullName || resource.owner.firstName}
               </span>
             </div>
             
             <div className="flex items-center text-gray-600">
               <Calendar className="w-4 h-4 mr-2" />
               <span>
-                Created {resource.created_at.toLocaleDateString()}
+                Created {resource.createdAt.toLocaleDateString()}
               </span>
             </div>
 
@@ -119,24 +119,24 @@ export function ResourceDetail({ resourceId }: ResourceDetailProps) {
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Logistics</h3>
           <div className="space-y-3">
-            {resource.pickup_instructions && (
+            {resource.pickupInstructions && (
               <div>
                 <h4 className="font-medium text-gray-900">Pickup Instructions</h4>
-                <p className="text-gray-600">{resource.pickup_instructions}</p>
+                <p className="text-gray-600">{resource.pickupInstructions}</p>
               </div>
             )}
 
-            {resource.parking_info && (
+            {resource.parkingInfo && (
               <div>
                 <h4 className="font-medium text-gray-900">Parking Info</h4>
-                <p className="text-gray-600">{resource.parking_info}</p>
+                <p className="text-gray-600">{resource.parkingInfo}</p>
               </div>
             )}
 
             <div>
               <h4 className="font-medium text-gray-900">Meetup Flexibility</h4>
               <p className="text-gray-600">
-                {resource.meetup_flexibility.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {resource.meetupFlexibility?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Not specified'}
               </p>
             </div>
           </div>
