@@ -1,6 +1,4 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useCurrentUser } from '@belongnetwork/api';
-import { Button } from '@belongnetwork/components';
 import { Users, Package, Heart, ArrowRight } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
@@ -8,7 +6,6 @@ export const Route = createFileRoute('/')({
 });
 
 function HomePage() {
-  const { data: user } = useCurrentUser();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -25,28 +22,13 @@ function HomePage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <Link to="/dashboard">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Go to Dashboard
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Get Started
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                    Sign In
-                  </Button>
-                </Link>
-              </>
-            )}
+            <Link to="/auth" className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700">
+              Get Started
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
+            <Link to="/auth" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 bg-white text-gray-700 font-medium rounded-md hover:bg-gray-50">
+              Sign In
+            </Link>
           </div>
         </div>
       </div>
@@ -105,24 +87,20 @@ function HomePage() {
       </div>
 
       {/* CTA Section */}
-      {!user && (
-        <div className="bg-blue-600 py-16">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Join thousands of neighbors already building stronger communities.
-            </p>
-            <Link to="/auth">
-              <Button size="lg" variant="secondary">
-                Create Your Account
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
+      <div className="bg-blue-600 py-16">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Get Started?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Join thousands of neighbors already building stronger communities.
+          </p>
+          <Link to="/auth" className="inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-50">
+            Create Your Account
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Link>
         </div>
-      )}
+      </div>
     </div>
   );
 }

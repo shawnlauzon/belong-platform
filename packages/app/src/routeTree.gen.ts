@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as rootSimpleImport } from './routes/__root-simple'
 import { Route as ThanksImport } from './routes/thanks'
 import { Route as ResourcesImport } from './routes/resources'
 import { Route as DashboardImport } from './routes/dashboard'
@@ -22,6 +23,11 @@ import { Route as ProfileIdImport } from './routes/profile.$id'
 import { Route as CommunityIdImport } from './routes/community.$id'
 
 // Create/Update Routes
+
+const rootSimpleRoute = rootSimpleImport.update({
+  id: '/__root-simple',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const ThanksRoute = ThanksImport.update({
   id: '/thanks',
@@ -86,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/__root-simple': {
+      id: '/__root-simple'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof rootSimpleImport
       parentRoute: typeof rootRoute
     }
     '/auth': {
@@ -163,6 +176,7 @@ const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '': typeof rootSimpleRoute
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
@@ -175,6 +189,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '': typeof rootSimpleRoute
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
@@ -188,6 +203,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/__root-simple': typeof rootSimpleRoute
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
@@ -202,6 +218,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | ''
     | '/auth'
     | '/community'
     | '/dashboard'
@@ -213,6 +230,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | ''
     | '/auth'
     | '/community'
     | '/dashboard'
@@ -224,6 +242,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/__root-simple'
     | '/auth'
     | '/community'
     | '/dashboard'
@@ -237,6 +256,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  rootSimpleRoute: typeof rootSimpleRoute
   AuthRoute: typeof AuthRoute
   CommunityRoute: typeof CommunityRouteWithChildren
   DashboardRoute: typeof DashboardRoute
@@ -248,6 +268,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  rootSimpleRoute: rootSimpleRoute,
   AuthRoute: AuthRoute,
   CommunityRoute: CommunityRouteWithChildren,
   DashboardRoute: DashboardRoute,
@@ -268,6 +289,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/__root-simple",
         "/auth",
         "/community",
         "/dashboard",
@@ -279,6 +301,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/__root-simple": {
+      "filePath": "__root-simple.tsx"
     },
     "/auth": {
       "filePath": "auth.tsx"

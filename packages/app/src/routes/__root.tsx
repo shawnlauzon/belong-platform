@@ -1,18 +1,8 @@
-import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
-import { QueryClient } from '@tanstack/react-query';
-import { AuthStatus } from '../components/auth/AuthStatus';
+import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import { Home, Users, Package } from 'lucide-react';
-import type { AuthUser } from '@belongnetwork/types';
+import { AuthStatus } from '../components/auth/AuthStatus';
 
-interface RouterContext {
-  queryClient: QueryClient;
-  auth: {
-    user: AuthUser | null;
-  };
-}
-
-export const Route = createRootRouteWithContext<RouterContext>()({
+export const Route = createRootRoute({
   component: RootComponent,
 });
 
@@ -67,8 +57,6 @@ function RootComponent() {
         <Outlet />
       </main>
 
-      {/* Development Tools */}
-      <TanStackRouterDevtools position="bottom-right" />
     </div>
   );
 }

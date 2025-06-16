@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
+    "packages/app",
+    "packages/components",
     "packages/dashboard",
     "packages/api",
     "packages/types",
