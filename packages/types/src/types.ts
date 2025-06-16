@@ -175,22 +175,6 @@ export interface MeetupSpot {
   type: string;
 }
 
-export interface Hangout extends HangoutData {
-  community: Community;
-  attendee_count: number;
-}
-
-export type NewHangout = Omit<HangoutData, 'id'>;
-
-export interface HangoutData {
-  id: string;
-  community_id: string;
-  title: string;
-  date: string;
-  location: string;
-  parking: string;
-  description: string;
-}
 
 export interface ResourceFilter {
   category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';

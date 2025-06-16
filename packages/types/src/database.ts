@@ -94,6 +94,112 @@ export type Database = {
           },
         ]
       }
+      event_attendances: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          attendee_count: number
+          community_id: string
+          coordinates: unknown
+          created_at: string
+          description: string
+          end_date_time: string | null
+          id: string
+          image_urls: string[]
+          is_active: boolean
+          location: string
+          max_attendees: number | null
+          organizer_id: string
+          parking_info: string | null
+          registration_required: boolean
+          start_date_time: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attendee_count?: number
+          community_id: string
+          coordinates: unknown
+          created_at?: string
+          description: string
+          end_date_time?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          location: string
+          max_attendees?: number | null
+          organizer_id: string
+          parking_info?: string | null
+          registration_required?: boolean
+          start_date_time: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attendee_count?: number
+          community_id?: string
+          coordinates?: unknown
+          created_at?: string
+          description?: string
+          end_date_time?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          location?: string
+          max_attendees?: number | null
+          organizer_id?: string
+          parking_info?: string | null
+          registration_required?: boolean
+          start_date_time?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -257,6 +363,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "thanks_from_user_id_fkey1"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "thanks_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
@@ -265,6 +378,13 @@ export type Database = {
           },
           {
             foreignKeyName: "thanks_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thanks_to_user_id_fkey1"
             columns: ["to_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
