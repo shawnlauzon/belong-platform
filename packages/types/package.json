@@ -19,7 +19,7 @@
   "scripts": {
     "build": "vite build --config vite.config.mts",
     "dev": "vite build --watch --config vite.config.mts",
-    "test": "vitest run --config vitest.config.mts",
+    "test": "vitest run --config vitest.config.mts --passWithNoTests",
     "test:watch": "vitest --config vitest.config.mts",
     "test:coverage": "vitest run --coverage --config vitest.config.mts",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
