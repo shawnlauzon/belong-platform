@@ -1,4 +1,5 @@
 import type {
+  Database,
   EventAttendanceData,
   EventAttendance,
   EventAttendanceStatus,
@@ -6,25 +7,10 @@ import type {
   Event,
 } from '@belongnetwork/types';
 
-// Temporary event attendance row types until database schema is updated
-export interface EventAttendanceRow {
-  id: string;
-  event_id: string;
-  user_id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EventAttendanceInsertDbData {
-  event_id: string;
-  user_id: string;
-  status: string;
-}
-
-export interface EventAttendanceUpdateDbData {
-  status?: string;
-}
+// Database types for event_attendances table (will be available once migrations are applied)
+export type EventAttendanceRow = Database['public']['Tables']['event_attendances']['Row'];
+export type EventAttendanceInsertDbData = Database['public']['Tables']['event_attendances']['Insert'];
+export type EventAttendanceUpdateDbData = Database['public']['Tables']['event_attendances']['Update'];
 
 /**
  * Transform a database event attendance record to a domain event attendance object

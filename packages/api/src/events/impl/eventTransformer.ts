@@ -1,4 +1,5 @@
 import type {
+  Database,
   EventData,
   Event,
   User,
@@ -7,61 +8,10 @@ import type {
 } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 
-// Temporary event row types until database schema is updated
-export interface EventRow {
-  id: string;
-  title: string;
-  description: string;
-  organizer_id: string;
-  community_id: string;
-  start_date_time: string;
-  end_date_time: string | null;
-  location: string;
-  coordinates: unknown;
-  parking_info: string | null;
-  max_attendees: number | null;
-  registration_required: boolean;
-  is_active: boolean;
-  tags: string[];
-  image_urls: string[];
-  attendee_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EventInsertDbData {
-  title: string;
-  description: string;
-  organizer_id: string;
-  community_id: string;
-  start_date_time: string;
-  end_date_time: string | null;
-  location: string;
-  coordinates: unknown;
-  parking_info: string | null;
-  max_attendees: number | null;
-  registration_required: boolean;
-  is_active: boolean;
-  tags: string[];
-  image_urls: string[];
-}
-
-export interface EventUpdateDbData {
-  title?: string;
-  description?: string;
-  organizer_id?: string;
-  community_id?: string;
-  start_date_time?: string;
-  end_date_time?: string | null;
-  location?: string;
-  coordinates?: unknown;
-  parking_info?: string | null;
-  max_attendees?: number | null;
-  registration_required?: boolean;
-  is_active?: boolean;
-  tags?: string[];
-  image_urls?: string[];
-}
+// Database types for events table (will be available once migrations are applied)
+export type EventRow = Database['public']['Tables']['events']['Row'];
+export type EventInsertDbData = Database['public']['Tables']['events']['Insert'];
+export type EventUpdateDbData = Database['public']['Tables']['events']['Update'];
 
 /**
  * Transform a database event record to a domain event object
