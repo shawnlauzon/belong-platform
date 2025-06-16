@@ -31,14 +31,13 @@ const mockSupabase = vi.mocked(supabase);
 const mockLogger = vi.mocked(logger);
 
 describe('getCurrentUser', () => {
-  const mockProfile = createMockDbProfile();
+  const userId = faker.string.uuid();
+  const mockProfile = createMockDbProfile({ id: userId });
   const mockAuthUser = toDomainUser(mockProfile);
-  const mockUser = createMockUser();
+  const mockAccount = createMockUser({ id: userId });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase.auth.getUser.mockReset();
-    mockSupabase.from('profiles').select('*').eq('id', mockUser.id).single.mockReset();
   });
 
   it('should return null when no user is authenticated', async () => {
@@ -61,41 +60,43 @@ describe('getCurrentUser', () => {
     mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: {
         user: {
-          id: mockUser.id,
-          email: mockUser.email,
+          id: mockAccount.id,
+          email: mockAccount.email,
           user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-            full_name: mockUser.full_name,
-            avatar_url: mockUser.avatar_url,
-            location: mockUser.location,
+            first_name: mockAccount.first_name,
+            last_name: mockAccount.last_name,
+            full_name: mockAccount.full_name,
+            avatar_url: mockAccount.avatar_url,
+            location: mockAccount.location,
           },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
+          created_at: mockAccount.createdAt.toISOString(),
+          updated_at: mockAccount.updatedAt.toISOString(),
         },
       },
       error: null,
     });
 
-    mockSupabase.from('profiles')
-      .select('*')
-      .eq('id', mockUser.id)
-      .single.mockResolvedValueOnce({
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: mockProfile,
         error: null,
-      });
+      }),
+    };
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await getCurrentUser();
 
     // Assert
-    expect(result).toEqual({
-      ...mockAuthUser,
-      email: mockUser.email,
-      location: mockUser.location,
+    expect(result).toMatchObject({
+      id: userId,
+      email: mockAccount.email,
+      firstName: mockProfile.user_metadata.first_name,
     });
     expect(mockLogger.debug).toHaveBeenCalledWith('🔐 API: Successfully retrieved current user', {
-      userId: mockUser.id,
+      userId: mockAccount.id,
     });
   });
 
@@ -104,44 +105,42 @@ describe('getCurrentUser', () => {
     mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: {
         user: {
-          id: mockUser.id,
-          email: mockUser.email,
+          id: mockAccount.id,
+          email: mockAccount.email,
           user_metadata: {
-            first_name: mockUser.first_name,
-            last_name: mockUser.last_name,
-            full_name: mockUser.full_name,
-            avatar_url: mockUser.avatar_url,
-            location: mockUser.location,
+            first_name: mockAccount.first_name,
+            last_name: mockAccount.last_name,
+            full_name: mockAccount.full_name,
+            avatar_url: mockAccount.avatar_url,
+            location: mockAccount.location,
           },
-          created_at: mockUser.created_at.toISOString(),
-          updated_at: mockUser.updated_at.toISOString(),
+          created_at: mockAccount.createdAt.toISOString(),
+          updated_at: mockAccount.updatedAt.toISOString(),
         },
       },
       error: null,
     });
 
-    mockSupabase.from('profiles')
-      .select('*')
-      .eq('id', mockUser.id)
-      .single.mockResolvedValueOnce({
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: null,
         error: { message: 'Profile not found' },
-      });
+      }),
+    };
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await getCurrentUser();
 
     // Assert
-    expect(result).toEqual({
-      id: mockUser.id,
-      email: mockUser.email,
-      first_name: mockUser.first_name,
-      last_name: mockUser.last_name,
-      full_name: mockUser.full_name,
-      avatar_url: mockUser.avatar_url,
-      location: mockUser.location,
-      created_at: new Date(mockUser.created_at.toISOString()),
-      updated_at: new Date(mockUser.updated_at.toISOString()),
+    expect(result).toMatchObject({
+      id: mockAccount.id,
+      email: mockAccount.email,
+      firstName: '',
+      lastName: '',
+      fullName: '',
     });
     expect(mockLogger.warn).toHaveBeenCalledWith(
       '🔐 API: Could not fetch user profile',

@@ -1,6 +1,6 @@
 import { logger } from '@belongnetwork/core';
 import { supabase } from '@belongnetwork/core';
-import { AuthUser } from '@belongnetwork/types';
+import { Account } from '@belongnetwork/types';
 import { toDomainUser } from '../../transformers/userTransformer';
 
 /**
@@ -10,7 +10,7 @@ import { toDomainUser } from '../../transformers/userTransformer';
  * @returns A promise that resolves to the authenticated user
  * @throws {Error} If sign in fails or no user data is returned
  */
-export async function signIn(email: string, password: string): Promise<AuthUser> {
+export async function signIn(email: string, password: string): Promise<Account> {
   logger.debug('🔐 API: Signing in user', { email });
 
   try {
@@ -39,19 +39,19 @@ export async function signIn(email: string, password: string): Promise<AuthUser>
       logger.warn('🔐 API: Could not fetch user profile', { profileError });
     }
 
-    let authUser: AuthUser;
+    let account: Account;
 
     if (profile) {
       // Transform the profile using the pure transformer function
       const domainUser = toDomainUser(profile);
-      authUser = {
+      account = {
         ...domainUser,
         email: data.user.email!,
         location: profile.user_metadata?.location,
       };
     } else {
       // Fallback if no profile exists - ensure email is included
-      authUser = {
+      account = {
         id: data.user.id,
         email: data.user.email!,
         first_name: data.user.user_metadata?.first_name || '',
@@ -64,8 +64,8 @@ export async function signIn(email: string, password: string): Promise<AuthUser>
       };
     }
 
-    logger.info('🔐 API: Successfully signed in', { userId: authUser.id });
-    return authUser;
+    logger.info('🔐 API: Successfully signed in', { userId: account.id });
+    return account;
   } catch (error) {
     logger.error('🔐 API: Error signing in', { error });
     throw error;

@@ -1,6 +1,6 @@
 import { logger } from '@belongnetwork/core';
 import { supabase } from '@belongnetwork/core';
-import { AuthUser } from '@belongnetwork/types';
+import { Account } from '@belongnetwork/types';
 
 /**
  * Signs up a new user with the provided email, password, and optional metadata
@@ -14,7 +14,7 @@ export async function signUp(
   email: string,
   password: string,
   metadata?: { firstName?: string; lastName?: string }
-): Promise<AuthUser> {
+): Promise<Account> {
   logger.debug('🔐 API: Signing up user', { email });
 
   try {
@@ -39,7 +39,7 @@ export async function signUp(
       throw new Error('No user data returned from sign up');
     }
 
-    const authUser: AuthUser = {
+    const account: Account = {
       id: data.user.id,
       email: data.user.email!,
       first_name: data.user.user_metadata?.first_name || '',
@@ -51,8 +51,8 @@ export async function signUp(
       updated_at: new Date(data.user.updated_at!),
     };
 
-    logger.info('🔐 API: Successfully signed up', { userId: authUser.id });
-    return authUser;
+    logger.info('🔐 API: Successfully signed up', { userId: account.id });
+    return account;
   } catch (error) {
     logger.error('🔐 API: Error signing up', { error });
     throw error;

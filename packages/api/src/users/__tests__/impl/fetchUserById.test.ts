@@ -68,10 +68,10 @@ describe('fetchUser', () => {
     });
   });
 
-  it('should throw an error when user is not found', async () => {
+  it('should return null when user is not found', async () => {
     // Arrange
     const userId = faker.string.uuid();
-    const notFoundError = { message: 'Not found' };
+    const notFoundError = { code: 'PGRST116', message: 'Not found' };
 
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
@@ -84,8 +84,11 @@ describe('fetchUser', () => {
 
     vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
-    // Act & Assert
-    await expect(fetchUserById(userId)).rejects.toThrow('User not found');
+    // Act
+    const result = await fetchUserById(userId);
+
+    // Assert
+    expect(result).toBeNull();
   });
 
   it('should throw an error when fetching fails', async () => {

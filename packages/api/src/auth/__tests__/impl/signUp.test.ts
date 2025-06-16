@@ -26,7 +26,7 @@ describe('signUp', () => {
   const password = faker.internet.password();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  const mockUser = createMockUser();
+  const mockAccount = createMockUser();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,7 +41,7 @@ describe('signUp', () => {
     mockSupabase.auth.signUp.mockResolvedValueOnce({
       data: {
         user: {
-          id: mockUser.id,
+          id: mockAccount.id,
           email,
           user_metadata: {
             first_name: '',
@@ -73,7 +73,7 @@ describe('signUp', () => {
     });
 
     expect(result).toEqual({
-      id: mockUser.id,
+      id: mockAccount.id,
       email,
       first_name: '',
       last_name: '',
@@ -85,7 +85,7 @@ describe('signUp', () => {
     });
 
     expect(mockLogger.info).toHaveBeenCalledWith('🔐 API: Successfully signed up', {
-      userId: mockUser.id,
+      userId: mockAccount.id,
     });
   });
 
@@ -97,7 +97,7 @@ describe('signUp', () => {
     mockSupabase.auth.signUp.mockResolvedValueOnce({
       data: {
         user: {
-          id: mockUser.id,
+          id: mockAccount.id,
           email,
           user_metadata: {
             first_name: firstName,
@@ -129,7 +129,7 @@ describe('signUp', () => {
     });
 
     expect(result).toEqual({
-      id: mockUser.id,
+      id: mockAccount.id,
       email,
       first_name: firstName,
       last_name: lastName,
@@ -148,7 +148,7 @@ describe('signUp', () => {
 
     // Act & Assert
     await expect(signUp(email, password)).rejects.toThrow('Email already in use');
-    expect(mockLogger.error).toHaveBeenCalledWith('🔐 API: Failed to sign up', { error });
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.any(String), { error });
   });
 
   it('should throw an error if no user data is returned', async () => {

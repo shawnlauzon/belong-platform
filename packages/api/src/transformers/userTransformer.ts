@@ -22,13 +22,13 @@ export function toDomainUser(dbUser: UserRow): User {
 
   return {
     ...rest,
-    first_name: (metadata?.first_name as string) || '',
-    last_name: metadata?.last_name as string | undefined,
+    firstName: (metadata?.first_name as string) || '',
+    lastName: metadata?.last_name as string | undefined,
     email,
-    full_name: metadata?.full_name as string | undefined,
-    avatar_url: metadata?.avatar_url as string | undefined,
-    created_at: new Date(rest.created_at),
-    updated_at: new Date(rest.updated_at),
+    fullName: metadata?.full_name as string | undefined,
+    avatarUrl: metadata?.avatar_url as string | undefined,
+    createdAt: new Date(rest.created_at),
+    updatedAt: new Date(rest.updated_at),
   };
 }
 
@@ -36,17 +36,17 @@ export function toDomainUser(dbUser: UserRow): User {
  * Transform a domain user object to a database user record
  */
 export function toDbUser(user: Partial<User>): Partial<UserRow> {
-  const { first_name, last_name, full_name, avatar_url, ...rest } = user;
+  const { firstName, lastName, fullName, avatarUrl, ...rest } = user;
   return {
     ...rest,
     user_metadata: {
-      first_name,
-      last_name,
-      full_name,
-      avatar_url,
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      avatar_url: avatarUrl,
     },
-    created_at: user.created_at?.toISOString(),
-    updated_at: user.updated_at?.toISOString(),
+    created_at: user.createdAt?.toISOString(),
+    updated_at: user.updatedAt?.toISOString(),
   };
 }
 

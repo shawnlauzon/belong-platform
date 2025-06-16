@@ -3,7 +3,7 @@ import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type {
   User,
-  UpdateUserData,
+  UserData,
   UserFilter,
   PaginatedResponse,
 } from '@belongnetwork/types';
@@ -103,7 +103,7 @@ export async function fetchUsers(
   }
 }
 
-export async function updateUser(data: UpdateUserData): Promise<User> {
+export async function updateUser(data: Partial<UserData>): Promise<User> {
   logger.debug('👤 API: Updating profile');
 
   try {
@@ -116,11 +116,11 @@ export async function updateUser(data: UpdateUserData): Promise<User> {
 
     const updateData = {
       user_metadata: {
-        first_name: data.first_name,
-        last_name: data.last_name,
+        first_name: data.firstName,
+        last_name: data.lastName,
         email: data.email,
-        full_name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
-        avatar_url: data.avatar_url,
+        full_name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+        avatar_url: data.avatarUrl,
         location: data.location,
       },
       updated_at: new Date().toISOString(),

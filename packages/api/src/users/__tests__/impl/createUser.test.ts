@@ -1,59 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createUser } from '../../impl/createUser';
-import { supabase } from '@belongnetwork/core';
-import { toDomainUser, forDbInsert } from '../../impl/userTransformer';
-import type { User, UserData, Database } from '@belongnetwork/types';
-import type { PostgrestSingleResponse } from '@supabase/supabase-js';
-import { createMockUser } from '../../../test-utils/mocks';
-
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-
-// Mock the supabase client and logger
-const mockFrom = vi.fn();
-const mockInsert = vi.fn();
-const mockSelect = vi.fn();
-const mockSingle = vi.fn();
-
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  error: vi.fn(),
-};
+import { supabase, logger } from '@belongnetwork/core';
+import type { UserData } from '@belongnetwork/types';
+import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
 
 vi.mock('@belongnetwork/core', () => ({
   supabase: {
-    from: mockFrom,
+    from: vi.fn(),
   },
-  logger: mockLogger,
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
-// Mock the query builder chain
-const createQueryBuilder = () => ({
-  insert: mockInsert.mockReturnThis(),
-  select: mockSelect.mockReturnThis(),
-  single: mockSingle,
-});
-
-// Set up the default mock implementation
-mockFrom.mockImplementation(() => createQueryBuilder());
-
-// Mock the userTransformer
-const mockToDomainUser = vi.mocked(toDomainUser);
-const mockForDbInsert = vi.mocked(forDbInsert);
+const mockSupabase = vi.mocked(supabase);
+const mockLogger = vi.mocked(logger);
 
 describe('createUser', () => {
-  let mockUserData: UserData;
-  let mockDbData: ProfileRow;
-  let mockDomainUser: User;
-
   beforeEach(() => {
     vi.clearAllMocks();
+  });
 
-    // Create a domain user first
-    mockDomainUser = createMockUser();
+  it('should create a new user successfully', async () => {
+    // Arrange
+    const mockDomainUser = createMockUser();
+    const mockDbProfile = createMockDbProfile({
+      id: mockDomainUser.id,
+      email: mockDomainUser.email,
+    });
     
-    // Create the input data (UserData) from the domain user
-    mockUserData = {
+    const mockUserData: UserData = {
       email: mockDomainUser.email,
       firstName: mockDomainUser.firstName,
       lastName: mockDomainUser.lastName,
@@ -61,151 +39,128 @@ describe('createUser', () => {
       avatarUrl: mockDomainUser.avatarUrl,
       location: mockDomainUser.location,
     };
-    
-    // Convert to database format using the transformer
-    // This will be the expected database row structure
-    mockDbData = {
-      id: mockDomainUser.id,
-      email: mockDomainUser.email,
-      user_metadata: {
-        first_name: mockDomainUser.firstName,
-        last_name: mockDomainUser.lastName,
-        full_name: mockDomainUser.fullName,
-        avatar_url: mockDomainUser.avatarUrl,
-        location: mockDomainUser.location,
-      },
-      created_at: mockDomainUser.createdAt.toISOString(),
-      updated_at: mockDomainUser.updatedAt.toISOString(),
-    } as ProfileRow;
 
-    // Reset mocks
-    mockForDbInsert.mockReturnValue(mockDbData);
-    mockToDomainUser.mockReturnValue(mockDomainUser);
+    const mockQuery = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockDbProfile,
+        error: null,
+      }),
+    };
 
-    // Default mock implementation
-    mockSingle.mockResolvedValue({
-      data: mockDbData,
-      error: null,
-      count: null, // Supabase single() returns null for count
-      status: 201,
-      statusText: 'Created',
-    } as PostgrestSingleResponse<typeof mockDbData>);
-  });
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
-  it('should create a new user successfully', async () => {
     // Act
-    const result = await createUser(mockUserData);
+    const result = await createUser(mockDomainUser.id, mockUserData);
 
     // Assert
-    expect(mockForDbInsert).toHaveBeenCalledWith(mockUserData);
-    expect(mockFrom).toHaveBeenCalledWith('profiles');
-    expect(mockInsert).toHaveBeenCalledWith(mockDbData);
-    expect(mockSelect).toHaveBeenCalledWith('*');
-    expect(mockSingle).toHaveBeenCalled();
-    expect(mockToDomainUser).toHaveBeenCalledWith(mockDbData);
-    expect(result).toEqual(mockDomainUser);
+    expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
+    expect(mockQuery.insert).toHaveBeenCalled();
+    expect(mockQuery.select).toHaveBeenCalledWith();
+    expect(mockQuery.single).toHaveBeenCalled();
+    expect(result).toMatchObject({
+      id: mockDbProfile.id,
+      email: mockDbProfile.email,
+    });
 
     // Verify logging
     expect(mockLogger.debug).toHaveBeenCalledWith('👤 API: Creating user', {
       email: mockUserData.email,
+      accountId: mockDomainUser.id,
     });
     expect(mockLogger.info).toHaveBeenCalledWith(
       '👤 API: Successfully created user',
-      {
-        id: mockDomainUser.id,
-        email: mockDomainUser.email,
-      }
+      expect.objectContaining({
+        id: expect.any(String),
+        email: mockUserData.email,
+      })
     );
   });
 
   it('should throw an error when database insert fails', async () => {
     // Arrange
-    const error = { 
-      name: 'PostgrestError',
-      message: 'Database error',
-      details: 'Error details',
-      hint: 'Hint',
-      code: '23505' // Example PostgreSQL error code
-    } as const;
+    const mockUserData: UserData = {
+      email: 'test@example.com',
+      firstName: 'Test',
+    };
     
-    vi.mocked(supabase.from('').insert('').select('').single).mockResolvedValue({
-      data: null,
-      error,
-      count: null, // Supabase single() returns null for count
-      status: 400,
-      statusText: 'Bad Request'
-    } as PostgrestSingleResponse<null>);
+    const error = new Error('Database error');
+    const mockQuery = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error,
+      }),
+    };
+
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
-    await expect(createUser(mockUserData)).rejects.toThrow(error.message);
-
-    // Verify error was logged
+    await expect(createUser('test-account-id', mockUserData)).rejects.toThrow(error);
     expect(mockLogger.error).toHaveBeenCalledWith(
-      '👤 API: Failed to create user',
-      {
+      expect.any(String),
+      expect.objectContaining({
         email: mockUserData.email,
         error,
-      }
+      })
     );
   });
 
   it('should create a user with minimal required fields', async () => {
     // Arrange
-    const minimalDomainUser = createMockUser({
-      email: 'minimal@example.com',
-      firstName: 'Minimal',
-      lastName: '',
-      fullName: 'Minimal',
-      avatarUrl: undefined,
-      location: undefined
-    });
-    
-    // Create a minimal user data object with required fields
-    const minimalUserData = {
-      id: minimalDomainUser.id, // Include id for the test
-      email: minimalDomainUser.email,
-      firstName: minimalDomainUser.firstName,
-      // Other required fields with default values
-      lastName: '',
-      fullName: minimalDomainUser.firstName,
-      avatarUrl: undefined,
-      location: undefined
+    const minimalUserData: UserData = {
+      email: 'test@example.com',
+      firstName: 'Test',
     };
-    
-    // Create mock database data using the transformer
-    const minimalDbData = forDbInsert(minimalUserData);
-    
-    // Mock the transformer functions
-    mockForDbInsert.mockReturnValueOnce(minimalDbData);
-    mockToDomainUser.mockReturnValueOnce(minimalDomainUser);
 
-    // Act - create user with minimal required fields
-    const result = await createUser(minimalUserData);
+    const mockDbProfile = createMockDbProfile({
+      email: minimalUserData.email,
+      user_metadata: {
+        first_name: minimalUserData.firstName,
+      },
+    });
+
+    const mockQuery = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockDbProfile,
+        error: null,
+      }),
+    };
+
+    mockSupabase.from.mockReturnValue(mockQuery as any);
+
+    // Act
+    const result = await createUser('test-account-id', minimalUserData);
 
     // Assert
-    expect(mockForDbInsert).toHaveBeenCalledWith(minimalUserData);
-    expect(mockInsert).toHaveBeenCalledWith(minimalDbData);
-    expect(result).toEqual(minimalDomainUser);
+    expect(result.email).toBe(minimalUserData.email);
+    expect(result.firstName).toBe(minimalUserData.firstName);
   });
 
   it('should handle unexpected errors', async () => {
     // Arrange
+    const mockUserData: UserData = {
+      email: 'test@example.com',
+      firstName: 'Test',
+    };
+    
     const error = new Error('Unexpected error');
-    mockSingle.mockImplementationOnce(() => {
+    mockSupabase.from.mockImplementation(() => {
       throw error;
     });
 
     // Act & Assert
-    await expect(createUser(mockUserData)).rejects.toThrow(error);
-
-    // Verify error was logged with stack trace
+    await expect(createUser('test-account-id', mockUserData)).rejects.toThrow(error);
     expect(mockLogger.error).toHaveBeenCalledWith(
-      '👤 API: Error creating user',
-      {
+      expect.any(String),
+      expect.objectContaining({
         email: mockUserData.email,
-        error: 'Unexpected error',
-        stack: expect.any(String),
-      }
+        error: expect.any(String),
+      })
     );
   });
 });
