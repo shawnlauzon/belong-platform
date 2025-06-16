@@ -13,6 +13,11 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @belongnetwork/app dev",
+    "dev:port": "pnpm --filter @belongnetwork/app dev -- --port",
+    "dev:3000": "PORT=3000 pnpm --filter @belongnetwork/app dev",
+    "dev:4000": "PORT=4000 pnpm --filter @belongnetwork/app dev",
+    "dev:8080": "PORT=8080 pnpm --filter @belongnetwork/app dev",
+    "dev:dashboard": "pnpm --filter @belongnetwork/dashboard dev",
     "build": "pnpm -r build",
     "test": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test",
     "test:coverage": "pnpm -r --filter=@belongnetwork/api --parallel --no-bail test:coverage",

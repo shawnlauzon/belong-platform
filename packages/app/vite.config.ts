@@ -11,64 +11,71 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  root: __dirname,
-  base: '/',
-  publicDir: 'public',
-  envDir: resolve(__dirname, '../../'),
-  plugins: [
-    tailwindcss(),
-    tsconfigPaths({
-      projects: [
-        resolve(__dirname, '../../tsconfig.json'),
-        resolve(__dirname, '../../tsconfig.app.json'),
-        resolve(__dirname, '../../tsconfig.node.json'),
-        resolve(__dirname, '../../tsconfig.base.json'),
-      ],
-    }),
-    react(),
-    TanStackRouterVite(),
-  ],
-  server: {
-    port: 5173,
-    open: true,
-    strictPort: true,
-    fs: {
-      // Allow serving files from the project root
-      allow: ['..'],
-    },
-  },
-  resolve: {
-    alias: [
-      {
-        find: '~',
-        replacement: resolve(__dirname, '../core/src'),
-      },
-      {
-        find: '@',
-        replacement: resolve(__dirname, 'src'),
-      },
-      {
-        find: '@belongnetwork/core',
-        replacement: resolve(__dirname, '../core/src'),
-      },
-      // Add an alias for the root src directory
-      {
-        find: 'src',
-        replacement: resolve(__dirname, 'src/$1'),
-      },
+export default defineConfig(({ command, mode }) => {
+  // Get port from environment variable or default to 5173
+  // Vite automatically handles --port CLI argument, so we just need to handle env var
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5173;
+
+  return {
+    root: __dirname,
+    base: '/',
+    publicDir: 'public',
+    envDir: resolve(__dirname, '../../'),
+    plugins: [
+      tailwindcss(),
+      tsconfigPaths({
+        projects: [
+          resolve(__dirname, '../../tsconfig.json'),
+          resolve(__dirname, '../../tsconfig.app.json'),
+          resolve(__dirname, '../../tsconfig.node.json'),
+          resolve(__dirname, '../../tsconfig.base.json'),
+        ],
+      }),
+      react(),
+      TanStackRouterVite(),
     ],
-  },
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
-  build: {
-    outDir: resolve(__dirname, 'dist'),
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
+    server: {
+      port: port,
+      host: true, // Listen on all addresses
+      open: true,
+      strictPort: false, // Allow fallback to next available port
+      fs: {
+        // Allow serving files from the project root
+        allow: ['..'],
       },
     },
-  },
+    resolve: {
+      alias: [
+        {
+          find: '~',
+          replacement: resolve(__dirname, '../core/src'),
+        },
+        {
+          find: '@',
+          replacement: resolve(__dirname, 'src'),
+        },
+        {
+          find: '@belongnetwork/core',
+          replacement: resolve(__dirname, '../core/src'),
+        },
+        // Add an alias for the root src directory
+        {
+          find: 'src',
+          replacement: resolve(__dirname, 'src/$1'),
+        },
+      ],
+    },
+    optimizeDeps: {
+      exclude: ['lucide-react'],
+    },
+    build: {
+      outDir: resolve(__dirname, 'dist'),
+      emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+        },
+      },
+    },
+  };
 });
