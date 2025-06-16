@@ -16,7 +16,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
     if (error) {
       logger.error('🔐 API: Failed to get current user', { error });
-      throw error;
+      return null;
     }
 
     if (!user) {

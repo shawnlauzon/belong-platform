@@ -2,7 +2,9 @@ import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type { ResourceData, Resource } from '@belongnetwork/types';
 import { toDomainResource, forDbInsert } from './resourceTransformer';
-import { MESSAGE_AUTHENTICATION_REQUIRED } from 'src/constants';
+import { fetchUserById } from '../../users/impl/fetchUserById';
+import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
+import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function createResource(data: ResourceData): Promise<Resource> {
   logger.debug('📚 API: Creating resource', {
@@ -29,7 +31,7 @@ export async function createResource(data: ResourceData): Promise<Resource> {
     const { data: createdResource, error } = await supabase
       .from('resources')
       .insert([dbResource])
-      .select('*, owner:profiles(*), community:communities(*)')
+      .select('*')
       .single();
 
     if (error) {
@@ -37,8 +39,21 @@ export async function createResource(data: ResourceData): Promise<Resource> {
       throw error;
     }
 
+    // Fetch owner and community from cache
+    const [owner, community] = await Promise.all([
+      fetchUserById(createdResource.owner_id),
+      fetchCommunityById(createdResource.community_id),
+    ]);
+
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+    if (!community) {
+      throw new Error('Community not found');
+    }
+
     // Transform to domain model
-    const resource = toDomainResource(createdResource);
+    const resource = toDomainResource(createdResource, { owner, community });
 
     logger.info('📚 API: Successfully created resource', {
       id: resource.id,

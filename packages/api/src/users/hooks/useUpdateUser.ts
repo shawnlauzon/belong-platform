@@ -2,17 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateUser } from '../impl/updateUser';
 import type { User } from '@belongnetwork/types';
 
-type UpdateUserInput = {
-  id: string;
-  updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>;
-};
+type UpdateUserInput = Partial<User> & { id: string };
 
 export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, updates }: UpdateUserInput) => 
-      updateUser({ id, ...updates }),
+    mutationFn: (userData: UpdateUserInput) => 
+      updateUser(userData),
     onSuccess: (updatedUser) => {
       // Update the individual user cache
       queryClient.setQueryData(['user', updatedUser.id], updatedUser);

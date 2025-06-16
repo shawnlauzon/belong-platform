@@ -25,7 +25,7 @@ export function ResourceList({
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const handleFilterChange = (key: keyof ResourceFilter, value: any) => {
+  const handleFilterChange = (key: keyof ResourceFilter, value: string | number) => {
     setFilter((prev) => ({ ...prev, [key]: value }));
   };
 

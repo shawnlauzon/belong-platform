@@ -1,52 +1,57 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
-import { eventBus, useBelongStore } from '@belongnetwork/core';
-import { Community } from '@belongnetwork/core';
 import { Button } from '../ui/button';
 import { CreateCommunityDialog } from './CreateCommunityDialog';
-import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
+
+// Temporary type until API package is properly configured
+interface TempCommunity {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string | null;
+  memberCount?: number;
+}
+
+// Temporary hook until API package is properly configured
+function useCommunities() {
+  return {
+    data: [] as TempCommunity[],
+    isLoading: false,
+  };
+}
 
 export function CommunitySelector() {
-  logComponentRender('CommunitySelector');
-
-  const { list: communities = [], isLoading } = useBelongStore(
-    (state) => state.communities
-  );
-
-  const { activeCommunityId } = useBelongStore((state) => state.app);
-
+  const { data: communities = [], isLoading } = useCommunities();
+  
   const [isOpen, setIsOpen] = useState(false);
-  const [browseCommunityId, setBrowseCommunityId] = useState(
-    activeCommunityId ?? 'worldwide'
-  );
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>('worldwide');
+  const [browseCommunityId, setBrowseCommunityId] = useState('worldwide');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const activeCommunity = communities.find((c) => c.id === activeCommunityId);
+  const selectedCommunity = communities.find((c: TempCommunity) => c.id === selectedCommunityId);
 
-  // Set default active community when communities load
+  // Set default selected community when communities load
   useEffect(() => {
-    if (communities.length > 0 && !activeCommunityId) {
+    if (communities.length > 0 && selectedCommunityId === 'worldwide') {
       const defaultCommunity =
-        communities.find((c) => c.id === 'south-austin') || communities[0];
-      // setActiveCommunity(defaultCommunity);
-      logger.debug('🏘️ CommunitySelector: Set default active community:', {
-        communityId: defaultCommunity.id,
-        communityName: defaultCommunity.name,
-      });
+        communities.find((c: TempCommunity) => c.id === 'south-austin') || communities[0];
+      if (defaultCommunity) {
+        setSelectedCommunityId(defaultCommunity.id);
+      }
     }
-  }, [communities, activeCommunityId]);
+  }, [communities, selectedCommunityId]);
 
   // Get the breadcrumb chain from worldwide down to the browse community
   const getBreadcrumbChain = () => {
-    const chain: Community[] = [];
+    const chain: TempCommunity[] = [];
     let currentId: string | null = browseCommunityId;
 
     while (currentId) {
-      const community = communities.find((c) => c.id === currentId);
+      const community = communities.find((c: TempCommunity) => c.id === currentId);
       if (community) {
         chain.unshift(community);
-        currentId = community.parent_id;
+        currentId = community.parentId || null;
       } else {
         break;
       }
@@ -55,18 +60,18 @@ export function CommunitySelector() {
     return chain;
   };
 
-  // Get the active community's full chain for display
-  const getActiveCommunityChain = () => {
-    if (!activeCommunityId) return [];
+  // Get the selected community's full chain for display
+  const getSelectedCommunityChain = () => {
+    if (!selectedCommunityId) return [];
 
-    const chain: Community[] = [];
-    let currentId: string | null = activeCommunityId;
+    const chain: TempCommunity[] = [];
+    let currentId: string | null = selectedCommunityId;
 
     while (currentId) {
-      const community = communities.find((c) => c.id === currentId);
+      const community = communities.find((c: TempCommunity) => c.id === currentId);
       if (community) {
         chain.unshift(community);
-        currentId = community.parent_id;
+        currentId = community.parentId || null;
       } else {
         break;
       }
@@ -77,64 +82,30 @@ export function CommunitySelector() {
 
   // Get children of the current browse community
   const getChildCommunities = () => {
-    return communities.filter((c) => c.parent_id === browseCommunityId);
+    return communities.filter((c: TempCommunity) => c.parentId === browseCommunityId);
   };
 
   const breadcrumbChain = getBreadcrumbChain();
-  const activeCommunityChain = getActiveCommunityChain();
+  const selectedCommunityChain = getSelectedCommunityChain();
   const childCommunities = getChildCommunities();
 
-  const handleCommunitySelect = (community: Community) => {
-    logger.debug('🏘️ CommunitySelector: Community selected:', {
-      communityId: community.id,
-      communityName: community.name,
-    });
-
+  const handleCommunitySelect = (community: TempCommunity) => {
+    setSelectedCommunityId(community.id);
     setIsOpen(false);
-    eventBus.emit('community.active.change.requested', {
-      communityId: community.id,
-    });
-
-    logUserAction('community_selected', {
-      communityId: community.id,
-      communityName: community.name,
-      level: community.level,
-    });
   };
 
   const handleBreadcrumbClick = (communityId: string) => {
-    logger.debug('🏘️ CommunitySelector: Breadcrumb clicked:', { communityId });
     setBrowseCommunityId(communityId);
-
-    logUserAction('community_breadcrumb_clicked', { communityId });
   };
 
   const handleCreateNew = () => {
-    logger.debug('🏘️ CommunitySelector: Create new community clicked:', {
-      parentCommunityId: browseCommunityId,
-    });
-
     setIsOpen(false);
     setShowCreateDialog(true);
-
-    logUserAction('community_create_dialog_opened', {
-      parentCommunityId: browseCommunityId,
-    });
   };
 
-  const handleCommunityCreated = (newCommunity: Community) => {
-    logger.info('🏘️ CommunitySelector: New community created:', newCommunity);
-
+  const handleCommunityCreated = (community: { id: string }) => {
     // Select the newly created community
-    eventBus.emit('community.active.change.requested', {
-      communityId: newCommunity.id,
-    });
-
-    logUserAction('community_created_and_selected', {
-      communityId: newCommunity.id,
-      communityName: newCommunity.name,
-      level: newCommunity.level,
-    });
+    setSelectedCommunityId(community.id);
   };
 
   // Close dropdown when clicking outside
@@ -165,7 +136,7 @@ export function CommunitySelector() {
     );
   }
 
-  if (!activeCommunityId) {
+  if (!selectedCommunityId) {
     return (
       <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 shadow-sm">
         <span>No community selected</span>
@@ -177,9 +148,9 @@ export function CommunitySelector() {
     <>
       <div className="relative" ref={dropdownRef}>
         <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-warmgray-800 hover:bg-gray-50 shadow-sm">
-          {/* Display active community chain - each part separately clickable */}
+          {/* Display selected community chain - each part separately clickable */}
           <div className="hidden sm:flex items-center gap-1">
-            {activeCommunityChain.map((community, i) => (
+            {selectedCommunityChain.map((community, i) => (
               <React.Fragment key={community.id}>
                 {i > 0 && <span className="text-warmgray-400 mx-1">›</span>}
                 <button
@@ -188,7 +159,7 @@ export function CommunitySelector() {
                     setIsOpen(true);
                   }}
                   className={`hover:text-primary-600 transition-colors ${
-                    i === activeCommunityChain.length - 1
+                    i === selectedCommunityChain.length - 1
                       ? 'font-medium text-warmgray-800'
                       : 'text-warmgray-500 hover:text-warmgray-700'
                   }`}
@@ -204,7 +175,7 @@ export function CommunitySelector() {
             onClick={() => setIsOpen(!isOpen)}
             className="sm:hidden font-medium"
           >
-            {activeCommunity?.name}
+            {selectedCommunity?.name}
           </button>
 
           {/* Dropdown arrow */}
@@ -241,7 +212,7 @@ export function CommunitySelector() {
 
             <div className="py-2 max-h-64 overflow-y-auto">
               {/* Child communities */}
-              {childCommunities.map((community) => (
+              {childCommunities.map((community: TempCommunity) => (
                 <div key={community.id} className="flex items-center">
                   <button
                     className="flex-1 px-4 py-2 text-left hover:bg-gray-50 flex justify-between items-center"
@@ -254,7 +225,7 @@ export function CommunitySelector() {
                       </p>
                     </div>
                     <div className="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                      {community.member_count} members
+                      {community.memberCount} members
                     </div>
                   </button>
                 </div>
@@ -288,7 +259,7 @@ export function CommunitySelector() {
       <CreateCommunityDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        parentCommunityId={browseCommunityId}
+        parentCommunity={communities.find((c: TempCommunity) => c.id === browseCommunityId) || undefined}
         onCommunityCreated={handleCommunityCreated}
       />
     </>

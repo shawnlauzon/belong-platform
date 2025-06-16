@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signUp } from '../impl/signUp';
 import { AuthUser } from '@belongnetwork/types';
+import { logger } from '@belongnetwork/core';
 
 type SignUpData = {
   email: string;
@@ -16,15 +17,17 @@ type SignUpData = {
 export function useSignUp() {
   const queryClient = useQueryClient();
 
-  return useMutation<AuthUser, Error, SignUpData>(
-    async ({ email, password, firstName, lastName }) => {
+  return useMutation<AuthUser, Error, SignUpData>({
+    mutationFn: async ({ email, password, firstName, lastName }) => {
       return signUp(email, password, { firstName, lastName });
     },
-    {
-      onSuccess: (data) => {
-        // Invalidate any queries that depend on the current user
-        queryClient.setQueryData(['currentUser'], data);
-      },
-    }
-  );
+    onSuccess: (data) => {
+      // Invalidate any queries that depend on the current user
+      queryClient.setQueryData(['currentUser'], data);
+      logger.info('🔐 API: User signed up successfully', { userId: data.id });
+    },
+    onError: (error) => {
+      logger.error('🔐 API: Failed to sign up', { error });
+    },
+  });
 }

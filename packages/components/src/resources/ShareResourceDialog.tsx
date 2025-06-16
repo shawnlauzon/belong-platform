@@ -12,9 +12,7 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Resource } from '../../types/resources';
-import { useBelongStore } from '../../stores/useBelongStore';
-import { eventBus } from '../../lib/eventBus';
+import { useCurrentUser, useCreateResource } from '@belongnetwork/api';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -51,21 +49,9 @@ export function ShareResourceDialog({
     },
   });
   const [images, setImages] = useState<string[]>([]);
-  const userLocation = useBelongStore((state: { auth: { user?: { location?: any } } }) => state.auth.user?.location);
-  const { user } = useBelongStore((state: { auth: { user: any } }) => ({
-    user: state.auth.user,
-  }));
+  const { data: user } = useCurrentUser();
+  const createResource = useCreateResource();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-
-  React.useEffect(() => {
-    const unsubscribe = eventBus.on('resource.created', () => {
-      reset();
-      setImages([]);
-      onOpenChange(false);
-    });
-
-    return unsubscribe;
-  }, [reset, onOpenChange]);
 
   const onSubmit = async (data: ResourceFormData) => {
     if (!user) {
@@ -73,17 +59,22 @@ export function ShareResourceDialog({
       return;
     }
 
-    const sharedResource: Resource = {
-      ...data,
-      id: '',
-      owner_id: user.id,
-      image_urls: images,
-      location: userLocation ?? undefined,
-      is_active: true,
-      times_helped: 0, // Still need this as it's required by the type
-    } as Omit<Resource, 'id' | 'created_at'>;
-
-    eventBus.emit('resource.create.requested', sharedResource);
+    try {
+      await createResource.mutateAsync({
+        ...data,
+        owner_id: user.id,
+        image_urls: images,
+        location: user.location ?? undefined,
+        is_active: true,
+      });
+      
+      // Reset form and close dialog on success
+      reset();
+      setImages([]);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to create resource:', error);
+    }
   };
 
   return (

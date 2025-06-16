@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { TrustBadge } from '../trust';
 import { Button } from '../ui/button';
 import { User } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
@@ -9,16 +8,14 @@ import { MessageCircle, User as UserIcon } from 'lucide-react';
 
 interface MemberCardProps {
   member: User;
-  communityId: string;
   showActions?: boolean;
 }
 
 export function MemberCard({
   member,
-  communityId,
   showActions = true,
 }: MemberCardProps) {
-  const trustScore = member.trust_scores?.[communityId] ?? 0;
+  // Trust scores not implemented yet
 
   return (
     <Card className="overflow-hidden animate-fade-in">
@@ -29,11 +26,11 @@ export function MemberCard({
             to="/profile/$id"
             params={{ id: member.id }}
             className="hover:opacity-80 transition-opacity"
-            title={`View ${member.first_name}'s profile`}
+            title={`View ${member.firstName}'s profile`}
           >
             <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-              <AvatarImage src={member.avatar_url} alt={member.first_name} />
-              <AvatarFallback>{member.first_name[0]}</AvatarFallback>
+              <AvatarImage src={member.avatarUrl} alt={member.firstName} />
+              <AvatarFallback>{member.firstName[0]}</AvatarFallback>
             </Avatar>
           </Link>
           <div>
@@ -42,13 +39,13 @@ export function MemberCard({
                 to="/profile/$id"
                 params={{ id: member.id }}
                 className="hover:text-primary-600 transition-colors"
-                title={`View ${member.first_name}'s profile`}
+                title={`View ${member.firstName}'s profile`}
               >
-                {member.first_name}
+                {member.firstName}
               </Link>
             </div>
             <div className="flex items-center gap-2">
-              <TrustBadge score={trustScore} showLabel />
+              {/* Trust badge removed */}
             </div>
           </div>
         </div>

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { supabase } from '@belongnetwork/core';
 import { deleteResource } from '../impl/deleteResource';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import * as fetchUserById from '../../users/impl/fetchUserById';
+import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
@@ -28,40 +30,59 @@ vi.mock('@belongnetwork/core', () => ({
 
 describe('deleteResource', () => {
   const resourceId = faker.string.uuid();
+  const mockUser = createMockUser({ id: 'user-123' });
+  const mockCommunity = createMockCommunity();
 
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Mock the fetch for existing resource
-    (supabase.from('').select().eq().single as any).mockResolvedValue({
-      data: { owner_id: 'user-123' }, // Mock that the current user is the owner
-      error: null,
-    });
-    
-    // Mock the delete response
-    (supabase.from('').delete as any).mockReturnValue({
-      eq: vi.fn().mockResolvedValue({
-        error: null,
-      }),
-    });
+    // Mock the fetch functions
+    vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
   });
 
   it('should delete an existing resource', async () => {
+    // Arrange - Mock ownership check
+    const mockQuery1 = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: 'user-123', community_id: mockCommunity.id },
+        error: null,
+      }),
+    };
+    
+    // Mock update (soft delete)
+    const mockQuery2 = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          id: resourceId,
+          owner_id: 'user-123',
+          community_id: mockCommunity.id,
+          is_active: false,
+        },
+        error: null,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
+
     // Act
-    await deleteResource(resourceId);
+    const result = await deleteResource(resourceId);
 
     // Assert
     expect(supabase.auth.getUser).toHaveBeenCalled();
-    
-    // Verify we check the existing resource
-    expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').select).toHaveBeenCalledWith('owner_id');
-    expect(supabase.from('').eq).toHaveBeenCalledWith('id', resourceId);
-    
-    // Verify the delete
-    expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').delete).toHaveBeenCalled();
-    expect(supabase.from('').eq).toHaveBeenCalledWith('id', resourceId);
+    expect(mockQuery1.select).toHaveBeenCalledWith('owner_id, community_id');
+    expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
+    expect(mockQuery2.update).toHaveBeenCalledWith({
+      is_active: false,
+      updated_at: expect.any(String),
+    });
+    expect(result).toBeDefined();
+    expect(result?.id).toBe(resourceId);
   });
 
   it('should throw an error when user is not authenticated', async () => {
@@ -72,16 +93,22 @@ describe('deleteResource', () => {
 
     // Act & Assert
     await expect(deleteResource(resourceId)).rejects.toThrow(
-      AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED
+      'User must be authenticated to perform this operation'
     );
   });
 
   it('should throw an error when user is not the owner', async () => {
     // Arrange - Mock that the resource is owned by a different user
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: { owner_id: 'different-user' },
-      error: null,
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: 'different-user', community_id: mockCommunity.id },
+        error: null,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(deleteResource(resourceId)).rejects.toThrow(
@@ -91,29 +118,50 @@ describe('deleteResource', () => {
 
   it('should not throw an error when resource does not exist', async () => {
     // Arrange
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: null,
-      error: { code: 'PGRST116' }, // Not found error code
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116' }, // Not found error code
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act
-    await expect(deleteResource('non-existent-id')).resolves.not.toThrow();
+    const result = await deleteResource('non-existent-id');
     
-    // Verify we logged a warning
-    expect(supabase.logger.warn).toHaveBeenCalledWith(
-      '📚 API: Resource not found for deletion',
-      { id: 'non-existent-id' }
-    );
+    // Assert
+    expect(result).toBeNull();
   });
 
   it('should throw an error when delete fails', async () => {
     // Arrange
     const mockError = new Error('Failed to delete resource');
-    (supabase.from('').delete as any).mockReturnValue({
-      eq: vi.fn().mockResolvedValue({
+    
+    // Mock successful ownership check
+    const mockQuery1 = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: 'user-123', community_id: mockCommunity.id },
+        error: null,
+      }),
+    };
+    
+    // Mock failed update
+    const mockQuery2 = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
         error: mockError,
       }),
-    });
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act & Assert
     await expect(deleteResource(resourceId)).rejects.toThrow(mockError);

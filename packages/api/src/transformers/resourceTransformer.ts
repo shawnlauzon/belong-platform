@@ -121,14 +121,31 @@ export function toDomainResource(
 export function toDbResource(
   resource: Partial<Resource>
 ): Partial<ResourceRow> {
-  const { owner, community, location, ...rest } = resource;
+  const { 
+    owner, 
+    community, 
+    location, 
+    createdAt, 
+    updatedAt, 
+    imageUrls,
+    isActive,
+    meetupFlexibility,
+    parkingInfo,
+    pickupInstructions,
+    ...rest 
+  } = resource;
 
   return {
     ...rest,
     owner_id: owner?.id,
     community_id: community?.id,
     location: location ? toPostGisPoint(location) : null,
-    created_at: resource.created_at?.toISOString(),
-    updated_at: resource.updated_at?.toISOString(),
+    image_urls: imageUrls,
+    is_active: isActive,
+    meetup_flexibility: meetupFlexibility,
+    parking_info: parkingInfo,
+    pickup_instructions: pickupInstructions,
+    created_at: createdAt?.toISOString(),
+    updated_at: updatedAt?.toISOString(),
   };
 }

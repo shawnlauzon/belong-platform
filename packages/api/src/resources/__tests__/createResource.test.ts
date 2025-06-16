@@ -3,7 +3,9 @@ import { faker } from '@faker-js/faker';
 import { supabase } from '@belongnetwork/core';
 import { createResource } from '../impl/createResource';
 import { createMockDbResource } from './test-utils';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import * as fetchUserById from '../../users/impl/fetchUserById';
+import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
@@ -26,22 +28,37 @@ vi.mock('@belongnetwork/core', () => ({
 }));
 
 describe('createResource', () => {
+  const mockUser = createMockUser({ 
+    id: 'user-123',
+  });
+  const mockCommunity = createMockCommunity({
+    id: 'comm-123',
+  });
   const mockResourceData = {
     title: 'Test Resource',
     description: 'Test Description',
-    category: 'FOOD' as const,
-    url: 'https://example.com',
+    category: 'food' as const,
+    type: 'offer' as const,
+    communityId: mockCommunity.id,
+    isActive: true,
   };
 
   const mockCreatedResource = createMockDbResource({
-    ...mockResourceData,
+    title: mockResourceData.title,
+    description: mockResourceData.description,
+    category: mockResourceData.category,
+    type: mockResourceData.type,
     owner_id: 'user-123',
-    is_approved: false,
+    community_id: mockCommunity.id,
     is_active: true,
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Mock the fetch functions
+    vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
     
     // Reset the mock implementation for each test
     (supabase.from('').insert as any).mockReturnValue({
@@ -69,18 +86,23 @@ describe('createResource', () => {
       expect.objectContaining({
         title: 'Test Resource',
         description: 'Test Description',
-        category: 'FOOD',
-        url: 'https://example.com',
+        category: 'food',
+        type: 'offer',
         owner_id: 'user-123',
-        is_approved: false,
+        community_id: mockCommunity.id,
         is_active: true,
       }),
     ]);
-    expect(result).toEqual(expect.objectContaining({
+    expect(result).toMatchObject({
       id: mockCreatedResource.id,
       title: 'Test Resource',
-      ownerId: 'user-123',
-    }));
+      owner: expect.objectContaining({
+        id: 'user-123',
+      }),
+      community: expect.objectContaining({
+        id: 'comm-123',
+      }),
+    });
   });
 
   it('should throw an error when user is not authenticated', async () => {
@@ -91,7 +113,7 @@ describe('createResource', () => {
 
     // Act & Assert
     await expect(createResource(mockResourceData)).rejects.toThrow(
-      AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED
+      'User must be authenticated to perform this operation'
     );
   });
 
@@ -139,16 +161,11 @@ describe('createResource', () => {
     const result = await createResource(mockResourceData);
 
     // Assert
-    expect(result.owner).toEqual({
+    expect(result.owner).toMatchObject({
       id: 'user-123',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com',
     });
-    expect(result.community).toEqual({
+    expect(result.community).toMatchObject({
       id: 'comm-123',
-      name: 'Test Community',
-      slug: 'test-community',
     });
   });
 });

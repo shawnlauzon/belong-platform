@@ -9,7 +9,7 @@ export async function fetchCommunities(): Promise<Community[]> {
   try {
     const { data, error } = await supabase
       .from('communities')
-      .select('*')
+      .select('*, organizer:profiles!inner(*), parent:communities(*, organizer:profiles(*))')
       .order('created_at', { ascending: false });
 
     if (error) {

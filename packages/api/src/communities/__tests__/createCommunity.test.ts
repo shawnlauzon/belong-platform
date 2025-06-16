@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { createCommunity } from '../impl/createCommunity';
-import { createMockDbCommunity } from '../../test-utils/mocks';
+import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
 import { supabase } from '@belongnetwork/core';
 import { CreateCommunityData } from '@belongnetwork/types';
+import { forDbInsert } from '../impl/communityTransformer';
 
 // Mock the supabase client and auth
 vi.mock('@belongnetwork/core', () => ({
@@ -16,6 +17,7 @@ vi.mock('@belongnetwork/core', () => ({
     from: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({
       data: null,
       error: null,
@@ -44,26 +46,44 @@ describe('createCommunity', () => {
 
   it('should create a community successfully', async () => {
     // Arrange
-    const mockCommunity = createMockDbCommunity(communityData);
+    const mockCommunityId = faker.string.uuid();
+    const mockCommunityWithOrganizer = {
+      ...createMockDbCommunity({ ...communityData, id: mockCommunityId }),
+      organizer: createMockDbProfile(),
+    };
 
-    const mockQuery = {
+    // Mock insert query (returns just ID)
+    const mockInsertQuery = {
       insert: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: mockCommunity,
+        data: { id: mockCommunityId },
         error: null,
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    // Mock fetch query (returns community with organizer)
+    const mockFetchQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockCommunityWithOrganizer,
+        error: null,
+      }),
+    };
+
+    // Return different mocks based on call order
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(mockInsertQuery as any)  // First call: insert
+      .mockReturnValueOnce(mockFetchQuery as any);  // Second call: fetch
 
     // Act
     const result = await createCommunity(communityData);
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.insert).toHaveBeenCalledWith(communityData);
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockInsertQuery.insert).toHaveBeenCalledWith(forDbInsert(communityData));
+    expect(mockInsertQuery.select).toHaveBeenCalledWith('id');
     expect(result).toBeDefined();
     expect(result.name).toBe(communityData.name);
   });

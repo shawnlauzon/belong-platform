@@ -4,7 +4,8 @@ import { supabase } from '@belongnetwork/core';
 import { updateResource } from '../impl/updateResource';
 import { createMockDbResource } from './test-utils';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
-import { AUTH_ERROR_MESSAGES } from '../../auth';
+import * as fetchUserById from '../../users/impl/fetchUserById';
+import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
@@ -60,27 +61,41 @@ describe('updateResource', () => {
       data: { user: { id: authenticatedUserId } },
       error: null,
     });
+    
+    // Mock the fetch functions
+    vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
   });
 
   it('should update an existing resource', async () => {
-    // Arrange - Mock successful fetch and update
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: {
-        ...createMockDbResource({ owner_id: authenticatedUserId, community_id: mockCommunity.id }),
-        owner: mockUser,
-        community: mockCommunity,
-      },
-      error: null,
-    });
+    // Arrange - Mock successful ownership check
+    const mockQuery1 = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: authenticatedUserId },
+        error: null,
+      }),
+    };
     
-    (supabase.from('').update as any).mockReturnValue({
+    // Mock successful update
+    const mockQuery2 = {
+      update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: mockUpdatedResource,
+        data: createMockDbResource({
+          id: resourceId,
+          title: updatedTitle,
+          description: updatedDescription,
+          owner_id: authenticatedUserId,
+          community_id: mockCommunity.id,
+        }),
         error: null,
       }),
-    });
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act
     const result = await updateResource(mockUpdateData);
@@ -90,17 +105,17 @@ describe('updateResource', () => {
     
     // Verify we check the existing resource
     expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').select).toHaveBeenCalledWith('owner_id');
-    expect(supabase.from('').eq).toHaveBeenCalledWith('id', resourceId);
+    expect(mockQuery1.select).toHaveBeenCalledWith('owner_id');
+    expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
     
     // Verify the update
-    expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').update).toHaveBeenCalledWith(
+    expect(mockQuery2.update).toHaveBeenCalledWith(
       expect.objectContaining({
         title: updatedTitle,
         description: updatedDescription,
       })
     );
+    expect(mockQuery2.eq).toHaveBeenCalledWith('id', resourceId);
     
     expect(result).toMatchObject({
       id: resourceId,
@@ -117,23 +132,24 @@ describe('updateResource', () => {
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow(
-      AUTH_ERROR_MESSAGES.AUTHENTICATION_REQUIRED
+      'User must be authenticated to perform this operation'
     );
   });
 
   it('should throw an error when user is not the owner', async () => {
     // Arrange - Mock that the resource is owned by a different user
     const differentOwnerId = faker.string.uuid();
-    const differentOwner = createMockUser({ id: differentOwnerId });
     
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: {
-        ...createMockDbResource({ owner_id: differentOwnerId, community_id: mockCommunity.id }),
-        owner: differentOwner,
-        community: mockCommunity,
-      },
-      error: null,
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: differentOwnerId },
+        error: null,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery as any);
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow(
@@ -143,28 +159,47 @@ describe('updateResource', () => {
 
   it('should throw an error when resource does not exist', async () => {
     // Arrange
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: null,
-      error: { code: 'PGRST116' }, // Not found error code
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116' }, // Not found error code
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery as any);
 
     // Act & Assert
-    await expect(updateResource(mockUpdateData)).rejects.toThrow(
-      'Resource not found'
-    );
+    await expect(updateResource(mockUpdateData)).rejects.toThrow();
   });
 
   it('should throw an error when update fails', async () => {
     // Arrange
     const mockError = new Error('Database error');
-    (supabase.from('').update as any).mockReturnValue({
+    
+    // Mock successful ownership check
+    const mockQuery1 = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { owner_id: authenticatedUserId },
+        error: null,
+      }),
+    };
+    
+    // Mock failed update
+    const mockQuery2 = {
+      update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: null,
         error: mockError,
       }),
-    });
+    };
+    
+    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow(mockError);

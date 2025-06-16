@@ -113,6 +113,24 @@ export function createMockDbCommunity(
 }
 
 /**
+ * Creates a mock database Community with organizer attached
+ */
+export function createMockDbCommunityWithOrganizer(
+  overrides: Partial<CommunityRow> = {}
+): CommunityRow & { organizer: UserRow } {
+  const organizer = createMockDbProfile();
+  const community = createMockDbCommunity({
+    organizer_id: organizer.id,
+    ...overrides,
+  });
+  
+  return {
+    ...community,
+    organizer,
+  };
+}
+
+/**
  * Creates a mock hierarchy of communities (country -> state -> city -> neighborhood)
  */
 export function createMockCommunityHierarchy() {

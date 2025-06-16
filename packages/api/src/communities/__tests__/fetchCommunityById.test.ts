@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { fetchCommunityById } from '../impl/fetchCommunityById';
-import { createMockDbCommunity } from '../../test-utils/mocks';
+import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
 import { supabase } from '@belongnetwork/core';
 
 // Mock the supabase client
@@ -30,7 +30,11 @@ describe('fetchCommunityById', () => {
   it('should fetch a community by id successfully', async () => {
     // Arrange
     const communityId = faker.string.uuid();
-    const mockCommunity = createMockDbCommunity({ id: communityId });
+    const mockCommunity = {
+      ...createMockDbCommunity({ id: communityId }),
+      organizer: createMockDbProfile(),
+      parent: null
+    };
 
     // Mock the Supabase response
     const mockQuery = {
@@ -49,7 +53,7 @@ describe('fetchCommunityById', () => {
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!inner(*), parent:communities(*, organizer:profiles(*))');
     expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
     expect(result).toBeDefined();
     expect(result?.id).toBe(communityId);

@@ -1,4 +1,8 @@
-import { Coordinates } from '@belongnetwork/core';
+// Core interfaces
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 // Additional API-specific types
 export interface ApiResponse<T> {

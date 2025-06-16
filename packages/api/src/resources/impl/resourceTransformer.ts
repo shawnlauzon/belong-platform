@@ -20,7 +20,8 @@ export type ResourceUpdateDbData =
  * Transform a database resource record to a domain resource object
  */
 export function toDomainResource(
-  dbResource: ResourceRow & { owner: User; community: Community }
+  dbResource: ResourceRow,
+  refs: { owner: User; community: Community }
 ): Resource {
   if (!dbResource) {
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
@@ -29,11 +30,11 @@ export function toDomainResource(
   const { owner_id, community_id, location, created_at, updated_at, ...rest } =
     dbResource;
 
-  if (owner_id !== dbResource.owner.id) {
+  if (owner_id !== refs.owner.id) {
     throw new Error('Owner ID does not match');
   }
 
-  if (community_id !== dbResource.community.id) {
+  if (community_id !== refs.community.id) {
     throw new Error('Community ID does not match');
   }
 
@@ -52,8 +53,8 @@ export function toDomainResource(
     pickupInstructions: rest.pickup_instructions ?? undefined,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
-    owner: dbResource.owner,
-    community: dbResource.community,
+    owner: refs.owner,
+    community: refs.community,
   };
 }
 
@@ -64,9 +65,25 @@ export function forDbInsert(
   resource: ResourceData,
   ownerId: string
 ): ResourceInsertDbData {
+  const {
+    communityId,
+    imageUrls,
+    pickupInstructions,
+    parkingInfo,
+    meetupFlexibility,
+    isActive,
+    ...rest
+  } = resource;
+
   return {
-    ...resource,
+    ...rest,
     owner_id: ownerId,
+    community_id: communityId,
+    image_urls: imageUrls,
+    pickup_instructions: pickupInstructions,
+    parking_info: parkingInfo,
+    meetup_flexibility: meetupFlexibility,
+    is_active: isActive,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
   };
 }

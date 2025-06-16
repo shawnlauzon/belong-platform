@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  CommunityCreateFailedEvent,
-  eventBus,
-  useBelongStore,
-} from '@belongnetwork/core';
+// TODO: Re-enable when API is ready
+// import { useCreateCommunity } from '@belongnetwork/api';
 import {
   Dialog,
   DialogContent,
@@ -19,15 +16,35 @@ import { AddressAutocomplete } from '../shared/AddressAutocomplete';
 import { LocationPicker } from '../shared/LocationPicker';
 import { CountryAutocomplete } from './CountryAutocomplete';
 import { StateAutocomplete } from './StateAutocomplete';
-import { Community, Coordinates } from '@belongnetwork/core';
-import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
+import { Coordinates } from '@belongnetwork/core';
+
+// TODO: Import from @belongnetwork/core when available
+interface HierarchyLevel {
+  level: string;
+  name: string;
+}
+
+interface Community {
+  id: string;
+  name: string;
+  description?: string;
+  center?: Coordinates;
+  memberCount?: number;
+  hierarchyPath?: HierarchyLevel[];
+  // Old interface fallback properties
+  country?: string;
+  state?: string;
+  city?: string;
+  level?: string;
+}
 
 const communitySchema = z.object({
+  name: z.string().min(2, 'Community name is required'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
   country: z.string().min(2, 'Country is required'),
   state: z.string().optional(),
   city: z.string().min(2, 'City is required'),
   neighborhood: z.string().optional(),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
   address: z.string().optional(),
 });
 
@@ -36,21 +53,34 @@ type CommunityFormData = z.infer<typeof communitySchema>;
 interface CreateCommunityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  parentCommunityId?: string;
+  parentCommunity?: Community;
   onCommunityCreated?: (community: Community) => void;
 }
 
 export function CreateCommunityDialog({
   open,
   onOpenChange,
-  parentCommunityId,
+  parentCommunity,
   onCommunityCreated,
 }: CreateCommunityDialogProps) {
-  logComponentRender('CreateCommunityDialog', { open, parentCommunityId });
-
-  const { list: communities = [] } = useBelongStore(
-    (state) => state.communities
-  );
+  // TODO: Replace with actual useCreateCommunity when API is ready
+  interface CreateCommunityData {
+    name: string;
+    description: string;
+    country: string;
+    state: string;
+    city: string;
+  }
+  
+  const createCommunityMutation = {
+    mutateAsync: async (data: CreateCommunityData) => {
+      console.log('Mock community creation:', data);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      return { id: 'mock-id', ...data };
+    },
+    isPending: false,
+    error: null as Error | null,
+  };
 
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [addressBbox, setAddressBbox] = useState<
@@ -59,12 +89,8 @@ export function CreateCommunityDialog({
   const [currentAddress, setCurrentAddress] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedState, setSelectedState] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const parentCommunity = parentCommunityId
-    ? communities.find((c) => c.id === parentCommunityId)
-    : null;
+  const { isPending: isSubmitting, error } = createCommunityMutation;
 
   const {
     register,
@@ -76,139 +102,67 @@ export function CreateCommunityDialog({
   } = useForm<CommunityFormData>({
     resolver: zodResolver(communitySchema),
     defaultValues: {
+      name: '',
+      description: '',
       country: '',
       state: '',
       city: '',
       neighborhood: '',
-      description: '',
       address: '',
     },
   });
 
+  const watchedName = watch('name');
   const watchedCity = watch('city');
   const watchedNeighborhood = watch('neighborhood');
 
-  // Listen for community events
-  useEffect(() => {
-    const unsubscribeCreated = eventBus.on('community.created', (event) => {
-      logger.info(
-        '✅ CreateCommunityDialog: Community created successfully:',
-        event.data
-      );
-      setIsSubmitting(false);
-      setError(null);
-
-      if (onCommunityCreated) {
-        onCommunityCreated(event.data as Community);
-      }
-
-      onOpenChange(false);
-    });
-
-    const unsubscribeFailed = eventBus.on(
-      'community.create.failed',
-      (event) => {
-        const errorEvent = event as CommunityCreateFailedEvent;
-        logger.error(
-          '❌ CreateCommunityDialog: Community creation failed:',
-          errorEvent.data.error
-        );
-        setIsSubmitting(false);
-        setError(errorEvent.data.error);
-      }
-    );
-
-    return () => {
-      unsubscribeCreated();
-      unsubscribeFailed();
-    };
-  }, [onCommunityCreated, onOpenChange]);
-
-  // Get the full hierarchy chain for the parent community
 
   // Prefill form when dialog opens or parent changes
   useEffect(() => {
-    const getParentHierarchy = () => {
-      if (!parentCommunity) return { country: '', state: '', city: '' };
-
-      const hierarchy = { country: '', state: '', city: '' };
-
-      // Build the chain from parent to root
-      const chain: Community[] = [];
-      let currentId: string | null = parentCommunity.id;
-
-      while (currentId) {
-        const community = communities.find((c) => c.id === currentId);
-        if (community) {
-          chain.unshift(community);
-          currentId = community.parent_id;
-        } else {
-          break;
-        }
-      }
-
-      // Extract country, state, and city from the chain
-      for (const community of chain) {
-        if (community.level === 'country') {
-          hierarchy.country = community.name;
-        } else if (community.level === 'state') {
-          hierarchy.state = community.name;
-        } else if (community.level === 'city') {
-          hierarchy.city = community.name;
-        }
-      }
-
-      // If the parent itself is a city, include it
-      if (parentCommunity.level === 'city') {
-        hierarchy.city = parentCommunity.name;
-      }
-
-      return hierarchy;
-    };
-
     if (open && parentCommunity) {
-      const hierarchy = getParentHierarchy();
+      // Handle different Community interface structures
+      // Check if hierarchyPath exists (new interface) or fall back to old interface
+      if ('hierarchyPath' in parentCommunity && parentCommunity.hierarchyPath) {
+        const hierarchy = parentCommunity.hierarchyPath;
+        const countryInfo = hierarchy.find((h: HierarchyLevel) => h.level === 'country');
+        const stateInfo = hierarchy.find((h: HierarchyLevel) => h.level === 'state');
+        const cityInfo = hierarchy.find((h: HierarchyLevel) => h.level === 'city');
 
-      logger.debug(
-        '🏘️ CreateCommunityDialog: Prefilling form based on parent:',
-        {
-          parentId: parentCommunity.id,
-          parentName: parentCommunity.name,
-          parentLevel: parentCommunity.level,
-          hierarchy,
+        if (countryInfo) {
+          setSelectedCountry(countryInfo.name);
+          setValue('country', countryInfo.name);
         }
-      );
 
-      // Set country and state
-      if (hierarchy.country) {
-        setSelectedCountry(hierarchy.country);
-        setValue('country', hierarchy.country);
-      }
+        if (stateInfo) {
+          setSelectedState(stateInfo.name);
+          setValue('state', stateInfo.name);
+        }
 
-      if (hierarchy.state) {
-        setSelectedState(hierarchy.state);
-        setValue('state', hierarchy.state);
-      }
-
-      // Set city if parent is a city
-      if (hierarchy.city) {
-        setValue('city', hierarchy.city);
+        if (cityInfo) {
+          setValue('city', cityInfo.name);
+        }
+      } else {
+        // Fall back to old interface structure
+        const community = parentCommunity as Community & { state?: string; city?: string };
+        if (community.country) {
+          setSelectedCountry(community.country);
+          setValue('country', community.country);
+        }
+        if (community.state) {
+          setSelectedState(community.state);
+          setValue('state', community.state);
+        }
+        if (community.city) {
+          setValue('city', community.city);
+        }
       }
 
       // If parent has a location, use it as a starting point
       if (parentCommunity.center) {
         setLocation(parentCommunity.center);
       }
-
-      logUserAction('community_dialog_prefilled', {
-        parentId: parentCommunity.id,
-        parentLevel: parentCommunity.level,
-        country: hierarchy.country,
-        state: hierarchy.state,
-        city: hierarchy.city,
-      });
     }
-  }, [open, parentCommunity, communities, setValue]);
+  }, [open, parentCommunity, setValue]);
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -219,8 +173,6 @@ export function CreateCommunityDialog({
       setCurrentAddress('');
       setSelectedCountry('');
       setSelectedState('');
-      setIsSubmitting(false);
-      setError(null);
     }
   }, [open, reset]);
 
@@ -229,90 +181,52 @@ export function CreateCommunityDialog({
     coordinates: Coordinates | null,
     bbox?: [number, number, number, number]
   ) => {
-    logger.debug('🏘️ CreateCommunityDialog: Address changed:', {
-      address,
-      coordinates,
-      bbox,
-    });
-
     setCurrentAddress(address);
     setValue('address', address);
 
     if (coordinates) {
       setLocation(coordinates);
       setAddressBbox(bbox || null);
-
-      logUserAction('community_address_set', {
-        address,
-        coordinates,
-        hasBbox: !!bbox,
-      });
     }
   };
 
   const handleCountryChange = (country: string) => {
-    logger.debug('🏘️ CreateCommunityDialog: Country changed:', { country });
     setSelectedCountry(country);
     setValue('country', country);
 
     // Reset state when country changes
     setSelectedState('');
     setValue('state', '');
-
-    logUserAction('community_country_set', { country });
   };
 
   const handleStateChange = (state: string) => {
-    logger.debug('🏘️ CreateCommunityDialog: State changed:', { state });
     setSelectedState(state);
     setValue('state', state);
-
-    logUserAction('community_state_set', { state, country: selectedCountry });
   };
 
   const onSubmit = async (data: CommunityFormData) => {
-    logger.debug('🏘️ CreateCommunityDialog: Form submitted:', data);
-    logUserAction('community_create_attempt', {
-      country: data.country,
-      state: data.state,
-      city: data.city,
-      neighborhood: data.neighborhood,
-      hasParent: !!parentCommunityId,
-      hasLocation: !!location,
-      hasAddress: !!currentAddress,
-    });
+    console.log('Creating community with data:', data);
+    
+    try {
+      // For now, create a mock community object
+      const mockCommunity: CreateCommunityData = {
+        name: data.name,
+        description: data.description as string,
+        country: data.country,
+        state: data.state || '',
+        city: data.city,
+      };
 
-    setIsSubmitting(true);
-    setError(null);
+      const newCommunity = await createCommunityMutation.mutateAsync(mockCommunity);
 
-    // Determine what we're creating based on what's filled in
-    let communityName: string;
-    let communityLevel: Community['level'];
-    let radius: number;
+      if (onCommunityCreated) {
+        onCommunityCreated(newCommunity as Community);
+      }
 
-    if (data.neighborhood) {
-      // Creating a neighborhood
-      communityName = data.neighborhood;
-      communityLevel = 'neighborhood';
-      radius = 5;
-    } else {
-      // Creating a city
-      communityName = data.city;
-      communityLevel = 'city';
-      radius = 25;
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to create community:', error);
     }
-
-    // Emit community creation request
-    eventBus.emit('community.create.requested', {
-      name: communityName,
-      description: data.description,
-      level: communityLevel,
-      country: data.country,
-      state: data.state,
-      city: data.city,
-      center: location || undefined,
-      radius_km: radius,
-    });
   };
 
   return (
@@ -327,13 +241,34 @@ export function CreateCommunityDialog({
             </p>
             {parentCommunity && (
               <p className="text-sm text-primary-600 bg-primary-50 p-2 rounded">
-                Creating under: <strong>{parentCommunity.name}</strong> (
-                {parentCommunity.level})
+                Creating under: <strong>{parentCommunity.name}</strong>
               </p>
             )}
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
+            {/* Community Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-warmgray-800">
+                Community Details
+              </h3>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Community Name</label>
+                <input
+                  {...register('name')}
+                  className="w-full border rounded-md p-2"
+                  placeholder="Enter community name"
+                  disabled={isSubmitting}
+                />
+                {errors.name && (
+                  <p className="text-xs text-red-500">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Geographic Hierarchy */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-warmgray-800">
@@ -362,7 +297,6 @@ export function CreateCommunityDialog({
                   <StateAutocomplete
                     value={selectedState}
                     onChange={handleStateChange}
-                    country={selectedCountry}
                     disabled={isSubmitting || !selectedCountry}
                     placeholder="Enter state/province (optional)"
                   />
@@ -458,7 +392,8 @@ export function CreateCommunityDialog({
             </div>
 
             {/* Preview */}
-            {(selectedCountry ||
+            {(watchedName ||
+              selectedCountry ||
               selectedState ||
               watchedCity ||
               watchedNeighborhood) && (
@@ -474,33 +409,18 @@ export function CreateCommunityDialog({
                       <>
                         <span className="text-warmgray-400">›</span>
                         <span className="font-medium">{selectedCountry}</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                          {communities.find((c) => c.name === selectedCountry)
-                            ? 'exists'
-                            : 'will create'}
-                        </span>
                       </>
                     )}
                     {selectedState && (
                       <>
                         <span className="text-warmgray-400">›</span>
                         <span className="font-medium">{selectedState}</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                          {communities.find((c) => c.name === selectedState)
-                            ? 'exists'
-                            : 'will create'}
-                        </span>
                       </>
                     )}
                     {watchedCity && (
                       <>
                         <span className="text-warmgray-400">›</span>
                         <span className="font-medium">{watchedCity}</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                          {communities.find((c) => c.name === watchedCity)
-                            ? 'exists'
-                            : 'will create'}
-                        </span>
                       </>
                     )}
                     {watchedNeighborhood && (
@@ -514,12 +434,23 @@ export function CreateCommunityDialog({
                         </span>
                       </>
                     )}
+                    {watchedName && !watchedNeighborhood && (
+                      <>
+                        <span className="text-warmgray-400">›</span>
+                        <span className="font-medium text-primary-600">
+                          {watchedName}
+                        </span>
+                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">
+                          new
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="mt-2 text-xs text-warmgray-500">
                     {watchedNeighborhood
                       ? `Creating neighborhood "${watchedNeighborhood}" in ${watchedCity}`
-                      : watchedCity
-                        ? `Creating city "${watchedCity}"`
+                      : watchedName
+                        ? `Creating community "${watchedName}"`
                         : 'Fill in the fields above to see what will be created'}
                   </div>
                 </div>
@@ -529,7 +460,9 @@ export function CreateCommunityDialog({
             {/* Error Display */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm text-red-600">
+                  {(error as Error)?.message || 'An error occurred while creating the community'}
+                </p>
               </div>
             )}
           </div>

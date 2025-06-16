@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { TrustBadge } from '../trust/TrustBadge';
 import { AuthDialog } from '../users/AuthDialog';
 import { getInitials } from '../utils';
-import { eventBus } from '@belongnetwork/core';
+import { useCurrentUser, useSignOut } from '@belongnetwork/api';
 import {
   Home,
   Map,
@@ -17,7 +16,6 @@ import {
   X,
   LogIn,
 } from 'lucide-react';
-import { useBelongStore } from '@belongnetwork/core';
 
 type NavLinkProps = {
   to: string;
@@ -26,7 +24,8 @@ type NavLinkProps = {
 };
 
 export function Navigation() {
-  const { user } = useBelongStore((state) => state.auth);
+  const { data: user } = useCurrentUser();
+  const signOut = useSignOut();
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [notificationCount] = useState(2);
@@ -37,8 +36,8 @@ export function Navigation() {
     if (!user) return '';
 
     // Return first name only if available
-    if (user?.first_name) {
-      return user.first_name;
+    if (user?.firstName) {
+      return user.firstName;
     }
 
     // Final fallback to email username
@@ -46,13 +45,13 @@ export function Navigation() {
   };
 
   const getAvatarUrl = () => {
-    return user?.avatar_url;
+    return user?.avatarUrl;
   };
 
   const getAvatarText = () => {
     if (!user) return 'G'; // for Guest
 
-    return getInitials(user.first_name, user.last_name);
+    return getInitials(user.firstName, user.lastName);
   };
 
   const NavLink: React.FC<NavLinkProps> = ({ to, icon, children }) => (
@@ -123,7 +122,7 @@ export function Navigation() {
                       <span className="text-sm font-medium text-warmgray-800">
                         {getUserDisplayName()}
                       </span>
-                      <TrustBadge score={5.0} size="xs" />
+                      {/* Trust badge removed */}
                     </div>
                     <Avatar className="h-8 w-8 border border-primary-100">
                       <AvatarImage src={getAvatarUrl() || undefined} />
@@ -133,9 +132,7 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      eventBus.emit('auth.signOut.requested', void 0)
-                    }
+                    onClick={() => signOut.mutate()}
                   >
                     Sign Out
                   </Button>

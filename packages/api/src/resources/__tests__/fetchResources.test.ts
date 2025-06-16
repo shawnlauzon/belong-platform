@@ -3,6 +3,9 @@ import { faker } from '@faker-js/faker';
 import { supabase } from '@belongnetwork/core';
 import { fetchResources, fetchResourceById } from '../impl/fetchResources';
 import { createMockDbResource } from './test-utils';
+import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import * as fetchUserById from '../../users/impl/fetchUserById';
+import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
 // Mock the supabase client
 vi.mock('@belongnetwork/core', () => ({
@@ -26,79 +29,100 @@ vi.mock('@belongnetwork/core', () => ({
 }));
 
 describe('fetchResources', () => {
-  const mockResources = Array(3).fill(null).map(() => createMockDbResource());
+  const mockUser = createMockUser();
+  const mockCommunity = createMockCommunity();
+  const mockResources = Array(3).fill(null).map(() => createMockDbResource({
+    owner_id: mockUser.id,
+    community_id: mockCommunity.id,
+  }));
 
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Reset the mock implementation for each test
-    (supabase.from as any).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: mockResources[0], error: null }),
-    });
+    // Mock the fetch functions
+    vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
   });
 
   it('should fetch all resources', async () => {
     // Arrange
-    (supabase.from('').select().order() as any).mockResolvedValueOnce({
-      data: mockResources,
-      error: null,
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: mockResources,
+        error: null,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResources();
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').select).toHaveBeenCalledWith('*, owner:profiles(*), community:communities(*)');
-    expect(supabase.from('').order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result).toHaveLength(3);
     expect(result[0].id).toBe(mockResources[0].id);
+    expect(result[0].owner).toEqual(mockUser);
+    expect(result[0].community).toEqual(mockCommunity);
   });
 
   it('should apply filters when provided', async () => {
     // Arrange
     const filters = {
-      communityId: faker.string.uuid(),
-      category: 'FOOD',
-      isApproved: true,
+      communityId: mockCommunity.id,
+      category: 'food' as const,
       isActive: true,
     };
 
-    (supabase.from('').select().order() as any).mockImplementation(() => ({
-      eq: (key: string, value: any) => ({
-        eq: (k: string, v: any) => ({
-          eq: (k2: string, v2: any) => ({
-            eq: (k3: string, v3: any) => ({
-              data: mockResources.filter(
-                (r) =>
-                  r.community_id === filters.communityId &&
-                  r.category === filters.category &&
-                  r.is_approved === filters.isApproved &&
-                  r.is_active === filters.isActive
-              ),
-              error: null,
-            })
-          })
-        })
-      })
-    }));
+    const filteredResources = mockResources.filter(r => 
+      r.community_id === filters.communityId && 
+      r.category === filters.category &&
+      r.is_active === filters.isActive
+    );
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+    };
+    
+    // Chain the eq calls and return the filtered data at the end
+    mockQuery.eq = vi.fn((key, value) => {
+      if (key === 'is_active') {
+        return {
+          data: filteredResources,
+          error: null,
+        };
+      }
+      return mockQuery;
+    });
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResources(filters);
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').select).toHaveBeenCalledWith('*, owner:profiles(*), community:communities(*)');
-    expect(result).toHaveLength(3); // All mock resources match the filter in this test
+    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(result).toHaveLength(filteredResources.length);
   });
 
   it('should throw an error when fetching resources fails', async () => {
     // Arrange
     const mockError = new Error('Failed to fetch resources');
-    (supabase.from('').select().order() as any).mockRejectedValueOnce(mockError);
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: null,
+        error: mockError,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchResources()).rejects.toThrow(mockError);
@@ -106,36 +130,61 @@ describe('fetchResources', () => {
 });
 
 describe('fetchResourceById', () => {
-  const mockResource = createMockDbResource();
+  const mockUser = createMockUser();
+  const mockCommunity = createMockCommunity();
+  const mockResource = createMockDbResource({
+    owner_id: mockUser.id,
+    community_id: mockCommunity.id,
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Mock the fetch functions
+    vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
   });
 
   it('should fetch a resource by ID', async () => {
     // Arrange
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: mockResource,
-      error: null,
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockResource,
+        error: null,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResourceById(mockResource.id);
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('resources');
-    expect(supabase.from('').select).toHaveBeenCalledWith('*, owner:profiles(*), community:communities(*)');
-    expect(supabase.from('').eq).toHaveBeenCalledWith('id', mockResource.id);
-    expect(supabase.from('').single).toHaveBeenCalled();
-    expect(result).toEqual(expect.objectContaining({ id: mockResource.id }));
+    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.eq).toHaveBeenCalledWith('id', mockResource.id);
+    expect(mockQuery.single).toHaveBeenCalled();
+    expect(result).toEqual(expect.objectContaining({ 
+      id: mockResource.id,
+      owner: mockUser,
+      community: mockCommunity,
+    }));
   });
 
   it('should return null when resource is not found', async () => {
     // Arrange
-    (supabase.from('').select().eq().single as any).mockResolvedValueOnce({
-      data: null,
-      error: { code: 'PGRST116' }, // Not found error code
-    });
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116' }, // Not found error code
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResourceById('non-existent-id');
@@ -147,7 +196,16 @@ describe('fetchResourceById', () => {
   it('should throw an error when fetching fails', async () => {
     // Arrange
     const mockError = new Error('Failed to fetch resource');
-    (supabase.from('').select().eq().single as any).mockRejectedValueOnce(mockError);
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: mockError,
+      }),
+    };
+    
+    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchResourceById('some-id')).rejects.toThrow(mockError);

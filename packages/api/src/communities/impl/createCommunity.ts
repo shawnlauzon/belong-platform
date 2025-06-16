@@ -3,10 +3,10 @@ import { logger } from '@belongnetwork/core';
 import { forDbInsert, toDomainCommunity } from './communityTransformer';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
+import { fetchCommunityById } from './fetchCommunityById';
 
 export async function createCommunity(
-  data: CommunityData,
-  { parent }: { parent: Community }
+  data: CommunityData
 ): Promise<Community> {
   logger.debug('🏘️ API: Creating community', { name: data.name });
 
@@ -21,7 +21,7 @@ export async function createCommunity(
     const { data: newCommunity, error } = await supabase
       .from('communities')
       .insert(forDbInsert(data))
-      .select('*')
+      .select('id')
       .single();
 
     if (error) {
@@ -29,10 +29,12 @@ export async function createCommunity(
       throw error;
     }
 
-    const community = toDomainCommunity(newCommunity, {
-      organizer: user,
-      parent,
-    });
+    // Fetch the complete community with organizer data
+    const community = await fetchCommunityById(newCommunity.id);
+    if (!community) {
+      throw new Error('Failed to fetch created community');
+    }
+
     logger.info('🏘️ API: Successfully created community', {
       id: community.id,
       name: community.name,

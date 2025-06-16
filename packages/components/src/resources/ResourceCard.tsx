@@ -8,13 +8,12 @@ import {
 } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { TrustBadge } from '../trust/TrustBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { formatTimeAgo, truncateText } from '../utils/formatters';
-import { MapPin, Clock, CarFront, Edit } from 'lucide-react';
-import { Resource } from '@belongnetwork/core/types/resources';
+import { MapPin, Clock, Edit } from 'lucide-react';
+import { Resource } from '@belongnetwork/core';
 import { Link } from '@tanstack/react-router';
-import { useBelongStore } from '@belongnetwork/core/stores/useBelongStore';
+import { useCurrentUser } from '@belongnetwork/api';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -27,8 +26,8 @@ export function ResourceCard({
   onRequest,
   onEdit,
 }: ResourceCardProps) {
-  const currentUser = useBelongStore((state) => state.auth.user);
-  const isOwner = currentUser?.id === resource.owner_id;
+  const { data: currentUser } = useCurrentUser();
+  const isOwner = currentUser?.id === resource.owner.id;
 
   const getCategoryVariant = (category: string) => {
     type CategoryVariant = 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'secondary';
@@ -46,9 +45,9 @@ export function ResourceCard({
   return (
     <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-md animate-fade-in">
       <div className="relative">
-        {resource.image_urls?.[0] ? (
+        {resource.imageUrls?.[0] ? (
           <img
-            src={resource.image_urls[0]}
+            src={resource.imageUrls[0]}
             alt={resource.title}
             className="w-full h-48 object-cover"
           />
@@ -64,9 +63,7 @@ export function ResourceCard({
           </Badge>
         </div>
 
-        <div className="absolute top-2 right-2">
-          <TrustBadge score={resource.owner?.trust_score || 0} />
-        </div>
+        {/* Trust badge removed - not implemented yet */}
 
         {/* Edit button for resource owner */}
         {isOwner && onEdit && (
@@ -102,17 +99,12 @@ export function ResourceCard({
         </p>
 
         <div className="space-y-2">
-          {resource.distance_minutes && (
-            <div className="flex items-center text-xs text-warmgray-500">
-              <CarFront className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-              <span>{resource.distance_minutes} min drive</span>
-            </div>
-          )}
+          {/* Distance calculation removed */}
 
           <div className="flex items-center text-xs text-warmgray-500">
             <MapPin className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
             <span>
-              {resource.pickup_instructions || 'Contact for pickup details'}
+              {resource.pickupInstructions || 'Contact for pickup details'}
             </span>
           </div>
 
@@ -130,20 +122,20 @@ export function ResourceCard({
             to="/profile/$id"
             params={{ id: resource.owner?.id || '' }}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            title={`View ${resource.owner?.name}'s profile`}
+            title={`View ${resource.owner?.firstName}'s profile`}
           >
             <Avatar className="h-6 w-6">
-              <AvatarImage src={resource.owner?.avatar_url} />
+              <AvatarImage src={resource.owner?.avatarUrl} />
               <AvatarFallback>
-                {resource.owner?.name?.[0] || 'U'}
+                {resource.owner?.firstName?.[0] || 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="text-xs">
               <span className="text-warmgray-700 font-medium hover:text-primary-600 transition-colors">
-                {resource.owner?.name}
+                {resource.owner?.firstName}
               </span>
               <p className="text-warmgray-500">
-                {formatTimeAgo(resource.created_at)}
+                {formatTimeAgo(resource.createdAt)}
               </p>
             </div>
           </Link>

@@ -1,6 +1,6 @@
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
-import { toDomainCommunity } from './communityTransformer';
+import { fetchCommunityById } from './fetchCommunityById';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
@@ -24,19 +24,21 @@ export async function updateCommunity(
       updated_at: new Date().toISOString(),
     };
 
-    const { data: updatedCommunity, error } = await supabase
+    const { error } = await supabase
       .from('communities')
       .update(updatePayload)
-      .eq('id', id)
-      .select('*')
-      .single();
+      .eq('id', id);
 
     if (error) {
       logger.error('🏘️ API: Failed to update community', { id, error });
       throw error;
     }
 
-    const community = toDomainCommunity(updatedCommunity);
+    // Fetch the updated community with joined data
+    const community = await fetchCommunityById(id);
+    if (!community) {
+      throw new Error('Community not found after update');
+    }
     logger.info('🏘️ API: Successfully updated community', {
       id: community.id,
       name: community.name,

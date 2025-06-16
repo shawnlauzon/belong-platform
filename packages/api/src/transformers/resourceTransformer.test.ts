@@ -99,17 +99,17 @@ describe('Resource Transformer', () => {
         category: resource.category,
         title: resource.title,
         description: resource.description,
-        image_urls: resource.image_urls,
-        pickup_instructions: resource.pickup_instructions,
-        parking_info: resource.parking_info,
-        meetup_flexibility: resource.meetup_flexibility,
+        image_urls: resource.imageUrls,
+        pickup_instructions: resource.pickupInstructions,
+        parking_info: resource.parkingInfo,
+        meetup_flexibility: resource.meetupFlexibility,
         availability: resource.availability,
-        is_active: resource.is_active,
+        is_active: resource.isActive,
         owner_id: resource.owner.id,
         community_id: resource.community.id,
         location: resource.location ? toPostGisPoint(resource.location) : null,
-        created_at: resource.created_at.toISOString(),
-        updated_at: resource.updated_at.toISOString(),
+        created_at: resource.createdAt.toISOString(),
+        updated_at: resource.updatedAt.toISOString(),
       });
     });
 
@@ -120,20 +120,22 @@ describe('Resource Transformer', () => {
         title: 'Test Resource',
         owner: { id: 'owner-123' } as User,
         community: { id: 'community-123' } as Community,
+        createdAt: new Date('2023-01-01T00:00:00Z'),
+        updatedAt: new Date('2023-01-01T00:00:00Z'),
       };
 
       // Call the transformer
       const dbResource = toDbResource(partialResource);
 
       // Verify only provided fields are included
-      expect(dbResource).toEqual({
+      expect(dbResource).toMatchObject({
         id: 'resource-123',
         title: 'Test Resource',
         owner_id: 'owner-123',
         community_id: 'community-123',
         location: null,
-        created_at: undefined,
-        updated_at: undefined,
+        created_at: '2023-01-01T00:00:00.000Z',
+        updated_at: '2023-01-01T00:00:00.000Z',
       });
     });
 

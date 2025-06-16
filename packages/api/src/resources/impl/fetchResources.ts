@@ -3,6 +3,8 @@ import { logger } from '@belongnetwork/core';
 import type { Resource, ResourceFilter } from '@belongnetwork/types';
 import { toDomainResource } from './resourceTransformer';
 import { AUTH_ERROR_MESSAGES } from '../../auth';
+import { fetchUserById } from '../../users/impl/fetchUserById';
+import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 
 export async function fetchResources(
   filters?: ResourceFilter
@@ -12,7 +14,7 @@ export async function fetchResources(
   try {
     let query = supabase
       .from('resources')
-      .select('*, owner:profiles!inner(*), community:communities!inner(*)')
+      .select('*')
       .order('created_at', { ascending: false });
 
     // Apply filters if provided
@@ -45,10 +47,38 @@ export async function fetchResources(
       return [];
     }
 
+    // Get unique owner and community IDs to fetch
+    const ownerIds = [...new Set(data.map(r => r.owner_id))];
+    const communityIds = [...new Set(data.map(r => r.community_id))];
+
+    // Fetch all required owners and communities
+    const [owners, communities] = await Promise.all([
+      Promise.all(ownerIds.map(id => fetchUserById(id))),
+      Promise.all(communityIds.map(id => fetchCommunityById(id)))
+    ]);
+
+    // Create lookup maps
+    const ownerMap = new Map(owners.filter(Boolean).map(owner => [owner!.id, owner!]));
+    const communityMap = new Map(communities.filter(Boolean).map(community => [community!.id, community!]));
+
     const resources = data
       .map((dbResource) => {
         try {
-          return toDomainResource(dbResource);
+          const owner = ownerMap.get(dbResource.owner_id);
+          const community = communityMap.get(dbResource.community_id);
+          
+          if (!owner || !community) {
+            logger.warn('📚 API: Missing owner or community for resource', {
+              resourceId: dbResource.id,
+              ownerId: dbResource.owner_id,
+              communityId: dbResource.community_id,
+              hasOwner: !!owner,
+              hasCommunity: !!community,
+            });
+            return null;
+          }
+
+          return toDomainResource(dbResource, { owner, community });
         } catch (error) {
           logger.error('📚 API: Error transforming resource', {
             resourceId: dbResource.id,
@@ -78,7 +108,7 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
   try {
     const { data, error } = await supabase
       .from('resources')
-      .select('*, owner:profiles!inner(*), community:communities!inner(*)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -102,7 +132,24 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
     }
 
     try {
-      const resource = toDomainResource(data);
+      // Fetch owner and community separately
+      const [owner, community] = await Promise.all([
+        fetchUserById(data.owner_id),
+        fetchCommunityById(data.community_id)
+      ]);
+
+      if (!owner || !community) {
+        logger.error('📚 API: Missing owner or community for resource', {
+          id,
+          ownerId: data.owner_id,
+          communityId: data.community_id,
+          hasOwner: !!owner,
+          hasCommunity: !!community,
+        });
+        throw new Error('Failed to load resource dependencies');
+      }
+
+      const resource = toDomainResource(data, { owner, community });
       logger.debug('📚 API: Successfully fetched resource by ID', {
         id,
         title: resource.title,

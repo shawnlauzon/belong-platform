@@ -14,13 +14,10 @@ describe('Resource Transformer', () => {
         community_id: mockCommunity.id,
       });
 
-      const resourceWithRefs = {
-        ...dbResource,
+      const resource = toDomainResource(dbResource, {
         owner: mockOwner,
         community: mockCommunity,
-      };
-
-      const resource = toDomainResource(resourceWithRefs);
+      });
 
       expect(resource).toMatchObject({
         id: dbResource.id,
@@ -40,21 +37,20 @@ describe('Resource Transformer', () => {
         community_id: mockCommunity.id,
       });
 
-      const resourceWithRefs = {
-        ...dbResource,
+      const resource = toDomainResource(dbResource, {
         owner: mockOwner,
         community: mockCommunity,
-      };
-
-      const resource = toDomainResource(resourceWithRefs);
+      });
 
       expect(resource.owner).toEqual(mockOwner);
       expect(resource.community).toEqual(mockCommunity);
     });
 
     it('should throw an error if resource is null or undefined', () => {
-      expect(() => toDomainResource(null as any)).toThrow('User must be authenticated to perform this operation');
-      expect(() => toDomainResource(undefined as any)).toThrow('User must be authenticated to perform this operation');
+      const mockOwner = createMockUser();
+      const mockCommunity = createMockCommunity();
+      expect(() => toDomainResource(null as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
+      expect(() => toDomainResource(undefined as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
     });
   });
 

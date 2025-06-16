@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { fetchCommunities } from '../impl/fetchCommunities';
-import { createMockDbCommunity } from '../../test-utils/mocks';
+import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
 import { supabase } from '@belongnetwork/core';
 
 // Mock the supabase client
@@ -27,9 +27,11 @@ describe('fetchCommunities', () => {
 
   it('should fetch communities successfully', async () => {
     // Arrange
-    const mockCommunities = Array.from({ length: 3 }, () =>
-      createMockDbCommunity()
-    );
+    const mockCommunities = Array.from({ length: 3 }, () => ({
+      ...createMockDbCommunity(),
+      organizer: createMockDbProfile(),
+      parent: null
+    }));
 
     // Mock the Supabase response
     const mockQuery = {
@@ -47,7 +49,7 @@ describe('fetchCommunities', () => {
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!inner(*), parent:communities(*, organizer:profiles(*))');
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
     });

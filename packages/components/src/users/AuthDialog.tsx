@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  AuthSignInFailedEvent,
-  AuthSignUpFailedEvent,
-  eventBus,
-} from '@belongnetwork/core';
+import { useSignIn, useSignUp } from '@belongnetwork/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 
 const authSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,100 +21,58 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
-  logComponentRender('AuthDialog', { open });
-
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  const signIn = useSignIn();
+  const signUp = useSignUp();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   });
 
-  // Listen for auth events
-  useEffect(() => {
-    const unsubscribeSignInSuccess = eventBus.on('auth.signIn.success', () => {
-      logger.info('✅ AuthDialog: Sign in successful');
-      setIsSubmitting(false);
-      setError(null);
-      onOpenChange(false);
-    });
-
-    const unsubscribeSignUpSuccess = eventBus.on('auth.signUp.success', () => {
-      logger.info('✅ AuthDialog: Sign up successful');
-      setIsSubmitting(false);
-      setError(null);
-      onOpenChange(false);
-    });
-
-    const unsubscribeSignInFailed = eventBus.on(
-      'auth.signIn.failed',
-      (event) => {
-        const errorEvent = event as AuthSignInFailedEvent;
-        logger.error('❌ AuthDialog: Sign in failed:', errorEvent.data.error);
-        setIsSubmitting(false);
-        setError(errorEvent.data.error);
-      }
-    );
-
-    const unsubscribeSignUpFailed = eventBus.on(
-      'auth.signUp.failed',
-      (event) => {
-        const errorEvent = event as AuthSignUpFailedEvent;
-        logger.error('❌ AuthDialog: Sign up failed:', errorEvent.data.error);
-        setIsSubmitting(false);
-        setError(errorEvent.data.error);
-      }
-    );
-
-    return () => {
-      unsubscribeSignInSuccess();
-      unsubscribeSignUpSuccess();
-      unsubscribeSignInFailed();
-      unsubscribeSignUpFailed();
-    };
-  }, [onOpenChange]);
+  const isSubmitting = signIn.isPending || signUp.isPending;
+  const error = signIn.error?.message || signUp.error?.message || null;
 
   const onSubmit = async (data: AuthFormData) => {
-    logger.debug('🔐 Auth form submitted:', {
-      mode,
-      email: data.email,
-      hasFirstName: !!data.firstName,
-      hasLastName: !!data.lastName,
-    });
-
-    setIsSubmitting(true);
-    setError(null);
-
-    logUserAction(`auth_${mode}_attempt`, { email: data.email });
-
     if (mode === 'signin') {
-      logger.debug('📝 Emitting sign in request...');
-      eventBus.emit('auth.signIn.requested', {
-        email: data.email,
-        password: data.password,
-      });
+      signIn.mutate(
+        {
+          email: data.email,
+          password: data.password,
+        },
+        {
+          onSuccess: () => {
+            reset();
+            onOpenChange(false);
+          },
+        }
+      );
     } else {
-      logger.debug('📝 Emitting sign up request...');
-      eventBus.emit('auth.signUp.requested', {
-        email: data.email,
-        password: data.password,
-        metadata: {
+      signUp.mutate(
+        {
+          email: data.email,
+          password: data.password,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
         },
-      });
+        {
+          onSuccess: () => {
+            reset();
+            onOpenChange(false);
+          },
+        }
+      );
     }
   };
 
   const handleModeChange = (newMode: 'signin' | 'signup') => {
-    logUserAction('auth_mode_change', { from: mode, to: newMode });
     setMode(newMode);
-    setError(null);
+    reset();
   };
 
   return (

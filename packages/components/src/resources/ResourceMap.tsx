@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import { ResourceCard } from './ResourceCard';
 import { Resource, Coordinates, getPublicToken } from '@belongnetwork/core';
-import { TrustBadge } from '../trust/TrustBadge';
 import { MapPin, User } from 'lucide-react';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -88,18 +87,16 @@ export function ResourceMap({
             <div className="h-8 w-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-white">
               <User className="h-4 w-4" />
             </div>
-            <div className="absolute -bottom-1 -right-1">
-              <TrustBadge score={8.5} size="xs" />
-            </div>
+            {/* Trust badge removed */}
           </div>
         </Marker>
 
         {/* Resource markers */}
-        {resources.map((resource) => (
+        {resources.filter(resource => resource.location).map((resource) => (
           <Marker
             key={resource.id}
-            longitude={resource.location.lng}
-            latitude={resource.location.lat}
+            longitude={resource.location!.lng}
+            latitude={resource.location!.lat}
             anchor="bottom"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
@@ -112,18 +109,13 @@ export function ResourceMap({
               >
                 <MapPin className="h-4 w-4" />
               </div>
-              <div className="absolute -bottom-1 -right-1">
-                <TrustBadge
-                  score={resource.owner?.trust_score || 0}
-                  size="xs"
-                />
-              </div>
+              {/* Trust badge removed */}
             </div>
           </Marker>
         ))}
 
         {/* Selected resource popup */}
-        {selectedResource && (
+        {selectedResource && selectedResource.location && (
           <Popup
             longitude={selectedResource.location.lng}
             latitude={selectedResource.location.lat}

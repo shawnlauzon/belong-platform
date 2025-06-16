@@ -1,6 +1,8 @@
 import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import { toDomainResource } from './resourceTransformer';
+import { fetchUserById } from '../../users/impl/fetchUserById';
+import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 import type { Resource } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
@@ -26,10 +28,10 @@ export async function deleteResource(id: string): Promise<Resource | null> {
 
     const userId = userData.user.id;
 
-    // First, fetch the existing resource to verify ownership and get full data
+    // First, fetch the existing resource to verify ownership
     const { data: existingResource, error: fetchError } = await supabase
       .from('resources')
-      .select('*, owner:profiles!inner(*), community:communities!inner(*)')
+      .select('owner_id, community_id')
       .eq('id', id)
       .single();
 
@@ -55,7 +57,7 @@ export async function deleteResource(id: string): Promise<Resource | null> {
         ownerId: existingResource.owner_id,
         resourceId: id,
       });
-      throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
+      throw new Error('You are not authorized to delete this resource');
     }
 
     // Perform the soft delete (set is_active to false)
@@ -66,7 +68,7 @@ export async function deleteResource(id: string): Promise<Resource | null> {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .select('*, owner:profiles!inner(*), community:communities!inner(*)')
+      .select('*')
       .single();
 
     if (deleteError) {
@@ -83,8 +85,18 @@ export async function deleteResource(id: string): Promise<Resource | null> {
       throw new Error('No data returned after delete operation');
     }
 
+    // Fetch owner and community from cache
+    const [owner, community] = await Promise.all([
+      fetchUserById(updatedResource.owner_id),
+      fetchCommunityById(updatedResource.community_id),
+    ]);
+
+    if (!owner || !community) {
+      throw new Error('Failed to load resource dependencies');
+    }
+
     // Transform to domain model
-    const resource = toDomainResource(updatedResource);
+    const resource = toDomainResource(updatedResource, { owner, community });
 
     logger.info('📚 API: Successfully deleted resource', {
       id,

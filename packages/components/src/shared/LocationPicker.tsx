@@ -62,7 +62,7 @@ export function LocationPicker({
     }
   }, [addressBbox, value]);
 
-  const handleMapClick = (event: any) => {
+  const handleMapClick = (event: { lngLat: { lat: number; lng: number } }) => {
     const { lat, lng } = event.lngLat;
     onChange({ lat, lng });
   };

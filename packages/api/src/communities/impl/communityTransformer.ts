@@ -1,8 +1,10 @@
 import type { CommunityData, Database } from '@belongnetwork/types';
 import type { Community, User } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
+import { toDomainUser } from '../../users/impl/userTransformer';
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
+export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type CommunityInsertDbData =
   Database['public']['Tables']['communities']['Insert'];
 export type CommunityUpdateDbData =
@@ -12,13 +14,18 @@ export type CommunityUpdateDbData =
  * Transform a database community record to a domain community object
  */
 export function toDomainCommunity(
-  dbCommunity: CommunityRow,
-  { organizer, parent }: { organizer: User; parent: Community }
+  dbCommunity: CommunityRow & { 
+    organizer: ProfileRow; 
+    parent?: CommunityRow & { organizer: ProfileRow } | null;
+  }
 ): Community {
   const { center, created_at, updated_at, ...rest } = dbCommunity;
 
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
+
+  // Transform parent community if present
+  const parent = dbCommunity.parent ? toDomainCommunity(dbCommunity.parent) : undefined;
 
   return {
     ...rest,
@@ -30,11 +37,8 @@ export function toDomainCommunity(
     center: coords,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
-    organizer,
-    parentId: parent.id,
-    hierarchyPath: parent.hierarchyPath,
-    level: parent.level,
-    timeZone: parent.timeZone,
+    organizer: toDomainUser(dbCommunity.organizer),
+    parent,
   };
 }
 

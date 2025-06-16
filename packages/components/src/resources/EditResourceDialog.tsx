@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { eventBus, ResourceUpdateFailedEvent } from '@belongnetwork/core';
+import { useUpdateResource } from '@belongnetwork/api';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,6 @@ import { ImageUpload } from '../shared/ImageUpload';
 import { AddressAutocomplete } from '../shared/AddressAutocomplete';
 import { LocationPicker } from '../shared/LocationPicker';
 import { Resource, Coordinates } from '@belongnetwork/core';
-import { logger, logComponentRender, logUserAction } from '@belongnetwork/core';
 
 const resourceSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -46,16 +45,14 @@ export function EditResourceDialog({
   resource,
   onResourceUpdated,
 }: EditResourceDialogProps) {
-  logComponentRender('EditResourceDialog', { open, resourceId: resource?.id });
-
   const [images, setImages] = useState<string[]>([]);
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [addressBbox, setAddressBbox] = useState<
     [number, number, number, number] | null
   >(null);
   const [currentAddress, setCurrentAddress] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  const updateResource = useUpdateResource();
 
   const {
     register,
@@ -81,70 +78,32 @@ export function EditResourceDialog({
 
   const watchedType = watch('type');
 
-  // Listen for resource events
-  useEffect(() => {
-    const unsubscribeUpdated = eventBus.on('resource.updated', (event) => {
-      logger.info(
-        '✅ EditResourceDialog: Resource updated successfully:',
-        event.data
-      );
-      setIsSubmitting(false);
-      setError(null);
-
-      if (onResourceUpdated) {
-        onResourceUpdated(event.data as Resource);
-      }
-
-      onOpenChange(false);
-    });
-
-    const unsubscribeFailed = eventBus.on('resource.update.failed', (event) => {
-      const errorEvent = event as ResourceUpdateFailedEvent;
-      logger.error(
-        '❌ EditResourceDialog: Resource update failed:',
-        errorEvent.data.error
-      );
-      setIsSubmitting(false);
-      setError(errorEvent.data.error);
-    });
-
-    return () => {
-      unsubscribeUpdated();
-      unsubscribeFailed();
-    };
-  }, [onResourceUpdated, onOpenChange]);
+  // Derived state from mutation
+  const isSubmitting = updateResource.isPending;
+  const error = updateResource.error?.message || null;
 
   // Set form values when resource changes
   useEffect(() => {
     if (resource && open) {
-      logger.debug(
-        '📦 EditResourceDialog: Setting form values from resource:',
-        resource
-      );
 
       setValue('title', resource.title);
       setValue('description', resource.description);
       setValue('category', resource.category);
       setValue('type', resource.type);
-      setValue('pickup_instructions', resource.pickup_instructions || '');
-      setValue('parking_info', resource.parking_info || '');
+      setValue('pickup_instructions', resource.pickupInstructions || '');
+      setValue('parking_info', resource.parkingInfo || '');
       setValue(
         'meetup_flexibility',
-        resource.meetup_flexibility || 'home_only'
+        resource.meetupFlexibility || 'home_only'
       );
       setValue('availability', resource.availability || '');
-      setValue('is_active', resource.is_active);
+      setValue('is_active', resource.isActive);
 
-      setImages(resource.image_urls || []);
+      setImages(resource.imageUrls || []);
       setLocation(resource.location || null);
       setCurrentAddress(''); // We don't store the original address, so leave empty
 
-      logUserAction('resource_edit_dialog_opened', {
-        resourceId: resource.id,
-        title: resource.title,
-        type: resource.type,
-        category: resource.category,
-      });
+      // Dialog opened
     }
   }, [resource, open, setValue]);
 
@@ -156,8 +115,7 @@ export function EditResourceDialog({
       setLocation(null);
       setAddressBbox(null);
       setCurrentAddress('');
-      setIsSubmitting(false);
-      setError(null);
+      // State is managed by hook
     }
   }, [open, reset]);
 
@@ -166,50 +124,34 @@ export function EditResourceDialog({
     coordinates: Coordinates | null,
     bbox?: [number, number, number, number]
   ) => {
-    logger.debug('📍 EditResourceDialog: Address changed:', {
-      address,
-      coordinates,
-      bbox,
-    });
-
     setCurrentAddress(address);
 
     if (coordinates) {
       setLocation(coordinates);
       setAddressBbox(bbox || null);
-
-      logUserAction('resource_edit_address_set', {
-        resourceId: resource?.id,
-        address,
-        coordinates,
-        hasBbox: !!bbox,
-      });
     }
   };
 
   const onSubmit = async (data: ResourceFormData) => {
     if (!resource) return;
 
-    logger.debug('📦 EditResourceDialog: Form submitted:', data);
-    logUserAction('resource_update_attempt', {
-      resourceId: resource.id,
-      hasLocationChange: !!location,
-      hasImageChange: images.length !== (resource.image_urls?.length || 0),
-      newTitle: data.title,
-      newType: data.type,
-      newCategory: data.category,
-    });
+    try {
+      const updatedResource = await updateResource.mutateAsync({
+        id: resource.id,
+        ...data,
+        image_urls: images,
+        location: location || undefined,
+      });
 
-    setIsSubmitting(true);
-    setError(null);
+      if (onResourceUpdated) {
+        onResourceUpdated(updatedResource);
+      }
 
-    // Emit resource update request
-    eventBus.emit('resource.update.requested', {
-      id: resource.id,
-      ...data,
-      image_urls: images,
-      location: location || undefined,
-    });
+      onOpenChange(false);
+    } catch (error) {
+      // Error is handled by the hook and displayed via the error state
+      console.error('Failed to update resource:', error);
+    }
   };
 
   if (!resource) {

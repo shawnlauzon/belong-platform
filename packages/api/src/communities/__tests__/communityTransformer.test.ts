@@ -4,6 +4,7 @@ import {
   createMockCommunity,
   createMockCommunityData,
   createMockDbCommunity,
+  createMockDbProfile,
   createMockUser,
 } from '../../test-utils/mocks';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
@@ -16,13 +17,15 @@ vi.setSystemTime(mockDate);
 describe('Community Transformer', () => {
   describe('toDomainCommunity', () => {
     it('should transform a database community to domain model', () => {
-      // Create a mock database community
-      const mockDbCommunity = createMockDbCommunity();
-      const mockOrganizer = createMockUser();
-      const mockParent = createMockCommunity();
+      // Create a mock database community with joined data
+      const mockDbCommunity = {
+        ...createMockDbCommunity(),
+        organizer: createMockDbProfile(),
+        parent: null
+      };
 
       // Call the transformer
-      const domainCommunity = toDomainCommunity(mockDbCommunity, { organizer: mockOrganizer, parent: mockParent });
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
 
       // Verify the transformation
       expect(domainCommunity).toMatchObject({
@@ -42,44 +45,44 @@ describe('Community Transformer', () => {
       expect(domainCommunity.updatedAt).toBeInstanceOf(Date);
 
       // Verify organizer is set
-      expect(domainCommunity.organizer).toEqual(mockOrganizer);
+      expect(domainCommunity.organizer).toBeDefined();
+      expect(domainCommunity.organizer.id).toBe(mockDbCommunity.organizer.id);
     });
 
     it('should use provided organizer and parent when available', () => {
-      // Create mock data
-      const mockOrganizer = createMockUser();
-      const mockParent = createMockCommunity();
-      const mockDbCommunity = createMockDbCommunity({
-        organizer_id: mockOrganizer.id,
-        parent_id: mockParent.id,
-      });
+      // Create mock data with joined parent
+      const parentDbCommunity = {
+        ...createMockDbCommunity(),
+        organizer: createMockDbProfile()
+      };
+      const mockDbCommunity = {
+        ...createMockDbCommunity(),
+        organizer: createMockDbProfile(),
+        parent: parentDbCommunity
+      };
 
-      // Call the transformer with organizer and parent
-      const domainCommunity = toDomainCommunity(
-        mockDbCommunity,
-        { organizer: mockOrganizer, parent: mockParent }
-      );
+      // Call the transformer with joined data
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
 
-      // Verify the provided organizer is used
-      expect(domainCommunity.organizer).toEqual(mockOrganizer);
+      // Verify the organizer is transformed
+      expect(domainCommunity.organizer).toBeDefined();
+      expect(domainCommunity.organizer.id).toBe(mockDbCommunity.organizer.id);
 
-      // Verify the parent hierarchy is used
-      expect(domainCommunity.parentId).toBe(mockParent.id);
-      expect(domainCommunity.hierarchyPath).toBe(mockParent.hierarchyPath);
-      expect(domainCommunity.level).toBe(mockParent.level);
-      expect(domainCommunity.timeZone).toBe(mockParent.timeZone);
+      // Verify the parent is transformed
+      expect(domainCommunity.parent).toBeDefined();
+      expect(domainCommunity.parent?.id).toBe(parentDbCommunity.id);
     });
 
     it('should handle missing center gracefully', () => {
       // Create a mock database community without center
-      const mockDbCommunity = createMockDbCommunity({
-        center: null,
-      });
-      const mockOrganizer = createMockUser();
-      const mockParent = createMockCommunity();
+      const mockDbCommunity = {
+        ...createMockDbCommunity({ center: null }),
+        organizer: createMockDbProfile(),
+        parent: null
+      };
 
       // Call the transformer
-      const domainCommunity = toDomainCommunity(mockDbCommunity, { organizer: mockOrganizer, parent: mockParent });
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
 
       // Verify center is undefined
       expect(domainCommunity.center).toBeUndefined();
@@ -87,15 +90,17 @@ describe('Community Transformer', () => {
 
     it('should set neighborhood name for neighborhood level communities', () => {
       // Create a neighborhood level community
-      const mockDbCommunity = createMockDbCommunity({
-        level: 'neighborhood',
-        name: 'Test Neighborhood',
-      });
-      const mockOrganizer = createMockUser();
-      const mockParent = createMockCommunity();
+      const mockDbCommunity = {
+        ...createMockDbCommunity({
+          level: 'neighborhood',
+          name: 'Test Neighborhood',
+        }),
+        organizer: createMockDbProfile(),
+        parent: null
+      };
 
       // Call the transformer
-      const domainCommunity = toDomainCommunity(mockDbCommunity, { organizer: mockOrganizer, parent: mockParent });
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
 
       // The transformer gets level from parent, not from the community itself
       // This test needs to be adjusted based on actual transformer behavior

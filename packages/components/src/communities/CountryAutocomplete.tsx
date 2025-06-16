@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Globe } from 'lucide-react';
-import { logger, logUserAction, useBelongStore } from '@belongnetwork/core';
 
 // Common countries list for autocomplete
 const COMMON_COUNTRIES = [
@@ -67,12 +66,6 @@ export function CountryAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const { list: communities } = useBelongStore((state) => state.communities);
-
-  // Get existing countries from communities
-  const existingCountries = communities
-    .filter((c) => c.level === 'country')
-    .map((c) => c.name);
 
   useEffect(() => {
     setInputValue(value);
@@ -85,13 +78,8 @@ export function CountryAutocomplete({
 
     const lowerQuery = query.toLowerCase();
 
-    // Combine existing countries and common countries, remove duplicates
-    const allCountries = [
-      ...new Set([...existingCountries, ...COMMON_COUNTRIES]),
-    ];
-
     // Filter and sort by relevance
-    const filtered = allCountries
+    const filtered = COMMON_COUNTRIES
       .filter((country) => country.toLowerCase().includes(lowerQuery))
       .sort((a, b) => {
         // Prioritize exact matches
@@ -103,12 +91,6 @@ export function CountryAutocomplete({
         const bStartsWith = b.toLowerCase().startsWith(lowerQuery);
         if (aStartsWith && !bStartsWith) return -1;
         if (!aStartsWith && bStartsWith) return 1;
-
-        // Prioritize existing countries
-        const aExists = existingCountries.includes(a);
-        const bExists = existingCountries.includes(b);
-        if (aExists && !bExists) return -1;
-        if (!aExists && bExists) return 1;
 
         // Alphabetical order
         return a.localeCompare(b);
@@ -134,24 +116,16 @@ export function CountryAutocomplete({
 
     if (exactMatch && exactMatch !== value) {
       onChange(exactMatch);
-      logUserAction('country_auto_selected', { country: exactMatch });
     }
   };
 
   const handleSuggestionClick = (country: string) => {
-    logger.info('🌍 CountryAutocomplete: Country selected:', { country });
-
     setInputValue(country);
     setShowSuggestions(false);
     setSuggestions([]);
     setHighlightedIndex(-1);
 
     onChange(country);
-
-    logUserAction('country_selected', {
-      country,
-      isExisting: existingCountries.includes(country),
-    });
   };
 
   const handleClear = () => {
@@ -160,8 +134,6 @@ export function CountryAutocomplete({
     setSuggestions([]);
     setHighlightedIndex(-1);
     onChange('');
-
-    logUserAction('country_cleared');
 
     if (inputRef.current) {
       inputRef.current.focus();
@@ -188,7 +160,6 @@ export function CountryAutocomplete({
         // Allow custom country entry
         onChange(inputValue.trim());
         setShowSuggestions(false);
-        logUserAction('country_custom_entered', { country: inputValue.trim() });
       }
     }
   };
@@ -256,7 +227,6 @@ export function CountryAutocomplete({
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
         >
           {suggestions.map((country, index) => {
-            const isExisting = existingCountries.includes(country);
             const isHighlighted = index === highlightedIndex;
 
             return (
@@ -268,18 +238,11 @@ export function CountryAutocomplete({
                   isHighlighted ? 'bg-primary-50' : 'hover:bg-gray-50'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-primary-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {country}
-                    </span>
-                  </div>
-                  {isExisting && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                      exists
-                    </span>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-900">
+                    {country}
+                  </span>
                 </div>
               </button>
             );

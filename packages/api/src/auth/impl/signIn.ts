@@ -1,7 +1,6 @@
 import { logger } from '@belongnetwork/core';
 import { supabase } from '@belongnetwork/core';
 import { Account } from '@belongnetwork/types';
-import { toDomainUser } from '../../transformers/userTransformer';
 
 /**
  * Signs in a user with the provided email and password
@@ -42,12 +41,18 @@ export async function signIn(email: string, password: string): Promise<Account> 
     let account: Account;
 
     if (profile) {
-      // Transform the profile using the pure transformer function
-      const domainUser = toDomainUser(profile);
+      // Extract fields directly from profile to create Account format
+      const metadata = profile.user_metadata as Record<string, unknown>;
       account = {
-        ...domainUser,
+        id: profile.id,
         email: data.user.email!,
-        location: profile.user_metadata?.location,
+        first_name: (metadata?.first_name as string) || '',
+        last_name: metadata?.last_name as string | undefined,
+        full_name: metadata?.full_name as string | undefined,
+        avatar_url: metadata?.avatar_url as string | undefined,
+        location: data.user.user_metadata?.location,
+        created_at: new Date(profile.created_at),
+        updated_at: new Date(profile.updated_at),
       };
     } else {
       // Fallback if no profile exists - ensure email is included

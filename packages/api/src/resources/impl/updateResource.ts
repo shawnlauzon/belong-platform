@@ -2,6 +2,8 @@ import { supabase } from '@belongnetwork/core';
 import { logger } from '@belongnetwork/core';
 import type { Resource, ResourceData } from '@belongnetwork/types';
 import { toDomainResource, forDbUpdate } from './resourceTransformer';
+import { fetchUserById } from '../../users/impl/fetchUserById';
+import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 import {
   MESSAGE_AUTHENTICATION_REQUIRED,
   MESSAGE_NOT_AUTHORIZED,
@@ -52,7 +54,7 @@ export async function updateResource(
         userId,
         ownerId: existingResource.owner_id,
       });
-      throw new Error(MESSAGE_NOT_AUTHORIZED);
+      throw new Error('You are not authorized to update this resource');
     }
 
     // Transform to database format
@@ -63,7 +65,7 @@ export async function updateResource(
       .from('resources')
       .update(dbResource)
       .eq('id', data.id)
-      .select('*, owner:profiles(*), community:communities(*)')
+      .select('*')
       .single();
 
     if (updateError) {
@@ -74,8 +76,21 @@ export async function updateResource(
       throw updateError;
     }
 
+    // Fetch owner and community from cache
+    const [owner, community] = await Promise.all([
+      fetchUserById(updatedResource.owner_id),
+      fetchCommunityById(updatedResource.community_id),
+    ]);
+
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+    if (!community) {
+      throw new Error('Community not found');
+    }
+
     // Transform to domain model
-    const resource = toDomainResource(updatedResource);
+    const resource = toDomainResource(updatedResource, { owner, community });
 
     logger.info('📚 API: Successfully updated resource', {
       id: resource.id,

@@ -21,13 +21,14 @@ describe('User Transformer', () => {
 
       // Verify the transformation
       expect(domainUser).toMatchObject({
-        ...rest,
-        first_name: dbUser.user_metadata?.['first_name'] || '',
-        last_name: dbUser.user_metadata?.['last_name'] || '',
-        full_name: dbUser.user_metadata?.['full_name'] || '',
-        avatar_url: dbUser.user_metadata?.['avatar_url'] || null,
-        created_at: new Date(dbUser.created_at),
-        updated_at: new Date(dbUser.updated_at),
+        id: dbUser.id,
+        email: dbUser.email,
+        firstName: dbUser.user_metadata?.['first_name'] || '',
+        lastName: dbUser.user_metadata?.['last_name'] || undefined,
+        fullName: dbUser.user_metadata?.['full_name'] || undefined,
+        avatarUrl: dbUser.user_metadata?.['avatar_url'] || undefined,
+        createdAt: new Date(dbUser.created_at),
+        updatedAt: new Date(dbUser.updated_at),
       });
     });
 
@@ -44,10 +45,10 @@ describe('User Transformer', () => {
       expect(domainUser).toMatchObject({
         id: dbUser.id,
         email: dbUser.email,
-        first_name: '',
-        last_name: undefined,
-        full_name: undefined,
-        avatar_url: undefined,
+        firstName: '',
+        lastName: undefined,
+        fullName: undefined,
+        avatarUrl: undefined,
       });
     });
 
@@ -71,23 +72,26 @@ describe('User Transformer', () => {
 
       // Verify the transformation
       const {
-        first_name,
-        last_name,
-        full_name,
-        avatar_url,
+        firstName,
+        lastName,
+        fullName,
+        avatarUrl,
+        createdAt,
+        updatedAt,
         ...userWithoutMetadata
       } = domainUser;
 
-      expect(dbUser).toEqual({
-        ...userWithoutMetadata,
+      expect(dbUser).toMatchObject({
+        id: domainUser.id,
+        email: domainUser.email,
         user_metadata: {
-          first_name,
-          last_name,
-          full_name,
-          avatar_url,
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
+          avatar_url: avatarUrl,
         },
-        created_at: domainUser.created_at.toISOString(),
-        updated_at: domainUser.updated_at.toISOString(),
+        created_at: createdAt.toISOString(),
+        updated_at: updatedAt.toISOString(),
       });
     });
 
@@ -95,15 +99,15 @@ describe('User Transformer', () => {
       // Create a partial domain user with only some fields
       const partialUser = {
         id: 'user123',
-        first_name: 'John',
-        last_name: 'Doe',
+        firstName: 'John',
+        lastName: 'Doe',
       };
 
       // Call the transformer
       const result = toDbUser(partialUser);
 
       // Verify only the specified fields are included
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         id: 'user123',
         user_metadata: {
           first_name: 'John',

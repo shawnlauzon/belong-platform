@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { updateCommunity } from '../impl/updateCommunity';
-import { createMockDbCommunity } from '../../test-utils/mocks';
+import { createMockDbCommunity, createMockCommunity } from '../../test-utils/mocks';
 import { supabase } from '@belongnetwork/core';
 import { CommunityData } from '@belongnetwork/types';
+import * as fetchCommunityById from '../impl/fetchCommunityById';
 
 // Mock the supabase client and auth
 vi.mock('@belongnetwork/core', () => ({
@@ -15,9 +16,7 @@ vi.mock('@belongnetwork/core', () => ({
     },
     from: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
+    eq: vi.fn().mockResolvedValue({
       data: null,
       error: null,
     }),
@@ -43,18 +42,19 @@ describe('updateCommunity', () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: mockUser },
     } as any);
+    // Mock fetchCommunityById
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(createMockCommunity());
   });
 
   it('should update a community successfully', async () => {
     // Arrange
-    const updatedCommunity = createMockDbCommunity(updateData);
+    const mockCommunity = createMockCommunity({ id: communityId, name: updateData.name });
+    vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
 
     const mockQuery = {
       update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: updatedCommunity,
+      eq: vi.fn().mockResolvedValue({
+        data: null,
         error: null,
       }),
     };
@@ -74,7 +74,7 @@ describe('updateCommunity', () => {
       })
     );
     expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(fetchCommunityById.fetchCommunityById).toHaveBeenCalledWith(communityId);
     expect(result).toBeDefined();
     expect(result.id).toBe(communityId);
     expect(result.name).toBe(updateData.name);
@@ -98,9 +98,7 @@ describe('updateCommunity', () => {
 
     const mockQuery = {
       update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
+      eq: vi.fn().mockResolvedValue({
         data: null,
         error: mockError,
       }),

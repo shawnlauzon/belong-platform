@@ -32,6 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@belongnetwork/types": "workspace:*",
     "@supabase/supabase-js": "^2.39.7",
     "loglevel": "^1.9.2",
     "nanoid": "^5.1.5",
