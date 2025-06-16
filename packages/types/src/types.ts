@@ -275,3 +275,37 @@ export interface EventAttendanceFilter {
   page?: number;
   pageSize?: number;
 }
+
+// Community Activity Feed Types
+export enum ActivityType {
+  RESOURCE_CREATED = 'resource_created',
+  RESOURCE_UPDATED = 'resource_updated',
+  EVENT_CREATED = 'event_created',
+  EVENT_UPDATED = 'event_updated',
+  THANKS_GIVEN = 'thanks_given',
+  USER_JOINED = 'user_joined',
+  COMMUNITY_CREATED = 'community_created'
+}
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityType;
+  communityId: string;
+  actorId: string;
+  targetId: string;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+  // Assembled data
+  community: Community;
+  actor: User;
+  target?: Resource | Event | Thanks | User | Community;
+}
+
+export interface ActivityFeedFilter {
+  communityId?: string;
+  userId?: string;
+  types?: ActivityType[];
+  page?: number;
+  pageSize?: number;
+  since?: Date;
+}
