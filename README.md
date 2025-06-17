@@ -2,6 +2,10 @@
 
 A TypeScript-first platform for building hyper-local community applications with resource sharing, event management, and social features.
 
+```bash
+npm install @belongnetwork/platform
+```
+
 ## 🌟 Features
 
 **For Community Members:**
@@ -21,10 +25,10 @@ A TypeScript-first platform for building hyper-local community applications with
 ## 🏗️ Architecture
 
 ```
-belong-platform/
-├── @belongnetwork/core     # Configuration, clients, utilities
-├── @belongnetwork/types    # TypeScript types and database schema  
-└── @belongnetwork/api      # React Query hooks and data layer
+@belongnetwork/platform     # Single unified package
+├── /providers              # React providers (BelongClientProvider)
+├── /hooks                  # All React Query hooks  
+└── /types                  # TypeScript types and interfaces
 ```
 
 ## 🚀 Quick Start
@@ -32,9 +36,9 @@ belong-platform/
 ### Installation
 
 ```bash
-npm install @belongnetwork/api @belongnetwork/core @belongnetwork/types
+npm install @belongnetwork/platform
 # or
-pnpm add @belongnetwork/api @belongnetwork/core @belongnetwork/types
+pnpm add @belongnetwork/platform
 ```
 
 ### Basic Setup
@@ -42,7 +46,7 @@ pnpm add @belongnetwork/api @belongnetwork/core @belongnetwork/types
 ```tsx
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BelongClientProvider } from '@belongnetwork/api';
+import { BelongClientProvider } from '@belongnetwork/platform';
 
 const queryClient = new QueryClient();
 
@@ -72,7 +76,7 @@ import {
   useResources, 
   useCurrentUser,
   useCreateResource 
-} from '@belongnetwork/api';
+} from '@belongnetwork/platform';
 
 function CommunityDashboard() {
   const { data: user } = useCurrentUser();
@@ -120,41 +124,38 @@ function CommunityDashboard() {
 }
 ```
 
-## 📚 Package Documentation
+### Alternative Import Patterns
 
-### @belongnetwork/core
-
-The foundation layer providing configured clients and utilities.
+The package also supports subpath imports for better organization:
 
 ```tsx
-import { createBelongClient } from '@belongnetwork/core';
+// Import providers separately
+import { BelongClientProvider } from '@belongnetwork/platform/providers';
 
-// Create a configured client
-const client = createBelongClient({
-  supabaseUrl: 'https://your-project.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
-  mapboxPublicToken: 'your-mapbox-token'
-});
+// Import types separately  
+import type { Resource, Community, User } from '@belongnetwork/platform/types';
 
-// Access individual clients
-const { supabase, mapbox, logger } = client;
-
-// Use for custom operations
-const { data } = await supabase.from('communities').select('*');
-const addresses = await mapbox.searchAddresses('Austin, TX');
-logger.info('Operation completed');
+// Import hooks separately
+import { useResources, useCommunities } from '@belongnetwork/platform/hooks';
 ```
 
-**Key Exports:**
-- `createBelongClient()` - Main factory function
-- `createSupabaseClient()` - Database client factory
-- `createMapboxClient()` - Location services factory
-- `StorageManager` - File upload handling
-- All TypeScript types (re-exported from @belongnetwork/types)
+## 📚 Package Documentation
 
-### @belongnetwork/types
+### Available Exports
 
-Centralized TypeScript definitions and database schema.
+The `@belongnetwork/platform` package provides three main categories of exports:
+
+#### Providers
+
+```tsx
+import { BelongClientProvider } from '@belongnetwork/platform/providers';
+// or
+import { BelongClientProvider } from '@belongnetwork/platform';
+```
+
+The `BelongClientProvider` wraps your app and provides the configured Supabase and Mapbox clients to all hooks.
+
+#### Types
 
 ```tsx
 import type { 
@@ -164,7 +165,9 @@ import type {
   Event, 
   ResourceFilter,
   CommunityData 
-} from '@belongnetwork/types';
+} from '@belongnetwork/platform/types';
+// or
+import type { User, Community } from '@belongnetwork/platform';
 
 // Type-safe resource creation
 const resourceData: ResourceData = {
@@ -174,13 +177,6 @@ const resourceData: ResourceData = {
   communityId: 'community-123',
   meetupType: 'pickup'
 };
-
-// Type-safe filtering
-const filter: ResourceFilter = {
-  category: 'tools',
-  type: 'offer',
-  communityId: 'community-123'
-};
 ```
 
 **Key Types:**
@@ -189,13 +185,13 @@ const filter: ResourceFilter = {
 - **Filters**: `ResourceFilter`, `EventFilter`, etc.
 - **Activity**: `ActivityItem`, `ActivityType`
 
-### @belongnetwork/api
+#### Hooks
 
-React Query hooks for data access and state management.
+All React Query hooks for data fetching and mutations:
 
 #### Authentication
 ```tsx
-import { useCurrentUser, useSignIn, useSignOut } from '@belongnetwork/api';
+import { useCurrentUser, useSignIn, useSignOut } from '@belongnetwork/platform';
 
 function AuthComponent() {
   const { data: user, isLoading } = useCurrentUser();
@@ -228,7 +224,7 @@ import {
   useCommunity, 
   useCreateCommunity,
   useJoinCommunity 
-} from '@belongnetwork/api';
+} from '@belongnetwork/platform';
 
 function CommunityManager() {
   const { data: communities } = useCommunities();
@@ -261,7 +257,7 @@ import {
   useCreateResource, 
   useUpdateResource,
   useDeleteResource 
-} from '@belongnetwork/api';
+} from '@belongnetwork/platform';
 
 function ResourceManager() {
   const { data: resources } = useResources({
@@ -297,7 +293,7 @@ import {
   useCreateEvent, 
   useJoinEvent,
   useEventAttendees 
-} from '@belongnetwork/api';
+} from '@belongnetwork/platform';
 
 function EventManager() {
   const { data: events } = useEvents();
@@ -323,7 +319,7 @@ function EventManager() {
 
 #### Activity Feeds
 ```tsx
-import { useActivityFeed } from '@belongnetwork/api';
+import { useActivityFeed } from '@belongnetwork/platform';
 
 function ActivityFeed() {
   const { data: activities } = useActivityFeed({
@@ -526,10 +522,11 @@ pnpm --filter @belongnetwork/core build
 
 ### Adding New Features
 
-1. **Types First**: Add types to `@belongnetwork/types`
-2. **Implementation**: Add functions to `@belongnetwork/core` or `@belongnetwork/api`
+1. **Types First**: Add types to `packages/types`
+2. **Implementation**: Add hooks to `packages/api`
 3. **Tests**: Write comprehensive tests for new functionality
 4. **Documentation**: Update README and JSDoc comments
+5. **Export**: Ensure new features are exported from the appropriate barrel files
 
 ## 📝 License
 

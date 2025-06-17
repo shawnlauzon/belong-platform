@@ -1,18 +1,48 @@
 {
-  "name": "@belongnetwork/belong-platform",
-  "private": true,
+  "name": "@belongnetwork/platform",
   "version": "0.1.0",
   "type": "module",
+  "moduleResolution": "node16",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs.js"
+    },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "import": "./dist/providers.es.js",
+      "require": "./dist/providers.cjs.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks.d.ts",
+      "import": "./dist/hooks.es.js",
+      "require": "./dist/hooks.cjs.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.es.js",
+      "require": "./dist/types.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "workspaces": [
     "packages/api",
     "packages/types",
     "packages/core"
   ],
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm -r build && vite build --config vite.config.mts",
     "test": "pnpm -r --parallel --no-bail test",
     "test:coverage": "pnpm -r --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:integration:watch": "vitest --config vitest.integration.config.mts",
     "typecheck": "pnpm -r typecheck",
     "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
@@ -24,6 +54,7 @@
     "@eslint/js": "^9.9.1",
     "@manypkg/cli": "^0.24.0",
     "@types/jest": "^29.5.14",
+    "@vitejs/plugin-react": "^4.5.1",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^15.9.0",

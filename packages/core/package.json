@@ -1,7 +1,9 @@
 {
   "name": "@belongnetwork/core",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
+  "moduleResolution": "node16",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
@@ -10,11 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.es.js",
       "require": "./dist/index.cjs.js"
-    },
-    "./transformers": {
-      "types": "./dist/transformers/index.d.ts",
-      "import": "./dist/transformers/index.js",
-      "require": "./dist/transformers/index.cjs"
     }
   },
   "files": [
