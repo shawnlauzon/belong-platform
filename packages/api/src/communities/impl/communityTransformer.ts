@@ -21,7 +21,6 @@ export type CommunityMembershipUpdateDbData = Database['public']['Tables']['comm
 export function toDomainCommunity(
   dbCommunity: CommunityRow & { 
     organizer: ProfileRow; 
-    parent?: CommunityRow & { organizer: ProfileRow } | null;
   }
 ): Community {
   const { center, created_at, updated_at, ...rest } = dbCommunity;
@@ -29,8 +28,6 @@ export function toDomainCommunity(
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
 
-  // Transform parent community if present
-  const parent = dbCommunity.parent ? toDomainCommunity(dbCommunity.parent) : undefined;
 
   return {
     ...rest,
@@ -43,7 +40,7 @@ export function toDomainCommunity(
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
     organizer: toDomainUser(dbCommunity.organizer),
-    parent,
+    parent: undefined,
     parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path ? JSON.parse(dbCommunity.hierarchy_path as string) : [],
     timeZone: dbCommunity.time_zone,
