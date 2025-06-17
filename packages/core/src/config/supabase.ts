@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@belongnetwork/types';
+import type { Database } from '@belongnetwork/types/database';
 import { logger as defaultLogger } from '../utils/logger';
 
 /**

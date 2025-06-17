@@ -1,2 +1,2 @@
-export * from './types';
-export * from './database';
+// Export all public API types through wildcard
+export * from './public';

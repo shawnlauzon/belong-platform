@@ -1,5 +1,5 @@
+import type { Database } from '@belongnetwork/types/database';
 import type { User, UserData } from '@belongnetwork/types';
-import type { Database } from '@belongnetwork/types';
 
 // Types for database rows
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];

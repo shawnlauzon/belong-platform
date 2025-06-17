@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import type { Database, ThanksData } from '@belongnetwork/types';
+import type { Database } from '@belongnetwork/types/database';
+import type { ThanksData } from '@belongnetwork/types';
 
 type ThanksRow = Database['public']['Tables']['thanks']['Row'];
 

@@ -1,5 +1,5 @@
+import type { Database } from '@belongnetwork/types/database';
 import type {
-  Database,
   EventAttendanceData,
   EventAttendance,
   EventAttendanceStatus,

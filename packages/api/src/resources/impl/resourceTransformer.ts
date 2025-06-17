@@ -1,6 +1,6 @@
+import type { Database } from '@belongnetwork/types/database';
 import type {
   Community,
-  Database,
   MeetupFlexibility,
   ResourceCategory,
   ResourceData,

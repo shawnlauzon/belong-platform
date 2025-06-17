@@ -1,5 +1,5 @@
-import type { CommunityData, Database } from '@belongnetwork/types';
-import type { Community, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
+import type { Database } from '@belongnetwork/types/database';
+import type { CommunityData, Community, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 import { toDomainUser } from '../../users/impl/userTransformer';
 

@@ -2,7 +2,7 @@ import { createSupabaseClient } from './supabase';
 import { createMapboxClient } from './mapbox';
 import { createLogger } from '../utils/logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@belongnetwork/types';
+import type { Database } from '@belongnetwork/types/database';
 
 /**
  * Configuration options for the Belong Platform client

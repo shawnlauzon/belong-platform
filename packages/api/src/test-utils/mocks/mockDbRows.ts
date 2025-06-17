@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import type { Database } from '@belongnetwork/types';
+import type { Database } from '@belongnetwork/types/database';
 
 type UserRow = Database['public']['Tables']['profiles']['Row'];
 type ResourceRow = Database['public']['Tables']['resources']['Row'];
