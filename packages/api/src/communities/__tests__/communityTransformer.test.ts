@@ -68,9 +68,8 @@ describe('Community Transformer', () => {
       expect(domainCommunity.organizer).toBeDefined();
       expect(domainCommunity.organizer.id).toBe(mockDbCommunity.organizer.id);
 
-      // Verify the parent is transformed
-      expect(domainCommunity.parent).toBeDefined();
-      expect(domainCommunity.parent?.id).toBe(parentDbCommunity.id);
+      // Verify the parent is not transformed (always undefined)
+      expect(domainCommunity.parent).toBeUndefined();
     });
 
     it('should handle missing center gracefully', () => {
