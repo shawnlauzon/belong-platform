@@ -35,5 +35,33 @@ tsconfig.tsbuildinfo
 *.sw?
 .env
 
-# Supabase
+# Database migrations
+supabase/migrations
+supabase/functions
 supabase/.temp
+
+# Development/build artifacts
+*.tsbuildinfo
+coverage/
+.nyc_output
+test-results/
+
+# Development configs
+vitest.config.*
+jest.config.*
+.eslintrc.*
+.prettierrc.*
+tailwind.config.*
+
+# Documentation that shouldn't be published
+docs/
+*.md
+!README.md
+
+# Source maps (if you don't want them published)
+*.map
+
+# Lock files (optional - some prefer to exclude)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
