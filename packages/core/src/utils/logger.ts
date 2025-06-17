@@ -46,18 +46,18 @@ export function createLogger(logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'er
 const isDevelopment = import.meta.env.DEV;
 const defaultLogLevel = import.meta.env.VITE_LOG_LEVEL || (isDevelopment ? 'trace' : 'info');
 
-export const logger = createLogger(defaultLogLevel as any);
+export const logger = createLogger(defaultLogLevel as 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent');
 
 // Export convenience methods
-export const logComponentRender = (componentName: string, props?: any) => {
+export const logComponentRender = (componentName: string, props?: Record<string, unknown>) => {
   logger.trace(`🎨 Rendering ${componentName}`, props ? { props } : '');
 };
 
-export const logApiCall = (method: string, url: string, data?: any) => {
+export const logApiCall = (method: string, url: string, data?: unknown) => {
   logger.debug(`🌐 API ${method.toUpperCase()} ${url}`, data ? { data } : '');
 };
 
-export const logApiResponse = (method: string, url: string, response?: any, error?: any) => {
+export const logApiResponse = (method: string, url: string, response?: unknown, error?: unknown) => {
   if (error) {
     logger.warn(`🌐 API ${method.toUpperCase()} ${url} failed`, { error });
   } else {
@@ -65,15 +65,15 @@ export const logApiResponse = (method: string, url: string, response?: any, erro
   }
 };
 
-export const logUserAction = (action: string, data?: any) => {
+export const logUserAction = (action: string, data?: unknown) => {
   logger.info(`👤 User action: ${action}`, data ? { data } : '');
 };
 
-export const logStateChange = (stateName: string, oldValue?: any, newValue?: any) => {
+export const logStateChange = (stateName: string, oldValue?: unknown, newValue?: unknown) => {
   logger.debug(`🔄 State change: ${stateName}`, { oldValue, newValue });
 };
 
-export const logEvent = (eventType: string, eventData?: any) => {
+export const logEvent = (eventType: string, eventData?: unknown) => {
   logger.debug(`📡 Event: ${eventType}`, eventData ? { eventData } : '');
 };
 

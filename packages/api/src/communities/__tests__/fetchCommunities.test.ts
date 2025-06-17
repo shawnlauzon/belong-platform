@@ -49,7 +49,7 @@ describe('fetchCommunities', () => {
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!inner(*), parent:communities(*, organizer:profiles(*))');
+    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*), parent:communities(*, organizer:profiles(*))');
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
     });

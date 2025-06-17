@@ -53,7 +53,7 @@ describe('fetchCommunityById', () => {
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!inner(*), parent:communities(*, organizer:profiles(*))');
+    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*), parent:communities(*, organizer:profiles(*))');
     expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
     expect(result).toBeDefined();
     expect(result?.id).toBe(communityId);

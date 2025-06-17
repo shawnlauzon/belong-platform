@@ -19,7 +19,7 @@ export type Database = {
           level: string
           member_count: number
           name: string
-          organizer_id: string | null
+          organizer_id: string
           parent_id: string | null
           radius_km: number | null
           time_zone: string
@@ -34,7 +34,7 @@ export type Database = {
           level: string
           member_count?: number
           name: string
-          organizer_id?: string | null
+          organizer_id: string
           parent_id?: string | null
           radius_km?: number | null
           time_zone: string
@@ -49,13 +49,20 @@ export type Database = {
           level?: string
           member_count?: number
           name?: string
-          organizer_id?: string | null
+          organizer_id?: string
           parent_id?: string | null
           radius_km?: number | null
           time_zone?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "communities_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "communities_parent_id_fkey"
             columns: ["parent_id"]
@@ -85,6 +92,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "community_memberships_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_memberships_user_id_fkey1"
             columns: ["user_id"]
@@ -353,7 +367,7 @@ export type Database = {
         Insert: {
           availability?: string | null
           category: string
-          community_id?: string | null
+          community_id: string
           created_at?: string
           description: string
           id?: string
@@ -371,7 +385,7 @@ export type Database = {
         Update: {
           availability?: string | null
           category?: string
-          community_id?: string | null
+          community_id?: string
           created_at?: string
           description?: string
           id?: string
