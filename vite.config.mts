@@ -6,10 +6,13 @@ export default defineConfig({
   plugins: [
     dts({
       insertTypesEntry: true,
-      include: ['src/**/*', 'packages/*/src/**/*'],
-      exclude: ['**/*.test.*', '**/*.spec.*'],
+      include: ['src/**/*'],
+      exclude: ['**/*.test.*', '**/*.spec.*', 'packages/**/*'],
       tsConfigFilePath: './tsconfig.build.json',
-      skipDiagnostics: true
+      skipDiagnostics: true,
+      noEmitOnError: false,
+      strictOutput: false,
+      logLevel: 'silent'
     })
   ],
   build: {
@@ -32,7 +35,10 @@ export default defineConfig({
         '@tanstack/react-query',
         'loglevel',
         'nanoid',
-        'zod'
+        'zod',
+        '@belongnetwork/api',
+        '@belongnetwork/types',
+        '@belongnetwork/core'
       ]
     }
   }

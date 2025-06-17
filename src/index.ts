@@ -1,14 +1,14 @@
 // @belongnetwork/platform - Main entry point
 
 // Re-export everything from packages using barrel exports
-export * from '../packages/api/src'
-export * from '../packages/types/src'
-export * from '../packages/core/src'
+export * from '@belongnetwork/api'
+export * from '@belongnetwork/types'
+export * from '@belongnetwork/core'
 
 // Named exports for better organization
-export * as hooks from '../packages/api/src'
-export * as types from '../packages/types/src'
-export { BelongClientProvider } from '../packages/api/src'
+export * as hooks from '@belongnetwork/api'
+export * as types from '@belongnetwork/types'
+export { BelongClientProvider } from '@belongnetwork/api'
 
 // Explicit global configuration exports for clarity
 export { 
@@ -16,4 +16,4 @@ export {
   getBelongClient, 
   isInitialized, 
   resetBelongClient 
-} from '../packages/core/src'
+} from '@belongnetwork/core'

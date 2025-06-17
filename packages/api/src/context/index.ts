@@ -1,1 +1,1 @@
-export * from './BelongClientProvider';
+export * from './BelongClientProvider.js';
