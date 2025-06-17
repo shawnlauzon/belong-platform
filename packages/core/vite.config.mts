@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -10,7 +9,6 @@ const __dirname = resolve(__filename, '..');
 // Base configuration for both build and test
 const config = {
   plugins: [
-    react(),
     dts({
       insertTypesEntry: true,
       include: ['src/**/*'],
@@ -26,8 +24,6 @@ const config = {
     },
     rollupOptions: {
       external: [
-        'react',
-        'react-dom',
         'zod',
         'mapbox-gl',
         '@supabase/supabase-js',
@@ -36,8 +32,6 @@ const config = {
       ],
       output: {
         globals: {
-          react: 'React',
-          'react-dom': 'ReactDOM',
           zod: 'zod',
           'mapbox-gl': 'mapboxgl',
           '@supabase/supabase-js': 'supabase',
@@ -49,9 +43,6 @@ const config = {
     sourcemap: true,
     emptyOutDir: true
   },
-  optimizeDeps: {
-    exclude: ['lucide-react']
-  }
 };
 
 export default defineConfig(config);
