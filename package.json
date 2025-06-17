@@ -1,6 +1,8 @@
 {
   "name": "@belongnetwork/platform",
   "version": "0.1.0",
+  "private": false,
+  "description": "A platform for building hyper-local community applications with resource sharing, event management, and social features.",
   "type": "module",
   "moduleResolution": "node16",
   "main": "./dist/index.cjs.js",
