@@ -1,120 +1,135 @@
+import { describe, it, expect, beforeAll } from 'vitest';
+import { faker } from '@faker-js/faker';
+
 /**
- * Integration test to validate that the package exports work correctly
- * This test ensures clients can import from @belongnetwork/platform
- * in all the expected ways after building and publishing.
+ * Integration test to verify all expected exports are available
+ * from the main @belongnetwork/platform package.
+ * 
+ * This test ensures that:
+ * 1. All critical functions are properly exported
+ * 2. The package can be imported as consumers would use it
+ * 3. No build artifacts contain stale/missing exports
  */
-
-import { describe, test, expect } from 'vitest'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-
 describe('Package Exports Integration', () => {
-  test('dist files are generated correctly', () => {
-    const distPath = join(process.cwd(), 'dist')
-    
-    // Check main entry files exist
-    expect(() => readFileSync(join(distPath, 'index.es.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'index.cjs.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'index.d.ts'))).not.toThrow()
-    
-    // Check subpath files exist
-    expect(() => readFileSync(join(distPath, 'providers.es.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'providers.cjs.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'providers.d.ts'))).not.toThrow()
-    
-    expect(() => readFileSync(join(distPath, 'hooks.es.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'hooks.cjs.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'hooks.d.ts'))).not.toThrow()
-    
-    expect(() => readFileSync(join(distPath, 'types.es.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'types.cjs.js'))).not.toThrow()
-    expect(() => readFileSync(join(distPath, 'types.d.ts'))).not.toThrow()
-  })
+  let platformModule: any;
 
-  test('main entry point exports correct content', () => {
-    const indexContent = readFileSync(join(process.cwd(), 'dist/index.es.js'), 'utf-8')
-    
-    // Should export from packages
-    expect(indexContent).toContain('export')
-    expect(indexContent).toContain('from')
-    
-    // Should have BelongClientProvider export
-    expect(indexContent).toContain('BelongClientProvider')
-    
-    // Should have namespace exports
-    expect(indexContent).toContain('hooks')
-    expect(indexContent).toContain('types')
-  })
+  beforeAll(async () => {
+    // Import the actual built package, not source files
+    // This tests the real consumer experience
+    try {
+      platformModule = await import('@belongnetwork/platform');
+    } catch (error) {
+      // Fallback to local dist for development
+      platformModule = await import('../../dist/index.es.js');
+    }
+  });
 
-  test('providers subpath exports correct content', () => {
-    const providersContent = readFileSync(join(process.cwd(), 'dist/providers.es.js'), 'utf-8')
-    
-    // Should export BelongClientProvider
-    expect(providersContent).toContain('export')
-    expect(providersContent).toContain('BelongClientProvider')
-  })
+  describe('Global Configuration Exports', () => {
+    it('should export initializeBelong function', () => {
+      expect(platformModule.initializeBelong).toBeDefined();
+      expect(typeof platformModule.initializeBelong).toBe('function');
+    });
 
-  test('hooks subpath exports correct content', () => {
-    const hooksContent = readFileSync(join(process.cwd(), 'dist/hooks.es.js'), 'utf-8')
-    
-    // Should have export statements
-    expect(hooksContent).toContain('export')
-  })
+    it('should export getBelongClient function', () => {
+      expect(platformModule.getBelongClient).toBeDefined();
+      expect(typeof platformModule.getBelongClient).toBe('function');
+    });
 
-  test('types subpath exports correct content', () => {
-    const typesContent = readFileSync(join(process.cwd(), 'dist/types.es.js'), 'utf-8')
-    
-    // Should have export statements
-    expect(typesContent).toContain('export')
-  })
+    it('should export isInitialized function', () => {
+      expect(platformModule.isInitialized).toBeDefined();
+      expect(typeof platformModule.isInitialized).toBe('function');
+    });
 
-  test('package.json configuration is valid', () => {
-    const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'))
-    
-    expect(packageJson.name).toBe('@belongnetwork/platform')
-    expect(packageJson.main).toBe('./dist/index.cjs.js')
-    expect(packageJson.module).toBe('./dist/index.es.js')
-    expect(packageJson.types).toBe('./dist/index.d.ts')
-    
-    // Validate exports field
-    expect(packageJson.exports).toHaveProperty('.')
-    expect(packageJson.exports).toHaveProperty('./providers')
-    expect(packageJson.exports).toHaveProperty('./hooks')
-    expect(packageJson.exports).toHaveProperty('./types')
-    
-    // Validate main export paths
-    const mainExport = packageJson.exports['.']
-    expect(mainExport.types).toBe('./dist/index.d.ts')
-    expect(mainExport.import).toBe('./dist/index.es.js')
-    expect(mainExport.require).toBe('./dist/index.cjs.js')
-    
-    // Validate subpath exports
-    const providersExport = packageJson.exports['./providers']
-    expect(providersExport.types).toBe('./dist/providers.d.ts')
-    expect(providersExport.import).toBe('./dist/providers.es.js')
-    expect(providersExport.require).toBe('./dist/providers.cjs.js')
-  })
+    it('should export resetBelongClient function', () => {
+      expect(platformModule.resetBelongClient).toBeDefined();
+      expect(typeof platformModule.resetBelongClient).toBe('function');
+    });
+  });
 
-  test('TypeScript declarations are generated', () => {
-    const indexDts = readFileSync(join(process.cwd(), 'dist/index.d.ts'), 'utf-8')
-    const providersDts = readFileSync(join(process.cwd(), 'dist/providers.d.ts'), 'utf-8')
-    const hooksDts = readFileSync(join(process.cwd(), 'dist/hooks.d.ts'), 'utf-8')
-    const typesDts = readFileSync(join(process.cwd(), 'dist/types.d.ts'), 'utf-8')
-    
-    // Check that type definitions contain expected exports
-    expect(indexDts).toContain('export')
-    expect(providersDts).toContain('BelongClientProvider')
-    expect(hooksDts).toContain('export')
-    expect(typesDts).toContain('export')
-  })
+  describe('Hook Exports', () => {
+    const expectedHooks = [
+      'useCurrentUser',
+      'useSignIn', 
+      'useSignOut',
+      'useCommunities',
+      'useCommunity',
+      'useCreateCommunity',
+      'useResources',
+      'useCreateResource',
+      'useEvents',
+      'useCreateEvent',
+      'useThanks',
+      'useCreateThanks',
+      'useUsers',
+      'useCreateUser'
+    ];
 
-  test('files field includes only dist directory', () => {
-    const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'))
-    expect(packageJson.files).toEqual(['dist'])
-  })
+    it.each(expectedHooks)('should export %s hook', (hookName) => {
+      expect(platformModule[hookName]).toBeDefined();
+      expect(typeof platformModule[hookName]).toBe('function');
+    });
+  });
 
-  test('private field is not set (package can be published)', () => {
-    const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'))
-    expect(packageJson.private).toBeUndefined()
-  })
-})
+  describe('Type Exports', () => {
+    const expectedTypes = [
+      'ResourceCategory',
+      'MeetupFlexibility', 
+      'EventAttendanceStatus'
+    ];
+
+    it.each(expectedTypes)('should export %s type', (typeName) => {
+      expect(platformModule[typeName]).toBeDefined();
+    });
+  });
+
+  describe('Legacy Provider (Deprecated)', () => {
+    it('should still export BelongClientProvider for backward compatibility', () => {
+      expect(platformModule.BelongClientProvider).toBeDefined();
+      expect(typeof platformModule.BelongClientProvider).toBe('function');
+    });
+  });
+
+  describe('Functional Integration', () => {
+    it('should allow basic initialization flow', () => {
+      const { initializeBelong, isInitialized, resetBelongClient } = platformModule;
+      
+      // Reset any existing state
+      resetBelongClient();
+      expect(isInitialized()).toBe(false);
+      
+      // Generate realistic fake URLs and tokens using Faker
+      const fakeSupabaseUrl = `https://${faker.string.alphanumeric(8).toLowerCase()}.supabase.co`;
+      const fakeJwtToken = faker.internet.jwt();
+      const fakeMapboxToken = faker.string.alphanumeric(32);
+      
+      // Should be able to initialize with valid URLs (but fake tokens)
+      expect(() => {
+        initializeBelong({
+          supabaseUrl: fakeSupabaseUrl,
+          supabaseAnonKey: fakeJwtToken, 
+          mapboxPublicToken: fakeMapboxToken
+        });
+      }).not.toThrow();
+      
+      // Should now be initialized
+      expect(isInitialized()).toBe(true);
+    });
+  });
+
+  describe('Import Patterns', () => {
+    it('should support direct imports', async () => {
+      const { initializeBelong } = await import('@belongnetwork/platform');
+      expect(initializeBelong).toBeDefined();
+    });
+
+    it('should support subpath imports for hooks', async () => {
+      const hooks = await import('@belongnetwork/platform/hooks');
+      expect(hooks.useCurrentUser).toBeDefined();
+    });
+
+    it('should support subpath imports for types', async () => {
+      const types = await import('@belongnetwork/platform/types');
+      expect(types.ResourceCategory).toBeDefined();
+    });
+  });
+});

@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
+import { faker } from '@faker-js/faker'
 import { useCommunities } from '@belongnetwork/api/communities/hooks'
 import { TestWrapper } from '../utils/test-wrapper'
 
@@ -12,9 +13,13 @@ describe('useCommunities Database Integration', () => {
     // Initially should be loading
     expect(result.current.isLoading).toBe(true)
 
+    // Generate a random test ID for logging context
+    const testId = faker.string.alphanumeric(8)
+    console.log(`[Test ${testId}] Starting useCommunities integration test`)
+
     // Wait for query to complete with extended timeout
     await waitFor(() => {
-      console.log('Hook state:', {
+      console.log(`[Test ${testId}] Hook state:`, {
         isLoading: result.current.isLoading,
         isSuccess: result.current.isSuccess,
         isError: result.current.isError,

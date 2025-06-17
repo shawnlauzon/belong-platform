@@ -35,10 +35,8 @@ Supabase.
 Package Structure
 
 - @belongnetwork/api - Data layer with React Query hooks for auth, communities, resources, and users
-- @belongnetwork/app - Main React application with TanStack Router
 - @belongnetwork/components - Reusable UI components built with Radix UI and Tailwind CSS
 - @belongnetwork/core - Shared configuration, utilities, and logger
-- @belongnetwork/dashboard - Administrative dashboard application
 - @belongnetwork/types - TypeScript type definitions and database schema types
 
 
@@ -52,6 +50,11 @@ Tech Stack
 
 Development Guidelines
 
+Code Patterns
+
+- Study existing files for established patterns before creating new ones
+- Follow component composition patterns established in @belongnetwork/components
+
 Type Safety
 
 - NEVER use any types - always create proper interfaces, union types, or use type assertions
@@ -59,16 +62,25 @@ Type Safety
 - Use generated database types from @belongnetwork/types
 - Prefer type-safe patterns over casting or type assertions
 
-Testing
+TDD
+
+- Always write a test before writing the code
+- Use the test file to guide the implementation
+
+Unit Testing
 
 - Each package has its own Vitest configuration
 - Skipping tests is not an acceptable way to make tests pass
+- All unit tests must pass before committing
+- Use faker to generate data for tests and to document expected values
 
-Code Patterns
+Integration Testing
 
-- Study existing files for established patterns before creating new ones
-- Follow component composition patterns established in @belongnetwork/components
-- Import shared types from @belongnetwork/types
+- Integration tests are located in the tests/integration directory
+- Integration tests do not mock anything
+- Integration tests import packages from the dist directory
+- You may only read and write from the database for test setup or validation
+- Use faker to generate data for tests
 
 Code Safety Guidelines
 
@@ -85,6 +97,7 @@ Development Principles
 
 ## Memory
 
-- When asked to look at the database definition, either look at database.ts or use the supabase MCP
+- When asked to look at the database definition, either look at database.t
 - Never update the database.ts file. Always make changes via a database migration and then pull the types
-- To update the database.ts file, use supabase /mcp
+- To update the database.ts file, run `pnpm run gen:db-types` from the types directory
+```
