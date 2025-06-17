@@ -25,9 +25,6 @@
     "typecheck": "tsc --noEmit",
     "gen:db-types": "dotenv -e ../../.env supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/database.ts"
   },
-  "dependencies": {
-    "@belongnetwork/core": "workspace:*"
-  },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.3.1",
