@@ -2,5 +2,3 @@ packages:
   - 'packages/core'
   - 'packages/types'
   - 'packages/api'
-  - 'packages/components'
-  - 'packages/app'
