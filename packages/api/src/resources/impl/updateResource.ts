@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { Resource, ResourceData } from '@belongnetwork/types';
 import { toDomainResource, forDbUpdate } from './resourceTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -12,6 +11,8 @@ import {
 export async function updateResource(
   data: Partial<ResourceData> & { id: string }
 ): Promise<Resource> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('📚 API: Updating resource', {
     id: data.id,
     updates: {

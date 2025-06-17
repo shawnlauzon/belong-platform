@@ -1,11 +1,12 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { Event, EventFilter } from '@belongnetwork/types';
 import { toDomainEvent } from './eventTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 
 export async function fetchEvents(filters?: EventFilter): Promise<Event[]> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Fetching events', { filters });
 
   try {
@@ -108,6 +109,7 @@ export async function fetchEvents(filters?: EventFilter): Promise<Event[]> {
 }
 
 export async function fetchEventById(id: string): Promise<Event | null> {
+  const { supabase, logger } = getBelongClient();
   logger.debug('🎉 API: Fetching event by ID', { id });
 
   try {

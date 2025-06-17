@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { Thanks, ThanksData } from '@belongnetwork/types';
 import { toDomainThanks, forDbUpdate } from './thanksTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -11,6 +10,7 @@ import {
 export async function updateThanks(
   data: Partial<ThanksData> & { id: string }
 ): Promise<Thanks> {
+  const { supabase, logger } = getBelongClient();
   logger.debug('🙏 API: Updating thanks', {
     id: data.id,
     updates: {

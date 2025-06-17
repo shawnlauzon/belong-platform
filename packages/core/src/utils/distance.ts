@@ -1,5 +1,5 @@
 import { logger, logApiCall, logApiResponse } from '../utils/logger';
-import { getPublicToken } from '../config/mapbox';
+import type { createMapboxClient } from '../config/mapbox';
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
@@ -9,7 +9,8 @@ const isValidCoordinate = (value: number): boolean => {
 // Calculate driving time between two points (using Mapbox Directions API)
 export const calculateDrivingTime = async (
   origin: { lat: number; lng: number },
-  destination: { lat: number; lng: number }
+  destination: { lat: number; lng: number },
+  mapboxClient?: ReturnType<typeof createMapboxClient>
 ): Promise<number> => {
   logger.trace('🗺️ Calculating driving time:', { origin, destination });
 
@@ -31,37 +32,17 @@ export const calculateDrivingTime = async (
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    if (!getPublicToken()) {
-      logger.debug('No Mapbox token available, using approximation');
+    if (!mapboxClient) {
+      logger.debug('No Mapbox client available, using approximation');
       return calculateApproximateDrivingTime(origin, destination);
     }
 
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${getPublicToken()}`;
-
-    logApiCall('GET', 'mapbox/directions', { origin, destination });
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      logger.warn(
-        `Mapbox API error: ${response.status}, falling back to approximation`
-      );
-      logApiResponse('GET', 'mapbox/directions', null, {
-        status: response.status,
-      });
-      return calculateApproximateDrivingTime(origin, destination);
-    }
-
-    const data = await response.json();
-
-    // Return driving time in minutes
-    if (data.routes && data.routes.length > 0) {
-      const drivingTimeMinutes = Math.round(data.routes[0].duration / 60);
-      logApiResponse('GET', 'mapbox/directions', { drivingTimeMinutes });
-      logger.trace('🗺️ Mapbox driving time calculated:', {
-        drivingTimeMinutes,
-      });
-      return drivingTimeMinutes;
+    // Use the mapbox client's calculateDrivingTime method
+    const drivingTime = await mapboxClient.calculateDrivingTime(origin, destination);
+    
+    if (drivingTime !== null) {
+      logger.trace('🗺️ Mapbox driving time calculated:', { drivingTime });
+      return drivingTime;
     }
 
     // Fallback calculation if API fails (direct distance calculation)
@@ -69,7 +50,6 @@ export const calculateDrivingTime = async (
     return calculateApproximateDrivingTime(origin, destination);
   } catch (error) {
     logger.error('Error calculating driving time:', error);
-    logApiResponse('GET', 'mapbox/directions', null, error);
     // Fallback to approximation
     return calculateApproximateDrivingTime(origin, destination);
   }

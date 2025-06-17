@@ -5,14 +5,20 @@ export {
   type BelongClientConfig,
 } from './config/client';
 
+// Global Configuration
+export {
+  initializeBelong,
+  getBelongClient,
+  isInitialized,
+  resetBelongClient,
+} from './config/global';
+
 // Factory Functions
 export { createSupabaseClient } from './config/supabase';
 export { createMapboxClient, type Coordinates } from './config/mapbox';
 export { createLogger } from './utils/logger';
 
-// Legacy Singleton Instances (for backward compatibility)
-export { getPublicToken, mapbox } from './config/mapbox';
-export { supabase } from './config/supabase';
+// Logger Utilities
 export {
   logger,
   logApiCall,

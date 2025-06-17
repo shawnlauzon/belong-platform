@@ -1,5 +1,4 @@
-import { logger } from '@belongnetwork/core';
-import { supabase } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { Account } from '@belongnetwork/types';
 
 /**
@@ -15,6 +14,8 @@ export async function signUp(
   password: string,
   metadata?: { firstName?: string; lastName?: string }
 ): Promise<Account> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🔐 API: Signing up user', { email });
 
   try {

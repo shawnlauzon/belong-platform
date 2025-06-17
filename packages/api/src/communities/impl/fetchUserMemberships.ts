@@ -1,10 +1,11 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { CommunityMembership } from '@belongnetwork/types';
 import { toDomainMembership } from './communityTransformer';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function fetchUserMemberships(userId?: string): Promise<CommunityMembership[]> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🏘️ API: Fetching user memberships', { userId });
 
   try {

@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { ResourceData, Resource } from '@belongnetwork/types';
 import { toDomainResource, forDbInsert } from './resourceTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -7,6 +6,8 @@ import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function createResource(data: ResourceData): Promise<Resource> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('📚 API: Creating resource', {
     data: { ...data, location: 'REDACTED' },
   });

@@ -1,28 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { faker } from '@faker-js/faker';
 import { fetchCommunities } from '../impl/fetchCommunities';
 import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
-import { supabase } from '@belongnetwork/core';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue({
-      data: [],
-      error: null,
-    }),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
+
 describe('fetchCommunities', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
   });
 
   it('should fetch communities successfully', async () => {
@@ -42,14 +61,14 @@ describe('fetchCommunities', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery);
 
     // Act
     const result = await fetchCommunities();
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*), parent:communities(*, organizer:profiles(*))');
+    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
+    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*)');
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
     });
@@ -68,7 +87,7 @@ describe('fetchCommunities', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery);
 
     // Act & Assert
     await expect(fetchCommunities()).rejects.toThrow(mockError);

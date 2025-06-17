@@ -1,9 +1,10 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 import { COMMUNITY_ERROR_MESSAGES } from '../constants';
 
 export async function leaveCommunity(communityId: string): Promise<void> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🏘️ API: Leaving community', { communityId });
 
   try {

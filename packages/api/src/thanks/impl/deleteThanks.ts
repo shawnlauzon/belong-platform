@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainThanks } from './thanksTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchResourceById } from '../../resources/impl/fetchResources';
@@ -13,6 +12,8 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
  * @throws {Error} If user is not authenticated, not authorized, or other error occurs
  */
 export async function deleteThanks(id: string): Promise<Thanks | null> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🙏 API: Deleting thanks', { id });
 
   try {

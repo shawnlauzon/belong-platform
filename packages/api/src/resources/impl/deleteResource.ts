@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainResource } from './resourceTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
@@ -13,6 +12,8 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
  * @throws {Error} If user is not authenticated, not authorized, or other error occurs
  */
 export async function deleteResource(id: string): Promise<Resource | null> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('📚 API: Deleting resource', { id });
 
   try {

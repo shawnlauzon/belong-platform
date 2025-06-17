@@ -1,11 +1,12 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainCommunity } from './communityTransformer';
 import type { Community } from '@belongnetwork/types';
 
 export async function fetchCommunityById(
   id: string
 ): Promise<Community | null> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🏘️ API: Fetching community by ID', { id });
 
   try {

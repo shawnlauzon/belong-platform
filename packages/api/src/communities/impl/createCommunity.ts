@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { forDbInsert, toDomainCommunity } from './communityTransformer';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -8,6 +7,8 @@ import { fetchCommunityById } from './fetchCommunityById';
 export async function createCommunity(
   data: CommunityData
 ): Promise<Community> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🏘️ API: Creating community', { name: data.name });
 
   try {

@@ -1,8 +1,9 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function deleteEvent(id: string): Promise<void> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Deleting event', { id });
 
   try {

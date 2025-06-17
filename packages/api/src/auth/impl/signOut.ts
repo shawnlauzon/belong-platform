@@ -1,5 +1,4 @@
-import { logger } from '@belongnetwork/core';
-import { supabase } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 
 /**
  * Signs out the current user
@@ -7,6 +6,8 @@ import { supabase } from '@belongnetwork/core';
  * @throws {Error} If sign out fails
  */
 export async function signOut(): Promise<void> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🔐 API: Signing out user');
 
   try {

@@ -1,6 +1,6 @@
 import { createSupabaseClient } from './supabase';
 import { createMapboxClient } from './mapbox';
-import { createLogger } from '../utils/logger';
+import { logger as defaultLogger } from '../utils/logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@belongnetwork/types/database';
 
@@ -14,8 +14,6 @@ export interface BelongClientConfig {
   supabaseAnonKey: string;
   /** Mapbox public access token */
   mapboxPublicToken: string;
-  /** Log level (default: 'info') */
-  logLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
 }
 
 /**
@@ -27,7 +25,7 @@ export interface BelongClient {
   /** Configured Mapbox client */
   mapbox: ReturnType<typeof createMapboxClient>;
   /** Configured logger */
-  logger: ReturnType<typeof createLogger>;
+  logger: typeof defaultLogger;
 }
 
 /**
@@ -41,8 +39,7 @@ export interface BelongClient {
  * const client = createBelongClient({
  *   supabaseUrl: 'https://your-project.supabase.co',
  *   supabaseAnonKey: 'your-anon-key',
- *   mapboxPublicToken: 'your-mapbox-token',
- *   logLevel: 'info' // optional, defaults to 'info'
+ *   mapboxPublicToken: 'your-mapbox-token'
  * });
  * 
  * // Use the configured clients
@@ -55,8 +52,7 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   const {
     supabaseUrl,
     supabaseAnonKey,
-    mapboxPublicToken,
-    logLevel = 'info'
+    mapboxPublicToken
   } = config;
 
   // Validate required configuration
@@ -71,14 +67,13 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   }
 
   // Create configured instances
-  const logger = createLogger(logLevel);
-  const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, logger);
-  const mapbox = createMapboxClient(mapboxPublicToken, logger);
+  const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, defaultLogger);
+  const mapbox = createMapboxClient(mapboxPublicToken, defaultLogger);
 
   return {
     supabase,
     mapbox,
-    logger
+    logger: defaultLogger
   };
 }
 

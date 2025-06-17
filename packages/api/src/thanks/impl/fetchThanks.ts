@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { Thanks, ThanksFilter } from '@belongnetwork/types';
 import { toDomainThanks } from './thanksTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -8,6 +7,8 @@ import { fetchResourceById } from '../../resources/impl/fetchResources';
 export async function fetchThanks(
   filters?: ThanksFilter
 ): Promise<Thanks[]> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🙏 API: Fetching thanks', { filters });
 
   try {
@@ -103,6 +104,7 @@ export async function fetchThanks(
 }
 
 export async function fetchThanksById(id: string): Promise<Thanks | null> {
+  const { supabase, logger } = getBelongClient();
   logger.debug('🙏 API: Fetching thanks by ID', { id });
 
   try {

@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { ThanksData, Thanks } from '@belongnetwork/types';
 import { toDomainThanks, forDbInsert } from './thanksTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -7,6 +6,8 @@ import { fetchResourceById } from '../../resources/impl/fetchResources';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function createThanks(data: ThanksData): Promise<Thanks> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🙏 API: Creating thanks', {
     data: { ...data, message: 'REDACTED' },
   });

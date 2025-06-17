@@ -1,5 +1,4 @@
-import { logger, supabase } from '@belongnetwork/core';
-import type { BelongClient } from '@belongnetwork/core';
+import { getBelongClient, type BelongClient } from '@belongnetwork/core';
 import { User } from '@belongnetwork/types';
 import { toDomainUser } from '../../users/impl/userTransformer';
 
@@ -10,9 +9,10 @@ import { toDomainUser } from '../../users/impl/userTransformer';
  * @throws {Error} If there's an error fetching the current user
  */
 export async function getCurrentUser(client?: BelongClient): Promise<User | null> {
-  // Use provided client or fall back to singleton
-  const supabaseClient = client?.supabase || supabase;
-  const loggerClient = client?.logger || logger;
+  // Use provided client or fall back to global client
+  const globalClient = getBelongClient();
+  const supabaseClient = client?.supabase || globalClient.supabase;
+  const loggerClient = client?.logger || globalClient.logger;
 
   loggerClient.debug('🔐 API: Getting current user');
 

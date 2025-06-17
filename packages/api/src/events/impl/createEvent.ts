@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { EventData, Event } from '@belongnetwork/types';
 import { toDomainEvent, forDbInsert } from './eventTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -7,6 +6,8 @@ import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function createEvent(data: EventData): Promise<Event> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Creating event', {
     data: { ...data, coordinates: 'REDACTED' },
   });

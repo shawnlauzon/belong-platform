@@ -177,25 +177,3 @@ type AddressSuggestion = {
   context?: Array<{ id: string; text: string }>;
 };
 
-// Legacy singleton instance for backward compatibility
-const MAPBOX_PUBLIC_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
-
-export const getPublicToken = () => {
-  return MAPBOX_PUBLIC_TOKEN;
-};
-
-if (!MAPBOX_PUBLIC_TOKEN) {
-  defaultLogger.warn(
-    'Mapbox token not found. Please add VITE_MAPBOX_PUBLIC_TOKEN to your .env file'
-  );
-}
-
-export const mapbox = MAPBOX_PUBLIC_TOKEN ? createMapboxClient(MAPBOX_PUBLIC_TOKEN, defaultLogger) : {
-  getPublicToken: () => undefined,
-  searchAddresses: async () => [],
-  reverseGeocode: async () => null,
-  getStaticMapUrl: () => '',
-  calculateDrivingTime: async () => null,
-};
-
-export default mapbox;

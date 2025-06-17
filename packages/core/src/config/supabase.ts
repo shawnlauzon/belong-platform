@@ -60,24 +60,3 @@ export function createSupabaseClient(
   return client;
 }
 
-// Legacy singleton instance for backward compatibility
-// Use environment variables or fallback to local development values
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL || 'https://example.supabase.co';
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
-
-// Validate environment variables for legacy usage
-if (!supabaseUrl || supabaseUrl === 'https://example.supabase.co') {
-  defaultLogger.error(
-    '❌ VITE_SUPABASE_URL is not set or is using the default placeholder value'
-  );
-}
-
-if (!supabaseAnonKey || supabaseAnonKey === 'your-anon-key') {
-  defaultLogger.error(
-    '❌ VITE_SUPABASE_ANON_KEY is not set or is using the default placeholder value'
-  );
-}
-
-export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, defaultLogger);

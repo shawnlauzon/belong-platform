@@ -1,5 +1,4 @@
-import { logger } from '@belongnetwork/core';
-import { supabase } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { Account } from '@belongnetwork/types';
 
 /**
@@ -10,6 +9,8 @@ import { Account } from '@belongnetwork/types';
  * @throws {Error} If sign in fails or no user data is returned
  */
 export async function signIn(email: string, password: string): Promise<Account> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🔐 API: Signing in user', { email });
 
   try {

@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { EventData, Event } from '@belongnetwork/types';
 import { toDomainEvent, forDbUpdate } from './eventTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -10,6 +9,8 @@ export async function updateEvent(
   id: string,
   data: Partial<EventData>
 ): Promise<Event> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Updating event', { id, data });
 
   try {

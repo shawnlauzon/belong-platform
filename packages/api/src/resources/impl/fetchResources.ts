@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { Resource, ResourceFilter } from '@belongnetwork/types';
 import { toDomainResource } from './resourceTransformer';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -9,6 +8,8 @@ import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 export async function fetchResources(
   filters?: ResourceFilter
 ): Promise<Resource[]> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('📚 API: Fetching resources', { filters });
 
   try {
@@ -103,6 +104,7 @@ export async function fetchResources(
 }
 
 export async function fetchResourceById(id: string): Promise<Resource | null> {
+  const { supabase, logger } = getBelongClient();
   logger.debug('📚 API: Fetching resource by ID', { id });
 
   try {

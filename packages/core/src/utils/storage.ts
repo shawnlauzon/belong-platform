@@ -1,4 +1,5 @@
-import { supabase } from '../config/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 import { logger, logApiCall, logApiResponse } from './logger';
 
 export interface UploadResult {
@@ -9,13 +10,15 @@ export interface UploadResult {
 export class StorageManager {
   private static bucketName = 'images';
 
-  static async initializeBucket(): Promise<void> {
+  static async initializeBucket(
+    supabaseClient: SupabaseClient<Database>
+  ): Promise<void> {
     logger.debug('🗄️ StorageManager: Initializing bucket...');
 
     try {
       // Check if bucket exists
       const { data: buckets, error: listError } =
-        await supabase.storage.listBuckets();
+        await supabaseClient.storage.listBuckets();
 
       if (listError) {
         logger.warn('🗄️ StorageManager: Could not list buckets:', listError);
@@ -23,7 +26,7 @@ export class StorageManager {
       }
 
       const bucketExists = buckets?.some(
-        (bucket) => bucket.id === this.bucketName
+        (bucket: any) => bucket.id === this.bucketName
       );
 
       if (bucketExists) {
@@ -39,6 +42,7 @@ export class StorageManager {
 
   static async uploadFile(
     file: File,
+    supabaseClient: SupabaseClient<Database>,
     folder: string = 'uploads'
   ): Promise<UploadResult> {
     logger.debug('🗄️ StorageManager: Uploading file:', {
@@ -52,7 +56,7 @@ export class StorageManager {
       const {
         data: { user },
         error: userError,
-      } = await supabase.auth.getUser();
+      } = await supabaseClient.auth.getUser();
 
       if (userError || !user) {
         throw new Error('User must be authenticated to upload files');
@@ -69,7 +73,7 @@ export class StorageManager {
       });
 
       // Upload file
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseClient.storage
         .from(this.bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -86,7 +90,7 @@ export class StorageManager {
       }
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = supabaseClient.storage
         .from(this.bucketName)
         .getPublicUrl(filePath);
 
@@ -118,6 +122,7 @@ export class StorageManager {
 
   static async uploadFiles(
     files: File[],
+    supabaseClient: SupabaseClient<Database>,
     folder: string = 'uploads'
   ): Promise<string[]> {
     logger.debug('🗄️ StorageManager: Uploading multiple files:', {
@@ -125,7 +130,7 @@ export class StorageManager {
       folder,
     });
 
-    const uploadPromises = files.map((file) => this.uploadFile(file, folder));
+    const uploadPromises = files.map((file) => this.uploadFile(file, supabaseClient, folder));
 
     try {
       const results = await Promise.allSettled(uploadPromises);
@@ -217,13 +222,16 @@ export class StorageManager {
     }
   }
 
-  static async deleteFile(filePath: string): Promise<boolean> {
+  static async deleteFile(
+    filePath: string,
+    supabaseClient: SupabaseClient<Database>
+  ): Promise<boolean> {
     logger.debug('🗄️ StorageManager: Deleting file:', { filePath });
 
     try {
       logApiCall('DELETE', `/storage/delete/${filePath}`);
 
-      const { error } = await supabase.storage
+      const { error } = await supabaseClient.storage
         .from(this.bucketName)
         .remove([filePath]);
 

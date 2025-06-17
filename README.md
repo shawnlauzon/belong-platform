@@ -13,20 +13,20 @@ npm install @belongnetwork/platform
 - 📅 **Event Management** - Create and attend community gatherings and activities
 - 💌 **Gratitude System** - Send thanks messages to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
-- 📱 **Activity Feeds** - Stay updated on community activity and connections
+- 🔔 **Real-time Updates** - Stay connected with your community
 
 **For Developers:**
 - 🎯 **Type-Safe** - Comprehensive TypeScript coverage prevents runtime errors
 - 🗺️ **Location-Aware** - PostGIS integration for geographic features via Mapbox
 - ⚡ **Real-Time Ready** - Built on Supabase with real-time subscription support
 - 🧪 **Well-Tested** - Comprehensive test suite with 157+ passing tests
-- 📦 **Modular** - Use packages independently or together
+- 📦 **Simple Setup** - One-time global initialization, then clean usage everywhere
+- 🔧 **Easy Testing** - Mock global client instead of complex provider patterns
 
 ## 🏗️ Architecture
 
 ```
 @belongnetwork/platform     # Single unified package
-├── /providers              # React providers (BelongClientProvider)
 ├── /hooks                  # All React Query hooks  
 └── /types                  # TypeScript types and interfaces
 ```
@@ -45,27 +45,27 @@ pnpm add @belongnetwork/platform
 
 ```tsx
 import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BelongClientProvider } from '@belongnetwork/platform';
+import { initializeBelong } from '@belongnetwork/platform';
+import App from './App';
+
+// Initialize the platform once at app startup
+initializeBelong({
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  mapboxPublicToken: import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN,
+});
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <BelongClientProvider
-      config={{
-        supabaseUrl: 'https://your-project.supabase.co',
-        supabaseAnonKey: 'your-anon-key',
-        mapboxPublicToken: 'your-mapbox-token',
-        logLevel: 'info' // optional
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <YourApp />
-      </QueryClientProvider>
-    </BelongClientProvider>
-  );
-}
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </React.StrictMode>
+);
 ```
 
 ### Using the Hooks
@@ -124,14 +124,41 @@ function CommunityDashboard() {
 }
 ```
 
+### Migrating from Provider-Based Setup
+
+If you're upgrading from an older version that used `BelongClientProvider`:
+
+**Before:**
+```tsx
+<BelongClientProvider config={{ ... }}>
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+</BelongClientProvider>
+```
+
+**After:**
+```tsx
+// In main.tsx/index.tsx - before rendering
+initializeBelong({
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  mapboxPublicToken: import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN,
+});
+
+// Then just use QueryClientProvider
+<QueryClientProvider client={queryClient}>
+  <App />
+</QueryClientProvider>
+```
+
+The hooks work exactly the same - no changes needed in your components!
+
 ### Alternative Import Patterns
 
 The package also supports subpath imports for better organization:
 
 ```tsx
-// Import providers separately
-import { BelongClientProvider } from '@belongnetwork/platform/providers';
-
 // Import types separately  
 import type { Resource, Community, User } from '@belongnetwork/platform/types';
 
@@ -143,17 +170,22 @@ import { useResources, useCommunities } from '@belongnetwork/platform/hooks';
 
 ### Available Exports
 
-The `@belongnetwork/platform` package provides three main categories of exports:
+The `@belongnetwork/platform` package provides two main categories of exports:
 
-#### Providers
+#### Configuration
 
 ```tsx
-import { BelongClientProvider } from '@belongnetwork/platform/providers';
-// or
-import { BelongClientProvider } from '@belongnetwork/platform';
+import { initializeBelong } from '@belongnetwork/platform';
+
+// Initialize once at app startup
+initializeBelong({
+  supabaseUrl: 'https://your-project.supabase.co',
+  supabaseAnonKey: 'your-anon-key',
+  mapboxPublicToken: 'your-mapbox-token'
+});
 ```
 
-The `BelongClientProvider` wraps your app and provides the configured Supabase and Mapbox clients to all hooks.
+The `initializeBelong()` function configures the platform globally and should be called once before using any hooks.
 
 #### Types
 
@@ -183,7 +215,7 @@ const resourceData: ResourceData = {
 - **Entities**: `User`, `Community`, `Resource`, `Event`, `Thanks`
 - **Data Transfer**: `ResourceData`, `EventData`, etc.
 - **Filters**: `ResourceFilter`, `EventFilter`, etc.
-- **Activity**: `ActivityItem`, `ActivityType`
+- **Geography**: `Coordinates`, `AddressSearchResult`
 
 #### Hooks
 
@@ -317,23 +349,37 @@ function EventManager() {
 }
 ```
 
-#### Activity Feeds
+#### Thanks and Gratitude
 ```tsx
-import { useActivityFeed } from '@belongnetwork/platform';
+import { 
+  useThanks, 
+  useCreateThanks 
+} from '@belongnetwork/platform';
 
-function ActivityFeed() {
-  const { data: activities } = useActivityFeed({
-    communityId: 'community-123',
-    limit: 20
+function GratitudeManager() {
+  const { data: thanksMessages } = useThanks({
+    resourceId: 'resource-123'
   });
+  const createThanks = useCreateThanks();
+
+  const handleSendThanks = () => {
+    createThanks.mutate({
+      toUserId: 'user-456',
+      resourceId: 'resource-123',
+      message: 'Thank you for sharing this!'
+    });
+  };
 
   return (
     <div>
-      {activities?.map(activity => (
-        <div key={activity.id}>
-          <h4>{activity.title}</h4>
-          <p>{activity.description}</p>
-          <small>{activity.timestamp.toLocaleDateString()}</small>
+      <button onClick={handleSendThanks}>
+        Send Thanks
+      </button>
+      
+      {thanksMessages?.map(thanks => (
+        <div key={thanks.id}>
+          <p>"{thanks.message}"</p>
+          <small>From {thanks.fromUser.firstName}</small>
         </div>
       ))}
     </div>
@@ -388,7 +434,6 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
 
 # Optional
-VITE_LOG_LEVEL=debug
 VITE_DEFAULT_LOCATION_LAT=30.2672
 VITE_DEFAULT_LOCATION_LNG=-97.7431
 
@@ -428,6 +473,56 @@ pnpm test:watch
 pnpm test:coverage
 ```
 
+#### Testing with Global Configuration
+
+The new global configuration makes testing simpler. Here's how to set up tests:
+
+```typescript
+// test-setup.ts
+import { beforeEach, vi } from 'vitest';
+
+// Mock the global client
+const mockGetBelongClient = vi.fn();
+vi.mock('@belongnetwork/platform', () => ({
+  getBelongClient: mockGetBelongClient
+}));
+
+beforeEach(() => {
+  // Reset and configure mock client for each test
+  mockGetBelongClient.mockReturnValue({
+    supabase: {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      // ... other mocked methods
+    },
+    logger: {
+      debug: vi.fn(),
+      info: vi.fn(),
+      error: vi.fn(),
+    },
+    mapbox: {
+      searchAddresses: vi.fn(),
+      // ... other mocked methods
+    }
+  });
+});
+```
+
+For integration tests with real database:
+
+```typescript
+// integration-test-setup.ts
+import { initializeBelong } from '@belongnetwork/platform';
+
+beforeAll(() => {
+  initializeBelong({
+    supabaseUrl: process.env.VITE_SUPABASE_URL!,
+    supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+    mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+  });
+});
+```
+
 ## 🔧 Configuration Options
 
 ### BelongClientConfig
@@ -440,9 +535,23 @@ interface BelongClientConfig {
   supabaseAnonKey: string;
   /** Mapbox public access token */
   mapboxPublicToken: string;
-  /** Log level (default: 'info') */
-  logLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
 }
+```
+
+### Advanced Configuration
+
+For testing or advanced use cases, you can check initialization status:
+
+```typescript
+import { isInitialized, resetBelongClient } from '@belongnetwork/platform';
+
+// Check if platform is initialized
+if (!isInitialized()) {
+  console.warn('Platform not yet initialized');
+}
+
+// Reset configuration (mainly for testing)
+resetBelongClient();
 ```
 
 ### React Query Configuration

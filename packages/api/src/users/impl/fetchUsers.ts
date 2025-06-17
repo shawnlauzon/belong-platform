@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainUser } from './userTransformer';
 import type { User } from '@belongnetwork/types';
 
@@ -10,6 +9,8 @@ type UserFilter = {
 };
 
 export async function fetchUsers(filter: UserFilter = {}): Promise<User[]> {
+  const { supabase, logger } = getBelongClient();
+  
   const { searchTerm, page = 1, limit = 50 } = filter;
   const from = (page - 1) * limit;
   const to = from + limit - 1;

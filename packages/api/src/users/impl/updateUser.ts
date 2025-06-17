@@ -1,11 +1,12 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainUser, forDbUpdate } from './userTransformer';
 import type { User } from '@belongnetwork/types';
 
 export async function updateUser(
   userData: Partial<User> & { id: string }
 ): Promise<User> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('👤 API: Updating user', { id: userData.id });
 
   try {

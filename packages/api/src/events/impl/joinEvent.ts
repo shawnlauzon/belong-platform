@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { EventAttendance, EventAttendanceStatus } from '@belongnetwork/types';
 import { toDomainEventAttendance, forDbInsert } from './eventAttendanceTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -10,6 +9,8 @@ export async function joinEvent(
   eventId: string,
   status: EventAttendanceStatus = 'attending' as EventAttendanceStatus
 ): Promise<EventAttendance> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Joining event', { eventId, status });
 
   try {

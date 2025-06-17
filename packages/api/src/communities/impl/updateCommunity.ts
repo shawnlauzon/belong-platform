@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { fetchCommunityById } from './fetchCommunityById';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -7,6 +6,8 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 export async function updateCommunity(
   data: CommunityData & { id: string }
 ): Promise<Community> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🏘️ API: Updating community', { id: data.id });
 
   try {

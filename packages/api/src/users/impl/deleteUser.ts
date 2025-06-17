@@ -1,9 +1,10 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainUser } from './userTransformer';
 import type { User } from '@belongnetwork/types';
 
 export async function deleteUser(id: string): Promise<User | null> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('👤 API: Deleting user', { id });
 
   try {

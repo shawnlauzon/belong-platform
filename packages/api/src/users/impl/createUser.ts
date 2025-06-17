@@ -1,9 +1,10 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import { toDomainUser, forDbInsert } from './userTransformer';
 import type { User, UserData } from '@belongnetwork/types';
 
 export async function createUser(accountId: string, userData: UserData): Promise<User> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('👤 API: Creating user', { email: userData.email, accountId });
 
   try {

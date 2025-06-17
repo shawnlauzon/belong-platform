@@ -1,5 +1,4 @@
-import { supabase } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { getBelongClient } from '@belongnetwork/core';
 import type { EventAttendance, EventAttendanceFilter } from '@belongnetwork/types';
 import { toDomainEventAttendance } from './eventAttendanceTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
@@ -8,6 +7,8 @@ import { fetchEventById } from './fetchEvents';
 export async function fetchEventAttendees(
   filters: EventAttendanceFilter
 ): Promise<EventAttendance[]> {
+  const { supabase, logger } = getBelongClient();
+  
   logger.debug('🎉 API: Fetching event attendees', { filters });
 
   try {
