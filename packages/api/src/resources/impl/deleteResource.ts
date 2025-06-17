@@ -88,15 +88,19 @@ export async function deleteResource(id: string): Promise<Resource | null> {
     // Fetch owner and community from cache
     const [owner, community] = await Promise.all([
       fetchUserById(updatedResource.owner_id),
-      fetchCommunityById(updatedResource.community_id),
+      updatedResource.community_id ? fetchCommunityById(updatedResource.community_id) : Promise.resolve(null),
     ]);
 
-    if (!owner || !community) {
-      throw new Error('Failed to load resource dependencies');
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+    
+    if (updatedResource.community_id && !community) {
+      throw new Error('Community not found');
     }
 
     // Transform to domain model
-    const resource = toDomainResource(updatedResource, { owner, community });
+    const resource = toDomainResource(updatedResource, { owner, community: community || undefined });
 
     logger.info('📚 API: Successfully deleted resource', {
       id,

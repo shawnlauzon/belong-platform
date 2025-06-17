@@ -20,7 +20,7 @@ export type CommunityMembershipUpdateDbData = Database['public']['Tables']['comm
  */
 export function toDomainCommunity(
   dbCommunity: CommunityRow & { 
-    organizer: ProfileRow; 
+    organizer: ProfileRow | ProfileRow[]; 
   }
 ): Community {
   const { center, created_at, updated_at, ...rest } = dbCommunity;
@@ -39,7 +39,7 @@ export function toDomainCommunity(
     center: coords,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
-    organizer: toDomainUser(dbCommunity.organizer),
+    organizer: toDomainUser(Array.isArray(dbCommunity.organizer) ? dbCommunity.organizer[0] : dbCommunity.organizer),
     parent: undefined,
     parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path ? JSON.parse(dbCommunity.hierarchy_path as string) : [],

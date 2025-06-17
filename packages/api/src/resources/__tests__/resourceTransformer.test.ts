@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toDomainResource, forDbInsert } from '../impl/resourceTransformer';
-import { createMockDbResource } from './test-utils';
+import { createMockDbResource } from '../../test-utils';
 import { createMockResourceData, createMockUser, createMockCommunity } from '../../test-utils/mocks';
 
 describe('Resource Transformer', () => {

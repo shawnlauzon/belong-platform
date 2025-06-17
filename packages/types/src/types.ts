@@ -41,7 +41,7 @@ export interface ResourceData {
 export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
   owner: User;
-  community: Community;
+  community?: Community;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -280,7 +280,7 @@ export interface ActivityItem {
   metadata: Record<string, unknown>;
   createdAt: Date;
   // Assembled data
-  community: Community;
+  community?: Community;
   actor: User;
   target?: Resource | Event | Thanks | User | Community;
 }

@@ -335,7 +335,7 @@ export type Database = {
         Row: {
           availability: string | null
           category: string
-          community_id: string | null
+          community_id: string
           created_at: string
           description: string
           id: string

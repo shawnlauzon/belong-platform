@@ -82,3 +82,8 @@ Development Principles
 
 - Follow established code patterns and conventions within each package
 - Maintain consistent naming conventions across the monorepo
+
+## Memory
+
+- When asked to look at the database definition, either look at database.ts or use the supabase MCP
+- Never update the database.ts file. Always make changes via a database migration and then pull the types

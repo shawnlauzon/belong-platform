@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { supabase } from '@belongnetwork/core';
 import { updateResource } from '../impl/updateResource';
-import { createMockDbResource } from './test-utils';
+import { createMockDbResource } from '../../test-utils';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';

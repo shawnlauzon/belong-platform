@@ -25,7 +25,7 @@ export async function deleteUser(id: string): Promise<User | null> {
     // Perform the soft delete (set deleted_at)
     const { error: deleteError } = await supabase
       .from('profiles')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
 
     if (deleteError) {

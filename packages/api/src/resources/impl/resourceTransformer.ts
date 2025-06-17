@@ -21,7 +21,7 @@ export type ResourceUpdateDbData =
  */
 export function toDomainResource(
   dbResource: ResourceRow,
-  refs: { owner: User; community: Community }
+  refs: { owner: User; community?: Community }
 ): Resource {
   if (!dbResource) {
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
@@ -34,7 +34,7 @@ export function toDomainResource(
     throw new Error('Owner ID does not match');
   }
 
-  if (community_id !== refs.community.id) {
+  if (community_id && refs.community && community_id !== refs.community.id) {
     throw new Error('Community ID does not match');
   }
 

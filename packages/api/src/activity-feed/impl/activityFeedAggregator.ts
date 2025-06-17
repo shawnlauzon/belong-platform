@@ -102,9 +102,10 @@ async function aggregateResourceActivities(
 
     for (const resource of resources) {
       const owner = ownerMap.get(resource.owner_id);
-      const community = communityMap.get(resource.community_id);
+      const community = resource.community_id ? communityMap.get(resource.community_id) : null;
 
-      if (!owner || !community) continue;
+      if (!owner) continue;
+      if (resource.community_id && !community) continue;
 
       // Transform to domain resource for the activity
       const domainResource: Resource = {
@@ -114,14 +115,14 @@ async function aggregateResourceActivities(
         title: resource.title,
         description: resource.description,
         imageUrls: resource.image_urls || [],
-        location: resource.location ? JSON.parse(resource.location) : undefined,
+        location: resource.location ? JSON.parse(resource.location as string) : undefined,
         pickupInstructions: resource.pickup_instructions || undefined,
         parkingInfo: resource.parking_info || undefined,
         meetupFlexibility: resource.meetup_flexibility as any,
         availability: resource.availability || undefined,
         isActive: resource.is_active,
         owner,
-        community,
+        community: community || undefined,
         createdAt: new Date(resource.created_at),
         updatedAt: new Date(resource.updated_at),
       };
@@ -129,7 +130,7 @@ async function aggregateResourceActivities(
       activities.push({
         id: `resource_created_${resource.id}`,
         type: 'resource_created' as ActivityType,
-        communityId: resource.community_id,
+        communityId: resource.community_id || '',
         actorId: resource.owner_id,
         targetId: resource.id,
         metadata: {
@@ -138,7 +139,7 @@ async function aggregateResourceActivities(
           title: resource.title,
         },
         createdAt: new Date(resource.created_at),
-        community,
+        community: community || undefined,
         actor: owner,
         target: domainResource,
       });
@@ -207,7 +208,7 @@ async function aggregateEventActivities(
         imageUrls: event.image_urls || [],
         attendeeCount: event.attendee_count,
         organizer,
-        community,
+        community: community || undefined,
         createdAt: new Date(event.created_at),
         updatedAt: new Date(event.updated_at),
       };
@@ -224,7 +225,7 @@ async function aggregateEventActivities(
           location: event.location,
         },
         createdAt: new Date(event.created_at),
-        community,
+        community: community || undefined,
         actor: organizer,
         target: domainEvent,
       });
@@ -277,14 +278,15 @@ async function aggregateThanksActivities(
 
     for (const thanks of filteredThanks) {
       const fromUser = fromUserMap.get(thanks.from_user_id);
-      const community = communityMap.get(thanks.resource?.community_id);
+      const community = thanks.resource?.community_id ? communityMap.get(thanks.resource.community_id) : null;
       
-      if (!fromUser || !community) continue;
+      if (!fromUser) continue;
+      if (thanks.resource?.community_id && !community) continue;
 
       activities.push({
         id: `thanks_given_${thanks.id}`,
         type: 'thanks_given' as ActivityType,
-        communityId: thanks.resource.community_id,
+        communityId: thanks.resource.community_id || '',
         actorId: thanks.from_user_id,
         targetId: thanks.id,
         metadata: {
@@ -293,7 +295,7 @@ async function aggregateThanksActivities(
           toUserId: thanks.to_user_id,
         },
         createdAt: new Date(thanks.created_at),
-        community,
+        community: community || undefined,
         actor: fromUser,
       });
     }
@@ -353,7 +355,7 @@ async function aggregateUserJoinActivities(
           role: membership.role,
         },
         createdAt: new Date(membership.joined_at),
-        community,
+        community: community || undefined,
         actor: user,
         target: user,
       });

@@ -54,7 +54,7 @@ export async function fetchResources(
     // Fetch all required owners and communities
     const [owners, communities] = await Promise.all([
       Promise.all(ownerIds.map(id => fetchUserById(id))),
-      Promise.all(communityIds.map(id => fetchCommunityById(id)))
+      Promise.all(communityIds.filter(Boolean).map(id => fetchCommunityById(id!)))
     ]);
 
     // Create lookup maps
@@ -65,10 +65,10 @@ export async function fetchResources(
       .map((dbResource) => {
         try {
           const owner = ownerMap.get(dbResource.owner_id);
-          const community = communityMap.get(dbResource.community_id);
+          const community = dbResource.community_id ? communityMap.get(dbResource.community_id) : null;
           
-          if (!owner || !community) {
-            logger.warn('📚 API: Missing owner or community for resource', {
+          if (!owner) {
+            logger.warn('📚 API: Missing owner for resource', {
               resourceId: dbResource.id,
               ownerId: dbResource.owner_id,
               communityId: dbResource.community_id,
@@ -78,7 +78,7 @@ export async function fetchResources(
             return null;
           }
 
-          return toDomainResource(dbResource, { owner, community });
+          return toDomainResource(dbResource, { owner, community: community || undefined });
         } catch (error) {
           logger.error('📚 API: Error transforming resource', {
             resourceId: dbResource.id,
@@ -135,11 +135,19 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
       // Fetch owner and community separately
       const [owner, community] = await Promise.all([
         fetchUserById(data.owner_id),
-        fetchCommunityById(data.community_id)
+        data.community_id ? fetchCommunityById(data.community_id) : Promise.resolve(null)
       ]);
 
-      if (!owner || !community) {
-        logger.error('📚 API: Missing owner or community for resource', {
+      if (!owner) {
+        logger.error('📚 API: Missing owner for resource', {
+          id,
+          ownerId: data.owner_id,
+        });
+        return null;
+      }
+      
+      if (data.community_id && !community) {
+        logger.error('📚 API: Missing community for resource', {
           id,
           ownerId: data.owner_id,
           communityId: data.community_id,
@@ -149,7 +157,7 @@ export async function fetchResourceById(id: string): Promise<Resource | null> {
         throw new Error('Failed to load resource dependencies');
       }
 
-      const resource = toDomainResource(data, { owner, community });
+      const resource = toDomainResource(data, { owner, community: community || undefined });
       logger.debug('📚 API: Successfully fetched resource by ID', {
         id,
         title: resource.title,

@@ -42,7 +42,7 @@ export async function createResource(data: ResourceData): Promise<Resource> {
     // Fetch owner and community from cache
     const [owner, community] = await Promise.all([
       fetchUserById(createdResource.owner_id),
-      fetchCommunityById(createdResource.community_id),
+      createdResource.community_id ? fetchCommunityById(createdResource.community_id) : Promise.resolve(null),
     ]);
 
     if (!owner) {

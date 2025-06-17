@@ -28,9 +28,9 @@ export async function fetchUserMemberships(userId?: string): Promise<CommunityMe
       .from('community_memberships')
       .select(`
         *,
-        community:communities!inner(
+        community:communities(
           *,
-          organizer:profiles!inner(*)
+          organizer:profiles(*)
         )
       `)
       .eq('user_id', targetUserId)

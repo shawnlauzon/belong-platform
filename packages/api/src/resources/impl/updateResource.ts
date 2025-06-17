@@ -79,18 +79,19 @@ export async function updateResource(
     // Fetch owner and community from cache
     const [owner, community] = await Promise.all([
       fetchUserById(updatedResource.owner_id),
-      fetchCommunityById(updatedResource.community_id),
+      updatedResource.community_id ? fetchCommunityById(updatedResource.community_id) : Promise.resolve(null),
     ]);
 
     if (!owner) {
       throw new Error('Owner not found');
     }
-    if (!community) {
+    
+    if (updatedResource.community_id && !community) {
       throw new Error('Community not found');
     }
 
     // Transform to domain model
-    const resource = toDomainResource(updatedResource, { owner, community });
+    const resource = toDomainResource(updatedResource, { owner, community: community || undefined });
 
     logger.info('📚 API: Successfully updated resource', {
       id: resource.id,
