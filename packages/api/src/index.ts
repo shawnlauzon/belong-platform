@@ -1,3 +1,7 @@
+// Client Provider (Primary API for external consumers)
+export { BelongClientProvider, useBelongClient } from './context/BelongClientProvider';
+
+// Feature modules
 export * from './resources';
 export * from './communities'; 
 export * from './auth';

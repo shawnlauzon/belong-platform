@@ -1,38 +1,43 @@
-import { logger } from '@belongnetwork/core';
-import { supabase } from '@belongnetwork/core';
+import { logger, supabase } from '@belongnetwork/core';
+import type { BelongClient } from '@belongnetwork/core';
 import { User } from '@belongnetwork/types';
 import { toDomainUser } from '../../users/impl/userTransformer';
 
 /**
  * Gets the currently authenticated user
+ * @param client - Optional configured Belong client
  * @returns A promise that resolves to the current user, or null if not authenticated
  * @throws {Error} If there's an error fetching the current user
  */
-export async function getCurrentUser(): Promise<User | null> {
-  logger.debug('🔐 API: Getting current user');
+export async function getCurrentUser(client?: BelongClient): Promise<User | null> {
+  // Use provided client or fall back to singleton
+  const supabaseClient = client?.supabase || supabase;
+  const loggerClient = client?.logger || logger;
+
+  loggerClient.debug('🔐 API: Getting current user');
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabaseClient.auth.getUser();
 
     if (error) {
-      logger.error('🔐 API: Failed to get current user', { error });
+      loggerClient.error('🔐 API: Failed to get current user', { error });
       return null;
     }
 
     if (!user) {
-      logger.debug('🔐 API: No authenticated user found');
+      loggerClient.debug('🔐 API: No authenticated user found');
       return null;
     }
 
     // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
     if (profileError) {
-      logger.warn('🔐 API: Could not fetch user profile', { profileError });
+      loggerClient.warn('🔐 API: Could not fetch user profile', { profileError });
     }
 
     let domainUser: User;
@@ -61,10 +66,10 @@ export async function getCurrentUser(): Promise<User | null> {
       };
     }
 
-    logger.debug('🔐 API: Successfully retrieved current user', { userId: domainUser.id });
+    loggerClient.debug('🔐 API: Successfully retrieved current user', { userId: domainUser.id });
     return domainUser;
   } catch (error) {
-    logger.error('🔐 API: Error getting current user', { error });
+    loggerClient.error('🔐 API: Error getting current user', { error });
     throw error;
   }
 }
