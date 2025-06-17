@@ -1,26 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { updateUser } from '../../impl/updateUser';
 import { createMockUser } from '../../../test-utils/mocks';
+import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(),
-          })),
-        })),
-      })),
-    })),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 // Mock the transformer
@@ -31,14 +16,18 @@ vi.mock('../../impl/userTransformer', () => ({
 
 describe('updateUser', () => {
   const mockUser = createMockUser();
+  let mockSupabase: any;
+  let mockLogger: any;
   
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should update user successfully', async () => {
     // Arrange
-    const { supabase } = await import('@belongnetwork/core');
     const { toDomainUser, forDbUpdate } = await import('../../impl/userTransformer');
     
     vi.mocked(forDbUpdate).mockReturnValue({});
@@ -50,7 +39,7 @@ describe('updateUser', () => {
         error: null,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue(mockQuery),
@@ -67,7 +56,6 @@ describe('updateUser', () => {
 
   it('should handle errors', async () => {
     // Arrange
-    const { supabase } = await import('@belongnetwork/core');
     const { forDbUpdate } = await import('../../impl/userTransformer');
     const error = new Error('Update failed');
     
@@ -79,7 +67,7 @@ describe('updateUser', () => {
         error,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue(mockQuery),

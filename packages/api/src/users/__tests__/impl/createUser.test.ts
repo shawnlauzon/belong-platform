@@ -1,26 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createUser } from '../../impl/createUser';
-import { supabase, logger } from '@belongnetwork/core';
 import type { UserData } from '@belongnetwork/types';
-import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
+import { createMockUser, createMockDbProfile, setupBelongClientMocks } from '../../../test-utils';
 
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn(),
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
-const mockSupabase = vi.mocked(supabase);
-const mockLogger = vi.mocked(logger);
-
 describe('createUser', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    ({ mockSupabase, mockLogger } = setupBelongClientMocks());
   });
 
   it('should create a new user successfully', async () => {

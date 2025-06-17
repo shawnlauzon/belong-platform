@@ -2,25 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchUsers } from '../../impl/fetchUsers';
 import { createMockUser } from '../../../test-utils/mocks';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        ilike: vi.fn(() => ({
-          range: vi.fn(),
-        })),
-        range: vi.fn(),
-      })),
-    })),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
+
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
 
 // Mock the transformer
 vi.mock('../../impl/userTransformer', () => ({
@@ -28,16 +16,46 @@ vi.mock('../../impl/userTransformer', () => ({
 }));
 
 describe('fetchUsers', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const mockUser1 = createMockUser();
   const mockUser2 = createMockUser();
   
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          ilike: vi.fn(() => ({
+            range: vi.fn(),
+          })),
+          range: vi.fn(),
+        })),
+      })),
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
   });
 
   it('should fetch users successfully', async () => {
     // Arrange
-    const { supabase } = await import('@belongnetwork/core');
+    // Use mockSupabase directly
     const { toDomainUser } = await import('../../impl/userTransformer');
     
     const mockQuery = {
@@ -47,7 +65,7 @@ describe('fetchUsers', () => {
         count: 2,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue(mockQuery),
     });
     
@@ -66,7 +84,7 @@ describe('fetchUsers', () => {
 
   it('should handle empty results', async () => {
     // Arrange
-    const { supabase } = await import('@belongnetwork/core');
+    // Use mockSupabase directly
     
     const mockQuery = {
       range: vi.fn().mockResolvedValue({
@@ -75,7 +93,7 @@ describe('fetchUsers', () => {
         count: 0,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue(mockQuery),
     });
 
@@ -88,7 +106,7 @@ describe('fetchUsers', () => {
 
   it('should handle errors', async () => {
     // Arrange
-    const { supabase } = await import('@belongnetwork/core');
+    // Use mockSupabase directly
     const error = new Error('Database error');
     
     const mockQuery = {
@@ -98,7 +116,7 @@ describe('fetchUsers', () => {
         count: 0,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue(mockQuery),
     });
 

@@ -1,34 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { supabase } from '@belongnetwork/core';
 import { fetchResources, fetchResourceById } from '../impl/fetchResources';
 import { createMockDbResource } from '../../test-utils';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: faker.string.uuid() } },
-      }),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
+
 describe('fetchResources', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const mockUser = createMockUser();
   const mockCommunity = createMockCommunity();
   const mockResources = Array(3).fill(null).map(() => createMockDbResource({
@@ -38,6 +26,36 @@ describe('fetchResources', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: faker.string.uuid() } },
+        }),
+      },
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
@@ -54,13 +72,13 @@ describe('fetchResources', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResources();
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('resources');
+    expect(mockSupabase.from).toHaveBeenCalledWith('resources');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result).toHaveLength(3);
@@ -100,13 +118,13 @@ describe('fetchResources', () => {
       return mockQuery;
     });
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResources(filters);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('resources');
+    expect(mockSupabase.from).toHaveBeenCalledWith('resources');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(result).toHaveLength(filteredResources.length);
   });
@@ -122,7 +140,7 @@ describe('fetchResources', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchResources()).rejects.toThrow(mockError);
@@ -130,6 +148,8 @@ describe('fetchResources', () => {
 });
 
 describe('fetchResourceById', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const mockUser = createMockUser();
   const mockCommunity = createMockCommunity();
   const mockResource = createMockDbResource({
@@ -139,6 +159,36 @@ describe('fetchResourceById', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: faker.string.uuid() } },
+        }),
+      },
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
@@ -156,13 +206,13 @@ describe('fetchResourceById', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResourceById(mockResource.id);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('resources');
+    expect(mockSupabase.from).toHaveBeenCalledWith('resources');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.eq).toHaveBeenCalledWith('id', mockResource.id);
     expect(mockQuery.single).toHaveBeenCalled();
@@ -184,7 +234,7 @@ describe('fetchResourceById', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchResourceById('non-existent-id');
@@ -205,7 +255,7 @@ describe('fetchResourceById', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchResourceById('some-id')).rejects.toThrow(mockError);

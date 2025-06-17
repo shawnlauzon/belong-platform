@@ -1,28 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { signOut } from '../../impl/signOut';
-import { supabase, logger } from '@belongnetwork/core';
+import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock dependencies
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn(),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
-const mockSupabase = supabase as any;
-const mockLogger = logger as any;
-
 describe('signOut', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase.auth.signOut.mockReset();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should sign out successfully', async () => {

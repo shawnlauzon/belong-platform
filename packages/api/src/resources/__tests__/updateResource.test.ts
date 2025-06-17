@@ -1,32 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { supabase } from '@belongnetwork/core';
 import { updateResource } from '../impl/updateResource';
 import { createMockDbResource } from '../../test-utils';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn(),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
+
 describe('updateResource', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const resourceId = faker.string.uuid();
   const authenticatedUserId = faker.string.uuid();
   const mockUser = createMockUser({ id: authenticatedUserId });
@@ -55,11 +45,36 @@ describe('updateResource', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Mock supabase.auth.getUser to return the authenticated user (default)
-    (supabase.auth.getUser as any).mockResolvedValue({
-      data: { user: { id: authenticatedUserId } },
-      error: null,
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: authenticatedUserId } },
+          error: null,
+        }),
+      },
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
     });
     
     // Mock the fetch functions
@@ -95,16 +110,16 @@ describe('updateResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act
     const result = await updateResource(mockUpdateData);
 
     // Assert
-    expect(supabase.auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
     
     // Verify we check the existing resource
-    expect(supabase.from).toHaveBeenCalledWith('resources');
+    expect(mockSupabase.from).toHaveBeenCalledWith('resources');
     expect(mockQuery1.select).toHaveBeenCalledWith('owner_id');
     expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
     
@@ -126,7 +141,7 @@ describe('updateResource', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: null },
     });
 
@@ -149,7 +164,7 @@ describe('updateResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery as any);
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow(
@@ -168,7 +183,7 @@ describe('updateResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery as any);
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow();
@@ -199,7 +214,7 @@ describe('updateResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act & Assert
     await expect(updateResource(mockUpdateData)).rejects.toThrow(mockError);

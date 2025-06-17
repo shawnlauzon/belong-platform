@@ -2,30 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { fetchUserById } from '../../impl/fetchUserById';
 import { createMockDbProfile } from '../../../test-utils/mocks';
-import { supabase } from '@belongnetwork/core';
+import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock the supabase client and logger
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: null,
-      error: null,
-    }),
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('fetchUser', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should successfully fetch a user by ID', async () => {
@@ -49,13 +41,13 @@ describe('fetchUser', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchUserById(userId);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('profiles');
+    expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.eq).toHaveBeenCalledWith('id', userId);
     expect(result).toMatchObject({
@@ -82,7 +74,7 @@ describe('fetchUser', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchUserById(userId);
@@ -105,7 +97,7 @@ describe('fetchUser', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchUserById(userId)).rejects.toThrow(mockError);

@@ -1,33 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '@belongnetwork/core';
 import { updateThanks } from '../impl/updateThanks';
 import { createMockDbThanks } from './test-utils';
 import { createMockUser, createMockResource } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchResourceById from '../../resources/impl/fetchResources';
+import { setupBelongClientMocks } from '../../test-utils/mockSetup';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      }),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('updateThanks', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const mockFromUser = createMockUser({ id: 'user-123' });
   const mockToUser = createMockUser({ id: 'user-456' });
   const mockResource = createMockResource({ id: 'resource-789' });
@@ -54,6 +40,13 @@ describe('updateThanks', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
+    
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'user-123' } },
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -67,7 +60,7 @@ describe('updateThanks', () => {
 
   it('should update thanks successfully', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: { id: 'user-123' } },
     });
 
@@ -93,14 +86,14 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
 
     // Act
     const result = await updateThanks(updateData);
 
     // Assert
-    expect(supabase.auth.getUser).toHaveBeenCalled();
-    expect(supabase.from).toHaveBeenCalledWith('thanks');
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
     expect(result).toMatchObject({
       id: 'thanks-1',
       message: 'Updated message',
@@ -112,7 +105,7 @@ describe('updateThanks', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: null },
     });
 
@@ -124,10 +117,18 @@ describe('updateThanks', () => {
 
   it('should throw an error when thanks not found for ownership check', async () => {
     // Arrange
-    (supabase.from('').select as any).mockResolvedValue({
-      data: null,
-      error: { code: 'PGRST116', message: 'Not found' },
-    });
+    const mockSelectQuery = {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: { code: 'PGRST116', message: 'Not found' },
+          }),
+        }),
+      }),
+    };
+
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
 
     // Act & Assert
     await expect(updateThanks(updateData)).rejects.toThrow();
@@ -135,7 +136,7 @@ describe('updateThanks', () => {
 
   it('should throw an error when user is not the creator', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: { id: 'user-456' } }, // Different user
     });
     
@@ -161,7 +162,7 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
 
     // Act & Assert
     await expect(updateThanks(updateData)).rejects.toThrow(
@@ -195,7 +196,7 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
 
     // Act & Assert
     await expect(updateThanks(updateData)).rejects.toThrow(mockError);
@@ -225,7 +226,7 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
     
     // Mock fetchUserById to return null for from user
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -263,7 +264,7 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
     
     // Mock fetchUserById to return null for to user
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -301,7 +302,7 @@ describe('updateThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockSelectQuery as any);
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
     
     // Mock resource fetch to return null
     vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(null);

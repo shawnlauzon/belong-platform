@@ -1,36 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { deleteCommunity } from '../impl/deleteCommunity';
-import { supabase } from '@belongnetwork/core';
+import { setupBelongClientMocks } from '../../test-utils/mockSetup';
 
-// Mock the supabase client and auth
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: faker.string.uuid() } },
-      }),
-    },
-    from: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('deleteCommunity', () => {
   const mockUser = { id: faker.string.uuid() };
   const communityId = faker.string.uuid();
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
+    
+    mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: mockUser },
-    } as any);
+    });
 
     // Mock successful deletion by default
     const mockQuery = {
@@ -39,7 +32,7 @@ describe('deleteCommunity', () => {
         error: null,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       delete: vi.fn().mockReturnValue(mockQuery),
     });
   });
@@ -49,16 +42,16 @@ describe('deleteCommunity', () => {
     await deleteCommunity(communityId);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('communities');
-    expect(supabase.from('').delete).toHaveBeenCalled();
-    // expect(supabase.from('').eq).toHaveBeenCalledWith('id', communityId);
+    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
+    expect(mockSupabase.from('').delete).toHaveBeenCalled();
+    // expect(mockSupabase.from('').eq).toHaveBeenCalledWith('id', communityId);
   });
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+    mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: null },
-    } as any);
+    });
 
     // Act & Assert
     await expect(deleteCommunity(communityId)).rejects.toThrow(
@@ -76,7 +69,7 @@ describe('deleteCommunity', () => {
         error: mockError,
       }),
     };
-    (supabase.from as any).mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       delete: vi.fn().mockReturnValue(mockQuery),
     });
 

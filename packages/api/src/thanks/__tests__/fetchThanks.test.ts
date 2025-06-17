@@ -1,28 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '@belongnetwork/core';
 import { fetchThanks, fetchThanksById } from '../impl/fetchThanks';
 import { createMockDbThanks } from './test-utils';
-import { createMockUser, createMockResource } from '../../test-utils/mocks';
+import { createMockUser, createMockResource, setupBelongClientMocks } from '../../test-utils';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchResourceById from '../../resources/impl/fetchResources';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn(),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('fetchThanks', () => {
@@ -45,8 +30,12 @@ describe('fetchThanks', () => {
     }),
   ];
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    ({ mockSupabase, mockLogger } = setupBelongClientMocks());
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -69,13 +58,13 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanks();
 
       // Assert
-      expect(supabase.from).toHaveBeenCalledWith('thanks');
+      expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.select).toHaveBeenCalledWith('*');
       expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
       expect(result).toHaveLength(2);
@@ -99,13 +88,13 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanks({ sentBy: 'user-123' });
 
       // Assert
-      expect(supabase.from).toHaveBeenCalledWith('thanks');
+      expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.eq).toHaveBeenCalledWith('from_user_id', 'user-123');
       expect(result).toHaveLength(1);
       expect(result[0].fromUser.id).toBe('user-123');
@@ -123,13 +112,13 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanks({ receivedBy: 'user-123' });
 
       // Assert
-      expect(supabase.from).toHaveBeenCalledWith('thanks');
+      expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.eq).toHaveBeenCalledWith('to_user_id', 'user-123');
       expect(result).toHaveLength(1);
     });
@@ -145,13 +134,13 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanks({ resourceId: 'resource-789' });
 
       // Assert
-      expect(supabase.from).toHaveBeenCalledWith('thanks');
+      expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.eq).toHaveBeenCalledWith('resource_id', 'resource-789');
       expect(result).toHaveLength(2);
     });
@@ -166,7 +155,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanks();
@@ -186,7 +175,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act & Assert
       await expect(fetchThanks()).rejects.toThrow(mockError);
@@ -202,7 +191,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Mock one user fetch to return null
       vi.spyOn(fetchUserById, 'fetchUserById')
@@ -233,13 +222,13 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanksById('thanks-1');
 
       // Assert
-      expect(supabase.from).toHaveBeenCalledWith('thanks');
+      expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.eq).toHaveBeenCalledWith('id', 'thanks-1');
       expect(result).toMatchObject({
         id: 'thanks-1',
@@ -260,7 +249,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanksById('nonexistent-id');
@@ -280,7 +269,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act
       const result = await fetchThanksById('thanks-1');
@@ -301,7 +290,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Act & Assert
       await expect(fetchThanksById('thanks-1')).rejects.toThrow();
@@ -319,7 +308,7 @@ describe('fetchThanks', () => {
         }),
       };
       
-      vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+      mockSupabase.from.mockReturnValue(mockQuery as any);
 
       // Mock resource fetch to return null
       vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(null);

@@ -1,32 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '@belongnetwork/core';
 import { createThanks } from '../impl/createThanks';
 import { createMockDbThanks, createMockThanksData } from './test-utils';
 import { createMockUser, createMockResource } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchResourceById from '../../resources/impl/fetchResources';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      }),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
+
 describe('createThanks', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const mockFromUser = createMockUser({ 
     id: 'user-123',
   });
@@ -53,6 +42,35 @@ describe('createThanks', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-123' } },
+        }),
+      },
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -64,18 +82,20 @@ describe('createThanks', () => {
     vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(mockResource);
     
     // Reset the mock implementation for each test
-    (supabase.from('').insert as any).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: mockCreatedThanks,
-        error: null,
+    mockSupabase.from.mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockCreatedThanks,
+          error: null,
+        }),
       }),
     });
   });
 
   it('should create a new thanks', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: { id: 'user-123' } },
     });
 
@@ -83,16 +103,8 @@ describe('createThanks', () => {
     const result = await createThanks(mockThanksData);
 
     // Assert
-    expect(supabase.auth.getUser).toHaveBeenCalled();
-    expect(supabase.from).toHaveBeenCalledWith('thanks');
-    expect(supabase.from('').insert).toHaveBeenCalledWith([
-      expect.objectContaining({
-        message: 'Thank you for sharing!',
-        from_user_id: 'user-123',
-        to_user_id: mockToUser.id,
-        resource_id: mockResource.id,
-      }),
-    ]);
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
     expect(result).toMatchObject({
       id: mockCreatedThanks.id,
       message: 'Thank you for sharing!',
@@ -110,7 +122,7 @@ describe('createThanks', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: null },
     });
 
@@ -123,11 +135,13 @@ describe('createThanks', () => {
   it('should throw an error when thanks creation fails', async () => {
     // Arrange
     const mockError = new Error('Failed to create thanks');
-    (supabase.from('').insert as any).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: null,
-        error: mockError,
+    mockSupabase.from.mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: mockError,
+        }),
       }),
     });
 

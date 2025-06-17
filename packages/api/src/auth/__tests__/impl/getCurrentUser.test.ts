@@ -2,33 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { getCurrentUser } from '../../impl/getCurrentUser';
 import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
-import { supabase, logger } from '@belongnetwork/core';
 import { toDomainUser } from '../../../users/impl/userTransformer';
+import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock dependencies
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(),
-        })),
-      })),
-    })),
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
-
-const mockSupabase = supabase as any;
-const mockLogger = logger as any;
 
 describe('getCurrentUser', () => {
   const userId = faker.string.uuid();
@@ -36,8 +16,14 @@ describe('getCurrentUser', () => {
   const mockAuthUser = toDomainUser(mockProfile);
   const mockAccount = createMockUser({ id: userId });
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should return null when no user is authenticated', async () => {

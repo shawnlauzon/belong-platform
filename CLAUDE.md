@@ -100,4 +100,4 @@ Development Principles
 - When asked to look at the database definition, either look at database.t
 - Never update the database.ts file. Always make changes via a database migration and then pull the types
 - To update the database.ts file, run `pnpm run gen:db-types` from the types directory
-```
+- If you create the same code more than twice, extract it into a shared function

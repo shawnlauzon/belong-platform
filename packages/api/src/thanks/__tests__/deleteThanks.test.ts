@@ -1,30 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '@belongnetwork/core';
 import { deleteThanks } from '../impl/deleteThanks';
 import { createMockDbThanks } from './test-utils';
 import { createMockUser, createMockResource } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchResourceById from '../../resources/impl/fetchResources';
+import { setupBelongClientMocks } from '../../test-utils/mockSetup';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      }),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('deleteThanks', () => {
@@ -40,8 +24,18 @@ describe('deleteThanks', () => {
     message: 'Thank you!',
   });
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
+    
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'user-123' } },
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById')
@@ -51,28 +45,11 @@ describe('deleteThanks', () => {
         return Promise.resolve(null);
       });
     vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(mockResource);
-    
-    // Mock the select and delete queries
-    (supabase.from as any).mockImplementation(() => ({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: mockThanks,
-            error: null,
-          }),
-        }),
-      }),
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
-      }),
-    }));
   });
 
   it('should delete thanks successfully', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: { id: 'user-123' } },
     });
 
@@ -93,14 +70,14 @@ describe('deleteThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await deleteThanks('thanks-1');
 
     // Assert
-    expect(supabase.auth.getUser).toHaveBeenCalled();
-    expect(supabase.from).toHaveBeenCalledWith('thanks');
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
     expect(result).toMatchObject({
       id: 'thanks-1',
       message: 'Thank you!',
@@ -112,7 +89,7 @@ describe('deleteThanks', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: null },
     });
 
@@ -140,7 +117,7 @@ describe('deleteThanks', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await deleteThanks('nonexistent-id');
@@ -151,7 +128,7 @@ describe('deleteThanks', () => {
 
   it.skip('should throw an error when user is not the creator', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: { id: 'user-456' } }, // Different user
     });
     
@@ -160,7 +137,7 @@ describe('deleteThanks', () => {
       from_user_id: 'user-123', // Original creator
     };
     
-    (supabase.from('').select as any).mockResolvedValue({
+    mockSupabase.from('').select.mockResolvedValue({
       data: mockThanksWithDifferentCreator,
       error: null,
     });
@@ -174,7 +151,7 @@ describe('deleteThanks', () => {
   it.skip('should throw an error when delete operation fails', async () => {
     // Arrange
     const mockError = new Error('Delete failed');
-    (supabase.from('').delete as any).mockReturnValue({
+    mockSupabase.from('').delete.mockReturnValue({
       eq: vi.fn().mockResolvedValue({
         error: mockError,
       }),
@@ -221,7 +198,7 @@ describe('deleteThanks', () => {
   it.skip('should handle fetch error that is not "not found"', async () => {
     // Arrange
     const mockError = { code: 'SOME_ERROR', message: 'Database error' };
-    (supabase.from('').select as any).mockResolvedValue({
+    mockSupabase.from('').select.mockResolvedValue({
       data: null,
       error: mockError,
     });

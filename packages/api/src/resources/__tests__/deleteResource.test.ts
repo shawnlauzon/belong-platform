@@ -1,40 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { supabase } from '@belongnetwork/core';
 import { deleteResource } from '../impl/deleteResource';
 import { createMockUser, createMockCommunity } from '../../test-utils/mocks';
 import * as fetchUserById from '../../users/impl/fetchUserById';
 import * as fetchCommunityById from '../../communities/impl/fetchCommunityById';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      }),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
+import { getBelongClient } from '@belongnetwork/core';
+const mockGetBelongClient = vi.mocked(getBelongClient);
+
 describe('deleteResource', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
   const resourceId = faker.string.uuid();
   const mockUser = createMockUser({ id: 'user-123' });
   const mockCommunity = createMockCommunity();
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Create mock logger
+    mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      trace: vi.fn(),
+    };
+
+    // Create mock supabase client
+    mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-123' } },
+        }),
+      },
+    };
+
+    // Setup mock to return our mock client
+    mockGetBelongClient.mockReturnValue({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      mapbox: {} as any,
+    });
     
     // Mock the fetch functions
     vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
@@ -68,13 +86,13 @@ describe('deleteResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act
     const result = await deleteResource(resourceId);
 
     // Assert
-    expect(supabase.auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
     expect(mockQuery1.select).toHaveBeenCalledWith('owner_id, community_id');
     expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
     expect(mockQuery2.update).toHaveBeenCalledWith({
@@ -87,7 +105,7 @@ describe('deleteResource', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    (supabase.auth.getUser as any).mockResolvedValueOnce({
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
       data: { user: null },
     });
 
@@ -108,7 +126,7 @@ describe('deleteResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(deleteResource(resourceId)).rejects.toThrow(
@@ -127,7 +145,7 @@ describe('deleteResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await deleteResource('non-existent-id');
@@ -161,7 +179,7 @@ describe('deleteResource', () => {
       }),
     };
     
-    vi.mocked(supabase.from).mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
+    mockSupabase.from.mockReturnValueOnce(mockQuery1 as any).mockReturnValueOnce(mockQuery2 as any);
 
     // Act & Assert
     await expect(deleteResource(resourceId)).rejects.toThrow(mockError);

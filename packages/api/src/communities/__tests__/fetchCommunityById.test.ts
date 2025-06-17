@@ -2,29 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { fetchCommunityById } from '../impl/fetchCommunityById';
 import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
-import { supabase } from '@belongnetwork/core';
+import { setupBelongClientMocks } from '../../test-utils/mockSetup';
 
-// Mock the supabase client
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: null,
-      error: null,
-    }),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('fetchCommunityById', () => {
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should fetch a community by id successfully', async () => {
@@ -46,13 +39,13 @@ describe('fetchCommunityById', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchCommunityById(communityId);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('communities');
+    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
     expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*), parent:communities(*, organizer:profiles(*))');
     expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
     expect(result).toBeDefined();
@@ -73,7 +66,7 @@ describe('fetchCommunityById', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act
     const result = await fetchCommunityById(communityId);
@@ -96,7 +89,7 @@ describe('fetchCommunityById', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(fetchCommunityById(communityId)).rejects.toThrow(mockError);

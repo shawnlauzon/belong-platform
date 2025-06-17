@@ -2,32 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { createCommunity } from '../impl/createCommunity';
 import { createMockDbCommunity, createMockDbProfile } from '../../test-utils/mocks';
-import { supabase } from '@belongnetwork/core';
 import { CommunityData } from '@belongnetwork/types';
 import { forDbInsert } from '../impl/communityTransformer';
+import { setupBelongClientMocks } from '../../test-utils/mockSetup';
 
-// Mock the supabase client and auth
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: faker.string.uuid() } },
-      }),
-    },
-    from: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: null,
-      error: null,
-    }),
-  },
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
 
 describe('createCommunity', () => {
@@ -37,11 +18,18 @@ describe('createCommunity', () => {
     description: faker.lorem.sentence(),
   } as CommunityData;
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
+    
+    mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: mockUser },
-    } as any);
+    });
   });
 
   it('should create a community successfully', async () => {
@@ -73,7 +61,7 @@ describe('createCommunity', () => {
     };
 
     // Return different mocks based on call order
-    vi.mocked(supabase.from)
+    mockSupabase.from
       .mockReturnValueOnce(mockInsertQuery as any)  // First call: insert
       .mockReturnValueOnce(mockFetchQuery as any);  // Second call: fetch
 
@@ -81,7 +69,7 @@ describe('createCommunity', () => {
     const result = await createCommunity(communityData);
 
     // Assert
-    expect(supabase.from).toHaveBeenCalledWith('communities');
+    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
     expect(mockInsertQuery.insert).toHaveBeenCalledWith(forDbInsert(communityData));
     expect(mockInsertQuery.select).toHaveBeenCalledWith('id');
     expect(result).toBeDefined();
@@ -90,9 +78,9 @@ describe('createCommunity', () => {
 
   it('should throw an error when user is not authenticated', async () => {
     // Arrange
-    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+    mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: null },
-    } as any);
+    });
 
     // Act & Assert
     await expect(createCommunity(communityData)).rejects.toThrow(
@@ -113,7 +101,7 @@ describe('createCommunity', () => {
       }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    mockSupabase.from.mockReturnValue(mockQuery as any);
 
     // Act & Assert
     await expect(createCommunity(communityData)).rejects.toThrow(mockError);

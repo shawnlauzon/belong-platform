@@ -2,24 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { signUp } from '../../impl/signUp';
 import { createMockUser } from '../../../test-utils/mocks';
-import { supabase, logger } from '@belongnetwork/core';
+import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock dependencies
+// Mock the getBelongClient function
 vi.mock('@belongnetwork/core', () => ({
-  supabase: {
-    auth: {
-      signUp: vi.fn(),
-    },
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-  },
+  getBelongClient: vi.fn()
 }));
-
-const mockSupabase = supabase as any;
-const mockLogger = logger as any;
 
 describe('signUp', () => {
   const email = faker.internet.email();
@@ -28,9 +16,14 @@ describe('signUp', () => {
   const lastName = faker.person.lastName();
   const mockAccount = createMockUser();
 
+  let mockSupabase: any;
+  let mockLogger: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase.auth.signUp.mockReset();
+    const mocks = setupBelongClientMocks();
+    mockSupabase = mocks.mockSupabase;
+    mockLogger = mocks.mockLogger;
   });
 
   it('should sign up a new user with required fields', async () => {
