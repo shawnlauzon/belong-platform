@@ -22,16 +22,23 @@ export function setupBelongClientMocks() {
       signOut: vi.fn(),
     },
   };
+
+  const mockMapbox = {
+    autocomplete: vi.fn(),
+    reverseGeocode: vi.fn(),
+  };
   
   const mockGetBelongClient = vi.mocked(getBelongClient);
   mockGetBelongClient.mockReturnValue({
-    supabase: mockSupabase,
-    logger: mockLogger,
+    supabase: mockSupabase as any,
+    logger: mockLogger as any,
+    mapbox: mockMapbox as any,
   });
   
   return {
     mockSupabase,
     mockLogger,
+    mockMapbox,
     mockGetBelongClient,
   };
 }

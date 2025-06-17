@@ -3,15 +3,6 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { faker } from '@faker-js/faker'
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { 
-  useSignUp,
-  useSignIn, 
-  useCurrentUser,
-  useCommunities,
-  useResources,
-  useEvents,
-  useSignOut
-} from '@belongnetwork/platform'
 
 // Create a simple test wrapper for the new global pattern (no BelongClientProvider needed)
 const queryClient = new QueryClient({
@@ -42,12 +33,15 @@ function TestWrapper({ children }: TestWrapperProps) {
   )
 }
 
+// Import hooks from the actual dist bundle to test the published package
+let belongHooks: any;
+
 // Test the platform with global initialization
 beforeAll(async () => {
-  // Import and initialize from dist
-  const { initializeBelong } = await import('../../dist/index.es.js');
+  // Import everything from dist - this tests the actual published package
+  belongHooks = await import('../../dist/index.es.js');
   
-  initializeBelong({
+  belongHooks.initializeBelong({
     supabaseUrl: process.env.VITE_SUPABASE_URL!,
     supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
     mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
@@ -77,7 +71,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 1: Sign Up
     console.log(`[E2E Test ${testId}] Step 1: Testing signUp`)
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
+    const { result: signUpResult } = renderHook(() => belongHooks.useSignUp(), {
       wrapper: TestWrapper
     })
 
@@ -113,7 +107,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 2: Sign In
     console.log(`[E2E Test ${testId}] Step 2: Testing signIn`)
-    const { result: signInResult } = renderHook(() => useSignIn(), {
+    const { result: signInResult } = renderHook(() => belongHooks.useSignIn(), {
       wrapper: TestWrapper
     })
 
@@ -144,7 +138,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 3: Get Current User
     console.log(`[E2E Test ${testId}] Step 3: Testing useCurrentUser`)
-    const { result: currentUserResult } = renderHook(() => useCurrentUser(), {
+    const { result: currentUserResult } = renderHook(() => belongHooks.useCurrentUser(), {
       wrapper: TestWrapper
     })
 
@@ -174,7 +168,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 4: Get Communities
     console.log(`[E2E Test ${testId}] Step 4: Testing useCommunities`)
-    const { result: communitiesResult } = renderHook(() => useCommunities(), {
+    const { result: communitiesResult } = renderHook(() => belongHooks.useCommunities(), {
       wrapper: TestWrapper
     })
 
@@ -217,7 +211,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 5: Get Resources
     console.log(`[E2E Test ${testId}] Step 5: Testing useResources`)
-    const { result: resourcesResult } = renderHook(() => useResources(), {
+    const { result: resourcesResult } = renderHook(() => belongHooks.useResources(), {
       wrapper: TestWrapper
     })
 
@@ -260,7 +254,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 6: Get Events
     console.log(`[E2E Test ${testId}] Step 6: Testing useEvents`)
-    const { result: eventsResult } = renderHook(() => useEvents(), {
+    const { result: eventsResult } = renderHook(() => belongHooks.useEvents(), {
       wrapper: TestWrapper
     })
 
@@ -303,7 +297,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 7: Sign Out
     console.log(`[E2E Test ${testId}] Step 7: Testing signOut`)
-    const { result: signOutResult } = renderHook(() => useSignOut(), {
+    const { result: signOutResult } = renderHook(() => belongHooks.useSignOut(), {
       wrapper: TestWrapper
     })
 
@@ -342,13 +336,13 @@ describe('Belong Platform E2E Integration', () => {
     console.log(`[Hooks Test ${testId}] Testing hook initialization`)
 
     // Test that all hooks can be initialized without errors
-    const { result: signUpHook } = renderHook(() => useSignUp(), { wrapper: TestWrapper })
-    const { result: signInHook } = renderHook(() => useSignIn(), { wrapper: TestWrapper })
-    const { result: currentUserHook } = renderHook(() => useCurrentUser(), { wrapper: TestWrapper })
-    const { result: communitiesHook } = renderHook(() => useCommunities(), { wrapper: TestWrapper })
-    const { result: resourcesHook } = renderHook(() => useResources(), { wrapper: TestWrapper })
-    const { result: eventsHook } = renderHook(() => useEvents(), { wrapper: TestWrapper })
-    const { result: signOutHook } = renderHook(() => useSignOut(), { wrapper: TestWrapper })
+    const { result: signUpHook } = renderHook(() => belongHooks.useSignUp(), { wrapper: TestWrapper })
+    const { result: signInHook } = renderHook(() => belongHooks.useSignIn(), { wrapper: TestWrapper })
+    const { result: currentUserHook } = renderHook(() => belongHooks.useCurrentUser(), { wrapper: TestWrapper })
+    const { result: communitiesHook } = renderHook(() => belongHooks.useCommunities(), { wrapper: TestWrapper })
+    const { result: resourcesHook } = renderHook(() => belongHooks.useResources(), { wrapper: TestWrapper })
+    const { result: eventsHook } = renderHook(() => belongHooks.useEvents(), { wrapper: TestWrapper })
+    const { result: signOutHook } = renderHook(() => belongHooks.useSignOut(), { wrapper: TestWrapper })
 
     // Validate mutation hooks have mutate function
     expect(typeof signUpHook.current.mutate).toBe('function')
