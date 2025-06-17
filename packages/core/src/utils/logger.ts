@@ -1,40 +1,52 @@
 import log from 'loglevel';
 
+/**
+ * Creates a configured logger instance
+ * @param logLevel - Log level (default: 'info')
+ * @returns Configured logger instance
+ */
+export function createLogger(logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent' = 'info') {
+  // Create a new logger instance
+  const logger = log.getLogger(`belong-${Date.now()}`);
+  
+  // Set the log level
+  logger.setLevel(logLevel as log.LogLevelDesc);
+
+  // Custom log formatter for better readability
+  const originalFactory = logger.methodFactory;
+  logger.methodFactory = function (methodName, logLevel, loggerName) {
+    const rawMethod = originalFactory(methodName, logLevel, loggerName);
+    
+    return function (message, ...args) {
+      const timestamp = new Date().toISOString();
+      const level = methodName.toUpperCase().padEnd(5);
+      const prefix = `[${timestamp}] ${level}`;
+      
+      // Add emoji prefixes for better visual distinction
+      const emoji = {
+        trace: '🔍',
+        debug: '🐛',
+        info: 'ℹ️',
+        warn: '⚠️',
+        error: '❌'
+      }[methodName] || '';
+      
+      rawMethod(`${emoji} ${prefix}`, message, ...args);
+    };
+  };
+
+  // Apply the custom formatter
+  logger.setLevel(logger.getLevel());
+
+  return logger;
+}
+
+// Legacy singleton instance for backward compatibility
 // Configure log level based on environment
 const isDevelopment = import.meta.env.DEV;
-const logLevel = import.meta.env.VITE_LOG_LEVEL || (isDevelopment ? 'trace' : 'info');
+const defaultLogLevel = import.meta.env.VITE_LOG_LEVEL || (isDevelopment ? 'trace' : 'info');
 
-// Set the log level
-log.setLevel(logLevel as log.LogLevelDesc);
-
-// Custom log formatter for better readability
-const originalFactory = log.methodFactory;
-log.methodFactory = function (methodName, logLevel, loggerName) {
-  const rawMethod = originalFactory(methodName, logLevel, loggerName);
-  
-  return function (message, ...args) {
-    const timestamp = new Date().toISOString();
-    const level = methodName.toUpperCase().padEnd(5);
-    const prefix = `[${timestamp}] ${level}`;
-    
-    // Add emoji prefixes for better visual distinction
-    const emoji = {
-      trace: '🔍',
-      debug: '🐛',
-      info: 'ℹ️',
-      warn: '⚠️',
-      error: '❌'
-    }[methodName] || '';
-    
-    rawMethod(`${emoji} ${prefix}`, message, ...args);
-  };
-};
-
-// Apply the custom formatter
-log.setLevel(log.getLevel());
-
-// Export configured logger
-export const logger = log;
+export const logger = createLogger(defaultLogLevel as any);
 
 // Export convenience methods
 export const logComponentRender = (componentName: string, props?: any) => {
