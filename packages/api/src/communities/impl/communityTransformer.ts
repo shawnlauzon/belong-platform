@@ -42,7 +42,7 @@ export function toDomainCommunity(
     organizer: toDomainUser(Array.isArray(dbCommunity.organizer) ? dbCommunity.organizer[0] : dbCommunity.organizer),
     parent: undefined,
     parentId: dbCommunity.parent_id,
-    hierarchyPath: dbCommunity.hierarchy_path ? JSON.parse(dbCommunity.hierarchy_path as string) : [],
+    hierarchyPath: dbCommunity.hierarchy_path ? (typeof dbCommunity.hierarchy_path === 'string' ? JSON.parse(dbCommunity.hierarchy_path) : dbCommunity.hierarchy_path) : [],
     timeZone: dbCommunity.time_zone,
   };
 }

@@ -17,15 +17,10 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: {
-        index: resolve(__dirname, 'src/index.ts'),
-        providers: resolve(__dirname, 'src/providers.ts'),
-        hooks: resolve(__dirname, 'src/hooks.ts'),
-        types: resolve(__dirname, 'src/types.ts')
-      },
+      entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es', 'cjs'],
-      fileName: (format, entryName) => {
-        return `${entryName}.${format === 'es' ? 'es.js' : 'cjs.js'}`
+      fileName: (format) => {
+        return `index.${format === 'es' ? 'es.js' : 'cjs.js'}`
       }
     },
     rollupOptions: {
@@ -36,15 +31,7 @@ export default defineConfig({
         'loglevel',
         'nanoid',
         'zod'
-      ],
-      output: {
-        manualChunks: (id) => {
-          // Put everything in the index chunk to ensure global state sharing
-          if (id.includes('/packages/')) {
-            return 'index';
-          }
-        }
-      }
+      ]
     }
   }
 })

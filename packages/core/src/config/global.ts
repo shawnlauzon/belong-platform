@@ -2,8 +2,17 @@ import { createBelongClient, type BelongClient, type BelongClientConfig } from '
 
 /**
  * Global client instance - set via initializeBelong()
+ * Use globalThis to ensure singleton across module boundaries
  */
-let globalClient: BelongClient | null = null;
+const GLOBAL_KEY = '__BELONG_CLIENT__';
+
+function getGlobalClient(): BelongClient | null {
+  return (globalThis as any)[GLOBAL_KEY] || null;
+}
+
+function setGlobalClient(client: BelongClient | null): void {
+  (globalThis as any)[GLOBAL_KEY] = client;
+}
 
 /**
  * Initialize the Belong platform with configuration
@@ -26,7 +35,7 @@ let globalClient: BelongClient | null = null;
  * ```
  */
 export function initializeBelong(config: BelongClientConfig): void {
-  globalClient = createBelongClient(config);
+  setGlobalClient(createBelongClient(config));
 }
 
 /**
@@ -41,6 +50,7 @@ export function initializeBelong(config: BelongClientConfig): void {
  * ```
  */
 export function getBelongClient(): BelongClient {
+  const globalClient = getGlobalClient();
   if (!globalClient) {
     throw new Error(
       'Belong platform not initialized. Call initializeBelong() with your configuration before using any Belong functions.\n\n' +
@@ -62,7 +72,7 @@ export function getBelongClient(): BelongClient {
  * @returns true if initialized, false otherwise
  */
 export function isInitialized(): boolean {
-  return globalClient !== null;
+  return getGlobalClient() !== null;
 }
 
 /**
@@ -71,5 +81,5 @@ export function isInitialized(): boolean {
  * @internal
  */
 export function resetBelongClient(): void {
-  globalClient = null;
+  setGlobalClient(null);
 }

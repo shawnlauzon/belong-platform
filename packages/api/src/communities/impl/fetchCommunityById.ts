@@ -12,7 +12,7 @@ export async function fetchCommunityById(
   try {
     const { data, error } = await supabase
       .from('communities')
-      .select('*, organizer:profiles(*), parent:communities(*, organizer:profiles(*))')
+      .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
       .eq('id', id)
       .single();
 
