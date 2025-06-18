@@ -26,7 +26,7 @@ export class StorageManager {
       }
 
       const bucketExists = buckets?.some(
-        (bucket: any) => bucket.id === this.bucketName
+        (bucket: { id: string }) => bucket.id === this.bucketName
       );
 
       if (bucketExists) {

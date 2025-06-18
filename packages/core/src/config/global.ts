@@ -7,11 +7,11 @@ import { createBelongClient, type BelongClient, type BelongClientConfig } from '
 const GLOBAL_KEY = '__BELONG_CLIENT__';
 
 function getGlobalClient(): BelongClient | null {
-  return (globalThis as any)[GLOBAL_KEY] || null;
+  return (globalThis as Record<string, unknown>)[GLOBAL_KEY] as BelongClient | null || null;
 }
 
 function setGlobalClient(client: BelongClient | null): void {
-  (globalThis as any)[GLOBAL_KEY] = client;
+  (globalThis as Record<string, unknown>)[GLOBAL_KEY] = client;
 }
 
 /**

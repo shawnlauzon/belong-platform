@@ -1,4 +1,4 @@
-import { logger, logApiCall, logApiResponse } from '../utils/logger';
+import { logger } from '../utils/logger';
 import type { createMapboxClient } from '../config/mapbox';
 
 // Helper function to validate coordinates
