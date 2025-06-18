@@ -99,6 +99,7 @@ Development Principles
 
 - Follow established code patterns and conventions within each package
 - Maintain consistent naming conventions across the monorepo
+- A maximum file size is around 500 lines
 
 ## Memory
 
