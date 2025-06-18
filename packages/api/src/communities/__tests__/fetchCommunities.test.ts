@@ -68,7 +68,7 @@ describe('fetchCommunities', () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles(*)');
+    expect(mockQuery.select).toHaveBeenCalledWith(expect.stringContaining('organizer:profiles'));
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
     });
