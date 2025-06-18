@@ -42,7 +42,17 @@ describe('Authentication Integration', () => {
     }
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Clear any existing authentication state
+    try {
+      const client = getBelongClient();
+      if (client?.supabase) {
+        await client.supabase.auth.signOut();
+      }
+    } catch (error) {
+      // Ignore signOut errors for clean test isolation
+    }
+
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
