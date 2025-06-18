@@ -56,7 +56,7 @@ describe('Authentication Integration', () => {
     };
 
     await act(async () => {
-      result.current.mutate(testUser);
+      await result.current.mutateAsync(testUser);
     });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
@@ -78,7 +78,7 @@ describe('Authentication Integration', () => {
     };
 
     await act(async () => {
-      result.current.mutate(testCredentials);
+      await result.current.mutateAsync(testCredentials);
     });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
@@ -109,7 +109,7 @@ describe('Authentication Integration', () => {
     const { result } = renderHook(() => useSignOut(), { wrapper });
 
     await act(async () => {
-      result.current.mutate();
+      await result.current.mutateAsync();
     });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
