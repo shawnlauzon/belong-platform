@@ -77,6 +77,10 @@ Testing
 - Unit tests are located in the __tests__ directory of the feature
 - Integration tests are located in the tests/integration directory
 
+QA
+
+- Before any commit, run `pnpm tdd` and fix any warnings and errors
+- Before any publish, run `pnpm qa` and fix any warnings and errors
 
 Code Safety Guidelines
 
@@ -99,3 +103,4 @@ Development Principles
 - If you create the same code more than twice, extract it into a shared function
 - Keep versions of all packages aligned
 - When you commit after bumping a version, tag with that version
+```
