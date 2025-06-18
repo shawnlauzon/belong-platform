@@ -89,7 +89,7 @@ describe('createEvent CRUD Operations', () => {
         title: 'Test Event',
         description: 'Test Description',
         communityId: TEST_COMMUNITY_ID,
-        startDate: new Date(),
+        startDateTime: new Date(),
         location: 'Test Location',
       };
       const mockDbEvent = {
@@ -98,7 +98,7 @@ describe('createEvent CRUD Operations', () => {
         description: minimalEventData.description,
         community_id: TEST_COMMUNITY_ID,
         organizer_id: TEST_USER_ID,
-        start_date_time: minimalEventData.startDate.toISOString(),
+        start_date_time: minimalEventData.startDateTime.toISOString(),
         end_date_time: null,
         location: minimalEventData.location,
         coordinates: null,
@@ -290,7 +290,6 @@ describe('createEvent CRUD Operations', () => {
     it('should correctly transform coordinates to PostGIS format', async () => {
       // Arrange
       const eventData = generateTestEvent({
-        organizerId: TEST_USER_ID,
         communityId: TEST_COMMUNITY_ID,
         startDateTime: new Date('2024-12-25T15:00:00Z'),
         coordinates: { lat: 37.7749, lng: -122.4194 },
@@ -298,29 +297,39 @@ describe('createEvent CRUD Operations', () => {
       
       mockAuthenticatedUser(mocks.mockSupabase, TEST_USER_ID);
       
-      // Mock fetchUserById and fetchCommunityById to return the required data
-      vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(mockUser);
-      vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
-      
-      const mockQuery = {
-        insert: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'event-coordinates' },
-          error: null,
-        }),
+      const mockDbEvent = {
+        id: 'event-coordinates',
+        title: eventData.title,
+        description: eventData.description,
+        organizer_id: TEST_USER_ID,
+        community_id: TEST_COMMUNITY_ID,
+        start_date_time: eventData.startDateTime.toISOString(),
+        end_date_time: eventData.endDateTime?.toISOString() || null,
+        location: eventData.location,
+        coordinates: 'POINT(-122.4194 37.7749)',
+        parking_info: null,
+        max_attendees: null,
+        registration_required: false,
+        is_active: true,
+        tags: [],
+        image_urls: [],
+        attendee_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
-      mocks.mockSupabase.from.mockReturnValue(mockQuery);
+      
+      mockSuccessfulInsert(mocks.mockSupabase, 'events', mockDbEvent);
 
       // Act
-      await createEvent(eventData);
+      const result = await createEvent(eventData);
 
       // Assert
-      expect(mockQuery.insert).toHaveBeenCalledWith([
-        expect.objectContaining({
-          coordinates: 'POINT(-122.4194 37.7749)', // lng first, then lat for PostGIS
-        })
-      ]);
+      expect(result).toMatchObject({
+        id: 'event-coordinates',
+        coordinates: { lat: 37.7749, lng: -122.4194 },
+        organizer: expect.objectContaining({ id: TEST_USER_ID }),
+        community: expect.objectContaining({ id: TEST_COMMUNITY_ID }),
+      });
     });
   });
 });

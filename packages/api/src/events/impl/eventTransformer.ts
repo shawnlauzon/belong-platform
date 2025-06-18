@@ -95,7 +95,7 @@ export function forDbInsert(
     community_id: communityId,
     start_date_time: startDateTime.toISOString(),
     end_date_time: endDateTime?.toISOString() || null,
-    coordinates: toPostGisPoint(coordinates),
+    coordinates: coordinates ? toPostGisPoint(coordinates) : null,
     parking_info: parkingInfo || null,
     max_attendees: maxAttendees || null,
     registration_required: registrationRequired || false,

@@ -300,7 +300,25 @@ describe('fetchEvents CRUD Operations', () => {
 
     it('should handle transformation errors gracefully in fetchEvents', async () => {
       // Arrange
-      const invalidDbEvent = { ...mockDbEvent, start_date_time: null }; // This will cause transformer error
+      const invalidDbEvent = { 
+        ...mockDbEvent, 
+        organizer_id: 'nonexistent-organizer' // This will cause fetchUserById to return null
+      };
+      
+      // Reset the mocks to ensure fresh state
+      vi.clearAllMocks();
+      mocks = setupCrudTestMocks();
+      
+      // Mock fetchUserById to return null for the invalid organizer
+      vi.spyOn(fetchUserById, 'fetchUserById').mockImplementation((id) => {
+        if (id === 'nonexistent-organizer') {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(mockUser);
+      });
+      vi.spyOn(fetchCommunityById, 'fetchCommunityById').mockResolvedValue(mockCommunity);
+      
+      // Override the mockSuccessfulSelect to use our new mocks
       mockSuccessfulSelect(mocks.mockSupabase, 'events', [invalidDbEvent]);
 
       // Act
@@ -308,8 +326,8 @@ describe('fetchEvents CRUD Operations', () => {
 
       // Assert
       expect(result).toHaveLength(0); // Invalid event should be filtered out
-      expect(mocks.mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error transforming event'),
+      expect(mocks.mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Missing organizer or community for event'),
         expect.any(Object)
       );
     });
