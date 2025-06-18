@@ -11,6 +11,7 @@ import {
   initializeBelong,
   useResources,
   useEvents,
+  useCommunities,
   resetBelongClient,
 } from '@belongnetwork/platform';
 
@@ -72,5 +73,22 @@ describe('User Scenario Integration', () => {
       error: null,
       data: expect.any(Array),
     });
+  });
+
+  test('useCommunities should work after calling initializeBelong', async () => {
+    const { result } = renderHook(() => useCommunities(), { wrapper });
+
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+
+    expect(result.current).toMatchObject({
+      isError: false,
+      isSuccess: true,
+      isPending: false,
+      error: null,
+      data: expect.any(Array),
+    });
+
+    // Should return at least 1 community
+    expect(result.current.data.length).toBeGreaterThanOrEqual(1);
   });
 });
