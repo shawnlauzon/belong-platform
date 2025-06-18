@@ -54,15 +54,16 @@ export function toDomainCommunity(
  * Transform a domain community object to a database community record
  */
 export function forDbInsert(community: CommunityData): CommunityInsertDbData {
-  const { organizerId, center, ...rest } = community;
+  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, ...rest } = community;
 
   return {
     ...rest,
     center: center ? toPostGisPoint(center) : undefined,
     organizer_id: organizerId,
-    hierarchy_path: JSON.stringify(community.hierarchyPath),
-    parent_id: community.parentId,
-    time_zone: community.timeZone,
+    hierarchy_path: JSON.stringify(hierarchyPath),
+    parent_id: parentId,
+    time_zone: timeZone,
+    radius_km: radiusKm,
     is_active: true, // New communities are always active
   };
 }
@@ -70,15 +71,16 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
 export function forDbUpdate(
   community: Partial<CommunityData> & { id: string }
 ): CommunityUpdateDbData {
-  const { organizerId, center, ...rest } = community;
+  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, ...rest } = community;
 
   return {
     ...rest,
     center: center ? toPostGisPoint(center) : undefined,
     organizer_id: organizerId,
-    hierarchy_path: JSON.stringify(community.hierarchyPath),
-    parent_id: community.parentId,
-    time_zone: community.timeZone,
+    hierarchy_path: hierarchyPath ? JSON.stringify(hierarchyPath) : undefined,
+    parent_id: parentId,
+    time_zone: timeZone,
+    radius_km: radiusKm,
   };
 }
 

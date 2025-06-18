@@ -1,5 +1,6 @@
 import { getBelongClient } from '@belongnetwork/core';
 import { fetchCommunityById } from './fetchCommunityById';
+import { forDbUpdate } from './communityTransformer';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
@@ -19,8 +20,9 @@ export async function updateCommunity(
     }
 
     const { id, ...updateData } = data;
+    const dbUpdateData = forDbUpdate({ id, ...updateData });
     const updatePayload = {
-      ...updateData,
+      ...dbUpdateData,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     };

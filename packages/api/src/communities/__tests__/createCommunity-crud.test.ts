@@ -330,8 +330,9 @@ describe('createCommunity CRUD Operations', () => {
           parent_id: 'parent-123',
           time_zone: 'America/New_York',
           organizer_id: fullCommunityData.organizerId,
-          level: 'neighborhood',
+          level: fullCommunityData.level,
           hierarchy_path: expect.any(String),
+          is_active: true, // New communities are always active
         })
       );
     });

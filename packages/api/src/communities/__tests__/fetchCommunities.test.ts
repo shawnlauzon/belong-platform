@@ -55,6 +55,7 @@ describe('fetchCommunities', () => {
     // Mock the Supabase response
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
         data: mockCommunities,
         error: null,
@@ -81,6 +82,7 @@ describe('fetchCommunities', () => {
     
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
         data: null,
         error: mockError,

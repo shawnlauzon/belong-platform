@@ -56,12 +56,18 @@ describe('fetchCommunities CRUD Operations', () => {
   describe('fetchCommunities - Public Access Tests', () => {
     it('should fetch communities without authentication (public access)', async () => {
       // Arrange
+      const mockQueryResult = {
+        data: [mockDbCommunity],
+        error: null,
+      };
+      
+      // Create a mock query that properly chains and returns a thenable
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [mockDbCommunity],
-          error: null,
-        }),
+        eq: vi.fn().mockReturnValue(mockQueryResult),
+        order: vi.fn().mockReturnThis(),
+        then: vi.fn().mockImplementation((resolve) => Promise.resolve(resolve(mockQueryResult))),
+        catch: vi.fn().mockImplementation(() => Promise.resolve()),
       };
       mocks.mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -84,6 +90,7 @@ describe('fetchCommunities CRUD Operations', () => {
       // Arrange
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [],
           error: null,
@@ -108,6 +115,7 @@ describe('fetchCommunities CRUD Operations', () => {
       
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: mockDbCommunities,
           error: null,
@@ -129,6 +137,7 @@ describe('fetchCommunities CRUD Operations', () => {
       // Arrange
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: null,
           error: null,
@@ -226,6 +235,7 @@ describe('fetchCommunities CRUD Operations', () => {
 
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [mockDbCommunityWithAllFields],
           error: null,
@@ -263,6 +273,7 @@ describe('fetchCommunities CRUD Operations', () => {
 
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [mockDbCommunityMinimal],
           error: null,
@@ -285,12 +296,23 @@ describe('fetchCommunities CRUD Operations', () => {
 
     it('should handle organizer data transformation', async () => {
       // Arrange
+      const mockQueryResult = {
+        data: [mockDbCommunity],
+        error: null,
+      };
+      
+      // Create a thenable object that acts like a Promise
+      const createThenable = (result: any) => ({
+        ...result,
+        then: (onResolve: any) => Promise.resolve(onResolve(result)),
+        catch: (onReject: any) => Promise.resolve(),
+      });
+      
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [mockDbCommunity],
-          error: null,
-        }),
+        eq: vi.fn().mockImplementation(() => createThenable(mockQueryResult)),
+        order: vi.fn().mockReturnThis(),
+        ...createThenable(mockQueryResult),
       };
       mocks.mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -315,6 +337,7 @@ describe('fetchCommunities CRUD Operations', () => {
       const dbError = new Error('Database query failed');
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: null,
           error: dbError,
@@ -336,6 +359,7 @@ describe('fetchCommunities CRUD Operations', () => {
       
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [invalidDbCommunity],
           error: null,
@@ -370,12 +394,23 @@ describe('fetchCommunities CRUD Operations', () => {
   describe('Logging Tests', () => {
     it('should log debug message when starting fetch', async () => {
       // Arrange
+      const mockQueryResult = {
+        data: [mockDbCommunity],
+        error: null,
+      };
+      
+      // Create a thenable object that acts like a Promise
+      const createThenable = (result: any) => ({
+        ...result,
+        then: (onResolve: any) => Promise.resolve(onResolve(result)),
+        catch: (onReject: any) => Promise.resolve(),
+      });
+      
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [mockDbCommunity],
-          error: null,
-        }),
+        eq: vi.fn().mockImplementation(() => createThenable(mockQueryResult)),
+        order: vi.fn().mockReturnThis(),
+        ...createThenable(mockQueryResult),
       };
       mocks.mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -390,12 +425,23 @@ describe('fetchCommunities CRUD Operations', () => {
 
     it('should log debug message when fetch completes successfully', async () => {
       // Arrange
+      const mockQueryResult = {
+        data: [mockDbCommunity],
+        error: null,
+      };
+      
+      // Create a thenable object that acts like a Promise
+      const createThenable = (result: any) => ({
+        ...result,
+        then: (onResolve: any) => Promise.resolve(onResolve(result)),
+        catch: (onReject: any) => Promise.resolve(),
+      });
+      
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [mockDbCommunity],
-          error: null,
-        }),
+        eq: vi.fn().mockImplementation(() => createThenable(mockQueryResult)),
+        order: vi.fn().mockReturnThis(),
+        ...createThenable(mockQueryResult),
       };
       mocks.mockSupabase.from.mockReturnValue(mockQuery);
 
@@ -414,6 +460,7 @@ describe('fetchCommunities CRUD Operations', () => {
       const dbError = new Error('Fetch failed');
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: null,
           error: dbError,

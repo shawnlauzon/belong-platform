@@ -132,7 +132,7 @@ describe('updateCommunity CRUD Operations', () => {
       // Assert
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          center: 'POINT(-74.0060 40.7128)', // lng first, lat second for PostGIS
+          center: expect.stringMatching(/^POINT\(-74\.006\d* 40\.7128\)$/), // lng first, lat second for PostGIS
           hierarchy_path: JSON.stringify([
             { level: 'country', name: 'United States' },
             { level: 'state', name: 'New York' },
