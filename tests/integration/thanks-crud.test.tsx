@@ -242,9 +242,7 @@ describe('Thanks CRUD Integration Tests', () => {
             impactDescription: thanksData.impactDescription,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     
     // Track for cleanup
@@ -282,7 +280,7 @@ describe('Thanks CRUD Integration Tests', () => {
     expect(existingCommunity).toBeDefined();
     testCommunity.id = existingCommunity!.id;
 
-    // Sign up and sign in test user
+    // Sign up and sign in test user (sender)
     const { result: signUpResult } = renderHook(() => useSignUp(), {
       wrapper,
     });
@@ -309,6 +307,26 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Create a second user (recipient)
+    const recipientUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
+    const { result: signUpRecipientResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpRecipientResult.current.mutate({
+        email: recipientUser.email,
+        password: recipientUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
+    const recipientUserId = signUpRecipientResult.current.data?.id;
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -341,7 +359,7 @@ describe('Thanks CRUD Integration Tests', () => {
 
     const thanksData = {
       fromUserId: testUser.userId!,
-      toUserId: testUser.userId!, // Self-thanks for test simplicity
+      toUserId: recipientUserId!, // Use recipient user to avoid self-thanks constraint
       resourceId: createdResource!.id,
       message: faker.lorem.sentence(),
       impactDescription: faker.lorem.paragraph(),
@@ -360,9 +378,7 @@ describe('Thanks CRUD Integration Tests', () => {
             message: thanksData.message,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     const createdThanks = createThanksResult.current.data;
     expect(createdThanks).toBeDefined();
@@ -400,9 +416,7 @@ describe('Thanks CRUD Integration Tests', () => {
             impactDescription: updatedImpactDescription,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Verify thanks is updated in the list
@@ -465,6 +479,26 @@ describe('Thanks CRUD Integration Tests', () => {
 
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
 
+    // Create a second user (recipient)
+    const recipientUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
+    const { result: signUpRecipientResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpRecipientResult.current.mutate({
+        email: recipientUser.email,
+        password: recipientUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
+    const recipientUserId = signUpRecipientResult.current.data?.id;
+
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
       wrapper,
@@ -496,7 +530,7 @@ describe('Thanks CRUD Integration Tests', () => {
 
     const thanksData = {
       fromUserId: testUser.userId!,
-      toUserId: testUser.userId!, // Self-thanks for test simplicity
+      toUserId: recipientUserId!, // Use recipient user to avoid self-thanks constraint
       resourceId: createdResource!.id,
       message: faker.lorem.sentence(),
       impactDescription: faker.lorem.paragraph(),
@@ -515,9 +549,7 @@ describe('Thanks CRUD Integration Tests', () => {
             message: thanksData.message,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     const createdThanks = createThanksResult.current.data;
     expect(createdThanks).toBeDefined();
@@ -535,9 +567,7 @@ describe('Thanks CRUD Integration Tests', () => {
       expect(deleteThanksResult.current).toMatchObject({
           isSuccess: true,
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Verify thanks is deleted (or at least not findable in the list)

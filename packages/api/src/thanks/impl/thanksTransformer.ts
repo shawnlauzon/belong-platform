@@ -62,15 +62,16 @@ export function forDbInsert(
   fromUserId: string
 ): ThanksInsertDbData {
   const {
+    fromUserId: _fromUserId, // Extract and ignore the fromUserId from data
     toUserId,
     resourceId,
     imageUrls,
     impactDescription,
-    ...rest
+    message,
   } = thanksData;
 
   return {
-    ...rest,
+    message,
     from_user_id: fromUserId,
     to_user_id: toUserId,
     resource_id: resourceId,
@@ -86,16 +87,16 @@ export function forDbUpdate(
   thanksData: Partial<ThanksData>
 ): ThanksUpdateDbData {
   const {
+    fromUserId,
     toUserId,
     resourceId,
     imageUrls,
     impactDescription,
-    fromUserId,
-    ...rest
+    message,
   } = thanksData;
 
   return {
-    ...rest,
+    message,
     from_user_id: fromUserId,
     to_user_id: toUserId,
     resource_id: resourceId,
