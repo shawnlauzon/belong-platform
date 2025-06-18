@@ -83,9 +83,7 @@ describe('Resources CRUD Integration Tests', () => {
           expect(deleteResult.current).toMatchObject({
               isSuccess: true,
               error: null,
-            })
-          );
-        });
+            });
         });
       }
     }
@@ -138,7 +136,6 @@ describe('Resources CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
     testCommunity.id = existingCommunity!.id;
@@ -162,9 +159,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     testUser.userId = signUpResult.current.data?.id;
 
     // Sign in test user
@@ -186,9 +181,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     // Create a resource
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -221,9 +214,7 @@ describe('Resources CRUD Integration Tests', () => {
             isActive: resourceData.isActive,
           }),
           error: null,
-        })
-      );
-    });
+        });
     
     // Track for cleanup
     createdResourceIds.push(createResourceResult.current.data!.id);
@@ -269,7 +260,6 @@ describe('Resources CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
     testCommunity.id = existingCommunity!.id;
@@ -293,9 +283,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -315,9 +303,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -345,9 +331,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     const createdResource = createResourceResult.current.data;
     expect(createdResource).toBeDefined();
 
@@ -387,9 +371,7 @@ describe('Resources CRUD Integration Tests', () => {
             isActive: resourceData.isActive,
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     // Verify resource is updated in the list
     const { result: verifyUpdateResult } = renderHook(() => useResources(), {
@@ -431,7 +413,6 @@ describe('Resources CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
     testCommunity.id = existingCommunity!.id;
@@ -455,9 +436,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -477,9 +456,7 @@ describe('Resources CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -517,9 +494,7 @@ describe('Resources CRUD Integration Tests', () => {
       expect(deleteResourceResult.current).toMatchObject({
           isSuccess: true,
           error: null,
-        })
-      );
-    });
+        });
 
     // Verify resource is deleted (or at least not findable in the list)
     const { result: verifyDeleteResult } = renderHook(() => useResources(), {
