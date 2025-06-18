@@ -327,6 +327,8 @@ describe('Thanks CRUD Integration Tests', () => {
 
     await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
     const recipientUserId = signUpRecipientResult.current.data?.id;
+    expect(recipientUserId).toBeDefined();
+    expect(recipientUserId).not.toBe(testUser.userId);
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -498,6 +500,8 @@ describe('Thanks CRUD Integration Tests', () => {
 
     await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
     const recipientUserId = signUpRecipientResult.current.data?.id;
+    expect(recipientUserId).toBeDefined();
+    expect(recipientUserId).not.toBe(testUser.userId);
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
