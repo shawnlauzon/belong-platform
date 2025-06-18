@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": false,
   "description": "A platform for building hyper-local community applications with resource sharing, event management, and social features.",
   "type": "module",
