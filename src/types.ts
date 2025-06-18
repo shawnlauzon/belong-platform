@@ -1,4 +1,4 @@
 // @belongnetwork/platform/types - All type exports
 
 // Re-export all types from types package
-export * from '@belongnetwork/types'
+export * from '../packages/types/src'
