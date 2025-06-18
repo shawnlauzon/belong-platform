@@ -17,10 +17,15 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        hooks: resolve(__dirname, 'src/hooks.ts'),
+        types: resolve(__dirname, 'src/types.ts'),
+        providers: resolve(__dirname, 'src/providers.ts'),
+      },
       formats: ['es', 'cjs'],
-      fileName: (format) => {
-        return `index.${format === 'es' ? 'es.js' : 'cjs.js'}`
+      fileName: (format, entryName) => {
+        return `${entryName}.${format === 'es' ? 'es.js' : 'cjs.js'}`
       }
     },
     rollupOptions: {

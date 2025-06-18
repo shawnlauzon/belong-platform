@@ -51,6 +51,7 @@ describe('Package Exports Integration', () => {
       'useCurrentUser',
       'useSignIn', 
       'useSignOut',
+      'useSignUp',
       'useCommunities',
       'useCommunity',
       'useCreateCommunity',

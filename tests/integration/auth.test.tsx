@@ -188,10 +188,81 @@ describe('Authentication Integration', () => {
       isSuccess: true,
       isPending: false,
       data: expect.objectContaining({
-        email: testEmail,
+        email: testEmail.toLowerCase(),
         firstName: testUser.firstName,
         lastName: testUser.lastName,
       }),
+    });
+  });
+
+  test('useSignOut should work and clear current user', async () => {
+    // First create and sign in a user
+    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
+
+    const testEmail = `test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
+    const testPassword = 'TestPassword123!';
+    const testUser = {
+      email: testEmail,
+      password: testPassword,
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+    };
+
+    await act(async () => {
+      await signUpResult.current.mutateAsync(testUser);
+    });
+
+    await waitFor(() => expect(signUpResult.current.isPending).toBe(false));
+
+    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
+
+    await act(async () => {
+      await signInResult.current.mutateAsync({
+        email: testEmail,
+        password: testPassword,
+      });
+    });
+
+    await waitFor(() => expect(signInResult.current.isPending).toBe(false));
+
+    // Validate precondition: user should be authenticated
+    const { result: currentUserResult } = renderHook(() => useCurrentUser(), { wrapper });
+
+    await waitFor(() => expect(currentUserResult.current.isPending).toBe(false));
+
+    expect(currentUserResult.current.data).not.toBeNull();
+    expect(currentUserResult.current.data).toEqual(
+      expect.objectContaining({
+        email: testEmail.toLowerCase(),
+      })
+    );
+
+    // Now test sign out
+    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper });
+
+    await act(async () => {
+      await signOutResult.current.mutateAsync();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isPending).toBe(false));
+
+    expect(signOutResult.current).toMatchObject({
+      isError: false,
+      isSuccess: true,
+      isPending: false,
+      error: null,
+    });
+
+    // Verify current user is now null after sign out
+    const { result: currentUserAfterSignOut } = renderHook(() => useCurrentUser(), { wrapper });
+
+    await waitFor(() => expect(currentUserAfterSignOut.current.isPending).toBe(false));
+
+    expect(currentUserAfterSignOut.current).toMatchObject({
+      isError: false,
+      isSuccess: true,
+      isPending: false,
+      data: null,
     });
   });
 });
