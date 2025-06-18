@@ -20,7 +20,12 @@ export async function getCurrentUser(client?: BelongClient): Promise<User | null
     const { data: { user }, error } = await supabaseClient.auth.getUser();
 
     if (error) {
-      loggerClient.error('🔐 API: Failed to get current user', { error });
+      // AuthSessionMissingError is expected for unauthenticated users - log at debug level
+      if (error.message?.includes('Auth session missing')) {
+        loggerClient.debug('🔐 API: No auth session found (user not authenticated)', { error: error.message });
+      } else {
+        loggerClient.error('🔐 API: Failed to get current user', { error });
+      }
       return null;
     }
 
@@ -69,8 +74,14 @@ export async function getCurrentUser(client?: BelongClient): Promise<User | null
     loggerClient.debug('🔐 API: Successfully retrieved current user', { userId: domainUser.id });
     return domainUser;
   } catch (error) {
-    loggerClient.error('🔐 API: Error getting current user', { error });
-    throw error;
+    // AuthSessionMissingError is expected for unauthenticated users - handle gracefully
+    if (error instanceof Error && error.message?.includes('Auth session missing')) {
+      loggerClient.debug('🔐 API: No auth session found (user not authenticated)', { error: error.message });
+      return null;
+    } else {
+      loggerClient.error('🔐 API: Error getting current user', { error });
+      throw error;
+    }
   }
 }
 
