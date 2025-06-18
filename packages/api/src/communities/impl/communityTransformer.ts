@@ -23,7 +23,7 @@ export function toDomainCommunity(
     organizer: ProfileRow | ProfileRow[]; 
   }
 ): Community {
-  const { center, created_at, updated_at, ...rest } = dbCommunity;
+  const { center, created_at, updated_at, deleted_at, deleted_by, is_active, ...rest } = dbCommunity;
 
   // Parse PostGIS point to coordinates
   const coords = center ? parsePostGisPoint(center) : undefined;
@@ -39,6 +39,9 @@ export function toDomainCommunity(
     center: coords,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
+    isActive: is_active,
+    deletedAt: deleted_at ? new Date(deleted_at) : undefined,
+    deletedBy: deleted_by ?? undefined,
     organizer: toDomainUser(Array.isArray(dbCommunity.organizer) ? dbCommunity.organizer[0] : dbCommunity.organizer),
     parent: undefined,
     parentId: dbCommunity.parent_id,
@@ -60,6 +63,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     hierarchy_path: JSON.stringify(community.hierarchyPath),
     parent_id: community.parentId,
     time_zone: community.timeZone,
+    is_active: true, // New communities are always active
   };
 }
 

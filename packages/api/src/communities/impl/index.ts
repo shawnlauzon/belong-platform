@@ -2,6 +2,7 @@
 export * from './createCommunity';
 export * from './updateCommunity';
 export * from './deleteCommunity';
+export * from './restoreCommunity';
 export * from './fetchCommunities';
 export * from './fetchCommunityById';
 

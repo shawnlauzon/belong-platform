@@ -3,18 +3,25 @@ import { toDomainCommunity } from './communityTransformer';
 import type { Community } from '@belongnetwork/types';
 
 export async function fetchCommunityById(
-  id: string
+  id: string,
+  options?: { includeDeleted?: boolean }
 ): Promise<Community | null> {
   const { supabase, logger } = getBelongClient();
   
-  logger.debug('🏘️ API: Fetching community by ID', { id });
+  logger.debug('🏘️ API: Fetching community by ID', { id, options });
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('communities')
       .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+
+    // By default, only fetch active communities
+    if (!options?.includeDeleted) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -27,6 +34,7 @@ export async function fetchCommunityById(
     logger.debug('🏘️ API: Successfully fetched community', {
       id,
       name: community.name,
+      isActive: community.isActive,
     });
     return community;
   } catch (error) {

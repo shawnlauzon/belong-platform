@@ -446,6 +446,47 @@ export function mockSingleEqDelete(mockSupabase: any, tableName: string, error: 
   });
 }
 
+/**
+ * Mock successful database soft delete operation (update to set is_active = false)
+ */
+export function mockSoftDelete(mockSupabase: any, tableName: string, userId: string, error: any = null) {
+  const mockAuthQuery = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({
+      data: { organizer_id: userId, is_active: true },
+      error: null,
+    }),
+  };
+
+  const mockUpdateQuery = {
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockResolvedValue({ error }),
+  };
+
+  let callCount = 0;
+  mockSupabase.from.mockImplementation((table: string) => {
+    if (table === tableName) {
+      callCount++;
+      // First call is for authorization check, second is for update
+      if (callCount === 1) {
+        return mockAuthQuery;
+      } else {
+        return mockUpdateQuery;
+      }
+    }
+    return {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+    };
+  });
+}
+
 // Common Test Data
 
 export const TEST_USER_ID = 'test-user-123';
