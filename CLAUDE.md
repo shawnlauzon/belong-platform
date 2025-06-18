@@ -89,6 +89,7 @@ Code Safety Guidelines
 Development Principles
 
 - A task is only complete when build and typecheck and tests are all successful
+- Use the supabase MCP to interact with the database
 
 ## Code Style and Best Practices
 
