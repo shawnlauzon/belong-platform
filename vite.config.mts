@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [
     dts({
       insertTypesEntry: true,
-      include: ['src/**/*'],
-      exclude: ['**/*.test.*', '**/*.spec.*', 'packages/**/*'],
+      include: ['src/**/*', 'packages/*/src/**/*'],
+      exclude: ['**/*.test.*', '**/*.spec.*'],
       tsConfigFilePath: './tsconfig.build.json',
       skipDiagnostics: true,
       noEmitOnError: false,
@@ -35,11 +35,16 @@ export default defineConfig({
         '@tanstack/react-query',
         'loglevel',
         'nanoid',
-        'zod',
-        '@belongnetwork/api',
-        '@belongnetwork/types',
-        '@belongnetwork/core'
-      ]
+        'zod'
+      ],
+      output: {
+        manualChunks: (id) => {
+          // Put everything in the index chunk to ensure global state sharing
+          if (id.includes('/packages/')) {
+            return 'index';
+          }
+        }
+      }
     }
   }
 })
