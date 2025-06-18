@@ -80,6 +80,12 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   memberCount: number;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Soft delete fields
+  isActive: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+  
   // Optional membership status for current user
   currentUserMembership?: CommunityMembership;
 }

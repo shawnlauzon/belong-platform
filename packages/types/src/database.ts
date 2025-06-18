@@ -13,9 +13,12 @@ export type Database = {
         Row: {
           center: unknown | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           hierarchy_path: Json
           id: string
+          is_active: boolean
           level: string
           member_count: number
           name: string
@@ -28,9 +31,12 @@ export type Database = {
         Insert: {
           center?: unknown | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           hierarchy_path: Json
           id?: string
+          is_active?: boolean
           level: string
           member_count?: number
           name: string
@@ -43,9 +49,12 @@ export type Database = {
         Update: {
           center?: unknown | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           hierarchy_path?: Json
           id?: string
+          is_active?: boolean
           level?: string
           member_count?: number
           name?: string
