@@ -80,7 +80,11 @@ Testing
 QA
 
 - Before any commit, run `pnpm tdd` and fix any warnings and errors
-- Before any publish, run `pnpm qa` and fix any warnings and errors
+
+Publish
+
+- Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in all package.json files, then commit, then tag, then publish
+
 
 Code Safety Guidelines
 
