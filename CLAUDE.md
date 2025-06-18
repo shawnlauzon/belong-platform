@@ -67,20 +67,16 @@ TDD
 - Always write a test before writing the code
 - Use the test file to guide the implementation
 
-Unit Testing
+Testing
 
 - Each package has its own Vitest configuration
 - Skipping tests is not an acceptable way to make tests pass
-- All unit tests must pass before committing
+- A problem must fail the test; logging errors is only for debugging
 - Use faker to generate data for tests and to document expected values
 
-Integration Testing
-
+- Unit tests are located in the __tests__ directory of the feature
 - Integration tests are located in the tests/integration directory
-- Integration tests do not mock anything
-- Integration tests import packages from the dist directory
-- You may only read and write from the database for test setup or validation
-- Use faker to generate data for tests
+
 
 Code Safety Guidelines
 
@@ -101,3 +97,4 @@ Development Principles
 - Never update the database.ts file. Always make changes via a database migration and then pull the types
 - To update the database.ts file, run `pnpm run gen:db-types` from the types directory
 - If you create the same code more than twice, extract it into a shared function
+```
