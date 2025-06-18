@@ -3,8 +3,18 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { faker } from '@faker-js/faker'
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { 
+  initializeBelong,
+  useSignUp,
+  useSignIn, 
+  useCurrentUser,
+  useCommunities,
+  useResources,
+  useEvents,
+  useSignOut
+} from '@belongnetwork/platform'
 
-// Create a simple test wrapper for the new global pattern (no BelongClientProvider needed)
+// Create a simple test wrapper matching real client usage
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { 
@@ -33,15 +43,10 @@ function TestWrapper({ children }: TestWrapperProps) {
   )
 }
 
-// Import hooks from the actual dist bundle to test the published package
-let belongHooks: any;
-
-// Test the platform with global initialization
-beforeAll(async () => {
-  // Import everything from dist - this tests the actual published package
-  belongHooks = await import('../../dist/index.es.js');
-  
-  belongHooks.initializeBelong({
+// Test the platform with global initialization - exactly like real clients
+beforeAll(() => {
+  // Initialize the platform once at app startup (like real clients)
+  initializeBelong({
     supabaseUrl: process.env.VITE_SUPABASE_URL!,
     supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
     mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
@@ -71,7 +76,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 1: Sign Up
     console.log(`[E2E Test ${testId}] Step 1: Testing signUp`)
-    const { result: signUpResult } = renderHook(() => belongHooks.useSignUp(), {
+    const { result: signUpResult } = renderHook(() => useSignUp(), {
       wrapper: TestWrapper
     })
 
@@ -98,16 +103,20 @@ describe('Belong Platform E2E Integration', () => {
       return !signUpResult.current.isPending
     }, { timeout: 15000, interval: 1000 })
 
-    // SignUp might fail due to RLS policies or existing user - that's expected
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
     if (signUpResult.current.isError) {
-      console.log(`[E2E Test ${testId}] SignUp error (expected):`, signUpResult.current.error?.message)
+      const errorMsg = signUpResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] SignUp failed with expected error:`, errorMsg)
     } else if (signUpResult.current.isSuccess) {
       console.log(`[E2E Test ${testId}] SignUp successful`)
     }
 
     // Step 2: Sign In
     console.log(`[E2E Test ${testId}] Step 2: Testing signIn`)
-    const { result: signInResult } = renderHook(() => belongHooks.useSignIn(), {
+    const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper: TestWrapper
     })
 
@@ -131,14 +140,20 @@ describe('Belong Platform E2E Integration', () => {
       return !signInResult.current.isPending
     }, { timeout: 15000, interval: 1000 })
 
-    // SignIn might fail - that's expected for test users
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
     if (signInResult.current.isError) {
-      console.log(`[E2E Test ${testId}] SignIn error (expected):`, signInResult.current.error?.message)
+      const errorMsg = signInResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] SignIn failed with expected error:`, errorMsg)
+    } else if (signInResult.current.isSuccess) {
+      console.log(`[E2E Test ${testId}] SignIn successful`)
     }
 
     // Step 3: Get Current User
     console.log(`[E2E Test ${testId}] Step 3: Testing useCurrentUser`)
-    const { result: currentUserResult } = renderHook(() => belongHooks.useCurrentUser(), {
+    const { result: currentUserResult } = renderHook(() => useCurrentUser(), {
       wrapper: TestWrapper
     })
 
@@ -152,6 +167,15 @@ describe('Belong Platform E2E Integration', () => {
       })
       return !currentUserResult.current.isLoading
     }, { timeout: 15000, interval: 1000 })
+
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
+    if (currentUserResult.current.isError) {
+      const errorMsg = currentUserResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] CurrentUser failed with expected error:`, errorMsg)
+    }
 
     // Validate hook structure
     expect(typeof currentUserResult.current.refetch).toBe('function')
@@ -168,7 +192,7 @@ describe('Belong Platform E2E Integration', () => {
 
     // Step 4: Get Communities
     console.log(`[E2E Test ${testId}] Step 4: Testing useCommunities`)
-    const { result: communitiesResult } = renderHook(() => belongHooks.useCommunities(), {
+    const { result: communitiesResult } = renderHook(() => useCommunities(), {
       wrapper: TestWrapper
     })
 
@@ -182,6 +206,15 @@ describe('Belong Platform E2E Integration', () => {
       })
       return !communitiesResult.current.isLoading
     }, { timeout: 30000, interval: 1000 })
+
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
+    if (communitiesResult.current.isError) {
+      const errorMsg = communitiesResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] Communities failed with expected error:`, errorMsg)
+    }
 
     // Validate hook structure
     expect(typeof communitiesResult.current.refetch).toBe('function')
@@ -205,13 +238,11 @@ describe('Belong Platform E2E Integration', () => {
           level: firstCommunity.level
         })
       }
-    } else if (communitiesResult.current.isError) {
-      console.log(`[E2E Test ${testId}] Communities error (may be expected):`, communitiesResult.current.error?.message)
     }
 
     // Step 5: Get Resources
     console.log(`[E2E Test ${testId}] Step 5: Testing useResources`)
-    const { result: resourcesResult } = renderHook(() => belongHooks.useResources(), {
+    const { result: resourcesResult } = renderHook(() => useResources(), {
       wrapper: TestWrapper
     })
 
@@ -225,6 +256,15 @@ describe('Belong Platform E2E Integration', () => {
       })
       return !resourcesResult.current.isLoading
     }, { timeout: 30000, interval: 1000 })
+
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
+    if (resourcesResult.current.isError) {
+      const errorMsg = resourcesResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] Resources failed with expected error:`, errorMsg)
+    }
 
     // Validate hook structure
     expect(typeof resourcesResult.current.refetch).toBe('function')
@@ -248,13 +288,11 @@ describe('Belong Platform E2E Integration', () => {
           type: firstResource.type
         })
       }
-    } else if (resourcesResult.current.isError) {
-      console.log(`[E2E Test ${testId}] Resources error (may be expected):`, resourcesResult.current.error?.message)
     }
 
     // Step 6: Get Events
     console.log(`[E2E Test ${testId}] Step 6: Testing useEvents`)
-    const { result: eventsResult } = renderHook(() => belongHooks.useEvents(), {
+    const { result: eventsResult } = renderHook(() => useEvents(), {
       wrapper: TestWrapper
     })
 
@@ -268,6 +306,15 @@ describe('Belong Platform E2E Integration', () => {
       })
       return !eventsResult.current.isLoading
     }, { timeout: 30000, interval: 1000 })
+
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
+    if (eventsResult.current.isError) {
+      const errorMsg = eventsResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] Events failed with expected error:`, errorMsg)
+    }
 
     // Validate hook structure
     expect(typeof eventsResult.current.refetch).toBe('function')
@@ -291,13 +338,11 @@ describe('Belong Platform E2E Integration', () => {
           startTime: firstEvent.startTime
         })
       }
-    } else if (eventsResult.current.isError) {
-      console.log(`[E2E Test ${testId}] Events error (may be expected):`, eventsResult.current.error?.message)
     }
 
     // Step 7: Sign Out
     console.log(`[E2E Test ${testId}] Step 7: Testing signOut`)
-    const { result: signOutResult } = renderHook(() => belongHooks.useSignOut(), {
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
       wrapper: TestWrapper
     })
 
@@ -318,10 +363,15 @@ describe('Belong Platform E2E Integration', () => {
       return !signOutResult.current.isPending
     }, { timeout: 15000, interval: 1000 })
 
-    if (signOutResult.current.isSuccess) {
+    // After calling initializeBelong(), hooks should NOT return "platform not initialized" errors
+    if (signOutResult.current.isError) {
+      const errorMsg = signOutResult.current.error?.message || ''
+      if (errorMsg.includes('Belong platform not initialized')) {
+        throw new Error(`PLATFORM BUG: initializeBelong() was called but hooks still report platform not initialized. Error: ${errorMsg}`)
+      }
+      console.log(`[E2E Test ${testId}] SignOut failed with expected error:`, errorMsg)
+    } else if (signOutResult.current.isSuccess) {
       console.log(`[E2E Test ${testId}] SignOut successful`)
-    } else if (signOutResult.current.isError) {
-      console.log(`[E2E Test ${testId}] SignOut error:`, signOutResult.current.error?.message)
     }
 
     console.log(`[E2E Test ${testId}] Complete platform journey test finished`)
@@ -336,13 +386,13 @@ describe('Belong Platform E2E Integration', () => {
     console.log(`[Hooks Test ${testId}] Testing hook initialization`)
 
     // Test that all hooks can be initialized without errors
-    const { result: signUpHook } = renderHook(() => belongHooks.useSignUp(), { wrapper: TestWrapper })
-    const { result: signInHook } = renderHook(() => belongHooks.useSignIn(), { wrapper: TestWrapper })
-    const { result: currentUserHook } = renderHook(() => belongHooks.useCurrentUser(), { wrapper: TestWrapper })
-    const { result: communitiesHook } = renderHook(() => belongHooks.useCommunities(), { wrapper: TestWrapper })
-    const { result: resourcesHook } = renderHook(() => belongHooks.useResources(), { wrapper: TestWrapper })
-    const { result: eventsHook } = renderHook(() => belongHooks.useEvents(), { wrapper: TestWrapper })
-    const { result: signOutHook } = renderHook(() => belongHooks.useSignOut(), { wrapper: TestWrapper })
+    const { result: signUpHook } = renderHook(() => useSignUp(), { wrapper: TestWrapper })
+    const { result: signInHook } = renderHook(() => useSignIn(), { wrapper: TestWrapper })
+    const { result: currentUserHook } = renderHook(() => useCurrentUser(), { wrapper: TestWrapper })
+    const { result: communitiesHook } = renderHook(() => useCommunities(), { wrapper: TestWrapper })
+    const { result: resourcesHook } = renderHook(() => useResources(), { wrapper: TestWrapper })
+    const { result: eventsHook } = renderHook(() => useEvents(), { wrapper: TestWrapper })
+    const { result: signOutHook } = renderHook(() => useSignOut(), { wrapper: TestWrapper })
 
     // Validate mutation hooks have mutate function
     expect(typeof signUpHook.current.mutate).toBe('function')
