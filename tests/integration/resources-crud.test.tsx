@@ -80,15 +80,12 @@ describe('Resources CRUD Integration Tests', () => {
         });
         
         await waitFor(() => {
-          if (deleteResult.current.isError) {
-            console.error('Delete resource cleanup error:', deleteResult.current.error);
-          }
-          expect(deleteResult.current).toEqual(
-            expect.objectContaining({
+          expect(deleteResult.current).toMatchObject({
               isSuccess: true,
               error: null,
             })
           );
+        });
         });
       }
     }
@@ -106,9 +103,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (resourcesResult.current.isError) {
-        console.error('Fetch resources error:', resourcesResult.current.error);
-      }
       expect(resourcesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -137,9 +131,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -165,22 +156,16 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
     });
-    testUser.userId = signUpResult.current.data?.user?.id;
+    testUser.userId = signUpResult.current.data?.id;
 
     // Sign in test user
     const { result: signInResult } = renderHook(() => useSignIn(), {
@@ -195,16 +180,10 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
@@ -231,11 +210,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createResourceResult.current.isError) {
-        console.error('Create resource error:', createResourceResult.current.error);
-      }
-      expect(createResourceResult.current).toEqual(
-        expect.objectContaining({
+      expect(createResourceResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -259,9 +234,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (resourcesResult.current.isError) {
-        console.error('Fetch resources list error:', resourcesResult.current.error);
-      }
       expect(resourcesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -290,9 +262,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -318,16 +287,10 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
@@ -346,16 +309,10 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
@@ -382,11 +339,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createResourceResult.current.isError) {
-        console.error('Create resource error:', createResourceResult.current.error);
-      }
-      expect(createResourceResult.current).toEqual(
-        expect.objectContaining({
+      expect(createResourceResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -423,11 +376,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (updateResourceResult.current.isError) {
-        console.error('Update resource error:', updateResourceResult.current.error);
-      }
-      expect(updateResourceResult.current).toEqual(
-        expect.objectContaining({
+      expect(updateResourceResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: createdResource!.id,
@@ -448,9 +397,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (verifyUpdateResult.current.isError) {
-        console.error('Verify update error:', verifyUpdateResult.current.error);
-      }
       expect(verifyUpdateResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -478,9 +424,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -506,16 +449,10 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
@@ -534,16 +471,10 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
@@ -583,11 +514,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (deleteResourceResult.current.isError) {
-        console.error('Delete resource error:', deleteResourceResult.current.error);
-      }
-      expect(deleteResourceResult.current).toEqual(
-        expect.objectContaining({
+      expect(deleteResourceResult.current).toMatchObject({
           isSuccess: true,
           error: null,
         })
@@ -600,9 +527,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (verifyDeleteResult.current.isError) {
-        console.error('Verify delete error:', verifyDeleteResult.current.error);
-      }
       expect(verifyDeleteResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,

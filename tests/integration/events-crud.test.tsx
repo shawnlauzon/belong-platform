@@ -79,15 +79,10 @@ describe('Events CRUD Integration Tests', () => {
         });
         
         await waitFor(() => {
-          if (deleteResult.current.isError) {
-            console.error('Delete event cleanup error:', deleteResult.current.error);
-          }
-          expect(deleteResult.current).toEqual(
-            expect.objectContaining({
-              isSuccess: true,
-              error: null,
-            })
-          );
+          expect(deleteResult.current).toMatchObject({
+            isSuccess: true,
+            error: null,
+          });
         });
       }
     }
@@ -105,9 +100,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (eventsResult.current.isError) {
-        console.error('Fetch events error:', eventsResult.current.error);
-      }
       expect(eventsResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -115,6 +107,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
   });
 
@@ -129,9 +122,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -139,6 +129,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -157,22 +148,17 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
     });
-    testUser.userId = signUpResult.current.data?.user?.id;
+    });
+    testUser.userId = signUpResult.current.data?.id;
 
     // Sign in test user
     const { result: signInResult } = renderHook(() => useSignIn(), {
@@ -187,20 +173,15 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
+    });
     });
 
     // Create an event
@@ -228,11 +209,7 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createEventResult.current.isError) {
-        console.error('Create event error:', createEventResult.current.error);
-      }
-      expect(createEventResult.current).toEqual(
-        expect.objectContaining({
+      expect(createEventResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -245,6 +222,7 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
+    });
     
     // Track for cleanup
     createdEventIds.push(createEventResult.current.data!.id);
@@ -255,9 +233,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (eventsResult.current.isError) {
-        console.error('Fetch events list error:', eventsResult.current.error);
-      }
       expect(eventsResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -272,6 +247,7 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
+    });
   });
 
   test('should successfully update an event when authenticated as organizer', async () => {
@@ -285,9 +261,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -295,6 +268,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -313,22 +287,17 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
     });
-    testUser.userId = signUpResult.current.data?.user?.id;
+    });
+    testUser.userId = signUpResult.current.data?.id;
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -342,20 +311,15 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
+    });
     });
 
     // Create an event first
@@ -383,11 +347,7 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createEventResult.current.isError) {
-        console.error('Create event error:', createEventResult.current.error);
-      }
-      expect(createEventResult.current).toEqual(
-        expect.objectContaining({
+      expect(createEventResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -395,6 +355,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const createdEvent = createEventResult.current.data;
     expect(createdEvent).toBeDefined();
@@ -425,11 +386,7 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (updateEventResult.current.isError) {
-        console.error('Update event error:', updateEventResult.current.error);
-      }
-      expect(updateEventResult.current).toEqual(
-        expect.objectContaining({
+      expect(updateEventResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: createdEvent!.id,
@@ -442,6 +399,7 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
+    });
 
     // Verify event is updated in the list
     const { result: verifyUpdateResult } = renderHook(() => useEvents(), {
@@ -449,9 +407,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (verifyUpdateResult.current.isError) {
-        console.error('Verify update error:', verifyUpdateResult.current.error);
-      }
       expect(verifyUpdateResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -464,6 +419,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
   });
 
@@ -478,9 +434,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (communitiesResult.current.isError) {
-        console.error('Fetch communities error:', communitiesResult.current.error);
-      }
       expect(communitiesResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -488,6 +441,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -506,22 +460,17 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signUpResult.current.isError) {
-        console.error('Sign up error:', signUpResult.current.error);
-      }
-      expect(signUpResult.current).toEqual(
-        expect.objectContaining({
+      expect(signUpResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
     });
-    testUser.userId = signUpResult.current.data?.user?.id;
+    });
+    testUser.userId = signUpResult.current.data?.id;
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -535,20 +484,15 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (signInResult.current.isError) {
-        console.error('Sign in error:', signInResult.current.error);
-      }
-      expect(signInResult.current).toEqual(
-        expect.objectContaining({
+      expect(signInResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
-            user: expect.objectContaining({
-              id: expect.any(String),
-            }),
+            id: expect.any(String),
           }),
           error: null,
         })
       );
+    });
     });
 
     // Create an event first
@@ -589,15 +533,12 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (deleteEventResult.current.isError) {
-        console.error('Delete event error:', deleteEventResult.current.error);
-      }
-      expect(deleteEventResult.current).toEqual(
-        expect.objectContaining({
+      expect(deleteEventResult.current).toMatchObject({
           isSuccess: true,
           error: null,
         })
       );
+    });
     });
 
     // Verify event is deleted (or at least not findable in the list)
@@ -606,9 +547,6 @@ describe('Events CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (verifyDeleteResult.current.isError) {
-        console.error('Verify delete error:', verifyDeleteResult.current.error);
-      }
       expect(verifyDeleteResult.current).toEqual(
         expect.objectContaining({
           isSuccess: true,
@@ -620,6 +558,7 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
   });
 });

@@ -160,7 +160,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
-    testUser.userId = signUpResult.current.data?.user?.id;
+    testUser.userId = signUpResult.current.data?.id;
 
     // Sign in test user
     const { result: signInResult } = renderHook(() => useSignIn(), {
@@ -234,11 +234,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createThanksResult.current.isError) {
-        console.error('Create thanks error:', createThanksResult.current.error);
-      }
-      expect(createThanksResult.current).toEqual(
-        expect.objectContaining({
+      expect(createThanksResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -248,6 +244,7 @@ describe('Thanks CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     
     // Track for cleanup
@@ -298,7 +295,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
-    testUser.userId = signUpResult.current.data?.user?.id;
+    testUser.userId = signUpResult.current.data?.id;
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -356,11 +353,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createThanksResult.current.isError) {
-        console.error('Create thanks error (update test):', createThanksResult.current.error);
-      }
-      expect(createThanksResult.current).toEqual(
-        expect.objectContaining({
+      expect(createThanksResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -369,6 +362,7 @@ describe('Thanks CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const createdThanks = createThanksResult.current.data;
     expect(createdThanks).toBeDefined();
@@ -398,11 +392,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (updateThanksResult.current.isError) {
-        console.error('Update thanks error:', updateThanksResult.current.error);
-      }
-      expect(updateThanksResult.current).toEqual(
-        expect.objectContaining({
+      expect(updateThanksResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: createdThanks!.id,
@@ -412,6 +402,7 @@ describe('Thanks CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
 
     // Verify thanks is updated in the list
@@ -459,7 +450,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
-    testUser.userId = signUpResult.current.data?.user?.id;
+    testUser.userId = signUpResult.current.data?.id;
 
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -517,11 +508,7 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (createThanksResult.current.isError) {
-        console.error('Create thanks error (delete test):', createThanksResult.current.error);
-      }
-      expect(createThanksResult.current).toEqual(
-        expect.objectContaining({
+      expect(createThanksResult.current).toMatchObject({
           isSuccess: true,
           data: expect.objectContaining({
             id: expect.any(String),
@@ -530,6 +517,7 @@ describe('Thanks CRUD Integration Tests', () => {
           error: null,
         })
       );
+    });
     });
     const createdThanks = createThanksResult.current.data;
     expect(createdThanks).toBeDefined();
@@ -544,15 +532,12 @@ describe('Thanks CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      if (deleteThanksResult.current.isError) {
-        console.error('Delete thanks error:', deleteThanksResult.current.error);
-      }
-      expect(deleteThanksResult.current).toEqual(
-        expect.objectContaining({
+      expect(deleteThanksResult.current).toMatchObject({
           isSuccess: true,
           error: null,
         })
       );
+    });
     });
 
     // Verify thanks is deleted (or at least not findable in the list)
