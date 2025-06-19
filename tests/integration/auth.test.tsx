@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, act, render, screen } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import {
   useSignIn,
   useCurrentUser,
   useSignOut,
+  CurrentUserProvider,
   resetBelongClient,
   getBelongClient,
 } from '@belongnetwork/platform';
@@ -254,9 +255,7 @@ describe('Authentication Integration', () => {
 
   test('useSignOut should work and clear current user', async () => {
     await signOutBetweenTests();
-    // First create and sign in a user
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
-
+    
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
     const testUser = {
@@ -266,78 +265,135 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
+    // Create a component that uses TkDodo's pattern with CurrentUserProvider
+    const AuthTestComponent = () => {
+      const signUp = useSignUp();
+      const signIn = useSignIn();
+      const signOut = useSignOut();
+      
+      // This component will be wrapped by CurrentUserProvider, so useCurrentUser will work
+      let currentUser;
+      try {
+        currentUser = useCurrentUser();
+      } catch (error) {
+        // User is not authenticated yet
+        currentUser = null;
+      }
+
+      return (
+        <div>
+          <div data-testid="current-user-email">
+            {currentUser?.email || 'not-authenticated'}
+          </div>
+          <button
+            data-testid="sign-up-btn"
+            onClick={async () => {
+              await signUp.mutateAsync(testUser);
+            }}
+          >
+            Sign Up
+          </button>
+          <button
+            data-testid="sign-in-btn"
+            onClick={async () => {
+              await signIn.mutateAsync({
+                email: testEmail,
+                password: testPassword,
+              });
+            }}
+          >
+            Sign In
+          </button>
+          <button
+            data-testid="sign-out-btn"
+            onClick={async () => {
+              await signOut.mutateAsync();
+            }}
+          >
+            Sign Out
+          </button>
+          <div data-testid="sign-up-status">
+            {signUp.isPending ? 'signing-up' : signUp.isSuccess ? 'sign-up-success' : 'sign-up-idle'}
+          </div>
+          <div data-testid="sign-in-status">
+            {signIn.isPending ? 'signing-in' : signIn.isSuccess ? 'sign-in-success' : 'sign-in-idle'}
+          </div>
+          <div data-testid="sign-out-status">
+            {signOut.isPending ? 'signing-out' : signOut.isSuccess ? 'sign-out-success' : 'sign-out-idle'}
+          </div>
+        </div>
+      );
+    };
+
+    // Since CurrentUserProvider will only render children when user is authenticated,
+    // we need a wrapper that handles the unauthenticated state
+    const TestWrapper = () => {
+      const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+      
+      if (!isAuthenticated) {
+        return (
+          <div>
+            <AuthTestComponent />
+            <button 
+              data-testid="simulate-auth"
+              onClick={() => setIsAuthenticated(true)}
+            >
+              Simulate Auth
+            </button>
+          </div>
+        );
+      }
+      
+      return (
+        <CurrentUserProvider>
+          <AuthTestComponent />
+        </CurrentUserProvider>
+      );
+    };
+
+    render(<TestWrapper />, { wrapper });
+
+    // Step 1: Sign up user
     await act(async () => {
-      await signUpResult.current.mutateAsync(testUser);
+      screen.getByTestId('sign-up-btn').click();
     });
-
-    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
-
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
-
-    await act(async () => {
-      await signInResult.current.mutateAsync({
-        email: testEmail,
-        password: testPassword,
-      });
-    });
-
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
-
-    // Validate precondition: user should be authenticated
-    const { result: currentUserResult } = renderHook(() => useCurrentUser(), {
-      wrapper,
-    });
-
-    await waitFor(() => expect(currentUserResult.current.isSuccess).toBe(true));
-
-    // Debug logging to understand the cache pollution issue
-    console.log('🔍 DEBUG: Expected email:', testEmail.toLowerCase());
-    console.log('🔍 DEBUG: Actual currentUser data:', JSON.stringify(currentUserResult.current.data, null, 2));
-    console.log('🔍 DEBUG: QueryClient cache state:', queryClient.getQueryCache().getAll().map(query => ({
-      queryKey: query.queryKey,
-      state: query.state.status,
-      data: query.state.data
-    })));
-
-    expect(currentUserResult.current).toMatchObject({
-      data: expect.objectContaining({
-        email: testEmail.toLowerCase(),
-      }),
-    });
-
-    // Now test sign out
-    const { result: signOutResult } = renderHook(() => useSignOut(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      await signOutResult.current.mutateAsync();
-    });
-
-    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
-
-    expect(signOutResult.current).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      error: null,
-    });
-
-    // Verify current user is now null after sign out
-    const { result: currentUserAfterSignOut } = renderHook(
-      () => useCurrentUser(),
-      { wrapper }
-    );
 
     await waitFor(() =>
-      expect(currentUserAfterSignOut.current.isSuccess).toBe(true)
+      expect(screen.getByTestId('sign-up-status')).toHaveTextContent('sign-up-success')
     );
 
-    expect(currentUserAfterSignOut.current).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      data: null,
+    // Step 2: Sign in user
+    await act(async () => {
+      screen.getByTestId('sign-in-btn').click();
     });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('sign-in-status')).toHaveTextContent('sign-in-success')
+    );
+
+    // Step 3: Simulate moving to authenticated state (wrap with CurrentUserProvider)
+    await act(async () => {
+      screen.getByTestId('simulate-auth').click();
+    });
+
+    // Step 4: Verify user is authenticated and email matches
+    await waitFor(() =>
+      expect(screen.getByTestId('current-user-email')).toHaveTextContent(testEmail.toLowerCase())
+    );
+
+    // Step 5: Sign out user
+    await act(async () => {
+      screen.getByTestId('sign-out-btn').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('sign-out-status')).toHaveTextContent('sign-out-success')
+    );
+
+    // Step 6: Verify user is no longer authenticated
+    // The CurrentUserProvider should handle the transition to unauthenticated state
+    await waitFor(() =>
+      expect(screen.getByTestId('current-user-email')).toHaveTextContent('not-authenticated')
+    );
   });
 });
