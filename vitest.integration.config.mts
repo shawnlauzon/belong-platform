@@ -6,7 +6,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['tests/integration/database/setup.ts'],
     globals: true,
-    silent: true,
     // Run integration tests sequentially to avoid conflicts
     pool: 'forks',
     poolOptions: {

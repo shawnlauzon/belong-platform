@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { faker } from '@faker-js/faker';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import {
@@ -9,18 +8,23 @@ import {
   useCreateResource,
   useUpdateResource,
   useDeleteResource,
-  useSignIn,
-  useSignUp,
-  useCommunities,
   resetBelongClient,
   ResourceCategory,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
+import { 
+  setupAuthenticatedUser, 
+  resetAuthCache,
+  type AuthSetupResult
+} from './helpers/auth-helpers';
+import { 
+  generateResourceData,
+  performCleanupDeletion
+} from './helpers/crud-test-patterns';
 
 describe('Resources CRUD Integration Tests', () => {
-  let testUser: { email: string; password: string; userId?: string };
-  let testCommunity: { id?: string; name: string };
+  let authSetup: AuthSetupResult;
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
 
@@ -49,19 +53,10 @@ describe('Resources CRUD Integration Tests', () => {
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
 
-    // Generate unique test user
-    testUser = {
-      email: faker.internet.email(),
-      password: faker.internet.password({ length: 12 }),
-    };
-
-    // Generate unique test community
-    testCommunity = {
-      name: generateTestName('Test Community'),
-    };
-
     createdResourceIds = [];
+    resetAuthCache();
   });
+
 
   afterEach(async () => {
     // Clean up created resources
@@ -75,20 +70,12 @@ describe('Resources CRUD Integration Tests', () => {
       });
 
       for (const resourceId of createdResourceIds) {
-        await act(async () => {
-          deleteResult.current.mutate(resourceId);
-        });
-        
-        await waitFor(() => {
-          expect(deleteResult.current).toMatchObject({
-              isSuccess: true,
-              error: null,
-            });
-        });
+        await performCleanupDeletion(deleteResult, resourceId, act, waitFor);
       }
     }
 
     resetBelongClient();
+    resetAuthCache();
   });
 
   test('should successfully read resources without authentication', async () => {
@@ -123,83 +110,14 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Get existing communities to use for testing
-    const { result: communitiesResult } = renderHook(() => useCommunities(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(communitiesResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.any(Array),
-          error: null,
-        })
-      );
-    });
-    const existingCommunity = communitiesResult.current.data?.[0];
-    expect(existingCommunity).toBeDefined();
-    testCommunity.id = existingCommunity!.id;
-
-    // Sign up test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
-    testUser.userId = signUpResult.current.data?.id;
-
-    // Sign in test user
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
+    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a resource
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
       wrapper,
     });
 
-    const resourceData = {
-      title: generateTestName('Test Resource'),
-      description: faker.lorem.paragraph(),
-      category: ResourceCategory.FOOD,
-      type: 'offer' as const,
-      communityId: testCommunity.id!,
-      isActive: true,
-      imageUrls: [],
-    };
+    const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
       createResourceResult.current.mutate(resourceData);
@@ -251,66 +169,7 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Get existing communities to use for testing
-    const { result: communitiesResult } = renderHook(() => useCommunities(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(communitiesResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.any(Array),
-          error: null,
-        })
-      );
-    });
-    const existingCommunity = communitiesResult.current.data?.[0];
-    expect(existingCommunity).toBeDefined();
-    testCommunity.id = existingCommunity!.id;
-
-    // Sign up and sign in test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
-
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
+    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -318,13 +177,8 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     const resourceData = {
+      ...generateResourceData(testCommunity.id!),
       title: generateTestName('Test Resource to Update'),
-      description: faker.lorem.paragraph(),
-      category: ResourceCategory.FOOD,
-      type: 'offer' as const,
-      communityId: testCommunity.id!,
-      isActive: true,
-      imageUrls: [],
     };
 
     await act(async () => {
@@ -409,66 +263,7 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Get existing communities to use for testing
-    const { result: communitiesResult } = renderHook(() => useCommunities(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(communitiesResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.any(Array),
-          error: null,
-        })
-      );
-    });
-    const existingCommunity = communitiesResult.current.data?.[0];
-    expect(existingCommunity).toBeDefined();
-    testCommunity.id = existingCommunity!.id;
-
-    // Sign up and sign in test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
-
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
+    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -476,13 +271,8 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     const resourceData = {
+      ...generateResourceData(testCommunity.id!),
       title: generateTestName('Test Resource to Delete'),
-      description: faker.lorem.paragraph(),
-      category: ResourceCategory.FOOD,
-      type: 'offer' as const,
-      communityId: testCommunity.id!,
-      isActive: true,
-      imageUrls: [],
     };
 
     await act(async () => {
