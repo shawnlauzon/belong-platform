@@ -18,7 +18,6 @@ import { generateTestName } from './database/utils/database-helpers';
 import { 
   setupAuthenticatedUser, 
   setupTwoUsers, 
-  resetAuthCache,
   type AuthSetupResult,
   type TwoUserSetupResult 
 } from './helpers/auth-helpers';
@@ -29,10 +28,43 @@ import {
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
-  let authSetup: AuthSetupResult;
+  let twoUsersSetup: TwoUserSetupResult;
   let createdThanksIds: string[] = [];
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
+
+  beforeAll(async () => {
+    // Initialize Belong client
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client for auth setup
+    const setupQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
+    );
+
+    // Set up two users once for all tests
+    twoUsersSetup = await setupTwoUsers(wrapper);
+  });
 
   beforeEach(async () => {
     // Create fresh query client for each test
@@ -52,16 +84,8 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       },
     });
 
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     createdThanksIds = [];
     createdResourceIds = [];
-    resetAuthCache();
   });
 
   afterEach(async () => {
@@ -92,7 +116,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should successfully read thanks without authentication', async () => {
@@ -116,7 +139,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser }: TwoUserSetupResult = await setupTwoUsers(wrapper);
+    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
 
     // Create a resource first (needed for thanks)
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -185,7 +208,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser }: TwoUserSetupResult = await setupTwoUsers(wrapper);
+    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -289,7 +312,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser }: TwoUserSetupResult = await setupTwoUsers(wrapper);
+    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {

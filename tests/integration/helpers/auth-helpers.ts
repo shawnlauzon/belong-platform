@@ -26,16 +26,10 @@ export interface TwoUserSetupResult extends AuthSetupResult {
   recipientUser: TestUser;
 }
 
-let cachedAuthSetup: AuthSetupResult | null = null;
-let isCacheValid = false;
-
 /**
- * Sets up an authenticated user and community, caching the result for reuse
+ * Sets up an authenticated user and community for use in beforeAll
  */
 export async function setupAuthenticatedUser(wrapper: any): Promise<AuthSetupResult> {
-  if (isCacheValid && cachedAuthSetup) {
-    return cachedAuthSetup;
-  }
 
   const testUser: TestUser = {
     email: faker.internet.email(),
@@ -109,19 +103,16 @@ export async function setupAuthenticatedUser(wrapper: any): Promise<AuthSetupRes
     });
   });
 
-  const result = { testUser, testCommunity };
-  cachedAuthSetup = result;
-  isCacheValid = true;
-  
-  return result;
+  return { testUser, testCommunity };
 }
 
 /**
  * Sets up two authenticated users for multi-user scenarios (like thanks)
- * Creates fresh users each time to avoid authentication conflicts
+ * Should be called in beforeAll to avoid repeated authentication calls
  */
 export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
-  // Create fresh users for multi-user scenarios to avoid auth conflicts
+
+  // Create fresh users for multi-user scenarios
   const testUser: TestUser = {
     email: faker.internet.email(),
     password: faker.internet.password({ length: 12 }),
@@ -194,7 +185,7 @@ export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
     });
   });
 
-  // Create a second user (recipient)
+  // Create a second user (recipient) - only signup, no signin needed
   const recipientUser: TestUser = {
     email: faker.internet.email(),
     password: faker.internet.password({ length: 12 }),
@@ -219,17 +210,3 @@ export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
   return { testUser, testCommunity, recipientUser };
 }
 
-/**
- * Resets the authentication cache - call in afterEach or when switching test suites
- */
-export function resetAuthCache() {
-  cachedAuthSetup = null;
-  isCacheValid = false;
-}
-
-/**
- * Ensures a user is authenticated for the current test suite, reusing cached auth if available
- */
-export async function ensureAuthenticated(wrapper: any): Promise<AuthSetupResult> {
-  return setupAuthenticatedUser(wrapper);
-}
