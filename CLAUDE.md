@@ -72,6 +72,7 @@ Testing
 - Each package has its own Vitest configuration
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
+- **ALWAYS use createMock* utilities from @belongnetwork/api/src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
 
 - Unit tests are located in the __tests__ directory of the feature
@@ -110,3 +111,76 @@ Development Principles
 - Keep versions of all packages aligned
 - When you commit after bumping a version, tag with that version
 - Do not deprecate; remove
+
+## Debugging Guidelines
+
+### Problem-Solving Methodology
+
+1. **Write a Failing Test First**: Always create a unit test that reproduces the exact problem before attempting any fixes
+   - Unit tests should demonstrate the bug in isolation
+   - Use proper mocking strategy: only mock external dependencies (like Supabase), never mock platform code
+   - The test should fail for the right reason - demonstrating the actual bug
+
+2. **Understand the Real Problem Space**:
+   - Distinguish between unit test failures and integration test failures - they may have different root causes
+   - Unit tests with mocks may pass while integration tests fail, indicating the mock doesn't reflect real behavior
+   - Integration test failures may reveal environmental issues (shared state, timing, real external dependencies) that unit tests can't detect
+
+3. **Test Your Hypothesis with Real Evidence**:
+   - When you think you've identified the root cause, test it against the actual failing scenario
+   - If your fix works for unit tests but not integration tests, your hypothesis may be incomplete
+   - Don't assume a fix works just because it seems logical - verify it against the failing test case
+
+4. **Fix the Root Cause, Not Symptoms**: 
+   - Don't mask problems with workarounds (e.g., clearing caches manually between tests)
+   - Ask "Why isn't the intended behavior working?" rather than "How can I make this pass?"
+   - Example: If cache is polluted after sign-out, fix the sign-out cache invalidation, don't clear cache manually
+
+5. **Verify the Fix Completely**: 
+   - The unit test should pass after the fix
+   - Integration tests should also pass without additional workarounds
+   - Both test types should demonstrate the same correct behavior
+   - If integration tests still fail after unit tests pass, there may be additional root causes
+
+6. **Test-Driven Development (TDD) Process**:
+   - Red: Write a failing test that demonstrates the problem
+   - Green: Fix the minimum code needed to make the test pass
+   - Refactor: Clean up the implementation while keeping tests green
+
+### Common Anti-Patterns to Avoid
+
+- **Mocking platform code**: Never mock our own functions - only mock external dependencies
+- **Hiding problems with cleanup**: Don't add manual cache clearing, database cleanup, or other workarounds that mask the real issue
+- **Fixing symptoms instead of causes**: If something should work automatically but doesn't, fix the automation, don't work around it
+- **Skipping the failing test step**: Always prove you can reproduce the problem in a test before fixing it
+- **Writing tests that expect bugs**: Don't write assertions that expect broken behavior (e.g., `expect(cache).toEqual(oldData)` when cache should be cleared). Instead, write tests that expect correct behavior - they will fail and demonstrate the bug, then pass after the fix
+- **Assuming mocked behavior matches real behavior**: Unit tests with mocks may pass while integration tests fail because mocks don't perfectly simulate real external dependencies
+- **Stopping investigation after first hypothesis**: If your fix works for unit tests but integration tests still fail, there may be multiple root causes or your understanding is incomplete
+- **Using console.log for debugging tests**: Tests should pass or fail clearly without requiring debug output to understand the problem
+
+### Integration vs Unit Test Differences
+
+- **Unit tests**: Mock external dependencies, test platform logic in isolation, create fresh test environment per test
+- **Integration tests**: No mocking, test real end-to-end behavior, may share some state between tests
+- **When integration tests fail but unit tests pass**: Look for environmental differences (shared state, different setup, real vs mocked dependencies)
+
+### Key Lessons from Real Debugging Sessions
+
+1. **Cache Pollution Investigation Example**:
+   - **Initial Hypothesis**: Cache not being invalidated when using useSignOut hook
+   - **Reality**: Integration test was calling `supabase.auth.signOut()` directly, bypassing our hooks entirely
+   - **First Fix Attempt**: Added auth state listener to automatically clear cache on SIGNED_OUT events
+   - **Result**: Unit tests still fail because mocks don't trigger real auth state changes; integration tests still fail indicating additional root causes
+   - **Lesson**: Multiple layers of the problem needed investigation - direct Supabase calls AND potentially other cache pollution sources
+
+2. **Mock vs Reality Gap**:
+   - **Problem**: Unit test with perfect mocks can pass while integration test with real Supabase fails
+   - **Insight**: Mocks capture our understanding of how external dependencies work, but may miss edge cases, timing issues, or state persistence that real dependencies exhibit
+   - **Solution**: When unit and integration tests diverge, investigate what real behavior the mocks are missing
+
+3. **Shared State in Integration Tests**:
+   - **Problem**: Integration tests getting user data from previous test runs instead of current test
+   - **Insight**: Integration tests may share QueryClient instances, database state, or browser storage between tests
+   - **Investigation Strategy**: Look for differences in test setup (beforeEach vs beforeAll, fresh vs shared instances)
+
+```
