@@ -8,7 +8,6 @@ export * from '../packages/types/src'
 // Named exports for better organization
 export * as hooks from '../packages/api/src'
 export * as types from '../packages/types/src'
-export { BelongClientProvider } from '../packages/api/src'
 
 // Explicit core exports to ensure single source of truth
 export { 

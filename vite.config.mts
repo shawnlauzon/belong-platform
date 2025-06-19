@@ -21,7 +21,6 @@ export default defineConfig({
         index: resolve(__dirname, 'src/index.ts'),
         hooks: resolve(__dirname, 'src/hooks.ts'),
         types: resolve(__dirname, 'src/types.ts'),
-        providers: resolve(__dirname, 'src/providers.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => {
