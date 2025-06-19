@@ -877,9 +877,9 @@ describe('fetchCommunities CRUD Operations', () => {
           ],
           timeZone: 'America/Los_Angeles',
           isActive: true,
-          deletedAt: undefined,
-          deletedBy: undefined,
-          organizer: expect.objectContaining({ id: TEST_USER_ID }),
+          deletedAt: null,
+          deletedBy: null,
+          organizerId: TEST_USER_ID,
         });
       });
     });

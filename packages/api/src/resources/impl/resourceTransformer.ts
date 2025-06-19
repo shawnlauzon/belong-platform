@@ -115,24 +115,21 @@ export function toResourceInfo(
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
   }
 
-  const { owner_id, community_id, location, created_at, updated_at, ...rest } =
-    dbResource;
-
   return {
-    ...rest,
     id: dbResource.id,
-    type: rest.type as 'offer' | 'request',
-    title: rest.title,
-    description: rest.description,
-    category: rest.category as ResourceCategory,
-    location: location ? parsePostGisPoint(location) : undefined,
-    isActive: rest.is_active !== false, // Default to true if not set
-    availability: rest.availability ?? 'available',
-    meetupFlexibility: rest.meetup_flexibility as MeetupFlexibility,
-    parkingInfo: rest.parking_info ?? undefined,
-    pickupInstructions: rest.pickup_instructions ?? undefined,
-    createdAt: new Date(created_at),
-    updatedAt: new Date(updated_at),
+    type: dbResource.type as 'offer' | 'request',
+    title: dbResource.title,
+    description: dbResource.description,
+    category: dbResource.category as ResourceCategory,
+    location: dbResource.location ? parsePostGisPoint(dbResource.location) : undefined,
+    isActive: dbResource.is_active !== false, // Default to true if not set
+    availability: dbResource.availability ?? 'available',
+    meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
+    parkingInfo: dbResource.parking_info ?? undefined,
+    pickupInstructions: dbResource.pickup_instructions ?? undefined,
+    imageUrls: dbResource.image_urls || [],
+    createdAt: new Date(dbResource.created_at),
+    updatedAt: new Date(dbResource.updated_at),
     ownerId: ownerId,
     communityId: communityId,
   };

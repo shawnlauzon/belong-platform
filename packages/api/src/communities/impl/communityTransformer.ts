@@ -125,26 +125,24 @@ export function forDbMembershipInsert(membership: CommunityMembershipData): Comm
 export function toCommunityInfo(
   dbCommunity: CommunityRow
 ): CommunityInfo {
-  const { center, created_at, updated_at, deleted_at, deleted_by, is_active, organizer_id, parent_id, ...rest } = dbCommunity;
-
   // Parse PostGIS point to coordinates
-  const coords = center ? parsePostGisPoint(center) : undefined;
+  const coords = dbCommunity.center ? parsePostGisPoint(dbCommunity.center) : undefined;
 
   return {
-    ...rest,
     id: dbCommunity.id,
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     memberCount: dbCommunity.member_count,
     radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
-    createdAt: new Date(created_at),
-    updatedAt: new Date(updated_at),
-    isActive: is_active,
-    deletedAt: deleted_at ? new Date(deleted_at) : undefined,
-    deletedBy: deleted_by ?? undefined,
-    organizerId: organizer_id,
-    parentId: parent_id,
+    level: dbCommunity.level,
+    createdAt: new Date(dbCommunity.created_at),
+    updatedAt: new Date(dbCommunity.updated_at),
+    isActive: dbCommunity.is_active,
+    deletedAt: dbCommunity.deleted_at ? new Date(dbCommunity.deleted_at) : null,
+    deletedBy: dbCommunity.deleted_by,
+    organizerId: dbCommunity.organizer_id,
+    parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path ? (typeof dbCommunity.hierarchy_path === 'string' ? JSON.parse(dbCommunity.hierarchy_path) : dbCommunity.hierarchy_path) : [],
     timeZone: dbCommunity.time_zone,
   };

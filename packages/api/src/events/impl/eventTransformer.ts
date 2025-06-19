@@ -159,40 +159,23 @@ export function toEventInfo(
   organizerId: string,
   communityId: string
 ): EventInfo {
-  const {
-    organizer_id,
-    community_id,
-    start_date_time,
-    end_date_time,
-    coordinates,
-    parking_info,
-    max_attendees,
-    registration_required,
-    is_active,
-    image_urls,
-    created_at,
-    updated_at,
-    ...rest
-  } = dbEvent;
-
   return {
-    ...rest,
     id: dbEvent.id,
-    title: rest.title,
-    description: rest.description,
-    startDateTime: new Date(start_date_time),
-    endDateTime: end_date_time ? new Date(end_date_time) : undefined,
-    location: rest.location,
-    coordinates: parsePostGisPoint(coordinates),
-    parkingInfo: parking_info || undefined,
-    maxAttendees: max_attendees || undefined,
-    registrationRequired: registration_required === true, // Default to false if not set
-    isActive: is_active !== false, // Default to true if not set
-    tags: rest.tags || [],
-    imageUrls: image_urls || [],
-    attendeeCount: rest.attendee_count || 0,
-    createdAt: new Date(created_at),
-    updatedAt: new Date(updated_at),
+    title: dbEvent.title,
+    description: dbEvent.description,
+    startDateTime: new Date(dbEvent.start_date_time),
+    endDateTime: dbEvent.end_date_time ? new Date(dbEvent.end_date_time) : undefined,
+    location: dbEvent.location,
+    coordinates: parsePostGisPoint(dbEvent.coordinates),
+    parkingInfo: dbEvent.parking_info || undefined,
+    maxAttendees: dbEvent.max_attendees || undefined,
+    registrationRequired: dbEvent.registration_required === true, // Default to false if not set
+    isActive: dbEvent.is_active !== false, // Default to true if not set
+    tags: dbEvent.tags || [],
+    imageUrls: dbEvent.image_urls || [],
+    attendeeCount: dbEvent.attendee_count || 0,
+    createdAt: new Date(dbEvent.created_at),
+    updatedAt: new Date(dbEvent.updated_at),
     organizerId: organizerId,
     communityId: communityId,
   };
