@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 /**
  * Integration test to verify all expected exports are available
  * from the main @belongnetwork/platform package.
- * 
+ *
  * This test ensures that:
  * 1. All critical functions are properly exported
  * 2. The package can be imported as consumers would use it
@@ -49,7 +49,7 @@ describe('Package Exports Integration', () => {
   describe('Hook Exports', () => {
     const expectedHooks = [
       'useCurrentUser',
-      'useSignIn', 
+      'useSignIn',
       'useSignOut',
       'useSignUp',
       'useCommunities',
@@ -62,7 +62,7 @@ describe('Package Exports Integration', () => {
       'useThanks',
       'useCreateThanks',
       'useUsers',
-      'useCreateUser'
+      'useCreateUser',
     ];
 
     it.each(expectedHooks)('should export %s hook', (hookName) => {
@@ -74,8 +74,8 @@ describe('Package Exports Integration', () => {
   describe('Type Exports', () => {
     const expectedTypes = [
       'ResourceCategory',
-      'MeetupFlexibility', 
-      'EventAttendanceStatus'
+      'MeetupFlexibility',
+      'EventAttendanceStatus',
     ];
 
     it.each(expectedTypes)('should export %s type', (typeName) => {
@@ -83,35 +83,29 @@ describe('Package Exports Integration', () => {
     });
   });
 
-  describe('Legacy Provider (Deprecated)', () => {
-    it('should still export BelongClientProvider for backward compatibility', () => {
-      expect(platformModule.BelongClientProvider).toBeDefined();
-      expect(typeof platformModule.BelongClientProvider).toBe('function');
-    });
-  });
-
   describe('Functional Integration', () => {
     it('should allow basic initialization flow', () => {
-      const { initializeBelong, isInitialized, resetBelongClient } = platformModule;
-      
+      const { initializeBelong, isInitialized, resetBelongClient } =
+        platformModule;
+
       // Reset any existing state
       resetBelongClient();
       expect(isInitialized()).toBe(false);
-      
+
       // Generate realistic fake URLs and tokens using Faker
       const fakeSupabaseUrl = `https://${faker.string.alphanumeric(8).toLowerCase()}.supabase.co`;
       const fakeJwtToken = faker.internet.jwt();
       const fakeMapboxToken = faker.string.alphanumeric(32);
-      
+
       // Should be able to initialize with valid URLs (but fake tokens)
       expect(() => {
         initializeBelong({
           supabaseUrl: fakeSupabaseUrl,
-          supabaseAnonKey: fakeJwtToken, 
-          mapboxPublicToken: fakeMapboxToken
+          supabaseAnonKey: fakeJwtToken,
+          mapboxPublicToken: fakeMapboxToken,
         });
       }).not.toThrow();
-      
+
       // Should now be initialized
       expect(isInitialized()).toBe(true);
     });
