@@ -12,8 +12,10 @@ import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import {
   initializeBelong,
+  useThanks,
   useCreateThanks,
   useUpdateThanks,
+  useDeleteThanks,
   useCreateResource,
   useDeleteResource,
   useSignUp,
@@ -278,7 +280,7 @@ describe('Thanks Validation Integration Tests', () => {
       expect(createThanksResult.current.isSuccess).toBe(true)
     );
     const createdThanks = createThanksResult.current.data!;
-    createdThanksIds.push(createdThanks.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Try to update thanks with different sender
     const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
@@ -329,7 +331,7 @@ describe('Thanks Validation Integration Tests', () => {
       expect(createThanksResult.current.isSuccess).toBe(true)
     );
     const createdThanks = createThanksResult.current.data!;
-    createdThanksIds.push(createdThanks.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Try to update thanks with receiver as sender
     const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
