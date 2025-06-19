@@ -1,4 +1,11 @@
-import { describe, test, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+} from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
@@ -10,22 +17,23 @@ import {
   useDeleteThanks,
   useCreateResource,
   useDeleteResource,
+  useSignIn,
   resetBelongClient,
   ResourceCategory,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
-import { 
-  setupAuthenticatedUser, 
-  setupTwoUsers, 
+import {
+  setupAuthenticatedUser,
+  setupTwoUsers,
   type AuthSetupResult,
-  type TwoUserSetupResult 
+  type TwoUserSetupResult,
 } from './helpers/auth-helpers';
-import { 
-  generateResourceData, 
+import {
+  generateResourceData,
   generateThanksData,
   performCleanupDeletion,
-  commonDeleteSuccessExpectation
+  commonDeleteSuccessExpectation,
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
@@ -33,6 +41,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   let createdThanksIds: string[] = [];
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
+  let testResource: any;
 
   beforeAll(async () => {
     // Initialize Belong client
@@ -65,9 +74,109 @@ describe('Thanks Basic CRUD Integration Tests', () => {
 
     // Set up two users once for all tests
     twoUsersSetup = await setupTwoUsers(wrapper);
+
+    // Create a test resource while authenticated as first user
+    const { result: createResourceResult } = renderHook(
+      () => useCreateResource(),
+      {
+        wrapper,
+      }
+    );
+
+    const resourceData = generateResourceData(twoUsersSetup.testCommunity.id!);
+
+    await act(async () => {
+      createResourceResult.current.mutate(resourceData);
+    });
+
+    await waitFor(() =>
+      expect(createResourceResult.current.isSuccess).toBe(true)
+    );
+    testResource = createResourceResult.current.data!;
+    createdResourceIds.push(testResource.id);
+
+    // Sign back in as the original user to ensure proper authentication state
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: twoUsersSetup.testUser.email,
+        password: twoUsersSetup.testUser.password,
+      });
+    });
+
+    await waitFor(() => {
+      expect(signInResult.current).toMatchObject({
+        isSuccess: true,
+        data: expect.objectContaining({
+          id: expect.any(String),
+        }),
+        error: null,
+      });
+    });
   });
 
   afterAll(async () => {
+    // Clean up the test resource and any remaining thanks
+    const setupQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
+    );
+
+    // Sign in as the original user for cleanup (the user who created the resource)
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: twoUsersSetup.testUser.email,
+        password: twoUsersSetup.testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Clean up test resource
+    if (testResource) {
+      const { result: deleteResourceResult } = renderHook(
+        () => useDeleteResource(),
+        {
+          wrapper,
+        }
+      );
+
+      await act(async () => {
+        deleteResourceResult.current.mutate(testResource.id);
+      });
+
+      await waitFor(() =>
+        expect(deleteResourceResult.current.isPending).toBe(false)
+      );
+
+      expect(deleteResourceResult.current).toMatchObject({
+        isSuccess: true,
+        error: null,
+      });
+    }
+
     resetBelongClient();
   });
 
@@ -109,14 +218,25 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       }
     }
 
-    // Clean up created resources
-    if (createdResourceIds.length > 0) {
-      const { result: deleteResourceResult } = renderHook(() => useDeleteResource(), {
-        wrapper,
-      });
+    // Clean up created resources (excluding the main test resource which is cleaned in afterAll)
+    const resourcesToClean = createdResourceIds.filter(
+      (id) => id !== testResource?.id
+    );
+    if (resourcesToClean.length > 0) {
+      const { result: deleteResourceResult } = renderHook(
+        () => useDeleteResource(),
+        {
+          wrapper,
+        }
+      );
 
-      for (const resourceId of createdResourceIds) {
-        await performCleanupDeletion(deleteResourceResult, resourceId, act, waitFor);
+      for (const resourceId of resourcesToClean) {
+        await performCleanupDeletion(
+          deleteResourceResult,
+          resourceId,
+          act,
+          waitFor
+        );
       }
     }
   });
@@ -131,10 +251,8 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(thanksResult.current.isSuccess).toBe(true));
-    
-    expect(thanksResult.current.data).toEqual(
-      expect.any(Array)
-    );
+
+    expect(thanksResult.current.data).toEqual(expect.any(Array));
   });
 
   test('should successfully create thanks when authenticated', async () => {
@@ -142,32 +260,17 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    const { testUser, recipientUser } = twoUsersSetup;
 
-    // Create a resource first (needed for thanks)
-    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
-      wrapper,
-    });
-
-    const resourceData = generateResourceData(testCommunity.id!);
-
-    await act(async () => {
-      createResourceResult.current.mutate(resourceData);
-    });
-
-    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
-    const createdResource = createResourceResult.current.data!;
-    createdResourceIds.push(createdResource.id);
-
-    // Create thanks
+    // Create thanks using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
     });
 
     const thanksData = generateThanksData(
-      testUser.userId!, 
-      recipientUser.userId!, 
-      createdResource.id
+      testUser.userId!,
+      recipientUser.userId!,
+      testResource.id
     );
 
     await act(async () => {
@@ -185,7 +288,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
         error: null,
       });
     });
-    
+
     // Track for cleanup
     createdThanksIds.push(createThanksResult.current.data!.id);
 
@@ -195,13 +298,13 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => expect(thanksListResult.current.isSuccess).toBe(true));
-    
+
     expect(thanksListResult.current.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: createThanksResult.current.data!.id,
           message: thanksData.message,
-        })
+        }),
       ])
     );
   });
@@ -211,36 +314,17 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    const { testUser, recipientUser } = twoUsersSetup;
 
-    // Create a resource first
-    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
-      wrapper,
-    });
-
-    const resourceData = {
-      ...generateResourceData(testCommunity.id!),
-      title: generateTestName('Test Resource for Thanks Update'),
-      category: ResourceCategory.TOOLS,
-    };
-
-    await act(async () => {
-      createResourceResult.current.mutate(resourceData);
-    });
-
-    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
-    const createdResource = createResourceResult.current.data!;
-    createdResourceIds.push(createdResource.id);
-
-    // Create thanks first
+    // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
     });
 
     const thanksData = generateThanksData(
-      testUser.userId!, 
-      recipientUser.userId!, 
-      createdResource.id
+      testUser.userId!,
+      recipientUser.userId!,
+      testResource.id
     );
 
     await act(async () => {
@@ -298,14 +382,16 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(() => expect(verifyUpdateResult.current.isSuccess).toBe(true));
-    
+    await waitFor(() =>
+      expect(verifyUpdateResult.current.isSuccess).toBe(true)
+    );
+
     expect(verifyUpdateResult.current.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: createdThanks.id,
           message: updatedMessage,
-        })
+        }),
       ])
     );
   });
@@ -315,36 +401,17 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    const { testUser, recipientUser } = twoUsersSetup;
 
-    // Create a resource first
-    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
-      wrapper,
-    });
-
-    const resourceData = {
-      ...generateResourceData(testCommunity.id!),
-      title: generateTestName('Test Resource for Thanks Delete'),
-      category: ResourceCategory.SUPPLIES,
-    };
-
-    await act(async () => {
-      createResourceResult.current.mutate(resourceData);
-    });
-
-    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
-    const createdResource = createResourceResult.current.data!;
-    createdResourceIds.push(createdResource.id);
-
-    // Create thanks first
+    // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
     });
 
     const thanksData = generateThanksData(
-      testUser.userId!, 
-      recipientUser.userId!, 
-      createdResource.id
+      testUser.userId!,
+      recipientUser.userId!,
+      testResource.id
     );
 
     await act(async () => {
@@ -373,7 +440,9 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteThanksResult.current).toMatchObject(commonDeleteSuccessExpectation);
+      expect(deleteThanksResult.current).toMatchObject(
+        commonDeleteSuccessExpectation
+      );
     });
 
     // Verify thanks is deleted (or at least not findable in the list)
@@ -381,13 +450,15 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(() => expect(verifyDeleteResult.current.isSuccess).toBe(true));
-    
+    await waitFor(() =>
+      expect(verifyDeleteResult.current.isSuccess).toBe(true)
+    );
+
     expect(verifyDeleteResult.current.data).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({
           id: createdThanks.id,
-        })
+        }),
       ])
     );
   });
