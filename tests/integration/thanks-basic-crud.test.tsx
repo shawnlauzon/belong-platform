@@ -5,6 +5,7 @@ import {
   beforeAll,
   beforeEach,
   afterEach,
+  afterAll,
 } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -18,6 +19,7 @@ import {
   useCreateResource,
   useDeleteResource,
   useSignIn,
+  useSignOut,
   resetBelongClient,
   ResourceCategory,
 } from '@belongnetwork/platform';
@@ -42,6 +44,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
   let testResource: any;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
     // Initialize Belong client
@@ -51,8 +54,8 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
 
-    // Create query client for auth setup
-    const setupQueryClient = new QueryClient({
+    // Create query client once for all tests
+    queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           retry: false,
@@ -68,34 +71,15 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       },
     });
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
     // Set up two users once for all tests
     twoUsersSetup = await setupTwoUsers(wrapper);
 
-    // Create a test resource while authenticated as first user
-    const { result: createResourceResult } = renderHook(
-      () => useCreateResource(),
-      {
-        wrapper,
-      }
-    );
-
-    const resourceData = generateResourceData(twoUsersSetup.testCommunity.id!);
-
-    await act(async () => {
-      createResourceResult.current.mutate(resourceData);
-    });
-
-    await waitFor(() =>
-      expect(createResourceResult.current.isSuccess).toBe(true)
-    );
-    testResource = createResourceResult.current.data!;
-    createdResourceIds.push(testResource.id);
-
-    // Sign back in as the original user to ensure proper authentication state
+    // The setupTwoUsers function signs up recipientUser last, leaving them authenticated
+    // We need to sign in as testUser before creating the resource
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
     });
@@ -116,30 +100,30 @@ describe('Thanks Basic CRUD Integration Tests', () => {
         error: null,
       });
     });
+
+    // Now create a test resource while authenticated as first user (testUser)
+    const { result: createResourceResult } = renderHook(
+      () => useCreateResource(),
+      {
+        wrapper,
+      }
+    );
+
+    const resourceData = generateResourceData(twoUsersSetup.testCommunity.id!);
+
+    await act(async () => {
+      createResourceResult.current.mutate(resourceData);
+    });
+
+    await waitFor(() =>
+      expect(createResourceResult.current.isSuccess).toBe(true)
+    );
+    testResource = createResourceResult.current.data!;
+    createdResourceIds.push(testResource.id);
   });
 
   afterAll(async () => {
     // Clean up the test resource and any remaining thanks
-    const setupQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-          staleTime: 0,
-          refetchOnWindowFocus: false,
-          refetchOnMount: true,
-          refetchOnReconnect: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
-    );
-
     // Sign in as the original user for cleanup (the user who created the resource)
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -168,45 +152,31 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       });
 
       await waitFor(() =>
-        expect(deleteResourceResult.current.isPending).toBe(false)
+        expect(deleteResourceResult.current.isSuccess).toBe(true)
       );
-
-      expect(deleteResourceResult.current).toMatchObject({
-        isSuccess: true,
-        error: null,
-      });
     }
+
+    // Sign out to ensure clean state
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signOutResult.current.mutate();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     resetBelongClient();
   });
 
   beforeEach(async () => {
-    // Create fresh query client for each test
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-          staleTime: 0,
-          refetchOnWindowFocus: false,
-          refetchOnMount: true,
-          refetchOnReconnect: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-
+    // Reset tracking arrays for each test
     createdThanksIds = [];
     createdResourceIds = [];
   });
 
   afterEach(async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     // Clean up created thanks
     if (createdThanksIds.length > 0) {
       const { result: deleteResult } = renderHook(() => useDeleteThanks(), {
@@ -242,10 +212,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully read thanks without authentication', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { result: thanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
@@ -256,10 +222,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully create thanks when authenticated', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, recipientUser } = twoUsersSetup;
 
     // Create thanks using the pre-created resource
@@ -310,10 +272,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully update thanks when authenticated as sender', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, recipientUser } = twoUsersSetup;
 
     // Create thanks first using the pre-created resource
@@ -397,10 +355,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully delete thanks when authenticated as sender', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, recipientUser } = twoUsersSetup;
 
     // Create thanks first using the pre-created resource

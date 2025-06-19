@@ -18,6 +18,7 @@ import {
   useDeleteResource,
   useSignUp,
   useSignIn,
+  useSignOut,
   resetBelongClient,
   ResourceCategory,
 } from '@belongnetwork/platform';
@@ -43,6 +44,7 @@ describe('Thanks Validation Integration Tests', () => {
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
   let testResource: any;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
     // Initialize Belong client
@@ -52,8 +54,8 @@ describe('Thanks Validation Integration Tests', () => {
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
 
-    // Create query client for setup
-    const setupQueryClient = new QueryClient({
+    // Create query client once for all tests
+    queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           retry: false,
@@ -69,8 +71,8 @@ describe('Thanks Validation Integration Tests', () => {
       },
     });
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
     // Set up users once for all tests
@@ -80,7 +82,30 @@ describe('Thanks Validation Integration Tests', () => {
       testCommunity: twoUsersSetup.testCommunity,
     };
 
-    // Create a test resource while authenticated as first user
+    // The setupTwoUsers function signs up recipientUser last, leaving them authenticated
+    // We need to sign in as testUser before creating the resource
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: twoUsersSetup.testUser.email,
+        password: twoUsersSetup.testUser.password,
+      });
+    });
+
+    await waitFor(() => {
+      expect(signInResult.current).toMatchObject({
+        isSuccess: true,
+        data: expect.objectContaining({
+          id: expect.any(String),
+        }),
+        error: null,
+      });
+    });
+
+    // Now create a test resource while authenticated as first user (testUser)
     const { result: createResourceResult } = renderHook(
       () => useCreateResource(),
       {
@@ -99,44 +124,9 @@ describe('Thanks Validation Integration Tests', () => {
     );
     testResource = createResourceResult.current.data!;
     createdResourceIds.push(testResource.id);
-
-    // Sign back in as the original user after setup
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: twoUsersSetup.testUser.email,
-        password: twoUsersSetup.testUser.password,
-      });
-    });
-
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
   });
 
   afterAll(async () => {
-    // Clean up the test resource
-    const setupQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-          staleTime: 0,
-          refetchOnWindowFocus: false,
-          refetchOnMount: true,
-          refetchOnReconnect: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
-    );
-
     // Sign in as the original user for cleanup
     const { result: signInResult } = renderHook(() => useSignIn(), {
       wrapper,
@@ -165,44 +155,31 @@ describe('Thanks Validation Integration Tests', () => {
       });
 
       await waitFor(() =>
-        expect(deleteResourceResult.current.isPending).toBe(false)
+        expect(deleteResourceResult.current.isSuccess).toBe(true)
       );
-      expect(deleteResourceResult.current).toMatchObject({
-        isSuccess: true,
-        error: null,
-      });
     }
+
+    // Sign out to ensure clean state
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signOutResult.current.mutate();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     resetBelongClient();
   });
 
   beforeEach(async () => {
-    // Create fresh query client for each test
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-          staleTime: 0,
-          refetchOnWindowFocus: false,
-          refetchOnMount: true,
-          refetchOnReconnect: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-
+    // Reset tracking arrays for each test
     createdThanksIds = [];
     createdResourceIds = [];
   });
 
   afterEach(async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     // Clean up created resources (excluding the main test resource which is cleaned in afterAll)
     const resourcesToClean = createdResourceIds.filter(
       (id) => id !== testResource?.id
@@ -227,10 +204,6 @@ describe('Thanks Validation Integration Tests', () => {
   });
 
   test('should fail to create thanks when user tries to thank themselves', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, testCommunity } = authSetup;
 
     // Try to create thanks with same user as sender and receiver using shared resource
@@ -252,20 +225,18 @@ describe('Thanks Validation Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(createThanksResult.current).toMatchObject({
-        isError: true,
-        error: expect.objectContaining({
-          message: 'Cannot thank yourself',
-        }),
-      });
+      expect(createThanksResult.current.isError || createThanksResult.current.isSuccess).toBe(true);
+    });
+
+    expect(createThanksResult.current).toMatchObject({
+      isError: true,
+      error: expect.objectContaining({
+        message: 'Cannot thank yourself',
+      }),
     });
   });
 
   test('should fail to update thanks when trying to change sender', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, testCommunity, recipientUser } = twoUsersSetup;
 
     // Create a third user (another user)
@@ -341,20 +312,18 @@ describe('Thanks Validation Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(updateThanksResult.current).toMatchObject({
-        isError: true,
-        error: expect.objectContaining({
-          message: 'Cannot change the sender of thanks',
-        }),
-      });
+      expect(updateThanksResult.current.isError || updateThanksResult.current.isSuccess).toBe(true);
+    });
+
+    expect(updateThanksResult.current).toMatchObject({
+      isError: true,
+      error: expect.objectContaining({
+        message: 'Cannot change the sender of thanks',
+      }),
     });
   });
 
   test('should fail to update thanks when trying to change receiver to sender', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
     const { testUser, testCommunity, recipientUser } = twoUsersSetup;
 
     // Create thanks first
@@ -394,12 +363,14 @@ describe('Thanks Validation Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(updateThanksResult.current).toMatchObject({
-        isError: true,
-        error: expect.objectContaining({
-          message: 'Cannot change receiver to yourself',
-        }),
-      });
+      expect(updateThanksResult.current.isError || updateThanksResult.current.isSuccess).toBe(true);
+    });
+
+    expect(updateThanksResult.current).toMatchObject({
+      isError: true,
+      error: expect.objectContaining({
+        message: 'Cannot change receiver to yourself',
+      }),
     });
   });
 });

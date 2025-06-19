@@ -13,8 +13,11 @@ export async function deleteResource(id: string): Promise<void> {
   logger.debug('📚 API: Deleting resource', { id });
 
   try {
+    logger.debug('📚 API: Starting delete operation', { id });
     // Get current user
+    logger.debug('📚 API: Getting current user', { id });
     const { data: userData, error: userError } = await supabase.auth.getUser();
+    logger.debug('📚 API: Got user data', { id, hasUser: !!userData?.user?.id, userError: !!userError });
 
     if (userError || !userData?.user?.id) {
       logger.error('📚 API: User must be authenticated to delete a resource', {
@@ -24,13 +27,17 @@ export async function deleteResource(id: string): Promise<void> {
     }
 
     const userId = userData.user.id;
+    logger.debug('📚 API: Authenticated user', { id, userId });
 
     // First, fetch the existing resource to verify ownership
+    logger.debug('📚 API: Fetching resource for ownership check', { id });
     const { data: existingResource, error: fetchError } = await supabase
       .from('resources')
       .select('owner_id, community_id')
       .eq('id', id)
       .single();
+    
+    logger.debug('📚 API: Fetch result', { id, hasResource: !!existingResource, fetchError: !!fetchError, errorCode: fetchError?.code });
 
     if (fetchError) {
       if (fetchError.code === 'PGRST116') {
@@ -58,6 +65,7 @@ export async function deleteResource(id: string): Promise<void> {
     }
 
     // Perform the soft delete (set is_active to false)
+    logger.debug('📚 API: Performing soft delete update', { id });
     const { error: deleteError } = await supabase
       .from('resources')
       .update({
@@ -65,6 +73,8 @@ export async function deleteResource(id: string): Promise<void> {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);
+
+    logger.debug('📚 API: Update result', { id, deleteError: !!deleteError });
 
     if (deleteError) {
       logger.error('📚 API: Failed to delete resource', {
@@ -76,6 +86,7 @@ export async function deleteResource(id: string): Promise<void> {
     }
 
     logger.info('📚 API: Successfully deleted resource', { id });
+    logger.debug('📚 API: About to return from deleteResource', { id });
 
     return;
   } catch (error) {
