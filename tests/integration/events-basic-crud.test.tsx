@@ -12,8 +12,7 @@ import {
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
 import { 
-  setupAuthenticatedUser, 
-  resetAuthCache,
+  setupAuthenticatedUser,
   type AuthSetupResult
 } from './helpers/auth-helpers';
 import { 
@@ -52,7 +51,6 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     createdEventIds = [];
-    resetAuthCache();
   });
 
   afterEach(async () => {
@@ -72,7 +70,6 @@ describe('Events Basic CRUD Integration Tests', () => {
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should successfully read events without authentication', async () => {

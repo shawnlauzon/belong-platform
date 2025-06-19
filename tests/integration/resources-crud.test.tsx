@@ -14,8 +14,7 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import { 
-  setupAuthenticatedUser, 
-  resetAuthCache,
+  setupAuthenticatedUser,
   type AuthSetupResult
 } from './helpers/auth-helpers';
 import { 
@@ -54,7 +53,6 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     createdResourceIds = [];
-    resetAuthCache();
   });
 
 
@@ -75,7 +73,6 @@ describe('Resources CRUD Integration Tests', () => {
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should successfully read resources without authentication', async () => {

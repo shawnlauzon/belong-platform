@@ -16,8 +16,7 @@ import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import { 
   setupAuthenticatedUser, 
-  setupTwoUsers, 
-  resetAuthCache,
+  setupTwoUsers,
   type AuthSetupResult,
   type TwoUserSetupResult 
 } from './helpers/auth-helpers';
@@ -61,7 +60,6 @@ describe('Thanks Validation Integration Tests', () => {
 
     createdThanksIds = [];
     createdResourceIds = [];
-    resetAuthCache();
   });
 
   afterEach(async () => {
@@ -81,7 +79,6 @@ describe('Thanks Validation Integration Tests', () => {
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should fail to create thanks when user tries to thank themselves', async () => {

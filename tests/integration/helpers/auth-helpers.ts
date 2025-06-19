@@ -209,4 +209,3 @@ export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
 
   return { testUser, testCommunity, recipientUser };
 }
-
