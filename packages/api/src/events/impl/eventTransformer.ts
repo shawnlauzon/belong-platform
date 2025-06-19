@@ -32,6 +32,7 @@ export function toDomainEvent(
     registration_required,
     is_active,
     image_urls,
+    attendee_count,
     created_at,
     updated_at,
     ...rest
@@ -60,7 +61,7 @@ export function toDomainEvent(
     isActive: is_active !== false, // Default to true if not set
     tags: rest.tags || [],
     imageUrls: image_urls || [],
-    attendeeCount: rest.attendee_count || 0,
+    attendeeCount: attendee_count || 0,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
     organizer: refs.organizer,

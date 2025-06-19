@@ -7,6 +7,7 @@ import {
   createUserMetadata,
 } from '../../impl/userTransformer';
 import type { User, UserData } from '@belongnetwork/types';
+import { createMockDbProfile } from '../../../test-utils/mocks/mockDbRows';
 
 describe('userTransformer', () => {
   describe('toDomainUser', () => {
@@ -81,6 +82,19 @@ describe('userTransformer', () => {
       expect(() => toDomainUser(undefined as any)).toThrow(
         'Profile is required'
       );
+    });
+
+    it('should not return any field names with underscores', () => {
+      // Arrange
+      const mockProfile = createMockDbProfile();
+
+      // Act
+      const result = toDomainUser(mockProfile);
+
+      // Assert
+      const fieldNames = Object.keys(result);
+      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      expect(underscoreFields).toEqual([]);
     });
   });
 

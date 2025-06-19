@@ -136,18 +136,6 @@ export interface User {
 export interface UserData
   extends Omit<User, 'id' | 'createdAt' | 'updatedAt'> {}
 
-export interface Account {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
-  avatar_url?: string;
-  location?: Coordinates;
-  created_at: Date;
-  updated_at: Date;
-}
-
 export interface UserFilter {
   searchTerm?: string;
   page?: number;

@@ -152,6 +152,30 @@ describe('Thanks Transformer', () => {
         })
       ).toThrow('Resource ID does not match');
     });
+
+    it('should not return any field names with underscores', () => {
+      // Arrange
+      const mockFromUser = createMockUser();
+      const mockToUser = createMockUser();
+      const mockResource = createMockResource();
+      const dbThanks = createMockDbThanks({
+        from_user_id: mockFromUser.id,
+        to_user_id: mockToUser.id,
+        resource_id: mockResource.id,
+      });
+
+      // Act
+      const result = toDomainThanks(dbThanks, {
+        fromUser: mockFromUser,
+        toUser: mockToUser,
+        resource: mockResource,
+      });
+
+      // Assert
+      const fieldNames = Object.keys(result);
+      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      expect(underscoreFields).toEqual([]);
+    });
   });
 
   describe('forDbInsert', () => {

@@ -110,6 +110,23 @@ describe('Community Transformer', () => {
       expect(() => toDomainCommunity(null as any)).toThrow();
       expect(() => toDomainCommunity(undefined as any)).toThrow();
     });
+
+    it('should not return any field names with underscores', () => {
+      // Arrange
+      const mockDbCommunity = {
+        ...createMockDbCommunity(),
+        organizer: createMockDbProfile(),
+        parent: null
+      };
+
+      // Act
+      const result = toDomainCommunity(mockDbCommunity);
+
+      // Assert
+      const fieldNames = Object.keys(result);
+      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      expect(underscoreFields).toEqual([]);
+    });
   });
 
   describe('forDbInsert', () => {

@@ -120,6 +120,25 @@ describe('Event Transformer', () => {
         });
       }).toThrow('Community ID does not match');
     });
+
+    it('should not return any underscore field names', () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      // Check that no keys contain underscores
+      const eventKeys = Object.keys(event);
+      const underscoreKeys = eventKeys.filter(key => key.includes('_'));
+      expect(underscoreKeys).toEqual([]);
+    });
   });
 
   describe('forDbInsert', () => {

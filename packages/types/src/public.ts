@@ -167,13 +167,13 @@ export interface UserData
 export interface Account {
   id: string;
   email: string;
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
-  avatar_url?: string;
+  firstName: string;
+  lastName?: string;
+  fullName?: string;
+  avatarUrl?: string;
   location?: Coordinates;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface UserFilter {

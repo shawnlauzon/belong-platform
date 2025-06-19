@@ -1,4 +1,5 @@
 import {
+  Account,
   Community,
   Event,
   EventAttendance,
@@ -9,6 +10,31 @@ import {
   MeetupFlexibility,
 } from '@belongnetwork/types';
 import { faker } from '@faker-js/faker';
+
+/**
+ * Creates a mock domain Account object
+ */
+export function createMockAccount(overrides: Partial<Account> = {}): Account {
+  const now = faker.date.recent();
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
+
+  return {
+    id: faker.string.uuid(),
+    email: faker.internet.email(),
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+    avatarUrl: faker.image.avatar(),
+    location: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
 
 /**
  * Creates a mock domain User object

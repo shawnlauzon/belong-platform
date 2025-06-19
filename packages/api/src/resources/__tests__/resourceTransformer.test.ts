@@ -52,6 +52,27 @@ describe('Resource Transformer', () => {
       expect(() => toDomainResource(null as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
       expect(() => toDomainResource(undefined as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
     });
+
+    it('should not return any field names with underscores', () => {
+      // Arrange
+      const mockOwner = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbResource = createMockDbResource({
+        owner_id: mockOwner.id,
+        community_id: mockCommunity.id,
+      });
+
+      // Act
+      const result = toDomainResource(dbResource, {
+        owner: mockOwner,
+        community: mockCommunity,
+      });
+
+      // Assert
+      const fieldNames = Object.keys(result);
+      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      expect(underscoreFields).toEqual([]);
+    });
   });
 
   describe('forDbInsert', () => {
