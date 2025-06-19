@@ -16,7 +16,7 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import { 
-  setupAuthenticatedUser,
+  createAndAuthenticateUser,
   type AuthSetupResult
 } from './helpers/auth-helpers';
 import { 
@@ -60,7 +60,7 @@ describe('Resources CRUD Integration Tests', () => {
     );
 
     // Set up authenticated user once for all tests
-    authSetup = await setupAuthenticatedUser(wrapper);
+    authSetup = await createAndAuthenticateUser(wrapper);
   });
 
   beforeEach(async () => {

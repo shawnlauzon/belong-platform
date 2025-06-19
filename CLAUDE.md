@@ -109,4 +109,4 @@ Development Principles
 - If you create the same code more than twice, extract it into a shared function
 - Keep versions of all packages aligned
 - When you commit after bumping a version, tag with that version
-```
+- Do not deprecate; remove

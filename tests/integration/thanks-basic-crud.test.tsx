@@ -26,10 +26,10 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import {
-  setupAuthenticatedUser,
-  setupTwoUsers,
+  createAndAuthenticateUser,
+  createAdditionalUser,
   type AuthSetupResult,
-  type TwoUserSetupResult,
+  type TestUser,
 } from './helpers/auth-helpers';
 import {
   generateResourceData,
@@ -39,7 +39,8 @@ import {
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
-  let twoUsersSetup: TwoUserSetupResult;
+  let authSetup: AuthSetupResult;
+  let recipientUser: TestUser;
   let queryClient: QueryClient;
   let testResource: any;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -73,31 +74,11 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Set up two users once for all tests
-    twoUsersSetup = await setupTwoUsers(wrapper);
+    // Set up authenticated user once for all tests - this user will create all test items
+    authSetup = await createAndAuthenticateUser(wrapper);
 
-    // The setupTwoUsers function signs up recipientUser last, leaving them authenticated
-    // We need to sign in as testUser before creating the resource
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: twoUsersSetup.testUser.email,
-        password: twoUsersSetup.testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
+    // Create a second user for recipient scenarios (but don't leave them authenticated)
+    recipientUser = await createAdditionalUser(wrapper, authSetup.testUser);
 
     // Now create a test resource while authenticated as first user (testUser)
     const { result: createResourceResult } = renderHook(
@@ -107,7 +88,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       }
     );
 
-    const resourceData = generateResourceData(twoUsersSetup.testCommunity.id!);
+    const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
       createResourceResult.current.mutate(resourceData);
@@ -195,7 +176,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully create thanks when authenticated', async () => {
-    const { testUser, recipientUser } = twoUsersSetup;
+    const { testUser } = authSetup;
 
     // Create thanks using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
@@ -244,7 +225,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully update thanks when authenticated as sender', async () => {
-    const { testUser, recipientUser } = twoUsersSetup;
+    const { testUser } = authSetup;
 
     // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
@@ -327,7 +308,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully delete thanks when authenticated as sender', async () => {
-    const { testUser, recipientUser } = twoUsersSetup;
+    const { testUser } = authSetup;
 
     // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {

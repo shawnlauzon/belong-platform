@@ -27,10 +27,10 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import {
-  setupAuthenticatedUser,
-  setupTwoUsers,
+  createAndAuthenticateUser,
+  createAdditionalUser,
   type AuthSetupResult,
-  type TwoUserSetupResult,
+  type TestUser,
 } from './helpers/auth-helpers';
 import {
   generateResourceData,
@@ -41,7 +41,7 @@ import { faker } from '@faker-js/faker';
 
 describe('Thanks Validation Integration Tests', () => {
   let authSetup: AuthSetupResult;
-  let twoUsersSetup: TwoUserSetupResult;
+  let recipientUser: TestUser;
   let queryClient: QueryClient;
   let testResource: any;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -75,35 +75,13 @@ describe('Thanks Validation Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Set up users once for all tests
-    twoUsersSetup = await setupTwoUsers(wrapper);
-    authSetup = {
-      testUser: twoUsersSetup.testUser,
-      testCommunity: twoUsersSetup.testCommunity,
-    };
+    // Set up authenticated user once for all tests - this user will create all test items
+    authSetup = await createAndAuthenticateUser(wrapper);
 
-    // The setupTwoUsers function signs up recipientUser last, leaving them authenticated
-    // We need to sign in as testUser before creating the resource
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
+    // Create a second user for recipient scenarios (but don't leave them authenticated)
+    recipientUser = await createAdditionalUser(wrapper, authSetup.testUser);
 
-    await act(async () => {
-      signInResult.current.mutate({
-        email: twoUsersSetup.testUser.email,
-        password: twoUsersSetup.testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
+    // User is already authenticated from createAndAuthenticateUser above
 
     // Now create a test resource while authenticated as first user (testUser)
     const { result: createResourceResult } = renderHook(
@@ -113,7 +91,7 @@ describe('Thanks Validation Integration Tests', () => {
       }
     );
 
-    const resourceData = generateResourceData(twoUsersSetup.testCommunity.id!);
+    const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
       createResourceResult.current.mutate(resourceData);
@@ -134,8 +112,8 @@ describe('Thanks Validation Integration Tests', () => {
 
     await act(async () => {
       signInResult.current.mutate({
-        email: twoUsersSetup.testUser.email,
-        password: twoUsersSetup.testUser.password,
+        email: authSetup.testUser.email,
+        password: authSetup.testUser.password,
       });
     });
 
@@ -190,7 +168,7 @@ describe('Thanks Validation Integration Tests', () => {
   });
 
   test('should fail to create thanks when user tries to thank themselves', async () => {
-    const { testUser, testCommunity } = authSetup;
+    const { testUser } = authSetup;
 
     // Try to create thanks with same user as sender and receiver using shared resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
@@ -223,7 +201,7 @@ describe('Thanks Validation Integration Tests', () => {
   });
 
   test('should fail to update thanks when trying to change sender', async () => {
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    const { testUser } = authSetup;
 
     // Create a third user (another user)
     const anotherUser = {
@@ -310,7 +288,7 @@ describe('Thanks Validation Integration Tests', () => {
   });
 
   test('should fail to update thanks when trying to change receiver to sender', async () => {
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    const { testUser } = authSetup;
 
     // Create thanks first
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
