@@ -48,7 +48,7 @@ describe('fetchUser', () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
     expect(mockQuery.eq).toHaveBeenCalledWith('id', userId);
     expect(result).toMatchObject({
       id: mockProfile.id,

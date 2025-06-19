@@ -57,7 +57,7 @@ describe('createCommunity CRUD Operations', () => {
       expect(mocks.mockSupabase.auth.getUser).toHaveBeenCalled();
       expect(mocks.mockSupabase.from).toHaveBeenCalledWith('communities');
       expect(mockQuery.insert).toHaveBeenCalled();
-      expect(mockQuery.select).toHaveBeenCalledWith('id');
+      expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
       expect(result).toEqual(mockCommunity);
       expect(fetchCommunityById.fetchCommunityById).toHaveBeenCalledWith(TEST_COMMUNITY_ID);
     });

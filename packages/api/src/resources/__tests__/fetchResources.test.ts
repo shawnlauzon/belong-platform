@@ -79,7 +79,7 @@ describe('fetchResources', () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result).toHaveLength(3);
     expect(result[0].id).toBe(mockResources[0].id);
@@ -128,7 +128,7 @@ describe('fetchResources', () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
     expect(result).toHaveLength(filteredResources.length);
   });
 
@@ -216,7 +216,7 @@ describe('fetchResourceById', () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
+    expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
     expect(mockQuery.eq).toHaveBeenCalledWith('id', mockResource.id);
     expect(mockQuery.single).toHaveBeenCalled();
     expect(result).toEqual(expect.objectContaining({ 

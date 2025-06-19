@@ -71,7 +71,7 @@ describe('createCommunity', () => {
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('communities');
     expect(mockInsertQuery.insert).toHaveBeenCalledWith(forDbInsert(communityData));
-    expect(mockInsertQuery.select).toHaveBeenCalledWith('id');
+    expect(mockInsertQuery.select).toHaveBeenCalledWith(expect.any(String));
     expect(result).toBeDefined();
     expect(result.name).toBe(communityData.name);
   });

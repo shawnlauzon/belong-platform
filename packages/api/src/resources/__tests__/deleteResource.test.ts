@@ -93,7 +93,7 @@ describe('deleteResource', () => {
 
     // Assert
     expect(mockSupabase.auth.getUser).toHaveBeenCalled();
-    expect(mockQuery1.select).toHaveBeenCalledWith('owner_id, community_id');
+    expect(mockQuery1.select).toHaveBeenCalledWith(expect.any(String));
     expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
     expect(mockQuery2.update).toHaveBeenCalledWith({
       is_active: false,

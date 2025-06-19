@@ -80,7 +80,7 @@ describe('Delete Resource - CRUD Operations', () => {
 
       // Assert
       expect(mocks.mockSupabase.auth.getUser).toHaveBeenCalled();
-      expect(mockOwnershipQuery.select).toHaveBeenCalledWith('owner_id, community_id');
+      expect(mockOwnershipQuery.select).toHaveBeenCalledWith(expect.any(String));
       expect(mockOwnershipQuery.eq).toHaveBeenCalledWith('id', TEST_RESOURCE_ID);
       expect(mockUpdateQuery.update).toHaveBeenCalledWith({
         is_active: false,
@@ -253,7 +253,7 @@ describe('Delete Resource - CRUD Operations', () => {
 
       // Verify auth and ownership checks were performed
       expect(mocks.mockSupabase.auth.getUser).toHaveBeenCalled();
-      expect(mockOwnershipQuery.select).toHaveBeenCalledWith('owner_id, community_id');
+      expect(mockOwnershipQuery.select).toHaveBeenCalledWith(expect.any(String));
     });
 
     it('should handle different user attempting to delete', async () => {

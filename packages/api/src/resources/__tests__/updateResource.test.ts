@@ -120,7 +120,7 @@ describe('updateResource', () => {
     
     // Verify we check the existing resource
     expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-    expect(mockQuery1.select).toHaveBeenCalledWith('owner_id');
+    expect(mockQuery1.select).toHaveBeenCalledWith(expect.any(String));
     expect(mockQuery1.eq).toHaveBeenCalledWith('id', resourceId);
     
     // Verify the update

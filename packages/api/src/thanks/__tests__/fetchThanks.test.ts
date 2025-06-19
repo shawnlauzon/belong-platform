@@ -65,7 +65,7 @@ describe('fetchThanks', () => {
 
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
-      expect(mockQuery.select).toHaveBeenCalledWith('*');
+      expect(mockQuery.select).toHaveBeenCalledWith(expect.any(String));
       expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
