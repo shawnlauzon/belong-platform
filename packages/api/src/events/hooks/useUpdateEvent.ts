@@ -6,8 +6,8 @@ import { updateEvent } from '../impl/updateEvent';
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
 
-  return useMutation<Event, Error, { id: string; data: Partial<EventData> }>({
-    mutationFn: ({ id, data }) => updateEvent(id, data),
+  return useMutation<Event, Error, Partial<EventData> & { id: string }>({
+    mutationFn: (data) => updateEvent(data.id, data),
     onSuccess: (updatedEvent) => {
       // Invalidate the events list to reflect the updated event
       queryClient.invalidateQueries({ queryKey: ['events'] });
