@@ -30,8 +30,6 @@ describe('Authentication Integration', () => {
       defaultOptions: {
         queries: {
           retry: false,
-          gcTime: 0,
-          staleTime: 0,
           refetchOnWindowFocus: false,
           refetchOnMount: true,
           refetchOnReconnect: false,
@@ -157,8 +155,6 @@ describe('Authentication Integration', () => {
 
   test('useCurrentUser should return user data when authenticated', async () => {
     await signOutBetweenTests();
-    // First create and sign in a user
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
@@ -169,29 +165,82 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
+    // Test the hypothesis: Use all hooks in single renderHook (like real app)
+    const { result } = renderHook(
+      () => {
+        return {
+          signUp: useSignUp(),
+          signIn: useSignIn(),
+          currentUser: useCurrentUser(),
+        };
+      },
+      { wrapper }
+    );
+
+    // Step 1: Sign up
     await act(async () => {
-      await signUpResult.current.mutateAsync(testUser);
+      await result.current.signUp.mutateAsync(testUser);
     });
 
-    await waitFor(() => expect(signUpResult.current.isPending).toBe(false));
+    await waitFor(() => expect(result.current.signUp.isPending).toBe(false));
 
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
-
+    // Step 2: Sign in
     await act(async () => {
-      await signInResult.current.mutateAsync({
+      await result.current.signIn.mutateAsync({
         email: testEmail,
         password: testPassword,
       });
     });
 
-    await waitFor(() => expect(signInResult.current.isPending).toBe(false));
+    await waitFor(() => expect(result.current.signIn.isPending).toBe(false));
 
-    // Now test current user
-    const { result } = renderHook(() => useCurrentUser(), { wrapper });
+    // Debug: Check actual session state after signIn
+    const client = getBelongClient();
+    const { data: sessionData, error: sessionError } =
+      await client.supabase.auth.getSession();
+    console.log('🔍 DEBUG: Session state after signIn:', {
+      hasSession: !!sessionData.session,
+      session: sessionData.session,
+      error: sessionError,
+      userId: sessionData.session?.user?.id,
+      userEmail: sessionData.session?.user?.email,
+    });
 
-    await waitFor(() => expect(result.current.isPending).toBe(false));
+    // Debug: Try getUser directly
+    const { data: userData, error: userError } =
+      await client.supabase.auth.getUser();
+    console.log('🔍 DEBUG: getUser result after signIn:', {
+      hasUser: !!userData.user,
+      user: userData.user,
+      error: userError,
+    });
 
-    expect(result.current).toMatchObject({
+    // Debug: Check useCurrentUser hook state before waiting
+    console.log('🔍 DEBUG: useCurrentUser hook state before waiting:', {
+      isLoading: result.current.currentUser.isLoading,
+      isPending: result.current.currentUser.isPending,
+      isSuccess: result.current.currentUser.isSuccess,
+      isError: result.current.currentUser.isError,
+      data: result.current.currentUser.data,
+      error: result.current.currentUser.error,
+    });
+
+    // Step 3: Check current user (should now work - same context!)
+    await waitFor(() =>
+      expect(result.current.currentUser.isSuccess).toBe(true)
+    );
+
+    // Debug: Check useCurrentUser hook state after waiting
+    console.log('🔍 DEBUG: useCurrentUser hook state after waiting:', {
+      isLoading: result.current.currentUser.isLoading,
+      isPending: result.current.currentUser.isPending,
+      isSuccess: result.current.currentUser.isSuccess,
+      isError: result.current.currentUser.isError,
+      data: result.current.currentUser.data,
+      error: result.current.currentUser.error,
+    });
+
+    expect(result.current.currentUser).toMatchObject({
       isError: false,
       isSuccess: true,
       isPending: false,
@@ -221,7 +270,7 @@ describe('Authentication Integration', () => {
       await signUpResult.current.mutateAsync(testUser);
     });
 
-    await waitFor(() => expect(signUpResult.current.isPending).toBe(false));
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
 
     const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
 
@@ -232,28 +281,40 @@ describe('Authentication Integration', () => {
       });
     });
 
-    await waitFor(() => expect(signInResult.current.isPending).toBe(false));
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
 
     // Validate precondition: user should be authenticated
-    const { result: currentUserResult } = renderHook(() => useCurrentUser(), { wrapper });
+    const { result: currentUserResult } = renderHook(() => useCurrentUser(), {
+      wrapper,
+    });
 
-    await waitFor(() => expect(currentUserResult.current.isPending).toBe(false));
+    await waitFor(() => expect(currentUserResult.current.isSuccess).toBe(true));
 
-    expect(currentUserResult.current.data).not.toBeNull();
-    expect(currentUserResult.current.data).toEqual(
-      expect.objectContaining({
+    // Debug logging to understand the cache pollution issue
+    console.log('🔍 DEBUG: Expected email:', testEmail.toLowerCase());
+    console.log('🔍 DEBUG: Actual currentUser data:', JSON.stringify(currentUserResult.current.data, null, 2));
+    console.log('🔍 DEBUG: QueryClient cache state:', queryClient.getQueryCache().getAll().map(query => ({
+      queryKey: query.queryKey,
+      state: query.state.status,
+      data: query.state.data
+    })));
+
+    expect(currentUserResult.current).toMatchObject({
+      data: expect.objectContaining({
         email: testEmail.toLowerCase(),
-      })
-    );
+      }),
+    });
 
     // Now test sign out
-    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper });
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
 
     await act(async () => {
       await signOutResult.current.mutateAsync();
     });
 
-    await waitFor(() => expect(signOutResult.current.isPending).toBe(false));
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     expect(signOutResult.current).toMatchObject({
       isError: false,
@@ -263,9 +324,14 @@ describe('Authentication Integration', () => {
     });
 
     // Verify current user is now null after sign out
-    const { result: currentUserAfterSignOut } = renderHook(() => useCurrentUser(), { wrapper });
+    const { result: currentUserAfterSignOut } = renderHook(
+      () => useCurrentUser(),
+      { wrapper }
+    );
 
-    await waitFor(() => expect(currentUserAfterSignOut.current.isPending).toBe(false));
+    await waitFor(() =>
+      expect(currentUserAfterSignOut.current.isSuccess).toBe(true)
+    );
 
     expect(currentUserAfterSignOut.current).toMatchObject({
       isError: false,

@@ -203,41 +203,7 @@ describe('Thanks Validation Integration Tests', () => {
   test('should fail to update thanks when trying to change sender', async () => {
     const { testUser } = authSetup;
 
-    // Create a third user (another user)
-    const anotherUser = {
-      email: faker.internet.email(),
-      password: faker.internet.password({ length: 12 }),
-    };
-
-    const { result: signUpAnotherResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpAnotherResult.current.mutate({
-        email: anotherUser.email,
-        password: anotherUser.password,
-      });
-    });
-
-    await waitFor(() =>
-      expect(signUpAnotherResult.current.isSuccess).toBe(true)
-    );
-    const anotherUserId = signUpAnotherResult.current.data?.id;
-
-    // Sign back in as the original user after creating the third user
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+    // Use pre-created third user
 
     // Create thanks first
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
@@ -267,7 +233,7 @@ describe('Thanks Validation Integration Tests', () => {
 
     const updateDataWithSender = {
       id: createdThanks.id,
-      fromUserId: anotherUserId!, // Trying to change sender - should fail
+      fromUserId: recipientUser.userId!, // Trying to change sender - should fail
       message: 'Updated message',
     };
 
