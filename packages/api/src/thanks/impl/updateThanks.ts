@@ -56,6 +56,24 @@ export async function updateThanks(
       throw new Error('You are not authorized to update this thanks');
     }
 
+    // Validate that user is not trying to change the sender
+    if (data.fromUserId && data.fromUserId !== userId) {
+      logger.error('🙏 API: Cannot change the sender of thanks', {
+        userId,
+        attemptedFromUserId: data.fromUserId,
+      });
+      throw new Error('Cannot change the sender of thanks');
+    }
+
+    // Validate that user is not trying to change receiver to themselves
+    if (data.toUserId && data.toUserId === userId) {
+      logger.error('🙏 API: Cannot change receiver to yourself', {
+        userId,
+        attemptedToUserId: data.toUserId,
+      });
+      throw new Error('Cannot change receiver to yourself');
+    }
+
     // Transform to database format
     const dbThanks = forDbUpdate(data);
 

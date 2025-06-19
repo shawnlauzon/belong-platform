@@ -108,7 +108,6 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
-    });
   });
 
   test('should successfully create an event when authenticated', async () => {
@@ -129,7 +128,6 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -154,9 +152,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     testUser.userId = signUpResult.current.data?.id;
 
@@ -179,9 +175,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Create an event
@@ -219,9 +213,7 @@ describe('Events CRUD Integration Tests', () => {
             isActive: eventData.isActive,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     
     // Track for cleanup
@@ -247,7 +239,6 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
-    });
   });
 
   test('should successfully update an event when authenticated as organizer', async () => {
@@ -268,7 +259,6 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -293,9 +283,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     testUser.userId = signUpResult.current.data?.id;
 
@@ -317,9 +305,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Create an event first
@@ -353,9 +339,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     const createdEvent = createEventResult.current.data;
     expect(createdEvent).toBeDefined();
@@ -374,11 +358,6 @@ describe('Events CRUD Integration Tests', () => {
       id: createdEvent!.id,
       title: updatedTitle,
       description: updatedDescription,
-      startDateTime: eventData.startDateTime,
-      endDateTime: eventData.endDateTime,
-      location: eventData.location,
-      coordinates: eventData.coordinates,
-      isActive: eventData.isActive,
     };
 
     await act(async () => {
@@ -396,9 +375,7 @@ describe('Events CRUD Integration Tests', () => {
             isActive: eventData.isActive,
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Verify event is updated in the list
@@ -420,7 +397,6 @@ describe('Events CRUD Integration Tests', () => {
         })
       );
     });
-    });
   });
 
   test('should successfully delete an event when authenticated as organizer', async () => {
@@ -441,7 +417,6 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     });
     const existingCommunity = communitiesResult.current.data?.[0];
     expect(existingCommunity).toBeDefined();
@@ -466,9 +441,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
     testUser.userId = signUpResult.current.data?.id;
 
@@ -490,9 +463,7 @@ describe('Events CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Create an event first
@@ -536,9 +507,7 @@ describe('Events CRUD Integration Tests', () => {
       expect(deleteEventResult.current).toMatchObject({
           isSuccess: true,
           error: null,
-        })
-      );
-    });
+        });
     });
 
     // Verify event is deleted (or at least not findable in the list)
@@ -558,7 +527,6 @@ describe('Events CRUD Integration Tests', () => {
           error: null,
         })
       );
-    });
     });
   });
 });

@@ -1,12 +1,12 @@
 import { getBelongClient } from '@belongnetwork/core';
-import type { Thanks, ThanksFilter } from '@belongnetwork/types';
-import { toDomainThanks } from './thanksTransformer';
+import type { Thanks, ThanksInfo, ThanksFilter } from '@belongnetwork/types';
+import { toDomainThanks, toThanksInfo } from './thanksTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchResourceById } from '../../resources/impl/fetchResources';
 
 export async function fetchThanks(
   filters?: ThanksFilter
-): Promise<Thanks[]> {
+): Promise<ThanksInfo[]> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('🙏 API: Fetching thanks', { filters });
@@ -41,45 +41,37 @@ export async function fetchThanks(
       return [];
     }
 
-    // Get unique user and resource IDs to fetch
-    const fromUserIds = Array.from(new Set(data.map(t => t.from_user_id)));
-    const toUserIds = Array.from(new Set(data.map(t => t.to_user_id)));
+    // For ThanksInfo[], we need to get communityId from resources but only fetch the ResourceInfo
+    // We'll fetch resources to get their communityId
     const resourceIds = Array.from(new Set(data.map(t => t.resource_id)));
-
-    // Combine and deduplicate user IDs
-    const allUserIds = Array.from(new Set([...fromUserIds, ...toUserIds]));
-
-    // Fetch all required users and resources
-    const [users, resources] = await Promise.all([
-      Promise.all(allUserIds.map(id => fetchUserById(id))),
-      Promise.all(resourceIds.map(id => fetchResourceById(id)))
-    ]);
-
-    // Create lookup maps
-    const userMap = new Map(users.filter(Boolean).map(user => [user!.id, user!]));
+    
+    // Fetch resources to get community IDs
+    const resources = await Promise.all(resourceIds.map(id => fetchResourceById(id)));
     const resourceMap = new Map(resources.filter(Boolean).map(resource => [resource!.id, resource!]));
 
     const thanks = data
       .map((dbThanks) => {
         try {
-          const fromUser = userMap.get(dbThanks.from_user_id);
-          const toUser = userMap.get(dbThanks.to_user_id);
-          const resource = resourceMap.get(dbThanks.resource_id);
+          const fromUserId = dbThanks.from_user_id;
+          const toUserId = dbThanks.to_user_id;
+          const resourceId = dbThanks.resource_id;
+          const resource = resourceMap.get(resourceId);
           
-          if (!fromUser || !toUser || !resource) {
-            logger.warn('🙏 API: Missing dependencies for thanks', {
+          if (!fromUserId || !toUserId || !resourceId || !resource) {
+            logger.warn('🙏 API: Missing IDs or resource for thanks', {
               thanksId: dbThanks.id,
               fromUserId: dbThanks.from_user_id,
               toUserId: dbThanks.to_user_id,
               resourceId: dbThanks.resource_id,
-              hasFromUser: !!fromUser,
-              hasToUser: !!toUser,
               hasResource: !!resource,
             });
             return null;
           }
 
-          return toDomainThanks(dbThanks, { fromUser, toUser, resource });
+          // Get communityId from resource for safety
+          const communityId = resource.community?.id || '';
+
+          return toThanksInfo(dbThanks, fromUserId, toUserId, resourceId, communityId);
         } catch (error) {
           logger.error('🙏 API: Error transforming thanks', {
             thanksId: dbThanks.id,
@@ -88,7 +80,7 @@ export async function fetchThanks(
           return null;
         }
       })
-      .filter((thanks): thanks is Thanks => thanks !== null);
+      .filter((thanks): thanks is ThanksInfo => thanks !== null);
 
     logger.debug('🙏 API: Successfully fetched thanks', {
       count: thanks.length,

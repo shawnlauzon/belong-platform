@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { toDomainEvent, forDbInsert } from '../impl/eventTransformer';
+import { faker } from '@faker-js/faker';
+import { toDomainEvent, forDbInsert, forDbUpdate } from '../impl/eventTransformer';
 import { createMockDbEvent } from './test-utils';
 import { createMockEventData, createMockUser, createMockCommunity } from '../../test-utils/mocks';
 
@@ -31,8 +32,8 @@ describe('Event Transformer', () => {
     it('should handle dates correctly', () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
-      const startDateTime = new Date('2024-12-01T10:00:00Z');
-      const endDateTime = new Date('2024-12-01T12:00:00Z');
+      const startDateTime = faker.date.future();
+      const endDateTime = faker.date.soon({ refDate: startDateTime });
       
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
@@ -168,6 +169,96 @@ describe('Event Transformer', () => {
 
       expect(dbEvent.registration_required).toBe(false);
       expect(dbEvent.is_active).toBe(true);
+    });
+  });
+
+  describe('forDbUpdate', () => {
+    it('should transform partial event data for database update', () => {
+      const eventData = {
+        title: faker.lorem.words(3),
+        description: faker.lorem.paragraph(),
+        communityId: faker.string.uuid(),
+      };
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent).toMatchObject({
+        title: eventData.title,
+        description: eventData.description,
+        organizer_id: organizerId,
+        community_id: eventData.communityId,
+      });
+    });
+
+    it('should handle empty partial data without destructuring errors', () => {
+      const eventData = {};
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent).toMatchObject({
+        organizer_id: organizerId,
+      });
+    });
+
+    it('should handle undefined eventData gracefully', () => {
+      const eventData = undefined as any;
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent).toMatchObject({
+        organizer_id: organizerId,
+      });
+    });
+
+    it('should handle null eventData gracefully', () => {
+      const eventData = null as any;
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent).toMatchObject({
+        organizer_id: organizerId,
+      });
+    });
+
+    it('should handle date transformations correctly', () => {
+      const startDateTime = faker.date.future();
+      const endDateTime = faker.date.soon({ refDate: startDateTime });
+      
+      const eventData = {
+        startDateTime,
+        endDateTime,
+      };
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent.start_date_time).toBe(startDateTime.toISOString());
+      expect(dbEvent.end_date_time).toBe(endDateTime.toISOString());
+    });
+
+    it('should handle optional fields correctly', () => {
+      const eventData = {
+        parkingInfo: undefined,
+        maxAttendees: undefined,
+        registrationRequired: undefined,
+        isActive: undefined,
+        tags: undefined,
+        imageUrls: undefined,
+      };
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent.parking_info).toBeUndefined();
+      expect(dbEvent.max_attendees).toBeUndefined();
+      expect(dbEvent.registration_required).toBeUndefined();
+      expect(dbEvent.is_active).toBeUndefined();
+      expect(dbEvent.tags).toBeUndefined();
+      expect(dbEvent.image_urls).toBeUndefined();
     });
   });
 });

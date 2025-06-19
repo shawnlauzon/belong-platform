@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import type { Resource, ResourceFilter } from '@belongnetwork/types';
+import type { ResourceInfo, ResourceFilter } from '@belongnetwork/types';
 import { fetchResources } from '../impl/fetchResources';
 
 export function useResources(filters?: ResourceFilter) {
-  const result = useQuery<Resource[], Error>({
+  const result = useQuery<ResourceInfo[], Error>({
     queryKey: ['resources', filters],
     queryFn: () => fetchResources(filters),
   });

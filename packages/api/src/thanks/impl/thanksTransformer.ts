@@ -2,6 +2,7 @@ import type { Database } from '@belongnetwork/types/database';
 import type {
   ThanksData,
   Thanks,
+  ThanksInfo,
   User,
   Resource,
 } from '@belongnetwork/types';
@@ -102,5 +103,41 @@ export function forDbUpdate(
     resource_id: resourceId,
     image_urls: imageUrls,
     impact_description: impactDescription || null,
+  };
+}
+
+/**
+ * Transform a database thanks record to a ThanksInfo object (lightweight for lists)
+ */
+export function toThanksInfo(
+  dbThanks: ThanksRow,
+  fromUserId: string,
+  toUserId: string,
+  resourceId: string,
+  communityId: string
+): ThanksInfo {
+  const {
+    from_user_id,
+    to_user_id,
+    resource_id,
+    image_urls,
+    impact_description,
+    created_at,
+    updated_at,
+    ...rest
+  } = dbThanks;
+
+  return {
+    ...rest,
+    id: dbThanks.id,
+    message: rest.message,
+    imageUrls: image_urls || [],
+    impactDescription: impact_description || undefined,
+    createdAt: new Date(created_at),
+    updatedAt: new Date(updated_at),
+    fromUserId: fromUserId,
+    toUserId: toUserId,
+    resourceId: resourceId,
+    communityId: communityId,
   };
 }

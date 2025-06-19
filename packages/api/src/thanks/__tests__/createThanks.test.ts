@@ -182,4 +182,20 @@ describe('createThanks', () => {
     // Act & Assert
     await expect(createThanks(mockThanksData)).rejects.toThrow('Resource not found');
   });
+
+  it('should throw an error when user tries to thank themselves', async () => {
+    // Arrange
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-123' } },
+    });
+
+    const selfThanksData = createMockThanksData({
+      toUserId: 'user-123', // Same as the authenticated user
+      resourceId: mockResource.id,
+      message: 'Trying to thank myself',
+    });
+
+    // Act & Assert
+    await expect(createThanks(selfThanksData)).rejects.toThrow('Cannot thank yourself');
+  });
 });

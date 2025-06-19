@@ -1,10 +1,10 @@
 import { getBelongClient } from '@belongnetwork/core';
-import type { Event, EventFilter } from '@belongnetwork/types';
-import { toDomainEvent } from './eventTransformer';
+import type { Event, EventInfo, EventFilter } from '@belongnetwork/types';
+import { toDomainEvent, toEventInfo } from './eventTransformer';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 
-export async function fetchEvents(filters?: EventFilter): Promise<Event[]> {
+export async function fetchEvents(filters?: EventFilter): Promise<EventInfo[]> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('🎉 API: Fetching events', { filters });
@@ -53,38 +53,23 @@ export async function fetchEvents(filters?: EventFilter): Promise<Event[]> {
       return [];
     }
 
-    // Get unique organizer and community IDs to fetch
-    const organizerIds = Array.from(new Set(data.map(e => e.organizer_id)));
-    const communityIds = Array.from(new Set(data.map(e => e.community_id)));
-
-    // Fetch all required organizers and communities
-    const [organizers, communities] = await Promise.all([
-      Promise.all(organizerIds.map(id => fetchUserById(id))),
-      Promise.all(communityIds.map(id => fetchCommunityById(id)))
-    ]);
-
-    // Create lookup maps
-    const organizerMap = new Map(organizers.filter(Boolean).map(organizer => [organizer!.id, organizer!]));
-    const communityMap = new Map(communities.filter(Boolean).map(community => [community!.id, community!]));
-
+    // For EventInfo[], we only need IDs, not full objects
     const events = data
       .map((dbEvent) => {
         try {
-          const organizer = organizerMap.get(dbEvent.organizer_id);
-          const community = communityMap.get(dbEvent.community_id);
+          const organizerId = dbEvent.organizer_id;
+          const communityId = dbEvent.community_id;
           
-          if (!organizer || !community) {
-            logger.warn('🎉 API: Missing organizer or community for event', {
+          if (!organizerId || !communityId) {
+            logger.warn('🎉 API: Missing organizer or community ID for event', {
               eventId: dbEvent.id,
               organizerId: dbEvent.organizer_id,
               communityId: dbEvent.community_id,
-              hasOrganizer: !!organizer,
-              hasCommunity: !!community,
             });
             return null;
           }
 
-          return toDomainEvent(dbEvent, { organizer, community });
+          return toEventInfo(dbEvent, organizerId, communityId);
         } catch (error) {
           logger.error('🎉 API: Error transforming event', {
             eventId: dbEvent.id,
@@ -93,7 +78,7 @@ export async function fetchEvents(filters?: EventFilter): Promise<Event[]> {
           return null;
         }
       })
-      .filter((event): event is Event => event !== null);
+      .filter((event): event is EventInfo => event !== null);
 
     logger.debug('🎉 API: Successfully fetched events', {
       count: events.length,

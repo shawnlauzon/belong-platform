@@ -52,14 +52,17 @@ describe('Fetch Resources - CRUD Operations', () => {
       expect(mocks.mockSupabase.from).toHaveBeenCalledWith('resources');
       expect(result).toHaveLength(3);
       
-      // Verify each resource has proper structure
+      // Verify each resource has proper structure for ResourceInfo
       result.forEach((resource, index) => {
         expect(resource).toEqual(expect.objectContaining({
           id: mockResources[index].id,
           title: mockResources[index].title,
-          owner: mockUser,
-          community: mockCommunity,
+          ownerId: TEST_USER_ID,
+          communityId: TEST_COMMUNITY_ID,
         }));
+        // ResourceInfo should not have nested objects
+        expect(resource).not.toHaveProperty('owner');
+        expect(resource).not.toHaveProperty('community');
       });
     });
 
@@ -261,27 +264,27 @@ describe('Fetch Resources - CRUD Operations', () => {
         category: ResourceCategory.FOOD,
         type: 'offer',
         isActive: true,
-        owner: expect.objectContaining({ id: TEST_USER_ID }),
-        community: expect.objectContaining({ id: TEST_COMMUNITY_ID }),
+        ownerId: TEST_USER_ID,
+        communityId: TEST_COMMUNITY_ID,
       });
+      // ResourceInfo should not have nested objects
+      expect(resource).not.toHaveProperty('owner');
+      expect(resource).not.toHaveProperty('community');
     });
 
-    it('should handle missing owner data gracefully', async () => {
+    it('should handle missing owner ID gracefully', async () => {
       // Arrange
-      const mockDbResource = createMockDbResource({
-        owner_id: TEST_USER_ID,
+      const mockDbResourceWithoutOwner = createMockDbResource({
+        owner_id: '', // Empty owner ID
         community_id: TEST_COMMUNITY_ID,
       });
 
-      mockSuccessfulSelect(mocks.mockSupabase, 'resources', [mockDbResource]);
-      
-      // Mock owner fetch returning null (should filter out the resource)
-      vi.spyOn(fetchUserById, 'fetchUserById').mockResolvedValue(null);
+      mockSuccessfulSelect(mocks.mockSupabase, 'resources', [mockDbResourceWithoutOwner]);
 
       // Act
       const result = await fetchResources();
 
-      // Assert - Should return empty array since owner is missing
+      // Assert - Should return empty array since owner ID is missing
       expect(result).toEqual([]);
     });
   });

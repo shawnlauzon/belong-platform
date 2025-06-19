@@ -83,8 +83,11 @@ describe('fetchResources', () => {
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result).toHaveLength(3);
     expect(result[0].id).toBe(mockResources[0].id);
-    expect(result[0].owner).toEqual(mockUser);
-    expect(result[0].community).toEqual(mockCommunity);
+    // For ResourceInfo[], we expect IDs instead of full objects
+    expect(result[0].ownerId).toBe(mockUser.id);
+    expect(result[0].communityId).toBe(mockCommunity.id);
+    expect(result[0]).not.toHaveProperty('owner');
+    expect(result[0]).not.toHaveProperty('community');
   });
 
   it('should apply filters when provided', async () => {

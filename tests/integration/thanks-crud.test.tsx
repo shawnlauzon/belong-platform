@@ -589,4 +589,392 @@ describe('Thanks CRUD Integration Tests', () => {
       ])
     );
   });
+
+  test('should fail to create thanks when user tries to thank themselves', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+    );
+
+    // Get existing communities to use for testing
+    const { result: communitiesResult } = renderHook(() => useCommunities(), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(communitiesResult.current.isSuccess).toBe(true));
+    const existingCommunity = communitiesResult.current.data?.[0];
+    expect(existingCommunity).toBeDefined();
+    testCommunity.id = existingCommunity!.id;
+
+    // Sign up test user
+    const { result: signUpResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
+    testUser.userId = signUpResult.current.data?.id;
+
+    // Sign in test user
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Create a resource first
+    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
+      wrapper,
+    });
+
+    const resourceData = {
+      title: generateTestName('Test Resource for Self Thanks'),
+      description: faker.lorem.paragraph(),
+      category: ResourceCategory.SUPPLIES,
+      type: 'offer' as const,
+      communityId: testCommunity.id!,
+      isActive: true,
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createResourceResult.current.mutate(resourceData);
+    });
+
+    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
+    const createdResource = createResourceResult.current.data;
+    expect(createdResource).toBeDefined();
+    createdResourceIds.push(createdResource!.id);
+
+    // Try to create thanks with same user as sender and receiver
+    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+      wrapper,
+    });
+
+    const selfThanksData = {
+      fromUserId: testUser.userId!,
+      toUserId: testUser.userId!, // Same as sender - should fail
+      resourceId: createdResource!.id,
+      message: faker.lorem.sentence(),
+      impactDescription: faker.lorem.paragraph(),
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createThanksResult.current.mutate(selfThanksData);
+    });
+
+    await waitFor(() => {
+      expect(createThanksResult.current).toMatchObject({
+        isError: true,
+        error: expect.objectContaining({
+          message: 'Cannot thank yourself',
+        }),
+      });
+    });
+  });
+
+  test('should fail to update thanks when trying to change sender', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+    );
+
+    // Get existing communities to use for testing
+    const { result: communitiesResult } = renderHook(() => useCommunities(), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(communitiesResult.current.isSuccess).toBe(true));
+    const existingCommunity = communitiesResult.current.data?.[0];
+    expect(existingCommunity).toBeDefined();
+    testCommunity.id = existingCommunity!.id;
+
+    // Sign up sender user
+    const { result: signUpResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
+    testUser.userId = signUpResult.current.data?.id;
+
+    // Sign in sender user
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Create a second user (recipient)
+    const recipientUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
+    const { result: signUpRecipientResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpRecipientResult.current.mutate({
+        email: recipientUser.email,
+        password: recipientUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
+    const recipientUserId = signUpRecipientResult.current.data?.id;
+
+    // Create a third user (another user)
+    const anotherUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
+    const { result: signUpAnotherResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpAnotherResult.current.mutate({
+        email: anotherUser.email,
+        password: anotherUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpAnotherResult.current.isSuccess).toBe(true));
+    const anotherUserId = signUpAnotherResult.current.data?.id;
+
+    // Create a resource
+    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
+      wrapper,
+    });
+
+    const resourceData = {
+      title: generateTestName('Test Resource for Update Thanks'),
+      description: faker.lorem.paragraph(),
+      category: ResourceCategory.SUPPLIES,
+      type: 'offer' as const,
+      communityId: testCommunity.id!,
+      isActive: true,
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createResourceResult.current.mutate(resourceData);
+    });
+
+    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
+    const createdResource = createResourceResult.current.data;
+    expect(createdResource).toBeDefined();
+    createdResourceIds.push(createdResource!.id);
+
+    // Create thanks first
+    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+      wrapper,
+    });
+
+    const thanksData = {
+      fromUserId: testUser.userId!,
+      toUserId: recipientUserId!,
+      resourceId: createdResource!.id,
+      message: faker.lorem.sentence(),
+      impactDescription: faker.lorem.paragraph(),
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createThanksResult.current.mutate(thanksData);
+    });
+
+    await waitFor(() => expect(createThanksResult.current.isSuccess).toBe(true));
+    const createdThanks = createThanksResult.current.data;
+    expect(createdThanks).toBeDefined();
+    createdThanksIds.push(createdThanks!.id);
+
+    // Try to update thanks with different sender
+    const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
+      wrapper,
+    });
+
+    const updateDataWithSender = {
+      id: createdThanks!.id,
+      fromUserId: anotherUserId!, // Trying to change sender - should fail
+      message: 'Updated message',
+    };
+
+    await act(async () => {
+      updateThanksResult.current.mutate(updateDataWithSender);
+    });
+
+    await waitFor(() => {
+      expect(updateThanksResult.current).toMatchObject({
+        isError: true,
+        error: expect.objectContaining({
+          message: 'Cannot change the sender of thanks',
+        }),
+      });
+    });
+  });
+
+  test('should fail to update thanks when trying to change receiver to sender', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+    );
+
+    // Get existing communities to use for testing
+    const { result: communitiesResult } = renderHook(() => useCommunities(), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(communitiesResult.current.isSuccess).toBe(true));
+    const existingCommunity = communitiesResult.current.data?.[0];
+    expect(existingCommunity).toBeDefined();
+    testCommunity.id = existingCommunity!.id;
+
+    // Sign up sender user
+    const { result: signUpResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
+    testUser.userId = signUpResult.current.data?.id;
+
+    // Sign in sender user
+    const { result: signInResult } = renderHook(() => useSignIn(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signInResult.current.mutate({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Create a second user (recipient)
+    const recipientUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
+    const { result: signUpRecipientResult } = renderHook(() => useSignUp(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signUpRecipientResult.current.mutate({
+        email: recipientUser.email,
+        password: recipientUser.password,
+      });
+    });
+
+    await waitFor(() => expect(signUpRecipientResult.current.isSuccess).toBe(true));
+    const recipientUserId = signUpRecipientResult.current.data?.id;
+
+    // Create a resource
+    const { result: createResourceResult } = renderHook(() => useCreateResource(), {
+      wrapper,
+    });
+
+    const resourceData = {
+      title: generateTestName('Test Resource for Receiver Update'),
+      description: faker.lorem.paragraph(),
+      category: ResourceCategory.SUPPLIES,
+      type: 'offer' as const,
+      communityId: testCommunity.id!,
+      isActive: true,
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createResourceResult.current.mutate(resourceData);
+    });
+
+    await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
+    const createdResource = createResourceResult.current.data;
+    expect(createdResource).toBeDefined();
+    createdResourceIds.push(createdResource!.id);
+
+    // Create thanks first
+    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+      wrapper,
+    });
+
+    const thanksData = {
+      fromUserId: testUser.userId!,
+      toUserId: recipientUserId!,
+      resourceId: createdResource!.id,
+      message: faker.lorem.sentence(),
+      impactDescription: faker.lorem.paragraph(),
+      imageUrls: [],
+    };
+
+    await act(async () => {
+      createThanksResult.current.mutate(thanksData);
+    });
+
+    await waitFor(() => expect(createThanksResult.current.isSuccess).toBe(true));
+    const createdThanks = createThanksResult.current.data;
+    expect(createdThanks).toBeDefined();
+    createdThanksIds.push(createdThanks!.id);
+
+    // Try to update thanks with receiver as sender
+    const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
+      wrapper,
+    });
+
+    const updateDataWithReceiverAsSender = {
+      id: createdThanks!.id,
+      toUserId: testUser.userId!, // Trying to change receiver to sender - should fail
+      message: 'Updated message',
+    };
+
+    await act(async () => {
+      updateThanksResult.current.mutate(updateDataWithReceiverAsSender);
+    });
+
+    await waitFor(() => {
+      expect(updateThanksResult.current).toMatchObject({
+        isError: true,
+        error: expect.objectContaining({
+          message: 'Cannot change receiver to yourself',
+        }),
+      });
+    });
+  });
 });

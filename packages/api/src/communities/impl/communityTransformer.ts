@@ -1,5 +1,5 @@
 import type { Database } from '@belongnetwork/types/database';
-import type { CommunityData, Community, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
+import type { CommunityData, Community, CommunityInfo, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
 import { toDomainUser } from '../../users/impl/userTransformer';
 
@@ -54,7 +54,7 @@ export function toDomainCommunity(
  * Transform a domain community object to a database community record
  */
 export function forDbInsert(community: CommunityData): CommunityInsertDbData {
-  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, ...rest } = community;
+  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, memberCount, ...rest } = community;
 
   return {
     ...rest,
@@ -64,6 +64,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     parent_id: parentId,
     time_zone: timeZone,
     radius_km: radiusKm,
+    member_count: memberCount,
     is_active: true, // New communities are always active
   };
 }
@@ -71,7 +72,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
 export function forDbUpdate(
   community: Partial<CommunityData> & { id: string }
 ): CommunityUpdateDbData {
-  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, ...rest } = community;
+  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, memberCount, ...rest } = community;
 
   return {
     ...rest,
@@ -81,6 +82,7 @@ export function forDbUpdate(
     parent_id: parentId,
     time_zone: timeZone,
     radius_km: radiusKm,
+    member_count: memberCount,
   };
 }
 
@@ -114,5 +116,36 @@ export function forDbMembershipInsert(membership: CommunityMembershipData): Comm
     user_id: membership.userId,
     community_id: membership.communityId,
     role: membership.role || 'member',
+  };
+}
+
+/**
+ * Transform a database community record to a CommunityInfo object (lightweight for lists)
+ */
+export function toCommunityInfo(
+  dbCommunity: CommunityRow
+): CommunityInfo {
+  const { center, created_at, updated_at, deleted_at, deleted_by, is_active, organizer_id, parent_id, ...rest } = dbCommunity;
+
+  // Parse PostGIS point to coordinates
+  const coords = center ? parsePostGisPoint(center) : undefined;
+
+  return {
+    ...rest,
+    id: dbCommunity.id,
+    name: dbCommunity.name,
+    description: dbCommunity.description ?? undefined,
+    memberCount: dbCommunity.member_count,
+    radiusKm: dbCommunity.radius_km ?? undefined,
+    center: coords,
+    createdAt: new Date(created_at),
+    updatedAt: new Date(updated_at),
+    isActive: is_active,
+    deletedAt: deleted_at ? new Date(deleted_at) : undefined,
+    deletedBy: deleted_by ?? undefined,
+    organizerId: organizer_id,
+    parentId: parent_id,
+    hierarchyPath: dbCommunity.hierarchy_path ? (typeof dbCommunity.hierarchy_path === 'string' ? JSON.parse(dbCommunity.hierarchy_path) : dbCommunity.hierarchy_path) : [],
+    timeZone: dbCommunity.time_zone,
   };
 }

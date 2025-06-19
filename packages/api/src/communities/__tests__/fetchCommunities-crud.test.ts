@@ -542,7 +542,7 @@ describe('fetchCommunities CRUD Operations', () => {
 
         // Assert
         expect(mocks.mockSupabase.from).toHaveBeenCalledWith('communities');
-        expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!communities_organizer_id_fkey(*)');
+        expect(mockQuery.select).toHaveBeenCalledWith('*');
         expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
         expect(result).toHaveLength(2);
         
@@ -724,7 +724,7 @@ describe('fetchCommunities CRUD Operations', () => {
 
         // Assert
         expect(mocks.mockSupabase.from).toHaveBeenCalledWith('communities');
-        expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!communities_organizer_id_fkey(*)');
+        expect(mockQuery.select).toHaveBeenCalledWith('*');
         expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({

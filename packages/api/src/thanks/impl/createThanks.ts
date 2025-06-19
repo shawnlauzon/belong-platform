@@ -25,6 +25,15 @@ export async function createThanks(data: ThanksData): Promise<Thanks> {
 
     const userId = userData.user.id;
 
+    // Validate that user is not thanking themselves
+    if (data.toUserId === userId) {
+      logger.error('🙏 API: User cannot thank themselves', {
+        userId,
+        toUserId: data.toUserId,
+      });
+      throw new Error('Cannot thank yourself');
+    }
+
     // Transform to database format
     const dbThanks = forDbInsert(data, userId);
 

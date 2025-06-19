@@ -4,6 +4,7 @@ import type {
   MeetupFlexibility,
   ResourceCategory,
   ResourceData,
+  ResourceInfo,
   User,
 } from '@belongnetwork/types';
 import type { Resource } from '@belongnetwork/types';
@@ -99,5 +100,40 @@ export function forDbUpdate(
     ...resource,
     owner_id: ownerId,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
+  };
+}
+
+/**
+ * Transform a database resource record to a ResourceInfo object (lightweight for lists)
+ */
+export function toResourceInfo(
+  dbResource: ResourceRow,
+  ownerId: string,
+  communityId: string
+): ResourceInfo {
+  if (!dbResource) {
+    throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
+  }
+
+  const { owner_id, community_id, location, created_at, updated_at, ...rest } =
+    dbResource;
+
+  return {
+    ...rest,
+    id: dbResource.id,
+    type: rest.type as 'offer' | 'request',
+    title: rest.title,
+    description: rest.description,
+    category: rest.category as ResourceCategory,
+    location: location ? parsePostGisPoint(location) : undefined,
+    isActive: rest.is_active !== false, // Default to true if not set
+    availability: rest.availability ?? 'available',
+    meetupFlexibility: rest.meetup_flexibility as MeetupFlexibility,
+    parkingInfo: rest.parking_info ?? undefined,
+    pickupInstructions: rest.pickup_instructions ?? undefined,
+    createdAt: new Date(created_at),
+    updatedAt: new Date(updated_at),
+    ownerId: ownerId,
+    communityId: communityId,
   };
 }

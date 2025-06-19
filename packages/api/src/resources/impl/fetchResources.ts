@@ -1,13 +1,13 @@
 import { getBelongClient } from '@belongnetwork/core';
-import type { Resource, ResourceFilter } from '@belongnetwork/types';
-import { toDomainResource } from './resourceTransformer';
+import type { Resource, ResourceInfo, ResourceFilter } from '@belongnetwork/types';
+import { toDomainResource, toResourceInfo } from './resourceTransformer';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
 
 export async function fetchResources(
   filters?: ResourceFilter
-): Promise<Resource[]> {
+): Promise<ResourceInfo[]> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('📚 API: Fetching resources', { filters });
@@ -48,38 +48,23 @@ export async function fetchResources(
       return [];
     }
 
-    // Get unique owner and community IDs to fetch
-    const ownerIds = Array.from(new Set(data.map(r => r.owner_id)));
-    const communityIds = Array.from(new Set(data.map(r => r.community_id)));
-
-    // Fetch all required owners and communities
-    const [owners, communities] = await Promise.all([
-      Promise.all(ownerIds.map(id => fetchUserById(id))),
-      Promise.all(communityIds.filter(Boolean).map(id => fetchCommunityById(id!)))
-    ]);
-
-    // Create lookup maps
-    const ownerMap = new Map(owners.filter(Boolean).map(owner => [owner!.id, owner!]));
-    const communityMap = new Map(communities.filter(Boolean).map(community => [community!.id, community!]));
-
+    // For ResourceInfo[], we only need IDs, not full objects
     const resources = data
       .map((dbResource) => {
         try {
-          const owner = ownerMap.get(dbResource.owner_id);
-          const community = dbResource.community_id ? communityMap.get(dbResource.community_id) : null;
+          const ownerId = dbResource.owner_id;
+          const communityId = dbResource.community_id || '';
           
-          if (!owner) {
-            logger.warn('📚 API: Missing owner for resource', {
+          if (!ownerId) {
+            logger.warn('📚 API: Missing owner ID for resource', {
               resourceId: dbResource.id,
               ownerId: dbResource.owner_id,
               communityId: dbResource.community_id,
-              hasOwner: !!owner,
-              hasCommunity: !!community,
             });
             return null;
           }
 
-          return toDomainResource(dbResource, { owner, community: community || undefined });
+          return toResourceInfo(dbResource, ownerId, communityId);
         } catch (error) {
           logger.error('📚 API: Error transforming resource', {
             resourceId: dbResource.id,
@@ -88,7 +73,7 @@ export async function fetchResources(
           return null;
         }
       })
-      .filter((resource): resource is Resource => resource !== null);
+      .filter((resource): resource is ResourceInfo => resource !== null);
 
     logger.debug('📚 API: Successfully fetched resources', {
       count: resources.length,

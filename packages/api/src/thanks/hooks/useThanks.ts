@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import type { Thanks, ThanksFilter } from '@belongnetwork/types';
+import type { ThanksInfo, ThanksFilter } from '@belongnetwork/types';
 import { fetchThanks } from '../impl/fetchThanks';
 
 export function useThanks(filters?: ThanksFilter) {
-  const result = useQuery<Thanks[], Error>({
+  const result = useQuery<ThanksInfo[], Error>({
     queryKey: ['thanks', filters],
     queryFn: () => fetchThanks(filters),
   });

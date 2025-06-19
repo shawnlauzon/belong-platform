@@ -192,8 +192,7 @@ describe('Communities CRUD Integration Tests', () => {
             organizerId: testUser.userId,
           }),
           error: null,
-        })
-      );
+        });
     });
     
     // Track for cleanup
@@ -245,8 +244,7 @@ describe('Communities CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
+        });
     });
     testUser.userId = signUpResult.current.data?.id;
 
@@ -298,8 +296,7 @@ describe('Communities CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
+        });
     });
     const createdCommunity = createCommunityResult.current.data;
     expect(createdCommunity).toBeDefined();
@@ -338,8 +335,7 @@ describe('Communities CRUD Integration Tests', () => {
             timeZone: communityData.timeZone,
           }),
           error: null,
-        })
-      );
+        });
     });
 
     // Verify community is updated in the list
@@ -387,8 +383,7 @@ describe('Communities CRUD Integration Tests', () => {
             id: expect.any(String),
           }),
           error: null,
-        })
-      );
+        });
     });
     testUser.userId = signUpResult.current.data?.id;
 
@@ -451,7 +446,6 @@ describe('Communities CRUD Integration Tests', () => {
           isSuccess: true,
           error: null,
         });
-      });
     });
 
     // Verify community is deleted (or at least not findable in the list)

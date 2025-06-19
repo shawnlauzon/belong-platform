@@ -310,4 +310,84 @@ describe('updateThanks', () => {
     // Act & Assert
     await expect(updateThanks(updateData)).rejects.toThrow('Resource not found');
   });
+
+  it('should throw an error when trying to change the sender', async () => {
+    // Arrange
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-123' } },
+    });
+
+    // Mock successful ownership check but no update needed as validation should fail first
+    const mockSelectQuery = {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { from_user_id: 'user-123' },
+            error: null,
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: mockUpdatedThanks,
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    };
+
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
+
+    const updateDataWithSender = {
+      id: 'thanks-1',
+      fromUserId: 'user-456', // Trying to change sender
+      message: 'Updated message',
+    };
+
+    // Act & Assert
+    await expect(updateThanks(updateDataWithSender)).rejects.toThrow('Cannot change the sender of thanks');
+  });
+
+  it('should throw an error when trying to change receiver to the sender', async () => {
+    // Arrange
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-123' } },
+    });
+
+    // Mock successful ownership check
+    const mockSelectQuery = {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { from_user_id: 'user-123' },
+            error: null,
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: mockUpdatedThanks,
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    };
+
+    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
+
+    const updateDataWithReceiverAsSender = {
+      id: 'thanks-1',
+      toUserId: 'user-123', // Trying to change receiver to sender
+      message: 'Updated message',
+    };
+
+    // Act & Assert
+    await expect(updateThanks(updateDataWithReceiverAsSender)).rejects.toThrow('Cannot change receiver to yourself');
+  });
 });

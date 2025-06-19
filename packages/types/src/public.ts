@@ -49,6 +49,12 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
   updatedAt: Date;
 }
 
+// Info version for list operations - includes all domain properties but only IDs for references
+export interface ResourceInfo extends Omit<Resource, 'owner' | 'community'> {
+  ownerId: string;     // Replaces owner: User
+  communityId: string; // Replaces community?: Community
+}
+
 export interface CommunityData {
   // Core Identity
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
@@ -119,6 +125,19 @@ export interface Thanks extends Omit<ThanksData, 'fromUserId' | 'toUserId' | 're
   resource: Resource;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ThanksInfo extends Omit<Thanks, 'fromUser' | 'toUser' | 'resource'> {
+  fromUserId: string;  // Replaces fromUser: User
+  toUserId: string;    // Replaces toUser: User
+  resourceId: string;  // Replaces resource: Resource
+  communityId: string; // Added for safety (derived from resource.communityId)
+}
+
+// Info version for list operations - includes all domain properties but only IDs for references
+export interface CommunityInfo extends Omit<Community, 'organizer' | 'parent'> {
+  organizerId: string; // Replaces organizer: User
+  parentId: string | null; // Replaces parent?: Community
 }
 
 export interface ThanksFilter {
@@ -226,6 +245,11 @@ export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
   updatedAt: Date;
   // Optional current user's attendance status
   currentUserAttendance?: EventAttendance;
+}
+
+export interface EventInfo extends Omit<Event, 'organizer' | 'community'> {
+  organizerId: string; // Replaces organizer: User
+  communityId: string; // Replaces community: Community
 }
 
 export interface EventFilter {

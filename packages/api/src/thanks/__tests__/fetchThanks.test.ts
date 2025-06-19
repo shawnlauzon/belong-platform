@@ -70,10 +70,15 @@ describe('fetchThanks', () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
         id: 'thanks-1',
-        fromUser: expect.objectContaining({ id: 'user-123' }),
-        toUser: expect.objectContaining({ id: 'user-456' }),
-        resource: expect.objectContaining({ id: 'resource-789' }),
+        fromUserId: 'user-123',
+        toUserId: 'user-456',
+        resourceId: 'resource-789',
+        communityId: expect.any(String),
       });
+      // ThanksInfo should not have nested objects
+      expect(result[0]).not.toHaveProperty('fromUser');
+      expect(result[0]).not.toHaveProperty('toUser');
+      expect(result[0]).not.toHaveProperty('resource');
     });
 
     it('should filter thanks by sentBy user', async () => {
@@ -97,7 +102,7 @@ describe('fetchThanks', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
       expect(mockQuery.eq).toHaveBeenCalledWith('from_user_id', 'user-123');
       expect(result).toHaveLength(1);
-      expect(result[0].fromUser.id).toBe('user-123');
+      expect(result[0].fromUserId).toBe('user-123');
     });
 
     it('should filter thanks by receivedBy user', async () => {
@@ -181,7 +186,7 @@ describe('fetchThanks', () => {
       await expect(fetchThanks()).rejects.toThrow(mockError);
     });
 
-    it('should filter out thanks with missing dependencies', async () => {
+    it('should filter out thanks with missing resource', async () => {
       // Arrange
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
@@ -193,18 +198,13 @@ describe('fetchThanks', () => {
       
       mockSupabase.from.mockReturnValue(mockQuery as any);
 
-      // Mock one user fetch to return null
-      vi.spyOn(fetchUserById, 'fetchUserById')
-        .mockImplementation((id) => {
-          if (id === 'user-123') return Promise.resolve(null); // Missing user
-          if (id === 'user-456') return Promise.resolve(mockToUser);
-          return Promise.resolve(null);
-        });
+      // Mock resource fetch to return null (missing resource)
+      vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(null);
 
       // Act
       const result = await fetchThanks();
 
-      // Assert - Should only return thanks where all dependencies are found
+      // Assert - Should filter out thanks where resource is missing
       expect(result).toHaveLength(0);
     });
   });

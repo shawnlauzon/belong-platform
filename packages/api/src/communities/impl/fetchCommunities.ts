@@ -1,8 +1,8 @@
 import { getBelongClient } from '@belongnetwork/core';
-import { toDomainCommunity } from './communityTransformer';
-import type { Community } from '@belongnetwork/types';
+import { toDomainCommunity, toCommunityInfo } from './communityTransformer';
+import type { Community, CommunityInfo } from '@belongnetwork/types';
 
-export async function fetchCommunities(options?: { includeDeleted?: boolean }): Promise<Community[]> {
+export async function fetchCommunities(options?: { includeDeleted?: boolean }): Promise<CommunityInfo[]> {
   const { supabase, logger } = getBelongClient();
 
   logger.debug('🏘️ API: Fetching communities', { options });
@@ -10,7 +10,7 @@ export async function fetchCommunities(options?: { includeDeleted?: boolean }): 
   try {
     let query = supabase
       .from('communities')
-      .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
+      .select('*')
       .order('created_at', { ascending: false });
 
     // By default, only fetch active communities
@@ -25,8 +25,8 @@ export async function fetchCommunities(options?: { includeDeleted?: boolean }): 
       throw error;
     }
 
-    const communities: Community[] = (data || []).map((dbCommunity) =>
-      toDomainCommunity(dbCommunity)
+    const communities: CommunityInfo[] = (data || []).map((dbCommunity) =>
+      toCommunityInfo(dbCommunity)
     );
 
     logger.debug('🏘️ API: Successfully fetched communities', {
