@@ -9,15 +9,19 @@ import {
   useCreateCommunity,
   useUpdateCommunity,
   useDeleteCommunity,
-  useSignIn,
-  useSignUp,
   resetBelongClient,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
+import { 
+  setupAuthenticatedUser,
+  type AuthSetupResult
+} from './helpers/auth-helpers';
+import { 
+  performCleanupDeletion
+} from './helpers/crud-test-patterns';
 
 describe('Communities CRUD Integration Tests', () => {
-  let testUser: { email: string; password: string; userId?: string };
   let createdCommunityIds: string[] = [];
   let queryClient: QueryClient;
 
@@ -46,12 +50,6 @@ describe('Communities CRUD Integration Tests', () => {
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
 
-    // Generate unique test user
-    testUser = {
-      email: faker.internet.email(),
-      password: faker.internet.password({ length: 12 }),
-    };
-
     createdCommunityIds = [];
   });
 
@@ -67,16 +65,7 @@ describe('Communities CRUD Integration Tests', () => {
       });
 
       for (const communityId of createdCommunityIds) {
-        await act(async () => {
-          deleteResult.current.mutate(communityId);
-        });
-        
-        await waitFor(() => {
-          expect(deleteResult.current).toMatchObject({
-            isSuccess: true,
-            error: null,
-          });
-        });
+        await performCleanupDeletion(deleteResult, communityId, act, waitFor);
       }
     }
 
@@ -115,50 +104,7 @@ describe('Communities CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Sign up test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
-    testUser.userId = signUpResult.current.data?.id;
-
-    // Sign in test user
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
+    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a community
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
@@ -225,49 +171,7 @@ describe('Communities CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Sign up and sign in test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
-    testUser.userId = signUpResult.current.data?.id;
-
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
+    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a community first
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
@@ -364,49 +268,7 @@ describe('Communities CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Sign up and sign in test user
-    const { result: signUpResult } = renderHook(() => useSignUp(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signUpResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signUpResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
-    });
-    testUser.userId = signUpResult.current.data?.id;
-
-    const { result: signInResult } = renderHook(() => useSignIn(), {
-      wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: testUser.email,
-        password: testUser.password,
-      });
-    });
-
-    await waitFor(() => {
-      expect(signInResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
-    });
+    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
 
     // Create a community first
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
