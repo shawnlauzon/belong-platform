@@ -58,8 +58,8 @@ export async function updateResource(
       throw new Error('You are not authorized to update this resource');
     }
 
-    // Transform to database format
-    const dbResource = forDbUpdate(data, userId);
+    // Transform to database format  
+    const dbResource = forDbUpdate(data);
 
     // Update in database
     const { data: updatedResource, error: updateError } = await supabase

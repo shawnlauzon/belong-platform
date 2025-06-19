@@ -23,25 +23,24 @@ export function toDomainCommunity(
     organizer: ProfileRow | ProfileRow[]; 
   }
 ): Community {
-  const { center, created_at, updated_at, deleted_at, deleted_by, is_active, ...rest } = dbCommunity;
+  // Explicitly extract only the fields we need to avoid leaking database properties
 
   // Parse PostGIS point to coordinates
-  const coords = center ? parsePostGisPoint(center) : undefined;
-
+  const coords = dbCommunity.center ? parsePostGisPoint(dbCommunity.center) : undefined;
 
   return {
-    ...rest,
     id: dbCommunity.id,
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
+    level: dbCommunity.level,
     memberCount: dbCommunity.member_count,
     radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
-    createdAt: new Date(created_at),
-    updatedAt: new Date(updated_at),
-    isActive: is_active,
-    deletedAt: deleted_at ? new Date(deleted_at) : undefined,
-    deletedBy: deleted_by ?? undefined,
+    createdAt: new Date(dbCommunity.created_at),
+    updatedAt: new Date(dbCommunity.updated_at),
+    isActive: dbCommunity.is_active,
+    deletedAt: dbCommunity.deleted_at ? new Date(dbCommunity.deleted_at) : undefined,
+    deletedBy: dbCommunity.deleted_by ?? undefined,
     organizer: toDomainUser(Array.isArray(dbCommunity.organizer) ? dbCommunity.organizer[0] : dbCommunity.organizer),
     parent: undefined,
     parentId: dbCommunity.parent_id,
@@ -77,7 +76,6 @@ export function forDbUpdate(
     name: community.name,
     description: community.description,
     level: community.level,
-    is_active: community.isActive,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     organizer_id: community.organizerId,
     hierarchy_path: community.hierarchyPath ? JSON.stringify(community.hierarchyPath) : undefined,
@@ -141,8 +139,8 @@ export function toCommunityInfo(
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
     isActive: dbCommunity.is_active,
-    deletedAt: dbCommunity.deleted_at ? new Date(dbCommunity.deleted_at) : null,
-    deletedBy: dbCommunity.deleted_by,
+    deletedAt: dbCommunity.deleted_at ? new Date(dbCommunity.deleted_at) : undefined,
+    deletedBy: dbCommunity.deleted_by ?? undefined,
     organizerId: dbCommunity.organizer_id,
     parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path ? (typeof dbCommunity.hierarchy_path === 'string' ? JSON.parse(dbCommunity.hierarchy_path) : dbCommunity.hierarchy_path) : [],

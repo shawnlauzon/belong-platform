@@ -28,32 +28,29 @@ export function toDomainResource(
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
   }
 
-  const { owner_id, community_id, location, created_at, updated_at, ...rest } =
-    dbResource;
-
-  if (owner_id !== refs.owner.id) {
+  if (dbResource.owner_id !== refs.owner.id) {
     throw new Error('Owner ID does not match');
   }
 
-  if (community_id && refs.community && community_id !== refs.community.id) {
+  if (dbResource.community_id && refs.community && dbResource.community_id !== refs.community.id) {
     throw new Error('Community ID does not match');
   }
 
   return {
-    ...rest,
     id: dbResource.id,
-    type: rest.type as 'offer' | 'request',
-    title: rest.title,
-    description: rest.description,
-    category: rest.category as ResourceCategory,
-    location: location ? parsePostGisPoint(location) : undefined,
-    isActive: rest.is_active !== false, // Default to true if not set
-    availability: rest.availability ?? 'available',
-    meetupFlexibility: rest.meetup_flexibility as MeetupFlexibility,
-    parkingInfo: rest.parking_info ?? undefined,
-    pickupInstructions: rest.pickup_instructions ?? undefined,
-    createdAt: new Date(created_at),
-    updatedAt: new Date(updated_at),
+    type: dbResource.type as 'offer' | 'request',
+    title: dbResource.title,
+    description: dbResource.description,
+    category: dbResource.category as ResourceCategory,
+    location: dbResource.location ? parsePostGisPoint(dbResource.location) : undefined,
+    isActive: dbResource.is_active !== false, // Default to true if not set
+    availability: dbResource.availability ?? 'available',
+    meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
+    parkingInfo: dbResource.parking_info ?? undefined,
+    pickupInstructions: dbResource.pickup_instructions ?? undefined,
+    imageUrls: dbResource.image_urls || [],
+    createdAt: new Date(dbResource.created_at),
+    updatedAt: new Date(dbResource.updated_at),
     owner: refs.owner,
     community: refs.community,
   };
@@ -93,11 +90,9 @@ export function forDbInsert(
  * Transform a domain resource object to a database resource record
  */
 export function forDbUpdate(
-  resource: Partial<ResourceData>,
-  ownerId?: string
+  resource: Partial<ResourceData>
 ): ResourceUpdateDbData {
   return {
-    id: resource.id,
     title: resource.title,
     description: resource.description,
     category: resource.category,
@@ -109,7 +104,7 @@ export function forDbUpdate(
     image_urls: resource.imageUrls,
     is_active: resource.isActive,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
-    owner_id: ownerId,
+    // Note: ownerId is not part of ResourceData and should be handled by the calling function
     community_id: resource.communityId,
   };
 }

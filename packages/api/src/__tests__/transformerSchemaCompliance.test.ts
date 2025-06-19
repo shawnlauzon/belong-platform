@@ -1,9 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import type { Database } from '@belongnetwork/types/database';
-import { forDbUpdate as communityForDbUpdate } from '../communities/impl/communityTransformer';
-import { forDbUpdate as resourceForDbUpdate } from '../resources/impl/resourceTransformer';
-import { forDbUpdate as eventForDbUpdate } from '../events/impl/eventTransformer';
-import { forDbUpdate as thanksForDbUpdate } from '../thanks/impl/thanksTransformer';
+import { forDbUpdate as communityForDbUpdate, toDomainCommunity } from '../communities/impl/communityTransformer';
+import { forDbUpdate as resourceForDbUpdate, toDomainResource } from '../resources/impl/resourceTransformer';
+import { forDbUpdate as eventForDbUpdate, toDomainEvent } from '../events/impl/eventTransformer';
+import { forDbUpdate as thanksForDbUpdate, toDomainThanks } from '../thanks/impl/thanksTransformer';
+import { 
+  createMockDbCommunityWithOrganizer,
+  createMockDbResourceWithOwner,
+  createMockDbEvent,
+  createMockDbThanks,
+  createMockDbProfile
+} from '../test-utils/mocks/mockDbRows';
+import { createMockUser, createMockCommunity, createMockResource } from '../test-utils/mocks/mockDomains';
 
 /**
  * Transformer Schema Compliance Tests
@@ -195,6 +203,142 @@ describe('Transformer Schema Compliance', () => {
       // Should NOT have camelCase
       expect(communityUpdate).not.toHaveProperty('organizerId');
       expect(communityUpdate).not.toHaveProperty('timeZone');
+    });
+  });
+
+  describe('Domain transformer compliance', () => {
+    describe('toDomainCommunity should not leak database fields', () => {
+      it('should not include snake_case database field names in domain object', () => {
+        const mockDbCommunity = createMockDbCommunityWithOrganizer();
+
+        const domainCommunity = toDomainCommunity(mockDbCommunity);
+
+        // Should NOT have snake_case database field names
+        expect(domainCommunity).not.toHaveProperty('created_at');
+        expect(domainCommunity).not.toHaveProperty('updated_at');
+        expect(domainCommunity).not.toHaveProperty('deleted_at');
+        expect(domainCommunity).not.toHaveProperty('deleted_by');
+        expect(domainCommunity).not.toHaveProperty('is_active');
+        expect(domainCommunity).not.toHaveProperty('member_count');
+        expect(domainCommunity).not.toHaveProperty('radius_km');
+        expect(domainCommunity).not.toHaveProperty('parent_id');
+        expect(domainCommunity).not.toHaveProperty('hierarchy_path');
+        expect(domainCommunity).not.toHaveProperty('time_zone');
+        expect(domainCommunity).not.toHaveProperty('organizer_id');
+
+        // Should HAVE correct camelCase domain properties
+        expect(domainCommunity).toHaveProperty('createdAt');
+        expect(domainCommunity).toHaveProperty('updatedAt');
+        expect(domainCommunity).toHaveProperty('isActive');
+        expect(domainCommunity).toHaveProperty('memberCount');
+        expect(domainCommunity).toHaveProperty('parentId');
+        expect(domainCommunity).toHaveProperty('hierarchyPath');
+        expect(domainCommunity).toHaveProperty('timeZone');
+        expect(domainCommunity).toHaveProperty('organizer');
+
+        // Should have proper types
+        expect(domainCommunity.createdAt).toBeInstanceOf(Date);
+        expect(domainCommunity.updatedAt).toBeInstanceOf(Date);
+        expect(typeof domainCommunity.isActive).toBe('boolean');
+        expect(typeof domainCommunity.memberCount).toBe('number');
+        expect(Array.isArray(domainCommunity.hierarchyPath)).toBe(true);
+        expect(typeof domainCommunity.organizer).toBe('object');
+      });
+    });
+
+    describe('toDomainResource should not leak database fields', () => {
+      it('should not include snake_case database field names in domain object', () => {
+        const owner = createMockDbProfile();
+        const mockDbResource = createMockDbResourceWithOwner(owner);
+        
+        const refs = {
+          owner: createMockUser({ id: owner.id }),
+          community: createMockCommunity({ id: mockDbResource.community_id })
+        };
+
+        const domainResource = toDomainResource(mockDbResource, refs);
+
+        // Should NOT have snake_case database field names
+        expect(domainResource).not.toHaveProperty('created_at');
+        expect(domainResource).not.toHaveProperty('updated_at');
+        expect(domainResource).not.toHaveProperty('is_active');
+        expect(domainResource).not.toHaveProperty('owner_id');
+        expect(domainResource).not.toHaveProperty('community_id');
+        expect(domainResource).not.toHaveProperty('image_urls');
+
+        // Should HAVE correct camelCase domain properties
+        expect(domainResource).toHaveProperty('createdAt');
+        expect(domainResource).toHaveProperty('updatedAt');
+        expect(domainResource).toHaveProperty('isActive');
+        expect(domainResource).toHaveProperty('owner');
+        expect(domainResource).toHaveProperty('community');
+        expect(domainResource).toHaveProperty('imageUrls');
+      });
+    });
+
+    describe('toDomainEvent should not leak database fields', () => {
+      it('should not include snake_case database field names in domain object', () => {
+        const mockDbEvent = createMockDbEvent();
+        
+        const refs = {
+          organizer: createMockUser({ id: mockDbEvent.organizer_id }),
+          community: createMockCommunity({ id: mockDbEvent.community_id })
+        };
+
+        const domainEvent = toDomainEvent(mockDbEvent, refs);
+
+        // Should NOT have snake_case database field names
+        expect(domainEvent).not.toHaveProperty('created_at');
+        expect(domainEvent).not.toHaveProperty('updated_at');
+        expect(domainEvent).not.toHaveProperty('is_active');
+        expect(domainEvent).not.toHaveProperty('organizer_id');
+        expect(domainEvent).not.toHaveProperty('community_id');
+        expect(domainEvent).not.toHaveProperty('start_date_time');
+        expect(domainEvent).not.toHaveProperty('end_date_time');
+        expect(domainEvent).not.toHaveProperty('registration_required');
+
+        // Should HAVE correct camelCase domain properties
+        expect(domainEvent).toHaveProperty('createdAt');
+        expect(domainEvent).toHaveProperty('updatedAt');
+        expect(domainEvent).toHaveProperty('isActive');
+        expect(domainEvent).toHaveProperty('organizer');
+        expect(domainEvent).toHaveProperty('community');
+        expect(domainEvent).toHaveProperty('startDateTime');
+        expect(domainEvent).toHaveProperty('endDateTime');
+        expect(domainEvent).toHaveProperty('registrationRequired');
+      });
+    });
+
+    describe('toDomainThanks should not leak database fields', () => {
+      it('should not include snake_case database field names in domain object', () => {
+        const mockDbThanks = createMockDbThanks();
+        
+        const refs = {
+          fromUser: createMockUser({ id: mockDbThanks.from_user_id }),
+          toUser: createMockUser({ id: mockDbThanks.to_user_id }),
+          resource: createMockResource({ id: mockDbThanks.resource_id })
+        };
+
+        const domainThanks = toDomainThanks(mockDbThanks, refs);
+
+        // Should NOT have snake_case database field names
+        expect(domainThanks).not.toHaveProperty('created_at');
+        expect(domainThanks).not.toHaveProperty('updated_at');
+        expect(domainThanks).not.toHaveProperty('impact_description');
+        expect(domainThanks).not.toHaveProperty('from_user_id');
+        expect(domainThanks).not.toHaveProperty('to_user_id');
+        expect(domainThanks).not.toHaveProperty('resource_id');
+        expect(domainThanks).not.toHaveProperty('image_urls');
+
+        // Should HAVE correct camelCase domain properties
+        expect(domainThanks).toHaveProperty('createdAt');
+        expect(domainThanks).toHaveProperty('updatedAt');
+        expect(domainThanks).toHaveProperty('impactDescription');
+        expect(domainThanks).toHaveProperty('fromUser');
+        expect(domainThanks).toHaveProperty('toUser');
+        expect(domainThanks).toHaveProperty('resource');
+        expect(domainThanks).toHaveProperty('imageUrls');
+      });
     });
   });
 });
