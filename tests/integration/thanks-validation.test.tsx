@@ -33,15 +33,13 @@ import {
 import {
   generateResourceData,
   generateThanksData,
-  performCleanupDeletion,
+  cleanupTestResources,
 } from './helpers/crud-test-patterns';
 import { faker } from '@faker-js/faker';
 
 describe('Thanks Validation Integration Tests', () => {
   let authSetup: AuthSetupResult;
   let twoUsersSetup: TwoUserSetupResult;
-  let createdThanksIds: string[] = [];
-  let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
   let testResource: any;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -123,7 +121,7 @@ describe('Thanks Validation Integration Tests', () => {
       expect(createResourceResult.current.isSuccess).toBe(true)
     );
     testResource = createResourceResult.current.data!;
-    createdResourceIds.push(testResource.id);
+    // Note: main test resource cleaned up in afterAll
   });
 
   afterAll(async () => {
@@ -174,33 +172,19 @@ describe('Thanks Validation Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Reset tracking arrays for each test
-    createdThanksIds = [];
-    createdResourceIds = [];
+    // Reset for each test - no expensive operations here
   });
 
   afterEach(async () => {
-    // Clean up created resources (excluding the main test resource which is cleaned in afterAll)
-    const resourcesToClean = createdResourceIds.filter(
-      (id) => id !== testResource?.id
+    // Clean up all test thanks using name-based cleanup
+    await cleanupTestResources(
+      wrapper,
+      'thanks',
+      () => renderHook(() => useThanks(), { wrapper }),
+      () => renderHook(() => useDeleteThanks(), { wrapper }),
+      act,
+      waitFor
     );
-    if (resourcesToClean.length > 0) {
-      const { result: deleteResourceResult } = renderHook(
-        () => useDeleteResource(),
-        {
-          wrapper,
-        }
-      );
-
-      for (const resourceId of resourcesToClean) {
-        await performCleanupDeletion(
-          deleteResourceResult,
-          resourceId,
-          act,
-          waitFor
-        );
-      }
-    }
   });
 
   test('should fail to create thanks when user tries to thank themselves', async () => {

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
@@ -9,6 +9,7 @@ import {
   useCreateCommunity,
   useUpdateCommunity,
   useDeleteCommunity,
+  useSignOut,
   resetBelongClient,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
@@ -18,16 +19,24 @@ import {
   type AuthSetupResult
 } from './helpers/auth-helpers';
 import { 
-  performCleanupDeletion,
+  cleanupTestResources,
   commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Communities CRUD Integration Tests', () => {
-  let createdCommunityIds: string[] = [];
+  let authSetup: AuthSetupResult;
   let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
-  beforeEach(async () => {
-    // Create fresh query client for each test
+  beforeAll(async () => {
+    // Initialize Belong client once for all tests
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -44,39 +53,46 @@ describe('Communities CRUD Integration Tests', () => {
       },
     });
 
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+    );
 
-    createdCommunityIds = [];
+    // Set up authenticated user once for all tests
+    authSetup = await setupAuthenticatedUser(wrapper);
+  });
+
+  beforeEach(async () => {
+    // Reset for each test - no expensive operations here
   });
 
   afterEach(async () => {
-    // Clean up created communities
-    if (createdCommunityIds.length > 0) {
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-      );
+    // Clean up all test communities using name-based cleanup
+    await cleanupTestResources(
+      wrapper,
+      'community',
+      () => renderHook(() => useCommunities(), { wrapper }),
+      () => renderHook(() => useDeleteCommunity(), { wrapper }),
+      act,
+      waitFor
+    );
+  });
 
-      const { result: deleteResult } = renderHook(() => useDeleteCommunity(), {
-        wrapper,
-      });
+  afterAll(async () => {
+    // Sign out to ensure clean state
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
 
-      for (const communityId of createdCommunityIds) {
-        await performCleanupDeletion(deleteResult, communityId, act, waitFor);
-      }
-    }
+    await act(async () => {
+      signOutResult.current.mutate();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     resetBelongClient();
   });
 
   test('should successfully read communities without authentication', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
 
     const { result: communitiesResult } = renderHook(() => useCommunities(), {
       wrapper,
@@ -101,11 +117,7 @@ describe('Communities CRUD Integration Tests', () => {
   });
 
   test('should successfully create a community when authenticated', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
@@ -113,7 +125,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     const communityData = {
-      name: generateTestName('Test Community'),
+      name: generateTestName('COMMUNITY'),
       description: faker.lorem.paragraph(),
       level: 'neighborhood' as const,
       timeZone: 'America/New_York',
@@ -143,9 +155,7 @@ describe('Communities CRUD Integration Tests', () => {
           error: null,
         });
     });
-    
-    // Track for cleanup
-    createdCommunityIds.push(createCommunityResult.current.data!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Verify community appears in communities list
     const { result: communitiesResult } = renderHook(() => useCommunities(), {
@@ -170,11 +180,7 @@ describe('Communities CRUD Integration Tests', () => {
   });
 
   test('should successfully update a community when authenticated as organizer', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community first
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
@@ -182,7 +188,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     const communityData = {
-      name: generateTestName('Test Community to Update'),
+      name: generateTestName('COMMUNITY'),
       description: faker.lorem.paragraph(),
       level: 'neighborhood' as const,
       timeZone: 'America/New_York',
@@ -208,15 +214,14 @@ describe('Communities CRUD Integration Tests', () => {
     const createdCommunity = createCommunityResult.current.data;
     expect(createdCommunity).toBeDefined();
 
-    // Track for cleanup
-    createdCommunityIds.push(createdCommunity!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the community
     const { result: updateCommunityResult } = renderHook(() => useUpdateCommunity(), {
       wrapper,
     });
 
-    const updatedName = generateTestName('Updated Community');
+    const updatedName = generateTestName('COMMUNITY');
     const updatedDescription = faker.lorem.paragraph();
     const updateData = {
       id: createdCommunity!.id,
@@ -267,11 +272,7 @@ describe('Communities CRUD Integration Tests', () => {
   });
 
   test('should successfully delete a community when authenticated as organizer', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community first
     const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
@@ -279,7 +280,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     const communityData = {
-      name: generateTestName('Test Community to Delete'),
+      name: generateTestName('COMMUNITY'),
       description: faker.lorem.paragraph(),
       level: 'neighborhood' as const,
       timeZone: 'America/New_York',

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
@@ -9,6 +9,7 @@ import {
   useCreateResource,
   useUpdateResource,
   useDeleteResource,
+  useSignOut,
   resetBelongClient,
   ResourceCategory,
 } from '@belongnetwork/platform';
@@ -20,17 +21,24 @@ import {
 } from './helpers/auth-helpers';
 import { 
   generateResourceData,
-  performCleanupDeletion,
+  cleanupTestResources,
   commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Resources CRUD Integration Tests', () => {
   let authSetup: AuthSetupResult;
-  let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
-  beforeEach(async () => {
-    // Create fresh query client for each test
+  beforeAll(async () => {
+    // Initialize Belong client once for all tests
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -47,40 +55,47 @@ describe('Resources CRUD Integration Tests', () => {
       },
     });
 
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+    );
 
-    createdResourceIds = [];
+    // Set up authenticated user once for all tests
+    authSetup = await setupAuthenticatedUser(wrapper);
+  });
+
+  beforeEach(async () => {
+    // Reset for each test - no expensive operations here
   });
 
 
   afterEach(async () => {
-    // Clean up created resources
-    if (createdResourceIds.length > 0) {
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-      );
+    // Clean up all test resources using name-based cleanup
+    await cleanupTestResources(
+      wrapper,
+      'resource',
+      () => renderHook(() => useResources(), { wrapper }),
+      () => renderHook(() => useDeleteResource(), { wrapper }),
+      act,
+      waitFor
+    );
+  });
 
-      const { result: deleteResult } = renderHook(() => useDeleteResource(), {
-        wrapper,
-      });
+  afterAll(async () => {
+    // Sign out to ensure clean state
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
 
-      for (const resourceId of createdResourceIds) {
-        await performCleanupDeletion(deleteResult, resourceId, act, waitFor);
-      }
-    }
+    await act(async () => {
+      signOutResult.current.mutate();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     resetBelongClient();
   });
 
   test('should successfully read resources without authentication', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
 
     const { result: resourcesResult } = renderHook(() => useResources(), {
       wrapper,
@@ -105,11 +120,7 @@ describe('Resources CRUD Integration Tests', () => {
   });
 
   test('should successfully create a resource when authenticated', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create a resource
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -136,9 +147,7 @@ describe('Resources CRUD Integration Tests', () => {
           error: null,
         });
     });
-    
-    // Track for cleanup
-    createdResourceIds.push(createResourceResult.current.data!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Verify resource appears in resources list
     const { result: resourcesResult } = renderHook(() => useResources(), {
@@ -164,21 +173,14 @@ describe('Resources CRUD Integration Tests', () => {
   });
 
   test('should successfully update a resource when authenticated as owner', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
       wrapper,
     });
 
-    const resourceData = {
-      ...generateResourceData(testCommunity.id!),
-      title: generateTestName('Test Resource to Update'),
-    };
+    const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
       createResourceResult.current.mutate(resourceData);
@@ -196,15 +198,14 @@ describe('Resources CRUD Integration Tests', () => {
     const createdResource = createResourceResult.current.data;
     expect(createdResource).toBeDefined();
 
-    // Track for cleanup
-    createdResourceIds.push(createdResource!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the resource (skip community validation by using existing community from created resource)
     const { result: updateResourceResult } = renderHook(() => useUpdateResource(), {
       wrapper,
     });
 
-    const updatedTitle = generateTestName('Updated Resource');
+    const updatedTitle = generateTestName('RESOURCE');
     const updatedDescription = faker.lorem.paragraph();
     const updateData = {
       id: createdResource!.id,
@@ -258,21 +259,14 @@ describe('Resources CRUD Integration Tests', () => {
   });
 
   test('should successfully delete a resource when authenticated as owner', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
       wrapper,
     });
 
-    const resourceData = {
-      ...generateResourceData(testCommunity.id!),
-      title: generateTestName('Test Resource to Delete'),
-    };
+    const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
       createResourceResult.current.mutate(resourceData);

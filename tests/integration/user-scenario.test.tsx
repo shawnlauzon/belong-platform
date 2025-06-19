@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
@@ -15,15 +15,20 @@ import {
   resetBelongClient,
 } from '@belongnetwork/platform';
 
-// Create a fresh query client for each test
+// Create a query client once for all tests
 let queryClient: QueryClient;
-
-const wrapper = ({ children }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
+let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
 describe('User Scenario Integration', () => {
-  beforeEach(() => {
+  beforeAll(() => {
+    // Initialize once for all tests
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -40,11 +45,13 @@ describe('User Scenario Integration', () => {
       },
     });
 
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  });
+
+  afterAll(() => {
+    resetBelongClient();
   });
 
   test('useResources should work after calling initializeBelong', async () => {

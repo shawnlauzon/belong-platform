@@ -34,14 +34,12 @@ import {
 import {
   generateResourceData,
   generateThanksData,
-  performCleanupDeletion,
+  cleanupTestResources,
   commonDeleteSuccessExpectation,
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
   let twoUsersSetup: TwoUserSetupResult;
-  let createdThanksIds: string[] = [];
-  let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
   let testResource: any;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -119,7 +117,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       expect(createResourceResult.current.isSuccess).toBe(true)
     );
     testResource = createResourceResult.current.data!;
-    createdResourceIds.push(testResource.id);
+    // Note: main test resource cleaned up in afterAll
   });
 
   afterAll(async () => {
@@ -171,44 +169,19 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Reset tracking arrays for each test
-    createdThanksIds = [];
-    createdResourceIds = [];
+    // Reset for each test - no expensive operations here
   });
 
   afterEach(async () => {
-    // Clean up created thanks
-    if (createdThanksIds.length > 0) {
-      const { result: deleteResult } = renderHook(() => useDeleteThanks(), {
-        wrapper,
-      });
-
-      for (const thanksId of createdThanksIds) {
-        await performCleanupDeletion(deleteResult, thanksId, act, waitFor);
-      }
-    }
-
-    // Clean up created resources (excluding the main test resource which is cleaned in afterAll)
-    const resourcesToClean = createdResourceIds.filter(
-      (id) => id !== testResource?.id
+    // Clean up all test thanks using name-based cleanup
+    await cleanupTestResources(
+      wrapper,
+      'thanks',
+      () => renderHook(() => useThanks(), { wrapper }),
+      () => renderHook(() => useDeleteThanks(), { wrapper }),
+      act,
+      waitFor
     );
-    if (resourcesToClean.length > 0) {
-      const { result: deleteResourceResult } = renderHook(
-        () => useDeleteResource(),
-        {
-          wrapper,
-        }
-      );
-
-      for (const resourceId of resourcesToClean) {
-        await performCleanupDeletion(
-          deleteResourceResult,
-          resourceId,
-          act,
-          waitFor
-        );
-      }
-    }
   });
 
   test('should successfully read thanks without authentication', async () => {
@@ -251,8 +224,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       });
     });
 
-    // Track for cleanup
-    createdThanksIds.push(createThanksResult.current.data!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Verify thanks appears in thanks list
     const { result: thanksListResult } = renderHook(() => useThanks(), {
@@ -300,7 +272,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       });
     });
     const createdThanks = createThanksResult.current.data!;
-    createdThanksIds.push(createdThanks.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the thanks
     const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {

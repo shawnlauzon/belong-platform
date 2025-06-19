@@ -29,7 +29,8 @@ export async function waitForCondition(
 }
 
 // Helper to generate test names with timestamp to avoid conflicts
-export function generateTestName(prefix: string): string {
+export function generateTestName(resourceType: string): string {
   const timestamp = Date.now()
-  return `${prefix} ${timestamp}`
+  const random = Math.random().toString(36).substring(2, 8)
+  return `INTEGRATION_TEST_${resourceType.toUpperCase()}_${timestamp}_${random}`
 }

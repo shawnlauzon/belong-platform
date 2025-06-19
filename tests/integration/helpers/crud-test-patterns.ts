@@ -43,7 +43,7 @@ export interface ThanksTestData {
  */
 export function generateResourceData(communityId: string): ResourceTestData {
   return {
-    title: generateTestName('Test Resource'),
+    title: generateTestName('RESOURCE'),
     description: faker.lorem.paragraph(),
     category: ResourceCategory.FOOD,
     type: 'offer' as const,
@@ -61,7 +61,7 @@ export function generateEventData(communityId: string, organizerId: string): Eve
   const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
   return {
-    title: generateTestName('Test Event'),
+    title: generateTestName('EVENT'),
     description: faker.lorem.paragraph(),
     communityId,
     organizerId,
@@ -81,7 +81,7 @@ export function generateThanksData(fromUserId: string, toUserId: string, resourc
     fromUserId,
     toUserId,
     resourceId,
-    message: faker.lorem.sentence(),
+    message: generateTestName('THANKS') + ' - ' + faker.lorem.sentence(),
     impactDescription: faker.lorem.paragraph(),
     imageUrls: [],
   };
@@ -140,4 +140,83 @@ export async function performCleanupDeletion(
   
   // Reset mutation state for next iteration
   deleteMutation.current.reset();
+}
+
+/**
+ * Name-based cleanup for integration test resources
+ */
+export async function cleanupTestResources(
+  wrapper: any,
+  resourceType: 'resource' | 'event' | 'community' | 'thanks',
+  useListHook: any,
+  useDeleteHook: any,
+  act: any,
+  waitFor: any
+) {
+  try {
+    // Get list of all items
+    const { result: listResult } = useListHook(wrapper);
+    
+    await waitFor(() => {
+      expect(listResult.current.isSuccess || listResult.current.isError).toBe(true);
+    });
+
+    if (listResult.current.isSuccess && listResult.current.data) {
+      // Find all items with INTEGRATION_TEST_ prefix
+      const testItems = listResult.current.data.filter((item: any) => {
+        const nameField = resourceType === 'thanks' ? 'message' : 'title';
+        return item[nameField]?.includes('INTEGRATION_TEST_');
+      });
+
+      if (testItems.length > 0) {
+        const { result: deleteResult } = useDeleteHook(wrapper);
+
+        // Delete all test items
+        for (const item of testItems) {
+          await performCleanupDeletion(deleteResult, item.id, act, waitFor);
+        }
+      }
+    }
+  } catch (error) {
+    // Ignore cleanup errors to avoid test failures
+    console.warn(`Cleanup failed for ${resourceType}:`, error);
+  }
+}
+
+/**
+ * Cleanup test users by email pattern
+ */
+export async function cleanupTestUsers(
+  wrapper: any,
+  useUsersHook: any,
+  useDeleteUserHook: any,
+  act: any,
+  waitFor: any
+) {
+  try {
+    const { result: usersResult } = useUsersHook(wrapper);
+    
+    await waitFor(() => {
+      expect(usersResult.current.isSuccess || usersResult.current.isError).toBe(true);
+    });
+
+    if (usersResult.current.isSuccess && usersResult.current.data) {
+      // Find all users with integration test email pattern
+      const testUsers = usersResult.current.data.filter((user: any) => 
+        user.email?.includes('integration-test-')
+      );
+
+      if (testUsers.length > 0) {
+        const { result: deleteResult } = useDeleteUserHook(wrapper);
+
+        // Delete all test users
+        for (const user of testUsers) {
+          await performCleanupDeletion(deleteResult, user.id, act, waitFor);
+        }
+      }
+    }
+  } catch (error) {
+    // Ignore cleanup errors to avoid test failures
+    console.warn('User cleanup failed:', error);
+  }
 }

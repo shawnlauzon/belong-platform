@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
+  useSignOut,
   resetBelongClient,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
@@ -17,17 +18,24 @@ import {
 } from './helpers/auth-helpers';
 import { 
   generateEventData,
-  performCleanupDeletion,
+  cleanupTestResources,
   commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Events Basic CRUD Integration Tests', () => {
   let authSetup: AuthSetupResult;
-  let createdEventIds: string[] = [];
   let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
-  beforeEach(async () => {
-    // Create fresh query client for each test
+  beforeAll(async () => {
+    // Initialize Belong client once for all tests
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -44,39 +52,46 @@ describe('Events Basic CRUD Integration Tests', () => {
       },
     });
 
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
-    createdEventIds = [];
-  });
-
-  afterEach(async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+    wrapper = ({ children }: { children: React.ReactNode }) => (
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    // Clean up created events
-    if (createdEventIds.length > 0) {
-      const { result: deleteResult } = renderHook(() => useDeleteEvent(), {
-        wrapper,
-      });
+    // Set up authenticated user once for all tests
+    authSetup = await setupAuthenticatedUser(wrapper);
+  });
 
-      for (const eventId of createdEventIds) {
-        await performCleanupDeletion(deleteResult, eventId, act, waitFor);
-      }
-    }
+  beforeEach(async () => {
+    // Reset for each test - no expensive operations here
+  });
+
+  afterEach(async () => {
+    // Clean up all test events using name-based cleanup
+    await cleanupTestResources(
+      wrapper,
+      'event',
+      () => renderHook(() => useEvents(), { wrapper }),
+      () => renderHook(() => useDeleteEvent(), { wrapper }),
+      act,
+      waitFor
+    );
+  });
+
+  afterAll(async () => {
+    // Sign out to ensure clean state
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      signOutResult.current.mutate();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
     resetBelongClient();
   });
 
   test('should successfully read events without authentication', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
 
     const { result: eventsResult } = renderHook(() => useEvents(), {
       wrapper,
@@ -94,11 +109,7 @@ describe('Events Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully create an event when authenticated', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event
     const { result: createEventResult } = renderHook(() => useCreateEvent(), {
@@ -124,9 +135,7 @@ describe('Events Basic CRUD Integration Tests', () => {
         error: null,
       });
     });
-    
-    // Track for cleanup
-    createdEventIds.push(createEventResult.current.data!.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Verify event appears in events list
     const { result: eventsResult } = renderHook(() => useEvents(), {
@@ -151,11 +160,7 @@ describe('Events Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully update an event when authenticated as organizer', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
     const { result: createEventResult } = renderHook(() => useCreateEvent(), {
@@ -181,7 +186,7 @@ describe('Events Basic CRUD Integration Tests', () => {
       });
     });
     const createdEvent = createEventResult.current.data!;
-    createdEventIds.push(createdEvent.id);
+    // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the event
     const { result: updateEventResult } = renderHook(() => useUpdateEvent(), {
@@ -236,11 +241,7 @@ describe('Events Basic CRUD Integration Tests', () => {
   });
 
   test('should successfully delete an event when authenticated as organizer', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
-    );
-
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
     const { result: createEventResult } = renderHook(() => useCreateEvent(), {

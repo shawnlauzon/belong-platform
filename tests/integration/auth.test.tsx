@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
@@ -14,45 +14,18 @@ import {
 } from '@belongnetwork/platform';
 
 let queryClient: QueryClient;
-
-const wrapper = ({ children }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
+let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
 describe('Authentication Integration', () => {
   beforeAll(() => {
+    // Initialize once for all tests
     initializeBelong({
       supabaseUrl: process.env.VITE_SUPABASE_URL!,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
-  });
 
-  afterAll(async () => {
-    try {
-      const client = getBelongClient();
-      if (client?.supabase) {
-        await client.supabase
-          .from('profiles')
-          .delete()
-          .like('email', 'test-%@example.com');
-      }
-    } catch (error) {
-      console.warn('Failed to clean up test users:', error);
-    }
-  });
-
-  beforeEach(async () => {
-    // Clear any existing authentication state
-    try {
-      const client = getBelongClient();
-      if (client?.supabase) {
-        await client.supabase.auth.signOut();
-      }
-    } catch (error) {
-      // Ignore signOut errors for clean test isolation
-    }
-
+    // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -68,12 +41,44 @@ describe('Authentication Integration', () => {
         },
       },
     });
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
   });
 
+  afterAll(async () => {
+    try {
+      const client = getBelongClient();
+      if (client?.supabase) {
+        // Clean up test users using naming convention
+        await client.supabase
+          .from('profiles')
+          .delete()
+          .like('email', 'integration-test-%');
+      }
+    } catch (error) {
+      console.warn('Failed to clean up test users:', error);
+    }
+  });
+
+  // Keep test isolation for auth tests - each test needs clean auth state
+  async function signOutBetweenTests() {
+    try {
+      const client = getBelongClient();
+      if (client?.supabase) {
+        await client.supabase.auth.signOut();
+      }
+    } catch (error) {
+      // Ignore signOut errors for clean test isolation
+    }
+  }
+
   test('useSignUp should work after calling initializeBelong', async () => {
+    await signOutBetweenTests();
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    const testEmail = `test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
+    const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
     const testUser = {
       email: testEmail,
@@ -97,10 +102,11 @@ describe('Authentication Integration', () => {
   });
 
   test('useSignIn should work after signing up a user', async () => {
+    await signOutBetweenTests();
     // First create a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
-    const testEmail = `test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
+    const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
     const testUser = {
       email: testEmail,
@@ -136,6 +142,7 @@ describe('Authentication Integration', () => {
   });
 
   test('useCurrentUser should return null when unauthenticated', async () => {
+    await signOutBetweenTests();
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
@@ -149,10 +156,11 @@ describe('Authentication Integration', () => {
   });
 
   test('useCurrentUser should return user data when authenticated', async () => {
+    await signOutBetweenTests();
     // First create and sign in a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
-    const testEmail = `test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
+    const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
     const testUser = {
       email: testEmail,
@@ -196,10 +204,11 @@ describe('Authentication Integration', () => {
   });
 
   test('useSignOut should work and clear current user', async () => {
+    await signOutBetweenTests();
     // First create and sign in a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
-    const testEmail = `test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
+    const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
     const testUser = {
       email: testEmail,
