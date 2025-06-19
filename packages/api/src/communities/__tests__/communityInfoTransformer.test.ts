@@ -41,8 +41,8 @@ describe('CommunityInfo Transformer', () => {
     expect(result).toHaveProperty('timeZone', 'America/New_York');
     expect(result).toHaveProperty('memberCount', 150);
     expect(result).toHaveProperty('isActive', true);
-    expect(result).toHaveProperty('deletedAt', null);
-    expect(result).toHaveProperty('deletedBy', null);
+    expect(result).toHaveProperty('deletedAt', undefined);
+    expect(result).toHaveProperty('deletedBy', undefined);
     expect(result).toHaveProperty('createdAt');
     expect(result).toHaveProperty('updatedAt');
 

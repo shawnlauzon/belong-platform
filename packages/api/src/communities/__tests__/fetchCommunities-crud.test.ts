@@ -877,8 +877,8 @@ describe('fetchCommunities CRUD Operations', () => {
           ],
           timeZone: 'America/Los_Angeles',
           isActive: true,
-          deletedAt: null,
-          deletedBy: null,
+          deletedAt: undefined,
+          deletedBy: undefined,
           organizerId: TEST_USER_ID,
         });
       });

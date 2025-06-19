@@ -32,9 +32,9 @@ describe('Community Transformer', () => {
         id: mockDbCommunity.id,
         name: mockDbCommunity.name,
         description: mockDbCommunity.description,
-        member_count: mockDbCommunity.member_count,
-        parent_id: mockDbCommunity.parent_id,
-        radius_km: mockDbCommunity.radius_km ?? undefined,
+        memberCount: mockDbCommunity.member_count,
+        parentId: mockDbCommunity.parent_id,
+        radiusKm: mockDbCommunity.radius_km ?? undefined,
       });
 
       // Verify coordinates are parsed correctly
