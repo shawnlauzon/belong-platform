@@ -97,9 +97,20 @@ export function forDbUpdate(
   ownerId?: string
 ): ResourceUpdateDbData {
   return {
-    ...resource,
-    owner_id: ownerId,
+    id: resource.id,
+    title: resource.title,
+    description: resource.description,
+    category: resource.category,
+    type: resource.type,
+    availability: resource.availability,
+    meetup_flexibility: resource.meetupFlexibility,
+    parking_info: resource.parkingInfo,
+    pickup_instructions: resource.pickupInstructions,
+    image_urls: resource.imageUrls,
+    is_active: resource.isActive,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
+    owner_id: ownerId,
+    community_id: resource.communityId,
   };
 }
 

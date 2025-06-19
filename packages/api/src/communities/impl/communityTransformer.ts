@@ -72,17 +72,19 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
 export function forDbUpdate(
   community: Partial<CommunityData> & { id: string }
 ): CommunityUpdateDbData {
-  const { organizerId, center, hierarchyPath, parentId, timeZone, radiusKm, memberCount, ...rest } = community;
-
   return {
-    ...rest,
-    center: center ? toPostGisPoint(center) : undefined,
-    organizer_id: organizerId,
-    hierarchy_path: hierarchyPath ? JSON.stringify(hierarchyPath) : undefined,
-    parent_id: parentId,
-    time_zone: timeZone,
-    radius_km: radiusKm,
-    member_count: memberCount,
+    id: community.id,
+    name: community.name,
+    description: community.description,
+    level: community.level,
+    is_active: community.isActive,
+    center: community.center ? toPostGisPoint(community.center) : undefined,
+    organizer_id: community.organizerId,
+    hierarchy_path: community.hierarchyPath ? JSON.stringify(community.hierarchyPath) : undefined,
+    parent_id: community.parentId,
+    time_zone: community.timeZone,
+    radius_km: community.radiusKm,
+    member_count: community.memberCount,
   };
 }
 
