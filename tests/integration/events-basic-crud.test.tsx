@@ -17,7 +17,8 @@ import {
 } from './helpers/auth-helpers';
 import { 
   generateEventData,
-  performCleanupDeletion
+  performCleanupDeletion,
+  commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Events Basic CRUD Integration Tests', () => {
@@ -268,10 +269,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteEventResult.current).toMatchObject({
-        isSuccess: true,
-        error: null,
-      });
+      expect(deleteEventResult.current).toMatchObject(commonDeleteSuccessExpectation);
     });
 
     // Verify event is deleted (or at least not findable in the list)

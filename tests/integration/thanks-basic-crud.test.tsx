@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
@@ -24,7 +24,8 @@ import {
 import { 
   generateResourceData, 
   generateThanksData,
-  performCleanupDeletion
+  performCleanupDeletion,
+  commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
@@ -64,6 +65,10 @@ describe('Thanks Basic CRUD Integration Tests', () => {
 
     // Set up two users once for all tests
     twoUsersSetup = await setupTwoUsers(wrapper);
+  });
+
+  afterAll(async () => {
+    resetBelongClient();
   });
 
   beforeEach(async () => {
@@ -114,8 +119,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
         await performCleanupDeletion(deleteResourceResult, resourceId, act, waitFor);
       }
     }
-
-    resetBelongClient();
   });
 
   test('should successfully read thanks without authentication', async () => {
@@ -370,10 +373,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteThanksResult.current).toMatchObject({
-        isSuccess: true,
-        error: null,
-      });
+      expect(deleteThanksResult.current).toMatchObject(commonDeleteSuccessExpectation);
     });
 
     // Verify thanks is deleted (or at least not findable in the list)

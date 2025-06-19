@@ -18,7 +18,8 @@ import {
   type AuthSetupResult
 } from './helpers/auth-helpers';
 import { 
-  performCleanupDeletion
+  performCleanupDeletion,
+  commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Communities CRUD Integration Tests', () => {
@@ -304,10 +305,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteCommunityResult.current).toMatchObject({
-          isSuccess: true,
-          error: null,
-        });
+      expect(deleteCommunityResult.current).toMatchObject(commonDeleteSuccessExpectation);
     });
 
     // Verify community is deleted (or at least not findable in the list)

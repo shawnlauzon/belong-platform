@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { faker } from '@faker-js/faker';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import {
@@ -19,7 +20,8 @@ import {
 } from './helpers/auth-helpers';
 import { 
   generateResourceData,
-  performCleanupDeletion
+  performCleanupDeletion,
+  commonDeleteSuccessExpectation
 } from './helpers/crud-test-patterns';
 
 describe('Resources CRUD Integration Tests', () => {
@@ -290,10 +292,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteResourceResult.current).toMatchObject({
-          isSuccess: true,
-          error: null,
-        });
+      expect(deleteResourceResult.current).toMatchObject(commonDeleteSuccessExpectation);
     });
 
     // Verify resource is deleted (or at least not findable in the list)

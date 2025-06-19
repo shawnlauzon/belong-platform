@@ -96,6 +96,14 @@ export const commonSuccessExpectation = {
 };
 
 /**
+ * Common expectations for successful delete mutations (return void)
+ */
+export const commonDeleteSuccessExpectation = {
+  isSuccess: true,
+  error: null,
+};
+
+/**
  * Common expectations for successful queries
  */
 export const commonQuerySuccessExpectation = {
@@ -127,7 +135,7 @@ export async function performCleanupDeletion(
   });
   
   await waitFor(() => {
-    expect(deleteMutation.current).toMatchObject(commonSuccessExpectation);
+    expect(deleteMutation.current).toMatchObject(commonDeleteSuccessExpectation);
   });
   
   // Reset mutation state for next iteration
