@@ -118,9 +118,81 @@ export async function setupAuthenticatedUser(wrapper: any): Promise<AuthSetupRes
 
 /**
  * Sets up two authenticated users for multi-user scenarios (like thanks)
+ * Creates fresh users each time to avoid authentication conflicts
  */
 export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
-  const { testUser, testCommunity } = await setupAuthenticatedUser(wrapper);
+  // Create fresh users for multi-user scenarios to avoid auth conflicts
+  const testUser: TestUser = {
+    email: faker.internet.email(),
+    password: faker.internet.password({ length: 12 }),
+  };
+
+  const testCommunity: TestCommunity = {
+    name: `Test Community ${Date.now()}`,
+  };
+
+  // Get existing communities to use for testing
+  const { result: communitiesResult } = renderHook(() => useCommunities(), {
+    wrapper,
+  });
+
+  await waitFor(() => {
+    expect(communitiesResult.current).toEqual(
+      expect.objectContaining({
+        isSuccess: true,
+        data: expect.any(Array),
+        error: null,
+      })
+    );
+  });
+  const existingCommunity = communitiesResult.current.data?.[0];
+  expect(existingCommunity).toBeDefined();
+  testCommunity.id = existingCommunity!.id;
+
+  // Sign up first user (sender)
+  const { result: signUpResult } = renderHook(() => useSignUp(), {
+    wrapper,
+  });
+
+  await act(async () => {
+    signUpResult.current.mutate({
+      email: testUser.email,
+      password: testUser.password,
+    });
+  });
+
+  await waitFor(() => {
+    expect(signUpResult.current).toMatchObject({
+      isSuccess: true,
+      data: expect.objectContaining({
+        id: expect.any(String),
+      }),
+      error: null,
+    });
+  });
+  testUser.userId = signUpResult.current.data?.id;
+
+  // Sign in first user (sender)
+  const { result: signInResult } = renderHook(() => useSignIn(), {
+    wrapper,
+  });
+
+  await act(async () => {
+    signInResult.current.mutate({
+      email: testUser.email,
+      password: testUser.password,
+    });
+  });
+
+  await waitFor(() => {
+    expect(signInResult.current).toMatchObject({
+      isSuccess: true,
+      data: expect.objectContaining({
+        id: expect.any(String),
+      }),
+      error: null,
+    });
+  });
 
   // Create a second user (recipient)
   const recipientUser: TestUser = {
