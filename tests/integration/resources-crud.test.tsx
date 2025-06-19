@@ -14,9 +14,7 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import { 
-  setupAuthenticatedUser, 
-  resetAuthCache,
-  type AuthSetupResult
+  setupAuthenticatedUser
 } from './helpers/auth-helpers';
 import { 
   generateResourceData,
@@ -24,9 +22,45 @@ import {
 } from './helpers/crud-test-patterns';
 
 describe('Resources CRUD Integration Tests', () => {
-  let authSetup: AuthSetupResult;
+  let testUser: { email: string; password: string; userId?: string };
+  let testCommunity: { id?: string; name: string };
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
+
+  beforeAll(async () => {
+    // Initialize Belong client
+    initializeBelong({
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    });
+
+    // Create query client for auth setup
+    const setupQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TestWrapper queryClient={setupQueryClient}>{children}</TestWrapper>
+    );
+
+    // Set up authenticated user once for all tests
+    const authSetup = await setupAuthenticatedUser(wrapper);
+    testUser = authSetup.testUser;
+    testCommunity = authSetup.testCommunity;
+  });
 
   beforeEach(async () => {
     // Create fresh query client for each test
@@ -46,15 +80,7 @@ describe('Resources CRUD Integration Tests', () => {
       },
     });
 
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     createdResourceIds = [];
-    resetAuthCache();
   });
 
 
@@ -75,7 +101,6 @@ describe('Resources CRUD Integration Tests', () => {
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should successfully read resources without authentication', async () => {
@@ -110,7 +135,7 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    // Use the authenticated user from beforeAll
 
     // Create a resource
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -169,7 +194,7 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    // Use the authenticated user from beforeAll
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -263,7 +288,7 @@ describe('Resources CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity }: AuthSetupResult = await setupAuthenticatedUser(wrapper);
+    // Use the authenticated user from beforeAll
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {

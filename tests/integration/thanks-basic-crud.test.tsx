@@ -16,10 +16,7 @@ import {
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
 import { 
-  setupAuthenticatedUser, 
-  setupTwoUsers, 
-  type AuthSetupResult,
-  type TwoUserSetupResult 
+  setupTwoUsers
 } from './helpers/auth-helpers';
 import { 
   generateResourceData, 
@@ -28,7 +25,9 @@ import {
 } from './helpers/crud-test-patterns';
 
 describe('Thanks Basic CRUD Integration Tests', () => {
-  let twoUsersSetup: TwoUserSetupResult;
+  let testUser: { email: string; password: string; userId?: string };
+  let recipientUser: { email: string; password: string; userId?: string };
+  let testCommunity: { id?: string; name: string };
   let createdThanksIds: string[] = [];
   let createdResourceIds: string[] = [];
   let queryClient: QueryClient;
@@ -63,7 +62,10 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     // Set up two users once for all tests
-    twoUsersSetup = await setupTwoUsers(wrapper);
+    const twoUsersSetup = await setupTwoUsers(wrapper);
+    testUser = twoUsersSetup.testUser;
+    recipientUser = twoUsersSetup.recipientUser;
+    testCommunity = twoUsersSetup.testCommunity;
   });
 
   beforeEach(async () => {
@@ -139,7 +141,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    // Use the authenticated users from beforeAll
 
     // Create a resource first (needed for thanks)
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -208,7 +210,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    // Use the authenticated users from beforeAll
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
@@ -312,7 +314,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
     );
 
-    const { testUser, testCommunity, recipientUser } = twoUsersSetup;
+    // Use the authenticated users from beforeAll
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(() => useCreateResource(), {
