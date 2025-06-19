@@ -27,9 +27,10 @@ export interface TwoUserSetupResult extends AuthSetupResult {
 }
 
 /**
- * Sets up an authenticated user and community - call directly in each test
+ * Sets up an authenticated user and community for use in beforeAll
  */
 export async function setupAuthenticatedUser(wrapper: any): Promise<AuthSetupResult> {
+
   const testUser: TestUser = {
     email: faker.internet.email(),
     password: faker.internet.password({ length: 12 }),
@@ -107,9 +108,11 @@ export async function setupAuthenticatedUser(wrapper: any): Promise<AuthSetupRes
 
 /**
  * Sets up two authenticated users for multi-user scenarios (like thanks)
- * Call directly in each test that needs multiple users
+ * Should be called in beforeAll to avoid repeated authentication calls
  */
 export async function setupTwoUsers(wrapper: any): Promise<TwoUserSetupResult> {
+
+  // Create fresh users for multi-user scenarios
   const testUser: TestUser = {
     email: faker.internet.email(),
     password: faker.internet.password({ length: 12 }),

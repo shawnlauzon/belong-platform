@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { faker } from '@faker-js/faker';
 import React from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import {
@@ -8,21 +9,15 @@ import {
   useCreateCommunity,
   useUpdateCommunity,
   useDeleteCommunity,
+  useSignIn,
+  useSignUp,
   resetBelongClient,
 } from '@belongnetwork/platform';
 import { TestWrapper } from './database/utils/test-wrapper';
 import { generateTestName } from './database/utils/database-helpers';
-import { 
-  setupAuthenticatedUser, 
-  resetAuthCache,
-  type AuthSetupResult
-} from './helpers/auth-helpers';
-import { 
-  performCleanupDeletion
-} from './helpers/crud-test-patterns';
 
 describe('Communities CRUD Integration Tests', () => {
-  let authSetup: AuthSetupResult;
+  let testUser: { email: string; password: string; userId?: string };
   let createdCommunityIds: string[] = [];
   let queryClient: QueryClient;
 
@@ -51,8 +46,13 @@ describe('Communities CRUD Integration Tests', () => {
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     });
 
+    // Generate unique test user
+    testUser = {
+      email: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
+    };
+
     createdCommunityIds = [];
-    resetAuthCache();
   });
 
   afterEach(async () => {
@@ -67,12 +67,20 @@ describe('Communities CRUD Integration Tests', () => {
       });
 
       for (const communityId of createdCommunityIds) {
-        await performCleanupDeletion(deleteResult, communityId, act, waitFor);
+        await act(async () => {
+          deleteResult.current.mutate(communityId);
+        });
+        
+        await waitFor(() => {
+          expect(deleteResult.current).toMatchObject({
+            isSuccess: true,
+            error: null,
+          });
+        });
       }
     }
 
     resetBelongClient();
-    resetAuthCache();
   });
 
   test('should successfully read communities without authentication', async () => {
