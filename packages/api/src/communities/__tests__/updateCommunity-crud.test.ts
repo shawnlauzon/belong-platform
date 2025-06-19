@@ -62,7 +62,6 @@ describe('updateCommunity CRUD Operations', () => {
         expect.objectContaining({
           name: 'Updated Community Name',
           description: 'Updated Description',
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -95,7 +94,6 @@ describe('updateCommunity CRUD Operations', () => {
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Just Name Update',
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -140,7 +138,6 @@ describe('updateCommunity CRUD Operations', () => {
           parent_id: 'new-parent-123',
           radius_km: 100,
           time_zone: 'America/New_York',
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -347,7 +344,6 @@ describe('updateCommunity CRUD Operations', () => {
       expect(result).toEqual(mockCommunity);
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -383,7 +379,6 @@ describe('updateCommunity CRUD Operations', () => {
           center: undefined,
           radius_km: null,
           parent_id: null,
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -415,7 +410,6 @@ describe('updateCommunity CRUD Operations', () => {
         expect.objectContaining({
           organizer_id: 'new-organizer-123',
           name: 'Community with new organizer',
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );
@@ -469,7 +463,6 @@ describe('updateCommunity CRUD Operations', () => {
             { level: 'city', name: 'Los Angeles' },
           ]),
           time_zone: 'America/Los_Angeles',
-          updated_by: TEST_USER_ID,
           updated_at: expect.any(String),
         })
       );

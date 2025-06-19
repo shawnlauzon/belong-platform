@@ -23,7 +23,6 @@ export async function updateCommunity(
     const dbUpdateData = forDbUpdate({ id, ...updateData });
     const updatePayload = {
       ...dbUpdateData,
-      updated_by: user.id,
       updated_at: new Date().toISOString(),
     };
 

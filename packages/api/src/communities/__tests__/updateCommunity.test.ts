@@ -66,7 +66,7 @@ describe('updateCommunity', () => {
       expect.objectContaining({
         name: updateData.name,
         description: updateData.description,
-        updated_by: mockUser.id,
+        updated_at: expect.any(String),
       })
     );
     expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
