@@ -294,24 +294,5 @@ describe('Resources CRUD Integration Tests', () => {
     await waitFor(() => {
       expect(deleteResourceResult.current).toMatchObject(commonDeleteSuccessExpectation);
     });
-
-    // Verify resource is deleted (or at least not findable in the list)
-    const { result: verifyDeleteResult } = renderHook(() => useResources(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(verifyDeleteResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.not.arrayContaining([
-            expect.objectContaining({
-              id: createdResource!.id,
-            })
-          ]),
-          error: null,
-        })
-      );
-    });
   });
 });

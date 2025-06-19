@@ -71,8 +71,7 @@ describe('deleteCommunity', () => {
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith('communities');
     expect(mockSupabase.auth.getUser).toHaveBeenCalled();
-    expect(result).toEqual(mockCommunity);
-    expect(fetchCommunityById.fetchCommunityById).toHaveBeenCalledWith(communityId, { includeDeleted: true });
+    expect(result).toBeUndefined();
   });
 
   it('should throw an error when user is not authenticated', async () => {

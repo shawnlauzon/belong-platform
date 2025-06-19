@@ -99,8 +99,7 @@ describe('deleteResource', () => {
       is_active: false,
       updated_at: expect.any(String),
     });
-    expect(result).toBeDefined();
-    expect(result?.id).toBe(resourceId);
+    expect(result).toBeUndefined();
   });
 
   it('should throw an error when user is not authenticated', async () => {
@@ -151,7 +150,7 @@ describe('deleteResource', () => {
     const result = await deleteResource('non-existent-id');
     
     // Assert
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('should throw an error when delete fails', async () => {
@@ -171,9 +170,7 @@ describe('deleteResource', () => {
     // Mock failed update
     const mockQuery2 = {
       update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
+      eq: vi.fn().mockResolvedValue({
         data: null,
         error: mockError,
       }),

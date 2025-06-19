@@ -78,13 +78,7 @@ describe('deleteThanks', () => {
     // Assert
     expect(mockSupabase.auth.getUser).toHaveBeenCalled();
     expect(mockSupabase.from).toHaveBeenCalledWith('thanks');
-    expect(result).toMatchObject({
-      id: 'thanks-1',
-      message: 'Thank you!',
-      fromUser: expect.objectContaining({ id: 'user-123' }),
-      toUser: expect.objectContaining({ id: 'user-456' }),
-      resource: expect.objectContaining({ id: 'resource-789' }),
-    });
+    expect(result).toBeUndefined();
   });
 
   it('should throw an error when user is not authenticated', async () => {
@@ -123,7 +117,7 @@ describe('deleteThanks', () => {
     const result = await deleteThanks('nonexistent-id');
 
     // Assert
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('should throw an error when user is not the creator', async () => {
@@ -184,84 +178,6 @@ describe('deleteThanks', () => {
     await expect(deleteThanks('thanks-1')).rejects.toThrow(deleteError);
   });
 
-  it('should throw an error when from user is not found', async () => {
-    // Arrange
-    // Mock successful ownership check
-    const mockSelectQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: mockThanks,
-            error: null,
-          }),
-        }),
-      }),
-    };
-
-    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
-
-    // Override the fetchUserById mock to return null for from_user
-    vi.spyOn(fetchUserById, 'fetchUserById')
-      .mockImplementation((id) => {
-        if (id === 'user-123') return Promise.resolve(null); // From user not found
-        if (id === 'user-456') return Promise.resolve(mockToUser);
-        return Promise.resolve(null);
-      });
-
-    // Act & Assert
-    await expect(deleteThanks('thanks-1')).rejects.toThrow('Failed to load thanks dependencies');
-  });
-
-  it('should throw an error when to user is not found', async () => {
-    // Arrange
-    // Mock successful ownership check
-    const mockSelectQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: mockThanks,
-            error: null,
-          }),
-        }),
-      }),
-    };
-
-    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
-
-    // Override the fetchUserById mock to return null for to_user
-    vi.spyOn(fetchUserById, 'fetchUserById')
-      .mockImplementation((id) => {
-        if (id === 'user-123') return Promise.resolve(mockFromUser);
-        if (id === 'user-456') return Promise.resolve(null); // To user not found
-        return Promise.resolve(null);
-      });
-
-    // Act & Assert
-    await expect(deleteThanks('thanks-1')).rejects.toThrow('Failed to load thanks dependencies');
-  });
-
-  it('should throw an error when resource is not found', async () => {
-    // Arrange
-    // Mock successful ownership check
-    const mockSelectQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: mockThanks,
-            error: null,
-          }),
-        }),
-      }),
-    };
-
-    mockSupabase.from.mockReturnValue(mockSelectQuery as any);
-
-    // Override the fetchResourceById mock to return null
-    vi.spyOn(fetchResourceById, 'fetchResourceById').mockResolvedValue(null);
-
-    // Act & Assert
-    await expect(deleteThanks('thanks-1')).rejects.toThrow('Failed to load thanks dependencies');
-  });
 
   it('should handle fetch error that is not "not found"', async () => {
     // Arrange

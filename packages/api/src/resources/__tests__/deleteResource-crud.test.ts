@@ -86,16 +86,7 @@ describe('Delete Resource - CRUD Operations', () => {
         is_active: false,
         updated_at: expect.any(String),
       });
-      expect(result).toMatchObject({
-        id: TEST_RESOURCE_ID,
-        isActive: false,
-        owner: expect.objectContaining({
-          id: TEST_USER_ID,
-        }),
-        community: expect.objectContaining({
-          id: TEST_COMMUNITY_ID,
-        }),
-      });
+      expect(result).toBeUndefined();
     });
 
     it('should return null when resource does not exist (no error thrown)', async () => {
@@ -116,7 +107,7 @@ describe('Delete Resource - CRUD Operations', () => {
       const result = await deleteResource('non-existent-id');
 
       // Assert
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
       expect(mocks.mockSupabase.auth.getUser).toHaveBeenCalled();
     });
 
@@ -163,7 +154,6 @@ describe('Delete Resource - CRUD Operations', () => {
         is_active: false,
         updated_at: expect.any(String),
       });
-      expect(result?.updatedAt).toEqual(new Date(currentTime));
     });
 
     it('should preserve all other resource fields during soft delete', async () => {
@@ -209,12 +199,7 @@ describe('Delete Resource - CRUD Operations', () => {
       const result = await deleteResource(TEST_RESOURCE_ID);
 
       // Assert
-      expect(result).toMatchObject({
-        id: TEST_RESOURCE_ID,
-        title: originalTitle,
-        description: originalDescription,
-        isActive: false, // Only this should change
-      });
+      expect(result).toBeUndefined();
     });
   });
 
@@ -296,7 +281,7 @@ describe('Delete Resource - CRUD Operations', () => {
       const result = await deleteResource(TEST_RESOURCE_ID);
 
       // Assert - Should return null when resource doesn't exist
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -353,9 +338,7 @@ describe('Delete Resource - CRUD Operations', () => {
       // Mock failed update
       const mockUpdateQuery = {
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
+        eq: vi.fn().mockResolvedValue({
           data: null,
           error: dbError,
         }),
@@ -426,7 +409,7 @@ describe('Delete Resource - CRUD Operations', () => {
       const result = await deleteResource(veryLongId);
 
       // Assert
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
       expect(mockOwnershipQuery.eq).toHaveBeenCalledWith('id', veryLongId);
     });
   });

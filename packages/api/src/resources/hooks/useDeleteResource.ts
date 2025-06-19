@@ -1,12 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
 import { deleteResource } from '../impl/deleteResource';
-import type { Resource } from '@belongnetwork/types';
 
 export function useDeleteResource() {
   const queryClient = useQueryClient();
 
-  return useMutation<Resource | null, Error, string>({
+  return useMutation<void, Error, string>({
     mutationFn: deleteResource,
     onSuccess: (_, id) => {
       // Invalidate the resources list and the specific resource

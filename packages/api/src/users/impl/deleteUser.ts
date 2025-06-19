@@ -1,24 +1,22 @@
 import { getBelongClient } from '@belongnetwork/core';
-import { toDomainUser } from './userTransformer';
-import type { User } from '@belongnetwork/types';
 
-export async function deleteUser(id: string): Promise<User | null> {
+export async function deleteUser(id: string): Promise<void> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('👤 API: Deleting user', { id });
 
   try {
-    // First, fetch the user to return the deleted data
+    // Check if user exists before deletion
     const { data: userData, error: fetchError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id')
       .eq('id', id)
       .single();
 
     if (fetchError) {
       if (fetchError.code === 'PGRST116') { // Not found
         logger.debug('👤 API: User not found for deletion', { id });
-        return null;
+        return;
       }
       throw fetchError;
     }
@@ -33,15 +31,10 @@ export async function deleteUser(id: string): Promise<User | null> {
       logger.error('👤 API: Failed to delete user', { id, error: deleteError });
       throw deleteError;
     }
-
-    const user = toDomainUser(userData);
     
-    logger.info('👤 API: Successfully deleted user', { 
-      id: user.id,
-      email: user.email 
-    });
+    logger.info('👤 API: Successfully deleted user', { id });
     
-    return user;
+    return;
   } catch (error) {
     logger.error('👤 API: Error deleting user', { 
       id,

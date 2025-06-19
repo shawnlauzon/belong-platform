@@ -54,7 +54,7 @@ describe('deleteUser', () => {
     const result = await deleteUser(mockUser.id);
 
     // Assert
-    expect(result).toEqual(mockUser);
+    expect(result).toBeUndefined();
   });
 
   it('should return null if user not found', async () => {
@@ -72,7 +72,7 @@ describe('deleteUser', () => {
     const result = await deleteUser('non-existent-id');
 
     // Assert
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('should handle errors', async () => {

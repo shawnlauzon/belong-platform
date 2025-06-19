@@ -1,17 +1,13 @@
 import { getBelongClient } from '@belongnetwork/core';
-import { toDomainResource } from './resourceTransformer';
-import { fetchUserById } from '../../users/impl/fetchUserById';
-import { fetchCommunityById } from '../../communities/impl/fetchCommunityById';
-import type { Resource } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 /**
  * Soft deletes a resource by ID if the current user is the owner
  * @param id The ID of the resource to delete
- * @returns The deleted resource if successful, null if not found
+ * @returns void if successful
  * @throws {Error} If user is not authenticated, not authorized, or other error occurs
  */
-export async function deleteResource(id: string): Promise<Resource | null> {
+export async function deleteResource(id: string): Promise<void> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('📚 API: Deleting resource', { id });
@@ -40,7 +36,7 @@ export async function deleteResource(id: string): Promise<Resource | null> {
       if (fetchError.code === 'PGRST116') {
         // Resource not found - we can consider this a success
         logger.debug('📚 API: Resource not found for deletion', { id });
-        return null;
+        return;
       }
 
       logger.error('📚 API: Failed to fetch resource for deletion', {
@@ -62,15 +58,13 @@ export async function deleteResource(id: string): Promise<Resource | null> {
     }
 
     // Perform the soft delete (set is_active to false)
-    const { data: updatedResource, error: deleteError } = await supabase
+    const { error: deleteError } = await supabase
       .from('resources')
       .update({
         is_active: false,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id)
-      .select('*')
-      .single();
+      .eq('id', id);
 
     if (deleteError) {
       logger.error('📚 API: Failed to delete resource', {
@@ -81,36 +75,9 @@ export async function deleteResource(id: string): Promise<Resource | null> {
       throw deleteError;
     }
 
-    if (!updatedResource) {
-      logger.error('📚 API: No data returned after delete', { id });
-      throw new Error('No data returned after delete operation');
-    }
+    logger.info('📚 API: Successfully deleted resource', { id });
 
-    // Fetch owner and community from cache
-    const [owner, community] = await Promise.all([
-      fetchUserById(updatedResource.owner_id),
-      updatedResource.community_id ? fetchCommunityById(updatedResource.community_id) : Promise.resolve(null),
-    ]);
-
-    if (!owner) {
-      throw new Error('Owner not found');
-    }
-    
-    if (updatedResource.community_id && !community) {
-      throw new Error('Community not found');
-    }
-
-    // Transform to domain model
-    const resource = toDomainResource(updatedResource, { owner, community: community || undefined });
-
-    logger.info('📚 API: Successfully deleted resource', {
-      id,
-      title: resource.title,
-      type: resource.type,
-      category: resource.category,
-    });
-
-    return resource;
+    return;
   } catch (error) {
     logger.error('📚 API: Error deleting resource', {
       id,

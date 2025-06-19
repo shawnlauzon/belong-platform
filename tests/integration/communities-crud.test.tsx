@@ -136,7 +136,9 @@ describe('Communities CRUD Integration Tests', () => {
             description: communityData.description,
             level: communityData.level,
             timeZone: communityData.timeZone,
-            organizerId: testUser.userId,
+            organizer: expect.objectContaining({
+              id: testUser.userId,
+            }),
           }),
           error: null,
         });

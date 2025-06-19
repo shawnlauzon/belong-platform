@@ -5,17 +5,15 @@ import type { User } from '@belongnetwork/types';
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<void, Error, string>({
     mutationFn: (userId: string) => deleteUser(userId),
-    onSuccess: (deletedUser, userId) => {
-      if (deletedUser) {
-        // Remove the user from the users list cache
-        queryClient.setQueryData<User[]>(['users'], (oldUsers = []) =>
-          oldUsers.filter((user) => user.id !== userId)
-        );
-        // Remove the individual user cache
-        queryClient.removeQueries({ queryKey: ['user', userId] });
-      }
+    onSuccess: (_, userId) => {
+      // Remove the user from the users list cache
+      queryClient.setQueryData<User[]>(['users'], (oldUsers = []) =>
+        oldUsers.filter((user) => user.id !== userId)
+      );
+      // Remove the individual user cache
+      queryClient.removeQueries({ queryKey: ['user', userId] });
     },
   });
 }

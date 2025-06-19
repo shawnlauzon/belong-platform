@@ -1,9 +1,7 @@
 import { getBelongClient } from '@belongnetwork/core';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
-import type { Community } from '@belongnetwork/types';
-import { fetchCommunityById } from './fetchCommunityById';
 
-export async function deleteCommunity(id: string): Promise<Community> {
+export async function deleteCommunity(id: string): Promise<void> {
   const { supabase, logger } = getBelongClient();
   
   logger.debug('🏘️ API: Soft deleting community', { id });
@@ -56,19 +54,12 @@ export async function deleteCommunity(id: string): Promise<Community> {
       throw error;
     }
 
-    // Fetch the updated community to return
-    const deletedCommunity = await fetchCommunityById(id, { includeDeleted: true });
-    if (!deletedCommunity) {
-      throw new Error('Failed to fetch deleted community');
-    }
-
     logger.info('🏘️ API: Successfully soft deleted community', { 
-      id, 
-      name: deletedCommunity.name,
+      id,
       deletedBy: user.id 
     });
     
-    return deletedCommunity;
+    return;
   } catch (error) {
     logger.error('🏘️ API: Error soft deleting community', { id, error });
     throw error;
