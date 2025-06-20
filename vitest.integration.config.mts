@@ -1,4 +1,9 @@
 import { defineConfig } from 'vitest/config'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Load environment variables from integration test directory
+config({ path: resolve(__dirname, 'tests/integration/.env') })
 
 export default defineConfig({
   test: {

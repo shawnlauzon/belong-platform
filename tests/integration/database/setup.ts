@@ -1,10 +1,4 @@
-import { config } from 'dotenv'
-import { resolve } from 'path'
-
-// Load environment variables from .env file in the integration test directory
-config({ path: resolve(__dirname, '../.env') })
-
-// Verify required environment variables are set
+// Verify required environment variables are set (loaded by vitest config)
 const requiredEnvVars = [
   'VITE_SUPABASE_URL',
   'VITE_SUPABASE_ANON_KEY',
@@ -13,7 +7,7 @@ const requiredEnvVars = [
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}. Please check your .env file.`)
+    throw new Error(`Missing required environment variable: ${envVar}. Please check your .env file at tests/integration/.env`)
   }
 }
 
