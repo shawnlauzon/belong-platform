@@ -117,6 +117,7 @@ Development Principles
 - When you commit after bumping a version, tag with that version
 - Do not deprecate; remove
 - When you believe you have fixed a problem, run the test to confirm before continuing
+- After making any database change, run gen:db-types from the types package to update database.ts
 
 ## Debugging Guidelines
 

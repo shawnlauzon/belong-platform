@@ -384,3 +384,42 @@ export interface MessageFilter {
   pageSize?: number;
   since?: Date;
 }
+
+// Notification Types
+export interface NotificationData {
+  userId: string;
+  type: 'new_message' | 'message_read';
+  title: string;
+  body?: string;
+  data: {
+    conversationId?: string;
+    messageId?: string;
+    senderId?: string;
+  };
+}
+
+export interface Notification extends NotificationData {
+  id: string;
+  readAt?: Date;
+  createdAt: Date;
+  // Assembled references
+  sender?: User;
+  conversation?: Conversation;
+  message?: Message;
+}
+
+export interface NotificationInfo extends Omit<Notification, 'sender' | 'conversation' | 'message'> {
+  // Lightweight version for lists - contains IDs instead of full objects
+  senderId?: string;
+  conversationId?: string;
+  messageId?: string;
+}
+
+export interface NotificationFilter {
+  userId?: string;
+  type?: 'new_message' | 'message_read';
+  isRead?: boolean;
+  page?: number;
+  pageSize?: number;
+  since?: Date;
+}
