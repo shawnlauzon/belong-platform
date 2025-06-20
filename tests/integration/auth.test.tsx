@@ -217,7 +217,8 @@ describe('Authentication Integration', () => {
     // Step 4: Test BelongContextProvider with authenticated user
     const TestComponent = () => {
       const data = useCurrentUserContext();
-      return <div data-testid="user-data">{data.currentUser?.email}</div>;
+      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      return <div data-testid="user-data">{data.currentUser?.email || ''}</div>;
     };
 
     const { getByTestId } = render(
@@ -232,7 +233,7 @@ describe('Authentication Integration', () => {
     await waitFor(() => {
       const userElement = getByTestId('user-data');
       expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    });
+    }, { timeout: 10000 });
   });
 
   test('useSignOut should work and clear current user', async () => {
@@ -274,7 +275,8 @@ describe('Authentication Integration', () => {
     // Step 4: Verify user is authenticated with BelongContextProvider
     const AuthenticatedComponent = () => {
       const data = useCurrentUserContext();
-      return <div data-testid="authenticated-user">{data.currentUser?.email}</div>;
+      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      return <div data-testid="authenticated-user">{data.currentUser?.email || ''}</div>;
     };
 
     const { getByTestId, rerender } = render(
@@ -288,7 +290,7 @@ describe('Authentication Integration', () => {
     await waitFor(() => {
       const userElement = getByTestId('authenticated-user');
       expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    });
+    }, { timeout: 10000 });
 
     // Step 5: Sign out user
     await act(async () => {

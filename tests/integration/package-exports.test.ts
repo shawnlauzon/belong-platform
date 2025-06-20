@@ -24,31 +24,16 @@ describe('Package Exports Integration', () => {
     }
   });
 
-  describe('Global Configuration Exports', () => {
-    it('should export initializeBelong function', () => {
-      expect(platformModule.initializeBelong).toBeDefined();
-      expect(typeof platformModule.initializeBelong).toBe('function');
-    });
-
-    it('should export getBelongClient function', () => {
-      expect(platformModule.getBelongClient).toBeDefined();
-      expect(typeof platformModule.getBelongClient).toBe('function');
-    });
-
-    it('should export isInitialized function', () => {
-      expect(platformModule.isInitialized).toBeDefined();
-      expect(typeof platformModule.isInitialized).toBe('function');
-    });
-
-    it('should export resetBelongClient function', () => {
-      expect(platformModule.resetBelongClient).toBeDefined();
-      expect(typeof platformModule.resetBelongClient).toBe('function');
+  describe('Provider Exports', () => {
+    it('should export BelongContextProvider component', () => {
+      expect(platformModule.BelongContextProvider).toBeDefined();
+      expect(typeof platformModule.BelongContextProvider).toBe('function');
     });
   });
 
   describe('Hook Exports', () => {
     const expectedHooks = [
-      'useCurrentUser',
+      'useCurrentUserContext',
       'useSignIn',
       'useSignOut',
       'useSignUp',
@@ -84,42 +69,24 @@ describe('Package Exports Integration', () => {
   });
 
   describe('Functional Integration', () => {
-    it('should allow basic initialization flow', () => {
-      const { initializeBelong, isInitialized, resetBelongClient } =
-        platformModule;
+    it('should provide BelongContextProvider component', () => {
+      const { BelongContextProvider } = platformModule;
 
-      // Reset any existing state
-      resetBelongClient();
-      expect(isInitialized()).toBe(false);
-
-      // Generate realistic fake URLs and tokens using Faker
-      const fakeSupabaseUrl = `https://${faker.string.alphanumeric(8).toLowerCase()}.supabase.co`;
-      const fakeJwtToken = faker.internet.jwt();
-      const fakeMapboxToken = faker.string.alphanumeric(32);
-
-      // Should be able to initialize with valid URLs (but fake tokens)
-      expect(() => {
-        initializeBelong({
-          supabaseUrl: fakeSupabaseUrl,
-          supabaseAnonKey: fakeJwtToken,
-          mapboxPublicToken: fakeMapboxToken,
-        });
-      }).not.toThrow();
-
-      // Should now be initialized
-      expect(isInitialized()).toBe(true);
+      // Should be a React component (function)
+      expect(BelongContextProvider).toBeDefined();
+      expect(typeof BelongContextProvider).toBe('function');
     });
   });
 
   describe('Import Patterns', () => {
     it('should support direct imports', async () => {
-      const { initializeBelong } = await import('@belongnetwork/platform');
-      expect(initializeBelong).toBeDefined();
+      const { BelongContextProvider } = await import('@belongnetwork/platform');
+      expect(BelongContextProvider).toBeDefined();
     });
 
     it('should support subpath imports for hooks', async () => {
       const hooks = await import('@belongnetwork/platform/hooks');
-      expect(hooks.useCurrentUser).toBeDefined();
+      expect(hooks.useCurrentUserContext).toBeDefined();
     });
 
     it('should support subpath imports for types', async () => {

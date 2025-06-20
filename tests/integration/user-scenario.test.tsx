@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query';
 import {
   initializeBelong,
+  BelongContextProvider,
   useResources,
   useEvents,
   useCommunities,
@@ -21,7 +22,7 @@ let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
 describe('User Scenario Integration', () => {
   beforeAll(() => {
-    // Initialize once for all tests
+    // Initialize the platform
     initializeBelong({
       supabaseUrl: process.env.VITE_SUPABASE_URL!,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
@@ -46,7 +47,9 @@ describe('User Scenario Integration', () => {
     });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>{children}</BelongContextProvider>
+      </QueryClientProvider>
     );
   });
 
@@ -54,7 +57,7 @@ describe('User Scenario Integration', () => {
     resetBelongClient();
   });
 
-  test('useResources should work after calling initializeBelong', async () => {
+  test('useResources should work with BelongContextProvider', async () => {
     const { result } = renderHook(() => useResources(), { wrapper });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
@@ -68,7 +71,7 @@ describe('User Scenario Integration', () => {
     });
   });
 
-  test('useEvents should work after calling initializeBelong', async () => {
+  test('useEvents should work with BelongContextProvider', async () => {
     const { result } = renderHook(() => useEvents(), { wrapper });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
@@ -82,7 +85,7 @@ describe('User Scenario Integration', () => {
     });
   });
 
-  test('useCommunities should work after calling initializeBelong', async () => {
+  test('useCommunities should work with BelongContextProvider', async () => {
     const { result } = renderHook(() => useCommunities(), { wrapper });
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
