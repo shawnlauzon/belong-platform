@@ -47,26 +47,26 @@ export async function signIn(email: string, password: string): Promise<Account> 
       account = {
         id: profile.id,
         email: data.user.email!,
-        first_name: (metadata?.first_name as string) || '',
-        last_name: metadata?.last_name as string | undefined,
-        full_name: metadata?.full_name as string | undefined,
-        avatar_url: metadata?.avatar_url as string | undefined,
+        firstName: (metadata?.first_name as string) || '',
+        lastName: metadata?.last_name as string | undefined,
+        fullName: metadata?.full_name as string | undefined,
+        avatarUrl: metadata?.avatar_url as string | undefined,
         location: data.user.user_metadata?.location,
-        created_at: new Date(profile.created_at),
-        updated_at: new Date(profile.updated_at),
+        createdAt: new Date(profile.created_at),
+        updatedAt: new Date(profile.updated_at),
       };
     } else {
       // Fallback if no profile exists - ensure email is included
       account = {
         id: data.user.id,
         email: data.user.email!,
-        first_name: data.user.user_metadata?.first_name || '',
-        last_name: data.user.user_metadata?.last_name || '',
-        full_name: data.user.user_metadata?.full_name || '',
-        avatar_url: data.user.user_metadata?.avatar_url,
+        firstName: data.user.user_metadata?.first_name || '',
+        lastName: data.user.user_metadata?.last_name || '',
+        fullName: data.user.user_metadata?.full_name || '',
+        avatarUrl: data.user.user_metadata?.avatar_url,
         location: data.user.user_metadata?.location,
-        created_at: new Date(data.user.created_at!),
-        updated_at: new Date(data.user.updated_at!),
+        createdAt: new Date(data.user.created_at!),
+        updatedAt: new Date(data.user.updated_at!),
       };
     }
 

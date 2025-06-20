@@ -13,8 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@belongnetwork/platform': './packages/platform/src',
-      '@belongnetwork/api': './packages/api/src',
+      '@belongnetwork/platform': './packages/api/src',
       '@belongnetwork/components': './packages/components/src',
       '@belongnetwork/core': './packages/core/src',
       '@belongnetwork/types': './packages/types/src',

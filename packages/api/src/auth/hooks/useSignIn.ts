@@ -9,15 +9,17 @@ import { logger } from '@belongnetwork/core';
  */
 export function useSignIn() {
   const queryClient = useQueryClient();
-
+  
   return useMutation<Account, Error, { email: string; password: string }>({
     mutationFn: async ({ email, password }) => {
       return signIn(email, password);
     },
-    onSuccess: (data) => {
-      // Invalidate any queries that depend on the current user
-      queryClient.setQueryData(['currentUser'], data);
-      logger.info('🔐 API: User signed in successfully', { userId: data.id });
+    onSuccess: (account) => {
+      logger.info('🔐 API: User signed in successfully', { userId: account.id });
+      
+      // Invalidate currentUser cache so it refetches with the new auth state
+      // With TkDodo's pattern, the query is always active at the provider level
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },
     onError: (error) => {
       logger.error('🔐 API: Failed to sign in', { error });

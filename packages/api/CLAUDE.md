@@ -1,6 +1,6 @@
-# API Package Guidelines
+# Platform Package Guidelines
 
-This file provides specific guidance for working with the @belongnetwork/api package.
+This file provides specific guidance for working with the @belongnetwork/platform package.
 
 ## Data Fetching Patterns
 
@@ -18,7 +18,7 @@ This file provides specific guidance for working with the @belongnetwork/api pac
 
 - Use established Supabase client mocking patterns found in existing test files
 - Do not validate specific error messages
-- Leverage createMock* utilities from @belongnetwork/api/src/test-utils
+- Leverage createMock* utilities from @belongnetwork/platform/src/test-utils
 - Follow the transformer testing patterns: mock the transformer functions rather than complex data setup
 - Tests that validate edge cases are ok to skip if necessary
 
@@ -32,7 +32,7 @@ This file provides specific guidance for working with the @belongnetwork/api pac
 ## Code Organization
 
 - Import only from root features, never from impl. Export necessary functions as needed using the feature index.ts file
-- Use React Query hooks from @belongnetwork/api for all data fetching
+- Use React Query hooks from @belongnetwork/platform for all data fetching
 - Import shared types from @belongnetwork/types
 
 ## Type Safety

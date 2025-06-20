@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { signUp } from '../../impl/signUp';
-import { createMockUser } from '../../../test-utils/mocks';
+import { createMockAccount } from '../../../test-utils/mocks';
 import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
 // Mock the getBelongClient function
@@ -14,7 +14,7 @@ describe('signUp', () => {
   const password = faker.internet.password();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  const mockAccount = createMockUser();
+  const mockAccount = createMockAccount();
 
   let mockSupabase: any;
   let mockLogger: any;
@@ -68,13 +68,13 @@ describe('signUp', () => {
     expect(result).toEqual({
       id: mockAccount.id,
       email,
-      first_name: '',
-      last_name: '',
-      full_name: '',
-      avatar_url: undefined,
+      firstName: '',
+      lastName: '',
+      fullName: '',
+      avatarUrl: undefined,
       location: undefined,
-      created_at: new Date(createdAt),
-      updated_at: new Date(updatedAt),
+      createdAt: new Date(createdAt),
+      updatedAt: new Date(updatedAt),
     });
 
     expect(mockLogger.info).toHaveBeenCalledWith('🔐 API: Successfully signed up', {
@@ -124,13 +124,13 @@ describe('signUp', () => {
     expect(result).toEqual({
       id: mockAccount.id,
       email,
-      first_name: firstName,
-      last_name: lastName,
-      full_name: `${firstName} ${lastName}`,
-      avatar_url: undefined,
+      firstName: firstName,
+      lastName: lastName,
+      fullName: `${firstName} ${lastName}`,
+      avatarUrl: undefined,
       location: undefined,
-      created_at: new Date(createdAt),
-      updated_at: new Date(updatedAt),
+      createdAt: new Date(createdAt),
+      updatedAt: new Date(updatedAt),
     });
   });
 

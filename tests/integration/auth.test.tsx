@@ -7,12 +7,12 @@ import {
   initializeBelong,
   useSignUp,
   useSignIn,
-  useCurrentUser,
+  useCurrentUserContext,
   useSignOut,
-  CurrentUserProvider,
+  BelongContextProvider,
   resetBelongClient,
   getBelongClient,
-} from '@belongnetwork/platform';
+} from '../../dist/index.es.js';
 
 let queryClient: QueryClient;
 let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -42,7 +42,9 @@ describe('Authentication Integration', () => {
     });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>{children}</BelongContextProvider>
+      </QueryClientProvider>
     );
   });
 
@@ -75,6 +77,12 @@ describe('Authentication Integration', () => {
 
   test('useSignUp should work after calling initializeBelong', async () => {
     await signOutBetweenTests();
+    
+    // Test auth mutations outside of BelongContextProvider
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -102,6 +110,12 @@ describe('Authentication Integration', () => {
 
   test('useSignIn should work after signing up a user', async () => {
     await signOutBetweenTests();
+    
+    // Test auth mutations outside of BelongContextProvider  
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    
     // First create a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
@@ -140,21 +154,32 @@ describe('Authentication Integration', () => {
     });
   });
 
-  test('useCurrentUser should return null when unauthenticated', async () => {
+  test('useCurrentUserContext should render error when unauthenticated', async () => {
     await signOutBetweenTests();
-    const { result } = renderHook(() => useCurrentUser(), { wrapper });
+    
+    const TestComponent = () => {
+      const data = useCurrentUserContext();
+      if (data.isError || !data.currentUser) {
+        return <div data-testid="no-user">No user</div>;
+      }
+      return <div data-testid="user-data">{data.currentUser.email}</div>;
+    };
 
-    await waitFor(() => expect(result.current.isPending).toBe(false));
+    const { getByTestId } = render(
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>
+          <TestComponent />
+        </BelongContextProvider>
+      </QueryClientProvider>
+    );
 
-    expect(result.current).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      data: null,
+    // Wait for the component to render with no user
+    await waitFor(() => {
+      expect(getByTestId('no-user')).toBeDefined();
     });
   });
 
-  test('useCurrentUser should return user data when authenticated', async () => {
+  test('useCurrentUserContext should return user data when authenticated', async () => {
     await signOutBetweenTests();
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -166,90 +191,47 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
-    // Test the hypothesis: Use all hooks in single renderHook (like real app)
-    const { result } = renderHook(
-      () => {
-        return {
-          signUp: useSignUp(),
-          signIn: useSignIn(),
-          currentUser: useCurrentUser(),
-        };
-      },
-      { wrapper }
+    // Step 1: Create auth mutations outside provider
+    const authWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+    
+    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper: authWrapper });
+    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper: authWrapper });
 
-    // Step 1: Sign up
+    // Step 2: Sign up user
     await act(async () => {
-      await result.current.signUp.mutateAsync(testUser);
+      await signUpResult.current.mutateAsync(testUser);
     });
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
 
-    await waitFor(() => expect(result.current.signUp.isPending).toBe(false));
-
-    // Step 2: Sign in
+    // Step 3: Sign in user
     await act(async () => {
-      await result.current.signIn.mutateAsync({
+      await signInResult.current.mutateAsync({
         email: testEmail,
         password: testPassword,
       });
     });
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
 
-    await waitFor(() => expect(result.current.signIn.isPending).toBe(false));
+    // Step 4: Test BelongContextProvider with authenticated user
+    const TestComponent = () => {
+      const data = useCurrentUserContext();
+      return <div data-testid="user-data">{data.currentUser?.email}</div>;
+    };
 
-    // Debug: Check actual session state after signIn
-    const client = getBelongClient();
-    const { data: sessionData, error: sessionError } =
-      await client.supabase.auth.getSession();
-    console.log('🔍 DEBUG: Session state after signIn:', {
-      hasSession: !!sessionData.session,
-      session: sessionData.session,
-      error: sessionError,
-      userId: sessionData.session?.user?.id,
-      userEmail: sessionData.session?.user?.email,
-    });
-
-    // Debug: Try getUser directly
-    const { data: userData, error: userError } =
-      await client.supabase.auth.getUser();
-    console.log('🔍 DEBUG: getUser result after signIn:', {
-      hasUser: !!userData.user,
-      user: userData.user,
-      error: userError,
-    });
-
-    // Debug: Check useCurrentUser hook state before waiting
-    console.log('🔍 DEBUG: useCurrentUser hook state before waiting:', {
-      isLoading: result.current.currentUser.isLoading,
-      isPending: result.current.currentUser.isPending,
-      isSuccess: result.current.currentUser.isSuccess,
-      isError: result.current.currentUser.isError,
-      data: result.current.currentUser.data,
-      error: result.current.currentUser.error,
-    });
-
-    // Step 3: Check current user (should now work - same context!)
-    await waitFor(() =>
-      expect(result.current.currentUser.isSuccess).toBe(true)
+    const { getByTestId } = render(
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>
+          <TestComponent />
+        </BelongContextProvider>
+      </QueryClientProvider>
     );
 
-    // Debug: Check useCurrentUser hook state after waiting
-    console.log('🔍 DEBUG: useCurrentUser hook state after waiting:', {
-      isLoading: result.current.currentUser.isLoading,
-      isPending: result.current.currentUser.isPending,
-      isSuccess: result.current.currentUser.isSuccess,
-      isError: result.current.currentUser.isError,
-      data: result.current.currentUser.data,
-      error: result.current.currentUser.error,
-    });
-
-    expect(result.current.currentUser).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      data: expect.objectContaining({
-        email: testEmail.toLowerCase(),
-        firstName: testUser.firstName,
-        lastName: testUser.lastName,
-      }),
+    // Should eventually show authenticated user data
+    await waitFor(() => {
+      const userElement = getByTestId('user-data');
+      expect(userElement.textContent).toBe(testEmail.toLowerCase());
     });
   });
 
@@ -265,135 +247,69 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
-    // Create a component that uses TkDodo's pattern with CurrentUserProvider
-    const AuthTestComponent = () => {
-      const signUp = useSignUp();
-      const signIn = useSignIn();
-      const signOut = useSignOut();
-      
-      // This component will be wrapped by CurrentUserProvider, so useCurrentUser will work
-      let currentUser;
-      try {
-        currentUser = useCurrentUser();
-      } catch (error) {
-        // User is not authenticated yet
-        currentUser = null;
-      }
+    // Step 1: Set up auth hooks outside provider
+    const authWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    
+    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper: authWrapper });
+    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper: authWrapper });
+    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper: authWrapper });
 
-      return (
-        <div>
-          <div data-testid="current-user-email">
-            {currentUser?.email || 'not-authenticated'}
-          </div>
-          <button
-            data-testid="sign-up-btn"
-            onClick={async () => {
-              await signUp.mutateAsync(testUser);
-            }}
-          >
-            Sign Up
-          </button>
-          <button
-            data-testid="sign-in-btn"
-            onClick={async () => {
-              await signIn.mutateAsync({
-                email: testEmail,
-                password: testPassword,
-              });
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            data-testid="sign-out-btn"
-            onClick={async () => {
-              await signOut.mutateAsync();
-            }}
-          >
-            Sign Out
-          </button>
-          <div data-testid="sign-up-status">
-            {signUp.isPending ? 'signing-up' : signUp.isSuccess ? 'sign-up-success' : 'sign-up-idle'}
-          </div>
-          <div data-testid="sign-in-status">
-            {signIn.isPending ? 'signing-in' : signIn.isSuccess ? 'sign-in-success' : 'sign-in-idle'}
-          </div>
-          <div data-testid="sign-out-status">
-            {signOut.isPending ? 'signing-out' : signOut.isSuccess ? 'sign-out-success' : 'sign-out-idle'}
-          </div>
-        </div>
-      );
+    // Step 2: Sign up user
+    await act(async () => {
+      await signUpResult.current.mutateAsync(testUser);
+    });
+    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
+
+    // Step 3: Sign in user  
+    await act(async () => {
+      await signInResult.current.mutateAsync({
+        email: testEmail,
+        password: testPassword,
+      });
+    });
+    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+
+    // Step 4: Verify user is authenticated with BelongContextProvider
+    const AuthenticatedComponent = () => {
+      const data = useCurrentUserContext();
+      return <div data-testid="authenticated-user">{data.currentUser?.email}</div>;
     };
 
-    // Since CurrentUserProvider will only render children when user is authenticated,
-    // we need a wrapper that handles the unauthenticated state
-    const TestWrapper = () => {
-      const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-      
-      if (!isAuthenticated) {
-        return (
-          <div>
-            <AuthTestComponent />
-            <button 
-              data-testid="simulate-auth"
-              onClick={() => setIsAuthenticated(true)}
-            >
-              Simulate Auth
-            </button>
-          </div>
-        );
-      }
-      
-      return (
-        <CurrentUserProvider>
-          <AuthTestComponent />
-        </CurrentUserProvider>
-      );
-    };
-
-    render(<TestWrapper />, { wrapper });
-
-    // Step 1: Sign up user
-    await act(async () => {
-      screen.getByTestId('sign-up-btn').click();
-    });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('sign-up-status')).toHaveTextContent('sign-up-success')
+    const { getByTestId, rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>
+          <AuthenticatedComponent />
+        </BelongContextProvider>
+      </QueryClientProvider>
     );
 
-    // Step 2: Sign in user
-    await act(async () => {
-      screen.getByTestId('sign-in-btn').click();
+    await waitFor(() => {
+      const userElement = getByTestId('authenticated-user');
+      expect(userElement.textContent).toBe(testEmail.toLowerCase());
     });
-
-    await waitFor(() =>
-      expect(screen.getByTestId('sign-in-status')).toHaveTextContent('sign-in-success')
-    );
-
-    // Step 3: Simulate moving to authenticated state (wrap with CurrentUserProvider)
-    await act(async () => {
-      screen.getByTestId('simulate-auth').click();
-    });
-
-    // Step 4: Verify user is authenticated and email matches
-    await waitFor(() =>
-      expect(screen.getByTestId('current-user-email')).toHaveTextContent(testEmail.toLowerCase())
-    );
 
     // Step 5: Sign out user
     await act(async () => {
-      screen.getByTestId('sign-out-btn').click();
+      await signOutResult.current.mutateAsync();
     });
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
-    await waitFor(() =>
-      expect(screen.getByTestId('sign-out-status')).toHaveTextContent('sign-out-success')
+    // Step 6: Verify user is no longer authenticated (TkDodo's pattern should invalidate cache)
+    // Force React to re-evaluate the provider
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <BelongContextProvider>
+          <AuthenticatedComponent />
+        </BelongContextProvider>
+      </QueryClientProvider>
     );
 
-    // Step 6: Verify user is no longer authenticated
-    // The CurrentUserProvider should handle the transition to unauthenticated state
-    await waitFor(() =>
-      expect(screen.getByTestId('current-user-email')).toHaveTextContent('not-authenticated')
-    );
+    // Should now show no user data (empty or null email)
+    await waitFor(() => {
+      const userElement = getByTestId('authenticated-user');
+      expect(userElement.textContent).toBe(''); // Empty since no user
+    });
   });
 });

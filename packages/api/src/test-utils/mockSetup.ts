@@ -20,6 +20,13 @@ export function setupBelongClientMocks() {
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({
+        data: {
+          subscription: {
+            unsubscribe: vi.fn(),
+          },
+        },
+      })),
     },
   };
 

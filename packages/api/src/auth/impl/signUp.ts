@@ -43,13 +43,13 @@ export async function signUp(
     const account: Account = {
       id: data.user.id,
       email: data.user.email!,
-      first_name: data.user.user_metadata?.first_name || '',
-      last_name: data.user.user_metadata?.last_name || '',
-      full_name: data.user.user_metadata?.full_name || '',
-      avatar_url: data.user.user_metadata?.avatar_url,
+      firstName: data.user.user_metadata?.first_name || '',
+      lastName: data.user.user_metadata?.last_name || '',
+      fullName: data.user.user_metadata?.full_name || '',
+      avatarUrl: data.user.user_metadata?.avatar_url,
       location: data.user.user_metadata?.location,
-      created_at: new Date(data.user.created_at!),
-      updated_at: new Date(data.user.updated_at!),
+      createdAt: new Date(data.user.created_at!),
+      updatedAt: new Date(data.user.updated_at!),
     };
 
     logger.info('🔐 API: Successfully signed up', { userId: account.id });

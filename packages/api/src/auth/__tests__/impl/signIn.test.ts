@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { signIn } from '../../impl/signIn';
-import { createMockUser, createMockDbProfile } from '../../../test-utils/mocks';
+import { createMockAccount, createMockDbProfile } from '../../../test-utils/mocks';
 import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
 // Mock the getBelongClient function
@@ -12,13 +12,20 @@ vi.mock('@belongnetwork/core', () => ({
 describe('signIn', () => {
   const email = faker.internet.email();
   const password = faker.internet.password();
-  const mockAccount = createMockUser({
+  const mockAccount = createMockAccount({
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
   });
   const mockProfile = createMockDbProfile({
     id: mockAccount.id,
     email: mockAccount.email,
+    user_metadata: {
+      first_name: mockAccount.firstName,
+      last_name: mockAccount.lastName,
+      full_name: mockAccount.fullName,
+      avatar_url: mockAccount.avatarUrl,
+      location: mockAccount.location,
+    },
   });
 
   let mockSupabase: any;
@@ -74,7 +81,7 @@ describe('signIn', () => {
     expect(result).toMatchObject({
       id: mockAccount.id,
       email: mockAccount.email,
-      first_name: (mockProfile.user_metadata as any).first_name,
+      firstName: (mockProfile.user_metadata as any).first_name,
     });
     expect(mockLogger.info).toHaveBeenCalledWith('🔐 API: Successfully signed in', {
       userId: mockAccount.id,
@@ -138,9 +145,9 @@ describe('signIn', () => {
     expect(result).toMatchObject({
       id: mockAccount.id,
       email: mockAccount.email,
-      first_name: '', // Implementation defaults to empty string when no metadata
-      last_name: '',
-      full_name: '',
+      firstName: '', // Implementation defaults to empty string when no metadata
+      lastName: '',
+      fullName: '',
     });
     expect(mockLogger.warn).toHaveBeenCalledWith(
       '🔐 API: Could not fetch user profile',
