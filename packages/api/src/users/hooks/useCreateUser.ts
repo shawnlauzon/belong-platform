@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createUser } from '../impl/createUser';
+import { queryKeys } from '../../shared/queryKeys';
 import type { User, UserData } from '@belongnetwork/types';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -23,9 +24,9 @@ export function useCreateUser() {
     },
     onSuccess: (newUser) => {
       // Invalidate the users list query to refetch the updated list
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       // Update the individual user cache
-      queryClient.setQueryData(['user', newUser.id], newUser);
+      queryClient.setQueryData(queryKeys.users.byId(newUser.id), newUser);
     },
   });
 }

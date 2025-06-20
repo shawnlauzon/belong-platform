@@ -3,11 +3,11 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import { useSignOut } from '../../hooks/useSignOut';
-import { signOut } from '../../impl/signOut';
+import { signOut } from '../../services/auth.service';
 import { createMockUser } from '../../../test-utils/mocks';
 
-// Mock the implementation function
-vi.mock('../../impl/signOut', () => ({
+// Mock the auth service function
+vi.mock('../../services/auth.service', () => ({
   signOut: vi.fn(),
 }));
 

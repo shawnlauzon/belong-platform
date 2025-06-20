@@ -7,9 +7,9 @@ import {
   initializeBelong,
   useSignUp,
   useSignIn,
-  useCurrentUserContext,
+  useBelong,
   useSignOut,
-  BelongContextProvider,
+  BelongProvider,
   resetBelongClient,
   getBelongClient,
 } from '../../dist/index.es.js';
@@ -43,7 +43,7 @@ describe('Authentication Integration', () => {
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>{children}</BelongContextProvider>
+        <BelongProvider>{children}</BelongProvider>
       </QueryClientProvider>
     );
   });
@@ -78,7 +78,7 @@ describe('Authentication Integration', () => {
   test('useSignUp should work after calling initializeBelong', async () => {
     await signOutBetweenTests();
     
-    // Test auth mutations outside of BelongContextProvider
+    // Test auth mutations outside of BelongProvider
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -111,7 +111,7 @@ describe('Authentication Integration', () => {
   test('useSignIn should work after signing up a user', async () => {
     await signOutBetweenTests();
     
-    // Test auth mutations outside of BelongContextProvider  
+    // Test auth mutations outside of BelongProvider  
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -154,11 +154,11 @@ describe('Authentication Integration', () => {
     });
   });
 
-  test('useCurrentUserContext should render error when unauthenticated', async () => {
+  test('useBelong should render error when unauthenticated', async () => {
     await signOutBetweenTests();
     
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       if (data.isError || !data.currentUser) {
         return <div data-testid="no-user">No user</div>;
       }
@@ -167,9 +167,9 @@ describe('Authentication Integration', () => {
 
     const { getByTestId } = render(
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           <TestComponent />
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 
@@ -179,7 +179,7 @@ describe('Authentication Integration', () => {
     });
   });
 
-  test('useCurrentUserContext should return user data when authenticated', async () => {
+  test('useBelong should return user data when authenticated', async () => {
     await signOutBetweenTests();
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -214,18 +214,18 @@ describe('Authentication Integration', () => {
     });
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
 
-    // Step 4: Test BelongContextProvider with authenticated user
+    // Step 4: Test BelongProvider with authenticated user
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       if (data.isPending) return <div data-testid="loading">Loading...</div>;
       return <div data-testid="user-data">{data.currentUser?.email || ''}</div>;
     };
 
     const { getByTestId } = render(
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           <TestComponent />
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 
@@ -248,14 +248,10 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
-    // Step 1: Set up auth hooks outside provider
-    const authWrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper: authWrapper });
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper: authWrapper });
-    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper: authWrapper });
+    // Step 1: Set up auth hooks using the same shared wrapper
+    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
+    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
+    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper });
 
     // Step 2: Sign up user
     await act(async () => {
@@ -272,18 +268,18 @@ describe('Authentication Integration', () => {
     });
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
 
-    // Step 4: Verify user is authenticated with BelongContextProvider
+    // Step 4: Verify user is authenticated with BelongProvider
     const AuthenticatedComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       if (data.isPending) return <div data-testid="loading">Loading...</div>;
       return <div data-testid="authenticated-user">{data.currentUser?.email || ''}</div>;
     };
 
     const { getByTestId, rerender } = render(
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           <AuthenticatedComponent />
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 
@@ -302,9 +298,9 @@ describe('Authentication Integration', () => {
     // Force React to re-evaluate the provider
     rerender(
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           <AuthenticatedComponent />
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 

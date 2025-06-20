@@ -3,12 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import { useSignUp } from '../../hooks/useSignUp';
-import { signUp } from '../../impl/signUp';
+import { signUp } from '../../services/auth.service';
 import { createMockUser, createMockAccount } from '../../../test-utils/mocks';
 import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
 
-// Mock the implementation function
-vi.mock('../../impl/signUp', () => ({
+// Mock the auth service function
+vi.mock('../../services/auth.service', () => ({
   signUp: vi.fn(),
 }));
 
@@ -78,7 +78,8 @@ describe('useSignUp', () => {
     expect(mockSignUp).toHaveBeenCalledWith(
       'test@example.com',
       'password123',
-      { firstName: 'John', lastName: 'Doe' }
+      'John',
+      'Doe'
     );
   });
 
@@ -122,7 +123,8 @@ describe('useSignUp', () => {
     result.current.mutate({
       email: mockAccount.email,
       password: 'password123',
-      // firstName and lastName omitted
+      firstName: undefined,
+      lastName: undefined,
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -131,7 +133,8 @@ describe('useSignUp', () => {
     expect(mockSignUp).toHaveBeenCalledWith(
       mockAccount.email,
       'password123',
-      { firstName: undefined, lastName: undefined }
+      undefined,
+      undefined
     );
     expect(result.current.data).toEqual(mockAccount);
   });

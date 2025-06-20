@@ -2,14 +2,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { BelongContextProvider, useCurrentUserContext } from '../../providers/CurrentUserProvider';
+import { BelongProvider, useBelong } from '../../providers/CurrentUserProvider';
 
-// Mock the useCurrentUserQuery hook
-vi.mock('../../hooks/useCurrentUserQuery', () => ({
-  useCurrentUserQuery: vi.fn(),
+// Mock the useAuth hook
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: vi.fn(),
 }));
 
 vi.mock('@belongnetwork/core', () => ({
+  getBelongClient: vi.fn(() => ({
+    supabase: {
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } }
+        })),
+      },
+    },
+  })),
   logger: {
     info: vi.fn(),
     error: vi.fn(),
@@ -17,9 +27,9 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockUseCurrentUserQuery = vi.mocked(await import('../../hooks/useCurrentUserQuery')).useCurrentUserQuery;
+const mockUseAuth = vi.mocked(await import('../../hooks/useAuth')).useAuth;
 
-describe('BelongContextProvider', () => {
+describe('BelongProvider', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -40,15 +50,20 @@ describe('BelongContextProvider', () => {
   );
 
   it('should provide pending state while fetching user', () => {
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: undefined,
+      isAuthenticated: false,
       isPending: true,
       isError: false,
-      data: undefined,
       error: null,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       return (
         <div>
           <div data-testid="pending-state">{data.isPending ? 'loading' : 'not-loading'}</div>
@@ -58,9 +73,9 @@ describe('BelongContextProvider', () => {
     };
 
     render(
-      <BelongContextProvider>
+      <BelongProvider>
         <TestComponent />
-      </BelongContextProvider>,
+      </BelongProvider>,
       { wrapper }
     );
 
@@ -70,15 +85,20 @@ describe('BelongContextProvider', () => {
 
   it('should provide error state on fetch failure', () => {
     const error = new Error('Failed to fetch user');
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: undefined,
+      isAuthenticated: false,
       isPending: false,
       isError: true,
-      data: undefined,
       error,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       return (
         <div>
           <div data-testid="error-state">{data.isError ? 'error' : 'no-error'}</div>
@@ -89,9 +109,9 @@ describe('BelongContextProvider', () => {
     };
 
     render(
-      <BelongContextProvider>
+      <BelongProvider>
         <TestComponent />
-      </BelongContextProvider>,
+      </BelongProvider>,
       { wrapper }
     );
 
@@ -108,15 +128,20 @@ describe('BelongContextProvider', () => {
       lastName: 'User',
     };
 
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: userData,
+      isAuthenticated: true,
       isPending: false,
       isError: false,
-      data: userData,
       error: null,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       return (
         <div>
           <div data-testid="success-state">{data.isError ? 'error' : 'success'}</div>
@@ -127,9 +152,9 @@ describe('BelongContextProvider', () => {
     };
 
     render(
-      <BelongContextProvider>
+      <BelongProvider>
         <TestComponent />
-      </BelongContextProvider>,
+      </BelongProvider>,
       { wrapper }
     );
 
@@ -139,15 +164,20 @@ describe('BelongContextProvider', () => {
   });
 
   it('should provide null user when not authenticated', () => {
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: null,
+      isAuthenticated: false,
       isPending: false,
       isError: false,
-      data: null,
       error: null,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const TestComponent = () => {
-      const data = useCurrentUserContext();
+      const data = useBelong();
       return (
         <div>
           <div data-testid="auth-state">{data.currentUser ? 'authenticated' : 'not-authenticated'}</div>
@@ -157,9 +187,9 @@ describe('BelongContextProvider', () => {
     };
 
     render(
-      <BelongContextProvider>
+      <BelongProvider>
         <TestComponent />
-      </BelongContextProvider>,
+      </BelongProvider>,
       { wrapper }
     );
 

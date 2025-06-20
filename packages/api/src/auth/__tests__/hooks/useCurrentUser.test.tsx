@@ -2,15 +2,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useCurrentUserContext } from '../../hooks/useCurrentUser';
-import { BelongContextProvider } from '../../providers/CurrentUserProvider';
+import { useBelong } from '../../providers/CurrentUserProvider';
+import { BelongProvider } from '../../providers/CurrentUserProvider';
 
-// Mock the useCurrentUserQuery hook
-vi.mock('../../hooks/useCurrentUserQuery', () => ({
-  useCurrentUserQuery: vi.fn(),
+// Mock the useAuth hook
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: vi.fn(),
 }));
 
 vi.mock('@belongnetwork/core', () => ({
+  getBelongClient: vi.fn(() => ({
+    supabase: {
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } }
+        })),
+      },
+    },
+  })),
   logger: {
     info: vi.fn(),
     error: vi.fn(),
@@ -18,9 +28,9 @@ vi.mock('@belongnetwork/core', () => ({
   },
 }));
 
-const mockUseCurrentUserQuery = vi.mocked(await import('../../hooks/useCurrentUserQuery')).useCurrentUserQuery;
+const mockUseAuth = vi.mocked(await import('../../hooks/useAuth')).useAuth;
 
-describe('useCurrentUserContext', () => {
+describe('useBelong', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -34,7 +44,7 @@ describe('useCurrentUserContext', () => {
     });
   });
 
-  it('should throw error when used outside BelongContextProvider', () => {
+  it('should throw error when used outside BelongProvider', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         {children}
@@ -48,8 +58,8 @@ describe('useCurrentUserContext', () => {
     let thrownError: Error | undefined;
     try {
       expect(() => {
-        renderHook(() => useCurrentUserContext(), { wrapper });
-      }).toThrow('useCurrentUserContext must be used within BelongContextProvider');
+        renderHook(() => useBelong(), { wrapper });
+      }).toThrow('useBelong must be used within BelongProvider');
     } catch (error) {
       thrownError = error as Error;
     } finally {
@@ -58,12 +68,12 @@ describe('useCurrentUserContext', () => {
     }
 
     // Test should fail if the hook didn't throw the expected error
-    if (thrownError && !thrownError.message.includes('useCurrentUserContext must be used within BelongContextProvider')) {
+    if (thrownError && !thrownError.message.includes('useBelong must be used within BelongProvider')) {
       throw new Error(`Expected hook to throw context error, but got: ${thrownError.message}`);
     }
   });
 
-  it('should return user data when used inside BelongContextProvider', () => {
+  it('should return user data when used inside BelongProvider', () => {
     const userData = {
       id: 'user-123',
       email: 'test@example.com',
@@ -71,29 +81,37 @@ describe('useCurrentUserContext', () => {
       lastName: 'User',
     };
 
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: userData,
+      isAuthenticated: true,
       isPending: false,
       isError: false,
-      data: userData,
       error: null,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           {children}
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 
-    const { result } = renderHook(() => useCurrentUserContext(), { wrapper });
+    const { result } = renderHook(() => useBelong(), { wrapper });
 
-    expect(result.current).toEqual({
-      currentUser: userData,
-      isPending: false,
-      isError: false,
-      error: null,
-    });
+    expect(result.current).toEqual(
+      expect.objectContaining({
+        currentUser: userData,
+        isAuthenticated: true,
+        isPending: false,
+        isError: false,
+        error: null,
+      })
+    );
   });
 
   it('should have correct TypeScript types (no null checks needed)', () => {
@@ -104,22 +122,27 @@ describe('useCurrentUserContext', () => {
       lastName: 'User',
     };
 
-    mockUseCurrentUserQuery.mockReturnValue({
+    mockUseAuth.mockReturnValue({
+      currentUser: userData,
+      isAuthenticated: true,
       isPending: false,
       isError: false,
-      data: userData,
       error: null,
+      signIn: {} as any,
+      signUp: {} as any,
+      signOut: {} as any,
+      updateProfile: {} as any,
     } as any);
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongContextProvider>
+        <BelongProvider>
           {children}
-        </BelongContextProvider>
+        </BelongProvider>
       </QueryClientProvider>
     );
 
-    const { result } = renderHook(() => useCurrentUserContext(), { wrapper });
+    const { result } = renderHook(() => useBelong(), { wrapper });
 
     // TypeScript should allow direct property access through currentUser property
     expect(result.current.currentUser?.id).toBe('user-123');

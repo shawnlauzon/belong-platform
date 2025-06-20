@@ -25,18 +25,17 @@ describe('Package Exports Integration', () => {
   });
 
   describe('Provider Exports', () => {
-    it('should export BelongContextProvider component', () => {
-      expect(platformModule.BelongContextProvider).toBeDefined();
-      expect(typeof platformModule.BelongContextProvider).toBe('function');
+    it('should export BelongProvider component', () => {
+      expect(platformModule.BelongProvider).toBeDefined();
+      expect(typeof platformModule.BelongProvider).toBe('function');
     });
   });
 
   describe('Hook Exports', () => {
     const expectedHooks = [
-      'useCurrentUserContext',
-      'useSignIn',
-      'useSignOut',
-      'useSignUp',
+      'useBelong',
+      'useAuth',
+      'useResources',
       'useCommunities',
       'useCommunity',
       'useCreateCommunity',
@@ -69,24 +68,24 @@ describe('Package Exports Integration', () => {
   });
 
   describe('Functional Integration', () => {
-    it('should provide BelongContextProvider component', () => {
-      const { BelongContextProvider } = platformModule;
+    it('should provide BelongProvider component', () => {
+      const { BelongProvider } = platformModule;
 
       // Should be a React component (function)
-      expect(BelongContextProvider).toBeDefined();
-      expect(typeof BelongContextProvider).toBe('function');
+      expect(BelongProvider).toBeDefined();
+      expect(typeof BelongProvider).toBe('function');
     });
   });
 
   describe('Import Patterns', () => {
     it('should support direct imports', async () => {
-      const { BelongContextProvider } = await import('@belongnetwork/platform');
-      expect(BelongContextProvider).toBeDefined();
+      const { BelongProvider } = await import('@belongnetwork/platform');
+      expect(BelongProvider).toBeDefined();
     });
 
     it('should support subpath imports for hooks', async () => {
       const hooks = await import('@belongnetwork/platform/hooks');
-      expect(hooks.useCurrentUserContext).toBeDefined();
+      expect(hooks.useBelong).toBeDefined();
     });
 
     it('should support subpath imports for types', async () => {

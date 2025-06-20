@@ -1,6 +1,4 @@
-export * from './useCurrentUser';
-export * from './useCurrentUserId';
-export * from './useCurrentUserQuery';
+export * from './useAuth';
 export * from './useSignIn';
 export * from './useSignOut';
 export * from './useSignUp';

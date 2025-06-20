@@ -1,22 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { signOut } from '../impl/signOut';
+import { useMutation } from '@tanstack/react-query';
+import { signOut as signOutService } from '../services/auth.service';
 import { logger } from '@belongnetwork/core';
 
 /**
  * A React Query mutation hook for signing out the current user
+ * Uses the new auth service but maintains backward compatibility
+ * Note: Cache invalidation is now handled by the BelongProvider's centralized auth state listener
  * @returns A mutation object with the sign-out mutation and its status
  */
 export function useSignOut() {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error>({
+  return useMutation<void, Error, void>({
     mutationFn: async () => {
-      return signOut();
+      return signOutService();
     },
     onSuccess: () => {
-      // Remove the current user from the cache
-      queryClient.removeQueries({ queryKey: ['currentUser'] });
       logger.info('🔐 API: User signed out successfully');
+      // Note: Cache invalidation is handled by BelongProvider's centralized auth state listener
     },
     onError: (error) => {
       logger.error('🔐 API: Failed to sign out', { error });

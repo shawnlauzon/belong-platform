@@ -1,2 +1,5 @@
-export * from './hooks/index.js';
-export { BelongContextProvider, useCurrentUserContext } from './providers/CurrentUserProvider';
+export * from './hooks/index';
+export { 
+  BelongProvider, 
+  useBelong
+} from './providers/CurrentUserProvider';

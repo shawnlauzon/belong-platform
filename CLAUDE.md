@@ -1,6 +1,10 @@
-# CLAUDE.md
+This file provides guidance to Claude Code (claude.ai/code) when working with this repository.
 
-This file provides guidance to Claude Code when working with the Belong Network codebase.
+## Important
+
+- ALL instructions within this document MUST BE FOLLOWED, these are not optional unless explicitly stated.
+- DO NOT edit more code than you have to.
+- DO NOT WASTE TOKENS, be succinct and concise.
 
 ## Development Commands
 
@@ -26,6 +30,7 @@ pnpm format
 
 # Run comprehensive checks before committing
 pnpm lint && pnpm typecheck && pnpm build
+```
 
 Architecture Overview
 
@@ -111,6 +116,7 @@ Development Principles
 - Keep versions of all packages aligned
 - When you commit after bumping a version, tag with that version
 - Do not deprecate; remove
+- When you believe you have fixed a problem, run the test to confirm before continuing
 
 ## Debugging Guidelines
 
@@ -131,12 +137,12 @@ Development Principles
    - If your fix works for unit tests but not integration tests, your hypothesis may be incomplete
    - Don't assume a fix works just because it seems logical - verify it against the failing test case
 
-4. **Fix the Root Cause, Not Symptoms**: 
+4. **Fix the Root Cause, Not Symptoms**:
    - Don't mask problems with workarounds (e.g., clearing caches manually between tests)
    - Ask "Why isn't the intended behavior working?" rather than "How can I make this pass?"
    - Example: If cache is polluted after sign-out, fix the sign-out cache invalidation, don't clear cache manually
 
-5. **Verify the Fix Completely**: 
+5. **Verify the Fix Completely**:
    - The unit test should pass after the fix
    - Integration tests should also pass without additional workarounds
    - Both test types should demonstrate the same correct behavior
@@ -182,5 +188,3 @@ Development Principles
    - **Problem**: Integration tests getting user data from previous test runs instead of current test
    - **Insight**: Integration tests may share QueryClient instances, database state, or browser storage between tests
    - **Investigation Strategy**: Look for differences in test setup (beforeEach vs beforeAll, fresh vs shared instances)
-
-```
