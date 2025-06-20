@@ -30,6 +30,9 @@ pnpm format
 
 # Run comprehensive checks before committing
 pnpm lint && pnpm typecheck && pnpm build
+
+# Run integration tests
+pnpm test:integration
 ```
 
 Architecture Overview
@@ -117,6 +120,7 @@ Development Principles
 - When you commit after bumping a version, tag with that version
 - Do not deprecate; remove
 - When you believe you have fixed a problem, run the test to confirm before continuing
+- Run integration tests with `pnpm test:integration` from the project directory
 
 ## Debugging Guidelines
 

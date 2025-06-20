@@ -1,9 +1,9 @@
-import { getBelongClient } from '@belongnetwork/core';
+import type { BelongClient } from '@belongnetwork/core';
 import { toDomainCommunity, toCommunityInfo } from './communityTransformer';
 import type { Community, CommunityInfo } from '@belongnetwork/types';
 
-export async function fetchCommunities(options?: { includeDeleted?: boolean }): Promise<CommunityInfo[]> {
-  const { supabase, logger } = getBelongClient();
+export async function fetchCommunities(client: BelongClient, options?: { includeDeleted?: boolean }): Promise<CommunityInfo[]> {
+  const { supabase, logger } = client;
 
   logger.debug('🏘️ API: Fetching communities', { options });
 

@@ -1,15 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@belongnetwork/types';
-import { logger } from '@belongnetwork/core';
 import { queryKeys } from '../../shared/queryKeys';
-import { 
-  signIn as signInService, 
-  signUp as signUpService, 
-  signOut as signOutService,
-  getCurrentAuthUser,
-  getCurrentUser,
-} from '../services/auth.service';
+import { createAuthService } from '../services/auth.service';
 import { updateUser } from '../../users/impl/updateUser';
+import { useClient } from '../providers/CurrentUserProvider';
 
 /**
  * Unified authentication hook that provides both queries and mutations
@@ -17,11 +11,13 @@ import { updateUser } from '../../users/impl/updateUser';
  */
 export function useAuth() {
   const queryClient = useQueryClient();
+  const client = useClient();
+  const authService = createAuthService(client);
 
   // Query for authentication state (just auth info, no profile)
   const authQuery = useQuery({
     queryKey: queryKeys.auth,
-    queryFn: getCurrentAuthUser,
+    queryFn: authService.getCurrentAuthUser,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
@@ -37,7 +33,7 @@ export function useAuth() {
   // Query for current user profile data (if authenticated)
   const currentUserQuery = useQuery({
     queryKey: authQuery.data ? queryKeys.users.byId(authQuery.data.id) : ['user', 'null'],
-    queryFn: () => getCurrentUser(),
+    queryFn: authService.getCurrentUser,
     enabled: !!authQuery.data, // Only run if authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -54,9 +50,9 @@ export function useAuth() {
   // Sign in mutation
   const signInMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
-      signInService(email, password),
+      authService.signIn(email, password),
     onSuccess: (account) => {
-      logger.info('🔐 API: User signed in successfully', { userId: account.id });
+      client.logger.info('🔐 API: User signed in successfully', { userId: account.id });
       
       // Invalidate auth state to refetch with new session
       queryClient.invalidateQueries({ queryKey: queryKeys.auth });
@@ -67,7 +63,7 @@ export function useAuth() {
       });
     },
     onError: (error) => {
-      logger.error('🔐 API: Failed to sign in', { error });
+      client.logger.error('🔐 API: Failed to sign in', { error });
     },
   });
 
@@ -83,9 +79,9 @@ export function useAuth() {
       password: string; 
       firstName: string; 
       lastName?: string;
-    }) => signUpService(email, password, firstName, lastName),
+    }) => authService.signUp(email, password, firstName, lastName),
     onSuccess: (account) => {
-      logger.info('🔐 API: User signed up successfully', { userId: account.id });
+      client.logger.info('🔐 API: User signed up successfully', { userId: account.id });
       
       // Invalidate auth state to refetch with new session
       queryClient.invalidateQueries({ queryKey: queryKeys.auth });
@@ -96,17 +92,17 @@ export function useAuth() {
       });
     },
     onError: (error) => {
-      logger.error('🔐 API: Failed to sign up', { error });
+      client.logger.error('🔐 API: Failed to sign up', { error });
     },
   });
 
   // Sign out mutation
   const signOutMutation = useMutation({
-    mutationFn: signOutService,
+    mutationFn: authService.signOut,
     onSuccess: () => {
       const currentUserId = authQuery.data?.id;
       
-      logger.info('🔐 API: User signed out successfully');
+      client.logger.info('🔐 API: User signed out successfully');
       
       // Remove auth state
       queryClient.removeQueries({ queryKey: queryKeys.auth });
@@ -119,7 +115,7 @@ export function useAuth() {
       }
     },
     onError: (error) => {
-      logger.error('🔐 API: Failed to sign out', { error });
+      client.logger.error('🔐 API: Failed to sign out', { error });
     },
   });
 
@@ -135,7 +131,7 @@ export function useAuth() {
       });
     },
     onSuccess: (updatedUser) => {
-      logger.info('🔐 API: Profile updated successfully', { userId: updatedUser.id });
+      client.logger.info('🔐 API: Profile updated successfully', { userId: updatedUser.id });
       
       // Update the user cache with new data
       queryClient.setQueryData(
@@ -144,7 +140,7 @@ export function useAuth() {
       );
     },
     onError: (error) => {
-      logger.error('🔐 API: Failed to update profile', { error });
+      client.logger.error('🔐 API: Failed to update profile', { error });
     },
   });
 

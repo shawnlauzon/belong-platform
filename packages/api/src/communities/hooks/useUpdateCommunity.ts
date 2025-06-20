@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateCommunity } from '../impl/updateCommunity';
 import { logger } from '@belongnetwork/core';
+import { useClient } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
 import type { CommunityData } from '@belongnetwork/types';
 
 export function useUpdateCommunity() {
+  const client = useClient();
   const queryClient = useQueryClient();
+  const communityService = createCommunityService(client);
 
   return useMutation({
-    mutationFn: (data: CommunityData & { id: string }) => updateCommunity(data),
+    mutationFn: (data: CommunityData & { id: string }) => communityService.updateCommunity(data),
     onSuccess: (updatedCommunity) => {
       // Update the community in the cache
       queryClient.setQueryData(

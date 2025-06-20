@@ -20,8 +20,8 @@ npm install @belongnetwork/platform
 - 🗺️ **Location-Aware** - PostGIS integration for geographic features via Mapbox
 - ⚡ **Real-Time Ready** - Built on Supabase with real-time subscription support
 - 🧪 **Well-Tested** - Comprehensive test suite with 157+ passing tests
-- 📦 **Simple Setup** - One-time global initialization, then clean usage everywhere
-- 🔧 **Easy Testing** - Mock global client instead of complex provider patterns
+- 📦 **Simple Setup** - Provider-based configuration with clean context access
+- 🔧 **Easy Testing** - Clean provider wrapping for consistent test setups
 
 ## 🏗️ Architecture
 
@@ -29,8 +29,7 @@ npm install @belongnetwork/platform
 @belongnetwork/platform     # Single unified package
 ├── /hooks                  # All React Query hooks  
 ├── /types                  # TypeScript types and interfaces
-├── BelongProvider          # React context provider
-├── initializeBelong()      # Global initialization
+├── BelongProvider          # React context provider with config
 └── useBelong()            # Primary hook for current user
 ```
 
@@ -47,14 +46,14 @@ The platform provides flexible authentication patterns to suit different use cas
 
 **2. Individual Hooks Pattern** 
 - Use `useSignIn`, `useSignOut`, `useSignUp` hooks directly
-- Works without `BelongProvider` - just needs `QueryClientProvider`
-- Useful for login/signup forms before user is authenticated
+- Now requires `BelongProvider` for configuration access
+- Useful for focused authentication components within the provider
 
 #### Core Architecture
 
 - **`useBelong()`**: Primary hook for current user data and auth mutations (requires `BelongProvider`)
 - **`useAuth()`**: Advanced hook with full authentication state control
-- **Individual Hooks**: `useSignIn`, `useSignOut`, `useSignUp` work independently  
+- **Individual Hooks**: `useSignIn`, `useSignOut`, `useSignUp` require `BelongProvider` context
 - **`BelongProvider`**: React context provider managing centralized auth state
 - **Service Layer**: Clean separation between auth services and React hooks
 - **Single Source of Truth**: Unified caching prevents state inconsistencies
@@ -75,22 +74,21 @@ pnpm add @belongnetwork/platform
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { initializeBelong, BelongProvider } from '@belongnetwork/platform';
+import { BelongProvider } from '@belongnetwork/platform';
 import App from './App';
-
-// Initialize the platform once at app startup
-initializeBelong({
-  supabaseUrl: process.env.VITE_SUPABASE_URL!,
-  supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-  mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-});
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BelongProvider>
+      <BelongProvider 
+        config={{
+          supabaseUrl: process.env.REACT_APP_SUPABASE_URL!,
+          supabaseAnonKey: process.env.REACT_APP_SUPABASE_ANON_KEY!,
+          mapboxPublicToken: process.env.REACT_APP_MAPBOX_PUBLIC_TOKEN!,
+        }}
+      >
         <App />
       </BelongProvider>
     </QueryClientProvider>
@@ -159,11 +157,11 @@ function CommunityDashboard() {
 
 ### Key Setup Requirements
 
-1. **Platform Initialization**: Call `initializeBelong()` once at app startup with your credentials
+1. **BelongProvider Configuration**: Pass configuration as `config` prop to `BelongProvider`
 2. **QueryClientProvider**: Required for React Query functionality
-3. **BelongProvider**: Required for accessing current user data  
-4. **Provider nesting order**: QueryClient → Belong → App components
-5. **Hook usage**: `useBelong()` must be called inside `BelongProvider`
+3. **Provider nesting order**: QueryClient → Belong → App components
+4. **Hook usage**: `useBelong()` must be called inside `BelongProvider`
+5. **Individual hooks**: `useSignIn`, `useSignOut`, `useSignUp` now require `BelongProvider` context
 
 ### Quick Usage Pattern
 
@@ -210,20 +208,19 @@ The `@belongnetwork/platform` package provides two main categories of exports:
 #### Providers
 
 ```tsx
-import { initializeBelong, BelongProvider } from '@belongnetwork/platform';
+import { BelongProvider } from '@belongnetwork/platform';
 
-// Initialize once at app startup
-initializeBelong({
-  supabaseUrl: process.env.VITE_SUPABASE_URL!,
-  supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-  mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-});
-
-// Wrap your app with the BelongProvider
+// Wrap your app with the BelongProvider and pass configuration
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BelongProvider>
+      <BelongProvider 
+        config={{
+          supabaseUrl: process.env.REACT_APP_SUPABASE_URL!,
+          supabaseAnonKey: process.env.REACT_APP_SUPABASE_ANON_KEY!,
+          mapboxPublicToken: process.env.REACT_APP_MAPBOX_PUBLIC_TOKEN!,
+        }}
+      >
         {/* Your app components */}
       </BelongProvider>
     </QueryClientProvider>
@@ -231,7 +228,7 @@ function App() {
 }
 ```
 
-The `BelongProvider` manages current user state and should wrap your app components after global initialization.
+The `BelongProvider` manages current user state and requires configuration to be passed as a prop.
 
 #### Types
 
@@ -294,7 +291,7 @@ function AuthComponent() {
   );
 }
 
-// Alternative: Use individual hooks outside BelongProvider
+// Alternative: Use individual hooks within BelongProvider context
 function IndividualHooksComponent() {
   const signIn = useSignIn();
   const signOut = useSignOut();
@@ -549,60 +546,35 @@ pnpm test:watch
 pnpm test:coverage
 ```
 
-#### Testing with Global Configuration
+#### Testing with BelongProvider
 
-The new global configuration makes testing simpler. Here's how to set up tests:
+Testing requires wrapping components with `BelongProvider` and configuration. Here's how to set up tests:
 
 ```typescript
 // test-setup.ts
-import { beforeEach, vi } from 'vitest';
-import { initializeBelong, resetBelongClient } from '@belongnetwork/platform';
-
-// Mock the global client for unit tests
-const mockGetBelongClient = vi.fn();
-vi.mock('@belongnetwork/platform', () => ({
-  getBelongClient: mockGetBelongClient,
-  initializeBelong: vi.fn(),
-  resetBelongClient: vi.fn(),
-}));
-
-beforeEach(() => {
-  // Reset and configure mock client for each test
-  mockGetBelongClient.mockReturnValue({
-    supabase: {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      // ... other mocked methods
-    },
-    logger: {
-      debug: vi.fn(),
-      info: vi.fn(),
-      error: vi.fn(),
-    },
-    mapbox: {
-      searchAddresses: vi.fn(),
-      // ... other mocked methods
-    }
-  });
-});
-```
-
-For integration tests with real database, set up your environment variables and use the providers normally:
-
-```typescript
-// integration-test-setup.ts
-import { initializeBelong, BelongProvider } from '@belongnetwork/platform';
+import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BelongProvider } from '@belongnetwork/platform';
 
-// Initialize once for integration tests
-initializeBelong({
-  supabaseUrl: process.env.VITE_SUPABASE_URL!,
-  supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-  mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-});
+// For unit tests, you can mock Supabase client methods
+const mockSupabaseClient = {
+  from: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  insert: vi.fn().mockReturnThis(),
+  update: vi.fn().mockReturnThis(),
+  delete: vi.fn().mockReturnThis(),
+  // ... other mocked methods
+};
 
-// For testing useBelong() - requires BelongProvider
-export function BelongTestWrapper({ children }) {
+// Mock configuration for unit tests
+const testConfig = {
+  supabaseUrl: 'https://test.supabase.co',
+  supabaseAnonKey: 'test-key',
+  mapboxPublicToken: 'test-token'
+};
+
+// Test wrapper component
+export function TestWrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -612,44 +584,67 @@ export function BelongTestWrapper({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BelongProvider>
+      <BelongProvider config={testConfig}>
+        {children}
+      </BelongProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+For integration tests with real database, set up your environment variables and use the providers with real configuration:
+
+```typescript
+// integration-test-setup.ts
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BelongProvider } from '@belongnetwork/platform';
+
+// Real configuration for integration tests
+const config = {
+  supabaseUrl: process.env.VITE_SUPABASE_URL!,
+  supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+  mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+};
+
+export function IntegrationTestWrapper({ children }: { children: React.ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BelongProvider config={config}>
         {children}
       </BelongProvider>
     </QueryClientProvider>
   );
 }
 
-// For testing individual hooks - only needs QueryClient
-export function BasicTestWrapper({ children }) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
-}
+// All hooks require BelongProvider context
+export const TestWrapper = IntegrationTestWrapper;
 ```
 
 ## 🔧 Configuration Options
 
-### Platform Initialization
+### Provider Configuration
 
-Initialize the platform once at app startup with your credentials:
+Configure the platform by passing config to `BelongProvider`:
 
 ```tsx
-import { initializeBelong } from '@belongnetwork/platform';
+import { BelongProvider } from '@belongnetwork/platform';
 
-initializeBelong({
-  supabaseUrl: 'https://your-project.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
-  mapboxPublicToken: 'your-mapbox-token',
-});
+<BelongProvider 
+  config={{
+    supabaseUrl: 'https://your-project.supabase.co',
+    supabaseAnonKey: 'your-anon-key',
+    mapboxPublicToken: 'your-mapbox-token',
+  }}
+>
+  <YourApp />
+</BelongProvider>
 ```
 
 ### Environment Variables
