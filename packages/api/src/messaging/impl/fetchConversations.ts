@@ -79,19 +79,20 @@ export async function fetchConversations(
     const conversationIds = conversations.map(conv => conv.id);
     const { data: unreadMessages, error: unreadError } = await supabase
       .from('direct_messages')
-      .select('conversation_id')
+      .select('conversation_id, read_at, from_user_id')
       .in('conversation_id', conversationIds)
-      .is('read_at', null)
       .neq('from_user_id', userId); // Don't count own messages as unread
 
     // Count unread messages per conversation
     const unreadCounts = new Map<string, number>();
     if (!unreadError && unreadMessages) {
       conversations.forEach(conv => unreadCounts.set(conv.id, 0)); // Initialize all to 0
-      unreadMessages.forEach(msg => {
-        const currentCount = unreadCounts.get(msg.conversation_id) || 0;
-        unreadCounts.set(msg.conversation_id, currentCount + 1);
-      });
+      unreadMessages
+        .filter(msg => msg.read_at === null) // Filter for unread messages
+        .forEach(msg => {
+          const currentCount = unreadCounts.get(msg.conversation_id) || 0;
+          unreadCounts.set(msg.conversation_id, currentCount + 1);
+        });
     } else {
       conversations.forEach(conv => unreadCounts.set(conv.id, 0));
     }

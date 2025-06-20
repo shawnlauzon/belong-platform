@@ -29,16 +29,7 @@ describe('fetchConversations', () => {
     };
 
     mockSupabase = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          or: vi.fn(() => ({
-            order: vi.fn(() => ({
-              data: [],
-              error: null,
-            })),
-          })),
-        })),
-      })),
+      from: vi.fn(),
     };
 
     mockGetBelongClient.mockReturnValue({
@@ -87,7 +78,6 @@ describe('fetchConversations', () => {
     const unreadChain = {
       select: vi.fn(() => unreadChain),
       in: vi.fn(() => unreadChain),
-      is: vi.fn(() => unreadChain),
       neq: vi.fn(() => Promise.resolve({ data: [], error: null })),
     };
 
@@ -162,6 +152,7 @@ describe('fetchConversations', () => {
     const conversation = createMockDbConversation({
       participant_1_id: user1.id,
       participant_2_id: user2.id,
+      last_message_id: null, // Ensure no last message to keep mock count predictable
     });
 
     // 3 unread messages (read_at is null)
@@ -178,13 +169,6 @@ describe('fetchConversations', () => {
       order: vi.fn(() => Promise.resolve({ data: [conversation], error: null })),
     };
 
-    // Mock last messages query (returns empty for simplicity)
-    const messageChain = {
-      select: vi.fn(() => messageChain),
-      in: vi.fn(() => messageChain),
-      order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-    };
-
     // Mock profiles query
     const profileChain = {
       select: vi.fn(() => profileChain),
@@ -194,23 +178,24 @@ describe('fetchConversations', () => {
       ], error: null })),
     };
 
-    // Mock unread count query - return messages with conversation_id for counting
-    const unreadMessagesWithConvId = unreadMessages.map(msg => ({
+    // Mock unread count query - return messages with full data for filtering
+    const unreadMessagesWithData = unreadMessages.map(msg => ({
       conversation_id: conversation.id,
+      read_at: msg.read_at,
+      from_user_id: msg.from_user_id,
     }));
     
     const unreadChain = {
       select: vi.fn(() => unreadChain),
       in: vi.fn(() => unreadChain),
-      is: vi.fn(() => unreadChain),
-      neq: vi.fn(() => Promise.resolve({ data: unreadMessagesWithConvId, error: null })),
+      neq: vi.fn(() => Promise.resolve({ data: unreadMessagesWithData, error: null })),
     };
 
     // Set up the mock to return different chains for each call
+    // Note: No last message query since last_message_id is null
     mockSupabase.from
       .mockReturnValueOnce(conversationChain)  // conversations query
-      .mockReturnValueOnce(messageChain)       // last messages query
-      .mockReturnValueOnce(profileChain)       // profiles query
+      .mockReturnValueOnce(profileChain)       // profiles query  
       .mockReturnValueOnce(unreadChain);       // unread count query
 
     // Act
