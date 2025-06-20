@@ -2,7 +2,17 @@ import { config } from 'dotenv'
 import { resolve } from 'path'
 
 // Load environment variables from .env file
-config({ path: resolve(process.cwd(), '.env') })
+const envPath = resolve(process.cwd(), '.env')
+const result = config({ path: envPath })
+
+// Manually set environment variables if dotenv didn't set them (vitest issue)
+if (result.parsed) {
+  for (const [key, value] of Object.entries(result.parsed)) {
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
 
 // Verify required environment variables are set
 const requiredEnvVars = [

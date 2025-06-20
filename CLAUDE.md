@@ -34,7 +34,7 @@ Supabase.
 
 Package Structure
 
-- @belongnetwork/api - Data layer with React Query hooks for auth, communities, resources, and users
+- @belongnetwork/platform - Data layer with React Query hooks for auth, communities, resources, and users
 - @belongnetwork/components - Reusable UI components built with Radix UI and Tailwind CSS
 - @belongnetwork/core - Shared configuration, utilities, and logger
 - @belongnetwork/types - TypeScript type definitions and database schema types
@@ -72,7 +72,7 @@ Testing
 - Each package has its own Vitest configuration
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
-- **ALWAYS use createMock* utilities from @belongnetwork/api/src/test-utils for generating test data**
+- **ALWAYS use createMock* utilities from @belongnetwork/platform/src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
 
 - Unit tests are located in the __tests__ directory of the feature

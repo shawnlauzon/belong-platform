@@ -47,22 +47,17 @@ pnpm add @belongnetwork/platform
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { initializeBelong } from '@belongnetwork/platform';
+import { BelongContextProvider } from '@belongnetwork/platform';
 import App from './App';
-
-// Initialize the platform once at app startup
-initializeBelong({
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-  mapboxPublicToken: import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN,
-});
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <BelongContextProvider>
+        <App />
+      </BelongContextProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );
@@ -74,12 +69,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 import { 
   useCommunities, 
   useResources, 
-  useCurrentUser,
+  useCurrentUserContext,
   useCreateResource 
 } from '@belongnetwork/platform';
 
 function CommunityDashboard() {
-  const { data: user } = useCurrentUser();
+  const { currentUser, isPending } = useCurrentUserContext();
   const { data: communities } = useCommunities();
   const { data: resources } = useResources({ type: 'offer' });
   const createResource = useCreateResource();
@@ -95,9 +90,12 @@ function CommunityDashboard() {
     });
   };
 
+  if (isPending) return <div>Loading...</div>;
+  if (!currentUser) return <div>Please sign in</div>;
+
   return (
     <div>
-      <h1>Welcome {user?.firstName}!</h1>
+      <h1>Welcome {currentUser.firstName}!</h1>
       
       <section>
         <h2>Your Communities</h2>
@@ -124,35 +122,36 @@ function CommunityDashboard() {
 }
 ```
 
-### Migrating from Provider-Based Setup
+### Key Setup Requirements
 
-If you're upgrading from an older version that used `BelongClientProvider`:
+1. **QueryClientProvider**: Required for React Query functionality
+2. **BelongContextProvider**: Required for accessing current user data  
+3. **Provider nesting order**: QueryClient → Belong → App components
+4. **Hook usage**: `useCurrentUserContext()` must be called inside `BelongContextProvider`
 
-**Before:**
+### Quick Usage Pattern
+
 ```tsx
-<BelongClientProvider config={{ ... }}>
-  <QueryClientProvider client={queryClient}>
-    <App />
-  </QueryClientProvider>
-</BelongClientProvider>
+// Get current user data anywhere in your app (must be inside BelongContextProvider)
+function UserNameDisplay() {
+  const { currentUser } = useCurrentUserContext();
+  return <div>User: {currentUser?.firstName || 'Not signed in'}</div>;
+}
+
+// Handle loading and error states
+function AuthStatus() {
+  const { currentUser, isPending, isError } = useCurrentUserContext();
+  
+  if (isPending) return <div>Loading...</div>;
+  if (isError) return <div>Error loading user</div>;
+  
+  return currentUser ? (
+    <div>Welcome, {currentUser.firstName}!</div>
+  ) : (
+    <div>Please sign in</div>
+  );
+}
 ```
-
-**After:**
-```tsx
-// In main.tsx/index.tsx - before rendering
-initializeBelong({
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-  mapboxPublicToken: import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN,
-});
-
-// Then just use QueryClientProvider
-<QueryClientProvider client={queryClient}>
-  <App />
-</QueryClientProvider>
-```
-
-The hooks work exactly the same - no changes needed in your components!
 
 ### Alternative Import Patterns
 
@@ -172,20 +171,24 @@ import { useResources, useCommunities } from '@belongnetwork/platform/hooks';
 
 The `@belongnetwork/platform` package provides two main categories of exports:
 
-#### Configuration
+#### Providers
 
 ```tsx
-import { initializeBelong } from '@belongnetwork/platform';
+import { BelongContextProvider } from '@belongnetwork/platform';
 
-// Initialize once at app startup
-initializeBelong({
-  supabaseUrl: 'https://your-project.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
-  mapboxPublicToken: 'your-mapbox-token'
-});
+// Wrap your app with the BelongContextProvider
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BelongContextProvider>
+        {/* Your app components */}
+      </BelongContextProvider>
+    </QueryClientProvider>
+  );
+}
 ```
 
-The `initializeBelong()` function configures the platform globally and should be called once before using any hooks.
+The `BelongContextProvider` manages current user state and should wrap your app components.
 
 #### Types
 
@@ -223,16 +226,17 @@ All React Query hooks for data fetching and mutations:
 
 #### Authentication
 ```tsx
-import { useCurrentUser, useSignIn, useSignOut } from '@belongnetwork/platform';
+import { useCurrentUserContext, useSignIn, useSignOut } from '@belongnetwork/platform';
 
 function AuthComponent() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { currentUser, isPending, isError } = useCurrentUserContext();
   const signIn = useSignIn();
   const signOut = useSignOut();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isPending) return <div>Loading...</div>;
+  if (isError) return <div>Error loading user</div>;
   
-  if (!user) {
+  if (!currentUser) {
     return (
       <button onClick={() => signIn.mutate({ email, password })}>
         Sign In
@@ -242,7 +246,7 @@ function AuthComponent() {
 
   return (
     <div>
-      Welcome {user.firstName}!
+      Welcome {currentUser.firstName}!
       <button onClick={() => signOut.mutate()}>Sign Out</button>
     </div>
   );
@@ -508,50 +512,47 @@ beforeEach(() => {
 });
 ```
 
-For integration tests with real database:
+For integration tests with real database, set up your environment variables and use the providers normally:
 
 ```typescript
 // integration-test-setup.ts
-import { initializeBelong } from '@belongnetwork/platform';
+import { BelongContextProvider } from '@belongnetwork/platform';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-beforeAll(() => {
-  initializeBelong({
-    supabaseUrl: process.env.VITE_SUPABASE_URL!,
-    supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-    mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+// Setup test wrapper with providers
+export function TestWrapper({ children }) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
   });
-});
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BelongContextProvider>
+        {children}
+      </BelongContextProvider>
+    </QueryClientProvider>
+  );
+}
 ```
 
 ## 🔧 Configuration Options
 
-### BelongClientConfig
+### Environment Variables
 
-```typescript
-interface BelongClientConfig {
-  /** Supabase project URL */
-  supabaseUrl: string;
-  /** Supabase anonymous key */
-  supabaseAnonKey: string;
-  /** Mapbox public access token */
-  mapboxPublicToken: string;
-}
-```
+Set up your environment variables in `.env`:
 
-### Advanced Configuration
+```env
+# Required for the platform to work
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
 
-For testing or advanced use cases, you can check initialization status:
-
-```typescript
-import { isInitialized, resetBelongClient } from '@belongnetwork/platform';
-
-// Check if platform is initialized
-if (!isInitialized()) {
-  console.warn('Platform not yet initialized');
-}
-
-// Reset configuration (mainly for testing)
-resetBelongClient();
+# Optional
+VITE_DEFAULT_LOCATION_LAT=30.2672
+VITE_DEFAULT_LOCATION_LNG=-97.7431
 ```
 
 ### React Query Configuration

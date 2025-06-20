@@ -4,10 +4,9 @@ import path from 'path'
 export default defineConfig({
   resolve: {
     alias: {
-      '@belongnetwork/api': path.resolve(__dirname, './packages/api/src'),
+      '@belongnetwork/platform': path.resolve(__dirname, './packages/api/src'),
       '@belongnetwork/core': path.resolve(__dirname, './packages/core/src'),
-      '@belongnetwork/types': path.resolve(__dirname, './packages/types/src'),
-      '@belongnetwork/platform': path.resolve(__dirname, './src')
+      '@belongnetwork/types': path.resolve(__dirname, './packages/types/src')
     }
   },
   test: {

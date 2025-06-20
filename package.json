@@ -51,7 +51,7 @@
     "test:database": "vitest run --config vitest.database.config.mts",
     "test:database:watch": "vitest --config vitest.database.config.mts",
     "typecheck": "pnpm -r typecheck",
-    "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
+    "typecheck:api": "pnpm --filter=@belongnetwork/platform typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",

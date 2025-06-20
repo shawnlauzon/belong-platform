@@ -47,22 +47,17 @@ pnpm add @belongnetwork/platform
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { initializeBelong } from '@belongnetwork/platform';
+import { BelongContextProvider } from '@belongnetwork/platform';
 import App from './App';
-
-// Initialize the platform once at app startup
-initializeBelong({
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-  mapboxPublicToken: import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN,
-});
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <BelongContextProvider>
+        <App />
+      </BelongContextProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );
@@ -74,12 +69,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 import { 
   useCommunities, 
   useResources, 
-  useCurrentUser,
+  useCurrentUserContext,
   useCreateResource 
 } from '@belongnetwork/platform';
 
 function CommunityDashboard() {
-  const { data: user } = useCurrentUser();
+  const { currentUser, isPending } = useCurrentUserContext();
   const { data: communities } = useCommunities();
   const { data: resources } = useResources({ type: 'offer' });
   const createResource = useCreateResource();
@@ -95,9 +90,12 @@ function CommunityDashboard() {
     });
   };
 
+  if (isPending) return <div>Loading...</div>;
+  if (!currentUser) return <div>Please sign in</div>;
+
   return (
     <div>
-      <h1>Welcome {user?.firstName}!</h1>
+      <h1>Welcome {currentUser.firstName}!</h1>
       
       <section>
         <h2>Your Communities</h2>
@@ -120,6 +118,37 @@ function CommunityDashboard() {
         Share a Resource
       </button>
     </div>
+  );
+}
+```
+
+### Key Setup Requirements
+
+1. **QueryClientProvider**: Required for React Query functionality
+2. **BelongContextProvider**: Required for accessing current user data  
+3. **Provider nesting order**: QueryClient → Belong → App components
+4. **Hook usage**: `useCurrentUserContext()` must be called inside `BelongContextProvider`
+
+### Quick Usage Pattern
+
+```tsx
+// Get current user data anywhere in your app (must be inside BelongContextProvider)
+function UserNameDisplay() {
+  const { currentUser } = useCurrentUserContext();
+  return <div>User: {currentUser?.firstName || 'Not signed in'}</div>;
+}
+
+// Handle loading and error states
+function AuthStatus() {
+  const { currentUser, isPending, isError } = useCurrentUserContext();
+  
+  if (isPending) return <div>Loading...</div>;
+  if (isError) return <div>Error loading user</div>;
+  
+  return currentUser ? (
+    <div>Welcome, {currentUser.firstName}!</div>
+  ) : (
+    <div>Please sign in</div>
   );
 }
 ```
@@ -223,16 +252,17 @@ All React Query hooks for data fetching and mutations:
 
 #### Authentication
 ```tsx
-import { useCurrentUser, useSignIn, useSignOut } from '@belongnetwork/platform';
+import { useCurrentUserContext, useSignIn, useSignOut } from '@belongnetwork/platform';
 
 function AuthComponent() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { currentUser, isPending, isError } = useCurrentUserContext();
   const signIn = useSignIn();
   const signOut = useSignOut();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isPending) return <div>Loading...</div>;
+  if (isError) return <div>Error loading user</div>;
   
-  if (!user) {
+  if (!currentUser) {
     return (
       <button onClick={() => signIn.mutate({ email, password })}>
         Sign In
@@ -242,7 +272,7 @@ function AuthComponent() {
 
   return (
     <div>
-      Welcome {user.firstName}!
+      Welcome {currentUser.firstName}!
       <button onClick={() => signOut.mutate()}>Sign Out</button>
     </div>
   );

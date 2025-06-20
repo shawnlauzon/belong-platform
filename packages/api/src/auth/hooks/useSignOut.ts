@@ -15,9 +15,7 @@ export function useSignOut() {
     },
     onSuccess: () => {
       // Remove the current user from the cache
-      queryClient.setQueryData(['currentUser'], null);
-      // Invalidate any queries that depend on the current user
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.removeQueries({ queryKey: ['currentUser'] });
       logger.info('🔐 API: User signed out successfully');
     },
     onError: (error) => {
