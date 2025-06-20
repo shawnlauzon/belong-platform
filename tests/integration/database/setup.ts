@@ -1,8 +1,8 @@
 import { config } from 'dotenv'
 import { resolve } from 'path'
 
-// Load environment variables from .env file
-config({ path: resolve(process.cwd(), '.env') })
+// Load environment variables from .env file in the integration test directory
+config({ path: resolve(__dirname, '../.env') })
 
 // Verify required environment variables are set
 const requiredEnvVars = [
