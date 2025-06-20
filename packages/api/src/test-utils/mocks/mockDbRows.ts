@@ -6,6 +6,8 @@ type ResourceRow = Database['public']['Tables']['resources']['Row'];
 type CommunityRow = Database['public']['Tables']['communities']['Row'];
 type EventRow = Database['public']['Tables']['events']['Row'];
 type ThanksRow = Database['public']['Tables']['thanks']['Row'];
+type ConversationRow = Database['public']['Tables']['conversations']['Row'];
+type DirectMessageRow = Database['public']['Tables']['direct_messages']['Row'];
 
 export function createMockDbProfile(overrides: Partial<UserRow> = {}): UserRow {
   const firstName = faker.person.firstName();
@@ -238,6 +240,47 @@ export function createMockDbThanks(
       () => faker.image.urlLoremFlickr({ category: 'people' })
     ),
     impact_description: faker.datatype.boolean() ? faker.lorem.paragraph() : null,
+    created_at: now,
+    updated_at: now,
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock database Conversation row
+ */
+export function createMockDbConversation(
+  overrides: Partial<ConversationRow> = {}
+): ConversationRow {
+  const now = new Date().toISOString();
+
+  return {
+    id: faker.string.uuid(),
+    participant_1_id: faker.string.uuid(),
+    participant_2_id: faker.string.uuid(),
+    last_activity_at: faker.date.recent().toISOString(),
+    last_message_id: faker.datatype.boolean() ? faker.string.uuid() : null,
+    created_at: now,
+    updated_at: now,
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock database DirectMessage row
+ */
+export function createMockDbDirectMessage(
+  overrides: Partial<DirectMessageRow> = {}
+): DirectMessageRow {
+  const now = new Date().toISOString();
+
+  return {
+    id: faker.string.uuid(),
+    conversation_id: faker.string.uuid(),
+    from_user_id: faker.string.uuid(),
+    to_user_id: faker.string.uuid(),
+    content: faker.lorem.paragraph(),
+    read_at: faker.datatype.boolean() ? faker.date.recent().toISOString() : null,
     created_at: now,
     updated_at: now,
     ...overrides,
