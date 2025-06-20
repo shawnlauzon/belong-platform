@@ -94,7 +94,7 @@ describe('Thanks Validation Integration Tests', () => {
     const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() =>
@@ -111,7 +111,7 @@ describe('Thanks Validation Integration Tests', () => {
     });
 
     await act(async () => {
-      signInResult.current.mutate({
+      await signInResult.current.mutateAsync({
         email: authSetup.testUser.email,
         password: authSetup.testUser.password,
       });
@@ -129,7 +129,7 @@ describe('Thanks Validation Integration Tests', () => {
       );
 
       await act(async () => {
-        deleteResourceResult.current.mutate(testResource.id);
+        await deleteResourceResult.current.mutateAsync(testResource.id);
       });
 
       await waitFor(() =>
@@ -143,7 +143,7 @@ describe('Thanks Validation Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -185,7 +185,7 @@ describe('Thanks Validation Integration Tests', () => {
     };
 
     await act(async () => {
-      createThanksResult.current.mutate(selfThanksData);
+      await createThanksResult.current.mutateAsync(selfThanksData);
     });
 
     await waitFor(() => {
@@ -217,7 +217,7 @@ describe('Thanks Validation Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() =>
@@ -238,7 +238,7 @@ describe('Thanks Validation Integration Tests', () => {
     };
 
     await act(async () => {
-      updateThanksResult.current.mutate(updateDataWithSender);
+      await updateThanksResult.current.mutateAsync(updateDataWithSender);
     });
 
     await waitFor(() => {
@@ -268,7 +268,7 @@ describe('Thanks Validation Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() =>
@@ -289,7 +289,7 @@ describe('Thanks Validation Integration Tests', () => {
     };
 
     await act(async () => {
-      updateThanksResult.current.mutate(updateDataWithReceiverAsSender);
+      await updateThanksResult.current.mutateAsync(updateDataWithReceiverAsSender);
     });
 
     await waitFor(() => {

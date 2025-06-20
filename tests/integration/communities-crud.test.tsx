@@ -84,7 +84,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -136,7 +136,7 @@ describe('Communities CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createCommunityResult.current.mutate(communityData);
+      await createCommunityResult.current.mutateAsync(communityData);
     });
 
     await waitFor(() => {
@@ -199,7 +199,7 @@ describe('Communities CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createCommunityResult.current.mutate(communityData);
+      await createCommunityResult.current.mutateAsync(communityData);
     });
 
     await waitFor(() => {
@@ -233,7 +233,7 @@ describe('Communities CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateCommunityResult.current.mutate(updateData);
+      await updateCommunityResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -291,7 +291,7 @@ describe('Communities CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createCommunityResult.current.mutate(communityData);
+      await createCommunityResult.current.mutateAsync(communityData);
     });
 
     await waitFor(() => expect(createCommunityResult.current.isSuccess).toBe(true));
@@ -304,7 +304,7 @@ describe('Communities CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteCommunityResult.current.mutate(createdCommunity!.id);
+      await deleteCommunityResult.current.mutateAsync(createdCommunity!.id);
     });
 
     await waitFor(() => {

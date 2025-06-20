@@ -53,8 +53,9 @@ describe('Authentication Integration', () => {
   // Clean up auth state between tests to ensure isolation
   async function signOutBetweenTests() {
     try {
-      // Clear the query cache to ensure clean state between tests
-      queryClient.clear();
+      // Instead of clearing all cache, just invalidate auth-related queries
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
     } catch (error) {
       // Ignore errors during cleanup
     }

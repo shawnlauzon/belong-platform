@@ -83,7 +83,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -119,7 +119,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     const eventData = generateEventData(testCommunity.id!, testUser.userId!);
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => {
@@ -173,7 +173,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => {
@@ -202,7 +202,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateEventResult.current.mutate(updateData);
+      await updateEventResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -254,7 +254,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => expect(createEventResult.current.isSuccess).toBe(true));
@@ -266,7 +266,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteEventResult.current.mutate(createdEvent.id);
+      await deleteEventResult.current.mutateAsync(createdEvent.id);
     });
 
     await waitFor(() => {

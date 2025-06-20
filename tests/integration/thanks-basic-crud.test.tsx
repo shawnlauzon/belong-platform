@@ -91,7 +91,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() =>
@@ -126,7 +126,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       );
 
       await act(async () => {
-        deleteResourceResult.current.mutate(testResource.id);
+        await deleteResourceResult.current.mutateAsync(testResource.id);
       });
 
       await waitFor(() =>
@@ -140,7 +140,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -163,7 +163,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -193,7 +193,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -227,7 +227,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -261,7 +261,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateThanksResult.current.mutate(updateData);
+      await updateThanksResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -295,7 +295,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -316,7 +316,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteThanksResult.current.mutate(createdThanks.id);
+      await deleteThanksResult.current.mutateAsync(createdThanks.id);
     });
 
     await waitFor(() => {

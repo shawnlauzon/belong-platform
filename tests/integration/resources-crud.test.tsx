@@ -87,7 +87,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
@@ -130,7 +130,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => {
@@ -183,7 +183,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => {
@@ -218,7 +218,7 @@ describe('Resources CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateResourceResult.current.mutate(updateData);
+      await updateResourceResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -269,7 +269,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
@@ -282,7 +282,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteResourceResult.current.mutate(createdResource!.id);
+      await deleteResourceResult.current.mutateAsync(createdResource!.id);
     });
 
     await waitFor(() => {
