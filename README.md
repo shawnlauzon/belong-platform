@@ -11,6 +11,7 @@ npm install @belongnetwork/platform
 **For Community Members:**
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
 - 📅 **Event Management** - Create and attend community gatherings and activities
+- 💬 **Direct Messaging** - Send private messages to other community members
 - 💌 **Gratitude System** - Send thanks messages to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
 - 🔔 **Real-time Updates** - Stay connected with your community
@@ -19,7 +20,7 @@ npm install @belongnetwork/platform
 - 🎯 **Type-Safe** - Comprehensive TypeScript coverage prevents runtime errors
 - 🗺️ **Location-Aware** - PostGIS integration for geographic features via Mapbox
 - ⚡ **Real-Time Ready** - Built on Supabase with real-time subscription support
-- 🧪 **Well-Tested** - Comprehensive test suite with 157+ passing tests
+- 🧪 **Well-Tested** - Comprehensive test suite with 468+ passing tests
 - 📦 **Simple Setup** - One-time global initialization, then clean usage everywhere
 - 🔧 **Easy Testing** - Mock global client instead of complex provider patterns
 
@@ -105,14 +106,18 @@ import {
   useCommunities, 
   useResources, 
   useBelong,
-  useCreateResource 
+  useCreateResource,
+  useConversations,
+  useSendMessage
 } from '@belongnetwork/platform';
 
 function CommunityDashboard() {
   const { currentUser, isPending } = useBelong();
   const { data: communities } = useCommunities();
   const { data: resources } = useResources({ type: 'offer' });
+  const { data: conversations } = useConversations();
   const createResource = useCreateResource();
+  const sendMessage = useSendMessage();
 
   const handleShareResource = async () => {
     await createResource.mutateAsync({
@@ -122,6 +127,13 @@ function CommunityDashboard() {
       communityId: 'community-123',
       meetupType: 'pickup',
       // ... other fields
+    });
+  };
+
+  const handleSendMessage = async (conversationId: string, content: string) => {
+    await sendMessage.mutateAsync({
+      conversationId,
+      content,
     });
   };
 
@@ -145,6 +157,17 @@ function CommunityDashboard() {
           <div key={resource.id}>
             <h3>{resource.title}</h3>
             <p>Offered by {resource.owner.firstName}</p>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h2>Messages</h2>
+        {conversations?.map(conversation => (
+          <div key={conversation.id}>
+            <p>Conversation with participants</p>
+            <p>Last message: {conversation.lastMessagePreview}</p>
+            <p>Unread: {conversation.unreadCount}</p>
           </div>
         ))}
       </section>
@@ -240,9 +263,13 @@ import type {
   User, 
   Community, 
   Resource, 
-  Event, 
+  Event,
+  Message,
+  Conversation,
   ResourceFilter,
-  CommunityData 
+  CommunityData,
+  MessageData,
+  ConversationData
 } from '@belongnetwork/platform/types';
 // or
 import type { User, Community } from '@belongnetwork/platform';
@@ -258,9 +285,9 @@ const resourceData: ResourceData = {
 ```
 
 **Key Types:**
-- **Entities**: `User`, `Community`, `Resource`, `Event`, `Thanks`
-- **Data Transfer**: `ResourceData`, `EventData`, etc.
-- **Filters**: `ResourceFilter`, `EventFilter`, etc.
+- **Entities**: `User`, `Community`, `Resource`, `Event`, `Thanks`, `Message`, `Conversation`
+- **Data Transfer**: `ResourceData`, `EventData`, `MessageData`, `ConversationData`, etc.
+- **Filters**: `ResourceFilter`, `EventFilter`, `MessageFilter`, `ConversationFilter`, etc.
 - **Geography**: `Coordinates`, `AddressSearchResult`
 
 #### Hooks
@@ -463,6 +490,68 @@ function GratitudeManager() {
 }
 ```
 
+#### Direct Messaging
+```tsx
+import { 
+  useConversations, 
+  useMessages,
+  useSendMessage,
+  useMarkAsRead
+} from '@belongnetwork/platform';
+
+function MessagingInterface() {
+  const { data: conversations } = useConversations();
+  const { data: messages } = useMessages('conversation-123');
+  const sendMessage = useSendMessage();
+  const markAsRead = useMarkAsRead();
+
+  const handleSendMessage = (conversationId: string, content: string) => {
+    sendMessage.mutate({
+      conversationId,
+      content,
+    });
+  };
+
+  const handleMarkAsRead = (conversationId: string) => {
+    markAsRead.mutate({ conversationId });
+  };
+
+  return (
+    <div>
+      <section>
+        <h3>Conversations</h3>
+        {conversations?.map(conversation => (
+          <div key={conversation.id}>
+            <p>Last message: {conversation.lastMessagePreview}</p>
+            <span>Unread: {conversation.unreadCount}</span>
+            <button onClick={() => handleMarkAsRead(conversation.id)}>
+              Mark as Read
+            </button>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h3>Messages</h3>
+        {messages?.map(message => (
+          <div key={message.id}>
+            <p>{message.content}</p>
+            <small>
+              From: {message.fromUser?.firstName} 
+              {message.readAt ? ' (Read)' : ' (Unread)'}
+            </small>
+          </div>
+        ))}
+      </section>
+
+      <button onClick={() => handleSendMessage('conversation-123', 'Hello!')}>
+        Send Message
+      </button>
+    </div>
+  );
+}
+```
+
 ## 🛠️ Development Setup
 
 ### Prerequisites
@@ -531,6 +620,8 @@ The platform uses Supabase with PostGIS for geographic features:
 - events               -- Community events
 - event_attendances    -- RSVP tracking
 - thanks              -- Gratitude messages
+- conversations       -- Direct message conversations
+- direct_messages     -- Private messages between users
 ```
 
 ### Testing
