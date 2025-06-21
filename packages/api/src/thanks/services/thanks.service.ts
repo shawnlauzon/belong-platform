@@ -17,6 +17,35 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
+/**
+ * Validates thanks creation business rules
+ */
+function validateThanksCreation(data: ThanksData, currentUserId: string): void {
+  // Rule: User cannot thank themselves
+  if (data.fromUserId === data.toUserId) {
+    throw new Error("Cannot thank yourself");
+  }
+}
+
+/**
+ * Validates thanks update business rules
+ */
+function validateThanksUpdate(
+  existingThanks: any,
+  updateData: Partial<ThanksData>,
+  currentUserId: string
+): void {
+  // Rule: Cannot change the sender of thanks
+  if (updateData.fromUserId && updateData.fromUserId !== existingThanks.from_user_id) {
+    throw new Error("Cannot change the sender of thanks");
+  }
+
+  // Rule: Cannot change receiver to yourself (the sender)
+  if (updateData.toUserId && updateData.toUserId === existingThanks.from_user_id) {
+    throw new Error("Cannot change receiver to yourself");
+  }
+}
+
 export const createThanksService = (supabase: SupabaseClient<Database>) => ({
   async fetchThanks(filters?: ThanksFilter): Promise<ThanksInfo[]> {
     logger.debug("🙏 Thanks Service: Fetching thanks", { filters });
@@ -186,6 +215,9 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
 
       const userId = userData.user.id;
 
+      // Validate business rules before database operation
+      validateThanksCreation(data, userId);
+
       // Transform to database format
       const dbThanks = forDbInsert(data, userId);
 
@@ -255,6 +287,30 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         );
         throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
       }
+
+      const userId = userData.user.id;
+
+      // Fetch existing thanks to validate business rules
+      const { data: existingThanks, error: fetchError } = await supabase
+        .from("thanks")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === "PGRST116") {
+          logger.debug("🙏 Thanks Service: Thanks not found for update", { id });
+          throw new Error("Thanks not found");
+        }
+        logger.error("🙏 Thanks Service: Failed to fetch thanks for update", {
+          id,
+          error: fetchError,
+        });
+        throw fetchError;
+      }
+
+      // Validate business rules before database operation
+      validateThanksUpdate(existingThanks, data, userId);
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
