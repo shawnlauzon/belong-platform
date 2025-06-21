@@ -189,14 +189,24 @@ export async function cleanupTestResources(
       });
 
       if (testItems.length > 0) {
+        console.log(`Found ${testItems.length} test ${resourceType}s to clean up`);
+        
+        // Limit cleanup to prevent timeouts - only clean up recent items
+        const recentItems = testItems.slice(0, 10); // Only clean up 10 most recent items
+        
+        if (recentItems.length < testItems.length) {
+          console.warn(`Limiting cleanup to ${recentItems.length} most recent items out of ${testItems.length} total`);
+        }
+
         const { result: deleteResult } = useDeleteHook(wrapper);
 
-        // Delete all test items using consolidated hook
-        for (const item of testItems) {
-          await act(async () => {
-            await deleteResult.current.delete(item.id);
-          });
-        }
+        // Delete items in parallel for better performance
+        await act(async () => {
+          const deletePromises = recentItems.map(item => 
+            deleteResult.current.delete(item.id)
+          );
+          await Promise.all(deletePromises);
+        });
       }
     }
   } catch (error) {
