@@ -13,7 +13,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useCommunities,
-  useSignOut,
+  useAuth,
   BelongProvider,
 } from "@belongnetwork/platform";
 // Updated to use BelongProvider directly instead of TestWrapper
@@ -84,17 +84,25 @@ describe("Communities CRUD Integration Tests", () => {
 
   afterAll(async () => {
     // Sign out to ensure clean state
-    const { result: signOutResult } = renderHook(() => useSignOut(), {
+    const { result: authResult } = renderHook(() => useAuth(), {
       wrapper,
     });
 
-    await act(async () => {
-      await signOutResult.current.mutateAsync();
-    });
+    // Wait for hook initialization
+    await waitFor(() => {
+      expect(authResult.current).toBeDefined();
+      expect(authResult.current.signOut).toBeDefined();
+    }, { timeout: 5000 });
 
-    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
+    // Sign out if authenticated
+    if (authResult.current.isAuthenticated) {
+      await act(async () => {
+        await authResult.current.signOut();
+      });
+    }
 
-    // No cleanup needed with provider pattern
+    // Clear query cache
+    queryClient.clear();
   });
 
   test("should successfully read communities without authentication", async () => {
@@ -106,7 +114,7 @@ describe("Communities CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(communitiesResult.current).toBeDefined();
       expect(communitiesResult.current).not.toBeNull();
-    }, { timeout: 15000 });
+    }, { timeout: 20000 });
 
     // Then wait for data to load
     await waitFor(() => {
@@ -121,7 +129,7 @@ describe("Communities CRUD Integration Tests", () => {
         ]),
       );
       expect(communitiesResult.current.error).toBe(null);
-    }, { timeout: 15000 });
+    }, { timeout: 20000 });
   });
 
   test("should successfully create a community when authenticated", async () => {

@@ -172,7 +172,7 @@ export async function cleanupTestResources(
     // Wait for data to load
     await waitFor(() => {
       expect(listResult.current).toBeDefined();
-    });
+    }, { timeout: 10000 });
 
     // Get the appropriate data array from consolidated hook
     const dataField = resourceType === "community" ? "communities" : 
@@ -180,7 +180,7 @@ export async function cleanupTestResources(
                      resourceType === "event" ? "events" :
                      resourceType === "thanks" ? "thanks" : null;
     
-    if (dataField && listResult.current[dataField]) {
+    if (dataField && listResult.current && listResult.current[dataField]) {
       // Find all items with INTEGRATION_TEST_ prefix
       const testItems = listResult.current[dataField].filter((item: any) => {
         const nameField = resourceType === "thanks" ? "message" : 

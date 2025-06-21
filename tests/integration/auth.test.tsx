@@ -59,10 +59,26 @@ describe("Authentication Integration", () => {
   // Clean up auth state between tests to ensure isolation
   async function signOutBetweenTests() {
     try {
-      // Don't invalidate queries - this breaks auth state for useBelong
-      // The tests will handle their own auth setup and cleanup
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      
+      // Wait for hook initialization
+      await waitFor(() => {
+        expect(result.current).toBeDefined();
+        expect(result.current.signOut).toBeDefined();
+      }, { timeout: 5000 });
+
+      // Sign out if authenticated
+      if (result.current.isAuthenticated) {
+        await act(async () => {
+          await result.current.signOut();
+        });
+      }
+
+      // Clear query cache to ensure clean state
+      queryClient.clear();
     } catch (error) {
-      // Ignore errors during cleanup
+      // Ignore errors during cleanup but clear cache anyway
+      queryClient.clear();
     }
   }
 
