@@ -12,11 +12,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useThanks,
-  useCreateThanks,
-  useUpdateThanks,
-  useDeleteThanks,
-  useCreateResource,
-  useDeleteResource,
+  useResources,
   useSignUp,
   useSignIn,
   useSignOut,
@@ -85,7 +81,7 @@ describe("Thanks Validation Integration Tests", () => {
 
     // Now create a test resource while authenticated as first user (testUser)
     const { result: createResourceResult } = renderHook(
-      () => useCreateResource(),
+      () => useResources(),
       {
         wrapper,
       },
@@ -94,13 +90,10 @@ describe("Thanks Validation Integration Tests", () => {
     const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
-      await createResourceResult.current.mutateAsync(resourceData);
+      testResource = await createResourceResult.current.create(resourceData);
     });
 
-    await waitFor(() =>
-      expect(createResourceResult.current.isSuccess).toBe(true),
-    );
-    testResource = createResourceResult.current.data!;
+    expect(testResource).toBeDefined();
     // Note: main test resource cleaned up in afterAll
   });
 
@@ -122,19 +115,15 @@ describe("Thanks Validation Integration Tests", () => {
     // Clean up test resource
     if (testResource) {
       const { result: deleteResourceResult } = renderHook(
-        () => useDeleteResource(),
+        () => useResources(),
         {
           wrapper,
         },
       );
 
       await act(async () => {
-        await deleteResourceResult.current.mutateAsync(testResource.id);
+        await deleteResourceResult.current.delete(testResource.id);
       });
-
-      await waitFor(() =>
-        expect(deleteResourceResult.current.isSuccess).toBe(true),
-      );
     }
 
     // Sign out to ensure clean state
@@ -161,7 +150,7 @@ describe("Thanks Validation Integration Tests", () => {
       wrapper,
       "thanks",
       () => renderHook(() => useThanks(), { wrapper }),
-      () => renderHook(() => useDeleteThanks(), { wrapper }),
+      () => renderHook(() => useThanks(), { wrapper }),
       act,
       waitFor,
     );
@@ -171,7 +160,7 @@ describe("Thanks Validation Integration Tests", () => {
     const { testUser } = authSetup;
 
     // Try to create thanks with same user as sender and receiver using shared resource
-    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+    const { result: createThanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
@@ -184,23 +173,17 @@ describe("Thanks Validation Integration Tests", () => {
       imageUrls: [],
     };
 
+    let error: any;
     await act(async () => {
-      await createThanksResult.current.mutateAsync(selfThanksData);
+      try {
+        await createThanksResult.current.create(selfThanksData);
+      } catch (e) {
+        error = e;
+      }
     });
 
-    await waitFor(() => {
-      expect(
-        createThanksResult.current.isError ||
-          createThanksResult.current.isSuccess,
-      ).toBe(true);
-    });
-
-    expect(createThanksResult.current).toMatchObject({
-      isError: true,
-      error: expect.objectContaining({
-        message: "Cannot thank yourself",
-      }),
-    });
+    expect(error).toBeDefined();
+    expect(error.message).toBe("Cannot thank yourself");
   });
 
   test("should fail to update thanks when trying to change sender", async () => {
@@ -209,7 +192,7 @@ describe("Thanks Validation Integration Tests", () => {
     // Use pre-created third user
 
     // Create thanks first
-    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+    const { result: createThanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
@@ -219,51 +202,42 @@ describe("Thanks Validation Integration Tests", () => {
       testResource.id,
     );
 
+    let createdThanks: any;
     await act(async () => {
-      await createThanksResult.current.mutateAsync(thanksData);
+      createdThanks = await createThanksResult.current.create(thanksData);
     });
 
-    await waitFor(() =>
-      expect(createThanksResult.current.isSuccess).toBe(true),
-    );
-    const createdThanks = createThanksResult.current.data!;
+    expect(createdThanks).toBeDefined();
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Try to update thanks with different sender
-    const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
+    const { result: updateThanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
     const updateDataWithSender = {
-      id: createdThanks.id,
       fromUserId: recipientUser.userId!, // Trying to change sender - should fail
       message: "Updated message",
     };
 
+    let error: any;
     await act(async () => {
-      await updateThanksResult.current.mutateAsync(updateDataWithSender);
+      try {
+        await updateThanksResult.current.update(createdThanks.id, updateDataWithSender);
+      } catch (e) {
+        error = e;
+      }
     });
 
-    await waitFor(() => {
-      expect(
-        updateThanksResult.current.isError ||
-          updateThanksResult.current.isSuccess,
-      ).toBe(true);
-    });
-
-    expect(updateThanksResult.current).toMatchObject({
-      isError: true,
-      error: expect.objectContaining({
-        message: "Cannot change the sender of thanks",
-      }),
-    });
+    expect(error).toBeDefined();
+    expect(error.message).toBe("Cannot change the sender of thanks");
   });
 
   test("should fail to update thanks when trying to change receiver to sender", async () => {
     const { testUser } = authSetup;
 
     // Create thanks first
-    const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
+    const { result: createThanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
@@ -273,45 +247,37 @@ describe("Thanks Validation Integration Tests", () => {
       testResource.id,
     );
 
+    let createdThanks: any;
     await act(async () => {
-      await createThanksResult.current.mutateAsync(thanksData);
+      createdThanks = await createThanksResult.current.create(thanksData);
     });
 
-    await waitFor(() =>
-      expect(createThanksResult.current.isSuccess).toBe(true),
-    );
-    const createdThanks = createThanksResult.current.data!;
+    expect(createdThanks).toBeDefined();
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Try to update thanks with receiver as sender
-    const { result: updateThanksResult } = renderHook(() => useUpdateThanks(), {
+    const { result: updateThanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
     const updateDataWithReceiverAsSender = {
-      id: createdThanks.id,
       toUserId: testUser.userId!, // Trying to change receiver to sender - should fail
       message: "Updated message",
     };
 
+    let error: any;
     await act(async () => {
-      await updateThanksResult.current.mutateAsync(
-        updateDataWithReceiverAsSender,
-      );
+      try {
+        await updateThanksResult.current.update(
+          createdThanks.id,
+          updateDataWithReceiverAsSender,
+        );
+      } catch (e) {
+        error = e;
+      }
     });
 
-    await waitFor(() => {
-      expect(
-        updateThanksResult.current.isError ||
-          updateThanksResult.current.isSuccess,
-      ).toBe(true);
-    });
-
-    expect(updateThanksResult.current).toMatchObject({
-      isError: true,
-      error: expect.objectContaining({
-        message: "Cannot change receiver to yourself",
-      }),
-    });
+    expect(error).toBeDefined();
+    expect(error.message).toBe("Cannot change receiver to yourself");
   });
 });

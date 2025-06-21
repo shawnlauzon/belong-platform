@@ -44,15 +44,10 @@ export async function createAndAuthenticateUser(
   });
 
   await waitFor(() => {
-    expect(communitiesResult.current).toEqual(
-      expect.objectContaining({
-        isSuccess: true,
-        data: expect.any(Array),
-        error: null,
-      }),
-    );
+    expect(communitiesResult.current.communities).toEqual(expect.any(Array));
+    expect(communitiesResult.current.error).toBe(null);
   });
-  const existingCommunity = communitiesResult.current.data?.[0];
+  const existingCommunity = communitiesResult.current.communities?.[0];
   expect(existingCommunity).toBeDefined();
   testCommunity.id = existingCommunity!.id;
 

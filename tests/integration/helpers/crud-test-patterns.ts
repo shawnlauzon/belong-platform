@@ -166,28 +166,36 @@ export async function cleanupTestResources(
   waitFor: any,
 ) {
   try {
-    // Get list of all items
+    // Get list of all items using consolidated hook
     const { result: listResult } = useListHook(wrapper);
 
+    // Wait for data to load
     await waitFor(() => {
-      expect(listResult.current.isSuccess || listResult.current.isError).toBe(
-        true,
-      );
+      expect(listResult.current).toBeDefined();
     });
 
-    if (listResult.current.isSuccess && listResult.current.data) {
+    // Get the appropriate data array from consolidated hook
+    const dataField = resourceType === "community" ? "communities" : 
+                     resourceType === "resource" ? "resources" :
+                     resourceType === "event" ? "events" :
+                     resourceType === "thanks" ? "thanks" : null;
+    
+    if (dataField && listResult.current[dataField]) {
       // Find all items with INTEGRATION_TEST_ prefix
-      const testItems = listResult.current.data.filter((item: any) => {
-        const nameField = resourceType === "thanks" ? "message" : "title";
+      const testItems = listResult.current[dataField].filter((item: any) => {
+        const nameField = resourceType === "thanks" ? "message" : 
+                         resourceType === "community" ? "name" : "title";
         return item[nameField]?.includes("INTEGRATION_TEST_");
       });
 
       if (testItems.length > 0) {
         const { result: deleteResult } = useDeleteHook(wrapper);
 
-        // Delete all test items
+        // Delete all test items using consolidated hook
         for (const item of testItems) {
-          await performCleanupDeletion(deleteResult, item.id, act, waitFor);
+          await act(async () => {
+            await deleteResult.current.delete(item.id);
+          });
         }
       }
     }

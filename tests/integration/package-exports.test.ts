@@ -34,19 +34,15 @@ describe("Package Exports Integration", () => {
   describe("Hook Exports", () => {
     const expectedHooks = [
       "useBelong",
-      "useAuth",
-      "useResources",
+      "useAuth", 
+      "useSignIn",
+      "useSignUp", 
+      "useSignOut",
       "useCommunities",
-      "useCommunity",
-      "useCreateCommunity",
       "useResources",
-      "useCreateResource",
       "useEvents",
-      "useCreateEvent",
       "useThanks",
-      "useCreateThanks",
       "useUsers",
-      "useCreateUser",
     ];
 
     it.each(expectedHooks)("should export %s hook", (hookName) => {

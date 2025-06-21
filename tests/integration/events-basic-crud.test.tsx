@@ -12,9 +12,6 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useEvents,
-  useCreateEvent,
-  useUpdateEvent,
-  useDeleteEvent,
   useSignOut,
   BelongProvider,
 } from "@belongnetwork/platform";
@@ -78,7 +75,7 @@ describe("Events Basic CRUD Integration Tests", () => {
       wrapper,
       "event",
       () => renderHook(() => useEvents(), { wrapper }),
-      () => renderHook(() => useDeleteEvent(), { wrapper }),
+      () => renderHook(() => useEvents(), { wrapper }),
       act,
       waitFor,
     );
@@ -105,13 +102,8 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(eventsResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.any(Array),
-          error: null,
-        }),
-      );
+      expect(eventsResult.current.events).toEqual(expect.any(Array));
+      expect(eventsResult.current.error).toBe(null);
     });
   });
 
@@ -119,28 +111,23 @@ describe("Events Basic CRUD Integration Tests", () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event
-    const { result: createEventResult } = renderHook(() => useCreateEvent(), {
+    const { result: createEventResult } = renderHook(() => useEvents(), {
       wrapper,
     });
 
     const eventData = generateEventData(testCommunity.id!, testUser.userId!);
 
+    let createdEvent: any;
     await act(async () => {
-      await createEventResult.current.mutateAsync(eventData);
+      createdEvent = await createEventResult.current.create(eventData);
     });
 
-    await waitFor(() => {
-      expect(createEventResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-          title: eventData.title,
-          description: eventData.description,
-          location: eventData.location,
-          isActive: eventData.isActive,
-        }),
-        error: null,
-      });
+    expect(createdEvent).toMatchObject({
+      id: expect.any(String),
+      title: eventData.title,
+      description: eventData.description,
+      location: eventData.location,
+      isActive: eventData.isActive,
     });
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
@@ -150,19 +137,16 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(eventsResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              id: createEventResult.current.data!.id,
-              title: eventData.title,
-              location: eventData.location,
-            }),
-          ]),
-          error: null,
-        }),
+      expect(eventsResult.current.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: createdEvent.id,
+            title: eventData.title,
+            location: eventData.location,
+          }),
+        ])
       );
+      expect(eventsResult.current.error).toBe(null);
     });
   });
 
@@ -170,7 +154,7 @@ describe("Events Basic CRUD Integration Tests", () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
-    const { result: createEventResult } = renderHook(() => useCreateEvent(), {
+    const { result: createEventResult } = renderHook(() => useEvents(), {
       wrapper,
     });
 
@@ -179,51 +163,39 @@ describe("Events Basic CRUD Integration Tests", () => {
       title: "Test Event to Update",
     };
 
+    let createdEvent: any;
     await act(async () => {
-      await createEventResult.current.mutateAsync(eventData);
+      createdEvent = await createEventResult.current.create(eventData);
     });
 
-    await waitFor(() => {
-      expect(createEventResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
+    expect(createdEvent).toMatchObject({
+      id: expect.any(String),
     });
-    const createdEvent = createEventResult.current.data!;
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the event
-    const { result: updateEventResult } = renderHook(() => useUpdateEvent(), {
+    const { result: updateEventResult } = renderHook(() => useEvents(), {
       wrapper,
     });
 
     const updatedTitle = "Updated Event Title";
     const updatedDescription = "Updated event description";
     const updateData = {
-      id: createdEvent.id,
       title: updatedTitle,
       description: updatedDescription,
     };
 
+    let updatedEvent: any;
     await act(async () => {
-      await updateEventResult.current.mutateAsync(updateData);
+      updatedEvent = await updateEventResult.current.update(createdEvent.id, updateData);
     });
 
-    await waitFor(() => {
-      expect(updateEventResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: createdEvent.id,
-          title: updatedTitle,
-          description: updatedDescription,
-          location: eventData.location,
-          isActive: eventData.isActive,
-        }),
-        error: null,
-      });
+    expect(updatedEvent).toMatchObject({
+      id: createdEvent.id,
+      title: updatedTitle,
+      description: updatedDescription,
+      location: eventData.location,
+      isActive: eventData.isActive,
     });
 
     // Verify event is updated in the list
@@ -232,18 +204,15 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyUpdateResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              id: createdEvent.id,
-              title: updatedTitle,
-            }),
-          ]),
-          error: null,
-        }),
+      expect(verifyUpdateResult.current.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: createdEvent.id,
+            title: updatedTitle,
+          }),
+        ])
       );
+      expect(verifyUpdateResult.current.error).toBe(null);
     });
   });
 
@@ -251,7 +220,7 @@ describe("Events Basic CRUD Integration Tests", () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
-    const { result: createEventResult } = renderHook(() => useCreateEvent(), {
+    const { result: createEventResult } = renderHook(() => useEvents(), {
       wrapper,
     });
 
@@ -260,27 +229,23 @@ describe("Events Basic CRUD Integration Tests", () => {
       title: "Test Event to Delete",
     };
 
+    let createdEvent: any;
     await act(async () => {
-      await createEventResult.current.mutateAsync(eventData);
+      createdEvent = await createEventResult.current.create(eventData);
     });
 
-    await waitFor(() => expect(createEventResult.current.isSuccess).toBe(true));
-    const createdEvent = createEventResult.current.data!;
+    expect(createdEvent).toBeDefined();
 
     // Delete the event
-    const { result: deleteEventResult } = renderHook(() => useDeleteEvent(), {
+    const { result: deleteEventResult } = renderHook(() => useEvents(), {
       wrapper,
     });
 
     await act(async () => {
-      await deleteEventResult.current.mutateAsync(createdEvent.id);
+      await deleteEventResult.current.delete(createdEvent.id);
     });
 
-    await waitFor(() => {
-      expect(deleteEventResult.current).toMatchObject(
-        commonDeleteSuccessExpectation,
-      );
-    });
+    // Delete operation should succeed without throwing
 
     // Verify event is deleted (or at least not findable in the list)
     const { result: verifyDeleteResult } = renderHook(() => useEvents(), {
@@ -288,17 +253,14 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyDeleteResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.not.arrayContaining([
-            expect.objectContaining({
-              id: createdEvent.id,
-            }),
-          ]),
-          error: null,
-        }),
+      expect(verifyDeleteResult.current.events).toEqual(
+        expect.not.arrayContaining([
+          expect.objectContaining({
+            id: createdEvent.id,
+          }),
+        ])
       );
+      expect(verifyDeleteResult.current.error).toBe(null);
     });
   });
 });
