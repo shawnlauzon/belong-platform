@@ -35,7 +35,36 @@ describe("Resources CRUD Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Create query client once for all tests
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+    const tempQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+    const tempWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={tempQueryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
+    );
+    authSetup = await createAndAuthenticateUser(tempWrapper);
+  });
+
+  beforeEach(async () => {
+    // Create query client once for all tests - simulating real-world persistence
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -51,29 +80,27 @@ describe("Resources CRUD Integration Tests", () => {
         },
       },
     });
-
     const config = {
       supabaseUrl: process.env.VITE_SUPABASE_URL!,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <BelongProvider config={config}>{children}</BelongProvider>
       </QueryClientProvider>
     );
-
-    // Set up authenticated user once for all tests
-    authSetup = await createAndAuthenticateUser(wrapper);
-  });
-
-  beforeEach(async () => {
-    // Reset for each test - no expensive operations here
+    
+    // Wait for hooks to be ready before each test
+    const { result: resourcesHook } = renderHook(() => useResources(), { wrapper });
+    await waitFor(() => {
+      expect(resourcesHook.current).toBeDefined();
+      expect(resourcesHook.current).not.toBeNull();
+    }, { timeout: 15000 });
   });
 
   afterEach(async () => {
-    // Clean up all test resources using name-based cleanup
+    // Clean up only test data, not application state (like real world)
     await cleanupTestResources(
       wrapper,
       "resource",
@@ -104,6 +131,13 @@ describe("Resources CRUD Integration Tests", () => {
       wrapper,
     });
 
+    // Wait for hook to initialize properly first
+    await waitFor(() => {
+      expect(resourcesResult.current).toBeDefined();
+      expect(resourcesResult.current).not.toBeNull();
+    }, { timeout: 15000 });
+
+    // Then wait for data to load
     await waitFor(() => {
       expect(resourcesResult.current.resources).toEqual(
         expect.arrayContaining([
@@ -116,7 +150,7 @@ describe("Resources CRUD Integration Tests", () => {
         ])
       );
       expect(resourcesResult.current.error).toBe(null);
-    });
+    }, { timeout: 15000 });
   });
 
   test("should successfully create a resource when authenticated", async () => {
@@ -129,6 +163,13 @@ describe("Resources CRUD Integration Tests", () => {
         wrapper,
       },
     );
+
+    // Wait for hook to initialize properly
+    await waitFor(() => {
+      expect(createResourceResult.current).toBeDefined();
+      expect(createResourceResult.current).not.toBeNull();
+      expect(typeof createResourceResult.current.create).toBe('function');
+    }, { timeout: 15000 });
 
     const resourceData = generateResourceData(testCommunity.id!);
 

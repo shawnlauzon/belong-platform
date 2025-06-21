@@ -11,6 +11,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["tests/integration/database/setup.ts"],
     globals: true,
+    testTimeout: 20000, // 20 seconds to match hook readiness timeouts
     // Run integration tests sequentially to avoid conflicts
     pool: "forks",
     poolOptions: {

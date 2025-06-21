@@ -42,8 +42,12 @@ describe("Thanks Validation Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Create query client once for all tests
-    queryClient = new QueryClient({
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+    const tempQueryClient = new QueryClient({
       defaultOptions: {
         queries: {
           retry: false,
@@ -58,24 +62,17 @@ describe("Thanks Validation Integration Tests", () => {
         },
       },
     });
-
-    const config = {
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    };
-
-    wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
+    const tempWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={tempQueryClient}>
         <BelongProvider config={config}>{children}</BelongProvider>
       </QueryClientProvider>
     );
 
     // Set up authenticated user once for all tests - this user will create all test items
-    authSetup = await createAndAuthenticateUser(wrapper);
+    authSetup = await createAndAuthenticateUser(tempWrapper);
 
     // Create a second user for recipient scenarios (but don't leave them authenticated)
-    recipientUser = await createAdditionalUser(wrapper, authSetup.testUser);
+    recipientUser = await createAdditionalUser(tempWrapper, authSetup.testUser);
 
     // User is already authenticated from createAndAuthenticateUser above
 
@@ -83,7 +80,7 @@ describe("Thanks Validation Integration Tests", () => {
     const { result: createResourceResult } = renderHook(
       () => useResources(),
       {
-        wrapper,
+        wrapper: tempWrapper,
       },
     );
 
@@ -141,11 +138,43 @@ describe("Thanks Validation Integration Tests", () => {
   });
 
   beforeEach(async () => {
-    // Reset for each test - no expensive operations here
+    // Create query client once for all tests - simulating real-world persistence
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
+    );
+    
+    // Wait for hooks to be ready before each test
+    const { result: thanksHook } = renderHook(() => useThanks(), { wrapper });
+    await waitFor(() => {
+      expect(thanksHook.current).toBeDefined();
+      expect(thanksHook.current).not.toBeNull();
+    }, { timeout: 15000 });
   });
 
   afterEach(async () => {
-    // Clean up all test thanks using name-based cleanup
+    // Clean up only test data, not application state (like real world)
     await cleanupTestResources(
       wrapper,
       "thanks",

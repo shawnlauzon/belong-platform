@@ -72,6 +72,13 @@ describe("Authentication Integration", () => {
 
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
+    // Wait for hook to initialize properly
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+      expect(result.current).not.toBeNull();
+      expect(typeof result.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = "TestPassword123!";
     const testUser = {
@@ -101,6 +108,13 @@ describe("Authentication Integration", () => {
     // First create a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
+    // Wait for signup hook to initialize properly
+    await waitFor(() => {
+      expect(signUpResult.current).toBeDefined();
+      expect(signUpResult.current).not.toBeNull();
+      expect(typeof signUpResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = "TestPassword123!";
     const testUser = {
@@ -118,6 +132,13 @@ describe("Authentication Integration", () => {
 
     // Now test sign in
     const { result } = renderHook(() => useSignIn(), { wrapper });
+
+    // Wait for signin hook to initialize properly
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+      expect(result.current).not.toBeNull();
+      expect(typeof result.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
 
     await act(async () => {
       await result.current.mutateAsync({
@@ -171,6 +192,19 @@ describe("Authentication Integration", () => {
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
     const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
 
+    // Wait for hooks to initialize properly
+    await waitFor(() => {
+      expect(signUpResult.current).toBeDefined();
+      expect(signUpResult.current).not.toBeNull();
+      expect(typeof signUpResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
+    await waitFor(() => {
+      expect(signInResult.current).toBeDefined();
+      expect(signInResult.current).not.toBeNull();
+      expect(typeof signInResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
     // Step 2: Sign up user
     await act(async () => {
       await signUpResult.current.mutateAsync(testUser);
@@ -189,7 +223,7 @@ describe("Authentication Integration", () => {
     // Step 4: Test BelongProvider with authenticated user
     const TestComponent = () => {
       const data = useBelong();
-      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      if (data.isPending || !data.currentUser) return <div data-testid="loading">Loading...</div>;
       return <div data-testid="user-data">{data.currentUser?.email || ""}</div>;
     };
 
@@ -224,6 +258,25 @@ describe("Authentication Integration", () => {
       wrapper,
     });
 
+    // Wait for all hooks to initialize properly
+    await waitFor(() => {
+      expect(signUpResult.current).toBeDefined();
+      expect(signUpResult.current).not.toBeNull();
+      expect(typeof signUpResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
+    await waitFor(() => {
+      expect(signInResult.current).toBeDefined();
+      expect(signInResult.current).not.toBeNull();
+      expect(typeof signInResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
+    await waitFor(() => {
+      expect(signOutResult.current).toBeDefined();
+      expect(signOutResult.current).not.toBeNull();
+      expect(typeof signOutResult.current.mutateAsync).toBe('function');
+    }, { timeout: 15000 });
+
     // Step 2: Sign up user
     await act(async () => {
       await signUpResult.current.mutateAsync(testUser);
@@ -242,7 +295,7 @@ describe("Authentication Integration", () => {
     // Step 4: Verify user is authenticated with BelongProvider
     const AuthenticatedComponent = () => {
       const data = useBelong();
-      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      if (data.isPending || !data.currentUser) return <div data-testid="loading">Loading...</div>;
       return (
         <div data-testid="authenticated-user">
           {data.currentUser?.email || ""}

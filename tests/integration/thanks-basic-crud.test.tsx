@@ -41,7 +41,7 @@ describe("Thanks Basic CRUD Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Create query client once for all tests
+    // Create query client once for all tests - simulating real-world persistence
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -138,7 +138,13 @@ describe("Thanks Basic CRUD Integration Tests", () => {
   });
 
   beforeEach(async () => {
-    // Reset for each test - no expensive operations here
+    // No expensive operations here - maintain real-world flow
+    // Wait for hooks to be ready before each test
+    const { result: thanksHook } = renderHook(() => useThanks(), { wrapper });
+    await waitFor(() => {
+      expect(thanksHook.current).toBeDefined();
+      expect(thanksHook.current).not.toBeNull();
+    }, { timeout: 15000 });
   });
 
   afterEach(async () => {
@@ -151,12 +157,18 @@ describe("Thanks Basic CRUD Integration Tests", () => {
       wrapper,
     });
 
+    // Wait for hook to initialize properly first
     await waitFor(() => {
       expect(thanksResult.current).toBeDefined();
+      expect(thanksResult.current).not.toBeNull();
+    }, { timeout: 15000 });
+
+    // Then wait for data to load
+    await waitFor(() => {
       expect(thanksResult.current.isLoading).toBe(false);
       expect(thanksResult.current.thanks).toEqual(expect.any(Array));
       expect(thanksResult.current.error).toBe(null);
-    });
+    }, { timeout: 15000 });
   });
 
   test("should successfully create thanks when authenticated", async () => {
@@ -168,11 +180,12 @@ describe("Thanks Basic CRUD Integration Tests", () => {
       wrapper,
     });
 
-    // Wait for hook to be ready
+    // Wait for hook to initialize properly
     await waitFor(() => {
       expect(thanksHook.current).toBeDefined();
-      expect(thanksHook.current.create).toBeDefined();
-    });
+      expect(thanksHook.current).not.toBeNull();
+      expect(typeof thanksHook.current.create).toBe('function');
+    }, { timeout: 15000 });
 
     const thanksData = generateThanksData(
       testUser.userId!,

@@ -33,7 +33,7 @@ describe("Communities CRUD Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Create query client once for all tests
+    // Create query client once for all tests - simulating real-world persistence
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -67,11 +67,11 @@ describe("Communities CRUD Integration Tests", () => {
   });
 
   beforeEach(async () => {
-    // Reset for each test - no expensive operations here
+    // No expensive operations here - maintain real-world flow
   });
 
   afterEach(async () => {
-    // Clean up all test communities using name-based cleanup
+    // Clean up only test data, not application state (like real world)
     await cleanupTestResources(
       wrapper,
       "community",
@@ -102,6 +102,13 @@ describe("Communities CRUD Integration Tests", () => {
       wrapper,
     });
 
+    // Wait for hook to initialize properly first
+    await waitFor(() => {
+      expect(communitiesResult.current).toBeDefined();
+      expect(communitiesResult.current).not.toBeNull();
+    }, { timeout: 15000 });
+
+    // Then wait for data to load
     await waitFor(() => {
       expect(communitiesResult.current.communities).toEqual(
         expect.arrayContaining([
@@ -114,7 +121,7 @@ describe("Communities CRUD Integration Tests", () => {
         ]),
       );
       expect(communitiesResult.current.error).toBe(null);
-    });
+    }, { timeout: 15000 });
   });
 
   test("should successfully create a community when authenticated", async () => {
@@ -128,10 +135,12 @@ describe("Communities CRUD Integration Tests", () => {
       },
     );
 
-    // Wait for hook to be ready
+    // Wait for hook to initialize properly
     await waitFor(() => {
+      expect(communitiesHook.current).toBeDefined();
       expect(communitiesHook.current).not.toBeNull();
-    });
+      expect(typeof communitiesHook.current.create).toBe('function');
+    }, { timeout: 15000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),
@@ -190,6 +199,13 @@ describe("Communities CRUD Integration Tests", () => {
         wrapper,
       },
     );
+
+    // Wait for hook to initialize properly
+    await waitFor(() => {
+      expect(communitiesResult.current).toBeDefined();
+      expect(communitiesResult.current).not.toBeNull();
+      expect(typeof communitiesResult.current.create).toBe('function');
+    }, { timeout: 15000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),
@@ -262,6 +278,13 @@ describe("Communities CRUD Integration Tests", () => {
         wrapper,
       },
     );
+
+    // Wait for hook to initialize properly
+    await waitFor(() => {
+      expect(communitiesResult.current).toBeDefined();
+      expect(communitiesResult.current).not.toBeNull();
+      expect(typeof communitiesResult.current.create).toBe('function');
+    }, { timeout: 15000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),
