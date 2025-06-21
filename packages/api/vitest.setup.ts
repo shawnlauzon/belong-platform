@@ -10,3 +10,15 @@ vi.mock("@belongnetwork/core", () => ({
     error: vi.fn(),
   },
 }));
+
+// Suppress console output during tests unless VITEST_VERBOSE is set
+if (process.env.VITEST_VERBOSE !== "true") {
+  global.console = {
+    ...console,
+    log: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
+}

@@ -13,7 +13,7 @@ export default defineConfig({
     globals: true,
     testTimeout: 30000, // 30 seconds to match hook readiness timeouts
     hookTimeout: 30000, // 30 seconds for renderHook timeouts
-    silent: true, // Run silently by default to reduce noise
+    silent: process.env.VITEST_VERBOSE !== "true", // Run silently by default to reduce noise
     // Run integration tests sequentially to avoid conflicts
     pool: "forks",
     poolOptions: {
