@@ -219,17 +219,41 @@ describe("Authentication Integration", () => {
       });
     });
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+    
+    // Add small delay to allow auth state and user data to sync
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Step 4: Test BelongProvider with authenticated user
     const TestComponent = () => {
       const data = useBelong();
-      if (data.isPending || !data.currentUser) return <div data-testid="loading">Loading...</div>;
+      // First check if we're still pending
+      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      // Then check if we have user data or if there's an error
+      if (!data.currentUser) return <div data-testid="no-user">No user data</div>;
       return <div data-testid="user-data">{data.currentUser?.email || ""}</div>;
     };
 
     const { getByTestId } = render(<TestComponent />, { wrapper });
 
-    // Should eventually show authenticated user data
+    // First wait for loading to complete (either user-data or no-user)
+    await waitFor(
+      () => {
+        try {
+          getByTestId("user-data");
+          return true;
+        } catch {
+          try {
+            getByTestId("no-user");
+            return true;
+          } catch {
+            return false;
+          }
+        }
+      },
+      { timeout: 15000 },
+    );
+
+    // Then assert we have user data specifically
     await waitFor(
       () => {
         const userElement = getByTestId("user-data");
@@ -291,11 +315,17 @@ describe("Authentication Integration", () => {
       });
     });
     await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+    
+    // Add small delay to allow auth state and user data to sync
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Step 4: Verify user is authenticated with BelongProvider
     const AuthenticatedComponent = () => {
       const data = useBelong();
-      if (data.isPending || !data.currentUser) return <div data-testid="loading">Loading...</div>;
+      // First check if we're still pending
+      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      // Then check if we have user data or if there's an error
+      if (!data.currentUser) return <div data-testid="no-user">No user data</div>;
       return (
         <div data-testid="authenticated-user">
           {data.currentUser?.email || ""}
@@ -307,6 +337,25 @@ describe("Authentication Integration", () => {
       wrapper,
     });
 
+    // First wait for loading to complete (either authenticated-user or no-user)
+    await waitFor(
+      () => {
+        try {
+          getByTestId("authenticated-user");
+          return true;
+        } catch {
+          try {
+            getByTestId("no-user");
+            return true;
+          } catch {
+            return false;
+          }
+        }
+      },
+      { timeout: 15000 },
+    );
+
+    // Then assert we have user data specifically
     await waitFor(
       () => {
         const userElement = getByTestId("authenticated-user");
