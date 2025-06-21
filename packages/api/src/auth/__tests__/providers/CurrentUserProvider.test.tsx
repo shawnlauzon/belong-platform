@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
-import { BelongProvider, useBelong } from "../../providers/CurrentUserProvider";
+import { BelongProvider } from "../../providers/CurrentUserProvider";
+import { useAuth } from "../../hooks/useAuth";
 
 // Mock the useAuth hook
 vi.mock("../../hooks/useAuth", () => ({
@@ -77,7 +78,7 @@ describe("BelongProvider", () => {
     } as any);
 
     const TestComponent = () => {
-      const data = useBelong();
+      const data = useAuth();
       return (
         <div>
           <div data-testid="pending-state">
@@ -122,7 +123,7 @@ describe("BelongProvider", () => {
     } as any);
 
     const TestComponent = () => {
-      const data = useBelong();
+      const data = useAuth();
       return (
         <div>
           <div data-testid="error-state">
@@ -179,7 +180,7 @@ describe("BelongProvider", () => {
     } as any);
 
     const TestComponent = () => {
-      const data = useBelong();
+      const data = useAuth();
       return (
         <div>
           <div data-testid="success-state">
@@ -229,7 +230,7 @@ describe("BelongProvider", () => {
     } as any);
 
     const TestComponent = () => {
-      const data = useBelong();
+      const data = useAuth();
       return (
         <div>
           <div data-testid="auth-state">
