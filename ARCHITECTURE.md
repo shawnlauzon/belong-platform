@@ -357,8 +357,9 @@ function ResourceForm() {
 ### 2. Loading States
 
 ```typescript
-function CommunityPage() {
-  const { data: community, isLoading, error } = useCommunity(id);
+function CommunityPage({ id }: { id: string }) {
+  const communities = useCommunities();
+  const { data: community, isLoading, error } = communities.getCommunity(id);
 
   if (isLoading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
