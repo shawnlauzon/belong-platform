@@ -240,12 +240,27 @@ packages/api/
 │   │   └── providers/     # BelongProvider component
 │   ├── communities/
 │   │   ├── hooks/         # Community data hooks
-│   │   ├── impl/          # Implementation details
-│   │   └── services/      # Community service layer
+│   │   ├── services/      # Community service layer
+│   │   └── transformers/  # Data transformation logic
 │   ├── resources/
+│   │   ├── hooks/         # Resource data hooks
+│   │   ├── services/      # Resource service layer
+│   │   └── transformers/  # Data transformation logic
 │   ├── events/
+│   │   ├── hooks/         # Event data hooks
+│   │   ├── services/      # Event service layer
+│   │   └── transformers/  # Data transformation logic
 │   ├── thanks/
-│   └── users/
+│   │   ├── hooks/         # Thanks data hooks
+│   │   ├── services/      # Thanks service layer
+│   │   └── transformers/  # Data transformation logic
+│   ├── users/
+│   │   ├── hooks/         # User data hooks
+│   │   ├── services/      # User service layer
+│   │   └── transformers/  # Data transformation logic
+│   ├── shared/
+│   │   └── queryKeys.ts   # Centralized query key management
+│   └── test-utils/        # Shared testing utilities
 ```
 
 **Key Responsibilities**:
@@ -254,6 +269,8 @@ packages/api/
 - Implement caching and synchronization with React Query
 - Provide the main BelongProvider component
 - Handle data transformations and business logic
+- Centralize service layer implementations
+- Maintain consistent transformer patterns across entities
 
 ---
 
@@ -827,14 +844,18 @@ feature/
 ├── hooks/           # Public API - consolidated hooks
 │   ├── index.ts
 │   └── useCommunities.ts  # Single hook per entity
-├── impl/            # Internal implementation
-│   ├── fetchCommunities.ts
-│   ├── createCommunity.ts
-│   └── communityTransformer.ts
 ├── services/        # Service factories
 │   └── community.service.ts
+├── transformers/    # Data transformation logic
+│   └── communityTransformer.ts
 └── index.ts         # Feature exports
 ```
+
+**Architecture Migration Notes**:
+- **Completed**: Migration from `impl/` pattern to `services/` + `transformers/` pattern
+- **Current Structure**: All business logic now centralized in service layer
+- **Transformation Logic**: Moved to dedicated transformer files for consistency
+- **Removed**: `impl/` directories have been eliminated across all features
 
 ## Internal Provider Implementation
 
@@ -894,6 +915,14 @@ useEffect(() => {
 
 ## Internal Data Layer Architecture
 
+### Service-Based Architecture
+
+The platform uses a service-based architecture where each domain entity has:
+
+1. **Service Layer**: Centralized business logic and data access
+2. **Transformer Layer**: Consistent data transformation patterns
+3. **Hook Layer**: React Query integration and state management
+
 ### Data Fetching Strategies
 
 The platform uses two main data fetching strategies:
@@ -903,15 +932,18 @@ The platform uses two main data fetching strategies:
 Default pattern, used for: Resources, Events, Thanks - where related data is often already cached
 
 ```typescript
-// Fetch base resource
-const resource = await fetchResource(id);
+// Service method using cache assembly
+async fetchResourceWithRelations(id: string) {
+  // Fetch base resource
+  const resource = await this.fetchResource(id);
 
-// Assemble related data from cache or fetch if needed
-const owner =
-  queryClient.getQueryData(['user', resource.ownerId]) ||
-  (await fetchUserById(resource.ownerId));
+  // Assemble related data from cache or fetch if needed
+  const owner = 
+    queryClient.getQueryData(['user', resource.ownerId]) ||
+    (await this.userService.fetchUserById(resource.ownerId));
 
-return { ...resource, owner };
+  return { ...resource, owner };
+}
 ```
 
 #### 2. SQL Joins Pattern
@@ -919,23 +951,49 @@ return { ...resource, owner };
 Used for: Communities - where related data is often not cached
 
 ```typescript
-// Fetch community with organizer data in single query
-const { data } = await supabase
-  .from('communities')
-  .select(
-    `
-    *,
-    organizer:users!organizer_id(*)
-  `
-  )
-  .single();
+// Service method using SQL joins
+async fetchCommunityWithRelations(id: string) {
+  const { data } = await supabase
+    .from('communities')
+    .select(`
+      *,
+      organizer:users!organizer_id(*)
+    `)
+    .single();
+    
+  return toCommunityWithRelations(data);
+}
+```
+
+### Service Layer Implementation
+
+Each service encapsulates all business logic for its domain:
+
+```typescript
+// services/community.service.ts
+export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
+  async fetchCommunities(options?: CommunityFetchOptions): Promise<CommunityInfo[]> {
+    // Implementation with proper error handling
+  },
+  
+  async fetchCommunityById(id: string): Promise<Community | null> {
+    // Implementation with cache integration
+  },
+  
+  async createCommunity(data: CommunityCreate): Promise<Community> {
+    // Implementation with validation and transformation
+  },
+  
+  // ... other CRUD operations
+});
 ```
 
 ### Query Key Convention
 
-Consistent query key structure for cache management:
+Centralized query key management in `shared/queryKeys.ts`:
 
 ```typescript
+// shared/queryKeys.ts
 export const queryKeys = {
   auth: ['auth'],
   users: {
@@ -946,14 +1004,33 @@ export const queryKeys = {
   communities: {
     all: ['communities'],
     byId: (id: string) => ['community', id],
-    memberships: (communityId: string) => [
-      'community',
-      communityId,
-      'memberships',
-    ],
+    memberships: (communityId: string) => ['community', communityId, 'memberships'],
+    userMemberships: (userId: string) => ['user', userId, 'memberships'],
+  },
+  resources: {
+    all: ['resources'],
+    byId: (id: string) => ['resource', id],
+    byCommunity: (communityId: string) => ['resources', 'community', communityId],
+  },
+  events: {
+    all: ['events'],
+    byId: (id: string) => ['event', id],
+    attendees: (eventId: string) => ['event', eventId, 'attendees'],
+    userAttendances: (userId: string) => ['user', userId, 'attendances'],
+  },
+  thanks: {
+    all: ['thanks'],
+    byId: (id: string) => ['thanks', id],
+    byCommunity: (communityId: string) => ['thanks', 'community', communityId],
   },
 };
 ```
+
+This centralized approach ensures:
+- Consistent cache invalidation patterns
+- Easier maintenance and updates
+- Better query dependency management
+- Reduced cache key duplication
 
 ### Internal Cache Management
 
@@ -1240,59 +1317,46 @@ When adding new features to the platform:
 ### Example: Adding a New Entity
 
 ```typescript
-// 1. Define schema (schemas/widget.schema.ts)
-export const WidgetSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  value: z.number(),
-  ownerId: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date()
-});
-
-export const WidgetCreateSchema = WidgetSchema
-  .omit({ id: true, createdAt: true, updatedAt: true });
-
-export type Widget = z.infer<typeof WidgetSchema>;
-
-// 2. Create service (services/widget.service.ts)
-export const createWidgetService = (supabase: SupabaseClient) => ({
-  async fetchWidgets() {
-    const { data, error } = await supabase
-      .from('widgets')
-      .select('*');
+// 1. Create service (services/entity.service.ts)
+export const createEntityService = (supabase: SupabaseClient<Database>) => ({
+  async fetchEntities(): Promise<EntityInfo[]> {
+    const { data, error } = await supabase.from('entities').select('*');
     if (error) throw error;
-    return z.array(WidgetFromDbSchema).parse(data);
+    return (data || []).map(toEntityInfo);
   },
   
-  async createWidget(input: unknown) {
-    const validated = WidgetCreateSchema.parse(input);
-    const dbData = WidgetDbSchema.parse(validated);
-    // ... implementation
+  async createEntity(data: EntityCreate): Promise<Entity> {
+    const { data: result, error } = await supabase
+      .from('entities').insert(forDbEntity(data)).select().single();
+    if (error) throw error;
+    return toEntity(result);
   }
 });
 
-// 3. Create consolidated hook (hooks/useWidgets.ts)
-export function useWidgets() {
-  const queryClient = useQueryClient();
-  const supabase = useSupabase();
-  const service = createWidgetService(supabase);
+// 2. Create transformer (transformers/entityTransformer.ts)
+export const toEntityInfo = (row: DbRow): EntityInfo => ({
+  id: row.id,
+  name: row.name,
+  ownerId: row.owner_id,
+  createdAt: new Date(row.created_at)
+});
+
+// 3. Create hook (hooks/useEntities.ts)
+export function useEntities() {
+  const service = createEntityService(useSupabase());
   
-  const widgetsQuery = useQuery({
-    queryKey: ['widgets'],
-    queryFn: service.fetchWidgets
+  const entitiesQuery = useQuery({
+    queryKey: queryKeys.entities.all,
+    queryFn: service.fetchEntities
   });
   
   const createMutation = useMutation({
-    mutationFn: service.createWidget,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['widgets'] });
-    }
+    mutationFn: service.createEntity,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.entities.all })
   });
   
   return {
-    widgets: widgetsQuery.data,
-    isLoading: widgetsQuery.isLoading,
+    entities: entitiesQuery.data,
     create: createMutation.mutateAsync,
     isCreating: createMutation.isPending
   };
