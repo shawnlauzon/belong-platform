@@ -1,16 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { signIn, signUp, signOut, getCurrentAuthUser, getCurrentUser } from '../auth.service';
-import { setupBelongClientMocks } from '../../../test-utils/mockSetup';
-
-vi.mock('@belongnetwork/core', () => ({
-  getBelongClient: vi.fn(),
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
+import { createAuthService } from '../auth.service';
 
 // Mock fetchUserById
 vi.mock('../../../users/impl/fetchUserById', () => ({
@@ -19,11 +8,37 @@ vi.mock('../../../users/impl/fetchUserById', () => ({
 
 describe('auth.service', () => {
   let mockSupabase: any;
+  let mockClient: any;
+  let authService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const mocks = setupBelongClientMocks();
-    mockSupabase = mocks.mockSupabase;
+    
+    // Create mock objects
+    mockSupabase = {
+      auth: {
+        getUser: vi.fn(),
+        signUp: vi.fn(),
+        signInWithPassword: vi.fn(),
+        signOut: vi.fn(),
+      },
+    };
+
+    mockClient = {
+      supabase: mockSupabase,
+      logger: {
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+      mapbox: {
+        autocomplete: vi.fn(),
+        reverseGeocode: vi.fn(),
+      },
+    };
+
+    authService = createAuthService(mockClient);
   });
 
   describe('getCurrentAuthUser', () => {
@@ -39,7 +54,7 @@ describe('auth.service', () => {
         error: null,
       });
 
-      const result = await getCurrentAuthUser();
+      const result = await authService.getCurrentAuthUser();
 
       expect(result).toEqual({
         id: 'user-123',
@@ -53,7 +68,7 @@ describe('auth.service', () => {
         error: null,
       });
 
-      const result = await getCurrentAuthUser();
+      const result = await authService.getCurrentAuthUser();
 
       expect(result).toBeNull();
     });
@@ -64,7 +79,7 @@ describe('auth.service', () => {
         error: { message: 'Auth session missing' },
       });
 
-      const result = await getCurrentAuthUser();
+      const result = await authService.getCurrentAuthUser();
 
       expect(result).toBeNull();
     });
@@ -76,7 +91,7 @@ describe('auth.service', () => {
         error: null,
       });
 
-      await expect(signOut()).resolves.toBeUndefined();
+      await expect(authService.signOut()).resolves.toBeUndefined();
       expect(mockSupabase.auth.signOut).toHaveBeenCalled();
     });
 
@@ -86,7 +101,7 @@ describe('auth.service', () => {
         error: mockError,
       });
 
-      await expect(signOut()).rejects.toThrow('Sign out failed');
+      await expect(authService.signOut()).rejects.toThrow('Sign out failed');
     });
   });
 });

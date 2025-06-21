@@ -5,7 +5,7 @@ export {
   type BelongClientConfig,
 } from './config/client';
 
-// Global Configuration
+// Global Configuration (DEPRECATED)
 export {
   initializeBelong,
   getBelongClient,

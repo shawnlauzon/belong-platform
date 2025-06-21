@@ -1,10 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, createContext, useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getBelongClient } from '@belongnetwork/core';
-import { logger } from '@belongnetwork/core';
+import { createBelongClient, type BelongClient, type BelongClientConfig } from '@belongnetwork/core';
 import { useAuth } from '../hooks/useAuth';
 import { User } from '@belongnetwork/types';
 import { queryKeys } from '../../shared/queryKeys';
+
+// Client context for internal usage
+const ClientContext = createContext<BelongClient | undefined>(undefined);
+
+// Hook to access client internally
+export const useClient = (): BelongClient => {
+  const context = useContext(ClientContext);
+  if (context === undefined) {
+    throw new Error('useClient must be used within BelongProvider');
+  }
+  return context;
+};
+
+// Hook to access client optionally (for individual hooks)
+export const useOptionalClient = (): BelongClient | undefined => {
+  return useContext(ClientContext);
+};
 
 interface BelongContextValue {
   // Current user data
@@ -34,15 +50,18 @@ export const useBelong = (): BelongContextValue => {
 
 interface BelongProviderProps {
   children: React.ReactNode;
+  config: BelongClientConfig;
 }
 
-export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
+// Inner component that uses useAuth - this runs after ClientContext is provided
+const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
+  const client = useClient(); // This will now work because we're inside ClientContext
   const authHook = useAuth();
 
   // Centralized auth state change handler - this is where ALL auth state management happens
   useEffect(() => {
-    const { supabase } = getBelongClient();
+    const { supabase } = client;
     
     // Check for existing session on mount
     const checkInitialSession = async () => {
@@ -53,7 +72,7 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
         queryClient.invalidateQueries({ 
           queryKey: queryKeys.users.byId(session.user.id) 
         });
-        logger.info('🔐 API: Existing session detected, invalidated caches');
+        client.logger.info('🔐 API: Existing session detected, invalidated caches');
       }
     };
     
@@ -62,7 +81,7 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
     // Set up auth state listener for all auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        logger.debug('🔐 API: Auth state change detected', { event, userId: session?.user?.id });
+        client.logger.debug('🔐 API: Auth state change detected', { event, userId: session?.user?.id });
         
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           // Invalidate auth state to refetch with new session
@@ -75,7 +94,7 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
             });
           }
           
-          logger.info('🔐 API: Auth state changed to SIGNED_IN, invalidated caches');
+          client.logger.info('🔐 API: Auth state changed to SIGNED_IN, invalidated caches');
         } else if (event === 'SIGNED_OUT') {
           // Get current user ID before clearing auth cache
           const currentAuthUser = queryClient.getQueryData(queryKeys.auth) as { id: string } | null;
@@ -90,7 +109,7 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
             });
           }
           
-          logger.info('🔐 API: Auth state changed to SIGNED_OUT, removed caches');
+          client.logger.info('🔐 API: Auth state changed to SIGNED_OUT, removed caches');
         }
       }
     );
@@ -99,7 +118,7 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [queryClient, client]);
 
   const contextValue: BelongContextValue = {
     // Current user data
@@ -120,6 +139,19 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({ children }) => {
     <BelongContext.Provider value={contextValue}>
       {children}
     </BelongContext.Provider>
+  );
+};
+
+export const BelongProvider: React.FC<BelongProviderProps> = ({ children, config }) => {
+  // Create client instance from config
+  const client = useMemo(() => createBelongClient(config), [config]);
+
+  return (
+    <ClientContext.Provider value={client}>
+      <BelongContextProvider>
+        {children}
+      </BelongContextProvider>
+    </ClientContext.Provider>
   );
 };
 

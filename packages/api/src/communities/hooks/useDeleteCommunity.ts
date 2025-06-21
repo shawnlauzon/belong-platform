@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteCommunity } from '../impl/deleteCommunity';
 import { logger } from '@belongnetwork/core';
+import { useClient } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
 
 export function useDeleteCommunity() {
+  const client = useClient();
   const queryClient = useQueryClient();
+  const communityService = createCommunityService(client);
 
   return useMutation({
-    mutationFn: (id: string) => deleteCommunity(id),
+    mutationFn: (id: string) => communityService.deleteCommunity(id),
     onSuccess: (_, id) => {
       // Remove the community from the cache
       queryClient.removeQueries({ queryKey: ['communities', id] });

@@ -9,23 +9,39 @@ vi.mock('../../hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@belongnetwork/core', () => ({
-  getBelongClient: vi.fn(() => ({
-    supabase: {
-      auth: {
-        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } }
-        })),
-      },
-    },
-  })),
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
+vi.mock('@belongnetwork/core', () => {
+  const mockLogger = {
     debug: vi.fn(),
-  },
-}));
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
+
+  const mockSupabase = {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } }
+      })),
+    },
+  };
+
+  const mockMapbox = {
+    autocomplete: vi.fn(),
+    reverseGeocode: vi.fn(),
+  };
+
+  const mockClient = {
+    supabase: mockSupabase as any,
+    logger: mockLogger as any,
+    mapbox: mockMapbox as any,
+  };
+
+  return {
+    createBelongClient: vi.fn(() => mockClient),
+    logger: mockLogger,
+  };
+});
 
 const mockUseAuth = vi.mocked(await import('../../hooks/useAuth')).useAuth;
 
@@ -73,7 +89,11 @@ describe('BelongProvider', () => {
     };
 
     render(
-      <BelongProvider>
+      <BelongProvider config={{
+        supabaseUrl: 'https://test.supabase.co',
+        supabaseAnonKey: 'test-key',
+        mapboxPublicToken: 'test-token'
+      }}>
         <TestComponent />
       </BelongProvider>,
       { wrapper }
@@ -109,7 +129,11 @@ describe('BelongProvider', () => {
     };
 
     render(
-      <BelongProvider>
+      <BelongProvider config={{
+        supabaseUrl: 'https://test.supabase.co',
+        supabaseAnonKey: 'test-key',
+        mapboxPublicToken: 'test-token'
+      }}>
         <TestComponent />
       </BelongProvider>,
       { wrapper }
@@ -152,7 +176,11 @@ describe('BelongProvider', () => {
     };
 
     render(
-      <BelongProvider>
+      <BelongProvider config={{
+        supabaseUrl: 'https://test.supabase.co',
+        supabaseAnonKey: 'test-key',
+        mapboxPublicToken: 'test-token'
+      }}>
         <TestComponent />
       </BelongProvider>,
       { wrapper }
@@ -187,7 +215,11 @@ describe('BelongProvider', () => {
     };
 
     render(
-      <BelongProvider>
+      <BelongProvider config={{
+        supabaseUrl: 'https://test.supabase.co',
+        supabaseAnonKey: 'test-key',
+        mapboxPublicToken: 'test-token'
+      }}>
         <TestComponent />
       </BelongProvider>,
       { wrapper }

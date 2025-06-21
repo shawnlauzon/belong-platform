@@ -1,4 +1,4 @@
-import { getBelongClient } from '@belongnetwork/core';
+import { type BelongClient } from '@belongnetwork/core';
 import { Account, User } from '@belongnetwork/types';
 import { fetchUserById } from '../../users/impl/fetchUserById';
 
@@ -8,11 +8,16 @@ import { fetchUserById } from '../../users/impl/fetchUserById';
  */
 
 /**
- * Signs in a user with email and password
- * Returns Account object (authentication data only)
+ * Creates auth service with the provided client
+ * This pattern allows for dependency injection while keeping services pure
  */
-export async function signIn(email: string, password: string): Promise<Account> {
-  const { supabase, logger } = getBelongClient();
+export const createAuthService = (client: BelongClient) => ({
+  /**
+   * Signs in a user with email and password
+   * Returns Account object (authentication data only)
+   */
+  async signIn(email: string, password: string): Promise<Account> {
+    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing in user', { email });
 
@@ -50,19 +55,19 @@ export async function signIn(email: string, password: string): Promise<Account> 
     logger.error('🔐 API: Error signing in', { error });
     throw error;
   }
-}
+  },
 
-/**
- * Signs up a new user
- * Returns Account object (authentication data only)
- */
-export async function signUp(
-  email: string,
-  password: string,
-  firstName: string,
-  lastName?: string
-): Promise<Account> {
-  const { supabase, logger } = getBelongClient();
+  /**
+   * Signs up a new user
+   * Returns Account object (authentication data only)
+   */
+  async signUp(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName?: string
+  ): Promise<Account> {
+    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing up user', { email, firstName, lastName });
 
@@ -105,13 +110,13 @@ export async function signUp(
     logger.error('🔐 API: Error signing up', { error });
     throw error;
   }
-}
+  },
 
-/**
- * Signs out the current user
- */
-export async function signOut(): Promise<void> {
-  const { supabase, logger } = getBelongClient();
+  /**
+   * Signs out the current user
+   */
+  async signOut(): Promise<void> {
+    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing out user');
 
@@ -128,14 +133,14 @@ export async function signOut(): Promise<void> {
     logger.error('🔐 API: Error signing out', { error });
     throw error;
   }
-}
+  },
 
-/**
- * Gets the current authenticated user from Supabase auth
- * Returns just the authentication state (no profile data)
- */
-export async function getCurrentAuthUser(): Promise<{ id: string; email: string } | null> {
-  const { supabase, logger } = getBelongClient();
+  /**
+   * Gets the current authenticated user from Supabase auth
+   * Returns just the authentication state (no profile data)
+   */
+  async getCurrentAuthUser(): Promise<{ id: string; email: string } | null> {
+    const { supabase, logger } = client;
   
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -158,19 +163,20 @@ export async function getCurrentAuthUser(): Promise<{ id: string; email: string 
     logger.error('🔐 API: Error fetching current auth user', { error });
     return null;
   }
-}
+  },
 
-/**
- * Gets the current user's complete profile (auth + profile data)
- * Combines auth state with user profile data
- */
-export async function getCurrentUser(): Promise<User | null> {
-  const authUser = await getCurrentAuthUser();
-  
-  if (!authUser) {
-    return null;
+  /**
+   * Gets the current user's complete profile (auth + profile data)
+   * Combines auth state with user profile data
+   */
+  async getCurrentUser(): Promise<User | null> {
+    const authUser = await this.getCurrentAuthUser();
+    
+    if (!authUser) {
+      return null;
+    }
+    
+    // Use existing fetchUserById to get profile data
+    return fetchUserById(authUser.id);
   }
-  
-  // Use existing fetchUserById to get profile data
-  return fetchUserById(authUser.id);
-}
+});

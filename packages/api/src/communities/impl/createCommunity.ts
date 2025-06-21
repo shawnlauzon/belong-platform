@@ -1,13 +1,14 @@
-import { getBelongClient } from '@belongnetwork/core';
+import type { BelongClient } from '@belongnetwork/core';
 import { forDbInsert, toDomainCommunity } from './communityTransformer';
 import type { Community, CommunityData } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 import { fetchCommunityById } from './fetchCommunityById';
 
 export async function createCommunity(
+  client: BelongClient,
   data: CommunityData
 ): Promise<Community> {
-  const { supabase, logger } = getBelongClient();
+  const { supabase, logger } = client;
   
   logger.debug('🏘️ API: Creating community', { name: data.name });
 

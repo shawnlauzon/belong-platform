@@ -2,18 +2,17 @@ import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } fr
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { faker } from '@faker-js/faker';
 import React from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  initializeBelong,
   useResources,
   useCreateResource,
   useUpdateResource,
   useDeleteResource,
   useSignOut,
-  resetBelongClient,
+  BelongProvider,
   ResourceCategory,
 } from '@belongnetwork/platform';
-import { TestWrapper } from './database/utils/test-wrapper';
+// Updated to use BelongProvider directly instead of TestWrapper
 import { generateTestName } from './database/utils/database-helpers';
 import { 
   createAndAuthenticateUser,
@@ -31,13 +30,6 @@ describe('Resources CRUD Integration Tests', () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Initialize Belong client once for all tests
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
@@ -55,8 +47,16 @@ describe('Resources CRUD Integration Tests', () => {
       },
     });
 
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+      <QueryClientProvider client={queryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
     );
 
     // Set up authenticated user once for all tests
@@ -87,12 +87,12 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
-    resetBelongClient();
+    // No cleanup needed with provider pattern
   });
 
   test('should successfully read resources without authentication', async () => {
@@ -130,7 +130,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => {
@@ -183,7 +183,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => {
@@ -218,7 +218,7 @@ describe('Resources CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateResourceResult.current.mutate(updateData);
+      await updateResourceResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -269,7 +269,7 @@ describe('Resources CRUD Integration Tests', () => {
     const resourceData = generateResourceData(testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() => expect(createResourceResult.current.isSuccess).toBe(true));
@@ -282,7 +282,7 @@ describe('Resources CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteResourceResult.current.mutate(createdResource!.id);
+      await deleteResourceResult.current.mutateAsync(createdResource!.id);
     });
 
     await waitFor(() => {

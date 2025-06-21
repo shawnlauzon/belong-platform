@@ -9,9 +9,8 @@ import {
 } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  initializeBelong,
   useThanks,
   useCreateThanks,
   useUpdateThanks,
@@ -20,10 +19,10 @@ import {
   useDeleteResource,
   useSignIn,
   useSignOut,
-  resetBelongClient,
+  BelongProvider,
   ResourceCategory,
 } from '@belongnetwork/platform';
-import { TestWrapper } from './database/utils/test-wrapper';
+// Updated to use BelongProvider directly instead of TestWrapper
 import { generateTestName } from './database/utils/database-helpers';
 import {
   createAndAuthenticateUser,
@@ -46,13 +45,6 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Initialize Belong client
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
@@ -70,8 +62,16 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       },
     });
 
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+      <QueryClientProvider client={queryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
     );
 
     // Set up authenticated user once for all tests - this user will create all test items
@@ -91,31 +91,30 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     const resourceData = generateResourceData(authSetup.testCommunity.id!);
 
     await act(async () => {
-      createResourceResult.current.mutate(resourceData);
+      await createResourceResult.current.mutateAsync(resourceData);
     });
 
     await waitFor(() =>
       expect(createResourceResult.current.isSuccess).toBe(true)
     );
     testResource = createResourceResult.current.data!;
+
+    // Note: Keep user authenticated for all tests except the unauthenticated test
     // Note: main test resource cleaned up in afterAll
   });
 
   afterAll(async () => {
-    // Clean up the test resource and any remaining thanks
-    // Sign in as the original user for cleanup (the user who created the resource)
-    const { result: signInResult } = renderHook(() => useSignIn(), {
+    // User should already be authenticated from beforeAll, but ensure they are signed in for cleanup
+
+    // Clean up all remaining thanks first
+    await cleanupTestResources(
       wrapper,
-    });
-
-    await act(async () => {
-      signInResult.current.mutate({
-        email: authSetup.testUser.email,
-        password: authSetup.testUser.password,
-      });
-    });
-
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
+      'thanks',
+      () => renderHook(() => useThanks(), { wrapper }),
+      () => renderHook(() => useDeleteThanks(), { wrapper }),
+      act,
+      waitFor
+    );
 
     // Clean up test resource
     if (testResource) {
@@ -127,7 +126,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
       );
 
       await act(async () => {
-        deleteResourceResult.current.mutate(testResource.id);
+        await deleteResourceResult.current.mutateAsync(testResource.id);
       });
 
       await waitFor(() =>
@@ -141,12 +140,12 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
-    resetBelongClient();
+    // No cleanup needed with provider pattern
   });
 
   beforeEach(async () => {
@@ -154,30 +153,34 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   });
 
   afterEach(async () => {
-    // Clean up all test thanks using name-based cleanup
-    await cleanupTestResources(
-      wrapper,
-      'thanks',
-      () => renderHook(() => useThanks(), { wrapper }),
-      () => renderHook(() => useDeleteThanks(), { wrapper }),
-      act,
-      waitFor
-    );
+    // Note: Cleanup moved to afterAll to avoid auth issues with individual tests
   });
 
   test('should successfully read thanks without authentication', async () => {
+    // Temporarily sign out for this test
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await signOutResult.current.mutateAsync();
+    });
+
+    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
+
+    // Test unauthenticated access
     const { result: thanksResult } = renderHook(() => useThanks(), {
       wrapper,
     });
 
     await waitFor(() => expect(thanksResult.current.isSuccess).toBe(true));
-
     expect(thanksResult.current.data).toEqual(expect.any(Array));
   });
 
   test('should successfully create thanks when authenticated', async () => {
     const { testUser } = authSetup;
 
+    // User is already authenticated from beforeAll
     // Create thanks using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
@@ -190,7 +193,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -211,6 +214,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   test('should successfully update thanks when authenticated as sender', async () => {
     const { testUser } = authSetup;
 
+    // User is already authenticated from beforeAll
     // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
@@ -223,7 +227,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -257,7 +261,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateThanksResult.current.mutate(updateData);
+      await updateThanksResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -278,6 +282,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
   test('should successfully delete thanks when authenticated as sender', async () => {
     const { testUser } = authSetup;
 
+    // User is already authenticated from beforeAll
     // Create thanks first using the pre-created resource
     const { result: createThanksResult } = renderHook(() => useCreateThanks(), {
       wrapper,
@@ -290,7 +295,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     );
 
     await act(async () => {
-      createThanksResult.current.mutate(thanksData);
+      await createThanksResult.current.mutateAsync(thanksData);
     });
 
     await waitFor(() => {
@@ -311,7 +316,7 @@ describe('Thanks Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteThanksResult.current.mutate(createdThanks.id);
+      await deleteThanksResult.current.mutateAsync(createdThanks.id);
     });
 
     await waitFor(() => {

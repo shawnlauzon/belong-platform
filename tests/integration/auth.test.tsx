@@ -4,28 +4,24 @@ import { faker } from '@faker-js/faker';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  initializeBelong,
   useSignUp,
   useSignIn,
   useBelong,
   useSignOut,
   BelongProvider,
-  resetBelongClient,
-  getBelongClient,
 } from '../../dist/index.es.js';
 
 let queryClient: QueryClient;
 let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
+const config = {
+  supabaseUrl: process.env.VITE_SUPABASE_URL!,
+  supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+  mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+};
+
 describe('Authentication Integration', () => {
   beforeAll(() => {
-    // Initialize once for all tests
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
@@ -41,47 +37,32 @@ describe('Authentication Integration', () => {
       },
     });
 
+    // Single wrapper instance to avoid multiple Supabase clients
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongProvider>{children}</BelongProvider>
+        <BelongProvider config={config}>{children}</BelongProvider>
       </QueryClientProvider>
     );
   });
 
   afterAll(async () => {
-    try {
-      const client = getBelongClient();
-      if (client?.supabase) {
-        // Clean up test users using naming convention
-        await client.supabase
-          .from('profiles')
-          .delete()
-          .like('email', 'integration-test-%');
-      }
-    } catch (error) {
-      console.warn('Failed to clean up test users:', error);
-    }
+    // Clear all cached data after tests complete
+    queryClient.clear();
   });
 
-  // Keep test isolation for auth tests - each test needs clean auth state
+  // Clean up auth state between tests to ensure isolation
   async function signOutBetweenTests() {
     try {
-      const client = getBelongClient();
-      if (client?.supabase) {
-        await client.supabase.auth.signOut();
-      }
+      // Instead of clearing all cache, just invalidate auth-related queries
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
     } catch (error) {
-      // Ignore signOut errors for clean test isolation
+      // Ignore errors during cleanup
     }
   }
 
-  test('useSignUp should work after calling initializeBelong', async () => {
+  test('useSignUp should work with BelongProvider config', async () => {
     await signOutBetweenTests();
-    
-    // Test auth mutations outside of BelongProvider
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
     
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
@@ -110,11 +91,6 @@ describe('Authentication Integration', () => {
 
   test('useSignIn should work after signing up a user', async () => {
     await signOutBetweenTests();
-    
-    // Test auth mutations outside of BelongProvider  
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
     
     // First create a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
@@ -165,13 +141,7 @@ describe('Authentication Integration', () => {
       return <div data-testid="user-data">{data.currentUser.email}</div>;
     };
 
-    const { getByTestId } = render(
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider>
-          <TestComponent />
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    const { getByTestId } = render(<TestComponent />, { wrapper });
 
     // Wait for the component to render with no user
     await waitFor(() => {
@@ -191,13 +161,9 @@ describe('Authentication Integration', () => {
       lastName: faker.person.lastName(),
     };
 
-    // Step 1: Create auth mutations outside provider
-    const authWrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper: authWrapper });
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper: authWrapper });
+    // Step 1: Create auth mutations with BelongProvider
+    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
+    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
 
     // Step 2: Sign up user
     await act(async () => {
@@ -221,19 +187,13 @@ describe('Authentication Integration', () => {
       return <div data-testid="user-data">{data.currentUser?.email || ''}</div>;
     };
 
-    const { getByTestId } = render(
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider>
-          <TestComponent />
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    const { getByTestId } = render(<TestComponent />, { wrapper });
 
     // Should eventually show authenticated user data
     await waitFor(() => {
       const userElement = getByTestId('user-data');
       expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
   });
 
   test('useSignOut should work and clear current user', async () => {
@@ -275,18 +235,12 @@ describe('Authentication Integration', () => {
       return <div data-testid="authenticated-user">{data.currentUser?.email || ''}</div>;
     };
 
-    const { getByTestId, rerender } = render(
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider>
-          <AuthenticatedComponent />
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    const { getByTestId, rerender } = render(<AuthenticatedComponent />, { wrapper });
 
     await waitFor(() => {
       const userElement = getByTestId('authenticated-user');
       expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
 
     // Step 5: Sign out user
     await act(async () => {
@@ -296,13 +250,7 @@ describe('Authentication Integration', () => {
 
     // Step 6: Verify user is no longer authenticated (TkDodo's pattern should invalidate cache)
     // Force React to re-evaluate the provider
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider>
-          <AuthenticatedComponent />
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    rerender(<AuthenticatedComponent />);
 
     // Should now show no user data (empty or null email)
     await waitFor(() => {

@@ -1,17 +1,16 @@
 import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  initializeBelong,
   useEvents,
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
   useSignOut,
-  resetBelongClient,
+  BelongProvider,
 } from '@belongnetwork/platform';
-import { TestWrapper } from './database/utils/test-wrapper';
+// Updated to use BelongProvider directly instead of TestWrapper
 import { 
   createAndAuthenticateUser,
   type AuthSetupResult
@@ -28,13 +27,6 @@ describe('Events Basic CRUD Integration Tests', () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Initialize Belong client once for all tests
-    initializeBelong({
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    });
-
     // Create query client once for all tests
     queryClient = new QueryClient({
       defaultOptions: {
@@ -52,8 +44,16 @@ describe('Events Basic CRUD Integration Tests', () => {
       },
     });
 
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper queryClient={queryClient}>{children}</TestWrapper>
+      <QueryClientProvider client={queryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
     );
 
     // Set up authenticated user once for all tests
@@ -83,12 +83,12 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      signOutResult.current.mutate();
+      await signOutResult.current.mutateAsync();
     });
 
     await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
-    resetBelongClient();
+    // No cleanup needed with provider pattern
   });
 
   test('should successfully read events without authentication', async () => {
@@ -119,7 +119,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     const eventData = generateEventData(testCommunity.id!, testUser.userId!);
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => {
@@ -173,7 +173,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => {
@@ -202,7 +202,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      updateEventResult.current.mutate(updateData);
+      await updateEventResult.current.mutateAsync(updateData);
     });
 
     await waitFor(() => {
@@ -254,7 +254,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     };
 
     await act(async () => {
-      createEventResult.current.mutate(eventData);
+      await createEventResult.current.mutateAsync(eventData);
     });
 
     await waitFor(() => expect(createEventResult.current.isSuccess).toBe(true));
@@ -266,7 +266,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await act(async () => {
-      deleteEventResult.current.mutate(createdEvent.id);
+      await deleteEventResult.current.mutateAsync(createdEvent.id);
     });
 
     await waitFor(() => {
