@@ -1,5 +1,6 @@
-import { type BelongClient } from '@belongnetwork/core';
-import type { Database } from '@belongnetwork/types';
+import { logger } from '@belongnetwork/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 import type { 
   ConversationInfo,
   ConversationFilter,
@@ -15,14 +16,14 @@ import {
   toMessageInfo,
   forDbMessageInsert
 } from '../impl/messageTransformer';
-import { fetchUserById } from '../../users/impl/fetchUserById';
+import { createUserService } from '../../users/services/user.service';
 
 /**
  * Messaging Service Factory
- * Creates messaging service with the provided BelongClient
+ * Creates messaging service with the provided Supabase client
  * Handles conversations and messages with proper dependency injection
  */
-export const createMessagingService = (client: BelongClient) => ({
+export const createMessagingService = (supabase: SupabaseClient<Database>) => ({
   /**
    * Fetch conversations for a user with optional filtering
    */
@@ -30,7 +31,6 @@ export const createMessagingService = (client: BelongClient) => ({
     userId: string, 
     filters?: ConversationFilter
   ): Promise<ConversationInfo[]> {
-    const { supabase, logger } = client;
     
     logger.debug('💬 API: Fetching conversations', { userId, filters });
 
@@ -76,10 +76,11 @@ export const createMessagingService = (client: BelongClient) => ({
       });
 
       // Batch fetch all users
+      const userService = createUserService(supabase);
       const users = new Map();
       for (const id of userIds) {
         try {
-          const user = await fetchUserById(id);
+          const user = await userService.fetchUserById(id);
           if (user) users.set(id, user);
         } catch (err) {
           logger.warn('💬 API: Failed to fetch user for conversation', { userId: id, error: err });
@@ -110,7 +111,6 @@ export const createMessagingService = (client: BelongClient) => ({
     conversationId: string,
     filters?: MessageFilter
   ): Promise<MessageInfo[]> {
-    const { supabase, logger } = client;
     
     logger.debug('💬 API: Fetching messages', { conversationId, filters });
 
@@ -143,14 +143,15 @@ export const createMessagingService = (client: BelongClient) => ({
       // Get all unique user IDs for batch fetching
       const userIds = new Set<string>();
       data.forEach(msg => {
-        userIds.add(msg.sender_id);
+        userIds.add(msg.from_user_id);
       });
 
       // Batch fetch all users
+      const userService = createUserService(supabase);
       const users = new Map();
       for (const id of userIds) {
         try {
-          const user = await fetchUserById(id);
+          const user = await userService.fetchUserById(id);
           if (user) users.set(id, user);
         } catch (err) {
           logger.warn('💬 API: Failed to fetch user for message', { userId: id, error: err });
@@ -178,13 +179,41 @@ export const createMessagingService = (client: BelongClient) => ({
    * Send a new message
    */
   async sendMessage(messageData: MessageData): Promise<MessageInfo> {
-    const { supabase, logger } = client;
     
     logger.debug('💬 API: Sending message', { messageData });
 
     try {
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData?.user?.id) {
+        logger.error('💬 API: User must be authenticated to send a message', {
+          error: userError,
+        });
+        throw new Error('User must be authenticated to send a message');
+      }
+
+      const fromUserId = userData.user.id;
+
+      // Get conversation to determine the recipient
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('id', messageData.conversationId)
+        .single();
+
+      if (convError || !conversation) {
+        logger.error('💬 API: Failed to find conversation', { convError, conversationId: messageData.conversationId });
+        throw new Error('Conversation not found');
+      }
+
+      // Determine the recipient (the other participant)
+      const toUserId = conversation.participant_1_id === fromUserId 
+        ? conversation.participant_2_id 
+        : conversation.participant_1_id;
+
       // Transform to database format
-      const dbData = forDbMessageInsert(messageData);
+      const dbData = forDbMessageInsert(messageData, fromUserId, toUserId);
       
       const { data, error } = await supabase
         .from('direct_messages')
@@ -216,7 +245,6 @@ export const createMessagingService = (client: BelongClient) => ({
    * Mark a message as read
    */
   async markAsRead(messageId: string): Promise<void> {
-    const { supabase, logger } = client;
     
     logger.debug('💬 API: Marking message as read', { messageId });
 

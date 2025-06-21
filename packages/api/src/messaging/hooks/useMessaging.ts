@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useClient } from '../../auth/providers/CurrentUserProvider';
+import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
 import { createMessagingService } from '../services/messaging.service';
+import { queryKeys } from '../../shared/queryKeys';
 import type { 
   ConversationInfo,
   ConversationFilter,
@@ -16,8 +18,8 @@ import type {
  */
 export function useMessaging(userId?: string) {
   const queryClient = useQueryClient();
-  const client = useClient();
-  const messagingService = createMessagingService(client);
+  const supabase = useSupabase();
+  const messagingService = createMessagingService(supabase);
 
   // Conversations query function
   const getConversations = (filters?: ConversationFilter) => {

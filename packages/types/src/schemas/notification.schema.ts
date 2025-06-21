@@ -42,9 +42,9 @@ export const NotificationListSchema = NotificationSchema.extend({
   messageId: z.string().uuid().optional()
 }).transform(data => ({
   ...data,
-  senderId: data.data?.senderId,
-  conversationId: data.data?.conversationId,
-  messageId: data.data?.messageId
+  senderId: (data.data as any)?.senderId,
+  conversationId: (data.data as any)?.conversationId,
+  messageId: (data.data as any)?.messageId
 }));
 
 // Schema for single items with relations
@@ -77,7 +77,7 @@ export const NotificationDbSchema = NotificationSchema.transform(caseTransform.t
 // Transform from database with date parsing
 export const NotificationFromDbSchema = z.any()
   .transform(caseTransform.toCamelCase)
-  .transform(data => ({
+  .transform((data: any) => ({
     ...data,
     createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
     updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()

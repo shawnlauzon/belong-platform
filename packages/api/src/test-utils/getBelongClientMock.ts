@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import type { BelongClient } from "@belongnetwork/core";
+import { logger } from "@belongnetwork/core";
 
 /**
  * Creates a mock getBelongClient function for tests
@@ -16,6 +17,7 @@ export function createGetBelongClientMock(mockSupabase: any) {
   const mockBelongClient: BelongClient = {
     supabase: mockSupabase,
     mapbox: {} as any,
+    logger: logger, // Use the real logger for tests
   };
 
   return {

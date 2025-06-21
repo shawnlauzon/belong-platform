@@ -1,17 +1,36 @@
-import { camelCase, snakeCase, mapKeys, isObject, isArray } from 'lodash';
-
 /**
  * Utility functions for transforming object keys between camelCase and snake_case
  * Used in Zod schemas for automatic database transformations
  */
 
-function transformKeysDeep(obj: any, transformer: (key: string) => string): any {
-  if (isArray(obj)) {
-    return obj.map(item => transformKeysDeep(item, transformer));
+/**
+ * Convert string from camelCase to snake_case
+ */
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * Convert string from snake_case to camelCase
+ */
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * Check if value is an object (but not array or null)
+ */
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function transformKeysDeep(obj: unknown, transformer: (key: string) => string): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map((item: unknown) => transformKeysDeep(item, transformer));
   }
   
-  if (isObject(obj) && obj !== null) {
-    const transformed: any = {};
+  if (isObject(obj)) {
+    const transformed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       const newKey = transformer(key);
       transformed[newKey] = transformKeysDeep(value, transformer);
@@ -27,13 +46,13 @@ export const caseTransform = {
    * Transform object keys from camelCase to snake_case
    * Used when sending data to database
    */
-  toSnakeCase: (obj: any) => transformKeysDeep(obj, snakeCase),
+  toSnakeCase: (obj: unknown) => transformKeysDeep(obj, toSnakeCase),
   
   /**
    * Transform object keys from snake_case to camelCase
    * Used when receiving data from database
    */
-  toCamelCase: (obj: any) => transformKeysDeep(obj, camelCase)
+  toCamelCase: (obj: unknown) => transformKeysDeep(obj, toCamelCase)
 };
 
 /**

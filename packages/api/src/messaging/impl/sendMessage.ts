@@ -1,7 +1,7 @@
 import { getBelongClient } from '@belongnetwork/core';
 import type { Message, MessageData } from '@belongnetwork/types';
 import { forDbMessageInsert } from './messageTransformer';
-import { fetchUserById } from '../../users/impl/fetchUserById';
+import { createUserService } from '../../users/services/user.service';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 export async function sendMessage(
@@ -53,9 +53,10 @@ export async function sendMessage(
       .eq('id', messageData.conversationId);
 
     // Fetch users for full message object
+    const userService = createUserService(supabase);
     const [fromUser, toUser] = await Promise.all([
-      fetchUserById(fromUserId),
-      fetchUserById(toUserId),
+      userService.fetchUserById(fromUserId),
+      userService.fetchUserById(toUserId),
     ]);
 
     if (!fromUser || !toUser) {

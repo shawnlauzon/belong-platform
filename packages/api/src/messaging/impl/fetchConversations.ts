@@ -1,7 +1,7 @@
 import { getBelongClient } from '@belongnetwork/core';
 import type { ConversationInfo, ConversationFilter } from '@belongnetwork/types';
 import { toConversationInfo } from './conversationTransformer';
-import { toDomainUser } from '../../users/impl/userTransformer';
+import { toDomainUser } from '../../users/transformers/userTransformer';
 
 export async function fetchConversations(
   userId: string,
