@@ -94,7 +94,41 @@ describe("Event Transformer", () => {
       });
 
       expect(event.registrationRequired).toBe(false);
-      expect(event.isActive).toBe(true);
+      expect(event.isActive).toBe(false); // null is_active should be false
+    });
+
+    it("should handle explicitly true is_active", () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+        is_active: true,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      expect(event.isActive).toBe(true); // explicitly true is_active should be true
+    });
+
+    it("should handle explicitly false is_active", () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+        is_active: false,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      expect(event.isActive).toBe(false); // explicitly false is_active should be false
     });
 
     it("should throw an error if organizer ID does not match", () => {
