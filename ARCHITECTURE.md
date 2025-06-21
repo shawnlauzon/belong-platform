@@ -65,145 +65,47 @@ packages/types/
 - Provide runtime validation for all data
 - Handle automatic transformations between DB and domain formats
 
-#### Zod-Based Type System
+#### Current Transformer Architecture
 
-The platform uses Zod schemas as the single source of truth for all types:
+The platform currently uses manual transformer functions for data conversion between database and domain objects:
 
 ```typescript
-// schemas/community.schema.ts
-import { z } from 'zod';
-import { caseTransform } from '../utils/transformers';
+// transformers/communityTransformer.ts
+export function toDomainCommunity(
+  dbCommunity: CommunityRow & { organizer: ProfileRow }
+): Community {
+  const coords = dbCommunity.center ? parsePostGisPoint(dbCommunity.center) : undefined;
+  
+  return {
+    id: dbCommunity.id,
+    name: dbCommunity.name,
+    description: dbCommunity.description ?? undefined,
+    organizerId: dbCommunity.organizer_id,
+    center: coords,
+    createdAt: new Date(dbCommunity.created_at),
+    organizer: toDomainUser(dbCommunity.organizer),
+    // ... other field mappings
+  };
+}
 
-// Base schema with domain field names (camelCase)
-export const CommunitySchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  organizerId: z.string().uuid(),
-  parentId: z.string().uuid().nullable(),
-  center: z.object({
-    lat: z.number(),
-    lng: z.number()
-  }).optional(),
-  radiusKm: z.number().positive().optional(),
-  hierarchyPath: z.array(z.object({
-    level: z.string(),
-    name: z.string()
-  })),
-  level: z.string(),
-  memberCount: z.number().int().nonnegative(),
-  timeZone: z.string(),
-  isActive: z.boolean(),
-  deletedAt: z.date().optional(),
-  deletedBy: z.string().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date()
-});
-
-// Auto-generate variants
-export const CommunityCreateSchema = CommunitySchema
-  .omit({ id: true, createdAt: true, updatedAt: true, memberCount: true })
-  .extend({ memberCount: z.number().int().nonnegative().default(0) });
-
-export const CommunityUpdateSchema = CommunityCreateSchema.partial();
-
-// DB schemas with automatic case transformation
-export const CommunityDbSchema = CommunitySchema.transform(caseTransform.toSnakeCase);
-export const CommunityFromDbSchema = z.any().transform(caseTransform.toCamelCase).pipe(CommunitySchema);
-
-// Type inference
-export type Community = z.infer<typeof CommunitySchema>;
-export type CommunityCreate = z.infer<typeof CommunityCreateSchema>;
-export type CommunityUpdate = z.infer<typeof CommunityUpdateSchema>;
+export function forDbInsert(community: CommunityData): CommunityInsertDbData {
+  return {
+    name: community.name,
+    organizer_id: community.organizerId,
+    center: community.center ? toPostGisPoint(community.center) : undefined,
+    // ... other field mappings
+  };
+}
 ```
 
-#### Benefits of Zod-Based Architecture
+#### Transformer Patterns
 
-1. **Single Source of Truth**: Define schema once, derive all variants
-2. **Runtime Validation**: Catch data issues at runtime
-3. **Automatic Transformations**: No manual transformer functions
-4. **Type Safety**: 100% type inference from schemas
-5. **Reduced Boilerplate**: No separate Data/Domain/Info types
+Each entity follows consistent transformation patterns:
 
-#### Schema Patterns
-
-**Entity Relations**:
-```typescript
-// For lists - use ID references
-export const ResourceListSchema = ResourceSchema.extend({
-  owner: z.string().uuid(), // Just the ID
-  community: z.string().uuid()
-});
-
-// For single items - use full objects
-export const ResourceWithRelationsSchema = ResourceSchema.extend({
-  owner: UserSchema,
-  community: CommunitySchema
-});
-```
-
-**Database Integration**:
-```typescript
-// Automatic conversion between DB snake_case and domain camelCase
-const dbRow = await supabase.from('communities').select().single();
-const community = CommunityFromDbSchema.parse(dbRow);
-
-// Automatic conversion for inserts
-const insertData = CommunityDbSchema.parse(communityData);
-await supabase.from('communities').insert(insertData);
-```
-
-#### Type Generation Workflow
-
-**Automated type generation from schemas:**
-
-```bash
-# Generate types from Zod schemas
-pnpm gen:types
-
-# This command:
-# 1. Reads all schema files
-# 2. Generates TypeScript types
-# 3. Creates transformer utilities
-# 4. Updates generated/index.ts
-```
-
-**Database type generation remains the same:**
-
-```bash
-# Generate database types from Supabase
-pnpm gen:db-types
-```
-
-**Migration workflow integration:**
-
-```bash
-# New migration command that:
-# 1. Applies the migration
-# 2. Regenerates database types
-# 3. Validates schemas against DB types
-# 4. Reports any mismatches
-pnpm migrate:apply
-```
-
-#### Pre-commit Validation
-
-A pre-commit hook ensures type consistency:
-
-```bash
-# .husky/pre-commit
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-# Check if migrations exist without regenerated types
-if [ -n "$(git diff --cached --name-only | grep migrations/)" ]; then
-  echo "⚠️  Migration detected. Regenerating types..."
-  pnpm gen:db-types
-  pnpm gen:types
-  git add packages/types/src/database.ts
-  git add packages/types/src/generated/
-fi
-```
+- **`toDomainX()`**: Convert database row to full domain object with relations
+- **`toXInfo()`**: Convert database row to lightweight info object for lists  
+- **`forDbInsert()`**: Convert domain data to database insert format
+- **`forDbUpdate()`**: Convert partial domain data to database update format
 
 ### @belongnetwork/core
 
@@ -650,117 +552,83 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 });
 ```
 
-### Data Transformation with Zod
+### Current Data Transformation Patterns
 
-Zod schemas handle all transformations automatically:
+Manual transformer functions handle all data conversions:
 
 ```typescript
 // services/community.service.ts
-import { 
-  CommunitySchema, 
-  CommunityCreateSchema,
-  CommunityDbSchema,
-  CommunityFromDbSchema,
-  CommunityListSchema,
-  CommunityWithRelationsSchema 
-} from '@belongnetwork/types/schemas';
+import { toDomainCommunity, toCommunityInfo, forDbInsert } from '../transformers/communityTransformer';
 
-export const createCommunityService = (supabase: SupabaseClient) => ({
-  async fetchCommunities() {
+export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
+  async fetchCommunities(): Promise<CommunityInfo[]> {
     const { data, error } = await supabase
       .from('communities')
       .select('*')
       .order('created_at', { ascending: false });
       
-    if (error) throw error;
+    if (error) {
+      logger.error('Failed to fetch communities', { error });
+      throw error;
+    }
     
-    // Automatic transformation from snake_case to camelCase
-    return z.array(CommunityFromDbSchema).parse(data);
+    return (data || []).map(toCommunityInfo);
   },
   
-  async fetchCommunityById(id: string) {
+  async fetchCommunityById(id: string): Promise<Community | null> {
     const { data, error } = await supabase
       .from('communities')
       .select(`
         *,
-        organizer:users!organizer_id(*)
+        organizer:profiles!organizer_id(*)
       `)
       .eq('id', id)
       .single();
       
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      logger.error('Failed to fetch community', { id, error });
+      throw error;
+    }
     
-    // Parse with relations
-    return CommunityWithRelationsSchema.parse({
-      ...CommunityFromDbSchema.parse(data),
-      organizer: UserFromDbSchema.parse(data.organizer)
-    });
+    return toDomainCommunity(data);
   },
   
-  async createCommunity(input: unknown) {
-    // Validate input
-    const validated = CommunityCreateSchema.parse(input);
-    
-    // Transform to DB format
-    const dbData = CommunityDbSchema.parse(validated);
-    
-    const { data, error } = await supabase
+  async createCommunity(data: CommunityData): Promise<Community> {
+    const { data: result, error } = await supabase
       .from('communities')
-      .insert(dbData)
-      .select()
+      .insert(forDbInsert(data))
+      .select(`
+        *,
+        organizer:profiles!organizer_id(*)
+      `)
       .single();
       
-    if (error) throw error;
+    if (error) {
+      logger.error('Failed to create community', { data, error });
+      throw error;
+    }
     
-    return CommunityFromDbSchema.parse(data);
+    return toDomainCommunity(result);
   }
 });
 ```
 
-#### Schema-Based Patterns
+#### Transformation Utilities
 
-- **Lists**: Use base schema or list schema
-  ```typescript
-  const communities = z.array(CommunityListSchema).parse(data);
-  ```
-
-- **Single Items**: Use schema with relations
-  ```typescript
-  const community = CommunityWithRelationsSchema.parse(data);
-  ```
-
-- **Mutations**: Validate with create/update schemas
-  ```typescript
-  const validated = CommunityCreateSchema.parse(input);
-  const dbData = CommunityDbSchema.parse(validated);
-  ```
-
-#### Utility Transformers
+Common utilities for field transformation:
 
 ```typescript
-// utils/transformers.ts
-import { z } from 'zod';
-import { camelCase, snakeCase, mapKeys } from 'lodash';
-
-export const caseTransform = {
-  toSnakeCase: (obj: any) => mapKeys(obj, (_, key) => snakeCase(key)),
-  toCamelCase: (obj: any) => mapKeys(obj, (_, key) => camelCase(key))
-};
-
-// PostGIS transformers
-export const PointSchema = z.object({
-  lat: z.number(),
-  lng: z.number()
-});
-
-export const PostGisPointSchema = z.string().transform((val) => {
-  const match = val.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
-  if (!match) throw new Error('Invalid PostGIS point');
+// utils/index.ts
+export function parsePostGisPoint(postGisString: string): Coordinates {
+  const match = postGisString.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
+  if (!match) throw new Error('Invalid PostGIS point format');
   return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
-});
+}
 
-export const toPostGisPoint = (point: { lat: number; lng: number }) => 
-  `POINT(${point.lng} ${point.lat})`;
+export function toPostGisPoint(coords: Coordinates): string {
+  return `POINT(${coords.lng} ${coords.lat})`;
+}
 ```
 
 ### Hook Implementation Pattern
@@ -776,15 +644,15 @@ export function useCommunities() {
 
   // List query
   const communitiesQuery = useQuery<CommunityInfo[], Error>({
-    queryKey: ['communities'],
-    queryFn: () => service.fetchCommunities(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: queryKeys.communities.all,
+    queryFn: service.fetchCommunities,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Single item query function
   const getCommunity = (id: string) => {
-    return useQuery<Community, Error>({
-      queryKey: ['community', id],
+    return useQuery<Community | null, Error>({
+      queryKey: queryKeys.communities.byId(id),
       queryFn: () => service.fetchCommunityById(id),
       enabled: !!id,
     });
@@ -794,7 +662,7 @@ export function useCommunities() {
   const createMutation = useMutation({
     mutationFn: service.createCommunity,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
     },
   });
 
@@ -803,16 +671,8 @@ export function useCommunities() {
     mutationFn: ({ id, data }: { id: string; data: Partial<CommunityData> }) => 
       service.updateCommunity(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
-      queryClient.invalidateQueries({ queryKey: ['community', id] });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: service.deleteCommunity,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.communities.byId(id) });
     },
   });
 
@@ -827,12 +687,10 @@ export function useCommunities() {
     create: createMutation.mutateAsync,
     update: (id: string, data: Partial<CommunityData>) => 
       updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
     
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
   };
 }
 ```
@@ -1364,6 +1222,37 @@ export function useEntities() {
 ```
 
 ## Future Considerations
+
+### Planned: Zod-Based Type System
+
+The platform is planned to migrate to a Zod-based architecture as the single source of truth for all types:
+
+```typescript
+// Future: schemas/community.schema.ts
+export const CommunitySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  organizerId: z.string().uuid(),
+  // ... other fields
+});
+
+// Auto-generate variants
+export const CommunityCreateSchema = CommunitySchema.omit({ 
+  id: true, createdAt: true, updatedAt: true 
+});
+
+// Automatic DB transformations
+export const CommunityDbSchema = CommunitySchema.transform(caseTransform.toSnakeCase);
+export const CommunityFromDbSchema = z.any().transform(caseTransform.toCamelCase).pipe(CommunitySchema);
+```
+
+**Benefits of Future Zod Architecture**:
+- Single source of truth for all type definitions
+- Runtime validation with compile-time type safety
+- Automatic transformations between DB and domain formats
+- Reduced boilerplate and manual transformer functions
+
+### Other Future Enhancements
 
 While the architecture is designed for current needs, it's built to accommodate:
 
