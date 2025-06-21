@@ -1,6 +1,8 @@
-import { type BelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
 import { Account, User } from '@belongnetwork/types';
-import { fetchUserById } from '../../users/impl/fetchUserById';
+import { createUserService } from '../../users/services/user.service';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
 /**
  * Service layer for authentication operations
@@ -8,16 +10,15 @@ import { fetchUserById } from '../../users/impl/fetchUserById';
  */
 
 /**
- * Creates auth service with the provided client
+ * Creates auth service with the provided supabase client
  * This pattern allows for dependency injection while keeping services pure
  */
-export const createAuthService = (client: BelongClient) => ({
+export const createAuthService = (supabase: SupabaseClient<Database>) => ({
   /**
    * Signs in a user with email and password
    * Returns Account object (authentication data only)
    */
   async signIn(email: string, password: string): Promise<Account> {
-    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing in user', { email });
 
@@ -67,7 +68,6 @@ export const createAuthService = (client: BelongClient) => ({
     firstName: string,
     lastName?: string
   ): Promise<Account> {
-    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing up user', { email, firstName, lastName });
 
@@ -116,7 +116,6 @@ export const createAuthService = (client: BelongClient) => ({
    * Signs out the current user
    */
   async signOut(): Promise<void> {
-    const { supabase, logger } = client;
   
   logger.debug('🔐 API: Signing out user');
 
@@ -140,7 +139,6 @@ export const createAuthService = (client: BelongClient) => ({
    * Returns just the authentication state (no profile data)
    */
   async getCurrentAuthUser(): Promise<{ id: string; email: string } | null> {
-    const { supabase, logger } = client;
   
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -176,7 +174,8 @@ export const createAuthService = (client: BelongClient) => ({
       return null;
     }
     
-    // Use existing fetchUserById to get profile data
-    return fetchUserById(authUser.id);
+    // Use user service to get profile data
+    const userService = createUserService(supabase);
+    return userService.fetchUserById(authUser.id);
   }
 });

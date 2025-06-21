@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { deleteThanks } from '../impl/deleteThanks';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createThanksService } from '../services/thanks.service';
 
 export function useDeleteThanks() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const thanksService = createThanksService(supabase);
 
   return useMutation<void, Error, string>({
-    mutationFn: deleteThanks,
+    mutationFn: (id) => thanksService.deleteThanks(id),
     onSuccess: (_, thanksId) => {
       // Invalidate all thanks queries to reflect the deletion
       queryClient.invalidateQueries({ queryKey: ['thanks'] });

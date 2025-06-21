@@ -3,15 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import type { CommunityInfo } from '@belongnetwork/types';
-import { fetchCommunities } from '../impl/fetchCommunities';
 import { useCommunities } from '../hooks/useCommunities';
 
-// Mock the implementation
-vi.mock('../impl/fetchCommunities', () => ({
-  fetchCommunities: vi.fn(),
+// Mock the auth provider
+vi.mock('../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
 }));
 
-const mockFetchCommunities = vi.mocked(fetchCommunities);
+// Mock the community service
+vi.mock('../services/community.service', () => ({
+  createCommunityService: vi.fn(),
+}));
+
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateCommunityService = vi.mocked(createCommunityService);
+const mockFetchCommunities = vi.fn();
 
 describe('useCommunities', () => {
   let queryClient: QueryClient;
@@ -25,6 +34,12 @@ describe('useCommunities', () => {
       },
     });
     vi.clearAllMocks();
+    
+    // Setup mocks
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateCommunityService.mockReturnValue({
+      fetchCommunities: mockFetchCommunities,
+    });
   });
 
   const wrapper = ({ children }: { children: any }) =>
@@ -65,7 +80,7 @@ describe('useCommunities', () => {
     });
 
     expect(result.current.data).toEqual(mockCommunityInfo);
-    expect(mockFetchCommunities).toHaveBeenCalledWith();
+    expect(mockFetchCommunities).toHaveBeenCalledWith(undefined);
     
     // Verify the returned data has ID references, not full objects
     const community = result.current.data![0];

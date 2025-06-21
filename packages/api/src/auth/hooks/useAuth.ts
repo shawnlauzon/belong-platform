@@ -2,8 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@belongnetwork/types';
 import { queryKeys } from '../../shared/queryKeys';
 import { createAuthService } from '../services/auth.service';
-import { updateUser } from '../../users/impl/updateUser';
-import { useClient } from '../providers/CurrentUserProvider';
+import { createUserService } from '../../users/services/user.service';
+import { useSupabase } from '../providers/CurrentUserProvider';
+import { logger } from '@belongnetwork/core';
 
 /**
  * Unified authentication hook that provides both queries and mutations
@@ -11,8 +12,8 @@ import { useClient } from '../providers/CurrentUserProvider';
  */
 export function useAuth() {
   const queryClient = useQueryClient();
-  const client = useClient();
-  const authService = createAuthService(client);
+  const supabase = useSupabase();
+  const authService = createAuthService(supabase);
 
   // Query for authentication state (just auth info, no profile)
   const authQuery = useQuery({
@@ -52,7 +53,7 @@ export function useAuth() {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authService.signIn(email, password),
     onSuccess: (account) => {
-      client.logger.info('🔐 API: User signed in successfully', { userId: account.id });
+      logger.info('🔐 API: User signed in successfully', { userId: account.id });
       
       // Invalidate auth state to refetch with new session
       queryClient.invalidateQueries({ queryKey: queryKeys.auth });
@@ -63,7 +64,7 @@ export function useAuth() {
       });
     },
     onError: (error) => {
-      client.logger.error('🔐 API: Failed to sign in', { error });
+      logger.error('🔐 API: Failed to sign in', { error });
     },
   });
 
@@ -81,7 +82,7 @@ export function useAuth() {
       lastName?: string;
     }) => authService.signUp(email, password, firstName, lastName),
     onSuccess: (account) => {
-      client.logger.info('🔐 API: User signed up successfully', { userId: account.id });
+      logger.info('🔐 API: User signed up successfully', { userId: account.id });
       
       // Invalidate auth state to refetch with new session
       queryClient.invalidateQueries({ queryKey: queryKeys.auth });
@@ -92,7 +93,7 @@ export function useAuth() {
       });
     },
     onError: (error) => {
-      client.logger.error('🔐 API: Failed to sign up', { error });
+      logger.error('🔐 API: Failed to sign up', { error });
     },
   });
 
@@ -102,7 +103,7 @@ export function useAuth() {
     onSuccess: () => {
       const currentUserId = authQuery.data?.id;
       
-      client.logger.info('🔐 API: User signed out successfully');
+      logger.info('🔐 API: User signed out successfully');
       
       // Remove auth state
       queryClient.removeQueries({ queryKey: queryKeys.auth });
@@ -115,23 +116,24 @@ export function useAuth() {
       }
     },
     onError: (error) => {
-      client.logger.error('🔐 API: Failed to sign out', { error });
+      logger.error('🔐 API: Failed to sign out', { error });
     },
   });
 
   // Update profile mutation
+  const userService = createUserService(supabase);
   const updateProfileMutation = useMutation({
     mutationFn: (updates: Partial<User>) => {
       if (!authQuery.data?.id) {
         throw new Error('No authenticated user to update');
       }
-      return updateUser({ 
+      return userService.updateUser({ 
         id: authQuery.data.id, 
         ...updates 
       });
     },
     onSuccess: (updatedUser) => {
-      client.logger.info('🔐 API: Profile updated successfully', { userId: updatedUser.id });
+      logger.info('🔐 API: Profile updated successfully', { userId: updatedUser.id });
       
       // Update the user cache with new data
       queryClient.setQueryData(
@@ -140,7 +142,7 @@ export function useAuth() {
       );
     },
     onError: (error) => {
-      client.logger.error('🔐 API: Failed to update profile', { error });
+      logger.error('🔐 API: Failed to update profile', { error });
     },
   });
 

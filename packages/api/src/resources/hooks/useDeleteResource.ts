@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { deleteResource } from '../impl/deleteResource';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createResourceService } from '../services/resource.service';
 
 export function useDeleteResource() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const resourceService = createResourceService(supabase);
 
   return useMutation<void, Error, string>({
-    mutationFn: deleteResource,
+    mutationFn: (id) => resourceService.deleteResource(id),
     onSuccess: (_, id) => {
       // Invalidate the resources list and the specific resource
       queryClient.invalidateQueries({ queryKey: ['resources'] });

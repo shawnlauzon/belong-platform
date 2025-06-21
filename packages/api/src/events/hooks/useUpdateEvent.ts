@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
 import type { Event, EventData } from '@belongnetwork/types';
-import { updateEvent } from '../impl/updateEvent';
 
 export function useUpdateEvent() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const eventService = createEventService(supabase);
 
   return useMutation<Event, Error, Partial<EventData> & { id: string }>({
-    mutationFn: (data) => updateEvent(data.id, data),
+    mutationFn: ({ id, ...data }) => eventService.updateEvent(id, data),
     onSuccess: (updatedEvent) => {
       // Invalidate the events list to reflect the updated event
       queryClient.invalidateQueries({ queryKey: ['events'] });

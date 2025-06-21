@@ -1,9 +1,13 @@
-import { getBelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
 import { toDomainUser } from './userTransformer';
 import type { User } from '@belongnetwork/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
-export async function fetchUserById(id: string): Promise<User | null> {
-  const { supabase, logger } = getBelongClient();
+export async function fetchUserById(id: string, supabase?: SupabaseClient<Database>): Promise<User | null> {
+  if (!supabase) {
+    throw new Error('fetchUserById requires a supabase client. Use the hook pattern instead.');
+  }
   
   logger.debug('👤 API: Fetching user by ID', { id });
 

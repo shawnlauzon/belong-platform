@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, createContext, useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { createBelongClient, type BelongClient, type BelongClientConfig } from '@belongnetwork/core';
+import { createBelongClient, type BelongClient, type BelongClientConfig, logger } from '@belongnetwork/core';
 import { useAuth } from '../hooks/useAuth';
 import { User } from '@belongnetwork/types';
 import { queryKeys } from '../../shared/queryKeys';
@@ -8,18 +8,22 @@ import { queryKeys } from '../../shared/queryKeys';
 // Client context for internal usage
 const ClientContext = createContext<BelongClient | undefined>(undefined);
 
-// Hook to access client internally
-export const useClient = (): BelongClient => {
+// Hook to access Supabase client
+export const useSupabase = () => {
   const context = useContext(ClientContext);
   if (context === undefined) {
-    throw new Error('useClient must be used within BelongProvider');
+    throw new Error('useSupabase must be used within BelongProvider');
   }
-  return context;
+  return context.supabase;
 };
 
-// Hook to access client optionally (for individual hooks)
-export const useOptionalClient = (): BelongClient | undefined => {
-  return useContext(ClientContext);
+// Hook to access Mapbox client
+export const useMapbox = () => {
+  const context = useContext(ClientContext);
+  if (context === undefined) {
+    throw new Error('useMapbox must be used within BelongProvider');
+  }
+  return context.mapbox;
 };
 
 interface BelongContextValue {
@@ -56,12 +60,11 @@ interface BelongProviderProps {
 // Inner component that uses useAuth - this runs after ClientContext is provided
 const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
-  const client = useClient(); // This will now work because we're inside ClientContext
+  const supabase = useSupabase(); // Use new hook
   const authHook = useAuth();
 
   // Centralized auth state change handler - this is where ALL auth state management happens
   useEffect(() => {
-    const { supabase } = client;
     
     // Check for existing session on mount
     const checkInitialSession = async () => {
@@ -72,7 +75,7 @@ const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         queryClient.invalidateQueries({ 
           queryKey: queryKeys.users.byId(session.user.id) 
         });
-        client.logger.info('🔐 API: Existing session detected, invalidated caches');
+        logger.info('🔐 API: Existing session detected, invalidated caches');
       }
     };
     
@@ -81,7 +84,7 @@ const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Set up auth state listener for all auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        client.logger.debug('🔐 API: Auth state change detected', { event, userId: session?.user?.id });
+        logger.debug('🔐 API: Auth state change detected', { event, userId: session?.user?.id });
         
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           // Invalidate auth state to refetch with new session
@@ -94,7 +97,7 @@ const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             });
           }
           
-          client.logger.info('🔐 API: Auth state changed to SIGNED_IN, invalidated caches');
+          logger.info('🔐 API: Auth state changed to SIGNED_IN, invalidated caches');
         } else if (event === 'SIGNED_OUT') {
           // Get current user ID before clearing auth cache
           const currentAuthUser = queryClient.getQueryData(queryKeys.auth) as { id: string } | null;
@@ -109,7 +112,7 @@ const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             });
           }
           
-          client.logger.info('🔐 API: Auth state changed to SIGNED_OUT, removed caches');
+          logger.info('🔐 API: Auth state changed to SIGNED_OUT, removed caches');
         }
       }
     );
@@ -118,7 +121,7 @@ const BelongContextProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient, client]);
+  }, [queryClient, supabase]);
 
   const contextValue: BelongContextValue = {
     // Current user data

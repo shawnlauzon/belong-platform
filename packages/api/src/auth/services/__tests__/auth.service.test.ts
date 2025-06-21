@@ -38,7 +38,7 @@ describe('auth.service', () => {
       },
     };
 
-    authService = createAuthService(mockClient);
+    authService = createAuthService(mockSupabase);
   });
 
   describe('getCurrentAuthUser', () => {

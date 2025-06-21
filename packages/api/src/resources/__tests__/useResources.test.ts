@@ -3,15 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import type { ResourceInfo } from '@belongnetwork/types';
-import { fetchResources } from '../impl/fetchResources';
 import { useResources } from '../hooks/useResources';
 
-// Mock the implementation
-vi.mock('../impl/fetchResources', () => ({
-  fetchResources: vi.fn(),
+// Mock the auth provider
+vi.mock('../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
 }));
 
-const mockFetchResources = vi.mocked(fetchResources);
+// Mock the resource service
+vi.mock('../services/resource.service', () => ({
+  createResourceService: vi.fn(),
+}));
+
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createResourceService } from '../services/resource.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateResourceService = vi.mocked(createResourceService);
+const mockFetchResources = vi.fn();
 
 describe('useResources', () => {
   let queryClient: QueryClient;
@@ -25,6 +34,12 @@ describe('useResources', () => {
       },
     });
     vi.clearAllMocks();
+    
+    // Setup mocks
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateResourceService.mockReturnValue({
+      fetchResources: mockFetchResources,
+    });
   });
 
   const wrapper = ({ children }: { children: any }) =>

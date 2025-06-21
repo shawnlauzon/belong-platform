@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { deleteEvent } from '../impl/deleteEvent';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
 
 export function useDeleteEvent() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const eventService = createEventService(supabase);
 
   return useMutation<void, Error, string>({
-    mutationFn: deleteEvent,
+    mutationFn: (id) => eventService.deleteEvent(id),
     onSuccess: (_, eventId) => {
       // Invalidate the events list to reflect the deleted event
       queryClient.invalidateQueries({ queryKey: ['events'] });

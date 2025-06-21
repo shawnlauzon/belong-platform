@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { useClient } from '../../auth/providers/CurrentUserProvider';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
 import { createCommunityService } from '../services/community.service';
 import type { CommunityData } from '@belongnetwork/types';
 
 export function useCreateCommunity() {
-  const client = useClient();
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
-  const communityService = createCommunityService(client);
+  const communityService = createCommunityService(supabase);
 
   return useMutation({
     mutationFn: (data: CommunityData) => communityService.createCommunity(data),

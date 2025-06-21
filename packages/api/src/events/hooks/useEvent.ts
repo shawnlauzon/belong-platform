@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
 import type { Event } from '@belongnetwork/types';
-import { fetchEventById } from '../impl/fetchEvents';
 
 export function useEvent(id: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
   const result = useQuery<Event | null, Error>({
     queryKey: ['events', id],
-    queryFn: () => fetchEventById(id),
+    queryFn: () => eventService.fetchEventById(id),
     enabled: !!id,
   });
 

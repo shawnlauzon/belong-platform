@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createThanksService } from '../services/thanks.service';
 import type { Thanks, ThanksData } from '@belongnetwork/types';
-import { createThanks } from '../impl/createThanks';
 
 export function useCreateThanks() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const thanksService = createThanksService(supabase);
 
   return useMutation<Thanks, Error, ThanksData>({
-    mutationFn: createThanks,
+    mutationFn: (data) => thanksService.createThanks(data),
     onSuccess: (newThanks) => {
       // Invalidate all thanks queries to reflect the new thanks
       queryClient.invalidateQueries({ queryKey: ['thanks'] });

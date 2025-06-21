@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createThanksService } from '../services/thanks.service';
 import type { ThanksInfo, ThanksFilter } from '@belongnetwork/types';
-import { fetchThanks } from '../impl/fetchThanks';
 
 export function useThanks(filters?: ThanksFilter) {
+  const supabase = useSupabase();
+  const thanksService = createThanksService(supabase);
+  
   const result = useQuery<ThanksInfo[], Error>({
     queryKey: ['thanks', filters],
-    queryFn: () => fetchThanks(filters),
+    queryFn: () => thanksService.fetchThanks(filters),
   });
 
   // Handle errors manually since onError is deprecated

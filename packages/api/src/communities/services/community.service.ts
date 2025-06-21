@@ -1,11 +1,12 @@
-import type { BelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
 import type { Community, CommunityData, CommunityInfo, User } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
-import { toCommunityInfo, forDbInsert } from '../impl/communityTransformer';
+import { toCommunityInfo, toDomainCommunity, forDbInsert } from '../impl/communityTransformer';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
-export const createCommunityService = (client: BelongClient) => ({
+export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
   async fetchCommunities(options?: { includeDeleted?: boolean }): Promise<CommunityInfo[]> {
-    const { supabase, logger } = client;
 
     logger.debug('🏘️ API: Fetching communities', { options });
 
@@ -42,8 +43,46 @@ export const createCommunityService = (client: BelongClient) => ({
     }
   },
 
+  async fetchCommunityById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Community | null> {
+    logger.debug('🏘️ API: Fetching community by ID', { id, options });
+
+    try {
+      let query = supabase
+        .from('communities')
+        .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
+        .eq('id', id);
+
+      // By default, only fetch active communities
+      if (!options?.includeDeleted) {
+        query = query.eq('is_active', true);
+      }
+
+      const { data, error } = await query.single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null; // Community not found
+        }
+        throw error;
+      }
+
+      const community = toDomainCommunity(data);
+      logger.debug('🏘️ API: Successfully fetched community', {
+        id,
+        name: community.name,
+        isActive: community.isActive,
+      });
+      return community;
+    } catch (error) {
+      logger.error('🏘️ API: Error fetching community by ID', { id, error });
+      throw error;
+    }
+  },
+
   async createCommunity(data: CommunityData): Promise<Community> {
-    const { supabase, logger } = client;
     
     logger.debug('🏘️ API: Creating community', { name: data.name });
 
@@ -104,7 +143,6 @@ export const createCommunityService = (client: BelongClient) => ({
   },
 
   async updateCommunity(updateData: Partial<CommunityData> & { id: string }): Promise<Community> {
-    const { supabase, logger } = client;
     
     logger.debug('🏘️ API: Updating community', { id: updateData.id });
 
@@ -169,7 +207,6 @@ export const createCommunityService = (client: BelongClient) => ({
   },
 
   async deleteCommunity(id: string): Promise<{ success: boolean }> {
-    const { supabase, logger } = client;
     
     logger.debug('🏘️ API: Deleting community', { id });
 

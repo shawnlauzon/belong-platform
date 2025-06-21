@@ -24,8 +24,6 @@ export interface BelongClient {
   supabase: SupabaseClient<Database>;
   /** Configured Mapbox client */
   mapbox: ReturnType<typeof createMapboxClient>;
-  /** Configured logger */
-  logger: typeof defaultLogger;
 }
 
 /**
@@ -45,7 +43,6 @@ export interface BelongClient {
  * // Use the configured clients
  * const { data } = await client.supabase.from('communities').select('*');
  * const addresses = await client.mapbox.searchAddresses('Austin, TX');
- * client.logger.info('Application started');
  * ```
  */
 export function createBelongClient(config: BelongClientConfig): BelongClient {
@@ -72,8 +69,7 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
 
   return {
     supabase,
-    mapbox,
-    logger: defaultLogger
+    mapbox
   };
 }
 

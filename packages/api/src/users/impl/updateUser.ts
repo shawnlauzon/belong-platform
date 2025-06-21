@@ -1,11 +1,16 @@
-import { getBelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
 import { toDomainUser, forDbUpdate } from './userTransformer';
 import type { User } from '@belongnetwork/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
 export async function updateUser(
-  userData: Partial<User> & { id: string }
+  userData: Partial<User> & { id: string },
+  supabase?: SupabaseClient<Database>
 ): Promise<User> {
-  const { supabase, logger } = getBelongClient();
+  if (!supabase) {
+    throw new Error('updateUser requires a supabase client. Use the hook pattern instead.');
+  }
   
   logger.debug('👤 API: Updating user', { id: userData.id });
 

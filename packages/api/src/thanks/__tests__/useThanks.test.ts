@@ -3,15 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import type { ThanksInfo } from '@belongnetwork/types';
-import { fetchThanks } from '../impl/fetchThanks';
 import { useThanks } from '../hooks/useThanks';
 
-// Mock the implementation
-vi.mock('../impl/fetchThanks', () => ({
-  fetchThanks: vi.fn(),
+// Mock the auth provider
+vi.mock('../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
 }));
 
-const mockFetchThanks = vi.mocked(fetchThanks);
+// Mock the thanks service
+vi.mock('../services/thanks.service', () => ({
+  createThanksService: vi.fn(),
+}));
+
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createThanksService } from '../services/thanks.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateThanksService = vi.mocked(createThanksService);
+const mockFetchThanks = vi.fn();
 
 describe('useThanks', () => {
   let queryClient: QueryClient;
@@ -25,6 +34,12 @@ describe('useThanks', () => {
       },
     });
     vi.clearAllMocks();
+    
+    // Setup mocks
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateThanksService.mockReturnValue({
+      fetchThanks: mockFetchThanks,
+    });
   });
 
   const wrapper = ({ children }: { children: any }) =>

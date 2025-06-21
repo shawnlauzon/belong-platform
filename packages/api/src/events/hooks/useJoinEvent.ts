@@ -1,14 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
 import type { EventAttendance, EventAttendanceStatus } from '@belongnetwork/types';
-import { joinEvent } from '../impl/joinEvent';
 
 export function useJoinEvent() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const eventService = createEventService(supabase);
 
   return useMutation<EventAttendance, Error, { eventId: string; status?: EventAttendanceStatus }>({
     mutationFn: ({ eventId, status = 'attending' as EventAttendanceStatus }) => 
-      joinEvent(eventId, status),
+      eventService.joinEvent(eventId, status),
     onSuccess: (attendance) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['events'] });

@@ -1,15 +1,20 @@
-import { getBelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
 import { Account } from '@belongnetwork/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
 /**
  * Signs in a user with the provided email and password
  * @param email - The user's email address
  * @param password - The user's password
+ * @param supabase - The supabase client instance
  * @returns A promise that resolves to the authenticated user
  * @throws {Error} If sign in fails or no user data is returned
  */
-export async function signIn(email: string, password: string): Promise<Account> {
-  const { supabase, logger } = getBelongClient();
+export async function signIn(email: string, password: string, supabase?: SupabaseClient<Database>): Promise<Account> {
+  if (!supabase) {
+    throw new Error('signIn requires a supabase client. Use the hook pattern instead.');
+  }
   
   logger.debug('🔐 API: Signing in user', { email });
 

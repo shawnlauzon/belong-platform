@@ -3,15 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import type { EventInfo } from '@belongnetwork/types';
-import { fetchEvents } from '../impl/fetchEvents';
 import { useEvents } from '../hooks/useEvents';
 
-// Mock the implementation
-vi.mock('../impl/fetchEvents', () => ({
-  fetchEvents: vi.fn(),
+// Mock the auth provider
+vi.mock('../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
 }));
 
-const mockFetchEvents = vi.mocked(fetchEvents);
+// Mock the event service
+vi.mock('../services/event.service', () => ({
+  createEventService: vi.fn(),
+}));
+
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateEventService = vi.mocked(createEventService);
+const mockFetchEvents = vi.fn();
 
 describe('useEvents', () => {
   let queryClient: QueryClient;
@@ -25,6 +34,12 @@ describe('useEvents', () => {
       },
     });
     vi.clearAllMocks();
+    
+    // Setup mocks
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateEventService.mockReturnValue({
+      fetchEvents: mockFetchEvents,
+    });
   });
 
   const wrapper = ({ children }: { children: any }) =>

@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { useClient } from '../../auth/providers/CurrentUserProvider';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
 import { createCommunityService } from '../services/community.service';
 
 export function useDeleteCommunity() {
-  const client = useClient();
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
-  const communityService = createCommunityService(client);
+  const communityService = createCommunityService(supabase);
 
   return useMutation({
     mutationFn: (id: string) => communityService.deleteCommunity(id),

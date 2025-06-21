@@ -1,7 +1,11 @@
-import { getBelongClient } from '@belongnetwork/core';
+import { logger } from '@belongnetwork/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@belongnetwork/types/database';
 
-export async function deleteUser(id: string): Promise<void> {
-  const { supabase, logger } = getBelongClient();
+export async function deleteUser(id: string, supabase?: SupabaseClient<Database>): Promise<void> {
+  if (!supabase) {
+    throw new Error('deleteUser requires a supabase client. Use the hook pattern instead.');
+  }
   
   logger.debug('👤 API: Deleting user', { id });
 

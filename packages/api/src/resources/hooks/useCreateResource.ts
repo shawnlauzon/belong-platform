@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createResourceService } from '../services/resource.service';
 import type { Resource, ResourceData } from '@belongnetwork/types';
-import { createResource } from '../impl/createResource';
 
 export function useCreateResource() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const resourceService = createResourceService(supabase);
 
   return useMutation<Resource, Error, ResourceData>({
-    mutationFn: createResource,
+    mutationFn: (data) => resourceService.createResource(data),
     onSuccess: (newResource) => {
       // Invalidate the resources list to reflect the new resource
       queryClient.invalidateQueries({ queryKey: ['resources'] });

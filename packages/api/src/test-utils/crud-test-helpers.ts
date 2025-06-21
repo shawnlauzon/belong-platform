@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { setupBelongClientMocks } from './mockSetup';
+import { setupSupabaseMocks } from './mockSetup';
+import { createGetBelongClientMock } from './getBelongClientMock';
 import { 
   createMockUser, 
   createMockCommunity, 
@@ -9,6 +10,7 @@ import {
   createMockDbCommunity 
 } from './mocks';
 import { ResourceCategory } from '@belongnetwork/types';
+import * as core from '@belongnetwork/core';
 
 /**
  * Shared utilities for CRUD testing across Resources, Events, and Communities
@@ -16,19 +18,29 @@ import { ResourceCategory } from '@belongnetwork/types';
 
 export interface CrudTestMocks {
   mockSupabase: any;
+  mockMapbox: any;
   mockLogger: any;
-  mockGetBelongClient: any;
+  mockBelongClient: any;
 }
 
 /**
  * Sets up fresh mocks for each test
  */
 export function setupCrudTestMocks(): CrudTestMocks {
-  const mocks = setupBelongClientMocks();
+  const mocks = setupSupabaseMocks();
+  
+  // Set up getBelongClient mock
+  const { getBelongClient, mockLogger } = createGetBelongClientMock(mocks.mockSupabase);
+  const mockBelongClient = { supabase: mocks.mockSupabase, logger: mockLogger };
+  
+  // Mock the getBelongClient function globally
+  vi.mocked(core.getBelongClient).mockImplementation(getBelongClient);
+  
   return {
     mockSupabase: mocks.mockSupabase,
-    mockLogger: mocks.mockLogger,
-    mockGetBelongClient: mocks.mockGetBelongClient,
+    mockMapbox: mocks.mockMapbox,
+    mockLogger,
+    mockBelongClient,
   };
 }
 

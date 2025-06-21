@@ -5,13 +5,6 @@ export {
   type BelongClientConfig,
 } from './config/client';
 
-// Global Configuration (DEPRECATED)
-export {
-  initializeBelong,
-  getBelongClient,
-  isInitialized,
-  resetBelongClient,
-} from './config/global';
 
 // Factory Functions
 export { createSupabaseClient } from './config/supabase';

@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { leaveEvent } from '../impl/leaveEvent';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createEventService } from '../services/event.service';
 
 export function useLeaveEvent() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const eventService = createEventService(supabase);
 
   return useMutation<void, Error, string>({
-    mutationFn: leaveEvent,
+    mutationFn: (eventId) => eventService.leaveEvent(eventId),
     onSuccess: (_, eventId) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['events'] });
