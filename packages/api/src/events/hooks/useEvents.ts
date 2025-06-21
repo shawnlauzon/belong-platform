@@ -30,33 +30,8 @@ export function useEvents(filters?: EventFilter) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Query factory functions
-  const getEvent = (id: string) => {
-    return useQuery<Event | null, Error>({
-      queryKey: queryKeys.events.byId(id),
-      queryFn: () => eventService.fetchEventById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-
-  const getAttendees = (eventId: string) => {
-    return useQuery<EventAttendance[], Error>({
-      queryKey: queryKeys.events.attendees(eventId),
-      queryFn: () => eventService.fetchEventAttendees({ eventId }),
-      enabled: !!eventId,
-      staleTime: 2 * 60 * 1000, // 2 minutes (fresher for attendance)
-    });
-  };
-
-  const getUserAttendances = (userId: string) => {
-    return useQuery<EventAttendance[], Error>({
-      queryKey: queryKeys.events.userAttendances(userId),
-      queryFn: () => eventService.fetchUserEventAttendances(userId),
-      enabled: !!userId,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Create mutation
   const createMutation = useMutation({
@@ -218,27 +193,69 @@ export function useEvents(filters?: EventFilter) {
     events: eventsQuery.data,
     isLoading: eventsQuery.isLoading,
     error: eventsQuery.error,
-    getEvent,
-    getAttendees,
-    getUserAttendances,
 
-    // Mutations
-    create: createMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
     update: (id: string, data: Partial<EventData>) =>
-      updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
+      updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
     join: (eventId: string, status?: EventAttendanceStatus) =>
-      joinMutation.mutateAsync({ eventId, status }),
-    leave: leaveMutation.mutateAsync,
+      joinMutation?.mutateAsync ? joinMutation.mutateAsync({ eventId, status }) : Promise.reject(new Error('Join mutation not ready')),
+    leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
 
-    // Mutation states
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isJoining: joinMutation.isPending,
-    isLeaving: leaveMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isCreating: createMutation?.isPending || false,
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
+    isJoining: joinMutation?.isPending || false,
+    isLeaving: leaveMutation?.isPending || false,
 
     // Raw queries for advanced usage
     eventsQuery,
   };
+}
+
+/**
+ * Hook to fetch a specific event by ID
+ */
+export function useEvent(id: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<Event | null, Error>({
+    queryKey: queryKeys.events.byId(id),
+    queryFn: () => eventService.fetchEventById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch attendees for a specific event
+ */
+export function useEventAttendees(eventId: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<EventAttendance[], Error>({
+    queryKey: queryKeys.events.attendees(eventId),
+    queryFn: () => eventService.fetchEventAttendees({ eventId }),
+    enabled: !!eventId,
+    staleTime: 2 * 60 * 1000, // 2 minutes (fresher for attendance)
+  });
+}
+
+/**
+ * Hook to fetch user attendances across all events
+ */
+export function useUserEventAttendances(userId: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<EventAttendance[], Error>({
+    queryKey: queryKeys.events.userAttendances(userId),
+    queryFn: () => eventService.fetchUserEventAttendances(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
 }

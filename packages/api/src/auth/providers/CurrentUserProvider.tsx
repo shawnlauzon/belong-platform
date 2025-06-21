@@ -17,7 +17,10 @@ const ClientContext = createContext<BelongClient | undefined>(undefined);
 export const useSupabase = () => {
   const context = useContext(ClientContext);
   if (context === undefined) {
-    throw new Error("useSupabase must be used within BelongProvider");
+    throw new Error("useSupabase must be used within BelongProvider. Make sure your component is wrapped with BelongProvider.");
+  }
+  if (!context.supabase) {
+    throw new Error("Supabase client not available in BelongProvider context. Check your client configuration.");
   }
   return context.supabase;
 };

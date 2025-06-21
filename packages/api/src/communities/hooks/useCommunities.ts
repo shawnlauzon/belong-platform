@@ -21,6 +21,9 @@ type JoinCommunityInput = {
  */
 export function useCommunities(options?: { includeDeleted?: boolean }) {
   const queryClient = useQueryClient();
+  if (!queryClient) {
+    throw new Error("QueryClient not available. Make sure your component is wrapped with QueryClientProvider.");
+  }
   const supabase = useSupabase();
   const communityService = createCommunityService(supabase);
 
@@ -31,33 +34,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Query factory functions
-  const getCommunity = (id: string) => {
-    return useQuery<Community | null, Error>({
-      queryKey: queryKeys.communities.byId(id),
-      queryFn: () => communityService.fetchCommunityById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-
-  const getMemberships = (communityId: string) => {
-    return useQuery<CommunityMembership[], Error>({
-      queryKey: queryKeys.communities.memberships(communityId),
-      queryFn: () => communityService.fetchCommunityMemberships(communityId),
-      enabled: !!communityId,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-
-  const getUserMemberships = (userId: string) => {
-    return useQuery<CommunityMembership[], Error>({
-      queryKey: queryKeys.communities.userMemberships(userId),
-      queryFn: () => communityService.fetchUserMemberships(userId),
-      enabled: !!userId,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Create mutation
   const createMutation = useMutation({
@@ -192,32 +170,76 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
     },
   });
 
-  return {
+  const result = {
     // Queries
     communities: communitiesQuery.data,
     isLoading: communitiesQuery.isLoading,
     error: communitiesQuery.error,
-    getCommunity,
-    getMemberships,
-    getUserMemberships,
 
-    // Mutations
-    create: createMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
     update: (id: string, data: Partial<CommunityData>) =>
-      updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
+      updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
     join: (communityId: string, role?: "member" | "admin" | "organizer") =>
-      joinMutation.mutateAsync({ communityId, role }),
-    leave: leaveMutation.mutateAsync,
+      joinMutation?.mutateAsync ? joinMutation.mutateAsync({ communityId, role }) : Promise.reject(new Error('Join mutation not ready')),
+    leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
 
-    // Mutation states
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isJoining: joinMutation.isPending,
-    isLeaving: leaveMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isCreating: createMutation?.isPending || false,
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
+    isJoining: joinMutation?.isPending || false,
+    isLeaving: leaveMutation?.isPending || false,
 
     // Raw queries for advanced usage
     communitiesQuery,
   };
+  
+  return result;
+}
+
+/**
+ * Hook to fetch a specific community by ID
+ */
+export function useCommunity(id: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+  
+  return useQuery<Community | null, Error>({
+    queryKey: queryKeys.communities.byId(id),
+    queryFn: () => communityService.fetchCommunityById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch memberships for a specific community
+ */
+export function useCommunityMemberships(communityId: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+  
+  return useQuery<CommunityMembership[], Error>({
+    queryKey: queryKeys.communities.memberships(communityId),
+    queryFn: () => communityService.fetchCommunityMemberships(communityId),
+    enabled: !!communityId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch user memberships across all communities
+ */
+export function useUserMemberships(userId: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+  
+  return useQuery<CommunityMembership[], Error>({
+    queryKey: queryKeys.communities.userMemberships(userId),
+    queryFn: () => communityService.fetchUserMemberships(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
 }
