@@ -37,13 +37,17 @@ export function useEvents(filters?: EventFilter) {
   const createMutation = useMutation({
     mutationFn: (data: EventData) => eventService.createEvent(data),
     onSuccess: (newEvent) => {
-      // Invalidate the events list to reflect the new event
+      // Invalidate all events queries to reflect the new event
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byCommunity(newEvent.community.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byOrganizer(newEvent.organizer.id),
+      });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
       });
 
       // Update the cache for this specific event
@@ -67,13 +71,17 @@ export function useEvents(filters?: EventFilter) {
     mutationFn: ({ id, data }: { id: string; data: Partial<EventData> }) =>
       eventService.updateEvent(id, data),
     onSuccess: (updatedEvent) => {
-      // Invalidate queries to refresh data
+      // Invalidate all events queries to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byCommunity(updatedEvent.community.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byOrganizer(updatedEvent.organizer.id),
+      });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
       });
 
       // Update the cache for this specific event
@@ -98,8 +106,12 @@ export function useEvents(filters?: EventFilter) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => eventService.deleteEvent(id),
     onSuccess: (_, eventId) => {
-      // Invalidate queries to refresh data
+      // Invalidate all events queries to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
+      });
       queryClient.removeQueries({
         queryKey: queryKeys.events.byId(eventId),
       });
@@ -139,6 +151,10 @@ export function useEvents(filters?: EventFilter) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.userAttendances(attendance.user.id),
       });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
+      });
 
       logger.info("🎉 API: Successfully joined event via consolidated hook", {
         eventId: attendance.event.id,
@@ -167,6 +183,10 @@ export function useEvents(filters?: EventFilter) {
       });
       queryClient.invalidateQueries({
         queryKey: ["user-attendances"],
+      });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
       });
 
       logger.info("🎉 API: Successfully left event via consolidated hook", {
