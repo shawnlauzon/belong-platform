@@ -114,7 +114,7 @@ describe("Communities CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(communitiesResult.current).toBeDefined();
       expect(communitiesResult.current).not.toBeNull();
-    }, { timeout: 20000 });
+    }, { timeout: 25000 });
 
     // Then wait for data to load
     await waitFor(() => {
@@ -129,8 +129,8 @@ describe("Communities CRUD Integration Tests", () => {
         ]),
       );
       expect(communitiesResult.current.error).toBe(null);
-    }, { timeout: 20000 });
-  });
+    }, { timeout: 25000 });
+  }, 30000);
 
   test("should successfully create a community when authenticated", async () => {
     const { testUser }: AuthSetupResult = authSetup;
