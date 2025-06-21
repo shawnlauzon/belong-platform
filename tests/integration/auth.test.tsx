@@ -10,12 +10,12 @@ import { faker } from "@faker-js/faker";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  useAuth,
   useSignUp,
   useSignIn,
-  useBelong,
   useSignOut,
   BelongProvider,
-} from "../../dist/index.es.js";
+} from "@belongnetwork/platform";
 
 let queryClient: QueryClient;
 let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -59,24 +59,23 @@ describe("Authentication Integration", () => {
   // Clean up auth state between tests to ensure isolation
   async function signOutBetweenTests() {
     try {
-      // Instead of clearing all cache, just invalidate auth-related queries
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      // Don't invalidate queries - this breaks auth state for useBelong
+      // The tests will handle their own auth setup and cleanup
     } catch (error) {
       // Ignore errors during cleanup
     }
   }
 
-  test("useSignUp should work with BelongProvider config", async () => {
+  test("useAuth signUp should work with BelongProvider config", async () => {
     await signOutBetweenTests();
 
-    const { result } = renderHook(() => useSignUp(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
     // Wait for hook to initialize properly
     await waitFor(() => {
       expect(result.current).toBeDefined();
       expect(result.current).not.toBeNull();
-      expect(typeof result.current.mutateAsync).toBe('function');
+      expect(typeof result.current.signUp).toBe('function');
     }, { timeout: 15000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -88,31 +87,29 @@ describe("Authentication Integration", () => {
       lastName: faker.person.lastName(),
     };
 
+    let signUpResult: any;
     await act(async () => {
-      await result.current.mutateAsync(testUser);
+      signUpResult = await result.current.signUp(testUser);
     });
 
-    await waitFor(() => expect(result.current.isPending).toBe(false));
-
-    expect(result.current).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      error: null,
+    expect(signUpResult).toMatchObject({
+      id: expect.any(String),
+      email: testUser.email,
+      firstName: testUser.firstName,
     });
   });
 
-  test("useSignIn should work after signing up a user", async () => {
+  test("useAuth signIn should work after signing up a user", async () => {
     await signOutBetweenTests();
 
-    // First create a user
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper });
 
-    // Wait for signup hook to initialize properly
+    // Wait for auth hook to initialize properly
     await waitFor(() => {
-      expect(signUpResult.current).toBeDefined();
-      expect(signUpResult.current).not.toBeNull();
-      expect(typeof signUpResult.current.mutateAsync).toBe('function');
+      expect(result.current).toBeDefined();
+      expect(result.current).not.toBeNull();
+      expect(typeof result.current.signUp).toBe('function');
+      expect(typeof result.current.signIn).toBe('function');
     }, { timeout: 15000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -124,48 +121,41 @@ describe("Authentication Integration", () => {
       lastName: faker.person.lastName(),
     };
 
+    // First sign up the user
+    let signUpResult: any;
     await act(async () => {
-      await signUpResult.current.mutateAsync(testUser);
+      signUpResult = await result.current.signUp(testUser);
     });
 
-    await waitFor(() => expect(signUpResult.current.isPending).toBe(false));
+    expect(signUpResult).toMatchObject({
+      id: expect.any(String),
+      email: testUser.email,
+    });
 
     // Now test sign in
-    const { result } = renderHook(() => useSignIn(), { wrapper });
-
-    // Wait for signin hook to initialize properly
-    await waitFor(() => {
-      expect(result.current).toBeDefined();
-      expect(result.current).not.toBeNull();
-      expect(typeof result.current.mutateAsync).toBe('function');
-    }, { timeout: 15000 });
-
+    let signInResult: any;
     await act(async () => {
-      await result.current.mutateAsync({
+      signInResult = await result.current.signIn({
         email: testEmail,
         password: testPassword,
       });
     });
 
-    await waitFor(() => expect(result.current.isPending).toBe(false));
-
-    expect(result.current).toMatchObject({
-      isError: false,
-      isSuccess: true,
-      isPending: false,
-      error: null,
+    expect(signInResult).toMatchObject({
+      id: expect.any(String),
+      email: testUser.email,
     });
   });
 
-  test("useBelong should render error when unauthenticated", async () => {
+  test("useAuth should render error when unauthenticated", async () => {
     await signOutBetweenTests();
 
     const TestComponent = () => {
-      const data = useBelong();
-      if (data.isError || !data.currentUser) {
+      const { currentUser, isAuthenticated } = useAuth();
+      if (!isAuthenticated || !currentUser) {
         return <div data-testid="no-user">No user</div>;
       }
-      return <div data-testid="user-data">{data.currentUser.email}</div>;
+      return <div data-testid="user-data">{currentUser.email}</div>;
     };
 
     const { getByTestId } = render(<TestComponent />, { wrapper });
@@ -176,7 +166,7 @@ describe("Authentication Integration", () => {
     });
   });
 
-  test("useBelong should return user data when authenticated", async () => {
+  test("useAuth should return user data when authenticated", async () => {
     await signOutBetweenTests();
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -188,49 +178,41 @@ describe("Authentication Integration", () => {
       lastName: faker.person.lastName(),
     };
 
-    // Step 1: Create auth mutations with BelongProvider
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
+    // Use the consolidated useAuth hook
+    const { result: authResult } = renderHook(() => useAuth(), { wrapper });
 
-    // Wait for hooks to initialize properly
+    // Wait for auth hook to initialize properly
     await waitFor(() => {
-      expect(signUpResult.current).toBeDefined();
-      expect(signUpResult.current).not.toBeNull();
-      expect(typeof signUpResult.current.mutateAsync).toBe('function');
+      expect(authResult.current).toBeDefined();
+      expect(authResult.current).not.toBeNull();
+      expect(typeof authResult.current.signUp).toBe('function');
+      expect(typeof authResult.current.signIn).toBe('function');
     }, { timeout: 15000 });
 
-    await waitFor(() => {
-      expect(signInResult.current).toBeDefined();
-      expect(signInResult.current).not.toBeNull();
-      expect(typeof signInResult.current.mutateAsync).toBe('function');
-    }, { timeout: 15000 });
-
-    // Step 2: Sign up user
+    // Step 1: Sign up user
     await act(async () => {
-      await signUpResult.current.mutateAsync(testUser);
+      await authResult.current.signUp(testUser);
     });
-    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
 
-    // Step 3: Sign in user
+    // Step 2: Sign in user  
     await act(async () => {
-      await signInResult.current.mutateAsync({
+      await authResult.current.signIn({
         email: testEmail,
         password: testPassword,
       });
     });
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
     
     // Add small delay to allow auth state and user data to sync
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Step 4: Test BelongProvider with authenticated user
+    // Step 3: Test that useAuth returns user data
     const TestComponent = () => {
-      const data = useBelong();
+      const { currentUser, isPending, isAuthenticated } = useAuth();
       // First check if we're still pending
-      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      if (isPending) return <div data-testid="loading">Loading...</div>;
       // Then check if we have user data or if there's an error
-      if (!data.currentUser) return <div data-testid="no-user">No user data</div>;
-      return <div data-testid="user-data">{data.currentUser?.email || ""}</div>;
+      if (!isAuthenticated || !currentUser) return <div data-testid="no-user">No user data</div>;
+      return <div data-testid="user-data">{currentUser?.email || ""}</div>;
     };
 
     const { getByTestId } = render(<TestComponent />, { wrapper });
@@ -263,7 +245,7 @@ describe("Authentication Integration", () => {
     );
   });
 
-  test("useSignOut should work and clear current user", async () => {
+  test("useAuth signOut should work and clear current user", async () => {
     await signOutBetweenTests();
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -275,60 +257,44 @@ describe("Authentication Integration", () => {
       lastName: faker.person.lastName(),
     };
 
-    // Step 1: Set up auth hooks using the same shared wrapper
-    const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
-    const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
-    const { result: signOutResult } = renderHook(() => useSignOut(), {
-      wrapper,
+    // Use the consolidated useAuth hook
+    const { result: authResult } = renderHook(() => useAuth(), { wrapper });
+
+    // Wait for auth hook to initialize properly
+    await waitFor(() => {
+      expect(authResult.current).toBeDefined();
+      expect(authResult.current).not.toBeNull();
+      expect(typeof authResult.current.signUp).toBe('function');
+      expect(typeof authResult.current.signIn).toBe('function');
+      expect(typeof authResult.current.signOut).toBe('function');
+    }, { timeout: 15000 });
+
+    // Step 1: Sign up user
+    await act(async () => {
+      await authResult.current.signUp(testUser);
     });
 
-    // Wait for all hooks to initialize properly
-    await waitFor(() => {
-      expect(signUpResult.current).toBeDefined();
-      expect(signUpResult.current).not.toBeNull();
-      expect(typeof signUpResult.current.mutateAsync).toBe('function');
-    }, { timeout: 15000 });
-
-    await waitFor(() => {
-      expect(signInResult.current).toBeDefined();
-      expect(signInResult.current).not.toBeNull();
-      expect(typeof signInResult.current.mutateAsync).toBe('function');
-    }, { timeout: 15000 });
-
-    await waitFor(() => {
-      expect(signOutResult.current).toBeDefined();
-      expect(signOutResult.current).not.toBeNull();
-      expect(typeof signOutResult.current.mutateAsync).toBe('function');
-    }, { timeout: 15000 });
-
-    // Step 2: Sign up user
+    // Step 2: Sign in user
     await act(async () => {
-      await signUpResult.current.mutateAsync(testUser);
-    });
-    await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
-
-    // Step 3: Sign in user
-    await act(async () => {
-      await signInResult.current.mutateAsync({
+      await authResult.current.signIn({
         email: testEmail,
         password: testPassword,
       });
     });
-    await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
     
     // Add small delay to allow auth state and user data to sync
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Step 4: Verify user is authenticated with BelongProvider
+    // Step 3: Verify user is authenticated
     const AuthenticatedComponent = () => {
-      const data = useBelong();
+      const { currentUser, isPending, isAuthenticated } = useAuth();
       // First check if we're still pending
-      if (data.isPending) return <div data-testid="loading">Loading...</div>;
+      if (isPending) return <div data-testid="loading">Loading...</div>;
       // Then check if we have user data or if there's an error
-      if (!data.currentUser) return <div data-testid="no-user">No user data</div>;
+      if (!isAuthenticated || !currentUser) return <div data-testid="no-user">No user data</div>;
       return (
         <div data-testid="authenticated-user">
-          {data.currentUser?.email || ""}
+          {currentUser?.email || ""}
         </div>
       );
     };
@@ -364,20 +330,19 @@ describe("Authentication Integration", () => {
       { timeout: 15000 },
     );
 
-    // Step 5: Sign out user
+    // Step 4: Sign out user
     await act(async () => {
-      await signOutResult.current.mutateAsync();
+      await authResult.current.signOut();
     });
-    await waitFor(() => expect(signOutResult.current.isSuccess).toBe(true));
 
-    // Step 6: Verify user is no longer authenticated (TkDodo's pattern should invalidate cache)
+    // Step 5: Verify user is no longer authenticated
     // Force React to re-evaluate the provider
     rerender(<AuthenticatedComponent />);
 
-    // Should now show no user data (empty or null email)
+    // Should now show no user data
     await waitFor(() => {
-      const userElement = getByTestId("authenticated-user");
-      expect(userElement.textContent).toBe(""); // Empty since no user
-    });
+      const noUserElement = getByTestId("no-user");
+      expect(noUserElement.textContent).toBe("No user data");
+    }, { timeout: 15000 });
   });
 });

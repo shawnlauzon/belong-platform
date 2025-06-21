@@ -33,7 +33,6 @@ describe("Package Exports Integration", () => {
 
   describe("Hook Exports", () => {
     const expectedHooks = [
-      "useBelong",
       "useAuth", 
       "useSignIn",
       "useSignUp", 
@@ -81,7 +80,7 @@ describe("Package Exports Integration", () => {
 
     it("should support subpath imports for hooks", async () => {
       const hooks = await import("@belongnetwork/platform/hooks");
-      expect(hooks.useBelong).toBeDefined();
+      expect(hooks.useAuth).toBeDefined();
     });
 
     it("should support subpath imports for types", async () => {
