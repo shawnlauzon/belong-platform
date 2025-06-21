@@ -1,7 +1,7 @@
 import { logger } from '@belongnetwork/core';
-import type { Community, CommunityData, CommunityInfo, User } from '@belongnetwork/types';
+import type { Community, CommunityData, CommunityInfo, CommunityMembership, User } from '@belongnetwork/types';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
-import { toCommunityInfo, toDomainCommunity, forDbInsert } from '../impl/communityTransformer';
+import { toCommunityInfo, toDomainCommunity, forDbInsert } from '../transformers/communityTransformer';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@belongnetwork/types/database';
 
@@ -236,6 +236,260 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       return { success: true };
     } catch (error) {
       logger.error('🏘️ API: Error deleting community', { error });
+      throw error;
+    }
+  },
+
+  async joinCommunity(
+    communityId: string,
+    role: 'member' | 'admin' | 'organizer' = 'member'
+  ): Promise<CommunityMembership> {
+    logger.debug('🏘️ API: Joining community', { communityId, role });
+
+    try {
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData?.user?.id) {
+        logger.error('🏘️ API: User must be authenticated to join a community', {
+          error: userError,
+        });
+        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
+      }
+
+      const userId = userData.user.id;
+
+      // Check if user is already a member
+      const { data: existingMembership, error: checkError } = await supabase
+        .from('community_memberships')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('community_id', communityId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "No rows found" - which is what we want
+        logger.error('🏘️ API: Failed to check existing membership', { error: checkError });
+        throw checkError;
+      }
+
+      if (existingMembership) {
+        logger.info('🏘️ API: User is already a member of this community', {
+          userId,
+          communityId,
+        });
+        throw new Error('User is already a member of this community');
+      }
+
+      // Create membership data
+      const membershipData = {
+        userId,
+        communityId,
+        role,
+      };
+
+      // Transform to database format
+      const dbMembership = {
+        user_id: userId,
+        community_id: communityId,
+        role: role,
+      };
+
+      // Insert membership
+      const { data: createdMembership, error } = await supabase
+        .from('community_memberships')
+        .insert([dbMembership])
+        .select('user_id, community_id, role, joined_at')
+        .single();
+
+      if (error) {
+        logger.error('🏘️ API: Failed to create community membership', { error });
+        throw error;
+      }
+
+      // Transform to domain model
+      const membership = {
+        id: `${createdMembership.user_id}-${createdMembership.community_id}`,
+        userId: createdMembership.user_id,
+        communityId: createdMembership.community_id,
+        role: createdMembership.role as 'member' | 'admin' | 'organizer',
+        joinedAt: new Date(createdMembership.joined_at),
+      };
+
+      logger.info('🏘️ API: Successfully joined community', {
+        userId,
+        communityId,
+        role,
+      });
+
+      return membership;
+    } catch (error) {
+      logger.error('🏘️ API: Error joining community', { error, communityId });
+      throw error;
+    }
+  },
+
+  async leaveCommunity(communityId: string): Promise<void> {
+    logger.debug('🏘️ API: Leaving community', { communityId });
+
+    try {
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData?.user?.id) {
+        logger.error('🏘️ API: User must be authenticated to leave a community', {
+          error: userError,
+        });
+        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
+      }
+
+      const userId = userData.user.id;
+
+      // Check if user is a member
+      const { data: existingMembership, error: checkError } = await supabase
+        .from('community_memberships')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('community_id', communityId)
+        .single();
+
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          // No rows found - user is not a member
+          logger.info('🏘️ API: User is not a member of this community', {
+            userId,
+            communityId,
+          });
+          throw new Error('User is not a member of this community');
+        }
+        logger.error('🏘️ API: Failed to check existing membership', { error: checkError });
+        throw checkError;
+      }
+
+      // Check if user is the organizer - they cannot leave their own community
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('organizer_id')
+        .eq('id', communityId)
+        .single();
+
+      if (communityError) {
+        logger.error('🏘️ API: Failed to fetch community details', { error: communityError });
+        throw communityError;
+      }
+
+      if (community.organizer_id === userId) {
+        logger.info('🏘️ API: Organizer cannot leave their own community', {
+          userId,
+          communityId,
+        });
+        throw new Error('Organizer cannot leave their own community');
+      }
+
+      // Delete membership
+      const { error: deleteError } = await supabase
+        .from('community_memberships')
+        .delete()
+        .eq('user_id', userId)
+        .eq('community_id', communityId);
+
+      if (deleteError) {
+        logger.error('🏘️ API: Failed to delete community membership', { error: deleteError });
+        throw deleteError;
+      }
+
+      logger.info('🏘️ API: Successfully left community', {
+        userId,
+        communityId,
+      });
+    } catch (error) {
+      logger.error('🏘️ API: Error leaving community', { error, communityId });
+      throw error;
+    }
+  },
+
+  async fetchCommunityMemberships(communityId: string): Promise<CommunityMembership[]> {
+    logger.debug('🏘️ API: Fetching community memberships', { communityId });
+
+    try {
+      const { data, error } = await supabase
+        .from('community_memberships')
+        .select('user_id, community_id, role, joined_at')
+        .eq('community_id', communityId)
+        .order('joined_at', { ascending: false });
+
+      if (error) {
+        logger.error('🏘️ API: Failed to fetch community memberships', { error });
+        throw error;
+      }
+
+      const memberships = (data || []).map((dbMembership: any) => ({
+        id: `${dbMembership.user_id}-${dbMembership.community_id}`,
+        userId: dbMembership.user_id,
+        communityId: dbMembership.community_id,
+        role: dbMembership.role as 'member' | 'admin' | 'organizer',
+        joinedAt: new Date(dbMembership.joined_at),
+      }));
+
+      logger.debug('🏘️ API: Successfully fetched community memberships', {
+        communityId,
+        count: memberships.length,
+      });
+
+      return memberships;
+    } catch (error) {
+      logger.error('🏘️ API: Error fetching community memberships', { error, communityId });
+      throw error;
+    }
+  },
+
+  async fetchUserMemberships(userId?: string): Promise<CommunityMembership[]> {
+    logger.debug('🏘️ API: Fetching user memberships', { userId });
+
+    try {
+      let targetUserId = userId;
+
+      // If no userId provided, get current user
+      if (!targetUserId) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !userData?.user?.id) {
+          logger.error('🏘️ API: User must be authenticated or userId must be provided', {
+            error: userError,
+          });
+          throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
+        }
+
+        targetUserId = userData.user.id;
+      }
+
+      const { data, error } = await supabase
+        .from('community_memberships')
+        .select('user_id, community_id, role, joined_at')
+        .eq('user_id', targetUserId)
+        .order('joined_at', { ascending: false });
+
+      if (error) {
+        logger.error('🏘️ API: Failed to fetch user memberships', { error });
+        throw error;
+      }
+
+      const memberships = (data || []).map((dbMembership: any) => ({
+        id: `${dbMembership.user_id}-${dbMembership.community_id}`,
+        userId: dbMembership.user_id,
+        communityId: dbMembership.community_id,
+        role: dbMembership.role as 'member' | 'admin' | 'organizer',
+        joinedAt: new Date(dbMembership.joined_at),
+      }));
+
+      logger.debug('🏘️ API: Successfully fetched user memberships', {
+        userId: targetUserId,
+        count: memberships.length,
+      });
+
+      return memberships;
+    } catch (error) {
+      logger.error('🏘️ API: Error fetching user memberships', { error, userId });
       throw error;
     }
   },

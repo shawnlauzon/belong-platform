@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toEventInfo } from '../impl/eventTransformer';
+import { toEventInfo } from '../transformers/eventTransformer';
 import { createMockDbEvent } from '../../test-utils';
 
 describe('EventInfo Transformer', () => {

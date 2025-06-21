@@ -1,11 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchCommunityMemberships } from '../impl/fetchCommunityMemberships';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
 import { logger } from '@belongnetwork/core';
 
 export function useCommunityMemberships(communityId: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+  
   const result = useQuery({
     queryKey: ['community-memberships', communityId],
-    queryFn: () => fetchCommunityMemberships(communityId),
+    queryFn: () => communityService.fetchCommunityMemberships(communityId),
     enabled: !!communityId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

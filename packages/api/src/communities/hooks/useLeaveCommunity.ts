@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { leaveCommunity } from '../impl/leaveCommunity';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
 import { logger } from '@belongnetwork/core';
 
 export function useLeaveCommunity() {
   const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
 
   return useMutation({
-    mutationFn: (communityId: string) => leaveCommunity(communityId),
+    mutationFn: (communityId: string) => communityService.leaveCommunity(communityId),
     onSuccess: (_, communityId) => {
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['communities'] });

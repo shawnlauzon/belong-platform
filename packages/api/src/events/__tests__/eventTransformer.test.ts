@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { toDomainEvent, forDbInsert, forDbUpdate } from '../impl/eventTransformer';
+import { toDomainEvent, forDbInsert, forDbUpdate } from '../transformers/eventTransformer';
 import { createMockDbEvent } from './test-utils';
 import { createMockEventData, createMockUser, createMockCommunity } from '../../test-utils/mocks';
 

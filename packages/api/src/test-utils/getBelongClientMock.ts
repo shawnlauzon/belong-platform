@@ -15,7 +15,7 @@ export function createGetBelongClientMock(mockSupabase: any) {
 
   const mockBelongClient: BelongClient = {
     supabase: mockSupabase,
-    logger: mockLogger,
+    mapbox: {} as any,
   };
 
   return {

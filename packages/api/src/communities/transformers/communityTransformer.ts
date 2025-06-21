@@ -1,7 +1,7 @@
 import type { Database } from '@belongnetwork/types/database';
 import type { CommunityData, Community, CommunityInfo, User, CommunityMembership, CommunityMembershipData } from '@belongnetwork/types';
 import { parsePostGisPoint, toPostGisPoint } from '../../utils';
-import { toDomainUser } from '../../users/impl/userTransformer';
+import { toDomainUser } from '../../users/transformers/userTransformer';
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];

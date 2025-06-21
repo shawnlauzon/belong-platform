@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toCommunityInfo } from '../impl/communityTransformer';
+import { toCommunityInfo } from '../transformers/communityTransformer';
 import { createMockDbCommunity } from '../../test-utils';
 
 describe('CommunityInfo Transformer', () => {

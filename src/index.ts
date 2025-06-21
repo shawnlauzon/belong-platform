@@ -11,10 +11,6 @@ export * as types from '../packages/types/src'
 
 // Explicit core exports to ensure single source of truth
 export { 
-  initializeBelong, 
-  getBelongClient, 
-  isInitialized, 
-  resetBelongClient,
   createBelongClient,
   createSupabaseClient,
   createMapboxClient,

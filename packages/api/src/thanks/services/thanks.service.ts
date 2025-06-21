@@ -5,7 +5,7 @@ import {
   toThanksInfo, 
   forDbInsert, 
   forDbUpdate 
-} from '../impl/thanksTransformer';
+} from '../transformers/thanksTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createResourceService } from '../../resources/services/resource.service';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -138,7 +138,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Required related entities not found');
       }
 
-      const thanks = toDomainThanks(data, fromUser, toUser, resource);
+      const thanks = toDomainThanks(data, { fromUser, toUser, resource });
       
       logger.debug('🙏 Thanks Service: Successfully fetched thanks', {
         id,
@@ -203,7 +203,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Required related entities not found');
       }
 
-      const thanks = toDomainThanks(createdThanks, fromUser, toUser, resource);
+      const thanks = toDomainThanks(createdThanks, { fromUser, toUser, resource });
 
       logger.info('🙏 Thanks Service: Successfully created thanks', {
         id: thanks.id,
@@ -266,7 +266,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Required related entities not found');
       }
 
-      const thanks = toDomainThanks(updatedThanks, fromUser, toUser, resource);
+      const thanks = toDomainThanks(updatedThanks, { fromUser, toUser, resource });
 
       logger.info('🙏 Thanks Service: Successfully updated thanks', {
         id: thanks.id,

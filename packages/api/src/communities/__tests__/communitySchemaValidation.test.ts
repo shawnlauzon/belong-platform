@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Database } from '@belongnetwork/types/database';
-import { forDbUpdate, forDbInsert } from '../impl/communityTransformer';
+import { forDbUpdate, forDbInsert } from '../transformers/communityTransformer';
 import { createMockDbCommunity } from '../../test-utils';
 
 type CommunityRow = Database['public']['Tables']['communities']['Row'];

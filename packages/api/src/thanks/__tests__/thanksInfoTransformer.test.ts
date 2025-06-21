@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toThanksInfo } from '../impl/thanksTransformer';
+import { toThanksInfo } from '../transformers/thanksTransformer';
 import { createMockDbThanks } from '../../test-utils';
 
 describe('ThanksInfo Transformer', () => {

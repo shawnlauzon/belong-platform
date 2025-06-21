@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { joinCommunity } from '../impl/joinCommunity';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createCommunityService } from '../services/community.service';
 import { logger } from '@belongnetwork/core';
 
 type JoinCommunityInput = {
@@ -9,10 +10,12 @@ type JoinCommunityInput = {
 
 export function useJoinCommunity() {
   const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
 
   return useMutation({
     mutationFn: ({ communityId, role = 'member' }: JoinCommunityInput) =>
-      joinCommunity(communityId, role),
+      communityService.joinCommunity(communityId, role),
     onSuccess: (newMembership) => {
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['communities'] });

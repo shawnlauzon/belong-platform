@@ -1,6 +1,6 @@
 import { logger } from '@belongnetwork/core';
 import type { Resource, ResourceData, ResourceInfo, ResourceFilter } from '@belongnetwork/types';
-import { toDomainResource, toResourceInfo, forDbInsert, forDbUpdate } from '../impl/resourceTransformer';
+import { toDomainResource, toResourceInfo, forDbInsert, forDbUpdate } from '../transformers/resourceTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -48,7 +48,9 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Convert to ResourceInfo objects
-      const resources = data.map(toResourceInfo);
+      const resources = data.map((dbResource) => 
+        toResourceInfo(dbResource, dbResource.owner_id, dbResource.community_id)
+      );
 
       logger.debug('📚 API: Successfully fetched resources', {
         count: resources.length,
@@ -99,7 +101,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Owner not found');
       }
 
-      const resource = toDomainResource(data, owner, community || undefined);
+      const resource = toDomainResource(data, { owner, community: community || undefined });
       
       logger.debug('📚 API: Successfully fetched resource', {
         id,
@@ -164,7 +166,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Owner not found');
       }
 
-      const resource = toDomainResource(createdResource, owner, community || undefined);
+      const resource = toDomainResource(createdResource, { owner, community: community || undefined });
 
       logger.info('📚 API: Successfully created resource', {
         id: resource.id,
@@ -226,7 +228,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Owner not found');
       }
 
-      const resource = toDomainResource(updatedResource, owner, community || undefined);
+      const resource = toDomainResource(updatedResource, { owner, community: community || undefined });
 
       logger.info('📚 API: Successfully updated resource', {
         id: resource.id,

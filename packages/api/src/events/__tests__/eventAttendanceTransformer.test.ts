@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toDomainEventAttendance, forDbInsert } from '../impl/eventAttendanceTransformer';
+import { toDomainEventAttendance, forDbInsert } from '../transformers/eventAttendanceTransformer';
 import { createMockDbEventAttendance } from './test-utils';
 import { createMockEventAttendanceData, createMockUser, createMockEvent } from '../../test-utils/mocks';
 

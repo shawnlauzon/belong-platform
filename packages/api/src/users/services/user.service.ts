@@ -1,6 +1,6 @@
 import { logger } from '@belongnetwork/core';
 import type { User, UserData, UserFilter } from '@belongnetwork/types';
-import { toDomainUser, forDbInsert, forDbUpdate } from '../impl/userTransformer';
+import { toDomainUser, forDbInsert, forDbUpdate } from '../transformers/userTransformer';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@belongnetwork/types/database';
 

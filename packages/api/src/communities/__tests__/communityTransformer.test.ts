@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { toDomainCommunity, forDbInsert } from '../impl/communityTransformer';
+import { toDomainCommunity, forDbInsert } from '../transformers/communityTransformer';
 import {
   createMockCommunity,
   createMockCommunityData,

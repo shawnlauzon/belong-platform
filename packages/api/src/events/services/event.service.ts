@@ -1,13 +1,16 @@
 import { logger } from '@belongnetwork/core';
 import type { Event, EventData, EventInfo, EventFilter, EventAttendance, User } from '@belongnetwork/types';
+import { EventAttendanceStatus } from '@belongnetwork/types';
 import { 
   toDomainEvent, 
   toEventInfo, 
   forDbInsert, 
-  forDbUpdate,
+  forDbUpdate
+} from '../transformers/eventTransformer';
+import {
   toDomainEventAttendance,
-  forDbAttendanceInsert
-} from '../impl/eventTransformer';
+  forDbInsert as forDbAttendanceInsert
+} from '../transformers/eventAttendanceTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
@@ -63,7 +66,9 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Convert to EventInfo objects
-      const events = data.map(toEventInfo);
+      const events = data.map((dbEvent) => 
+        toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id)
+      );
 
       logger.debug('🎉 Event Service: Successfully fetched events', {
         count: events.length,
@@ -114,7 +119,11 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Organizer not found');
       }
 
-      const event = toDomainEvent(data, organizer, community || undefined);
+      if (!community) {
+        throw new Error('Community not found');
+      }
+      
+      const event = toDomainEvent(data, { organizer, community });
       
       logger.debug('🎉 Event Service: Successfully fetched event', {
         id,
@@ -179,7 +188,11 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Organizer not found');
       }
 
-      const event = toDomainEvent(createdEvent, organizer, community || undefined);
+      if (!community) {
+        throw new Error('Community not found');
+      }
+      
+      const event = toDomainEvent(createdEvent, { organizer, community });
 
       logger.info('🎉 Event Service: Successfully created event', {
         id: event.id,
@@ -241,7 +254,11 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('Organizer not found');
       }
 
-      const event = toDomainEvent(updatedEvent, organizer, community || undefined);
+      if (!community) {
+        throw new Error('Community not found');
+      }
+      
+      const event = toDomainEvent(updatedEvent, { organizer, community });
 
       logger.info('🎉 Event Service: Successfully updated event', {
         id: event.id,
@@ -337,7 +354,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async joinEvent(eventId: string, status: string = 'attending'): Promise<EventAttendance> {
+  async joinEvent(eventId: string, status: EventAttendanceStatus = EventAttendanceStatus.ATTENDING): Promise<EventAttendance> {
     logger.debug('🎉 Event Service: Joining event', { eventId, status });
 
     try {
@@ -418,15 +435,15 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         if (!user) {
           throw new Error('User not found');
         }
-        return toDomainEventAttendance(updatedAttendance, user);
+        return toDomainEventAttendance(updatedAttendance, { user, event });
       }
 
-      // Create new attendance
+      // Create new attendance  
       const dbAttendance = forDbAttendanceInsert({
         eventId,
         userId,
         status,
-      });
+      }, userId);
 
       const { data: newAttendance, error: insertError } = await supabase
         .from('event_attendances')
@@ -450,7 +467,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('User not found');
       }
 
-      const attendance = toDomainEventAttendance(newAttendance, user);
+      const attendance = toDomainEventAttendance(newAttendance, { user, event });
 
       logger.info('🎉 Event Service: Successfully joined event', {
         eventId,
@@ -573,10 +590,26 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         }
       });
 
+      // For fetchEventAttendees, we need the event for each attendance
+      // This is inefficient but necessary for the domain model
+      const eventIds = Array.from(new Set(data.map(a => a.event_id)));
+      const eventPromises = eventIds.map(id => this.fetchEventById(id));
+      const events = await Promise.all(eventPromises);
+      
+      // Create event map for quick lookup
+      const eventMap = new Map<string, Event>();
+      events.forEach(event => {
+        if (event) {
+          eventMap.set(event.id, event);
+        }
+      });
+      
       // Transform to EventAttendance objects
       const attendances = data
         .map(attendance => {
           const user = userMap.get(attendance.user_id);
+          const event = eventMap.get(attendance.event_id);
+          
           if (!user) {
             logger.warn('🎉 Event Service: User not found for attendance', {
               userId: attendance.user_id,
@@ -584,7 +617,16 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
             });
             return null;
           }
-          return toDomainEventAttendance(attendance, user);
+          
+          if (!event) {
+            logger.warn('🎉 Event Service: Event not found for attendance', {
+              eventId: attendance.event_id,
+              attendanceId: attendance.id,
+            });
+            return null;
+          }
+          
+          return toDomainEventAttendance(attendance, { user, event });
         })
         .filter((attendance): attendance is EventAttendance => attendance !== null);
 
@@ -634,9 +676,32 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('User not found');
       }
 
-      const eventAttendances = attendances.map(attendance => 
-        toDomainEventAttendance(attendance, user)
-      );
+      // Fetch events for all attendances
+      const eventIds = Array.from(new Set(attendances.map(a => a.event_id)));
+      const eventPromises = eventIds.map(id => this.fetchEventById(id));
+      const events = await Promise.all(eventPromises);
+      
+      // Create event map for quick lookup
+      const eventMap = new Map<string, Event>();
+      events.forEach(event => {
+        if (event) {
+          eventMap.set(event.id, event);
+        }
+      });
+      
+      const eventAttendances = attendances
+        .map(attendance => {
+          const event = eventMap.get(attendance.event_id);
+          if (!event) {
+            logger.warn('🎉 Event Service: Event not found for attendance', {
+              eventId: attendance.event_id,
+              attendanceId: attendance.id,
+            });
+            return null;
+          }
+          return toDomainEventAttendance(attendance, { user, event });
+        })
+        .filter((attendance): attendance is EventAttendance => attendance !== null);
 
       logger.debug('🎉 Event Service: Successfully fetched user event attendances', {
         userId,

@@ -31,10 +31,10 @@ export function setupCrudTestMocks(): CrudTestMocks {
   
   // Set up getBelongClient mock
   const { getBelongClient, mockLogger } = createGetBelongClientMock(mocks.mockSupabase);
-  const mockBelongClient = { supabase: mocks.mockSupabase, logger: mockLogger };
+  const mockBelongClient = { supabase: mocks.mockSupabase, mapbox: {} as any };
   
-  // Mock the getBelongClient function globally
-  vi.mocked(core.getBelongClient).mockImplementation(getBelongClient);
+  // Mock the createBelongClient function globally  
+  vi.mocked(core.createBelongClient).mockImplementation(() => mockBelongClient as any);
   
   return {
     mockSupabase: mocks.mockSupabase,

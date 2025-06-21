@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { Database } from '@belongnetwork/types/database';
-import { forDbUpdate as communityForDbUpdate, toDomainCommunity } from '../communities/impl/communityTransformer';
-import { forDbUpdate as resourceForDbUpdate, toDomainResource } from '../resources/impl/resourceTransformer';
-import { forDbUpdate as eventForDbUpdate, toDomainEvent } from '../events/impl/eventTransformer';
-import { forDbUpdate as thanksForDbUpdate, toDomainThanks } from '../thanks/impl/thanksTransformer';
+import { forDbUpdate as communityForDbUpdate, toDomainCommunity } from '../communities/transformers/communityTransformer';
+import { forDbUpdate as resourceForDbUpdate, toDomainResource } from '../resources/transformers/resourceTransformer';
+import { forDbUpdate as eventForDbUpdate, toDomainEvent } from '../events/transformers/eventTransformer';
+import { forDbUpdate as thanksForDbUpdate, toDomainThanks } from '../thanks/transformers/thanksTransformer';
 import { 
   createMockDbCommunityWithOrganizer,
   createMockDbResourceWithOwner,
