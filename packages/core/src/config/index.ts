@@ -1,2 +1,2 @@
-export * from './mapbox';
-export * from './supabase';
+export * from "./mapbox";
+export * from "./supabase";

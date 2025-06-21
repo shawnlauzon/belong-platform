@@ -1,8 +1,8 @@
-import { createSupabaseClient } from './supabase';
-import { createMapboxClient } from './mapbox';
-import { logger as defaultLogger } from '../utils/logger';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@belongnetwork/types/database';
+import { createSupabaseClient } from "./supabase";
+import { createMapboxClient } from "./mapbox";
+import { logger as defaultLogger } from "../utils/logger";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@belongnetwork/types/database";
 
 /**
  * Configuration options for the Belong Platform client
@@ -28,10 +28,10 @@ export interface BelongClient {
 
 /**
  * Creates a configured Belong Platform client
- * 
+ *
  * @param config - Client configuration options
  * @returns Configured client instances
- * 
+ *
  * @example
  * ```typescript
  * const client = createBelongClient({
@@ -39,37 +39,37 @@ export interface BelongClient {
  *   supabaseAnonKey: 'your-anon-key',
  *   mapboxPublicToken: 'your-mapbox-token'
  * });
- * 
+ *
  * // Use the configured clients
  * const { data } = await client.supabase.from('communities').select('*');
  * const addresses = await client.mapbox.searchAddresses('Austin, TX');
  * ```
  */
 export function createBelongClient(config: BelongClientConfig): BelongClient {
-  const {
-    supabaseUrl,
-    supabaseAnonKey,
-    mapboxPublicToken
-  } = config;
+  const { supabaseUrl, supabaseAnonKey, mapboxPublicToken } = config;
 
   // Validate required configuration
   if (!supabaseUrl) {
-    throw new Error('supabaseUrl is required');
+    throw new Error("supabaseUrl is required");
   }
   if (!supabaseAnonKey) {
-    throw new Error('supabaseAnonKey is required');
+    throw new Error("supabaseAnonKey is required");
   }
   if (!mapboxPublicToken) {
-    throw new Error('mapboxPublicToken is required');
+    throw new Error("mapboxPublicToken is required");
   }
 
   // Create configured instances
-  const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, defaultLogger);
+  const supabase = createSupabaseClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    defaultLogger,
+  );
   const mapbox = createMapboxClient(mapboxPublicToken, defaultLogger);
 
   return {
     supabase,
-    mapbox
+    mapbox,
   };
 }
 

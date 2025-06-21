@@ -1,45 +1,55 @@
-import { logger } from '@belongnetwork/core';
-import type { Resource, ResourceData, ResourceInfo, ResourceFilter } from '@belongnetwork/types';
-import { toDomainResource, toResourceInfo, forDbInsert, forDbUpdate } from '../transformers/resourceTransformer';
-import { createUserService } from '../../users/services/user.service';
-import { createCommunityService } from '../../communities/services/community.service';
-import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@belongnetwork/types/database';
+import { logger } from "@belongnetwork/core";
+import type {
+  Resource,
+  ResourceData,
+  ResourceInfo,
+  ResourceFilter,
+} from "@belongnetwork/types";
+import {
+  toDomainResource,
+  toResourceInfo,
+  forDbInsert,
+  forDbUpdate,
+} from "../transformers/resourceTransformer";
+import { createUserService } from "../../users/services/user.service";
+import { createCommunityService } from "../../communities/services/community.service";
+import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@belongnetwork/types/database";
 
 export const createResourceService = (supabase: SupabaseClient<Database>) => ({
   async fetchResources(filters?: ResourceFilter): Promise<ResourceInfo[]> {
-    logger.debug('📚 API: Fetching resources', { filters });
+    logger.debug("📚 API: Fetching resources", { filters });
 
     try {
       let query = supabase
-        .from('resources')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("resources")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       // Apply filters if provided
       if (filters) {
         if (filters.communityId) {
-          query = query.eq('community_id', filters.communityId);
+          query = query.eq("community_id", filters.communityId);
         }
-        if (filters.category && filters.category !== 'all') {
-          query = query.eq('category', filters.category);
+        if (filters.category && filters.category !== "all") {
+          query = query.eq("category", filters.category);
         }
-        if (filters.type && filters.type !== 'all') {
-          query = query.eq('type', filters.type);
+        if (filters.type && filters.type !== "all") {
+          query = query.eq("type", filters.type);
         }
         if (filters.ownerId) {
-          query = query.eq('owner_id', filters.ownerId);
+          query = query.eq("owner_id", filters.ownerId);
         }
         if (filters.isActive !== undefined) {
-          query = query.eq('is_active', filters.isActive);
+          query = query.eq("is_active", filters.isActive);
         }
       }
 
       const { data, error } = await query;
 
       if (error) {
-        logger.error('📚 API: Failed to fetch resources', { error });
+        logger.error("📚 API: Failed to fetch resources", { error });
         throw error;
       }
 
@@ -48,20 +58,24 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Convert to ResourceInfo objects
-      const resources = data.map((dbResource) => 
-        toResourceInfo(dbResource, dbResource.owner_id, dbResource.community_id)
+      const resources = data.map((dbResource) =>
+        toResourceInfo(
+          dbResource,
+          dbResource.owner_id,
+          dbResource.community_id,
+        ),
       );
 
-      logger.debug('📚 API: Successfully fetched resources', {
+      logger.debug("📚 API: Successfully fetched resources", {
         count: resources.length,
         filters,
       });
 
       return resources;
     } catch (error) {
-      logger.error('📚 API: Error fetching resources', {
+      logger.error("📚 API: Error fetching resources", {
         filters,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
@@ -69,51 +83,56 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async fetchResourceById(id: string): Promise<Resource | null> {
-    logger.debug('📚 API: Fetching resource by ID', { id });
+    logger.debug("📚 API: Fetching resource by ID", { id });
 
     try {
       const { data, error } = await supabase
-        .from('resources')
-        .select('*')
-        .eq('id', id)
+        .from("resources")
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           // Not found
-          logger.debug('📚 API: Resource not found', { id });
+          logger.debug("📚 API: Resource not found", { id });
           return null;
         }
-        logger.error('📚 API: Failed to fetch resource', { id, error });
+        logger.error("📚 API: Failed to fetch resource", { id, error });
         throw error;
       }
 
       // Fetch owner and community using cache pattern
       const userService = createUserService(supabase);
       const communityService = createCommunityService(supabase);
-      
+
       const [owner, community] = await Promise.all([
         userService.fetchUserById(data.owner_id),
-        data.community_id ? communityService.fetchCommunityById(data.community_id) : Promise.resolve(null),
+        data.community_id
+          ? communityService.fetchCommunityById(data.community_id)
+          : Promise.resolve(null),
       ]);
 
       if (!owner) {
-        throw new Error('Owner not found');
+        throw new Error("Owner not found");
       }
 
-      const resource = toDomainResource(data, { owner, community: community || undefined });
-      
-      logger.debug('📚 API: Successfully fetched resource', {
+      const resource = toDomainResource(data, {
+        owner,
+        community: community || undefined,
+      });
+
+      logger.debug("📚 API: Successfully fetched resource", {
         id,
         ownerId: resource.owner.id,
         communityId: resource.community?.id,
       });
-      
+
       return resource;
     } catch (error) {
-      logger.error('📚 API: Error fetching resource', {
+      logger.error("📚 API: Error fetching resource", {
         id,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
@@ -121,18 +140,22 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async createResource(data: ResourceData): Promise<Resource> {
-    logger.debug('📚 API: Creating resource', {
-      data: { ...data, location: 'REDACTED' },
+    logger.debug("📚 API: Creating resource", {
+      data: { ...data, location: "REDACTED" },
     });
 
     try {
       // Get current user
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
 
       if (userError || !userData?.user?.id) {
-        logger.error('📚 API: User must be authenticated to create a resource', {
-          error: userError,
-        });
+        logger.error(
+          "📚 API: User must be authenticated to create a resource",
+          {
+            error: userError,
+          },
+        );
         throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
       }
 
@@ -143,32 +166,37 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
 
       // Insert into database
       const { data: createdResource, error } = await supabase
-        .from('resources')
+        .from("resources")
         .insert([dbResource])
-        .select('*')
+        .select("*")
         .single();
 
       if (error) {
-        logger.error('📚 API: Failed to create resource', { error });
+        logger.error("📚 API: Failed to create resource", { error });
         throw error;
       }
 
       // Fetch owner and community from cache
       const userService = createUserService(supabase);
       const communityService = createCommunityService(supabase);
-      
+
       const [owner, community] = await Promise.all([
         userService.fetchUserById(createdResource.owner_id),
-        createdResource.community_id ? communityService.fetchCommunityById(createdResource.community_id) : Promise.resolve(null),
+        createdResource.community_id
+          ? communityService.fetchCommunityById(createdResource.community_id)
+          : Promise.resolve(null),
       ]);
 
       if (!owner) {
-        throw new Error('Owner not found');
+        throw new Error("Owner not found");
       }
 
-      const resource = toDomainResource(createdResource, { owner, community: community || undefined });
+      const resource = toDomainResource(createdResource, {
+        owner,
+        community: community || undefined,
+      });
 
-      logger.info('📚 API: Successfully created resource', {
+      logger.info("📚 API: Successfully created resource", {
         id: resource.id,
         title: resource.title,
         ownerId: resource.owner.id,
@@ -177,25 +205,32 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
 
       return resource;
     } catch (error) {
-      logger.error('📚 API: Error creating resource', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("📚 API: Error creating resource", {
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
   },
 
-  async updateResource(id: string, data: Partial<ResourceData>): Promise<Resource> {
-    logger.debug('📚 API: Updating resource', { id, data });
+  async updateResource(
+    id: string,
+    data: Partial<ResourceData>,
+  ): Promise<Resource> {
+    logger.debug("📚 API: Updating resource", { id, data });
 
     try {
       // Get current user
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
 
       if (userError || !userData?.user?.id) {
-        logger.error('📚 API: User must be authenticated to update a resource', {
-          error: userError,
-        });
+        logger.error(
+          "📚 API: User must be authenticated to update a resource",
+          {
+            error: userError,
+          },
+        );
         throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
       }
 
@@ -204,42 +239,47 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
 
       // Update in database
       const { data: updatedResource, error } = await supabase
-        .from('resources')
+        .from("resources")
         .update(dbUpdate)
-        .eq('id', id)
-        .select('*')
+        .eq("id", id)
+        .select("*")
         .single();
 
       if (error) {
-        logger.error('📚 API: Failed to update resource', { id, error });
+        logger.error("📚 API: Failed to update resource", { id, error });
         throw error;
       }
 
       // Fetch owner and community from cache
       const userService = createUserService(supabase);
       const communityService = createCommunityService(supabase);
-      
+
       const [owner, community] = await Promise.all([
         userService.fetchUserById(updatedResource.owner_id),
-        updatedResource.community_id ? communityService.fetchCommunityById(updatedResource.community_id) : Promise.resolve(null),
+        updatedResource.community_id
+          ? communityService.fetchCommunityById(updatedResource.community_id)
+          : Promise.resolve(null),
       ]);
 
       if (!owner) {
-        throw new Error('Owner not found');
+        throw new Error("Owner not found");
       }
 
-      const resource = toDomainResource(updatedResource, { owner, community: community || undefined });
+      const resource = toDomainResource(updatedResource, {
+        owner,
+        community: community || undefined,
+      });
 
-      logger.info('📚 API: Successfully updated resource', {
+      logger.info("📚 API: Successfully updated resource", {
         id: resource.id,
         title: resource.title,
       });
 
       return resource;
     } catch (error) {
-      logger.error('📚 API: Error updating resource', {
+      logger.error("📚 API: Error updating resource", {
         id,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
@@ -247,83 +287,103 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async deleteResource(id: string): Promise<void> {
-    logger.debug('📚 Resource Service: Deleting resource', { id });
+    logger.debug("📚 Resource Service: Deleting resource", { id });
 
     try {
-      logger.debug('📚 Resource Service: Starting delete operation', { id });
+      logger.debug("📚 Resource Service: Starting delete operation", { id });
       // Get current user
-      logger.debug('📚 Resource Service: Getting current user', { id });
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      logger.debug('📚 Resource Service: Got user data', { 
-        id, 
-        hasUser: !!userData?.user?.id, 
-        userError: !!userError 
+      logger.debug("📚 Resource Service: Getting current user", { id });
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+      logger.debug("📚 Resource Service: Got user data", {
+        id,
+        hasUser: !!userData?.user?.id,
+        userError: !!userError,
       });
 
       if (userError || !userData?.user?.id) {
-        logger.error('📚 Resource Service: User must be authenticated to delete a resource', {
-          error: userError,
-        });
+        logger.error(
+          "📚 Resource Service: User must be authenticated to delete a resource",
+          {
+            error: userError,
+          },
+        );
         throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
       }
 
       const userId = userData.user.id;
-      logger.debug('📚 Resource Service: Authenticated user', { id, userId });
+      logger.debug("📚 Resource Service: Authenticated user", { id, userId });
 
       // First, fetch the existing resource to verify ownership
-      logger.debug('📚 Resource Service: Fetching resource for ownership check', { id });
+      logger.debug(
+        "📚 Resource Service: Fetching resource for ownership check",
+        { id },
+      );
       const { data: existingResource, error: fetchError } = await supabase
-        .from('resources')
-        .select('owner_id, community_id')
-        .eq('id', id)
+        .from("resources")
+        .select("owner_id, community_id")
+        .eq("id", id)
         .single();
-      
-      logger.debug('📚 Resource Service: Fetch result', { 
-        id, 
-        hasResource: !!existingResource, 
-        fetchError: !!fetchError, 
-        errorCode: fetchError?.code 
+
+      logger.debug("📚 Resource Service: Fetch result", {
+        id,
+        hasResource: !!existingResource,
+        fetchError: !!fetchError,
+        errorCode: fetchError?.code,
       });
 
       if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
+        if (fetchError.code === "PGRST116") {
           // Resource not found - we can consider this a success
-          logger.debug('📚 Resource Service: Resource not found for deletion', { id });
+          logger.debug("📚 Resource Service: Resource not found for deletion", {
+            id,
+          });
           return;
         }
 
-        logger.error('📚 Resource Service: Failed to fetch resource for deletion', {
-          id,
-          error: fetchError.message,
-          code: fetchError.code,
-        });
+        logger.error(
+          "📚 Resource Service: Failed to fetch resource for deletion",
+          {
+            id,
+            error: fetchError.message,
+            code: fetchError.code,
+          },
+        );
         throw fetchError;
       }
 
       // Check if the current user is the owner
       if (existingResource.owner_id !== userId) {
-        logger.error('📚 Resource Service: User is not authorized to delete this resource', {
-          userId,
-          ownerId: existingResource.owner_id,
-          resourceId: id,
-        });
-        throw new Error('You are not authorized to delete this resource');
+        logger.error(
+          "📚 Resource Service: User is not authorized to delete this resource",
+          {
+            userId,
+            ownerId: existingResource.owner_id,
+            resourceId: id,
+          },
+        );
+        throw new Error("You are not authorized to delete this resource");
       }
 
       // Perform the soft delete (set is_active to false)
-      logger.debug('📚 Resource Service: Performing soft delete update', { id });
+      logger.debug("📚 Resource Service: Performing soft delete update", {
+        id,
+      });
       const { error: deleteError } = await supabase
-        .from('resources')
+        .from("resources")
         .update({
           is_active: false,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id);
+        .eq("id", id);
 
-      logger.debug('📚 Resource Service: Update result', { id, deleteError: !!deleteError });
+      logger.debug("📚 Resource Service: Update result", {
+        id,
+        deleteError: !!deleteError,
+      });
 
       if (deleteError) {
-        logger.error('📚 Resource Service: Failed to delete resource', {
+        logger.error("📚 Resource Service: Failed to delete resource", {
           id,
           error: deleteError.message,
           code: deleteError.code,
@@ -331,14 +391,16 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw deleteError;
       }
 
-      logger.info('📚 Resource Service: Successfully deleted resource', { id });
-      logger.debug('📚 Resource Service: About to return from deleteResource', { id });
+      logger.info("📚 Resource Service: Successfully deleted resource", { id });
+      logger.debug("📚 Resource Service: About to return from deleteResource", {
+        id,
+      });
 
       return;
     } catch (error) {
-      logger.error('📚 Resource Service: Error deleting resource', {
+      logger.error("📚 Resource Service: Error deleting resource", {
         id,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;

@@ -1,11 +1,11 @@
-import { faker } from '@faker-js/faker';
-import type { Database } from '@belongnetwork/types/database';
-import type { ThanksData } from '@belongnetwork/types';
+import { faker } from "@faker-js/faker";
+import type { Database } from "@belongnetwork/types/database";
+import type { ThanksData } from "@belongnetwork/types";
 
-type ThanksRow = Database['public']['Tables']['thanks']['Row'];
+type ThanksRow = Database["public"]["Tables"]["thanks"]["Row"];
 
 export function createMockDbThanks(
-  overrides: Partial<ThanksRow> = {}
+  overrides: Partial<ThanksRow> = {},
 ): ThanksRow {
   const now = new Date().toISOString();
 
@@ -17,9 +17,11 @@ export function createMockDbThanks(
     message: faker.lorem.paragraph(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.url()
+      () => faker.image.url(),
     ),
-    impact_description: faker.datatype.boolean() ? faker.lorem.sentence() : null,
+    impact_description: faker.datatype.boolean()
+      ? faker.lorem.sentence()
+      : null,
     created_at: now,
     updated_at: now,
     ...overrides,
@@ -27,7 +29,7 @@ export function createMockDbThanks(
 }
 
 export function createMockThanksData(
-  overrides: Partial<ThanksData> = {}
+  overrides: Partial<ThanksData> = {},
 ): ThanksData {
   return {
     fromUserId: faker.string.uuid(),
@@ -36,9 +38,11 @@ export function createMockThanksData(
     message: faker.lorem.paragraph(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.url()
+      () => faker.image.url(),
     ),
-    impactDescription: faker.datatype.boolean() ? faker.lorem.sentence() : undefined,
+    impactDescription: faker.datatype.boolean()
+      ? faker.lorem.sentence()
+      : undefined,
     ...overrides,
   };
 }

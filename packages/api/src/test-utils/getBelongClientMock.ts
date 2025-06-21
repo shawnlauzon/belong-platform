@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
-import type { BelongClient } from '@belongnetwork/core';
+import { vi } from "vitest";
+import type { BelongClient } from "@belongnetwork/core";
 
 /**
  * Creates a mock getBelongClient function for tests

@@ -1,4 +1,8 @@
-import { logger as defaultLogger, logApiCall, logApiResponse } from '../utils/logger';
+import {
+  logger as defaultLogger,
+  logApiCall,
+  logApiResponse,
+} from "../utils/logger";
 
 // Types
 export interface Coordinates {
@@ -12,9 +16,12 @@ export interface Coordinates {
  * @param logger - Logger instance (optional, uses default if not provided)
  * @returns Configured Mapbox client
  */
-export function createMapboxClient(mapboxPublicToken: string, logger = defaultLogger) {
+export function createMapboxClient(
+  mapboxPublicToken: string,
+  logger = defaultLogger,
+) {
   if (!mapboxPublicToken) {
-    throw new Error('Mapbox public token is required');
+    throw new Error("Mapbox public token is required");
   }
 
   return {
@@ -31,7 +38,7 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
         return [];
       }
 
-      logApiCall('GET', 'mapbox/geocoding', { query });
+      logApiCall("GET", "mapbox/geocoding", { query });
 
       try {
         const response = await fetch(
@@ -40,7 +47,7 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
             `country=US&` +
             `types=address,poi&` +
             `limit=5&` +
-            `autocomplete=true`
+            `autocomplete=true`,
         );
 
         if (!response.ok) {
@@ -48,11 +55,11 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
         }
 
         const data = await response.json();
-        logApiResponse('GET', 'mapbox/geocoding', data);
+        logApiResponse("GET", "mapbox/geocoding", data);
         return data.features || [];
       } catch (error) {
-        logger.error('❌ Mapbox search error:', error);
-        logApiResponse('GET', 'mapbox/geocoding', null, error);
+        logger.error("❌ Mapbox search error:", error);
+        logApiResponse("GET", "mapbox/geocoding", null, error);
         return [];
       }
     },
@@ -62,18 +69,18 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
      */
     async reverseGeocode(coordinates: Coordinates): Promise<string | null> {
       if (!mapboxPublicToken) {
-        logger.warn('📍 reverseGeocode: No Mapbox token available');
+        logger.warn("📍 reverseGeocode: No Mapbox token available");
         return null;
       }
 
-      logApiCall('GET', 'mapbox/reverse-geocode', { coordinates });
+      logApiCall("GET", "mapbox/reverse-geocode", { coordinates });
 
       try {
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.lng},${coordinates.lat}.json?` +
             `access_token=${mapboxPublicToken}&` +
             `types=address&` +
-            `limit=1`
+            `limit=1`,
         );
 
         if (!response.ok) {
@@ -81,7 +88,7 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
         }
 
         const data = await response.json();
-        logApiResponse('GET', 'mapbox/reverse-geocode', data);
+        logApiResponse("GET", "mapbox/reverse-geocode", data);
 
         if (data.features && data.features.length > 0) {
           return data.features[0].place_name;
@@ -89,8 +96,8 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
 
         return null;
       } catch (error) {
-        logger.error('❌ Mapbox reverse geocode error:', error);
-        logApiResponse('GET', 'mapbox/reverse-geocode', null, error);
+        logger.error("❌ Mapbox reverse geocode error:", error);
+        logApiResponse("GET", "mapbox/reverse-geocode", null, error);
         return null;
       }
     },
@@ -106,21 +113,21 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
         zoom?: number;
         marker?: boolean;
         markerColor?: string;
-      } = {}
+      } = {},
     ): string {
       const {
         width = 800,
         height = 200,
         zoom = 10,
         marker = true,
-        markerColor = 'f97316',
+        markerColor = "f97316",
       } = options;
 
       const baseUrl =
-        'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static';
+        "https://api.mapbox.com/styles/v1/mapbox/streets-v11/static";
       const markerPart = marker
         ? `pin-l+${markerColor}(${center.lng},${center.lat})/`
-        : '';
+        : "";
       const centerPart = `${center.lng},${center.lat},${zoom}`;
       const sizePart = `${width}x${height}`;
 
@@ -132,14 +139,14 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
      */
     async calculateDrivingTime(
       origin: Coordinates,
-      destination: Coordinates
+      destination: Coordinates,
     ): Promise<number | null> {
       if (!mapboxPublicToken) {
-        logger.warn('No Mapbox token available for driving time calculation');
+        logger.warn("No Mapbox token available for driving time calculation");
         return null;
       }
 
-      logApiCall('GET', 'mapbox/directions', { origin, destination });
+      logApiCall("GET", "mapbox/directions", { origin, destination });
 
       try {
         const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?access_token=${mapboxPublicToken}`;
@@ -150,7 +157,7 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
         }
 
         const data = await response.json();
-        logApiResponse('GET', 'mapbox/directions', data);
+        logApiResponse("GET", "mapbox/directions", data);
 
         if (data.routes && data.routes.length > 0) {
           // Return duration in minutes
@@ -159,8 +166,8 @@ export function createMapboxClient(mapboxPublicToken: string, logger = defaultLo
 
         return null;
       } catch (error) {
-        logger.error('Error calculating driving time:', error);
-        logApiResponse('GET', 'mapbox/directions', null, error);
+        logger.error("Error calculating driving time:", error);
+        logApiResponse("GET", "mapbox/directions", null, error);
         return null;
       }
     },
@@ -176,4 +183,3 @@ type AddressSuggestion = {
   bbox?: BoundingBox;
   context?: Array<{ id: string; text: string }>;
 };
-

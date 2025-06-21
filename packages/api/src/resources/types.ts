@@ -1,4 +1,4 @@
-import { ResourceCategory } from '@belongnetwork/types';
+import { ResourceCategory } from "@belongnetwork/types";
 
 export interface ResourceFilters {
   category?: ResourceCategory;

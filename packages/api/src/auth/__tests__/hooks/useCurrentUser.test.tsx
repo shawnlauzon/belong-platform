@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import { useBelong } from '../../providers/CurrentUserProvider';
-import { BelongProvider } from '../../providers/CurrentUserProvider';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
+import { useBelong } from "../../providers/CurrentUserProvider";
+import { BelongProvider } from "../../providers/CurrentUserProvider";
 
 // Mock the useAuth hook
-vi.mock('../../hooks/useAuth', () => ({
+vi.mock("../../hooks/useAuth", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@belongnetwork/core', () => {
+vi.mock("@belongnetwork/core", () => {
   const mockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@belongnetwork/core', () => {
     auth: {
       getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
       onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
+        data: { subscription: { unsubscribe: vi.fn() } },
       })),
     },
   };
@@ -44,14 +44,14 @@ vi.mock('@belongnetwork/core', () => {
   };
 });
 
-const mockUseAuth = vi.mocked(await import('../../hooks/useAuth')).useAuth;
+const mockUseAuth = vi.mocked(await import("../../hooks/useAuth")).useAuth;
 
-describe('useBelong', () => {
+describe("useBelong", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -60,11 +60,9 @@ describe('useBelong', () => {
     });
   });
 
-  it('should throw error when used outside BelongProvider', () => {
+  it("should throw error when used outside BelongProvider", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
     // Suppress console.error for this expected error to avoid stderr noise
@@ -75,7 +73,7 @@ describe('useBelong', () => {
     try {
       expect(() => {
         renderHook(() => useBelong(), { wrapper });
-      }).toThrow('useBelong must be used within BelongProvider');
+      }).toThrow("useBelong must be used within BelongProvider");
     } catch (error) {
       thrownError = error as Error;
     } finally {
@@ -84,17 +82,24 @@ describe('useBelong', () => {
     }
 
     // Test should fail if the hook didn't throw the expected error
-    if (thrownError && !thrownError.message.includes('useBelong must be used within BelongProvider')) {
-      throw new Error(`Expected hook to throw context error, but got: ${thrownError.message}`);
+    if (
+      thrownError &&
+      !thrownError.message.includes(
+        "useBelong must be used within BelongProvider",
+      )
+    ) {
+      throw new Error(
+        `Expected hook to throw context error, but got: ${thrownError.message}`,
+      );
     }
   });
 
-  it('should return user data when used inside BelongProvider', () => {
+  it("should return user data when used inside BelongProvider", () => {
     const userData = {
-      id: 'user-123',
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
+      id: "user-123",
+      email: "test@example.com",
+      firstName: "Test",
+      lastName: "User",
     };
 
     mockUseAuth.mockReturnValue({
@@ -111,11 +116,13 @@ describe('useBelong', () => {
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongProvider config={{
-          supabaseUrl: 'https://test.supabase.co',
-          supabaseAnonKey: 'test-key',
-          mapboxPublicToken: 'test-token'
-        }}>
+        <BelongProvider
+          config={{
+            supabaseUrl: "https://test.supabase.co",
+            supabaseAnonKey: "test-key",
+            mapboxPublicToken: "test-token",
+          }}
+        >
           {children}
         </BelongProvider>
       </QueryClientProvider>
@@ -130,16 +137,16 @@ describe('useBelong', () => {
         isPending: false,
         isError: false,
         error: null,
-      })
+      }),
     );
   });
 
-  it('should have correct TypeScript types (no null checks needed)', () => {
+  it("should have correct TypeScript types (no null checks needed)", () => {
     const userData = {
-      id: 'user-123',
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
+      id: "user-123",
+      email: "test@example.com",
+      firstName: "Test",
+      lastName: "User",
     };
 
     mockUseAuth.mockReturnValue({
@@ -156,11 +163,13 @@ describe('useBelong', () => {
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <BelongProvider config={{
-          supabaseUrl: 'https://test.supabase.co',
-          supabaseAnonKey: 'test-key',
-          mapboxPublicToken: 'test-token'
-        }}>
+        <BelongProvider
+          config={{
+            supabaseUrl: "https://test.supabase.co",
+            supabaseAnonKey: "test-key",
+            mapboxPublicToken: "test-token",
+          }}
+        >
           {children}
         </BelongProvider>
       </QueryClientProvider>
@@ -169,9 +178,9 @@ describe('useBelong', () => {
     const { result } = renderHook(() => useBelong(), { wrapper });
 
     // TypeScript should allow direct property access through currentUser property
-    expect(result.current.currentUser?.id).toBe('user-123');
-    expect(result.current.currentUser?.email).toBe('test@example.com');
-    expect(result.current.currentUser?.firstName).toBe('Test');
-    expect(result.current.currentUser?.lastName).toBe('User');
+    expect(result.current.currentUser?.id).toBe("user-123");
+    expect(result.current.currentUser?.email).toBe("test@example.com");
+    expect(result.current.currentUser?.firstName).toBe("Test");
+    expect(result.current.currentUser?.lastName).toBe("User");
   });
 });

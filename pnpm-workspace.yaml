@@ -1,4 +1,4 @@
 packages:
-  - 'packages/core'
-  - 'packages/types'
-  - 'packages/api'
+  - "packages/core"
+  - "packages/types"
+  - "packages/api"

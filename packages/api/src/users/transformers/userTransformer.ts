@@ -1,10 +1,10 @@
-import type { Database } from '@belongnetwork/types/database';
-import type { User, UserData } from '@belongnetwork/types';
+import type { Database } from "@belongnetwork/types/database";
+import type { User, UserData } from "@belongnetwork/types";
 
 // Types for database rows
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-type ProfileInsertDbData = Database['public']['Tables']['profiles']['Insert'];
-type ProfileUpdateDbData = Database['public']['Tables']['profiles']['Update'];
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+type ProfileInsertDbData = Database["public"]["Tables"]["profiles"]["Insert"];
+type ProfileUpdateDbData = Database["public"]["Tables"]["profiles"]["Update"];
 
 // Type for the user_metadata JSONB column
 type UserMetadata = {
@@ -23,7 +23,7 @@ type UserMetadata = {
  */
 export function toDomainUser(profile: ProfileRow): User {
   if (!profile) {
-    throw new Error('Profile is required');
+    throw new Error("Profile is required");
   }
 
   const metadata = (profile.user_metadata || {}) as UserMetadata;
@@ -31,8 +31,8 @@ export function toDomainUser(profile: ProfileRow): User {
 
   return {
     id: profile.id,
-    email: profile.email || '',
-    firstName: first_name || '',
+    email: profile.email || "",
+    firstName: first_name || "",
     lastName: last_name,
     fullName: full_name,
     avatarUrl: avatar_url,
@@ -46,7 +46,7 @@ export function toDomainUser(profile: ProfileRow): User {
  * Prepares user data for database insertion into profiles table
  */
 export function forDbInsert(
-  userData: UserData & { id: string }
+  userData: UserData & { id: string },
 ): ProfileInsertDbData {
   const { email, firstName, lastName, fullName, avatarUrl, location } =
     userData;
@@ -70,7 +70,7 @@ export function forDbInsert(
  * Prepares user data for updating the profiles table
  */
 export function forDbUpdate(
-  userData: Partial<UserData> & { id: string }
+  userData: Partial<UserData> & { id: string },
 ): ProfileUpdateDbData {
   return {
     user_metadata: createUserMetadata(userData),

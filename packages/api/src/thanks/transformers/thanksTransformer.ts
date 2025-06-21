@@ -1,22 +1,24 @@
-import type { Database } from '@belongnetwork/types/database';
+import type { Database } from "@belongnetwork/types/database";
 import type {
   ThanksData,
   Thanks,
   ThanksInfo,
   User,
   Resource,
-} from '@belongnetwork/types';
+} from "@belongnetwork/types";
 
-export type ThanksRow = Database['public']['Tables']['thanks']['Row'];
-export type ThanksInsertDbData = Database['public']['Tables']['thanks']['Insert'];
-export type ThanksUpdateDbData = Database['public']['Tables']['thanks']['Update'];
+export type ThanksRow = Database["public"]["Tables"]["thanks"]["Row"];
+export type ThanksInsertDbData =
+  Database["public"]["Tables"]["thanks"]["Insert"];
+export type ThanksUpdateDbData =
+  Database["public"]["Tables"]["thanks"]["Update"];
 
 /**
  * Transform a database thanks record to a domain thanks object
  */
 export function toDomainThanks(
   dbThanks: ThanksRow,
-  refs: { fromUser: User; toUser: User; resource: Resource }
+  refs: { fromUser: User; toUser: User; resource: Resource },
 ): Thanks {
   const {
     from_user_id,
@@ -30,15 +32,15 @@ export function toDomainThanks(
   } = dbThanks;
 
   if (from_user_id !== refs.fromUser.id) {
-    throw new Error('From user ID does not match');
+    throw new Error("From user ID does not match");
   }
 
   if (to_user_id !== refs.toUser.id) {
-    throw new Error('To user ID does not match');
+    throw new Error("To user ID does not match");
   }
 
   if (resource_id !== refs.resource.id) {
-    throw new Error('Resource ID does not match');
+    throw new Error("Resource ID does not match");
   }
 
   return {
@@ -60,7 +62,7 @@ export function toDomainThanks(
  */
 export function forDbInsert(
   thanksData: ThanksData,
-  fromUserId: string
+  fromUserId: string,
 ): ThanksInsertDbData {
   const {
     fromUserId: _fromUserId, // Extract and ignore the fromUserId from data
@@ -85,7 +87,7 @@ export function forDbInsert(
  * Transform a domain thanks data object to a database thanks update record
  */
 export function forDbUpdate(
-  thanksData: Partial<ThanksData>
+  thanksData: Partial<ThanksData>,
 ): ThanksUpdateDbData {
   const {
     fromUserId,
@@ -114,7 +116,7 @@ export function toThanksInfo(
   fromUserId: string,
   toUserId: string,
   resourceId: string,
-  communityId: string
+  communityId: string,
 ): ThanksInfo {
   return {
     id: dbThanks.id,

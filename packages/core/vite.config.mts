@@ -1,22 +1,22 @@
-import { defineConfig } from 'vite';
-import dts from 'vite-plugin-dts';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
+import { resolve } from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = resolve(__filename, '..');
+const __dirname = resolve(__filename, "..");
 
 // Custom plugin to fail build on TypeScript errors
 const typescriptChecker = () => ({
-  name: 'typescript-checker',
+  name: "typescript-checker",
   buildStart() {
     try {
-      execSync('pnpm typecheck', { stdio: 'pipe', cwd: __dirname });
+      execSync("pnpm typecheck", { stdio: "pipe", cwd: __dirname });
     } catch (error) {
-      this.error('TypeScript errors found. Build failed.');
+      this.error("TypeScript errors found. Build failed.");
     }
-  }
+  },
 });
 
 // Base configuration for both build and test
@@ -25,39 +25,39 @@ const config = {
     typescriptChecker(),
     dts({
       insertTypesEntry: true,
-      include: ['src/**/*'],
-      exclude: ['**/*.test.ts'],
+      include: ["src/**/*"],
+      exclude: ["**/*.test.ts"],
       strictOutput: true,
-      noEmitOnError: true
-    })
+      noEmitOnError: true,
+    }),
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: 'BelongNetworkCore',
+      entry: resolve(__dirname, "src/index.ts"),
+      name: "BelongNetworkCore",
       fileName: (format) => `index.${format}.js`,
-      formats: ['es', 'cjs']
+      formats: ["es", "cjs"],
     },
     rollupOptions: {
       external: [
-        'zod',
-        'mapbox-gl',
-        '@supabase/supabase-js',
-        'zustand',
-        'loglevel'
+        "zod",
+        "mapbox-gl",
+        "@supabase/supabase-js",
+        "zustand",
+        "loglevel",
       ],
       output: {
         globals: {
-          zod: 'zod',
-          'mapbox-gl': 'mapboxgl',
-          '@supabase/supabase-js': 'supabase',
-          zustand: 'zustand',
-          loglevel: 'loglevel'
-        }
-      }
+          zod: "zod",
+          "mapbox-gl": "mapboxgl",
+          "@supabase/supabase-js": "supabase",
+          zustand: "zustand",
+          loglevel: "loglevel",
+        },
+      },
     },
     sourcemap: true,
-    emptyOutDir: true
+    emptyOutDir: true,
   },
 };
 

@@ -8,11 +8,13 @@ This document describes the architecture of the Belong Network platform, a TypeS
 2. [Package Structure](#package-structure)
 
 ### For Platform Consumers (Using the Platform)
+
 3. [Consumer Integration Guide](#consumer-integration-guide)
 4. [Consumer API Patterns](#consumer-api-patterns)
 5. [Consumer Best Practices](#consumer-best-practices)
 
 ### For Platform Developers (Building the Platform)
+
 6. [Internal Architecture Principles](#internal-architecture-principles)
 7. [Internal Implementation Patterns](#internal-implementation-patterns)
 8. [Internal Data Layer Architecture](#internal-data-layer-architecture)
@@ -72,10 +74,12 @@ The platform currently uses manual transformer functions for data conversion bet
 ```typescript
 // transformers/communityTransformer.ts
 export function toDomainCommunity(
-  dbCommunity: CommunityRow & { organizer: ProfileRow }
+  dbCommunity: CommunityRow & { organizer: ProfileRow },
 ): Community {
-  const coords = dbCommunity.center ? parsePostGisPoint(dbCommunity.center) : undefined;
-  
+  const coords = dbCommunity.center
+    ? parsePostGisPoint(dbCommunity.center)
+    : undefined;
+
   return {
     id: dbCommunity.id,
     name: dbCommunity.name,
@@ -103,7 +107,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
 Each entity follows consistent transformation patterns:
 
 - **`toDomainX()`**: Convert database row to full domain object with relations
-- **`toXInfo()`**: Convert database row to lightweight info object for lists  
+- **`toXInfo()`**: Convert database row to lightweight info object for lists
 - **`forDbInsert()`**: Convert domain data to database insert format
 - **`forDbUpdate()`**: Convert partial domain data to database update format
 
@@ -185,11 +189,13 @@ packages/api/
 To use the Belong Network platform in your application:
 
 1. **Install the package**:
+
 ```bash
 npm install @belongnetwork/platform
 ```
 
 2. **Set up providers**:
+
 ```typescript
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BelongProvider } from '@belongnetwork/platform';
@@ -221,6 +227,7 @@ function App() {
 ```
 
 3. **Use the hooks**:
+
 ```typescript
 import { useCommunities, useCreateCommunity } from '@belongnetwork/platform';
 
@@ -248,20 +255,20 @@ function CommunityList() {
 import { useAuth } from '@belongnetwork/platform';
 
 function AuthExample() {
-  const { 
-    currentUser, 
+  const {
+    currentUser,
     isAuthenticated,
     isLoading,
-    signIn, 
-    signUp, 
+    signIn,
+    signUp,
     signOut,
     updateProfile
   } = useAuth();
 
   const handleSignIn = async () => {
-    await signIn.mutateAsync({ 
-      email: 'user@example.com', 
-      password: 'password' 
+    await signIn.mutateAsync({
+      email: 'user@example.com',
+      password: 'password'
     });
   };
 
@@ -312,27 +319,27 @@ const events = useEvents();
 
 // Fetching lists
 const communityList = communities.communities;
-const resourceList = resources.resources({ communityId: 'abc123' });
-const eventList = events.events({ communityId: 'abc123' });
+const resourceList = resources.resources({ communityId: "abc123" });
+const eventList = events.events({ communityId: "abc123" });
 
 // Fetching single items
-const { data: community } = communities.getCommunity('abc123');
-const { data: resource } = resources.getResource('def456');
-const { data: event } = events.getEvent('ghi789');
+const { data: community } = communities.getCommunity("abc123");
+const { data: resource } = resources.getResource("def456");
+const { data: event } = events.getEvent("ghi789");
 
 // Using mutations
 await resources.create({
-  title: 'Garden Tools',
-  type: 'offer',
+  title: "Garden Tools",
+  type: "offer",
   category: ResourceCategory.TOOLS,
-  communityId: 'abc123'
+  communityId: "abc123",
 });
 
-await resources.update('def456', {
-  title: 'Updated Garden Tools'
+await resources.update("def456", {
+  title: "Updated Garden Tools",
 });
 
-await resources.delete('def456');
+await resources.delete("def456");
 ```
 
 ## Consumer Best Practices
@@ -346,7 +353,7 @@ function ResourceForm() {
   const handleSubmit = async (data: ResourceData) => {
     try {
       await resources.create(data);
-      toast.success('Resource created!');
+      toast.success("Resource created!");
     } catch (error) {
       toast.error(error.message);
     }
@@ -378,7 +385,7 @@ The platform handles optimistic updates internally for better UX. Your UI will u
 All hooks and functions are fully typed. Use the exported types:
 
 ```typescript
-import type { Community, Resource, User } from '@belongnetwork/platform';
+import type { Community, Resource, User } from "@belongnetwork/platform";
 
 interface Props {
   community: Community;
@@ -394,7 +401,9 @@ interface Props {
 Each entity provides a single hook that returns all operations:
 
 #### `useAuth()`
+
 Returns an object with:
+
 - **State**:
   - `currentUser` - Current authenticated user or null
   - `isAuthenticated` - Boolean auth state
@@ -406,7 +415,9 @@ Returns an object with:
   - `updateProfile(updates)` - Update current user profile mutation
 
 #### `useCommunities()`
+
 Returns an object with:
+
 - **Queries**:
   - `communities` - List of communities
   - `getCommunity(id)` - Get single community by ID
@@ -420,7 +431,9 @@ Returns an object with:
   - `leave(communityId)` - Leave community
 
 #### `useResources()`
+
 Returns an object with:
+
 - **Queries**:
   - `resources` - List of resources (accepts filter)
   - `getResource(id)` - Get single resource by ID
@@ -430,7 +443,9 @@ Returns an object with:
   - `delete(id)` - Delete resource
 
 #### `useEvents()`
+
 Returns an object with:
+
 - **Queries**:
   - `events` - List of events (accepts filter)
   - `getEvent(id)` - Get single event by ID
@@ -443,7 +458,9 @@ Returns an object with:
   - `leave(eventId)` - Leave event
 
 #### `useThanks()`
+
 Returns an object with:
+
 - **Queries**:
   - `thanks` - List of thanks (accepts filter)
   - `getThank(id)` - Get single thank by ID
@@ -453,7 +470,9 @@ Returns an object with:
   - `delete(id)` - Delete thanks
 
 #### `useUsers()`
+
 Returns an object with:
+
 - **Queries**:
   - `users` - List of users (accepts filter)
   - `getUser(id)` - Get single user by ID
@@ -474,7 +493,7 @@ The platform uses dependency injection through React Context:
 // Internal: How we structure the provider
 export function BelongProvider({ children, config }: BelongProviderProps) {
   const client = useMemo(() => createBelongClient(config), [config]);
-  
+
   return (
     <ClientContext.Provider value={client}>
       <BelongContextProvider>
@@ -537,12 +556,12 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     includeDeleted?: boolean;
   }): Promise<CommunityInfo[]> {
     let query = supabase
-      .from('communities')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("communities")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (!options?.includeDeleted) {
-      query = query.eq('is_active', true);
+      query = query.eq("is_active", true);
     }
 
     const { data, error } = await query;
@@ -559,59 +578,67 @@ Manual transformer functions handle all data conversions:
 
 ```typescript
 // services/community.service.ts
-import { toDomainCommunity, toCommunityInfo, forDbInsert } from '../transformers/communityTransformer';
+import {
+  toDomainCommunity,
+  toCommunityInfo,
+  forDbInsert,
+} from "../transformers/communityTransformer";
 
 export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
   async fetchCommunities(): Promise<CommunityInfo[]> {
     const { data, error } = await supabase
-      .from('communities')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
+      .from("communities")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     if (error) {
-      logger.error('Failed to fetch communities', { error });
+      logger.error("Failed to fetch communities", { error });
       throw error;
     }
-    
+
     return (data || []).map(toCommunityInfo);
   },
-  
+
   async fetchCommunityById(id: string): Promise<Community | null> {
     const { data, error } = await supabase
-      .from('communities')
-      .select(`
+      .from("communities")
+      .select(
+        `
         *,
         organizer:profiles!organizer_id(*)
-      `)
-      .eq('id', id)
+      `,
+      )
+      .eq("id", id)
       .single();
-      
+
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      logger.error('Failed to fetch community', { id, error });
+      if (error.code === "PGRST116") return null; // Not found
+      logger.error("Failed to fetch community", { id, error });
       throw error;
     }
-    
+
     return toDomainCommunity(data);
   },
-  
+
   async createCommunity(data: CommunityData): Promise<Community> {
     const { data: result, error } = await supabase
-      .from('communities')
+      .from("communities")
       .insert(forDbInsert(data))
-      .select(`
+      .select(
+        `
         *,
         organizer:profiles!organizer_id(*)
-      `)
+      `,
+      )
       .single();
-      
+
     if (error) {
-      logger.error('Failed to create community', { data, error });
+      logger.error("Failed to create community", { data, error });
       throw error;
     }
-    
+
     return toDomainCommunity(result);
-  }
+  },
 });
 ```
 
@@ -623,7 +650,7 @@ Common utilities for field transformation:
 // utils/index.ts
 export function parsePostGisPoint(postGisString: string): Coordinates {
   const match = postGisString.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
-  if (!match) throw new Error('Invalid PostGIS point format');
+  if (!match) throw new Error("Invalid PostGIS point format");
   return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
 }
 
@@ -669,11 +696,13 @@ export function useCommunities() {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CommunityData> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<CommunityData> }) =>
       service.updateCommunity(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.byId(id) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.communities.byId(id),
+      });
     },
   });
 
@@ -683,12 +712,12 @@ export function useCommunities() {
     isLoading: communitiesQuery.isLoading,
     error: communitiesQuery.error,
     getCommunity,
-    
+
     // Mutations
     create: createMutation.mutateAsync,
-    update: (id: string, data: Partial<CommunityData>) => 
+    update: (id: string, data: Partial<CommunityData>) =>
       updateMutation.mutateAsync({ id, data }),
-    
+
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
@@ -711,6 +740,7 @@ feature/
 ```
 
 **Architecture Migration Notes**:
+
 - **Completed**: Migration from `impl/` pattern to `services/` + `transformers/` pattern
 - **Current Structure**: All business logic now centralized in service layer
 - **Transformation Logic**: Moved to dedicated transformer files for consistency
@@ -757,14 +787,14 @@ useEffect(() => {
   const {
     data: { subscription },
   } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+    if (event === "SIGNED_IN") {
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({
-        queryKey: ['user', session.user.id],
+        queryKey: ["user", session.user.id],
       });
-    } else if (event === 'SIGNED_OUT') {
-      queryClient.removeQueries({ queryKey: ['auth'] });
-      queryClient.removeQueries({ queryKey: ['users'] });
+    } else if (event === "SIGNED_OUT") {
+      queryClient.removeQueries({ queryKey: ["auth"] });
+      queryClient.removeQueries({ queryKey: ["users"] });
     }
   });
 
@@ -797,7 +827,7 @@ async fetchResourceWithRelations(id: string) {
   const resource = await this.fetchResource(id);
 
   // Assemble related data from cache or fetch if needed
-  const owner = 
+  const owner =
     queryClient.getQueryData(['user', resource.ownerId]) ||
     (await this.userService.fetchUserById(resource.ownerId));
 
@@ -819,7 +849,7 @@ async fetchCommunityWithRelations(id: string) {
       organizer:users!organizer_id(*)
     `)
     .single();
-    
+
   return toCommunityWithRelations(data);
 }
 ```
@@ -831,18 +861,20 @@ Each service encapsulates all business logic for its domain:
 ```typescript
 // services/community.service.ts
 export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
-  async fetchCommunities(options?: CommunityFetchOptions): Promise<CommunityInfo[]> {
+  async fetchCommunities(
+    options?: CommunityFetchOptions,
+  ): Promise<CommunityInfo[]> {
     // Implementation with proper error handling
   },
-  
+
   async fetchCommunityById(id: string): Promise<Community | null> {
     // Implementation with cache integration
   },
-  
+
   async createCommunity(data: CommunityCreate): Promise<Community> {
     // Implementation with validation and transformation
   },
-  
+
   // ... other CRUD operations
 });
 ```
@@ -854,38 +886,47 @@ Centralized query key management in `shared/queryKeys.ts`:
 ```typescript
 // shared/queryKeys.ts
 export const queryKeys = {
-  auth: ['auth'],
+  auth: ["auth"],
   users: {
-    all: ['users'],
-    byId: (id: string) => ['user', id],
-    search: (term: string) => ['users', 'search', term],
+    all: ["users"],
+    byId: (id: string) => ["user", id],
+    search: (term: string) => ["users", "search", term],
   },
   communities: {
-    all: ['communities'],
-    byId: (id: string) => ['community', id],
-    memberships: (communityId: string) => ['community', communityId, 'memberships'],
-    userMemberships: (userId: string) => ['user', userId, 'memberships'],
+    all: ["communities"],
+    byId: (id: string) => ["community", id],
+    memberships: (communityId: string) => [
+      "community",
+      communityId,
+      "memberships",
+    ],
+    userMemberships: (userId: string) => ["user", userId, "memberships"],
   },
   resources: {
-    all: ['resources'],
-    byId: (id: string) => ['resource', id],
-    byCommunity: (communityId: string) => ['resources', 'community', communityId],
+    all: ["resources"],
+    byId: (id: string) => ["resource", id],
+    byCommunity: (communityId: string) => [
+      "resources",
+      "community",
+      communityId,
+    ],
   },
   events: {
-    all: ['events'],
-    byId: (id: string) => ['event', id],
-    attendees: (eventId: string) => ['event', eventId, 'attendees'],
-    userAttendances: (userId: string) => ['user', userId, 'attendances'],
+    all: ["events"],
+    byId: (id: string) => ["event", id],
+    attendees: (eventId: string) => ["event", eventId, "attendees"],
+    userAttendances: (userId: string) => ["user", userId, "attendances"],
   },
   thanks: {
-    all: ['thanks'],
-    byId: (id: string) => ['thanks', id],
-    byCommunity: (communityId: string) => ['thanks', 'community', communityId],
+    all: ["thanks"],
+    byId: (id: string) => ["thanks", id],
+    byCommunity: (communityId: string) => ["thanks", "community", communityId],
   },
 };
 ```
 
 This centralized approach ensures:
+
 - Consistent cache invalidation patterns
 - Easier maintenance and updates
 - Better query dependency management
@@ -904,7 +945,7 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes
       retry: (failureCount, error) => {
         // Don't retry on auth errors
-        if (error?.message?.includes('Invalid Refresh Token')) {
+        if (error?.message?.includes("Invalid Refresh Token")) {
           return false;
         }
         return failureCount < 2;
@@ -923,19 +964,19 @@ const mutation = useMutation({
   mutationFn: updateResource,
   onMutate: async (newData) => {
     // Cancel in-flight queries
-    await queryClient.cancelQueries(['resource', newData.id]);
+    await queryClient.cancelQueries(["resource", newData.id]);
 
     // Save current data
-    const previousData = queryClient.getQueryData(['resource', newData.id]);
+    const previousData = queryClient.getQueryData(["resource", newData.id]);
 
     // Optimistically update
-    queryClient.setQueryData(['resource', newData.id], newData);
+    queryClient.setQueryData(["resource", newData.id], newData);
 
     return { previousData };
   },
   onError: (err, newData, context) => {
     // Rollback on error
-    queryClient.setQueryData(['resource', newData.id], context.previousData);
+    queryClient.setQueryData(["resource", newData.id], context.previousData);
   },
 });
 ```
@@ -948,19 +989,19 @@ const mutation = useMutation({
 
 ```typescript
 // ✅ Good - Mock Supabase for unit tests
-vi.mock('@supabase/supabase-js');
+vi.mock("@supabase/supabase-js");
 
 // ✅ Also Good - Mock platform functions when testing components in isolation
-vi.mock('../impl/fetchUsers');
+vi.mock("../impl/fetchUsers");
 
 // ✅ Good - Mock hooks when testing components
-vi.mock('@belongnetwork/platform', () => ({
+vi.mock("@belongnetwork/platform", () => ({
   useCommunities: () => ({
     communities: mockCommunities,
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-  })
+  }),
 }));
 ```
 
@@ -977,20 +1018,20 @@ Only pass override parameters to createMock\* functions if absolutely necessary.
 
 ```typescript
 // Test consolidated hook behavior
-it('should provide community operations', async () => {
+it("should provide community operations", async () => {
   const { result } = renderHook(() => useCommunities());
 
   // Test query
   await waitFor(() => {
     expect(result.current.communities).toHaveLength(2);
-    expect(result.current.communities[0]).toHaveProperty('organizerId');
+    expect(result.current.communities[0]).toHaveProperty("organizerId");
   });
 
   // Test mutation
   await act(async () => {
     await result.current.create({
-      name: 'Test Community',
-      organizerId: 'user123'
+      name: "Test Community",
+      organizerId: "user123",
     });
   });
 
@@ -1006,8 +1047,8 @@ Keep integration tests separate with real Supabase connections:
 // vitest.integration.config.ts
 export default defineConfig({
   test: {
-    include: ['tests/integration/**/*.test.{ts,tsx}'],
-    setupFiles: ['./tests/integration/setup.ts'],
+    include: ["tests/integration/**/*.test.{ts,tsx}"],
+    setupFiles: ["./tests/integration/setup.ts"],
     // Use real environment, no mocks
   },
 });
@@ -1040,11 +1081,11 @@ it('should display communities', () => {
 
 ```typescript
 // Can mock service layer for hook tests
-vi.mock('../services/community.service', () => ({
+vi.mock("../services/community.service", () => ({
   createCommunityService: () => ({
     fetchCommunities: vi.fn().mockResolvedValue(mockCommunities),
     createCommunity: vi.fn().mockResolvedValue(mockNewCommunity),
-  })
+  }),
 }));
 ```
 
@@ -1073,7 +1114,7 @@ export const createService = (supabase: SupabaseClient) => ({
 // Bad - Don't access Supabase directly
 function MyComponent() {
   const handleClick = async () => {
-    const { data } = await supabase.from('users').select();
+    const { data } = await supabase.from("users").select();
   };
 }
 ```
@@ -1091,7 +1132,7 @@ function MyComponent() {
 
 ```typescript
 // Bad - Don't manage cache manually
-const users = localStorage.getItem('users');
+const users = localStorage.getItem("users");
 ```
 
 ### ✅ Rely on React Query
@@ -1099,7 +1140,7 @@ const users = localStorage.getItem('users');
 ```typescript
 // Good - Let React Query handle caching
 const { data: users } = useQuery({
-  queryKey: ['users'],
+  queryKey: ["users"],
   queryFn: fetchUsers,
 });
 ```
@@ -1122,7 +1163,7 @@ try {
 try {
   await fetchData();
 } catch (error) {
-  logger.error('Failed to fetch data', { error });
+  logger.error("Failed to fetch data", { error });
   throw error;
 }
 ```
@@ -1179,17 +1220,20 @@ When adding new features to the platform:
 // 1. Create service (services/entity.service.ts)
 export const createEntityService = (supabase: SupabaseClient<Database>) => ({
   async fetchEntities(): Promise<EntityInfo[]> {
-    const { data, error } = await supabase.from('entities').select('*');
+    const { data, error } = await supabase.from("entities").select("*");
     if (error) throw error;
     return (data || []).map(toEntityInfo);
   },
-  
+
   async createEntity(data: EntityCreate): Promise<Entity> {
     const { data: result, error } = await supabase
-      .from('entities').insert(forDbEntity(data)).select().single();
+      .from("entities")
+      .insert(forDbEntity(data))
+      .select()
+      .single();
     if (error) throw error;
     return toEntity(result);
-  }
+  },
 });
 
 // 2. Create transformer (transformers/entityTransformer.ts)
@@ -1197,27 +1241,28 @@ export const toEntityInfo = (row: DbRow): EntityInfo => ({
   id: row.id,
   name: row.name,
   ownerId: row.owner_id,
-  createdAt: new Date(row.created_at)
+  createdAt: new Date(row.created_at),
 });
 
 // 3. Create hook (hooks/useEntities.ts)
 export function useEntities() {
   const service = createEntityService(useSupabase());
-  
+
   const entitiesQuery = useQuery({
     queryKey: queryKeys.entities.all,
-    queryFn: service.fetchEntities
+    queryFn: service.fetchEntities,
   });
-  
+
   const createMutation = useMutation({
     mutationFn: service.createEntity,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.entities.all })
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.entities.all }),
   });
-  
+
   return {
     entities: entitiesQuery.data,
     create: createMutation.mutateAsync,
-    isCreating: createMutation.isPending
+    isCreating: createMutation.isPending,
   };
 }
 ```
@@ -1238,16 +1283,24 @@ export const CommunitySchema = z.object({
 });
 
 // Auto-generate variants
-export const CommunityCreateSchema = CommunitySchema.omit({ 
-  id: true, createdAt: true, updatedAt: true 
+export const CommunityCreateSchema = CommunitySchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Automatic DB transformations
-export const CommunityDbSchema = CommunitySchema.transform(caseTransform.toSnakeCase);
-export const CommunityFromDbSchema = z.any().transform(caseTransform.toCamelCase).pipe(CommunitySchema);
+export const CommunityDbSchema = CommunitySchema.transform(
+  caseTransform.toSnakeCase,
+);
+export const CommunityFromDbSchema = z
+  .any()
+  .transform(caseTransform.toCamelCase)
+  .pipe(CommunitySchema);
 ```
 
 **Benefits of Future Zod Architecture**:
+
 - Single source of truth for all type definitions
 - Runtime validation with compile-time type safety
 - Automatic transformations between DB and domain formats

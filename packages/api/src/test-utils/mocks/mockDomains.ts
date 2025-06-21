@@ -8,8 +8,8 @@ import {
   User,
   ResourceCategory,
   MeetupFlexibility,
-} from '@belongnetwork/types';
-import { faker } from '@faker-js/faker';
+} from "@belongnetwork/types";
+import { faker } from "@faker-js/faker";
 
 /**
  * Creates a mock domain Account object
@@ -60,7 +60,7 @@ export function createMockUser(overrides: Partial<User> = {}): User {
  * Creates a mock domain Resource object with an owner
  */
 export function createMockResource(
-  overrides: Partial<Resource> = {}
+  overrides: Partial<Resource> = {},
 ): Resource {
   const now = new Date();
 
@@ -70,13 +70,13 @@ export function createMockResource(
 
   return {
     id: faker.string.uuid(),
-    type: faker.helpers.arrayElement(['offer', 'request'] as const),
+    type: faker.helpers.arrayElement(["offer", "request"] as const),
     category: faker.helpers.enumValue(ResourceCategory),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
-      () => faker.image.urlLoremFlickr({ category: 'object' })
+      () => faker.image.urlLoremFlickr({ category: "object" }),
     ),
     location: {
       lat: faker.location.latitude(),
@@ -100,7 +100,7 @@ export function createMockResource(
  */
 export function createMockResourceWithOwner(
   owner: User,
-  overrides: Partial<Resource> = {}
+  overrides: Partial<Resource> = {},
 ): Resource {
   const resource = createMockResource(overrides);
   return {
@@ -110,14 +110,14 @@ export function createMockResourceWithOwner(
 }
 
 export function createMockCommunity(
-  overrides: Partial<Community> = {}
+  overrides: Partial<Community> = {},
 ): Community {
   return {
     id: faker.string.uuid(),
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     hierarchyPath: [],
-    level: faker.helpers.arrayElement(['state', 'city', 'neighborhood']),
+    level: faker.helpers.arrayElement(["state", "city", "neighborhood"]),
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
@@ -142,8 +142,11 @@ export function createMockCommunity(
 export function createMockEvent(overrides: Partial<Event> = {}): Event {
   const now = new Date();
   const startDateTime = faker.date.future();
-  const endDateTime = faker.datatype.boolean() 
-    ? new Date(startDateTime.getTime() + faker.number.int({ min: 1, max: 8 }) * 60 * 60 * 1000)
+  const endDateTime = faker.datatype.boolean()
+    ? new Date(
+        startDateTime.getTime() +
+          faker.number.int({ min: 1, max: 8 }) * 60 * 60 * 1000,
+      )
     : undefined;
 
   const organizer = createMockUser();
@@ -161,16 +164,17 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
       lng: faker.location.longitude(),
     },
     parkingInfo: faker.lorem.sentence(),
-    maxAttendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : undefined,
+    maxAttendees: faker.datatype.boolean()
+      ? faker.number.int({ min: 5, max: 100 })
+      : undefined,
     registrationRequired: false, // Default to false
     isActive: true, // Default to true
-    tags: Array.from(
-      { length: faker.number.int({ min: 0, max: 5 }) },
-      () => faker.lorem.word()
+    tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
+      faker.lorem.word(),
     ),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.urlLoremFlickr({ category: 'event' })
+      () => faker.image.urlLoremFlickr({ category: "event" }),
     ),
     attendeeCount: faker.number.int({ min: 0, max: 50 }),
     createdAt: now,
@@ -186,7 +190,7 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
  */
 export function createMockEventWithOrganizer(
   organizer: User,
-  overrides: Partial<Event> = {}
+  overrides: Partial<Event> = {},
 ): Event {
   const event = createMockEvent(overrides);
   return {
@@ -198,7 +202,9 @@ export function createMockEventWithOrganizer(
 /**
  * Creates a mock domain EventAttendance object
  */
-export function createMockEventAttendance(overrides: Partial<EventAttendance> = {}): EventAttendance {
+export function createMockEventAttendance(
+  overrides: Partial<EventAttendance> = {},
+): EventAttendance {
   const now = new Date();
   const user = createMockUser();
   const event = createMockEvent();
@@ -207,7 +213,11 @@ export function createMockEventAttendance(overrides: Partial<EventAttendance> = 
     id: faker.string.uuid(),
     eventId: event.id,
     userId: user.id,
-    status: faker.helpers.arrayElement(['attending', 'not_attending', 'maybe']) as EventAttendanceStatus,
+    status: faker.helpers.arrayElement([
+      "attending",
+      "not_attending",
+      "maybe",
+    ]) as EventAttendanceStatus,
     createdAt: now,
     updatedAt: now,
     user,

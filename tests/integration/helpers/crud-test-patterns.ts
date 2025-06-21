@@ -1,7 +1,7 @@
-import { faker } from '@faker-js/faker';
-import { ResourceCategory } from '@belongnetwork/platform';
-import { generateTestName } from '../database/utils/database-helpers';
-import { waitFor } from '@testing-library/react';
+import { faker } from "@faker-js/faker";
+import { ResourceCategory } from "@belongnetwork/platform";
+import { generateTestName } from "../database/utils/database-helpers";
+import { waitFor } from "@testing-library/react";
 
 /**
  * Common test data generators for CRUD operations
@@ -11,7 +11,7 @@ export interface ResourceTestData {
   title: string;
   description: string;
   category: ResourceCategory;
-  type: 'offer' | 'request';
+  type: "offer" | "request";
   communityId: string;
   isActive: boolean;
   imageUrls: string[];
@@ -43,10 +43,10 @@ export interface ThanksTestData {
  */
 export function generateResourceData(communityId: string): ResourceTestData {
   return {
-    title: generateTestName('RESOURCE'),
+    title: generateTestName("RESOURCE"),
     description: faker.lorem.paragraph(),
     category: ResourceCategory.FOOD,
-    type: 'offer' as const,
+    type: "offer" as const,
     communityId,
     isActive: true,
     imageUrls: [],
@@ -56,19 +56,25 @@ export function generateResourceData(communityId: string): ResourceTestData {
 /**
  * Generates test data for event creation
  */
-export function generateEventData(communityId: string, organizerId: string): EventTestData {
+export function generateEventData(
+  communityId: string,
+  organizerId: string,
+): EventTestData {
   const startDate = faker.date.future();
   const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
   return {
-    title: generateTestName('EVENT'),
+    title: generateTestName("EVENT"),
     description: faker.lorem.paragraph(),
     communityId,
     organizerId,
     startDateTime: startDate,
     endDateTime: endDate,
     location: faker.location.streetAddress(),
-    coordinates: { lat: faker.location.latitude(), lng: faker.location.longitude() },
+    coordinates: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     isActive: true,
   };
 }
@@ -76,12 +82,16 @@ export function generateEventData(communityId: string, organizerId: string): Eve
 /**
  * Generates test data for thanks creation
  */
-export function generateThanksData(fromUserId: string, toUserId: string, resourceId: string): ThanksTestData {
+export function generateThanksData(
+  fromUserId: string,
+  toUserId: string,
+  resourceId: string,
+): ThanksTestData {
   return {
     fromUserId,
     toUserId,
     resourceId,
-    message: generateTestName('THANKS') + ' - ' + faker.lorem.sentence(),
+    message: generateTestName("THANKS") + " - " + faker.lorem.sentence(),
     impactDescription: faker.lorem.paragraph(),
     imageUrls: [],
   };
@@ -125,19 +135,21 @@ export async function waitForMutationSuccess(mutationResult: any) {
  * Common cleanup pattern for deletion with state reset
  */
 export async function performCleanupDeletion(
-  deleteMutation: any, 
+  deleteMutation: any,
   itemId: string,
   act: any,
-  waitFor: any
+  waitFor: any,
 ) {
   await act(async () => {
     deleteMutation.current.mutate(itemId);
   });
-  
+
   await waitFor(() => {
-    expect(deleteMutation.current).toMatchObject(commonDeleteSuccessExpectation);
+    expect(deleteMutation.current).toMatchObject(
+      commonDeleteSuccessExpectation,
+    );
   });
-  
+
   // Reset mutation state for next iteration
   deleteMutation.current.reset();
 }
@@ -147,25 +159,27 @@ export async function performCleanupDeletion(
  */
 export async function cleanupTestResources(
   wrapper: any,
-  resourceType: 'resource' | 'event' | 'community' | 'thanks',
+  resourceType: "resource" | "event" | "community" | "thanks",
   useListHook: any,
   useDeleteHook: any,
   act: any,
-  waitFor: any
+  waitFor: any,
 ) {
   try {
     // Get list of all items
     const { result: listResult } = useListHook(wrapper);
-    
+
     await waitFor(() => {
-      expect(listResult.current.isSuccess || listResult.current.isError).toBe(true);
+      expect(listResult.current.isSuccess || listResult.current.isError).toBe(
+        true,
+      );
     });
 
     if (listResult.current.isSuccess && listResult.current.data) {
       // Find all items with INTEGRATION_TEST_ prefix
       const testItems = listResult.current.data.filter((item: any) => {
-        const nameField = resourceType === 'thanks' ? 'message' : 'title';
-        return item[nameField]?.includes('INTEGRATION_TEST_');
+        const nameField = resourceType === "thanks" ? "message" : "title";
+        return item[nameField]?.includes("INTEGRATION_TEST_");
       });
 
       if (testItems.length > 0) {
@@ -191,19 +205,21 @@ export async function cleanupTestUsers(
   useUsersHook: any,
   useDeleteUserHook: any,
   act: any,
-  waitFor: any
+  waitFor: any,
 ) {
   try {
     const { result: usersResult } = useUsersHook(wrapper);
-    
+
     await waitFor(() => {
-      expect(usersResult.current.isSuccess || usersResult.current.isError).toBe(true);
+      expect(usersResult.current.isSuccess || usersResult.current.isError).toBe(
+        true,
+      );
     });
 
     if (usersResult.current.isSuccess && usersResult.current.data) {
       // Find all users with integration test email pattern
-      const testUsers = usersResult.current.data.filter((user: any) => 
-        user.email?.includes('integration-test-')
+      const testUsers = usersResult.current.data.filter((user: any) =>
+        user.email?.includes("integration-test-"),
       );
 
       if (testUsers.length > 0) {
@@ -217,6 +233,6 @@ export async function cleanupTestUsers(
     }
   } catch (error) {
     // Ignore cleanup errors to avoid test failures
-    console.warn('User cleanup failed:', error);
+    console.warn("User cleanup failed:", error);
   }
 }

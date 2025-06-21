@@ -1,3 +1,3 @@
-export * from './mockDomains';
-export * from './mockDbRows';
-export * from './mockData';
+export * from "./mockDomains";
+export * from "./mockDbRows";
+export * from "./mockData";

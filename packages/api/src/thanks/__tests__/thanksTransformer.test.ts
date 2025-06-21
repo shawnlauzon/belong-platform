@@ -1,12 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { faker } from '@faker-js/faker';
-import { toDomainThanks, forDbInsert, forDbUpdate } from '../transformers/thanksTransformer';
-import { createMockDbThanks, createMockThanksData } from './test-utils';
-import { createMockUser, createMockResource } from '../../test-utils/mocks';
+import { describe, it, expect } from "vitest";
+import { faker } from "@faker-js/faker";
+import {
+  toDomainThanks,
+  forDbInsert,
+  forDbUpdate,
+} from "../transformers/thanksTransformer";
+import { createMockDbThanks, createMockThanksData } from "./test-utils";
+import { createMockUser, createMockResource } from "../../test-utils/mocks";
 
-describe('Thanks Transformer', () => {
-  describe('toDomainThanks', () => {
-    it('should transform a database thanks to a domain thanks', () => {
+describe("Thanks Transformer", () => {
+  describe("toDomainThanks", () => {
+    it("should transform a database thanks to a domain thanks", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
@@ -35,7 +39,7 @@ describe('Thanks Transformer', () => {
       expect(thanks.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should include users and resource if provided', () => {
+    it("should include users and resource if provided", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
@@ -56,7 +60,7 @@ describe('Thanks Transformer', () => {
       expect(thanks.resource).toEqual(mockResource);
     });
 
-    it('should handle null impact_description', () => {
+    it("should handle null impact_description", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
@@ -76,7 +80,7 @@ describe('Thanks Transformer', () => {
       expect(thanks.impactDescription).toBeUndefined();
     });
 
-    it('should handle empty image_urls array', () => {
+    it("should handle empty image_urls array", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
@@ -96,12 +100,12 @@ describe('Thanks Transformer', () => {
       expect(thanks.imageUrls).toEqual([]);
     });
 
-    it('should throw an error if from user ID does not match', () => {
+    it("should throw an error if from user ID does not match", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
       const dbThanks = createMockDbThanks({
-        from_user_id: 'different-id',
+        from_user_id: "different-id",
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
       });
@@ -111,17 +115,17 @@ describe('Thanks Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
-      ).toThrow('From user ID does not match');
+        }),
+      ).toThrow("From user ID does not match");
     });
 
-    it('should throw an error if to user ID does not match', () => {
+    it("should throw an error if to user ID does not match", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
       const dbThanks = createMockDbThanks({
         from_user_id: mockFromUser.id,
-        to_user_id: 'different-id',
+        to_user_id: "different-id",
         resource_id: mockResource.id,
       });
 
@@ -130,18 +134,18 @@ describe('Thanks Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
-      ).toThrow('To user ID does not match');
+        }),
+      ).toThrow("To user ID does not match");
     });
 
-    it('should throw an error if resource ID does not match', () => {
+    it("should throw an error if resource ID does not match", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
       const dbThanks = createMockDbThanks({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
-        resource_id: 'different-id',
+        resource_id: "different-id",
       });
 
       expect(() =>
@@ -149,11 +153,11 @@ describe('Thanks Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
-      ).toThrow('Resource ID does not match');
+        }),
+      ).toThrow("Resource ID does not match");
     });
 
-    it('should not return any field names with underscores', () => {
+    it("should not return any field names with underscores", () => {
       // Arrange
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
@@ -173,13 +177,13 @@ describe('Thanks Transformer', () => {
 
       // Assert
       const fieldNames = Object.keys(result);
-      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      const underscoreFields = fieldNames.filter((name) => name.includes("_"));
       expect(underscoreFields).toEqual([]);
     });
   });
 
-  describe('forDbInsert', () => {
-    it('should transform domain thanks data to database insert format', () => {
+  describe("forDbInsert", () => {
+    it("should transform domain thanks data to database insert format", () => {
       const thanksData = createMockThanksData();
       const fromUserId = faker.string.uuid();
 
@@ -195,7 +199,7 @@ describe('Thanks Transformer', () => {
       });
     });
 
-    it('should handle undefined imageUrls', () => {
+    it("should handle undefined imageUrls", () => {
       const thanksData = createMockThanksData({
         imageUrls: undefined,
       });
@@ -206,7 +210,7 @@ describe('Thanks Transformer', () => {
       expect(dbThanks.image_urls).toEqual([]);
     });
 
-    it('should handle undefined impactDescription', () => {
+    it("should handle undefined impactDescription", () => {
       const thanksData = createMockThanksData({
         impactDescription: undefined,
       });
@@ -218,8 +222,8 @@ describe('Thanks Transformer', () => {
     });
   });
 
-  describe('forDbUpdate', () => {
-    it('should transform partial domain thanks data to database update format', () => {
+  describe("forDbUpdate", () => {
+    it("should transform partial domain thanks data to database update format", () => {
       const partialThanksData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
@@ -235,7 +239,7 @@ describe('Thanks Transformer', () => {
       });
     });
 
-    it('should handle undefined values', () => {
+    it("should handle undefined values", () => {
       const partialThanksData = {
         message: faker.lorem.paragraph(),
       };
@@ -252,7 +256,7 @@ describe('Thanks Transformer', () => {
       });
     });
 
-    it('should convert undefined impactDescription to null', () => {
+    it("should convert undefined impactDescription to null", () => {
       const partialThanksData = {
         impactDescription: undefined,
       };

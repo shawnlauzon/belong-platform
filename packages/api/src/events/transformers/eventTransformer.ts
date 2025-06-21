@@ -1,4 +1,4 @@
-import type { Database } from '@belongnetwork/types/database';
+import type { Database } from "@belongnetwork/types/database";
 import type {
   EventData,
   Event,
@@ -6,20 +6,22 @@ import type {
   User,
   Community,
   Coordinates,
-} from '@belongnetwork/types';
-import { parsePostGisPoint, toPostGisPoint } from '../../utils';
+} from "@belongnetwork/types";
+import { parsePostGisPoint, toPostGisPoint } from "../../utils";
 
 // Database types for events table (will be available once migrations are applied)
-export type EventRow = Database['public']['Tables']['events']['Row'];
-export type EventInsertDbData = Database['public']['Tables']['events']['Insert'];
-export type EventUpdateDbData = Database['public']['Tables']['events']['Update'];
+export type EventRow = Database["public"]["Tables"]["events"]["Row"];
+export type EventInsertDbData =
+  Database["public"]["Tables"]["events"]["Insert"];
+export type EventUpdateDbData =
+  Database["public"]["Tables"]["events"]["Update"];
 
 /**
  * Transform a database event record to a domain event object
  */
 export function toDomainEvent(
   dbEvent: EventRow,
-  refs: { organizer: User; community: Community }
+  refs: { organizer: User; community: Community },
 ): Event {
   const {
     organizer_id,
@@ -39,11 +41,11 @@ export function toDomainEvent(
   } = dbEvent;
 
   if (organizer_id !== refs.organizer.id) {
-    throw new Error('Organizer ID does not match');
+    throw new Error("Organizer ID does not match");
   }
 
   if (community_id !== refs.community.id) {
-    throw new Error('Community ID does not match');
+    throw new Error("Community ID does not match");
   }
 
   return {
@@ -74,7 +76,7 @@ export function toDomainEvent(
  */
 export function forDbInsert(
   eventData: EventData,
-  organizerId: string
+  organizerId: string,
 ): EventInsertDbData {
   const {
     communityId,
@@ -112,7 +114,7 @@ export function forDbInsert(
  */
 export function forDbUpdate(
   eventData: Partial<EventData>,
-  organizerId?: string
+  organizerId?: string,
 ): EventUpdateDbData {
   // Handle undefined or null eventData gracefully
   if (!eventData) {
@@ -158,14 +160,16 @@ export function forDbUpdate(
 export function toEventInfo(
   dbEvent: EventRow,
   organizerId: string,
-  communityId: string
+  communityId: string,
 ): EventInfo {
   return {
     id: dbEvent.id,
     title: dbEvent.title,
     description: dbEvent.description,
     startDateTime: new Date(dbEvent.start_date_time),
-    endDateTime: dbEvent.end_date_time ? new Date(dbEvent.end_date_time) : undefined,
+    endDateTime: dbEvent.end_date_time
+      ? new Date(dbEvent.end_date_time)
+      : undefined,
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     parkingInfo: dbEvent.parking_info || undefined,

@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 /**
  * Sets up standard mocks for Supabase client and logger
@@ -26,7 +26,7 @@ export function setupSupabaseMocks() {
     autocomplete: vi.fn(),
     reverseGeocode: vi.fn(),
   };
-  
+
   return {
     mockSupabase,
     mockMapbox,

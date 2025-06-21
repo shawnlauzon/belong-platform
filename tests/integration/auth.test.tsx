@@ -1,15 +1,21 @@
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { renderHook, waitFor, act, render, screen } from '@testing-library/react';
-import { faker } from '@faker-js/faker';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import {
+  renderHook,
+  waitFor,
+  act,
+  render,
+  screen,
+} from "@testing-library/react";
+import { faker } from "@faker-js/faker";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useSignUp,
   useSignIn,
   useBelong,
   useSignOut,
   BelongProvider,
-} from '../../dist/index.es.js';
+} from "../../dist/index.es.js";
 
 let queryClient: QueryClient;
 let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -20,7 +26,7 @@ const config = {
   mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
 };
 
-describe('Authentication Integration', () => {
+describe("Authentication Integration", () => {
   beforeAll(() => {
     // Create query client once for all tests
     queryClient = new QueryClient({
@@ -54,20 +60,20 @@ describe('Authentication Integration', () => {
   async function signOutBetweenTests() {
     try {
       // Instead of clearing all cache, just invalidate auth-related queries
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
     } catch (error) {
       // Ignore errors during cleanup
     }
   }
 
-  test('useSignUp should work with BelongProvider config', async () => {
+  test("useSignUp should work with BelongProvider config", async () => {
     await signOutBetweenTests();
-    
+
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
-    const testPassword = 'TestPassword123!';
+    const testPassword = "TestPassword123!";
     const testUser = {
       email: testEmail,
       password: testPassword,
@@ -89,14 +95,14 @@ describe('Authentication Integration', () => {
     });
   });
 
-  test('useSignIn should work after signing up a user', async () => {
+  test("useSignIn should work after signing up a user", async () => {
     await signOutBetweenTests();
-    
+
     // First create a user
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
-    const testPassword = 'TestPassword123!';
+    const testPassword = "TestPassword123!";
     const testUser = {
       email: testEmail,
       password: testPassword,
@@ -130,9 +136,9 @@ describe('Authentication Integration', () => {
     });
   });
 
-  test('useBelong should render error when unauthenticated', async () => {
+  test("useBelong should render error when unauthenticated", async () => {
     await signOutBetweenTests();
-    
+
     const TestComponent = () => {
       const data = useBelong();
       if (data.isError || !data.currentUser) {
@@ -145,15 +151,15 @@ describe('Authentication Integration', () => {
 
     // Wait for the component to render with no user
     await waitFor(() => {
-      expect(getByTestId('no-user')).toBeDefined();
+      expect(getByTestId("no-user")).toBeDefined();
     });
   });
 
-  test('useBelong should return user data when authenticated', async () => {
+  test("useBelong should return user data when authenticated", async () => {
     await signOutBetweenTests();
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
-    const testPassword = 'TestPassword123!';
+    const testPassword = "TestPassword123!";
     const testUser = {
       email: testEmail,
       password: testPassword,
@@ -184,23 +190,26 @@ describe('Authentication Integration', () => {
     const TestComponent = () => {
       const data = useBelong();
       if (data.isPending) return <div data-testid="loading">Loading...</div>;
-      return <div data-testid="user-data">{data.currentUser?.email || ''}</div>;
+      return <div data-testid="user-data">{data.currentUser?.email || ""}</div>;
     };
 
     const { getByTestId } = render(<TestComponent />, { wrapper });
 
     // Should eventually show authenticated user data
-    await waitFor(() => {
-      const userElement = getByTestId('user-data');
-      expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    }, { timeout: 15000 });
+    await waitFor(
+      () => {
+        const userElement = getByTestId("user-data");
+        expect(userElement.textContent).toBe(testEmail.toLowerCase());
+      },
+      { timeout: 15000 },
+    );
   });
 
-  test('useSignOut should work and clear current user', async () => {
+  test("useSignOut should work and clear current user", async () => {
     await signOutBetweenTests();
-    
+
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
-    const testPassword = 'TestPassword123!';
+    const testPassword = "TestPassword123!";
     const testUser = {
       email: testEmail,
       password: testPassword,
@@ -211,7 +220,9 @@ describe('Authentication Integration', () => {
     // Step 1: Set up auth hooks using the same shared wrapper
     const { result: signUpResult } = renderHook(() => useSignUp(), { wrapper });
     const { result: signInResult } = renderHook(() => useSignIn(), { wrapper });
-    const { result: signOutResult } = renderHook(() => useSignOut(), { wrapper });
+    const { result: signOutResult } = renderHook(() => useSignOut(), {
+      wrapper,
+    });
 
     // Step 2: Sign up user
     await act(async () => {
@@ -219,7 +230,7 @@ describe('Authentication Integration', () => {
     });
     await waitFor(() => expect(signUpResult.current.isSuccess).toBe(true));
 
-    // Step 3: Sign in user  
+    // Step 3: Sign in user
     await act(async () => {
       await signInResult.current.mutateAsync({
         email: testEmail,
@@ -232,15 +243,24 @@ describe('Authentication Integration', () => {
     const AuthenticatedComponent = () => {
       const data = useBelong();
       if (data.isPending) return <div data-testid="loading">Loading...</div>;
-      return <div data-testid="authenticated-user">{data.currentUser?.email || ''}</div>;
+      return (
+        <div data-testid="authenticated-user">
+          {data.currentUser?.email || ""}
+        </div>
+      );
     };
 
-    const { getByTestId, rerender } = render(<AuthenticatedComponent />, { wrapper });
+    const { getByTestId, rerender } = render(<AuthenticatedComponent />, {
+      wrapper,
+    });
 
-    await waitFor(() => {
-      const userElement = getByTestId('authenticated-user');
-      expect(userElement.textContent).toBe(testEmail.toLowerCase());
-    }, { timeout: 15000 });
+    await waitFor(
+      () => {
+        const userElement = getByTestId("authenticated-user");
+        expect(userElement.textContent).toBe(testEmail.toLowerCase());
+      },
+      { timeout: 15000 },
+    );
 
     // Step 5: Sign out user
     await act(async () => {
@@ -254,8 +274,8 @@ describe('Authentication Integration', () => {
 
     // Should now show no user data (empty or null email)
     await waitFor(() => {
-      const userElement = getByTestId('authenticated-user');
-      expect(userElement.textContent).toBe(''); // Empty since no user
+      const userElement = getByTestId("authenticated-user");
+      expect(userElement.textContent).toBe(""); // Empty since no user
     });
   });
 });

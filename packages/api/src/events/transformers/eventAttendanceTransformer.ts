@@ -1,38 +1,35 @@
-import type { Database } from '@belongnetwork/types/database';
+import type { Database } from "@belongnetwork/types/database";
 import type {
   EventAttendanceData,
   EventAttendance,
   EventAttendanceStatus,
   User,
   Event,
-} from '@belongnetwork/types';
+} from "@belongnetwork/types";
 
 // Database types for event_attendances table (will be available once migrations are applied)
-export type EventAttendanceRow = Database['public']['Tables']['event_attendances']['Row'];
-export type EventAttendanceInsertDbData = Database['public']['Tables']['event_attendances']['Insert'];
-export type EventAttendanceUpdateDbData = Database['public']['Tables']['event_attendances']['Update'];
+export type EventAttendanceRow =
+  Database["public"]["Tables"]["event_attendances"]["Row"];
+export type EventAttendanceInsertDbData =
+  Database["public"]["Tables"]["event_attendances"]["Insert"];
+export type EventAttendanceUpdateDbData =
+  Database["public"]["Tables"]["event_attendances"]["Update"];
 
 /**
  * Transform a database event attendance record to a domain event attendance object
  */
 export function toDomainEventAttendance(
   dbAttendance: EventAttendanceRow,
-  refs: { user: User; event: Event }
+  refs: { user: User; event: Event },
 ): EventAttendance {
-  const {
-    event_id,
-    user_id,
-    created_at,
-    updated_at,
-    ...rest
-  } = dbAttendance;
+  const { event_id, user_id, created_at, updated_at, ...rest } = dbAttendance;
 
   if (event_id !== refs.event.id) {
-    throw new Error('Event ID does not match');
+    throw new Error("Event ID does not match");
   }
 
   if (user_id !== refs.user.id) {
-    throw new Error('User ID does not match');
+    throw new Error("User ID does not match");
   }
 
   return {
@@ -53,7 +50,7 @@ export function toDomainEventAttendance(
  */
 export function forDbInsert(
   attendanceData: EventAttendanceData,
-  userId: string
+  userId: string,
 ): EventAttendanceInsertDbData {
   return {
     event_id: attendanceData.eventId,
@@ -66,7 +63,7 @@ export function forDbInsert(
  * Transform a domain event attendance data object to a database event attendance update record
  */
 export function forDbUpdate(
-  attendanceData: Partial<EventAttendanceData>
+  attendanceData: Partial<EventAttendanceData>,
 ): EventAttendanceUpdateDbData {
   return {
     status: attendanceData.status,

@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { createAuthService } from '../services/auth.service';
-import { useSupabase } from '../providers/CurrentUserProvider';
+import { useMutation } from "@tanstack/react-query";
+import { createAuthService } from "../services/auth.service";
+import { useSupabase } from "../providers/CurrentUserProvider";
 
 /**
  * A React Query mutation hook for signing out the current user

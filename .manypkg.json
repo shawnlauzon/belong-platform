@@ -4,7 +4,12 @@
   "dependencyConstraints": {
     "enforceWorkspaceDependencies": true,
     "enforceWorkspaceDependenciesOptions": {
-      "allowDependencies": ["react", "react-dom", "react-router-dom", "@tanstack/react-query"]
+      "allowDependencies": [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "@tanstack/react-query"
+      ]
     }
   }
 }

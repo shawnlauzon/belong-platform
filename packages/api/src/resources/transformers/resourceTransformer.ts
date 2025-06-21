@@ -1,4 +1,4 @@
-import type { Database } from '@belongnetwork/types/database';
+import type { Database } from "@belongnetwork/types/database";
 import type {
   Community,
   MeetupFlexibility,
@@ -6,45 +6,51 @@ import type {
   ResourceData,
   ResourceInfo,
   User,
-} from '@belongnetwork/types';
-import type { Resource } from '@belongnetwork/types';
-import { parsePostGisPoint, toPostGisPoint } from '../../utils';
-import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
+} from "@belongnetwork/types";
+import type { Resource } from "@belongnetwork/types";
+import { parsePostGisPoint, toPostGisPoint } from "../../utils";
+import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
 
-export type ResourceRow = Database['public']['Tables']['resources']['Row'];
+export type ResourceRow = Database["public"]["Tables"]["resources"]["Row"];
 export type ResourceInsertDbData =
-  Database['public']['Tables']['resources']['Insert'];
+  Database["public"]["Tables"]["resources"]["Insert"];
 export type ResourceUpdateDbData =
-  Database['public']['Tables']['resources']['Update'];
+  Database["public"]["Tables"]["resources"]["Update"];
 
 /**
  * Transform a database resource record to a domain resource object
  */
 export function toDomainResource(
   dbResource: ResourceRow,
-  refs: { owner: User; community?: Community }
+  refs: { owner: User; community?: Community },
 ): Resource {
   if (!dbResource) {
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
   }
 
   if (dbResource.owner_id !== refs.owner.id) {
-    throw new Error('Owner ID does not match');
+    throw new Error("Owner ID does not match");
   }
 
-  if (dbResource.community_id && refs.community && dbResource.community_id !== refs.community.id) {
-    throw new Error('Community ID does not match');
+  if (
+    dbResource.community_id &&
+    refs.community &&
+    dbResource.community_id !== refs.community.id
+  ) {
+    throw new Error("Community ID does not match");
   }
 
   return {
     id: dbResource.id,
-    type: dbResource.type as 'offer' | 'request',
+    type: dbResource.type as "offer" | "request",
     title: dbResource.title,
     description: dbResource.description,
     category: dbResource.category as ResourceCategory,
-    location: dbResource.location ? parsePostGisPoint(dbResource.location) : undefined,
+    location: dbResource.location
+      ? parsePostGisPoint(dbResource.location)
+      : undefined,
     isActive: dbResource.is_active !== false, // Default to true if not set
-    availability: dbResource.availability ?? 'available',
+    availability: dbResource.availability ?? "available",
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
     pickupInstructions: dbResource.pickup_instructions ?? undefined,
@@ -61,7 +67,7 @@ export function toDomainResource(
  */
 export function forDbInsert(
   resource: ResourceData,
-  ownerId: string
+  ownerId: string,
 ): ResourceInsertDbData {
   const {
     communityId,
@@ -90,7 +96,7 @@ export function forDbInsert(
  * Transform a domain resource object to a database resource record
  */
 export function forDbUpdate(
-  resource: Partial<ResourceData>
+  resource: Partial<ResourceData>,
 ): ResourceUpdateDbData {
   return {
     title: resource.title,
@@ -115,7 +121,7 @@ export function forDbUpdate(
 export function toResourceInfo(
   dbResource: ResourceRow,
   ownerId: string,
-  communityId: string
+  communityId: string,
 ): ResourceInfo {
   if (!dbResource) {
     throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
@@ -123,13 +129,15 @@ export function toResourceInfo(
 
   return {
     id: dbResource.id,
-    type: dbResource.type as 'offer' | 'request',
+    type: dbResource.type as "offer" | "request",
     title: dbResource.title,
     description: dbResource.description,
     category: dbResource.category as ResourceCategory,
-    location: dbResource.location ? parsePostGisPoint(dbResource.location) : undefined,
+    location: dbResource.location
+      ? parsePostGisPoint(dbResource.location)
+      : undefined,
     isActive: dbResource.is_active !== false, // Default to true if not set
-    availability: dbResource.availability ?? 'available',
+    availability: dbResource.availability ?? "available",
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
     pickupInstructions: dbResource.pickup_instructions ?? undefined,

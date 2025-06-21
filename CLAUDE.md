@@ -28,8 +28,8 @@ pnpm lint
 # Format code
 pnpm format
 
-# Run comprehensive checks before committing
-pnpm lint && pnpm typecheck && pnpm build
+# Pre-commit verification (lint, typecheck, tests, and clean build)
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 # Run integration tests
 pnpm test:integration
@@ -46,7 +46,6 @@ Package Structure
 - @belongnetwork/components - Reusable UI components built with Radix UI and Tailwind CSS
 - @belongnetwork/core - Shared configuration, utilities, and logger
 - @belongnetwork/types - TypeScript type definitions and database schema types
-
 
 Tech Stack
 
@@ -80,10 +79,10 @@ Testing
 - Each package has its own Vitest configuration
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
-- **ALWAYS use createMock* utilities from @belongnetwork/platform/src/test-utils for generating test data**
+- **ALWAYS use createMock\* utilities from @belongnetwork/platform/src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
 
-- Unit tests are located in the __tests__ directory of the feature
+- Unit tests are located in the **tests** directory of the feature
 - Integration tests are located in the tests/integration directory
 
 QA
@@ -93,7 +92,6 @@ QA
 Publish
 
 - Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in all package.json files, then commit, then tag, then publish
-
 
 Code Safety Guidelines
 
@@ -127,26 +125,31 @@ Development Principles
 ### Problem-Solving Methodology
 
 1. **Write a Failing Test First**: Always create a unit test that reproduces the exact problem before attempting any fixes
+
    - Unit tests should demonstrate the bug in isolation
    - Use proper mocking strategy: only mock external dependencies (like Supabase), never mock platform code
    - The test should fail for the right reason - demonstrating the actual bug
 
 2. **Understand the Real Problem Space**:
+
    - Distinguish between unit test failures and integration test failures - they may have different root causes
    - Unit tests with mocks may pass while integration tests fail, indicating the mock doesn't reflect real behavior
    - Integration test failures may reveal environmental issues (shared state, timing, real external dependencies) that unit tests can't detect
 
 3. **Test Your Hypothesis with Real Evidence**:
+
    - When you think you've identified the root cause, test it against the actual failing scenario
    - If your fix works for unit tests but not integration tests, your hypothesis may be incomplete
    - Don't assume a fix works just because it seems logical - verify it against the failing test case
 
 4. **Fix the Root Cause, Not Symptoms**:
+
    - Don't mask problems with workarounds (e.g., clearing caches manually between tests)
    - Ask "Why isn't the intended behavior working?" rather than "How can I make this pass?"
    - Example: If cache is polluted after sign-out, fix the sign-out cache invalidation, don't clear cache manually
 
 5. **Verify the Fix Completely**:
+
    - The unit test should pass after the fix
    - Integration tests should also pass without additional workarounds
    - Both test types should demonstrate the same correct behavior
@@ -177,6 +180,7 @@ Development Principles
 ### Key Lessons from Real Debugging Sessions
 
 1. **Cache Pollution Investigation Example**:
+
    - **Initial Hypothesis**: Cache not being invalidated when using useSignOut hook
    - **Reality**: Integration test was calling `supabase.auth.signOut()` directly, bypassing our hooks entirely
    - **First Fix Attempt**: Added auth state listener to automatically clear cache on SIGNED_OUT events
@@ -184,6 +188,7 @@ Development Principles
    - **Lesson**: Multiple layers of the problem needed investigation - direct Supabase calls AND potentially other cache pollution sources
 
 2. **Mock vs Reality Gap**:
+
    - **Problem**: Unit test with perfect mocks can pass while integration test with real Supabase fails
    - **Insight**: Mocks capture our understanding of how external dependencies work, but may miss edge cases, timing issues, or state persistence that real dependencies exhibit
    - **Solution**: When unit and integration tests diverge, investigate what real behavior the mocks are missing

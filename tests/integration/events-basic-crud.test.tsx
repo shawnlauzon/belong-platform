@@ -1,7 +1,15 @@
-import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from "vitest";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useEvents,
   useCreateEvent,
@@ -9,19 +17,19 @@ import {
   useDeleteEvent,
   useSignOut,
   BelongProvider,
-} from '@belongnetwork/platform';
+} from "@belongnetwork/platform";
 // Updated to use BelongProvider directly instead of TestWrapper
-import { 
+import {
   createAndAuthenticateUser,
-  type AuthSetupResult
-} from './helpers/auth-helpers';
-import { 
+  type AuthSetupResult,
+} from "./helpers/auth-helpers";
+import {
   generateEventData,
   cleanupTestResources,
-  commonDeleteSuccessExpectation
-} from './helpers/crud-test-patterns';
+  commonDeleteSuccessExpectation,
+} from "./helpers/crud-test-patterns";
 
-describe('Events Basic CRUD Integration Tests', () => {
+describe("Events Basic CRUD Integration Tests", () => {
   let authSetup: AuthSetupResult;
   let queryClient: QueryClient;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -68,11 +76,11 @@ describe('Events Basic CRUD Integration Tests', () => {
     // Clean up all test events using name-based cleanup
     await cleanupTestResources(
       wrapper,
-      'event',
+      "event",
       () => renderHook(() => useEvents(), { wrapper }),
       () => renderHook(() => useDeleteEvent(), { wrapper }),
       act,
-      waitFor
+      waitFor,
     );
   });
 
@@ -91,8 +99,7 @@ describe('Events Basic CRUD Integration Tests', () => {
     // No cleanup needed with provider pattern
   });
 
-  test('should successfully read events without authentication', async () => {
-
+  test("should successfully read events without authentication", async () => {
     const { result: eventsResult } = renderHook(() => useEvents(), {
       wrapper,
     });
@@ -103,12 +110,12 @@ describe('Events Basic CRUD Integration Tests', () => {
           isSuccess: true,
           data: expect.any(Array),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully create an event when authenticated', async () => {
+  test("should successfully create an event when authenticated", async () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event
@@ -151,15 +158,15 @@ describe('Events Basic CRUD Integration Tests', () => {
               id: createEventResult.current.data!.id,
               title: eventData.title,
               location: eventData.location,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully update an event when authenticated as organizer', async () => {
+  test("should successfully update an event when authenticated as organizer", async () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
@@ -169,7 +176,7 @@ describe('Events Basic CRUD Integration Tests', () => {
 
     const eventData = {
       ...generateEventData(testCommunity.id!, testUser.userId!),
-      title: 'Test Event to Update',
+      title: "Test Event to Update",
     };
 
     await act(async () => {
@@ -193,8 +200,8 @@ describe('Events Basic CRUD Integration Tests', () => {
       wrapper,
     });
 
-    const updatedTitle = 'Updated Event Title';
-    const updatedDescription = 'Updated event description';
+    const updatedTitle = "Updated Event Title";
+    const updatedDescription = "Updated event description";
     const updateData = {
       id: createdEvent.id,
       title: updatedTitle,
@@ -232,15 +239,15 @@ describe('Events Basic CRUD Integration Tests', () => {
             expect.objectContaining({
               id: createdEvent.id,
               title: updatedTitle,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully delete an event when authenticated as organizer', async () => {
+  test("should successfully delete an event when authenticated as organizer", async () => {
     const { testUser, testCommunity }: AuthSetupResult = authSetup;
 
     // Create an event first
@@ -250,7 +257,7 @@ describe('Events Basic CRUD Integration Tests', () => {
 
     const eventData = {
       ...generateEventData(testCommunity.id!, testUser.userId!),
-      title: 'Test Event to Delete',
+      title: "Test Event to Delete",
     };
 
     await act(async () => {
@@ -270,7 +277,9 @@ describe('Events Basic CRUD Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(deleteEventResult.current).toMatchObject(commonDeleteSuccessExpectation);
+      expect(deleteEventResult.current).toMatchObject(
+        commonDeleteSuccessExpectation,
+      );
     });
 
     // Verify event is deleted (or at least not findable in the list)
@@ -285,10 +294,10 @@ describe('Events Basic CRUD Integration Tests', () => {
           data: expect.not.arrayContaining([
             expect.objectContaining({
               id: createdEvent.id,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });

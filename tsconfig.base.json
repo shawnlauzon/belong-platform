@@ -15,34 +15,16 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@belongnetwork/platform": [
-        "./packages/api/src"
-      ],
-      "@belongnetwork/core": [
-        "./packages/core/src"
-      ],
-      "@belongnetwork/types": [
-        "./packages/types/src"
-      ],
-      "@belongnetwork/types/database": [
-        "./packages/types/src/database"
-      ],
-      "@belongnetwork/core/test-utils": [
-        "./packages/core/src/test-utils"
-      ]
+      "@belongnetwork/platform": ["./packages/api/src"],
+      "@belongnetwork/core": ["./packages/core/src"],
+      "@belongnetwork/types": ["./packages/types/src"],
+      "@belongnetwork/types/database": ["./packages/types/src/database"],
+      "@belongnetwork/core/test-utils": ["./packages/core/src/test-utils"]
     },
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "target": "es2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "es2017"
   },
-  "include": [
-    "src/**/*",
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
+  "include": ["src/**/*", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "node_modules",
     "dist",

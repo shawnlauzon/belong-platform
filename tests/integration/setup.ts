@@ -1,1 +1,1 @@
-import './database/setup';
+import "./database/setup";
