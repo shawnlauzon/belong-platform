@@ -17,33 +17,52 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
+// Helper function to apply common filters to a query
+const applyResourceFilters = (
+  query: any,
+  filters: ResourceFilter
+) => {
+  if (filters.communityId) {
+    query = query.eq("community_id", filters.communityId);
+  }
+  if (filters.category && filters.category !== "all") {
+    query = query.eq("category", filters.category);
+  }
+  if (filters.type && filters.type !== "all") {
+    query = query.eq("type", filters.type);
+  }
+  if (filters.ownerId) {
+    query = query.eq("owner_id", filters.ownerId);
+  }
+  return query;
+};
+
+// Helper function to build base query with activity filter
+const buildResourceQuery = (
+  supabase: SupabaseClient<Database>,
+  isActive: boolean
+) => {
+  return supabase
+    .from("resources")
+    .select("*")
+    .eq("is_active", isActive)
+    .order("created_at", { ascending: false });
+};
+
 export const createResourceService = (supabase: SupabaseClient<Database>) => ({
   async fetchResources(filters?: ResourceFilter): Promise<ResourceInfo[]> {
     logger.debug("📚 API: Fetching resources", { filters });
 
     try {
-      let query = supabase
-        .from("resources")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      // Apply filters if provided
+      // CRITICAL FIX: Determine activity filter (defaults to active)
+      const requestedActiveState = filters?.isActive !== false;
+      
+      // Build base query with activity filter
+      let query = buildResourceQuery(supabase, requestedActiveState);
+      
+      // Apply additional filters if provided
       if (filters) {
-        if (filters.communityId) {
-          query = query.eq("community_id", filters.communityId);
-        }
-        if (filters.category && filters.category !== "all") {
-          query = query.eq("category", filters.category);
-        }
-        if (filters.type && filters.type !== "all") {
-          query = query.eq("type", filters.type);
-        }
-        if (filters.ownerId) {
-          query = query.eq("owner_id", filters.ownerId);
-        }
-        if (filters.isActive !== undefined) {
-          query = query.eq("is_active", filters.isActive);
-        }
+        query = applyResourceFilters(query, filters);
       }
 
       const { data, error } = await query;
@@ -66,12 +85,20 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         ),
       );
 
+      // CRITICAL FIX: Defensive application-level filtering as safety net
+      const expectedActiveState = filters?.isActive !== false;
+      const filteredResources = resources.filter(resource => 
+        resource.isActive === expectedActiveState
+      );
+
       logger.debug("📚 API: Successfully fetched resources", {
-        count: resources.length,
+        count: filteredResources.length,
+        totalFromDb: resources.length,
+        expectedActiveState,
         filters,
       });
 
-      return resources;
+      return filteredResources;
     } catch (error) {
       logger.error("📚 API: Error fetching resources", {
         filters,

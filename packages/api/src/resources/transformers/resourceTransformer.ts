@@ -49,7 +49,7 @@ export function toDomainResource(
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    isActive: dbResource.is_active !== false, // Default to true if not set
+    isActive: dbResource.is_active === true, // CRITICAL FIX: Only true when explicitly true
     availability: dbResource.availability ?? "available",
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
@@ -136,7 +136,7 @@ export function toResourceInfo(
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    isActive: dbResource.is_active !== false, // Default to true if not set
+    isActive: dbResource.is_active === true, // CRITICAL FIX: Only true when explicitly true
     availability: dbResource.availability ?? "available",
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
