@@ -76,6 +76,8 @@ describe("Authentication Integration", () => {
       expect(result.current).toBeDefined();
       expect(result.current).not.toBeNull();
       expect(typeof result.current.signUp).toBe('function');
+      // Ensure mutations are ready
+      expect(result.current.signUp).not.toBeUndefined();
     }, { timeout: 15000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -94,7 +96,7 @@ describe("Authentication Integration", () => {
 
     expect(signUpResult).toMatchObject({
       id: expect.any(String),
-      email: testUser.email,
+      email: testUser.email.toLowerCase(), // Supabase normalizes emails to lowercase
       firstName: testUser.firstName,
     });
   });
@@ -110,6 +112,9 @@ describe("Authentication Integration", () => {
       expect(result.current).not.toBeNull();
       expect(typeof result.current.signUp).toBe('function');
       expect(typeof result.current.signIn).toBe('function');
+      // Ensure mutations are ready
+      expect(result.current.signUp).not.toBeUndefined();
+      expect(result.current.signIn).not.toBeUndefined();
     }, { timeout: 15000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
@@ -129,7 +134,7 @@ describe("Authentication Integration", () => {
 
     expect(signUpResult).toMatchObject({
       id: expect.any(String),
-      email: testUser.email,
+      email: testUser.email.toLowerCase(), // Supabase normalizes emails to lowercase
     });
 
     // Now test sign in
@@ -143,7 +148,7 @@ describe("Authentication Integration", () => {
 
     expect(signInResult).toMatchObject({
       id: expect.any(String),
-      email: testUser.email,
+      email: testUser.email.toLowerCase(), // Supabase normalizes emails to lowercase
     });
   });
 
@@ -187,6 +192,9 @@ describe("Authentication Integration", () => {
       expect(authResult.current).not.toBeNull();
       expect(typeof authResult.current.signUp).toBe('function');
       expect(typeof authResult.current.signIn).toBe('function');
+      // Ensure mutations are ready
+      expect(authResult.current.signUp).not.toBeUndefined();
+      expect(authResult.current.signIn).not.toBeUndefined();
     }, { timeout: 15000 });
 
     // Step 1: Sign up user
