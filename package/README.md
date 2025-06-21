@@ -9,6 +9,7 @@ npm install @belongnetwork/platform
 ## 🌟 Features
 
 **For Community Members:**
+
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
 - 📅 **Event Management** - Create and attend community gatherings and activities
 - 💌 **Gratitude System** - Send thanks messages to community members who have helped
@@ -16,6 +17,7 @@ npm install @belongnetwork/platform
 - 🔔 **Real-time Updates** - Stay connected with your community
 
 **For Developers:**
+
 - 🎯 **Type-Safe** - Comprehensive TypeScript coverage prevents runtime errors
 - 🗺️ **Location-Aware** - PostGIS integration for geographic features via Mapbox
 - ⚡ **Real-Time Ready** - Built on Supabase with real-time subscription support
@@ -27,7 +29,7 @@ npm install @belongnetwork/platform
 
 ```
 @belongnetwork/platform     # Single unified package
-├── /hooks                  # All React Query hooks  
+├── /hooks                  # All React Query hooks
 └── /types                  # TypeScript types and interfaces
 ```
 
@@ -44,48 +46,48 @@ pnpm add @belongnetwork/platform
 ### Basic Setup
 
 ```tsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BelongContextProvider } from '@belongnetwork/platform';
-import App from './App';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BelongContextProvider } from "@belongnetwork/platform";
+import App from "./App";
 
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BelongContextProvider>
         <App />
       </BelongContextProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 ```
 
 ### Using the Hooks
 
 ```tsx
-import { 
-  useCommunities, 
-  useResources, 
+import {
+  useCommunities,
+  useResources,
   useCurrentUserContext,
-  useCreateResource 
-} from '@belongnetwork/platform';
+  useCreateResource,
+} from "@belongnetwork/platform";
 
 function CommunityDashboard() {
   const { currentUser, isPending } = useCurrentUserContext();
   const { data: communities } = useCommunities();
-  const { data: resources } = useResources({ type: 'offer' });
+  const { data: resources } = useResources({ type: "offer" });
   const createResource = useCreateResource();
 
   const handleShareResource = async () => {
     await createResource.mutateAsync({
-      title: 'Power Drill',
-      category: 'tools',
-      type: 'offer',
-      communityId: 'community-123',
-      meetupType: 'pickup',
+      title: "Power Drill",
+      category: "tools",
+      type: "offer",
+      communityId: "community-123",
+      meetupType: "pickup",
       // ... other fields
     });
   };
@@ -96,17 +98,17 @@ function CommunityDashboard() {
   return (
     <div>
       <h1>Welcome {currentUser.firstName}!</h1>
-      
+
       <section>
         <h2>Your Communities</h2>
-        {communities?.map(community => (
+        {communities?.map((community) => (
           <div key={community.id}>{community.name}</div>
         ))}
       </section>
 
       <section>
         <h2>Available Resources</h2>
-        {resources?.map(resource => (
+        {resources?.map((resource) => (
           <div key={resource.id}>
             <h3>{resource.title}</h3>
             <p>Offered by {resource.owner.firstName}</p>
@@ -114,9 +116,7 @@ function CommunityDashboard() {
         ))}
       </section>
 
-      <button onClick={handleShareResource}>
-        Share a Resource
-      </button>
+      <button onClick={handleShareResource}>Share a Resource</button>
     </div>
   );
 }
@@ -125,7 +125,7 @@ function CommunityDashboard() {
 ### Key Setup Requirements
 
 1. **QueryClientProvider**: Required for React Query functionality
-2. **BelongContextProvider**: Required for accessing current user data  
+2. **BelongContextProvider**: Required for accessing current user data
 3. **Provider nesting order**: QueryClient → Belong → App components
 4. **Hook usage**: `useCurrentUserContext()` must be called inside `BelongContextProvider`
 
@@ -135,16 +135,16 @@ function CommunityDashboard() {
 // Get current user data anywhere in your app (must be inside BelongContextProvider)
 function UserNameDisplay() {
   const { currentUser } = useCurrentUserContext();
-  return <div>User: {currentUser?.firstName || 'Not signed in'}</div>;
+  return <div>User: {currentUser?.firstName || "Not signed in"}</div>;
 }
 
 // Handle loading and error states
 function AuthStatus() {
   const { currentUser, isPending, isError } = useCurrentUserContext();
-  
+
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading user</div>;
-  
+
   return currentUser ? (
     <div>Welcome, {currentUser.firstName}!</div>
   ) : (
@@ -158,6 +158,7 @@ function AuthStatus() {
 If you're upgrading from an older version that used `BelongClientProvider`:
 
 **Before:**
+
 ```tsx
 <BelongClientProvider config={{ ... }}>
   <QueryClientProvider client={queryClient}>
@@ -167,6 +168,7 @@ If you're upgrading from an older version that used `BelongClientProvider`:
 ```
 
 **After:**
+
 ```tsx
 // In main.tsx/index.tsx - before rendering
 initializeBelong({
@@ -178,7 +180,7 @@ initializeBelong({
 // Then just use QueryClientProvider
 <QueryClientProvider client={queryClient}>
   <App />
-</QueryClientProvider>
+</QueryClientProvider>;
 ```
 
 The hooks work exactly the same - no changes needed in your components!
@@ -188,11 +190,11 @@ The hooks work exactly the same - no changes needed in your components!
 The package also supports subpath imports for better organization:
 
 ```tsx
-// Import types separately  
-import type { Resource, Community, User } from '@belongnetwork/platform/types';
+// Import types separately
+import type { Resource, Community, User } from "@belongnetwork/platform/types";
 
 // Import hooks separately
-import { useResources, useCommunities } from '@belongnetwork/platform/hooks';
+import { useResources, useCommunities } from "@belongnetwork/platform/hooks";
 ```
 
 ## 📚 Package Documentation
@@ -204,13 +206,13 @@ The `@belongnetwork/platform` package provides two main categories of exports:
 #### Configuration
 
 ```tsx
-import { initializeBelong } from '@belongnetwork/platform';
+import { initializeBelong } from "@belongnetwork/platform";
 
 // Initialize once at app startup
 initializeBelong({
-  supabaseUrl: 'https://your-project.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
-  mapboxPublicToken: 'your-mapbox-token'
+  supabaseUrl: "https://your-project.supabase.co",
+  supabaseAnonKey: "your-anon-key",
+  mapboxPublicToken: "your-mapbox-token",
 });
 ```
 
@@ -219,28 +221,29 @@ The `initializeBelong()` function configures the platform globally and should be
 #### Types
 
 ```tsx
-import type { 
-  User, 
-  Community, 
-  Resource, 
-  Event, 
+import type {
+  User,
+  Community,
+  Resource,
+  Event,
   ResourceFilter,
-  CommunityData 
-} from '@belongnetwork/platform/types';
+  CommunityData,
+} from "@belongnetwork/platform/types";
 // or
-import type { User, Community } from '@belongnetwork/platform';
+import type { User, Community } from "@belongnetwork/platform";
 
 // Type-safe resource creation
 const resourceData: ResourceData = {
-  title: 'Garden Tools',
-  category: 'tools',
-  type: 'offer',
-  communityId: 'community-123',
-  meetupType: 'pickup'
+  title: "Garden Tools",
+  category: "tools",
+  type: "offer",
+  communityId: "community-123",
+  meetupType: "pickup",
 };
 ```
 
 **Key Types:**
+
 - **Entities**: `User`, `Community`, `Resource`, `Event`, `Thanks`
 - **Data Transfer**: `ResourceData`, `EventData`, etc.
 - **Filters**: `ResourceFilter`, `EventFilter`, etc.
@@ -251,8 +254,13 @@ const resourceData: ResourceData = {
 All React Query hooks for data fetching and mutations:
 
 #### Authentication
+
 ```tsx
-import { useCurrentUserContext, useSignIn, useSignOut } from '@belongnetwork/platform';
+import {
+  useCurrentUserContext,
+  useSignIn,
+  useSignOut,
+} from "@belongnetwork/platform";
 
 function AuthComponent() {
   const { currentUser, isPending, isError } = useCurrentUserContext();
@@ -261,7 +269,7 @@ function AuthComponent() {
 
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading user</div>;
-  
+
   if (!currentUser) {
     return (
       <button onClick={() => signIn.mutate({ email, password })}>
@@ -280,12 +288,13 @@ function AuthComponent() {
 ```
 
 #### Communities
+
 ```tsx
-import { 
-  useCommunities, 
-  useCommunity, 
+import {
+  useCommunities,
+  useCommunity,
   useCreateCommunity,
-  useJoinCommunity 
+  useJoinCommunity
 } from '@belongnetwork/platform';
 
 function CommunityManager() {
@@ -313,12 +322,13 @@ function CommunityManager() {
 ```
 
 #### Resources
+
 ```tsx
-import { 
-  useResources, 
-  useCreateResource, 
+import {
+  useResources,
+  useCreateResource,
   useUpdateResource,
-  useDeleteResource 
+  useDeleteResource
 } from '@belongnetwork/platform';
 
 function ResourceManager() {
@@ -327,7 +337,7 @@ function ResourceManager() {
     category: 'tools',
     communityId: 'community-123'
   });
-  
+
   const createResource = useCreateResource();
   const updateResource = useUpdateResource();
   const deleteResource = useDeleteResource();
@@ -349,12 +359,13 @@ function ResourceManager() {
 ```
 
 #### Events
+
 ```tsx
-import { 
-  useEvents, 
-  useCreateEvent, 
+import {
+  useEvents,
+  useCreateEvent,
   useJoinEvent,
-  useEventAttendees 
+  useEventAttendees
 } from '@belongnetwork/platform';
 
 function EventManager() {
@@ -380,33 +391,29 @@ function EventManager() {
 ```
 
 #### Thanks and Gratitude
+
 ```tsx
-import { 
-  useThanks, 
-  useCreateThanks 
-} from '@belongnetwork/platform';
+import { useThanks, useCreateThanks } from "@belongnetwork/platform";
 
 function GratitudeManager() {
   const { data: thanksMessages } = useThanks({
-    resourceId: 'resource-123'
+    resourceId: "resource-123",
   });
   const createThanks = useCreateThanks();
 
   const handleSendThanks = () => {
     createThanks.mutate({
-      toUserId: 'user-456',
-      resourceId: 'resource-123',
-      message: 'Thank you for sharing this!'
+      toUserId: "user-456",
+      resourceId: "resource-123",
+      message: "Thank you for sharing this!",
     });
   };
 
   return (
     <div>
-      <button onClick={handleSendThanks}>
-        Send Thanks
-      </button>
-      
-      {thanksMessages?.map(thanks => (
+      <button onClick={handleSendThanks}>Send Thanks</button>
+
+      {thanksMessages?.map((thanks) => (
         <div key={thanks.id}>
           <p>"{thanks.message}"</p>
           <small>From {thanks.fromUser.firstName}</small>
@@ -480,7 +487,7 @@ The platform uses Supabase with PostGIS for geographic features:
 -- Key tables (auto-managed by Supabase migrations)
 - profiles              -- User profiles
 - communities           -- Geographic hierarchy
-- community_memberships -- User-community relationships  
+- community_memberships -- User-community relationships
 - resources            -- Shared items/skills
 - events               -- Community events
 - event_attendances    -- RSVP tracking
@@ -509,12 +516,12 @@ The new global configuration makes testing simpler. Here's how to set up tests:
 
 ```typescript
 // test-setup.ts
-import { beforeEach, vi } from 'vitest';
+import { beforeEach, vi } from "vitest";
 
 // Mock the global client
 const mockGetBelongClient = vi.fn();
-vi.mock('@belongnetwork/platform', () => ({
-  getBelongClient: mockGetBelongClient
+vi.mock("@belongnetwork/platform", () => ({
+  getBelongClient: mockGetBelongClient,
 }));
 
 beforeEach(() => {
@@ -533,7 +540,7 @@ beforeEach(() => {
     mapbox: {
       searchAddresses: vi.fn(),
       // ... other mocked methods
-    }
+    },
   });
 });
 ```
@@ -542,7 +549,7 @@ For integration tests with real database:
 
 ```typescript
 // integration-test-setup.ts
-import { initializeBelong } from '@belongnetwork/platform';
+import { initializeBelong } from "@belongnetwork/platform";
 
 beforeAll(() => {
   initializeBelong({
@@ -573,11 +580,11 @@ interface BelongClientConfig {
 For testing or advanced use cases, you can check initialization status:
 
 ```typescript
-import { isInitialized, resetBelongClient } from '@belongnetwork/platform';
+import { isInitialized, resetBelongClient } from "@belongnetwork/platform";
 
 // Check if platform is initialized
 if (!isInitialized()) {
-  console.warn('Platform not yet initialized');
+  console.warn("Platform not yet initialized");
 }
 
 // Reset configuration (mainly for testing)
@@ -587,7 +594,7 @@ resetBelongClient();
 ### React Query Configuration
 
 ```tsx
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
   defaultOptions: {

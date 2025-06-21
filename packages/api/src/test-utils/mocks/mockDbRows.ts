@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker';
-import type { Database } from '@belongnetwork/types/database';
+import { faker } from "@faker-js/faker";
+import type { Database } from "@belongnetwork/types/database";
 
 type UserRow = Database['public']['Tables']['profiles']['Row'];
 type ResourceRow = Database['public']['Tables']['resources']['Row'];
@@ -34,10 +34,10 @@ export function createMockDbProfile(overrides: Partial<UserRow> = {}): UserRow {
 }
 
 export function createMockDbResource(
-  overrides: Partial<ResourceRow> = {}
+  overrides: Partial<ResourceRow> = {},
 ): ResourceRow {
   const now = new Date().toISOString();
-  const categories = ['tools', 'skills', 'food', 'supplies', 'other'];
+  const categories = ["tools", "skills", "food", "supplies", "other"];
 
   return {
     id: faker.string.uuid(),
@@ -45,10 +45,10 @@ export function createMockDbResource(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category: faker.helpers.arrayElement(categories),
-    type: faker.helpers.arrayElement(['offer', 'request']),
+    type: faker.helpers.arrayElement(["offer", "request"]),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
-      () => faker.image.urlLoremFlickr({ category: 'object' })
+      () => faker.image.urlLoremFlickr({ category: "object" }),
     ),
     location: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     owner_id: faker.string.uuid(),
@@ -56,15 +56,15 @@ export function createMockDbResource(
     updated_at: now,
     is_active: faker.datatype.boolean(),
     availability: faker.helpers.arrayElement([
-      'weekdays',
-      'weekends',
-      'anytime',
-      'mornings',
+      "weekdays",
+      "weekends",
+      "anytime",
+      "mornings",
     ]),
     meetup_flexibility: faker.helpers.arrayElement([
-      'home_only',
-      'public_meetup_ok',
-      'delivery_possible',
+      "home_only",
+      "public_meetup_ok",
+      "delivery_possible",
     ]),
     parking_info: faker.lorem.sentence(),
     pickup_instructions: faker.lorem.sentences(2),
@@ -77,7 +77,7 @@ export function createMockDbResource(
  */
 export function createMockDbResourceWithOwner(
   owner: UserRow,
-  overrides: Partial<ResourceRow> = {}
+  overrides: Partial<ResourceRow> = {},
 ): ResourceRow & { owner: UserRow } {
   const resource = createMockDbResource({
     owner_id: owner.id,
@@ -93,17 +93,17 @@ export function createMockDbResourceWithOwner(
  * Creates a mock database Community row
  */
 export function createMockDbCommunity(
-  overrides: Partial<CommunityRow> = {}
+  overrides: Partial<CommunityRow> = {},
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
   const isCity = faker.datatype.boolean(0.7); // 70% chance of being a top-level community
 
   return {
     id: faker.string.uuid(),
-    level: isCity ? 'city' : 'neighborhood',
+    level: isCity ? "city" : "neighborhood",
     radius_km: faker.number.int({ min: 1, max: 140 }),
     organizer_id: faker.string.uuid(),
-    name: faker.location.country() + ' ' + faker.company.buzzNoun(),
+    name: faker.location.country() + " " + faker.company.buzzNoun(),
     description: faker.lorem.sentence(),
     center: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     parent_id: faker.string.uuid(),
@@ -123,14 +123,14 @@ export function createMockDbCommunity(
  * Creates a mock database Community with organizer attached
  */
 export function createMockDbCommunityWithOrganizer(
-  overrides: Partial<CommunityRow> = {}
+  overrides: Partial<CommunityRow> = {},
 ): CommunityRow & { organizer: UserRow } {
   const organizer = createMockDbProfile();
   const community = createMockDbCommunity({
     organizer_id: organizer.id,
     ...overrides,
   });
-  
+
   return {
     ...community,
     organizer,
@@ -183,12 +183,10 @@ export function createMockCommunityHierarchy() {
 /**
  * Creates a mock database Event row
  */
-export function createMockDbEvent(
-  overrides: Partial<EventRow> = {}
-): EventRow {
+export function createMockDbEvent(overrides: Partial<EventRow> = {}): EventRow {
   const now = new Date().toISOString();
   const startDateTime = faker.date.future().toISOString();
-  const endDateTime = faker.datatype.boolean() 
+  const endDateTime = faker.datatype.boolean()
     ? faker.date.future().toISOString()
     : null;
 
@@ -203,16 +201,17 @@ export function createMockDbEvent(
     location: faker.location.streetAddress(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     parking_info: faker.lorem.sentence(),
-    max_attendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : null,
+    max_attendees: faker.datatype.boolean()
+      ? faker.number.int({ min: 5, max: 100 })
+      : null,
     registration_required: faker.datatype.boolean(),
     is_active: faker.datatype.boolean(),
-    tags: Array.from(
-      { length: faker.number.int({ min: 0, max: 5 }) },
-      () => faker.lorem.word()
+    tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
+      faker.lorem.word(),
     ),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.urlLoremFlickr({ category: 'event' })
+      () => faker.image.urlLoremFlickr({ category: "event" }),
     ),
     attendee_count: faker.number.int({ min: 0, max: 50 }),
     created_at: now,
@@ -225,7 +224,7 @@ export function createMockDbEvent(
  * Creates a mock database Thanks row
  */
 export function createMockDbThanks(
-  overrides: Partial<ThanksRow> = {}
+  overrides: Partial<ThanksRow> = {},
 ): ThanksRow {
   const now = new Date().toISOString();
 
@@ -237,9 +236,11 @@ export function createMockDbThanks(
     resource_id: faker.string.uuid(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.urlLoremFlickr({ category: 'people' })
+      () => faker.image.urlLoremFlickr({ category: "people" }),
     ),
-    impact_description: faker.datatype.boolean() ? faker.lorem.paragraph() : null,
+    impact_description: faker.datatype.boolean()
+      ? faker.lorem.paragraph()
+      : null,
     created_at: now,
     updated_at: now,
     ...overrides,

@@ -1,8 +1,16 @@
-import { describe, test, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { faker } from '@faker-js/faker';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from "vitest";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { faker } from "@faker-js/faker";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useCommunities,
   useCreateCommunity,
@@ -10,19 +18,19 @@ import {
   useDeleteCommunity,
   useSignOut,
   BelongProvider,
-} from '@belongnetwork/platform';
+} from "@belongnetwork/platform";
 // Updated to use BelongProvider directly instead of TestWrapper
-import { generateTestName } from './database/utils/database-helpers';
-import { 
+import { generateTestName } from "./database/utils/database-helpers";
+import {
   createAndAuthenticateUser,
-  type AuthSetupResult
-} from './helpers/auth-helpers';
-import { 
+  type AuthSetupResult,
+} from "./helpers/auth-helpers";
+import {
   cleanupTestResources,
-  commonDeleteSuccessExpectation
-} from './helpers/crud-test-patterns';
+  commonDeleteSuccessExpectation,
+} from "./helpers/crud-test-patterns";
 
-describe('Communities CRUD Integration Tests', () => {
+describe("Communities CRUD Integration Tests", () => {
   let authSetup: AuthSetupResult;
   let queryClient: QueryClient;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -69,11 +77,11 @@ describe('Communities CRUD Integration Tests', () => {
     // Clean up all test communities using name-based cleanup
     await cleanupTestResources(
       wrapper,
-      'community',
+      "community",
       () => renderHook(() => useCommunities(), { wrapper }),
       () => renderHook(() => useDeleteCommunity(), { wrapper }),
       act,
-      waitFor
+      waitFor,
     );
   });
 
@@ -92,8 +100,7 @@ describe('Communities CRUD Integration Tests', () => {
     // No cleanup needed with provider pattern
   });
 
-  test('should successfully read communities without authentication', async () => {
-
+  test("should successfully read communities without authentication", async () => {
     const { result: communitiesResult } = renderHook(() => useCommunities(), {
       wrapper,
     });
@@ -108,30 +115,33 @@ describe('Communities CRUD Integration Tests', () => {
               name: expect.any(String),
               level: expect.any(String),
               timeZone: expect.any(String),
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully create a community when authenticated', async () => {
+  test("should successfully create a community when authenticated", async () => {
     const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community
-    const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
-      wrapper,
-    });
+    const { result: createCommunityResult } = renderHook(
+      () => useCreateCommunity(),
+      {
+        wrapper,
+      },
+    );
 
     const communityData = {
-      name: generateTestName('COMMUNITY'),
+      name: generateTestName("COMMUNITY"),
       description: faker.lorem.paragraph(),
-      level: 'neighborhood' as const,
-      timeZone: 'America/New_York',
+      level: "neighborhood" as const,
+      timeZone: "America/New_York",
       organizerId: testUser.userId!,
       parentId: null,
-      hierarchyPath: [{ level: 'test', name: 'Test' }],
+      hierarchyPath: [{ level: "test", name: "Test" }],
       memberCount: 1,
     };
 
@@ -141,19 +151,19 @@ describe('Communities CRUD Integration Tests', () => {
 
     await waitFor(() => {
       expect(createCommunityResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-            name: communityData.name,
-            description: communityData.description,
-            level: communityData.level,
-            timeZone: communityData.timeZone,
-            organizer: expect.objectContaining({
-              id: testUser.userId,
-            }),
+        isSuccess: true,
+        data: expect.objectContaining({
+          id: expect.any(String),
+          name: communityData.name,
+          description: communityData.description,
+          level: communityData.level,
+          timeZone: communityData.timeZone,
+          organizer: expect.objectContaining({
+            id: testUser.userId,
           }),
-          error: null,
-        });
+        }),
+        error: null,
+      });
     });
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
@@ -171,30 +181,33 @@ describe('Communities CRUD Integration Tests', () => {
               id: createCommunityResult.current.data!.id,
               name: communityData.name,
               level: communityData.level,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully update a community when authenticated as organizer', async () => {
+  test("should successfully update a community when authenticated as organizer", async () => {
     const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community first
-    const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
-      wrapper,
-    });
+    const { result: createCommunityResult } = renderHook(
+      () => useCreateCommunity(),
+      {
+        wrapper,
+      },
+    );
 
     const communityData = {
-      name: generateTestName('COMMUNITY'),
+      name: generateTestName("COMMUNITY"),
       description: faker.lorem.paragraph(),
-      level: 'neighborhood' as const,
-      timeZone: 'America/New_York',
+      level: "neighborhood" as const,
+      timeZone: "America/New_York",
       organizerId: testUser.userId!,
       parentId: null,
-      hierarchyPath: [{ level: 'test', name: 'Test' }],
+      hierarchyPath: [{ level: "test", name: "Test" }],
       memberCount: 1,
     };
 
@@ -204,12 +217,12 @@ describe('Communities CRUD Integration Tests', () => {
 
     await waitFor(() => {
       expect(createCommunityResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: expect.any(String),
-          }),
-          error: null,
-        });
+        isSuccess: true,
+        data: expect.objectContaining({
+          id: expect.any(String),
+        }),
+        error: null,
+      });
     });
     const createdCommunity = createCommunityResult.current.data;
     expect(createdCommunity).toBeDefined();
@@ -217,11 +230,14 @@ describe('Communities CRUD Integration Tests', () => {
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the community
-    const { result: updateCommunityResult } = renderHook(() => useUpdateCommunity(), {
-      wrapper,
-    });
+    const { result: updateCommunityResult } = renderHook(
+      () => useUpdateCommunity(),
+      {
+        wrapper,
+      },
+    );
 
-    const updatedName = generateTestName('COMMUNITY');
+    const updatedName = generateTestName("COMMUNITY");
     const updatedDescription = faker.lorem.paragraph();
     const updateData = {
       id: createdCommunity!.id,
@@ -238,16 +254,16 @@ describe('Communities CRUD Integration Tests', () => {
 
     await waitFor(() => {
       expect(updateCommunityResult.current).toMatchObject({
-          isSuccess: true,
-          data: expect.objectContaining({
-            id: createdCommunity!.id,
-            name: updatedName,
-            description: updatedDescription,
-            level: communityData.level,
-            timeZone: communityData.timeZone,
-          }),
-          error: null,
-        });
+        isSuccess: true,
+        data: expect.objectContaining({
+          id: createdCommunity!.id,
+          name: updatedName,
+          description: updatedDescription,
+          level: communityData.level,
+          timeZone: communityData.timeZone,
+        }),
+        error: null,
+      });
     });
 
     // Verify community is updated in the list
@@ -263,30 +279,33 @@ describe('Communities CRUD Integration Tests', () => {
             expect.objectContaining({
               id: createdCommunity!.id,
               name: updatedName,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });
 
-  test('should successfully delete a community when authenticated as organizer', async () => {
+  test("should successfully delete a community when authenticated as organizer", async () => {
     const { testUser }: AuthSetupResult = authSetup;
 
     // Create a community first
-    const { result: createCommunityResult } = renderHook(() => useCreateCommunity(), {
-      wrapper,
-    });
+    const { result: createCommunityResult } = renderHook(
+      () => useCreateCommunity(),
+      {
+        wrapper,
+      },
+    );
 
     const communityData = {
-      name: generateTestName('COMMUNITY'),
+      name: generateTestName("COMMUNITY"),
       description: faker.lorem.paragraph(),
-      level: 'neighborhood' as const,
-      timeZone: 'America/New_York',
+      level: "neighborhood" as const,
+      timeZone: "America/New_York",
       organizerId: testUser.userId!,
       parentId: null,
-      hierarchyPath: [{ level: 'test', name: 'Test' }],
+      hierarchyPath: [{ level: "test", name: "Test" }],
       memberCount: 1,
     };
 
@@ -294,21 +313,28 @@ describe('Communities CRUD Integration Tests', () => {
       await createCommunityResult.current.mutateAsync(communityData);
     });
 
-    await waitFor(() => expect(createCommunityResult.current.isSuccess).toBe(true));
+    await waitFor(() =>
+      expect(createCommunityResult.current.isSuccess).toBe(true),
+    );
     const createdCommunity = createCommunityResult.current.data;
     expect(createdCommunity).toBeDefined();
 
     // Delete the community
-    const { result: deleteCommunityResult } = renderHook(() => useDeleteCommunity(), {
-      wrapper,
-    });
+    const { result: deleteCommunityResult } = renderHook(
+      () => useDeleteCommunity(),
+      {
+        wrapper,
+      },
+    );
 
     await act(async () => {
       await deleteCommunityResult.current.mutateAsync(createdCommunity!.id);
     });
 
     await waitFor(() => {
-      expect(deleteCommunityResult.current).toMatchObject(commonDeleteSuccessExpectation);
+      expect(deleteCommunityResult.current).toMatchObject(
+        commonDeleteSuccessExpectation,
+      );
     });
 
     // Verify community is deleted (or at least not findable in the list)
@@ -323,10 +349,10 @@ describe('Communities CRUD Integration Tests', () => {
           data: expect.not.arrayContaining([
             expect.objectContaining({
               id: createdCommunity!.id,
-            })
+            }),
           ]),
           error: null,
-        })
+        }),
       );
     });
   });

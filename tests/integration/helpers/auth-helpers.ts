@@ -1,11 +1,11 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { faker } from '@faker-js/faker';
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { faker } from "@faker-js/faker";
 import {
   useSignUp,
   useSignIn,
   useSignOut,
   useCommunities,
-} from '@belongnetwork/platform';
+} from "@belongnetwork/platform";
 
 export interface TestUser {
   email: string;
@@ -23,12 +23,12 @@ export interface AuthSetupResult {
   testCommunity: TestCommunity;
 }
 
-
 /**
  * Creates and authenticates a user with community access for use in beforeAll
  */
-export async function createAndAuthenticateUser(wrapper: any): Promise<AuthSetupResult> {
-
+export async function createAndAuthenticateUser(
+  wrapper: any,
+): Promise<AuthSetupResult> {
   const testUser: TestUser = {
     email: faker.internet.email(),
     password: faker.internet.password({ length: 12 }),
@@ -49,7 +49,7 @@ export async function createAndAuthenticateUser(wrapper: any): Promise<AuthSetup
         isSuccess: true,
         data: expect.any(Array),
         error: null,
-      })
+      }),
     );
   });
   const existingCommunity = communitiesResult.current.data?.[0];
@@ -108,7 +108,10 @@ export async function createAndAuthenticateUser(wrapper: any): Promise<AuthSetup
  * Creates an additional user but maintains authentication of the primary user
  * Use this to create users for multi-user scenarios without affecting authentication state
  */
-export async function createAdditionalUser(wrapper: any, primaryUser: TestUser): Promise<TestUser> {
+export async function createAdditionalUser(
+  wrapper: any,
+  primaryUser: TestUser,
+): Promise<TestUser> {
   const additionalUser: TestUser = {
     email: `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`,
     password: faker.internet.password({ length: 12 }),
@@ -153,4 +156,3 @@ export async function createAdditionalUser(wrapper: any, primaryUser: TestUser):
 
   return additionalUser;
 }
-

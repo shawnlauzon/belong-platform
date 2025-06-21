@@ -9,6 +9,7 @@ This document describes how the authentication system works in the Belong Networ
 The authentication system uses two distinct but related types:
 
 #### Account (Authentication Domain)
+
 ```typescript
 interface Account {
   id: string;
@@ -29,6 +30,7 @@ interface Account {
 - **Fields**: All camelCase (our standard), transformed from Supabase snake_case
 
 #### User (Application Domain)
+
 ```typescript
 interface User {
   id: string;
@@ -63,6 +65,7 @@ No automatic caching (new architecture)
 ```
 
 **Implementation**:
+
 - `useSignUp()`: React Query mutation hook
 - `signUp()`: Implementation function that calls Supabase
 - Returns `Account` object immediately
@@ -81,6 +84,7 @@ No automatic caching (new architecture)
 ```
 
 **Implementation**:
+
 - `useSignIn()`: React Query mutation hook
 - `signIn()`: Implementation function that calls Supabase
 - Returns `Account` object immediately
@@ -98,6 +102,7 @@ Returns: User object (cached)
 ```
 
 **Implementation**:
+
 - `useCurrentUser()`: React Query that fetches fresh data
 - `fetchCurrentUser()`: Gets current auth state + profile data
 - Combines Account data with profile table data
@@ -113,6 +118,7 @@ Invalidates ['currentUser'] cache
 ```
 
 **Implementation**:
+
 - `useSignOut()`: React Query mutation hook
 - `signOut()`: Implementation function that calls Supabase
 - Clears auth session and invalidates User cache
@@ -122,13 +128,14 @@ Invalidates ['currentUser'] cache
 ### Clean Domain Separation
 
 1. **Authentication mutations** (`useSignIn`, `useSignUp`, `useSignOut`):
+
    - Work with `Account` objects
    - Call Supabase auth directly
    - Do NOT cache anything
    - Return immediately after auth operation
 
 2. **User query** (`useCurrentUser`):
-   - Works with `User` objects  
+   - Works with `User` objects
    - Fetches fresh auth state + profile data
    - Single cache key: `['currentUser']`
    - Handles complete user profile data
@@ -143,6 +150,7 @@ Invalidates ['currentUser'] cache
 ## Proper Usage Patterns
 
 ### Sign In + Get Current User
+
 ```typescript
 // 1. Sign in user
 const signIn = useSignIn();
@@ -155,6 +163,7 @@ const { data: currentUser } = useCurrentUser();
 ```
 
 ### Check Authentication Status
+
 ```typescript
 // Use useCurrentUser to check if user is authenticated
 const { data: currentUser, isLoading } = useCurrentUser();
@@ -165,6 +174,7 @@ return <AuthenticatedApp user={currentUser} />;
 ```
 
 ### Error Handling
+
 ```typescript
 const signIn = useSignIn();
 
@@ -174,7 +184,7 @@ const handleSignIn = async (credentials) => {
     // Account created, user can now access app
   } catch (error) {
     // Handle auth errors
-    console.error('Sign in failed:', error);
+    console.error("Sign in failed:", error);
   }
 };
 ```
@@ -182,12 +192,14 @@ const handleSignIn = async (credentials) => {
 ## Implementation Files
 
 ### Hooks (`/hooks/`)
+
 - `useSignIn.ts`: Sign in mutation hook
-- `useSignUp.ts`: Sign up mutation hook  
+- `useSignUp.ts`: Sign up mutation hook
 - `useSignOut.ts`: Sign out mutation hook
 - `useCurrentUser.ts`: Current user query hook
 
 ### Implementation (`/impl/`)
+
 - `signIn.ts`: Core sign in logic with Supabase
 - `signUp.ts`: Core sign up logic with Supabase
 - `signOut.ts`: Core sign out logic with Supabase
@@ -203,6 +215,7 @@ const handleSignIn = async (credentials) => {
 4. **Test type transformations**: Verify Account → User transformations work correctly
 
 ### Example Test Structure
+
 ```typescript
 // ✅ Good: Test real platform code
 mockSupabase.auth.signInWithPassword.mockResolvedValue(mockAuthData);
@@ -210,18 +223,20 @@ const { result } = renderHook(() => useSignIn());
 expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalled();
 
 // ❌ Bad: Mock our own platform functions
-vi.mock('../../impl/signIn'); // Don't do this
+vi.mock("../../impl/signIn"); // Don't do this
 ```
 
 ## Session Management
 
 ### How It Works
+
 1. `signIn()` establishes Supabase auth session
 2. Session persists in browser storage
 3. `useCurrentUser()` reads session via `supabase.auth.getUser()`
 4. No manual session management required
 
 ### Integration Testing
+
 - Real Supabase maintains session state between calls
 - Unit tests mock session responses appropriately
 - Session persistence handled by Supabase automatically
@@ -229,6 +244,7 @@ vi.mock('../../impl/signIn'); // Don't do this
 ## Migration Notes
 
 This architecture replaced a previous system that had:
+
 - Cache pollution between auth and user domains
 - Async `onSuccess` callback timing issues
 - Type conflicts between Account and User objects

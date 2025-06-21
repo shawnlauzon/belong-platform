@@ -1,8 +1,8 @@
 // Debug script to test community creation
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCreateCommunity, BelongProvider } from './dist/index.es.js';
-import React from 'react';
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useCreateCommunity, BelongProvider } from "./dist/index.es.js";
+import React from "react";
 
 const config = {
   supabaseUrl: process.env.VITE_SUPABASE_URL,
@@ -24,17 +24,17 @@ const wrapper = ({ children }) => (
 );
 
 const testData = {
-  name: 'Debug Test Community',
-  description: 'Test community for debugging',
-  level: 'neighborhood',
-  timeZone: 'America/New_York',
-  organizerId: 'test-user-id',
+  name: "Debug Test Community",
+  description: "Test community for debugging",
+  level: "neighborhood",
+  timeZone: "America/New_York",
+  organizerId: "test-user-id",
   parentId: null,
-  hierarchyPath: [{ level: 'test', name: 'Test' }],
+  hierarchyPath: [{ level: "test", name: "Test" }],
   memberCount: 1,
 };
 
-console.log('Testing community creation...');
+console.log("Testing community creation...");
 
 const { result } = renderHook(() => useCreateCommunity(), { wrapper });
 
@@ -43,7 +43,7 @@ act(() => {
 });
 
 setTimeout(() => {
-  console.log('Mutation result:', {
+  console.log("Mutation result:", {
     isSuccess: result.current.isSuccess,
     isPending: result.current.isPending,
     isError: result.current.isError,

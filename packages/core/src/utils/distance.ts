@@ -1,18 +1,18 @@
-import { logger } from '../utils/logger';
-import type { createMapboxClient } from '../config/mapbox';
+import { logger } from "../utils/logger";
+import type { createMapboxClient } from "../config/mapbox";
 
 // Helper function to validate coordinates
 const isValidCoordinate = (value: number): boolean => {
-  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+  return typeof value === "number" && !isNaN(value) && isFinite(value);
 };
 
 // Calculate driving time between two points (using Mapbox Directions API)
 export const calculateDrivingTime = async (
   origin: { lat: number; lng: number },
   destination: { lat: number; lng: number },
-  mapboxClient?: ReturnType<typeof createMapboxClient>
+  mapboxClient?: ReturnType<typeof createMapboxClient>,
 ): Promise<number> => {
-  logger.trace('🗺️ Calculating driving time:', { origin, destination });
+  logger.trace("🗺️ Calculating driving time:", { origin, destination });
 
   try {
     // Validate all coordinates before making API call
@@ -23,33 +23,36 @@ export const calculateDrivingTime = async (
       !isValidCoordinate(destination.lng)
     ) {
       logger.warn(
-        'Invalid coordinates detected, falling back to approximation:',
+        "Invalid coordinates detected, falling back to approximation:",
         {
           origin: { lat: origin.lat, lng: origin.lng },
           destination: { lat: destination.lat, lng: destination.lng },
-        }
+        },
       );
       return calculateApproximateDrivingTime(origin, destination);
     }
 
     if (!mapboxClient) {
-      logger.debug('No Mapbox client available, using approximation');
+      logger.debug("No Mapbox client available, using approximation");
       return calculateApproximateDrivingTime(origin, destination);
     }
 
     // Use the mapbox client's calculateDrivingTime method
-    const drivingTime = await mapboxClient.calculateDrivingTime(origin, destination);
-    
+    const drivingTime = await mapboxClient.calculateDrivingTime(
+      origin,
+      destination,
+    );
+
     if (drivingTime !== null) {
-      logger.trace('🗺️ Mapbox driving time calculated:', { drivingTime });
+      logger.trace("🗺️ Mapbox driving time calculated:", { drivingTime });
       return drivingTime;
     }
 
     // Fallback calculation if API fails (direct distance calculation)
-    logger.debug('No routes returned from Mapbox, using approximation');
+    logger.debug("No routes returned from Mapbox, using approximation");
     return calculateApproximateDrivingTime(origin, destination);
   } catch (error) {
-    logger.error('Error calculating driving time:', error);
+    logger.error("Error calculating driving time:", error);
     // Fallback to approximation
     return calculateApproximateDrivingTime(origin, destination);
   }
@@ -58,9 +61,9 @@ export const calculateDrivingTime = async (
 // Fallback method that approximates driving time
 const calculateApproximateDrivingTime = (
   origin: { lat: number; lng: number },
-  destination: { lat: number; lng: number }
+  destination: { lat: number; lng: number },
 ): number => {
-  logger.trace('🗺️ Using approximate driving time calculation');
+  logger.trace("🗺️ Using approximate driving time calculation");
 
   // Validate coordinates for approximation as well
   if (
@@ -70,7 +73,7 @@ const calculateApproximateDrivingTime = (
     !isValidCoordinate(destination.lng)
   ) {
     logger.warn(
-      'Invalid coordinates for approximation, returning default time'
+      "Invalid coordinates for approximation, returning default time",
     );
     return 15; // Return a reasonable default time in minutes
   }
@@ -93,7 +96,7 @@ const calculateApproximateDrivingTime = (
   const drivingTime = ((distance * 1.3) / 50) * 60;
 
   const approximateTime = Math.round(drivingTime);
-  logger.trace('🗺️ Approximate driving time calculated:', {
+  logger.trace("🗺️ Approximate driving time calculated:", {
     distance,
     approximateTime,
   });

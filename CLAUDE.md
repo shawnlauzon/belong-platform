@@ -28,8 +28,8 @@ pnpm lint
 # Format code
 pnpm format
 
-# Run comprehensive checks before committing
-pnpm lint && pnpm typecheck && pnpm build
+# Pre-commit verification (lint, typecheck, tests, and clean build)
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 # Run integration tests
 pnpm test:integration

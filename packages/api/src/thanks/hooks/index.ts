@@ -1,5 +1,2 @@
-export * from './useThanks';
-export * from './useThankById';
-export * from './useCreateThanks';
-export * from './useUpdateThanks';
-export * from './useDeleteThanks';
+// Consolidated thanks hook
+export * from "./useThanks";

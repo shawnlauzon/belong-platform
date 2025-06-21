@@ -1,12 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { faker } from '@faker-js/faker';
-import { toDomainResource, forDbInsert } from '../impl/resourceTransformer';
-import { createMockDbResource } from '../../test-utils';
-import { createMockResourceData, createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import { describe, it, expect } from "vitest";
+import { faker } from "@faker-js/faker";
+import {
+  toDomainResource,
+  forDbInsert,
+} from "../transformers/resourceTransformer";
+import { createMockDbResource } from "../../test-utils";
+import {
+  createMockResourceData,
+  createMockUser,
+  createMockCommunity,
+} from "../../test-utils/mocks";
 
-describe('Resource Transformer', () => {
-  describe('toDomainResource', () => {
-    it('should transform a database resource to a domain resource', () => {
+describe("Resource Transformer", () => {
+  describe("toDomainResource", () => {
+    it("should transform a database resource to a domain resource", () => {
       const mockOwner = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbResource = createMockDbResource({
@@ -29,7 +36,7 @@ describe('Resource Transformer', () => {
       });
     });
 
-    it('should include owner and community if provided', () => {
+    it("should include owner and community if provided", () => {
       const mockOwner = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbResource = createMockDbResource({
@@ -46,14 +53,24 @@ describe('Resource Transformer', () => {
       expect(resource.community).toEqual(mockCommunity);
     });
 
-    it('should throw an error if resource is null or undefined', () => {
+    it("should throw an error if resource is null or undefined", () => {
       const mockOwner = createMockUser();
       const mockCommunity = createMockCommunity();
-      expect(() => toDomainResource(null as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
-      expect(() => toDomainResource(undefined as any, { owner: mockOwner, community: mockCommunity })).toThrow('User must be authenticated to perform this operation');
+      expect(() =>
+        toDomainResource(null as any, {
+          owner: mockOwner,
+          community: mockCommunity,
+        }),
+      ).toThrow("User must be authenticated to perform this operation");
+      expect(() =>
+        toDomainResource(undefined as any, {
+          owner: mockOwner,
+          community: mockCommunity,
+        }),
+      ).toThrow("User must be authenticated to perform this operation");
     });
 
-    it('should not return any field names with underscores', () => {
+    it("should not return any field names with underscores", () => {
       // Arrange
       const mockOwner = createMockUser();
       const mockCommunity = createMockCommunity();
@@ -70,13 +87,13 @@ describe('Resource Transformer', () => {
 
       // Assert
       const fieldNames = Object.keys(result);
-      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      const underscoreFields = fieldNames.filter((name) => name.includes("_"));
       expect(underscoreFields).toEqual([]);
     });
   });
 
-  describe('forDbInsert', () => {
-    it('should transform a domain resource to a database resource', () => {
+  describe("forDbInsert", () => {
+    it("should transform a domain resource to a database resource", () => {
       const resourceData = createMockResourceData();
       const ownerId = faker.string.uuid();
 
@@ -88,11 +105,13 @@ describe('Resource Transformer', () => {
         title: resourceData.title,
         description: resourceData.description,
         owner_id: ownerId,
-        location: resourceData.location ? expect.stringContaining('POINT') : undefined,
+        location: resourceData.location
+          ? expect.stringContaining("POINT")
+          : undefined,
       });
     });
 
-    it('should handle partial updates', () => {
+    it("should handle partial updates", () => {
       const resourceData = createMockResourceData();
       const ownerId = faker.string.uuid();
 

@@ -1,20 +1,16 @@
 // @belongnetwork/platform - Main entry point
 
 // Re-export everything from packages using barrel exports
-export * from '../packages/api/src'
-export * from '../packages/types/src'
+export * from "../packages/api/src";
+export * from "../packages/types/src";
 // Note: Core exports are handled explicitly below to avoid duplication
 
 // Named exports for better organization
-export * as hooks from '../packages/api/src'
-export * as types from '../packages/types/src'
+export * as hooks from "../packages/api/src";
+export * as types from "../packages/types/src";
 
 // Explicit core exports to ensure single source of truth
-export { 
-  initializeBelong, 
-  getBelongClient, 
-  isInitialized, 
-  resetBelongClient,
+export {
   createBelongClient,
   createSupabaseClient,
   createMapboxClient,
@@ -27,5 +23,5 @@ export {
   logStateChange,
   logUserAction,
   calculateDrivingTime,
-  StorageManager
-} from '../packages/core/src'
+  StorageManager,
+} from "../packages/core/src";

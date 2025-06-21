@@ -5,7 +5,7 @@ export function parsePostGisPoint(point: unknown): {
 } {
   if (!point) return { lat: 0, lng: 0 };
 
-  if (typeof point === 'string') {
+  if (typeof point === "string") {
     const match = point.match(/POINT\(([^ ]+) ([^)]+)\)/);
     if (match) {
       return {
@@ -15,15 +15,15 @@ export function parsePostGisPoint(point: unknown): {
     }
   }
 
-  if (typeof point === 'object' && point !== null) {
+  if (typeof point === "object" && point !== null) {
     const coords = point as Record<string, unknown>;
-    if ('x' in coords && 'y' in coords) {
+    if ("x" in coords && "y" in coords) {
       return {
         lng: Number(coords.x) || 0,
         lat: Number(coords.y) || 0,
       };
     }
-    if ('lng' in coords && 'lat' in coords) {
+    if ("lng" in coords && "lat" in coords) {
       return {
         lng: Number(coords.lng) || 0,
         lat: Number(coords.lat) || 0,

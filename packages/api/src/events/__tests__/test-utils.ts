@@ -1,9 +1,9 @@
-import { 
-  createMockEvent as createMockEventFromMocks, 
+import {
+  createMockEvent as createMockEventFromMocks,
   createMockEventData,
   createMockEventAttendance as createMockEventAttendanceFromMocks,
-  createMockEventAttendanceData
-} from '../../test-utils/mocks';
+  createMockEventAttendanceData,
+} from "../../test-utils/mocks";
 
 export function createMockEvent(overrides: any = {}) {
   return createMockEventFromMocks(overrides);
@@ -15,9 +15,9 @@ export function createMockEventAttendance(overrides: any = {}) {
 
 export function createMockDbEvent(overrides: any = {}) {
   const event = createMockEvent(overrides);
-  const { 
-    organizer, 
-    community, 
+  const {
+    organizer,
+    community,
     startDateTime,
     endDateTime,
     coordinates,
@@ -26,11 +26,11 @@ export function createMockDbEvent(overrides: any = {}) {
     registrationRequired,
     isActive,
     attendeeCount,
-    createdAt, 
-    updatedAt, 
-    ...rest 
+    createdAt,
+    updatedAt,
+    ...rest
   } = event;
-  
+
   return {
     ...rest,
     organizer_id: organizer.id,
@@ -51,16 +51,9 @@ export function createMockDbEvent(overrides: any = {}) {
 
 export function createMockDbEventAttendance(overrides: any = {}) {
   const attendance = createMockEventAttendance(overrides);
-  const { 
-    event,
-    user,
-    eventId,
-    userId,
-    createdAt, 
-    updatedAt, 
-    ...rest 
-  } = attendance;
-  
+  const { event, user, eventId, userId, createdAt, updatedAt, ...rest } =
+    attendance;
+
   return {
     ...rest,
     event_id: eventId,

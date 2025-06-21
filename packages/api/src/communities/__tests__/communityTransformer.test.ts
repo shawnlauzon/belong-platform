@@ -1,27 +1,30 @@
-import { describe, it, expect, vi } from 'vitest';
-import { toDomainCommunity, forDbInsert } from '../impl/communityTransformer';
+import { describe, it, expect, vi } from "vitest";
+import {
+  toDomainCommunity,
+  forDbInsert,
+} from "../transformers/communityTransformer";
 import {
   createMockCommunity,
   createMockCommunityData,
   createMockDbCommunity,
   createMockDbProfile,
   createMockUser,
-} from '../../test-utils/mocks';
-import { parsePostGisPoint, toPostGisPoint } from '../../utils';
+} from "../../test-utils/mocks";
+import { parsePostGisPoint, toPostGisPoint } from "../../utils";
 
 // Mock the current date for consistent testing
-const mockDate = new Date('2023-01-01T00:00:00Z');
+const mockDate = new Date("2023-01-01T00:00:00Z");
 vi.useFakeTimers();
 vi.setSystemTime(mockDate);
 
-describe('Community Transformer', () => {
-  describe('toDomainCommunity', () => {
-    it('should transform a database community to domain model', () => {
+describe("Community Transformer", () => {
+  describe("toDomainCommunity", () => {
+    it("should transform a database community to domain model", () => {
       // Create a mock database community with joined data
       const mockDbCommunity = {
         ...createMockDbCommunity(),
         organizer: createMockDbProfile(),
-        parent: null
+        parent: null,
       };
 
       // Call the transformer
@@ -49,16 +52,16 @@ describe('Community Transformer', () => {
       expect(domainCommunity.organizer.id).toBe(mockDbCommunity.organizer.id);
     });
 
-    it('should use provided organizer and parent when available', () => {
+    it("should use provided organizer and parent when available", () => {
       // Create mock data with joined parent
       const parentDbCommunity = {
         ...createMockDbCommunity(),
-        organizer: createMockDbProfile()
+        organizer: createMockDbProfile(),
       };
       const mockDbCommunity = {
         ...createMockDbCommunity(),
         organizer: createMockDbProfile(),
-        parent: parentDbCommunity
+        parent: parentDbCommunity,
       };
 
       // Call the transformer with joined data
@@ -72,12 +75,12 @@ describe('Community Transformer', () => {
       expect(domainCommunity.parent).toBeUndefined();
     });
 
-    it('should handle missing center gracefully', () => {
+    it("should handle missing center gracefully", () => {
       // Create a mock database community without center
       const mockDbCommunity = {
         ...createMockDbCommunity({ center: null }),
         organizer: createMockDbProfile(),
-        parent: null
+        parent: null,
       };
 
       // Call the transformer
@@ -87,15 +90,15 @@ describe('Community Transformer', () => {
       expect(domainCommunity.center).toBeUndefined();
     });
 
-    it('should set neighborhood name for neighborhood level communities', () => {
+    it("should set neighborhood name for neighborhood level communities", () => {
       // Create a neighborhood level community
       const mockDbCommunity = {
         ...createMockDbCommunity({
-          level: 'neighborhood',
-          name: 'Test Neighborhood',
+          level: "neighborhood",
+          name: "Test Neighborhood",
         }),
         organizer: createMockDbProfile(),
-        parent: null
+        parent: null,
       };
 
       // Call the transformer
@@ -103,20 +106,20 @@ describe('Community Transformer', () => {
 
       // The transformer gets level from parent, not from the community itself
       // This test needs to be adjusted based on actual transformer behavior
-      expect(domainCommunity.name).toBe('Test Neighborhood');
+      expect(domainCommunity.name).toBe("Test Neighborhood");
     });
 
-    it('should throw error for null/undefined input', () => {
+    it("should throw error for null/undefined input", () => {
       expect(() => toDomainCommunity(null as any)).toThrow();
       expect(() => toDomainCommunity(undefined as any)).toThrow();
     });
 
-    it('should not return any field names with underscores', () => {
+    it("should not return any field names with underscores", () => {
       // Arrange
       const mockDbCommunity = {
         ...createMockDbCommunity(),
         organizer: createMockDbProfile(),
-        parent: null
+        parent: null,
       };
 
       // Act
@@ -124,13 +127,13 @@ describe('Community Transformer', () => {
 
       // Assert
       const fieldNames = Object.keys(result);
-      const underscoreFields = fieldNames.filter(name => name.includes('_'));
+      const underscoreFields = fieldNames.filter((name) => name.includes("_"));
       expect(underscoreFields).toEqual([]);
     });
   });
 
-  describe('forDbInsert', () => {
-    it('should transform a domain community to database model', () => {
+  describe("forDbInsert", () => {
+    it("should transform a domain community to database model", () => {
       // Create mock data
       const communityData = createMockCommunityData();
 
@@ -152,7 +155,7 @@ describe('Community Transformer', () => {
       });
     });
 
-    it('should handle missing center', () => {
+    it("should handle missing center", () => {
       // Create a community without center
       const communityData = createMockCommunityData({
         center: undefined,
@@ -165,36 +168,36 @@ describe('Community Transformer', () => {
       expect(dbCommunity.center).toBeUndefined();
     });
 
-    it('should set level to neighborhood when level is neighborhood', () => {
+    it("should set level to neighborhood when level is neighborhood", () => {
       // Create a community with neighborhood level
       const communityData = createMockCommunityData({
-        level: 'neighborhood',
+        level: "neighborhood",
       });
 
       // Call the transformer
       const dbCommunity = forDbInsert(communityData);
 
       // Verify level is set to neighborhood
-      expect(dbCommunity.level).toBe('neighborhood');
+      expect(dbCommunity.level).toBe("neighborhood");
     });
 
-    it('should set level to city when level is city', () => {
+    it("should set level to city when level is city", () => {
       // Create a community with city level
       const communityData = createMockCommunityData({
-        level: 'city',
+        level: "city",
       });
 
       // Call the transformer
       const dbCommunity = forDbInsert(communityData);
 
       // Verify level is set to city
-      expect(dbCommunity.level).toBe('city');
+      expect(dbCommunity.level).toBe("city");
     });
   });
 
-  describe('parsePostGisPoint', () => {
-    it('should parse PostGIS point string to coordinates', () => {
-      const point = 'POINT(-74.006 40.7128)';
+  describe("parsePostGisPoint", () => {
+    it("should parse PostGIS point string to coordinates", () => {
+      const point = "POINT(-74.006 40.7128)";
       const coords = parsePostGisPoint(point);
 
       expect(coords).toEqual({
@@ -203,30 +206,30 @@ describe('Community Transformer', () => {
       });
     });
 
-    it('should return default coordinates for malformed point string', () => {
-      const point = 'INVALID(-74.006 40.7128)';
+    it("should return default coordinates for malformed point string", () => {
+      const point = "INVALID(-74.006 40.7128)";
       const coords = parsePostGisPoint(point);
 
       expect(coords).toEqual({ lat: 0, lng: 0 });
     });
 
-    it('should handle null or undefined input', () => {
+    it("should handle null or undefined input", () => {
       expect(parsePostGisPoint(null as any)).toEqual({ lat: 0, lng: 0 });
       expect(parsePostGisPoint(undefined as any)).toEqual({ lat: 0, lng: 0 });
     });
   });
 
-  describe('toPostGisPoint', () => {
-    it('should convert coordinates to PostGIS point string', () => {
+  describe("toPostGisPoint", () => {
+    it("should convert coordinates to PostGIS point string", () => {
       const coords = { lat: 40.7128, lng: -74.006 };
       const point = toPostGisPoint(coords);
 
-      expect(point).toBe('POINT(-74.006 40.7128)');
+      expect(point).toBe("POINT(-74.006 40.7128)");
     });
 
-    it('should handle edge cases', () => {
-      expect(toPostGisPoint({ lat: 0, lng: 0 })).toBe('POINT(0 0)');
-      expect(toPostGisPoint({ lat: -90, lng: 180 })).toBe('POINT(180 -90)');
+    it("should handle edge cases", () => {
+      expect(toPostGisPoint({ lat: 0, lng: 0 })).toBe("POINT(0 0)");
+      expect(toPostGisPoint({ lat: -90, lng: 180 })).toBe("POINT(180 -90)");
     });
   });
 });

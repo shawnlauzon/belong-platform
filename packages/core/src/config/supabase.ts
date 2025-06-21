@@ -1,6 +1,6 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@belongnetwork/types/database';
-import { logger as defaultLogger } from '../utils/logger';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@belongnetwork/types/database";
+import { logger as defaultLogger } from "../utils/logger";
 
 /**
  * Creates a configured Supabase client instance
@@ -12,25 +12,26 @@ import { logger as defaultLogger } from '../utils/logger';
 export function createSupabaseClient(
   supabaseUrl: string,
   supabaseAnonKey: string,
-  logger = defaultLogger
+  logger = defaultLogger,
 ): SupabaseClient<Database> {
   // Debug logging for configuration
-  logger.debug('🔧 Supabase Client Debug Info:', {
+  logger.debug("🔧 Supabase Client Debug Info:", {
     url: supabaseUrl,
-    anonKeyPrefix: supabaseAnonKey.substring(0, 20) + '...',
+    anonKeyPrefix: supabaseAnonKey.substring(0, 20) + "...",
     urlIsValid:
-      supabaseUrl.startsWith('https://') && supabaseUrl.includes('.supabase.co'),
+      supabaseUrl.startsWith("https://") &&
+      supabaseUrl.includes(".supabase.co"),
     anonKeyIsValid:
-      supabaseAnonKey.startsWith('eyJ') && supabaseAnonKey.length > 100,
+      supabaseAnonKey.startsWith("eyJ") && supabaseAnonKey.length > 100,
   });
 
   // Validate configuration
   if (!supabaseUrl) {
-    throw new Error('Supabase URL is required');
+    throw new Error("Supabase URL is required");
   }
 
   if (!supabaseAnonKey) {
-    throw new Error('Supabase anonymous key is required');
+    throw new Error("Supabase anonymous key is required");
   }
 
   const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -46,17 +47,16 @@ export function createSupabaseClient(
     .getSession()
     .then(({ data, error }) => {
       if (error) {
-        logger.error('❌ Supabase client connection test failed:', error);
+        logger.error("❌ Supabase client connection test failed:", error);
       } else {
-        logger.info('✅ Supabase client initialized successfully', {
+        logger.info("✅ Supabase client initialized successfully", {
           hasSession: !!data.session,
         });
       }
     })
     .catch((error) => {
-      logger.error('❌ Supabase client initialization error:', error);
+      logger.error("❌ Supabase client initialization error:", error);
     });
 
   return client;
 }
-

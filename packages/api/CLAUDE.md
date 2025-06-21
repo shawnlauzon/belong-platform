@@ -18,14 +18,14 @@ This file provides specific guidance for working with the @belongnetwork/platfor
 
 - Use established Supabase client mocking patterns found in existing test files
 - Do not validate specific error messages
-- Leverage createMock* utilities from @belongnetwork/platform/src/test-utils
+- Leverage createMock\* utilities from @belongnetwork/platform/src/test-utils
 - Follow the transformer testing patterns: mock the transformer functions rather than complex data setup
 - Tests that validate edge cases are ok to skip if necessary
 
 ## Data Access Patterns
 
-- Follow transformer patterns: toDomain* functions convert DB rows to domain objects
-- Use forDb* functions to convert domain objects for database operations
+- Follow transformer patterns: toDomain\* functions convert DB rows to domain objects
+- Use forDb\* functions to convert domain objects for database operations
 - Communities use SQL joins, Resources use cache assembly
 - Handle errors gracefully with proper logging via the core logger
 

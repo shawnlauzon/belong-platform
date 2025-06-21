@@ -1,12 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { faker } from '@faker-js/faker';
-import { toDomainEvent, forDbInsert, forDbUpdate } from '../impl/eventTransformer';
-import { createMockDbEvent } from './test-utils';
-import { createMockEventData, createMockUser, createMockCommunity } from '../../test-utils/mocks';
+import { describe, it, expect } from "vitest";
+import { faker } from "@faker-js/faker";
+import {
+  toDomainEvent,
+  forDbInsert,
+  forDbUpdate,
+} from "../transformers/eventTransformer";
+import { createMockDbEvent } from "./test-utils";
+import {
+  createMockEventData,
+  createMockUser,
+  createMockCommunity,
+} from "../../test-utils/mocks";
 
-describe('Event Transformer', () => {
-  describe('toDomainEvent', () => {
-    it('should transform a database event to a domain event', () => {
+describe("Event Transformer", () => {
+  describe("toDomainEvent", () => {
+    it("should transform a database event to a domain event", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
@@ -29,12 +37,12 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle dates correctly', () => {
+    it("should handle dates correctly", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const startDateTime = faker.date.future();
       const endDateTime = faker.date.soon({ refDate: startDateTime });
-      
+
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
@@ -51,7 +59,7 @@ describe('Event Transformer', () => {
       expect(event.endDateTime).toEqual(endDateTime);
     });
 
-    it('should handle arrays with proper defaults', () => {
+    it("should handle arrays with proper defaults", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
@@ -70,7 +78,7 @@ describe('Event Transformer', () => {
       expect(event.imageUrls).toEqual([]);
     });
 
-    it('should handle boolean defaults correctly', () => {
+    it("should handle boolean defaults correctly", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
@@ -89,11 +97,11 @@ describe('Event Transformer', () => {
       expect(event.isActive).toBe(true);
     });
 
-    it('should throw an error if organizer ID does not match', () => {
+    it("should throw an error if organizer ID does not match", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
-        organizer_id: 'different-id',
+        organizer_id: "different-id",
         community_id: mockCommunity.id,
       });
 
@@ -102,15 +110,15 @@ describe('Event Transformer', () => {
           organizer: mockOrganizer,
           community: mockCommunity,
         });
-      }).toThrow('Organizer ID does not match');
+      }).toThrow("Organizer ID does not match");
     });
 
-    it('should throw an error if community ID does not match', () => {
+    it("should throw an error if community ID does not match", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
-        community_id: 'different-id',
+        community_id: "different-id",
       });
 
       expect(() => {
@@ -118,10 +126,10 @@ describe('Event Transformer', () => {
           organizer: mockOrganizer,
           community: mockCommunity,
         });
-      }).toThrow('Community ID does not match');
+      }).toThrow("Community ID does not match");
     });
 
-    it('should not return any underscore field names', () => {
+    it("should not return any underscore field names", () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
@@ -136,15 +144,15 @@ describe('Event Transformer', () => {
 
       // Check that no keys contain underscores
       const eventKeys = Object.keys(event);
-      const underscoreKeys = eventKeys.filter(key => key.includes('_'));
+      const underscoreKeys = eventKeys.filter((key) => key.includes("_"));
       expect(underscoreKeys).toEqual([]);
     });
   });
 
-  describe('forDbInsert', () => {
-    it('should transform event data for database insertion', () => {
+  describe("forDbInsert", () => {
+    it("should transform event data for database insertion", () => {
       const eventData = createMockEventData();
-      const organizerId = 'test-organizer-id';
+      const organizerId = "test-organizer-id";
 
       const dbEvent = forDbInsert(eventData, organizerId);
 
@@ -158,7 +166,7 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle optional fields correctly', () => {
+    it("should handle optional fields correctly", () => {
       const eventData = createMockEventData({
         endDateTime: undefined,
         parkingInfo: undefined,
@@ -166,7 +174,7 @@ describe('Event Transformer', () => {
         tags: undefined,
         imageUrls: undefined,
       });
-      const organizerId = 'test-organizer-id';
+      const organizerId = "test-organizer-id";
 
       const dbEvent = forDbInsert(eventData, organizerId);
 
@@ -177,12 +185,12 @@ describe('Event Transformer', () => {
       expect(dbEvent.image_urls).toEqual([]);
     });
 
-    it('should handle boolean defaults correctly', () => {
+    it("should handle boolean defaults correctly", () => {
       const eventData = createMockEventData({
         registrationRequired: undefined,
         isActive: undefined,
       });
-      const organizerId = 'test-organizer-id';
+      const organizerId = "test-organizer-id";
 
       const dbEvent = forDbInsert(eventData, organizerId);
 
@@ -191,8 +199,8 @@ describe('Event Transformer', () => {
     });
   });
 
-  describe('forDbUpdate', () => {
-    it('should transform partial event data for database update', () => {
+  describe("forDbUpdate", () => {
+    it("should transform partial event data for database update", () => {
       const eventData = {
         title: faker.lorem.words(3),
         description: faker.lorem.paragraph(),
@@ -210,7 +218,7 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle empty partial data without destructuring errors', () => {
+    it("should handle empty partial data without destructuring errors", () => {
       const eventData = {};
       const organizerId = faker.string.uuid();
 
@@ -221,7 +229,7 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle undefined eventData gracefully', () => {
+    it("should handle undefined eventData gracefully", () => {
       const eventData = undefined as any;
       const organizerId = faker.string.uuid();
 
@@ -232,7 +240,7 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle null eventData gracefully', () => {
+    it("should handle null eventData gracefully", () => {
       const eventData = null as any;
       const organizerId = faker.string.uuid();
 
@@ -243,10 +251,10 @@ describe('Event Transformer', () => {
       });
     });
 
-    it('should handle date transformations correctly', () => {
+    it("should handle date transformations correctly", () => {
       const startDateTime = faker.date.future();
       const endDateTime = faker.date.soon({ refDate: startDateTime });
-      
+
       const eventData = {
         startDateTime,
         endDateTime,
@@ -259,7 +267,7 @@ describe('Event Transformer', () => {
       expect(dbEvent.end_date_time).toBe(endDateTime.toISOString());
     });
 
-    it('should handle optional fields correctly', () => {
+    it("should handle optional fields correctly", () => {
       const eventData = {
         parkingInfo: undefined,
         maxAttendees: undefined,

@@ -27,7 +27,7 @@ export interface PaginatedResponse<T> {
 // Everything else can be derived from these two
 
 export interface ResourceData {
-  type: 'offer' | 'request';
+  type: "offer" | "request";
   category: ResourceCategory;
   title: string;
   description: string;
@@ -41,7 +41,7 @@ export interface ResourceData {
   isActive: boolean;
 }
 
-export interface Resource extends Omit<ResourceData, 'communityId'> {
+export interface Resource extends Omit<ResourceData, "communityId"> {
   id: string;
   owner: User;
   community?: Community;
@@ -50,8 +50,8 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface ResourceInfo extends Omit<Resource, 'owner' | 'community'> {
-  ownerId: string;     // Replaces owner: User
+export interface ResourceInfo extends Omit<Resource, "owner" | "community"> {
+  ownerId: string; // Replaces owner: User
   communityId: string; // Replaces community?: Community
 }
 
@@ -78,7 +78,7 @@ export interface CommunityData {
   timeZone: string;
 }
 
-export interface Community extends Omit<CommunityData, 'organizerId'> {
+export interface Community extends Omit<CommunityData, "organizerId"> {
   id: string;
   organizer: User;
   parent?: Community;
@@ -86,12 +86,12 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   memberCount: number;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Soft delete fields
   isActive: boolean;
   deletedAt?: Date;
   deletedBy?: string;
-  
+
   // Optional membership status for current user
   currentUserMembership?: CommunityMembership;
 }
@@ -100,7 +100,7 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
 export interface CommunityMembershipData {
   userId: string;
   communityId: string;
-  role?: 'member' | 'admin' | 'organizer';
+  role?: "member" | "admin" | "organizer";
 }
 
 export interface CommunityMembership extends CommunityMembershipData {
@@ -118,7 +118,8 @@ export interface ThanksData {
   impactDescription?: string;
 }
 
-export interface Thanks extends Omit<ThanksData, 'fromUserId' | 'toUserId' | 'resourceId'> {
+export interface Thanks
+  extends Omit<ThanksData, "fromUserId" | "toUserId" | "resourceId"> {
   id: string;
   fromUser: User;
   toUser: User;
@@ -127,15 +128,16 @@ export interface Thanks extends Omit<ThanksData, 'fromUserId' | 'toUserId' | 're
   updatedAt: Date;
 }
 
-export interface ThanksInfo extends Omit<Thanks, 'fromUser' | 'toUser' | 'resource'> {
-  fromUserId: string;  // Replaces fromUser: User
-  toUserId: string;    // Replaces toUser: User
-  resourceId: string;  // Replaces resource: Resource
+export interface ThanksInfo
+  extends Omit<Thanks, "fromUser" | "toUser" | "resource"> {
+  fromUserId: string; // Replaces fromUser: User
+  toUserId: string; // Replaces toUser: User
+  resourceId: string; // Replaces resource: Resource
   communityId: string; // Added for safety (derived from resource.communityId)
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface CommunityInfo extends Omit<Community, 'organizer' | 'parent'> {
+export interface CommunityInfo extends Omit<Community, "organizer" | "parent"> {
   organizerId: string; // Replaces organizer: User
   parentId: string | null; // Replaces parent?: Community
 }
@@ -162,7 +164,7 @@ export interface User {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UserData
-  extends Omit<User, 'id' | 'createdAt' | 'updatedAt'> {}
+  extends Omit<User, "id" | "createdAt" | "updatedAt"> {}
 
 export interface Account {
   id: string;
@@ -183,17 +185,17 @@ export interface UserFilter {
 }
 
 export enum ResourceCategory {
-  TOOLS = 'tools',
-  SKILLS = 'skills',
-  FOOD = 'food',
-  SUPPLIES = 'supplies',
-  OTHER = 'other',
+  TOOLS = "tools",
+  SKILLS = "skills",
+  FOOD = "food",
+  SUPPLIES = "supplies",
+  OTHER = "other",
 }
 
 export enum MeetupFlexibility {
-  HOME_ONLY = 'home_only',
-  PUBLIC_MEETUP_OK = 'public_meetup_ok',
-  DELIVERY_POSSIBLE = 'delivery_possible',
+  HOME_ONLY = "home_only",
+  PUBLIC_MEETUP_OK = "public_meetup_ok",
+  DELIVERY_POSSIBLE = "delivery_possible",
 }
 
 export interface MeetupSpot {
@@ -203,10 +205,9 @@ export interface MeetupSpot {
   type: string;
 }
 
-
 export interface ResourceFilter {
-  category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
-  type?: 'offer' | 'request' | 'all';
+  category?: "tools" | "skills" | "food" | "supplies" | "other" | "all";
+  type?: "offer" | "request" | "all";
   communityId?: string;
   ownerId?: string;
   isActive?: boolean;
@@ -232,7 +233,7 @@ export interface EventData {
   imageUrls?: string[];
 }
 
-export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
+export interface Event extends Omit<EventData, "communityId" | "organizerId"> {
   id: string;
   community: Community;
   organizer: User;
@@ -247,7 +248,7 @@ export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
   currentUserAttendance?: EventAttendance;
 }
 
-export interface EventInfo extends Omit<Event, 'organizer' | 'community'> {
+export interface EventInfo extends Omit<Event, "organizer" | "community"> {
   organizerId: string; // Replaces organizer: User
   communityId: string; // Replaces community: Community
 }
@@ -266,9 +267,9 @@ export interface EventFilter {
 }
 
 export enum EventAttendanceStatus {
-  ATTENDING = 'attending',
-  NOT_ATTENDING = 'not_attending',
-  MAYBE = 'maybe'
+  ATTENDING = "attending",
+  NOT_ATTENDING = "not_attending",
+  MAYBE = "maybe",
 }
 
 export interface EventAttendanceData {
@@ -295,13 +296,13 @@ export interface EventAttendanceFilter {
 
 // Community Activity Feed Types
 export enum ActivityType {
-  RESOURCE_CREATED = 'resource_created',
-  RESOURCE_UPDATED = 'resource_updated',
-  EVENT_CREATED = 'event_created',
-  EVENT_UPDATED = 'event_updated',
-  THANKS_GIVEN = 'thanks_given',
-  USER_JOINED = 'user_joined',
-  COMMUNITY_CREATED = 'community_created'
+  RESOURCE_CREATED = "resource_created",
+  RESOURCE_UPDATED = "resource_updated",
+  EVENT_CREATED = "event_created",
+  EVENT_UPDATED = "event_updated",
+  THANKS_GIVEN = "thanks_given",
+  USER_JOINED = "user_joined",
+  COMMUNITY_CREATED = "community_created",
 }
 
 export interface ActivityItem {

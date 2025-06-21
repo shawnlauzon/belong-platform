@@ -1,14 +1,16 @@
-import { vi } from 'vitest';
-import { faker } from '@faker-js/faker';
-import { setupBelongClientMocks } from './mockSetup';
-import { 
-  createMockUser, 
-  createMockCommunity, 
+import { vi } from "vitest";
+import { faker } from "@faker-js/faker";
+import { setupSupabaseMocks } from "./mockSetup";
+import { createGetBelongClientMock } from "./getBelongClientMock";
+import {
+  createMockUser,
+  createMockCommunity,
   createMockDbResource,
   createMockEvent,
-  createMockDbCommunity 
-} from './mocks';
-import { ResourceCategory } from '@belongnetwork/types';
+  createMockDbCommunity,
+} from "./mocks";
+import { ResourceCategory } from "@belongnetwork/types";
+import * as core from "@belongnetwork/core";
 
 /**
  * Shared utilities for CRUD testing across Resources, Events, and Communities
@@ -16,19 +18,33 @@ import { ResourceCategory } from '@belongnetwork/types';
 
 export interface CrudTestMocks {
   mockSupabase: any;
+  mockMapbox: any;
   mockLogger: any;
-  mockGetBelongClient: any;
+  mockBelongClient: any;
 }
 
 /**
  * Sets up fresh mocks for each test
  */
 export function setupCrudTestMocks(): CrudTestMocks {
-  const mocks = setupBelongClientMocks();
+  const mocks = setupSupabaseMocks();
+
+  // Set up getBelongClient mock
+  const { getBelongClient, mockLogger } = createGetBelongClientMock(
+    mocks.mockSupabase,
+  );
+  const mockBelongClient = { supabase: mocks.mockSupabase, mapbox: {} as any };
+
+  // Mock the createBelongClient function globally
+  vi.mocked(core.createBelongClient).mockImplementation(
+    () => mockBelongClient as any,
+  );
+
   return {
     mockSupabase: mocks.mockSupabase,
-    mockLogger: mocks.mockLogger,
-    mockGetBelongClient: mocks.mockGetBelongClient,
+    mockMapbox: mocks.mockMapbox,
+    mockLogger,
+    mockBelongClient,
   };
 }
 
@@ -59,12 +75,16 @@ export function mockUnauthenticatedUser(mockSupabase: any) {
 /**
  * Mock a user being a member of a community
  */
-export function mockCommunityMember(mockSupabase: any, userId: string, communityId: string) {
+export function mockCommunityMember(
+  mockSupabase: any,
+  userId: string,
+  communityId: string,
+) {
   const mockMembership = {
     id: faker.string.uuid(),
     user_id: userId,
     community_id: communityId,
-    role: 'member',
+    role: "member",
     joined_at: new Date().toISOString(),
   };
 
@@ -80,7 +100,7 @@ export function mockCommunityMember(mockSupabase: any, userId: string, community
 
   // Set up the query chain for membership checks
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'community_memberships') {
+    if (table === "community_memberships") {
       return mockMembershipQuery;
     }
     // Return default mock for other tables
@@ -98,18 +118,22 @@ export function mockCommunityMember(mockSupabase: any, userId: string, community
 /**
  * Mock a user NOT being a member of a community
  */
-export function mockNonCommunityMember(mockSupabase: any, userId: string, communityId: string) {
+export function mockNonCommunityMember(
+  mockSupabase: any,
+  userId: string,
+  communityId: string,
+) {
   const mockMembershipQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({
       data: null,
-      error: { code: 'PGRST116' }, // Not found
+      error: { code: "PGRST116" }, // Not found
     }),
   };
 
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'community_memberships') {
+    if (table === "community_memberships") {
       return mockMembershipQuery;
     }
     return {
@@ -128,7 +152,11 @@ export function mockNonCommunityMember(mockSupabase: any, userId: string, commun
 /**
  * Mock a user being the owner of a resource
  */
-export function mockResourceOwner(mockSupabase: any, userId: string, resourceId: string) {
+export function mockResourceOwner(
+  mockSupabase: any,
+  userId: string,
+  resourceId: string,
+) {
   const mockOwnershipQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -139,7 +167,7 @@ export function mockResourceOwner(mockSupabase: any, userId: string, resourceId:
   };
 
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'resources') {
+    if (table === "resources") {
       return mockOwnershipQuery;
     }
     return {
@@ -156,7 +184,12 @@ export function mockResourceOwner(mockSupabase: any, userId: string, resourceId:
 /**
  * Mock a user NOT being the owner of a resource
  */
-export function mockNonResourceOwner(mockSupabase: any, userId: string, resourceId: string, actualOwnerId: string) {
+export function mockNonResourceOwner(
+  mockSupabase: any,
+  userId: string,
+  resourceId: string,
+  actualOwnerId: string,
+) {
   const mockOwnershipQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -167,7 +200,7 @@ export function mockNonResourceOwner(mockSupabase: any, userId: string, resource
   };
 
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'resources') {
+    if (table === "resources") {
       return mockOwnershipQuery;
     }
     return {
@@ -184,7 +217,11 @@ export function mockNonResourceOwner(mockSupabase: any, userId: string, resource
 /**
  * Mock a user being the organizer of an event
  */
-export function mockEventOrganizer(mockSupabase: any, userId: string, eventId: string) {
+export function mockEventOrganizer(
+  mockSupabase: any,
+  userId: string,
+  eventId: string,
+) {
   const mockOrganizerQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -195,7 +232,7 @@ export function mockEventOrganizer(mockSupabase: any, userId: string, eventId: s
   };
 
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'events') {
+    if (table === "events") {
       return mockOrganizerQuery;
     }
     return {
@@ -212,7 +249,11 @@ export function mockEventOrganizer(mockSupabase: any, userId: string, eventId: s
 /**
  * Mock a user being the organizer of a community
  */
-export function mockCommunityOrganizer(mockSupabase: any, userId: string, communityId: string) {
+export function mockCommunityOrganizer(
+  mockSupabase: any,
+  userId: string,
+  communityId: string,
+) {
   const mockOrganizerQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -223,7 +264,7 @@ export function mockCommunityOrganizer(mockSupabase: any, userId: string, commun
   };
 
   mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'communities') {
+    if (table === "communities") {
       return mockOrganizerQuery;
     }
     return {
@@ -244,12 +285,12 @@ export function mockCommunityOrganizer(mockSupabase: any, userId: string, commun
  */
 export function generateTestResource(overrides: any = {}) {
   const communityId = overrides.communityId || faker.string.uuid();
-  
+
   return {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category: ResourceCategory.FOOD,
-    type: 'offer' as const,
+    type: "offer" as const,
     communityId,
     isActive: true,
     ...overrides,
@@ -261,9 +302,13 @@ export function generateTestResource(overrides: any = {}) {
  */
 export function generateTestEvent(overrides: any = {}) {
   const communityId = overrides.communityId || faker.string.uuid();
-  const startDateTime = overrides.startDateTime || overrides.startDate || faker.date.future();
-  const endDateTime = overrides.endDateTime || overrides.endDate || new Date(startDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
-  
+  const startDateTime =
+    overrides.startDateTime || overrides.startDate || faker.date.future();
+  const endDateTime =
+    overrides.endDateTime ||
+    overrides.endDate ||
+    new Date(startDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+
   return {
     title: faker.lorem.words(3),
     description: faker.lorem.paragraph(),
@@ -271,7 +316,10 @@ export function generateTestEvent(overrides: any = {}) {
     communityId,
     startDateTime,
     endDateTime,
-    coordinates: overrides.coordinates || { lat: faker.location.latitude(), lng: faker.location.longitude() },
+    coordinates: overrides.coordinates || {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     location: faker.location.streetAddress(),
     isActive: true,
     ...overrides,
@@ -286,9 +334,9 @@ export function generateTestCommunity(overrides: any = {}) {
     name: faker.company.name(),
     description: faker.lorem.sentence(),
     organizerId: overrides.organizerId || TEST_USER_ID,
-    level: overrides.level || 'city',
+    level: overrides.level || "city",
     hierarchyPath: overrides.hierarchyPath || [],
-    timeZone: overrides.timeZone || 'UTC',
+    timeZone: overrides.timeZone || "UTC",
     ...overrides,
   };
 }
@@ -298,7 +346,11 @@ export function generateTestCommunity(overrides: any = {}) {
 /**
  * Mock successful database insert operation
  */
-export function mockSuccessfulInsert(mockSupabase: any, tableName: string, returnData: any) {
+export function mockSuccessfulInsert(
+  mockSupabase: any,
+  tableName: string,
+  returnData: any,
+) {
   const mockQuery = {
     insert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
@@ -326,7 +378,11 @@ export function mockSuccessfulInsert(mockSupabase: any, tableName: string, retur
 /**
  * Mock successful database update operation
  */
-export function mockSuccessfulUpdate(mockSupabase: any, tableName: string, returnData: any) {
+export function mockSuccessfulUpdate(
+  mockSupabase: any,
+  tableName: string,
+  returnData: any,
+) {
   const mockQuery = {
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -355,7 +411,12 @@ export function mockSuccessfulUpdate(mockSupabase: any, tableName: string, retur
 /**
  * Mock successful database select operation
  */
-export function mockSuccessfulSelect(mockSupabase: any, tableName: string, returnData: any, isSingle = false) {
+export function mockSuccessfulSelect(
+  mockSupabase: any,
+  tableName: string,
+  returnData: any,
+  isSingle = false,
+) {
   const mockQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -394,7 +455,11 @@ export function mockSuccessfulSelect(mockSupabase: any, tableName: string, retur
 /**
  * Mock successful database delete operation (for hard deletes with multiple eq clauses)
  */
-export function mockSuccessfulDelete(mockSupabase: any, tableName: string, error: any = null) {
+export function mockSuccessfulDelete(
+  mockSupabase: any,
+  tableName: string,
+  error: any = null,
+) {
   const mockQuery = {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn(),
@@ -424,7 +489,11 @@ export function mockSuccessfulDelete(mockSupabase: any, tableName: string, error
 /**
  * Mock successful database delete operation (for single eq clause deletes)
  */
-export function mockSingleEqDelete(mockSupabase: any, tableName: string, error: any = null) {
+export function mockSingleEqDelete(
+  mockSupabase: any,
+  tableName: string,
+  error: any = null,
+) {
   const mockQuery = {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockResolvedValue({ error }),
@@ -449,7 +518,12 @@ export function mockSingleEqDelete(mockSupabase: any, tableName: string, error: 
 /**
  * Mock successful database soft delete operation (update to set is_active = false)
  */
-export function mockSoftDelete(mockSupabase: any, tableName: string, userId: string, error: any = null) {
+export function mockSoftDelete(
+  mockSupabase: any,
+  tableName: string,
+  userId: string,
+  error: any = null,
+) {
   const mockAuthQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -489,8 +563,8 @@ export function mockSoftDelete(mockSupabase: any, tableName: string, userId: str
 
 // Common Test Data
 
-export const TEST_USER_ID = 'test-user-123';
-export const TEST_COMMUNITY_ID = 'test-community-123';
-export const TEST_RESOURCE_ID = 'test-resource-123';
-export const TEST_EVENT_ID = 'test-event-123';
-export const DIFFERENT_USER_ID = 'different-user-456';
+export const TEST_USER_ID = "test-user-123";
+export const TEST_COMMUNITY_ID = "test-community-123";
+export const TEST_RESOURCE_ID = "test-resource-123";
+export const TEST_EVENT_ID = "test-event-123";
+export const DIFFERENT_USER_ID = "different-user-456";
