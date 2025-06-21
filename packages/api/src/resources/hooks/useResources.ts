@@ -28,15 +28,8 @@ export function useResources(filters?: ResourceFilter) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Query factory function
-  const getResource = (id: string) => {
-    return useQuery<Resource | null, Error>({
-      queryKey: queryKeys.resources.byId(id),
-      queryFn: () => resourceService.fetchResourceById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Create mutation
   const createMutation = useMutation({
@@ -148,20 +141,34 @@ export function useResources(filters?: ResourceFilter) {
     resources: resourcesQuery.data,
     isLoading: resourcesQuery.isLoading,
     error: resourcesQuery.error,
-    getResource,
 
-    // Mutations
-    create: createMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
     update: (id: string, data: Partial<ResourceData>) =>
-      updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
+      updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isCreating: createMutation?.isPending || false,
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
 
     // Raw queries for advanced usage
     resourcesQuery,
   };
+}
+
+/**
+ * Hook to fetch a specific resource by ID
+ */
+export function useResource(id: string) {
+  const supabase = useSupabase();
+  const resourceService = createResourceService(supabase);
+  
+  return useQuery<Resource | null, Error>({
+    queryKey: queryKeys.resources.byId(id),
+    queryFn: () => resourceService.fetchResourceById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 }

@@ -30,15 +30,8 @@ export function useUsers(filter: UserFilter = {}) {
     placeholderData: keepPreviousData,
   });
 
-  // Query factory function
-  const getUser = (id: string) => {
-    return useQuery<User | null, Error>({
-      queryKey: queryKeys.users.byId(id),
-      queryFn: () => userService.fetchUserById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Update mutation
   const updateMutation = useMutation({
@@ -94,17 +87,31 @@ export function useUsers(filter: UserFilter = {}) {
     users: usersQuery.data,
     isLoading: usersQuery.isLoading,
     error: usersQuery.error,
-    getUser,
 
-    // Mutations
-    update: updateMutation.mutateAsync,
-    delete: deleteMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    update: updateMutation?.mutateAsync || (() => Promise.reject(new Error('Update mutation not ready'))),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
 
     // Raw queries for advanced usage
     usersQuery,
   };
+}
+
+/**
+ * Hook to fetch a specific user by ID
+ */
+export function useUser(id: string) {
+  const supabase = useSupabase();
+  const userService = createUserService(supabase);
+  
+  return useQuery<User | null, Error>({
+    queryKey: queryKeys.users.byId(id),
+    queryFn: () => userService.fetchUserById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 }
