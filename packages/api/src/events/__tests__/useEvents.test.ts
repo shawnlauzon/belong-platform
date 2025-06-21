@@ -21,6 +21,7 @@ import { createEventService } from "../services/event.service";
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateEventService = vi.mocked(createEventService);
 const mockFetchEvents = vi.fn();
+const mockDeleteEvent = vi.fn();
 
 describe("useEvents", () => {
   let queryClient: QueryClient;
@@ -39,6 +40,7 @@ describe("useEvents", () => {
     mockUseSupabase.mockReturnValue({} as any);
     mockCreateEventService.mockReturnValue({
       fetchEvents: mockFetchEvents,
+      deleteEvent: mockDeleteEvent,
     });
   });
 
@@ -104,5 +106,185 @@ describe("useEvents", () => {
 
     expect(mockFetchEvents).toHaveBeenCalledWith(filters);
     // Already checked in waitFor above
+  });
+
+  it("should invalidate cache and remove deleted event from events list", async () => {
+    // Arrange: Set up initial events in cache
+    const initialEvents: EventInfo[] = [
+      {
+        id: "event-1",
+        title: "Event to Delete",
+        description: "This event will be deleted",
+        organizerId: "user-1",
+        communityId: "community-1",
+        startDateTime: new Date("2024-07-15T18:00:00Z"),
+        location: "Test Location",
+        coordinates: { lat: 40.7829, lng: -73.9654 },
+        attendeeCount: 5,
+        registrationRequired: false,
+        isActive: true,
+        tags: ["test"],
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "event-2",
+        title: "Event to Keep",
+        description: "This event will remain",
+        organizerId: "user-1",
+        communityId: "community-1",
+        startDateTime: new Date("2024-07-16T18:00:00Z"),
+        location: "Test Location 2",
+        coordinates: { lat: 40.7829, lng: -73.9654 },
+        attendeeCount: 10,
+        registrationRequired: false,
+        isActive: true,
+        tags: ["test"],
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    const eventsAfterDelete = initialEvents.slice(1); // Remove first event
+
+    // Mock initial fetch to return all events
+    mockFetchEvents.mockResolvedValueOnce(initialEvents);
+    
+    // Render hook and wait for initial data
+    const { result } = renderHook(() => useEvents(), { wrapper });
+    
+    await waitFor(() => {
+      expect(result.current.events).toEqual(initialEvents);
+    });
+
+    // Verify initial state
+    expect(result.current.events).toHaveLength(2);
+    expect(result.current.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "event-1" }),
+        expect.objectContaining({ id: "event-2" }),
+      ])
+    );
+
+    // Mock delete success and subsequent fetch to return updated events
+    mockDeleteEvent.mockResolvedValueOnce(undefined);
+    mockFetchEvents.mockResolvedValueOnce(eventsAfterDelete);
+
+    // Act: Delete the first event
+    await result.current.delete("event-1");
+
+    // Assert: Verify cache was invalidated and event was removed
+    await waitFor(() => {
+      expect(result.current.events).toHaveLength(1);
+    });
+
+    // The critical assertion: deleted event should not appear in the list
+    expect(result.current.events).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ id: "event-1" }),
+      ])
+    );
+
+    // Verify only the remaining event is present
+    expect(result.current.events).toEqual([
+      expect.objectContaining({ id: "event-2" }),
+    ]);
+
+    // Verify the service was called correctly
+    expect(mockDeleteEvent).toHaveBeenCalledWith("event-1");
+    expect(mockFetchEvents).toHaveBeenCalledTimes(2); // Initial + after delete
+  });
+
+  it("should invalidate cache for filtered events query after delete", async () => {
+    // Arrange: Set up filtered events query with initial data
+    const filters = { communityId: "community-1" };
+    const initialEvents: EventInfo[] = [
+      {
+        id: "event-1",
+        title: "Event to Delete",
+        description: "This event will be deleted",
+        organizerId: "user-1",
+        communityId: "community-1",
+        startDateTime: new Date("2024-07-15T18:00:00Z"),
+        location: "Test Location",
+        coordinates: { lat: 40.7829, lng: -73.9654 },
+        attendeeCount: 5,
+        registrationRequired: false,
+        isActive: true,
+        tags: ["test"],
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "event-2",
+        title: "Event to Keep",
+        description: "This event will remain",
+        organizerId: "user-1",
+        communityId: "community-1",
+        startDateTime: new Date("2024-07-16T18:00:00Z"),
+        location: "Test Location 2",
+        coordinates: { lat: 40.7829, lng: -73.9654 },
+        attendeeCount: 10,
+        registrationRequired: false,
+        isActive: true,
+        tags: ["test"],
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    const eventsAfterDelete = initialEvents.slice(1); // Remove first event
+
+    // Mock initial fetch to return all events
+    mockFetchEvents.mockResolvedValueOnce(initialEvents);
+    
+    // Render hook with filters and wait for initial data
+    const { result } = renderHook(() => useEvents(filters), { wrapper });
+    
+    await waitFor(() => {
+      expect(result.current.events).toEqual(initialEvents);
+    });
+
+    // Verify initial state
+    expect(result.current.events).toHaveLength(2);
+    expect(result.current.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "event-1" }),
+        expect.objectContaining({ id: "event-2" }),
+      ])
+    );
+
+    // Mock delete success and subsequent fetch to return updated events
+    mockDeleteEvent.mockResolvedValueOnce(undefined);
+    mockFetchEvents.mockResolvedValueOnce(eventsAfterDelete);
+
+    // Act: Delete the first event
+    await result.current.delete("event-1");
+
+    // Assert: Verify cache was invalidated and event was removed
+    await waitFor(() => {
+      expect(result.current.events).toHaveLength(1);
+    });
+
+    // The critical assertion: deleted event should not appear in the filtered list
+    expect(result.current.events).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ id: "event-1" }),
+      ])
+    );
+
+    // Verify only the remaining event is present
+    expect(result.current.events).toEqual([
+      expect.objectContaining({ id: "event-2" }),
+    ]);
+
+    // Verify the service was called correctly
+    expect(mockDeleteEvent).toHaveBeenCalledWith("event-1");
+    expect(mockFetchEvents).toHaveBeenCalledTimes(2); // Initial + after delete
+    expect(mockFetchEvents).toHaveBeenCalledWith(filters); // Both calls should use filters
   });
 });

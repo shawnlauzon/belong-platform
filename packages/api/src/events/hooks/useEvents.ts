@@ -105,18 +105,45 @@ export function useEvents(filters?: EventFilter) {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => eventService.deleteEvent(id),
-    onSuccess: (_, eventId) => {
-      // Invalidate all events queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
-      queryClient.invalidateQueries({ 
-        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
+    onSuccess: async (_, eventId) => {
+      logger.info("🎉 API DEBUG: Delete mutation onSuccess triggered", {
+        eventId,
+        queryClientExists: !!queryClient,
       });
-      queryClient.removeQueries({
-        queryKey: queryKeys.events.byId(eventId),
+
+      // Get all current queries before invalidation for debugging
+      const allQueries = queryClient.getQueryCache().getAll();
+      const eventsQueries = allQueries.filter(q => q.queryKey[0] === "events" || q.queryKey[0] === "event");
+      
+      logger.info("🎉 API DEBUG: Queries before invalidation", {
+        totalQueries: allQueries.length,
+        eventsQueriesCount: eventsQueries.length,
+        eventsQueryKeys: eventsQueries.map(q => q.queryKey),
+        eventsQueryStates: eventsQueries.map(q => ({
+          queryKey: q.queryKey,
+          state: q.state.status,
+          dataExists: !!q.state.data,
+        })),
       });
+
+      // CRITICAL FIX: Remove ALL events-related cache data synchronously first
       queryClient.removeQueries({
-        queryKey: queryKeys.events.attendees(eventId),
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "events" || key[0] === "event";
+        },
+      });
+      
+      // Then invalidate to trigger fresh fetches for active queries
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "events" || key[0] === "event";
+        },
+      });
+
+      logger.info("🎉 API DEBUG: Cache invalidation completed", {
+        eventId,
       });
 
       logger.info("🎉 API: Successfully deleted event via consolidated hook", {

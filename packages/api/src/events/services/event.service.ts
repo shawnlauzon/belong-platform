@@ -29,21 +29,29 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     logger.debug("🎉 Event Service: Fetching events", { filters });
 
     try {
+      // CRITICAL FIX: Always filter for active events first, then apply other filters
       let query = supabase
         .from("events")
         .select("*")
+        .eq("is_active", true)  // Force active events only
         .order("start_date_time", { ascending: true });
 
-      // Apply filters if provided
+      // Only allow explicit inactive filtering if specifically requested
+      if (filters?.isActive === false) {
+        query = supabase
+          .from("events")
+          .select("*")
+          .eq("is_active", false)
+          .order("start_date_time", { ascending: true });
+      }
+
+      // Apply other filters if provided
       if (filters) {
         if (filters.communityId) {
           query = query.eq("community_id", filters.communityId);
         }
         if (filters.organizerId) {
           query = query.eq("organizer_id", filters.organizerId);
-        }
-        if (filters.isActive !== undefined) {
-          query = query.eq("is_active", filters.isActive);
         }
         if (filters.startDate) {
           query = query.gte("start_date_time", filters.startDate.toISOString());
@@ -72,17 +80,25 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         return [];
       }
 
+
+
       // Convert to EventInfo objects
       const events = data.map((dbEvent) =>
         toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id),
       );
 
+      // CRITICAL FIX: Filter out inactive events at the application level
+      // This ensures soft-deleted events never appear regardless of database filtering issues
+      const activeEvents = events.filter(event => event.isActive === true);
+
       logger.debug("🎉 Event Service: Successfully fetched events", {
-        count: events.length,
+        totalCount: events.length,
+        activeCount: activeEvents.length,
+        filteredOut: events.length - activeEvents.length,
         filters,
       });
 
-      return events;
+      return activeEvents;
     } catch (error) {
       logger.error("🎉 Event Service: Error fetching events", {
         filters,
