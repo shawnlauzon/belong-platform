@@ -8,7 +8,7 @@ const requiredEnvVars = [
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(
-      `Missing required environment variable: ${envVar}. Please check your .env file at tests/integration/.env`,
+      `Missing required environment variable: ${envVar}. Please check your .env file in the root directory`,
     );
   }
 }
