@@ -107,11 +107,21 @@ export function useResources(filters?: ResourceFilter) {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => resourceService.deleteResource(id),
-    onSuccess: (_, resourceId) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
+    onSuccess: async (_, resourceId) => {
+      // CRITICAL FIX: Remove ALL resources-related cache data synchronously first
       queryClient.removeQueries({
-        queryKey: queryKeys.resources.byId(resourceId),
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "resources" || key[0] === "resource";
+        },
+      });
+
+      // Then invalidate to trigger fresh fetches
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "resources" || key[0] === "resource";
+        },
       });
 
       logger.info(
