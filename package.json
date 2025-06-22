@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": false,
   "description": "A platform for building hyper-local community applications with resource sharing, event management, and social features.",
   "type": "module",
@@ -60,7 +60,7 @@
     "manypkg": "manypkg check",
     "prepare": "husky install",
     "tdd": "pnpm lint && pnpm typecheck && pnpm test",
-    "qa": "pnpm tdd && pnpm build && pnpm test:integration",
+    "qa": "pnpm tdd && pnpm build && pnpm test:integration && pnpm test:acceptance",
     "prepublishOnly": "pnpm qa"
   },
   "devDependencies": {
