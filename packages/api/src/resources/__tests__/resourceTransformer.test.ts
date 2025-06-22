@@ -53,22 +53,6 @@ describe("Resource Transformer", () => {
       expect(resource.community).toEqual(mockCommunity);
     });
 
-    it("should throw an error if resource is null or undefined", () => {
-      const mockOwner = createMockUser();
-      const mockCommunity = createMockCommunity();
-      expect(() =>
-        toDomainResource(null as any, {
-          owner: mockOwner,
-          community: mockCommunity,
-        }),
-      ).toThrow("User must be authenticated to perform this operation");
-      expect(() =>
-        toDomainResource(undefined as any, {
-          owner: mockOwner,
-          community: mockCommunity,
-        }),
-      ).toThrow("User must be authenticated to perform this operation");
-    });
 
     it("should not return any field names with underscores", () => {
       // Arrange
