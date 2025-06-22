@@ -144,7 +144,7 @@ describe("Thanks Basic CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(thanksHook.current).toBeDefined();
       expect(thanksHook.current).not.toBeNull();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
   });
 
   afterEach(async () => {
@@ -161,14 +161,14 @@ describe("Thanks Basic CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(thanksResult.current).toBeDefined();
       expect(thanksResult.current).not.toBeNull();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     // Then wait for data to load
     await waitFor(() => {
       expect(thanksResult.current.isLoading).toBe(false);
       expect(thanksResult.current.thanks).toEqual(expect.any(Array));
       expect(thanksResult.current.error).toBe(null);
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
   });
 
   test("should successfully create thanks when authenticated", async () => {
@@ -185,7 +185,7 @@ describe("Thanks Basic CRUD Integration Tests", () => {
       expect(thanksHook.current).toBeDefined();
       expect(thanksHook.current).not.toBeNull();
       expect(typeof thanksHook.current.create).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const thanksData = generateThanksData(
       testUser.userId!,

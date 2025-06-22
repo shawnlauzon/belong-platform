@@ -170,7 +170,7 @@ describe("Thanks Validation Integration Tests", () => {
     await waitFor(() => {
       expect(thanksHook.current).toBeDefined();
       expect(thanksHook.current).not.toBeNull();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
   });
 
   afterEach(async () => {

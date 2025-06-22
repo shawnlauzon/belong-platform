@@ -94,7 +94,7 @@ describe("Authentication Integration", () => {
       expect(typeof result.current.signUp).toBe('function');
       // Ensure mutations are ready
       expect(result.current.signUp).not.toBeUndefined();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = "TestPassword123!";
@@ -131,7 +131,7 @@ describe("Authentication Integration", () => {
       // Ensure mutations are ready
       expect(result.current.signUp).not.toBeUndefined();
       expect(result.current.signIn).not.toBeUndefined();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const testEmail = `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`;
     const testPassword = "TestPassword123!";
@@ -211,7 +211,7 @@ describe("Authentication Integration", () => {
       // Ensure mutations are ready
       expect(authResult.current.signUp).not.toBeUndefined();
       expect(authResult.current.signIn).not.toBeUndefined();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     // Step 1: Sign up user
     await act(async () => {
@@ -227,7 +227,7 @@ describe("Authentication Integration", () => {
     });
     
     // Add small delay to allow auth state and user data to sync
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Step 3: Test that useAuth returns user data
     const TestComponent = () => {
@@ -256,7 +256,7 @@ describe("Authentication Integration", () => {
           }
         }
       },
-      { timeout: 15000 },
+      { timeout: 5000 },
     );
 
     // Then assert we have user data specifically
@@ -265,7 +265,7 @@ describe("Authentication Integration", () => {
         const userElement = getByTestId("user-data");
         expect(userElement.textContent).toBe(testEmail.toLowerCase());
       },
-      { timeout: 15000 },
+      { timeout: 5000 },
     );
   });
 
@@ -291,7 +291,7 @@ describe("Authentication Integration", () => {
       expect(typeof authResult.current.signUp).toBe('function');
       expect(typeof authResult.current.signIn).toBe('function');
       expect(typeof authResult.current.signOut).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     // Step 1: Sign up user
     await act(async () => {
@@ -307,7 +307,7 @@ describe("Authentication Integration", () => {
     });
     
     // Add small delay to allow auth state and user data to sync
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Step 3: Verify user is authenticated
     const AuthenticatedComponent = () => {
@@ -342,7 +342,7 @@ describe("Authentication Integration", () => {
           }
         }
       },
-      { timeout: 15000 },
+      { timeout: 5000 },
     );
 
     // Then assert we have user data specifically
@@ -351,7 +351,7 @@ describe("Authentication Integration", () => {
         const userElement = getByTestId("authenticated-user");
         expect(userElement.textContent).toBe(testEmail.toLowerCase());
       },
-      { timeout: 15000 },
+      { timeout: 5000 },
     );
 
     // Step 4: Sign out user
@@ -367,6 +367,6 @@ describe("Authentication Integration", () => {
     await waitFor(() => {
       const noUserElement = getByTestId("no-user");
       expect(noUserElement.textContent).toBe("No user data");
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
   });
 });

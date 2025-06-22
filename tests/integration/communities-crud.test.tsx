@@ -156,7 +156,7 @@ describe("Communities CRUD Integration Tests", () => {
       expect(communitiesHook.current).toBeDefined();
       expect(communitiesHook.current).not.toBeNull();
       expect(typeof communitiesHook.current.create).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),
@@ -221,7 +221,7 @@ describe("Communities CRUD Integration Tests", () => {
       expect(communitiesResult.current).toBeDefined();
       expect(communitiesResult.current).not.toBeNull();
       expect(typeof communitiesResult.current.create).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),
@@ -300,7 +300,7 @@ describe("Communities CRUD Integration Tests", () => {
       expect(communitiesResult.current).toBeDefined();
       expect(communitiesResult.current).not.toBeNull();
       expect(typeof communitiesResult.current.create).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const communityData = {
       name: generateTestName("COMMUNITY"),

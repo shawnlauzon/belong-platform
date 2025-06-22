@@ -32,35 +32,6 @@ describe("Events Basic CRUD Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    const config = {
-      supabaseUrl: process.env.VITE_SUPABASE_URL!,
-      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
-      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
-    };
-    const tempQueryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-          staleTime: 0,
-          refetchOnWindowFocus: false,
-          refetchOnMount: true,
-          refetchOnReconnect: false,
-        },
-        mutations: {
-          retry: false,
-        },
-      },
-    });
-    const tempWrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={tempQueryClient}>
-        <BelongProvider config={config}>{children}</BelongProvider>
-      </QueryClientProvider>
-    );
-    authSetup = await createAndAuthenticateUser(tempWrapper);
-  });
-
-  beforeEach(async () => {
     // Create query client once for all tests - simulating real-world persistence
     queryClient = new QueryClient({
       defaultOptions: {
@@ -77,23 +48,25 @@ describe("Events Basic CRUD Integration Tests", () => {
         },
       },
     });
+
     const config = {
       supabaseUrl: process.env.VITE_SUPABASE_URL!,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     };
+
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <BelongProvider config={config}>{children}</BelongProvider>
       </QueryClientProvider>
     );
-    
-    // Wait for hooks to be ready before each test
-    const { result: eventsHook } = renderHook(() => useEvents(), { wrapper });
-    await waitFor(() => {
-      expect(eventsHook.current).toBeDefined();
-      expect(eventsHook.current).not.toBeNull();
-    }, { timeout: 15000 });
+
+    // Set up authenticated user once for all tests
+    authSetup = await createAndAuthenticateUser(wrapper);
+  });
+
+  beforeEach(async () => {
+    // No expensive operations here - maintain real-world flow
   });
 
   afterEach(async () => {
@@ -132,13 +105,13 @@ describe("Events Basic CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(eventsResult.current).toBeDefined();
       expect(eventsResult.current).not.toBeNull();
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     // Then wait for data to load
     await waitFor(() => {
       expect(eventsResult.current.events).toEqual(expect.any(Array));
       expect(eventsResult.current.error).toBe(null);
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
   });
 
   test("should successfully create an event when authenticated", async () => {
@@ -154,7 +127,7 @@ describe("Events Basic CRUD Integration Tests", () => {
       expect(createEventResult.current).toBeDefined();
       expect(createEventResult.current).not.toBeNull();
       expect(typeof createEventResult.current.create).toBe('function');
-    }, { timeout: 15000 });
+    }, { timeout: 5000 });
 
     const eventData = generateEventData(testCommunity.id!, testUser.userId!);
 
