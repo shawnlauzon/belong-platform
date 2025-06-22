@@ -1,15 +1,9 @@
+// Test setup file for core package
 import { vi } from "vitest";
 
-// Mock @belongnetwork/core module globally
-vi.mock("@belongnetwork/core", () => ({
-  getBelongClient: vi.fn(),
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+// Mock environment variables
+vi.stubEnv("DEV", "true");
+vi.stubEnv("VITE_LOG_LEVEL", "debug");
 
 // Suppress console output during tests unless VITEST_VERBOSE is set
 if (process.env.VITEST_VERBOSE !== "true") {

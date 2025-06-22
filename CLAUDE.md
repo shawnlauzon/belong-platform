@@ -15,6 +15,9 @@ pnpm install
 # Run tests (API package only)
 pnpm test
 
+# Run tests with verbose logging (shows console.log statements)
+VITEST_VERBOSE=true pnpm test
+
 # TypeScript type checking
 pnpm typecheck          # Check all packages
 pnpm typecheck:api      # Check API package only
@@ -32,7 +35,7 @@ pnpm format
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 # Run integration tests
-pnpm test:integration
+pnpm -w test:integration
 ```
 
 Architecture Overview
@@ -157,9 +160,18 @@ Development Principles
    - If integration tests still fail after unit tests pass, there may be additional root causes
 
 6. **Test-Driven Development (TDD) Process**:
+
    - Red: Write a failing test that demonstrates the problem
    - Green: Fix the minimum code needed to make the test pass
    - Refactor: Clean up the implementation while keeping tests green
+
+7. **MANDATORY: Unit Test Before Implementation**:
+   - **ALWAYS write a failing unit test first** before implementing any bug fix or feature
+   - The test must reproduce the exact error or behavior described in the bug report
+   - Use the test to validate your understanding of the problem
+   - Only after the test fails for the right reason should you implement the fix
+   - Verify the test passes after implementation
+   - Example: For authentication bug, create unit test that calls the failing service method and expects the specific error message
 
 ### Common Anti-Patterns to Avoid
 

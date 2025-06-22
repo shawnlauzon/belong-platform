@@ -28,15 +28,8 @@ export function useThanks(filters?: ThanksFilter) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Query factory function
-  const getThank = (id: string) => {
-    return useQuery<Thanks | null, Error>({
-      queryKey: queryKeys.thanks.byId(id),
-      queryFn: () => thanksService.fetchThanksById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Create mutation
   const createMutation = useMutation({
@@ -160,20 +153,34 @@ export function useThanks(filters?: ThanksFilter) {
     thanks: thanksQuery.data,
     isLoading: thanksQuery.isLoading,
     error: thanksQuery.error,
-    getThank,
 
-    // Mutations
-    create: createMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
     update: (id: string, data: Partial<ThanksData>) =>
-      updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
+      updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isCreating: createMutation?.isPending || false,
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
 
     // Raw queries for advanced usage
     thanksQuery,
   };
+}
+
+/**
+ * Hook to fetch a specific thanks by ID
+ */
+export function useThank(id: string) {
+  const supabase = useSupabase();
+  const thanksService = createThanksService(supabase);
+  
+  return useQuery<Thanks | null, Error>({
+    queryKey: queryKeys.thanks.byId(id),
+    queryFn: () => thanksService.fetchThanksById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 }

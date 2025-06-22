@@ -98,7 +98,6 @@ describe("useCommunities consolidated hook", () => {
     expect(result.current).toHaveProperty("communities");
     expect(result.current).toHaveProperty("isLoading");
     expect(result.current).toHaveProperty("error");
-    expect(result.current).toHaveProperty("getCommunity");
     expect(result.current).toHaveProperty("create");
     expect(result.current).toHaveProperty("update");
     expect(result.current).toHaveProperty("delete");

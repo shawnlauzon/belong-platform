@@ -13,9 +13,6 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useResources,
-  useCreateResource,
-  useUpdateResource,
-  useDeleteResource,
   useSignOut,
   BelongProvider,
   ResourceCategory,
@@ -38,7 +35,36 @@ describe("Resources CRUD Integration Tests", () => {
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeAll(async () => {
-    // Create query client once for all tests
+    const config = {
+      supabaseUrl: process.env.VITE_SUPABASE_URL!,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+      mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+    };
+    const tempQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+          staleTime: 0,
+          refetchOnWindowFocus: false,
+          refetchOnMount: true,
+          refetchOnReconnect: false,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+    const tempWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={tempQueryClient}>
+        <BelongProvider config={config}>{children}</BelongProvider>
+      </QueryClientProvider>
+    );
+    authSetup = await createAndAuthenticateUser(tempWrapper);
+  });
+
+  beforeEach(async () => {
+    // Create query client once for all tests - simulating real-world persistence
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -54,34 +80,32 @@ describe("Resources CRUD Integration Tests", () => {
         },
       },
     });
-
     const config = {
       supabaseUrl: process.env.VITE_SUPABASE_URL!,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
       mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
     };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <BelongProvider config={config}>{children}</BelongProvider>
       </QueryClientProvider>
     );
-
-    // Set up authenticated user once for all tests
-    authSetup = await createAndAuthenticateUser(wrapper);
-  });
-
-  beforeEach(async () => {
-    // Reset for each test - no expensive operations here
+    
+    // Wait for hooks to be ready before each test
+    const { result: resourcesHook } = renderHook(() => useResources(), { wrapper });
+    await waitFor(() => {
+      expect(resourcesHook.current).toBeDefined();
+      expect(resourcesHook.current).not.toBeNull();
+    }, { timeout: 15000 });
   });
 
   afterEach(async () => {
-    // Clean up all test resources using name-based cleanup
+    // Clean up only test data, not application state (like real world)
     await cleanupTestResources(
       wrapper,
       "resource",
       () => renderHook(() => useResources(), { wrapper }),
-      () => renderHook(() => useDeleteResource(), { wrapper }),
+      () => renderHook(() => useResources(), { wrapper }),
       act,
       waitFor,
     );
@@ -107,22 +131,26 @@ describe("Resources CRUD Integration Tests", () => {
       wrapper,
     });
 
+    // Wait for hook to initialize properly first
     await waitFor(() => {
-      expect(resourcesResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              id: expect.any(String),
-              title: expect.any(String),
-              category: expect.any(String),
-              type: expect.stringMatching(/^(offer|request)$/),
-            }),
-          ]),
-          error: null,
-        }),
+      expect(resourcesResult.current).toBeDefined();
+      expect(resourcesResult.current).not.toBeNull();
+    }, { timeout: 15000 });
+
+    // Then wait for data to load
+    await waitFor(() => {
+      expect(resourcesResult.current.resources).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            title: expect.any(String),
+            category: expect.any(String),
+            type: expect.stringMatching(/^(offer|request)$/),
+          }),
+        ])
       );
-    });
+      expect(resourcesResult.current.error).toBe(null);
+    }, { timeout: 15000 });
   });
 
   test("should successfully create a resource when authenticated", async () => {
@@ -130,31 +158,33 @@ describe("Resources CRUD Integration Tests", () => {
 
     // Create a resource
     const { result: createResourceResult } = renderHook(
-      () => useCreateResource(),
+      () => useResources(),
       {
         wrapper,
       },
     );
 
+    // Wait for hook to initialize properly
+    await waitFor(() => {
+      expect(createResourceResult.current).toBeDefined();
+      expect(createResourceResult.current).not.toBeNull();
+      expect(typeof createResourceResult.current.create).toBe('function');
+    }, { timeout: 15000 });
+
     const resourceData = generateResourceData(testCommunity.id!);
 
+    let createdResource: any;
     await act(async () => {
-      await createResourceResult.current.mutateAsync(resourceData);
+      createdResource = await createResourceResult.current.create(resourceData);
     });
 
-    await waitFor(() => {
-      expect(createResourceResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-          title: resourceData.title,
-          description: resourceData.description,
-          category: resourceData.category,
-          type: resourceData.type,
-          isActive: resourceData.isActive,
-        }),
-        error: null,
-      });
+    expect(createdResource).toMatchObject({
+      id: expect.any(String),
+      title: resourceData.title,
+      description: resourceData.description,
+      category: resourceData.category,
+      type: resourceData.type,
+      isActive: resourceData.isActive,
     });
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
@@ -164,20 +194,17 @@ describe("Resources CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(resourcesResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              id: createResourceResult.current.data!.id,
-              title: resourceData.title,
-              category: resourceData.category,
-              type: resourceData.type,
-            }),
-          ]),
-          error: null,
-        }),
+      expect(resourcesResult.current.resources).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: createdResource.id,
+            title: resourceData.title,
+            category: resourceData.category,
+            type: resourceData.type,
+          }),
+        ])
       );
+      expect(resourcesResult.current.error).toBe(null);
     });
   });
 
@@ -186,7 +213,7 @@ describe("Resources CRUD Integration Tests", () => {
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(
-      () => useCreateResource(),
+      () => useResources(),
       {
         wrapper,
       },
@@ -194,27 +221,21 @@ describe("Resources CRUD Integration Tests", () => {
 
     const resourceData = generateResourceData(testCommunity.id!);
 
+    let createdResource: any;
     await act(async () => {
-      await createResourceResult.current.mutateAsync(resourceData);
+      createdResource = await createResourceResult.current.create(resourceData);
     });
 
-    await waitFor(() => {
-      expect(createResourceResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: expect.any(String),
-        }),
-        error: null,
-      });
+    expect(createdResource).toMatchObject({
+      id: expect.any(String),
     });
-    const createdResource = createResourceResult.current.data;
     expect(createdResource).toBeDefined();
 
     // Note: cleanup handled automatically by name-based cleanup in afterEach
 
     // Update the resource (skip community validation by using existing community from created resource)
     const { result: updateResourceResult } = renderHook(
-      () => useUpdateResource(),
+      () => useResources(),
       {
         wrapper,
       },
@@ -223,7 +244,6 @@ describe("Resources CRUD Integration Tests", () => {
     const updatedTitle = generateTestName("RESOURCE");
     const updatedDescription = faker.lorem.paragraph();
     const updateData = {
-      id: createdResource!.id,
       title: updatedTitle,
       description: updatedDescription,
       category: ResourceCategory.TOOLS, // Change category
@@ -232,23 +252,18 @@ describe("Resources CRUD Integration Tests", () => {
       imageUrls: resourceData.imageUrls,
     };
 
+    let updatedResource: any;
     await act(async () => {
-      await updateResourceResult.current.mutateAsync(updateData);
+      updatedResource = await updateResourceResult.current.update(createdResource.id, updateData);
     });
 
-    await waitFor(() => {
-      expect(updateResourceResult.current).toMatchObject({
-        isSuccess: true,
-        data: expect.objectContaining({
-          id: createdResource!.id,
-          title: updatedTitle,
-          description: updatedDescription,
-          category: ResourceCategory.TOOLS,
-          type: resourceData.type,
-          isActive: resourceData.isActive,
-        }),
-        error: null,
-      });
+    expect(updatedResource).toMatchObject({
+      id: createdResource.id,
+      title: updatedTitle,
+      description: updatedDescription,
+      category: ResourceCategory.TOOLS,
+      type: resourceData.type,
+      isActive: resourceData.isActive,
     });
 
     // Verify resource is updated in the list
@@ -257,19 +272,16 @@ describe("Resources CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyUpdateResult.current).toEqual(
-        expect.objectContaining({
-          isSuccess: true,
-          data: expect.arrayContaining([
-            expect.objectContaining({
-              id: createdResource!.id,
-              title: updatedTitle,
-              category: ResourceCategory.TOOLS,
-            }),
-          ]),
-          error: null,
-        }),
+      expect(verifyUpdateResult.current.resources).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: createdResource.id,
+            title: updatedTitle,
+            category: ResourceCategory.TOOLS,
+          }),
+        ])
       );
+      expect(verifyUpdateResult.current.error).toBe(null);
     });
   });
 
@@ -278,7 +290,7 @@ describe("Resources CRUD Integration Tests", () => {
 
     // Create a resource first
     const { result: createResourceResult } = renderHook(
-      () => useCreateResource(),
+      () => useResources(),
       {
         wrapper,
       },
@@ -286,32 +298,25 @@ describe("Resources CRUD Integration Tests", () => {
 
     const resourceData = generateResourceData(testCommunity.id!);
 
+    let createdResource: any;
     await act(async () => {
-      await createResourceResult.current.mutateAsync(resourceData);
+      createdResource = await createResourceResult.current.create(resourceData);
     });
 
-    await waitFor(() =>
-      expect(createResourceResult.current.isSuccess).toBe(true),
-    );
-    const createdResource = createResourceResult.current.data;
     expect(createdResource).toBeDefined();
 
     // Delete the resource
     const { result: deleteResourceResult } = renderHook(
-      () => useDeleteResource(),
+      () => useResources(),
       {
         wrapper,
       },
     );
 
     await act(async () => {
-      await deleteResourceResult.current.mutateAsync(createdResource!.id);
+      await deleteResourceResult.current.delete(createdResource.id);
     });
 
-    await waitFor(() => {
-      expect(deleteResourceResult.current).toMatchObject(
-        commonDeleteSuccessExpectation,
-      );
-    });
+    // Delete operation should succeed without throwing
   });
 });

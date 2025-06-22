@@ -166,29 +166,47 @@ export async function cleanupTestResources(
   waitFor: any,
 ) {
   try {
-    // Get list of all items
+    // Get list of all items using consolidated hook
     const { result: listResult } = useListHook(wrapper);
 
+    // Wait for data to load
     await waitFor(() => {
-      expect(listResult.current.isSuccess || listResult.current.isError).toBe(
-        true,
-      );
-    });
+      expect(listResult.current).toBeDefined();
+    }, { timeout: 10000 });
 
-    if (listResult.current.isSuccess && listResult.current.data) {
+    // Get the appropriate data array from consolidated hook
+    const dataField = resourceType === "community" ? "communities" : 
+                     resourceType === "resource" ? "resources" :
+                     resourceType === "event" ? "events" :
+                     resourceType === "thanks" ? "thanks" : null;
+    
+    if (dataField && listResult.current && listResult.current[dataField]) {
       // Find all items with INTEGRATION_TEST_ prefix
-      const testItems = listResult.current.data.filter((item: any) => {
-        const nameField = resourceType === "thanks" ? "message" : "title";
+      const testItems = listResult.current[dataField].filter((item: any) => {
+        const nameField = resourceType === "thanks" ? "message" : 
+                         resourceType === "community" ? "name" : "title";
         return item[nameField]?.includes("INTEGRATION_TEST_");
       });
 
       if (testItems.length > 0) {
+        console.log(`Found ${testItems.length} test ${resourceType}s to clean up`);
+        
+        // Limit cleanup to prevent timeouts - only clean up recent items
+        const recentItems = testItems.slice(0, 10); // Only clean up 10 most recent items
+        
+        if (recentItems.length < testItems.length) {
+          console.warn(`Limiting cleanup to ${recentItems.length} most recent items out of ${testItems.length} total`);
+        }
+
         const { result: deleteResult } = useDeleteHook(wrapper);
 
-        // Delete all test items
-        for (const item of testItems) {
-          await performCleanupDeletion(deleteResult, item.id, act, waitFor);
-        }
+        // Delete items in parallel for better performance
+        await act(async () => {
+          const deletePromises = recentItems.map(item => 
+            deleteResult.current.delete(item.id)
+          );
+          await Promise.all(deletePromises);
+        });
       }
     }
   } catch (error) {

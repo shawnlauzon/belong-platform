@@ -13,6 +13,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
+    // Suppress console output by default
+    silent: process.env.VITEST_VERBOSE !== "true",
     env: {
       VITE_MAPBOX_PUBLIC_TOKEN: faker.string.alphanumeric(32),
       VITE_SUPABASE_URL: `https://${faker.string.alphanumeric(8).toLowerCase()}.supabase.co`,

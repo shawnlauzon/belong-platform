@@ -60,7 +60,7 @@ export function toDomainEvent(
     parkingInfo: parking_info || undefined,
     maxAttendees: max_attendees || undefined,
     registrationRequired: registration_required === true, // Default to false if not set
-    isActive: is_active !== false, // Default to true if not set
+    isActive: is_active === true, // Only active if explicitly true
     tags: rest.tags || [],
     imageUrls: image_urls || [],
     attendeeCount: attendee_count || 0,
@@ -175,7 +175,7 @@ export function toEventInfo(
     parkingInfo: dbEvent.parking_info || undefined,
     maxAttendees: dbEvent.max_attendees || undefined,
     registrationRequired: dbEvent.registration_required === true, // Default to false if not set
-    isActive: dbEvent.is_active !== false, // Default to true if not set
+    isActive: dbEvent.is_active === true, // Only active if explicitly true
     tags: dbEvent.tags || [],
     imageUrls: dbEvent.image_urls || [],
     attendeeCount: dbEvent.attendee_count || 0,

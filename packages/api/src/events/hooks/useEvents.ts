@@ -30,45 +30,24 @@ export function useEvents(filters?: EventFilter) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Query factory functions
-  const getEvent = (id: string) => {
-    return useQuery<Event | null, Error>({
-      queryKey: queryKeys.events.byId(id),
-      queryFn: () => eventService.fetchEventById(id),
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-
-  const getAttendees = (eventId: string) => {
-    return useQuery<EventAttendance[], Error>({
-      queryKey: queryKeys.events.attendees(eventId),
-      queryFn: () => eventService.fetchEventAttendees({ eventId }),
-      enabled: !!eventId,
-      staleTime: 2 * 60 * 1000, // 2 minutes (fresher for attendance)
-    });
-  };
-
-  const getUserAttendances = (userId: string) => {
-    return useQuery<EventAttendance[], Error>({
-      queryKey: queryKeys.events.userAttendances(userId),
-      queryFn: () => eventService.fetchUserEventAttendances(userId),
-      enabled: !!userId,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
+  // Note: Individual query hooks should be called separately by consumers
+  // These factory functions violated Rules of Hooks and have been removed
 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: EventData) => eventService.createEvent(data),
     onSuccess: (newEvent) => {
-      // Invalidate the events list to reflect the new event
+      // Invalidate all events queries to reflect the new event
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byCommunity(newEvent.community.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byOrganizer(newEvent.organizer.id),
+      });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
       });
 
       // Update the cache for this specific event
@@ -92,13 +71,17 @@ export function useEvents(filters?: EventFilter) {
     mutationFn: ({ id, data }: { id: string; data: Partial<EventData> }) =>
       eventService.updateEvent(id, data),
     onSuccess: (updatedEvent) => {
-      // Invalidate queries to refresh data
+      // Invalidate all events queries to refresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byCommunity(updatedEvent.community.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.byOrganizer(updatedEvent.organizer.id),
+      });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
       });
 
       // Update the cache for this specific event
@@ -122,14 +105,45 @@ export function useEvents(filters?: EventFilter) {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => eventService.deleteEvent(id),
-    onSuccess: (_, eventId) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-      queryClient.removeQueries({
-        queryKey: queryKeys.events.byId(eventId),
+    onSuccess: async (_, eventId) => {
+      logger.info("🎉 API DEBUG: Delete mutation onSuccess triggered", {
+        eventId,
+        queryClientExists: !!queryClient,
       });
+
+      // Get all current queries before invalidation for debugging
+      const allQueries = queryClient.getQueryCache().getAll();
+      const eventsQueries = allQueries.filter(q => q.queryKey[0] === "events" || q.queryKey[0] === "event");
+      
+      logger.info("🎉 API DEBUG: Queries before invalidation", {
+        totalQueries: allQueries.length,
+        eventsQueriesCount: eventsQueries.length,
+        eventsQueryKeys: eventsQueries.map(q => q.queryKey),
+        eventsQueryStates: eventsQueries.map(q => ({
+          queryKey: q.queryKey,
+          state: q.state.status,
+          dataExists: !!q.state.data,
+        })),
+      });
+
+      // CRITICAL FIX: Remove ALL events-related cache data synchronously first
       queryClient.removeQueries({
-        queryKey: queryKeys.events.attendees(eventId),
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "events" || key[0] === "event";
+        },
+      });
+      
+      // Then invalidate to trigger fresh fetches for active queries
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "events" || key[0] === "event";
+        },
+      });
+
+      logger.info("🎉 API DEBUG: Cache invalidation completed", {
+        eventId,
       });
 
       logger.info("🎉 API: Successfully deleted event via consolidated hook", {
@@ -164,6 +178,10 @@ export function useEvents(filters?: EventFilter) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.userAttendances(attendance.user.id),
       });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
+      });
 
       logger.info("🎉 API: Successfully joined event via consolidated hook", {
         eventId: attendance.event.id,
@@ -193,6 +211,10 @@ export function useEvents(filters?: EventFilter) {
       queryClient.invalidateQueries({
         queryKey: ["user-attendances"],
       });
+      // Additionally invalidate ALL event-related queries (both "events" and "event" prefixes)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "events" || query.queryKey[0] === "event"
+      });
 
       logger.info("🎉 API: Successfully left event via consolidated hook", {
         eventId,
@@ -218,27 +240,69 @@ export function useEvents(filters?: EventFilter) {
     events: eventsQuery.data,
     isLoading: eventsQuery.isLoading,
     error: eventsQuery.error,
-    getEvent,
-    getAttendees,
-    getUserAttendances,
 
-    // Mutations
-    create: createMutation.mutateAsync,
+    // Mutations (with defensive null checks for testing environments)
+    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
     update: (id: string, data: Partial<EventData>) =>
-      updateMutation.mutateAsync({ id, data }),
-    delete: deleteMutation.mutateAsync,
+      updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
+    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
     join: (eventId: string, status?: EventAttendanceStatus) =>
-      joinMutation.mutateAsync({ eventId, status }),
-    leave: leaveMutation.mutateAsync,
+      joinMutation?.mutateAsync ? joinMutation.mutateAsync({ eventId, status }) : Promise.reject(new Error('Join mutation not ready')),
+    leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
 
-    // Mutation states
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isJoining: joinMutation.isPending,
-    isLeaving: leaveMutation.isPending,
+    // Mutation states (with defensive null checks)
+    isCreating: createMutation?.isPending || false,
+    isUpdating: updateMutation?.isPending || false,
+    isDeleting: deleteMutation?.isPending || false,
+    isJoining: joinMutation?.isPending || false,
+    isLeaving: leaveMutation?.isPending || false,
 
     // Raw queries for advanced usage
     eventsQuery,
   };
+}
+
+/**
+ * Hook to fetch a specific event by ID
+ */
+export function useEvent(id: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<Event | null, Error>({
+    queryKey: queryKeys.events.byId(id),
+    queryFn: () => eventService.fetchEventById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch attendees for a specific event
+ */
+export function useEventAttendees(eventId: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<EventAttendance[], Error>({
+    queryKey: queryKeys.events.attendees(eventId),
+    queryFn: () => eventService.fetchEventAttendees({ eventId }),
+    enabled: !!eventId,
+    staleTime: 2 * 60 * 1000, // 2 minutes (fresher for attendance)
+  });
+}
+
+/**
+ * Hook to fetch user attendances across all events
+ */
+export function useUserEventAttendances(userId: string) {
+  const supabase = useSupabase();
+  const eventService = createEventService(supabase);
+  
+  return useQuery<EventAttendance[], Error>({
+    queryKey: queryKeys.events.userAttendances(userId),
+    queryFn: () => eventService.fetchUserEventAttendances(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
 }

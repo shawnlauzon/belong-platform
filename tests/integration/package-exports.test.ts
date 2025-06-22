@@ -33,20 +33,15 @@ describe("Package Exports Integration", () => {
 
   describe("Hook Exports", () => {
     const expectedHooks = [
-      "useBelong",
-      "useAuth",
-      "useResources",
+      "useAuth", 
+      "useSignIn",
+      "useSignUp", 
+      "useSignOut",
       "useCommunities",
-      "useCommunity",
-      "useCreateCommunity",
       "useResources",
-      "useCreateResource",
       "useEvents",
-      "useCreateEvent",
       "useThanks",
-      "useCreateThanks",
       "useUsers",
-      "useCreateUser",
     ];
 
     it.each(expectedHooks)("should export %s hook", (hookName) => {
@@ -85,7 +80,7 @@ describe("Package Exports Integration", () => {
 
     it("should support subpath imports for hooks", async () => {
       const hooks = await import("@belongnetwork/platform/hooks");
-      expect(hooks.useBelong).toBeDefined();
+      expect(hooks.useAuth).toBeDefined();
     });
 
     it("should support subpath imports for types", async () => {
