@@ -6,7 +6,7 @@ import {
   toDomainMessage,
   toMessageInfo,
   forDbMessageInsert,
-} from '../../impl/messageTransformer';
+} from '../messageTransformer';
 
 type DirectMessageRow = Database['public']['Tables']['direct_messages']['Row'];
 

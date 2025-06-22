@@ -7,14 +7,14 @@ import { createWrapper } from '../../../test-utils';
 // Mock the service
 vi.mock('../../services/messaging.service');
 
-// Mock useClient hook
+// Mock useSupabase hook
 vi.mock('../../../auth/providers/CurrentUserProvider', () => ({
-  useClient: vi.fn(() => ({
-    supabase: {},
-    logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn() }
-  }))
+  useSupabase: vi.fn(() => ({}))
 }));
 
+import { useSupabase } from '../../../auth/providers/CurrentUserProvider';
+
+const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateMessagingService = vi.mocked(createMessagingService);
 
 describe('useMessaging', () => {
@@ -23,20 +23,14 @@ describe('useMessaging', () => {
   const mockConversations = [
     {
       id: '123e4567-e89b-12d3-a456-426614174001',
-      participants: [
-        { id: userId, firstName: 'Current', lastName: 'User' },
-        { id: 'other-user', firstName: 'Other', lastName: 'User' }
-      ],
-      lastMessage: {
-        id: 'msg-1',
-        content: 'Hello there!',
-        senderId: 'other-user',
-        createdAt: new Date('2024-01-01T00:00:00Z')
-      },
-      lastMessageAt: new Date('2024-01-01T00:00:00Z'),
-      unreadCount: 1,
+      participant1Id: userId,
+      participant2Id: 'other-user',
+      lastActivityAt: new Date('2024-01-01T00:00:00Z'),
+      lastMessageId: 'msg-1',
       createdAt: new Date('2024-01-01T00:00:00Z'),
-      updatedAt: new Date('2024-01-01T00:00:00Z')
+      updatedAt: new Date('2024-01-01T00:00:00Z'),
+      lastMessagePreview: 'Hello there!',
+      unreadCount: 1
     }
   ];
 
@@ -44,7 +38,8 @@ describe('useMessaging', () => {
     {
       id: 'msg-1',
       conversationId: '123e4567-e89b-12d3-a456-426614174001',
-      senderId: 'other-user',
+      fromUserId: 'other-user',
+      toUserId: userId,
       content: 'Hello there!',
       readAt: null,
       createdAt: new Date('2024-01-01T00:00:00Z'),
@@ -61,6 +56,9 @@ describe('useMessaging', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Setup mocks
+    mockUseSupabase.mockReturnValue({} as any);
     mockCreateMessagingService.mockReturnValue(mockService);
   });
 

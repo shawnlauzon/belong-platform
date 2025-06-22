@@ -1,21 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import type { Message, MessageData } from '@belongnetwork/types';
-import { sendMessage } from '../impl/sendMessage';
+import type { MessageInfo, MessageData } from '@belongnetwork/types';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createMessagingService } from '../services/messaging.service';
 import { queryKeys } from '../../shared/queryKeys';
 
 export function useSendMessage() {
   const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const messagingService = createMessagingService(supabase);
 
-  return useMutation<Message, Error, { messageData: MessageData; toUserId: string }>({
-    mutationFn: ({ messageData, toUserId }) => sendMessage(messageData, toUserId),
+  return useMutation<MessageInfo, Error, MessageData>({
+    mutationFn: (messageData) => messagingService.sendMessage(messageData),
     onSuccess: (newMessage) => {
-      // Invalidate conversations list for both participants
+      // Invalidate conversations list for the current user
+      // Note: We can't easily get both participant IDs here, so we'll invalidate based on conversation
       queryClient.invalidateQueries({ 
-        queryKey: queryKeys.messaging.conversations(newMessage.fromUserId)
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.messaging.conversations(newMessage.toUserId)
+        queryKey: ['messaging', 'conversations']
       });
 
       // Invalidate messages for this conversation

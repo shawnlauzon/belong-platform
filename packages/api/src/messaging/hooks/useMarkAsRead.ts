@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import { markAsRead } from '../impl/markAsRead';
+import { useSupabase } from '../../auth/providers/CurrentUserProvider';
+import { createMessagingService } from '../services/messaging.service';
 import { queryKeys } from '../../shared/queryKeys';
 
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const messagingService = createMessagingService(supabase);
 
   return useMutation<void, Error, string>({
-    mutationFn: markAsRead,
+    mutationFn: (messageId) => messagingService.markAsRead(messageId),
     onSuccess: (_, messageId) => {
       // Invalidate all conversations and messages queries
       // since read status affects unread counts

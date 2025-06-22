@@ -1,18 +1,34 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMarkAsRead } from '../useMarkAsRead';
-import { markAsRead } from '../../impl/markAsRead';
 import { createWrapper } from '../../../test-utils';
 
-// Mock the implementation
-vi.mock('../../impl/markAsRead');
-const mockMarkAsRead = vi.mocked(markAsRead);
+// Mock the auth provider
+vi.mock('../../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
+}));
+
+// Mock the messaging service
+vi.mock('../../services/messaging.service', () => ({
+  createMessagingService: vi.fn(),
+}));
+
+import { useSupabase } from '../../../auth/providers/CurrentUserProvider';
+import { createMessagingService } from '../../services/messaging.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateMessagingService = vi.mocked(createMessagingService);
+const mockMarkAsRead = vi.fn();
 
 describe('useMarkAsRead', () => {
   const messageId = 'message-123';
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateMessagingService.mockReturnValue({
+      markAsRead: mockMarkAsRead,
+    } as any);
   });
 
   it('should mark message as read successfully', async () => {

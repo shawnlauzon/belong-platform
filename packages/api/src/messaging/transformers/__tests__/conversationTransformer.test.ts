@@ -6,7 +6,7 @@ import {
   toDomainConversation,
   toConversationInfo,
   forDbConversationInsert,
-} from '../../impl/conversationTransformer';
+} from '../conversationTransformer';
 
 type ConversationRow = Database['public']['Tables']['conversations']['Row'];
 

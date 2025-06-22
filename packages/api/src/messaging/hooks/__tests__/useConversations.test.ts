@@ -1,14 +1,26 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useConversations } from '../useConversations';
-import { fetchConversations } from '../../impl/fetchConversations';
 import { createWrapper } from '../../../test-utils';
-import { createMockConversationInfo } from '../../__tests__/test-utils';
+import { createMockConversationInfo } from '../../../test-utils';
 import type { ConversationFilter } from '@belongnetwork/types';
 
-// Mock the implementation
-vi.mock('../../impl/fetchConversations');
-const mockFetchConversations = vi.mocked(fetchConversations);
+// Mock the auth provider
+vi.mock('../../../auth/providers/CurrentUserProvider', () => ({
+  useSupabase: vi.fn(),
+}));
+
+// Mock the messaging service
+vi.mock('../../services/messaging.service', () => ({
+  createMessagingService: vi.fn(),
+}));
+
+import { useSupabase } from '../../../auth/providers/CurrentUserProvider';
+import { createMessagingService } from '../../services/messaging.service';
+
+const mockUseSupabase = vi.mocked(useSupabase);
+const mockCreateMessagingService = vi.mocked(createMessagingService);
+const mockFetchConversations = vi.fn();
 
 describe('useConversations', () => {
   const userId = 'user-123';
@@ -19,6 +31,10 @@ describe('useConversations', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSupabase.mockReturnValue({} as any);
+    mockCreateMessagingService.mockReturnValue({
+      fetchConversations: mockFetchConversations,
+    } as any);
   });
 
   it('should fetch conversations successfully', async () => {
