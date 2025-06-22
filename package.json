@@ -57,7 +57,7 @@
     "manypkg": "manypkg check",
     "prepare": "husky install",
     "tdd": "pnpm lint && pnpm typecheck && pnpm test",
-    "qa": "pnpm tdd && pnpm test:integration && pnpm build",
+    "qa": "pnpm tdd && pnpm build && pnpm test:integration",
     "prepublishOnly": "pnpm qa"
   },
   "devDependencies": {
