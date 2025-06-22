@@ -13,10 +13,9 @@ export function useSendMessage() {
   return useMutation<MessageInfo, Error, MessageData>({
     mutationFn: (messageData) => messagingService.sendMessage(messageData),
     onSuccess: (newMessage) => {
-      // Invalidate conversations list for the current user
-      // Note: We can't easily get both participant IDs here, so we'll invalidate based on conversation
+      // Invalidate all user conversations to reflect new message
       queryClient.invalidateQueries({ 
-        queryKey: ['messaging', 'conversations']
+        queryKey: ['user', 'conversations']
       });
 
       // Invalidate messages for this conversation

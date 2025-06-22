@@ -15,10 +15,10 @@ export function useMarkAsRead() {
       // Invalidate all conversations and messages queries
       // since read status affects unread counts
       queryClient.invalidateQueries({ 
-        queryKey: ['conversations'] 
+        queryKey: ['user', 'conversations'] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['messages'] 
+        queryKey: ['messaging', 'messages'] 
       });
 
       logger.info('💬 useMarkAsRead: Successfully marked message as read', {

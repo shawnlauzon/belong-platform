@@ -16,84 +16,77 @@ import type {
  * Following the new architecture pattern of single hook per entity
  * Returns object with all messaging operations (queries and mutations)
  */
-export function useMessaging(userId?: string) {
+export function useMessaging(userId?: string, options?: { includeConversations?: boolean }) {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const messagingService = createMessagingService(supabase);
 
-  // Conversations query function
-  const getConversations = (filters?: ConversationFilter) => {
-    return useQuery<ConversationInfo[], Error>({
-      queryKey: ['conversations', userId, filters],
-      queryFn: () => {
-        if (!userId) throw new Error('User ID required');
-        return messagingService.fetchConversations(userId, filters);
-      },
-      enabled: !!userId,
-      staleTime: 30 * 1000, // 30 seconds
-    });
-  };
-
-  // Messages query function  
-  const getMessages = (conversationId: string, filters?: MessageFilter) => {
-    return useQuery<MessageInfo[], Error>({
-      queryKey: ['messages', conversationId, filters],
-      queryFn: () => messagingService.fetchMessages(conversationId, filters),
-      enabled: !!conversationId,
-      staleTime: 30 * 1000, // 30 seconds
-    });
-  };
+  // Default conversations query (most common use case)
+  const conversationsQuery = useQuery<ConversationInfo[], Error>({
+    queryKey: queryKeys.messaging.userConversations(userId || ''),
+    queryFn: () => {
+      if (!userId) throw new Error('User ID required');
+      return messagingService.fetchConversations(userId);
+    },
+    enabled: !!userId && (options?.includeConversations !== false),
+    staleTime: 30 * 1000, // 30 seconds
+  });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: (data: MessageData) => messagingService.sendMessage(data),
     onSuccess: (message) => {
       // Invalidate conversations list to update last message
-      queryClient.invalidateQueries({ queryKey: ['conversations', userId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messaging.userConversations(userId || '') });
       // Invalidate messages for this conversation
-      queryClient.invalidateQueries({ queryKey: ['messages', message.conversationId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messaging.messages(message.conversationId) });
+      
+      logger.info('💬 useMessaging: Successfully sent message', {
+        id: message.id,
+        conversationId: message.conversationId,
+      });
+    },
+    onError: (error) => {
+      logger.error('💬 useMessaging: Failed to send message', { error });
     },
   });
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: (messageId: string) => messagingService.markAsRead(messageId),
-    onSuccess: () => {
+    onSuccess: (_, messageId) => {
       // Invalidate all conversations and messages queries since read status affects unread counts
-      queryClient.invalidateQueries({ queryKey: ['conversations', userId] });
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['user', userId, 'conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messaging', 'messages'] });
+      
+      logger.info('💬 useMessaging: Successfully marked message as read', {
+        messageId,
+      });
+    },
+    onError: (error) => {
+      logger.error('💬 useMessaging: Failed to mark message as read', { error });
     },
   });
 
-  // Default conversations query (most common use case)
-  const conversationsQuery = getConversations();
-
-  return {
+  const result = {
     // Query data
     conversations: conversationsQuery.data,
-    isLoading: conversationsQuery.isPending,
+    isLoading: conversationsQuery.isLoading,
     error: conversationsQuery.error,
 
-    // Query functions
-    getConversations,
-    getMessages,
+    // Mutations (with defensive null checks for testing environments)
+    sendMessage: sendMessageMutation?.mutateAsync || (() => Promise.reject(new Error('Send message mutation not ready'))),
+    markAsRead: markAsReadMutation?.mutateAsync || (() => Promise.reject(new Error('Mark as read mutation not ready'))),
 
-    // Mutations
-    sendMessage: sendMessageMutation.mutateAsync,
-    markAsRead: markAsReadMutation.mutateAsync,
+    // Mutation states (with defensive null checks)
+    isSending: sendMessageMutation?.isPending || false,
+    isMarkingAsRead: markAsReadMutation?.isPending || false,
+    sendError: sendMessageMutation?.error,
+    markAsReadError: markAsReadMutation?.error,
 
-    // Mutation states
-    isSending: sendMessageMutation.isPending,
-    isMarkingAsRead: markAsReadMutation.isPending,
-    sendError: sendMessageMutation.error,
-    markAsReadError: markAsReadMutation.error,
-
-    // Sync mutations (don't return promises)
-    sendMessageSync: sendMessageMutation.mutate,
-    markAsReadSync: markAsReadMutation.mutate,
-
-    // Reset functions
-    resetSend: sendMessageMutation.reset,
-    resetMarkAsRead: markAsReadMutation.reset,
+    // Raw queries for advanced usage
+    conversationsQuery,
   };
+  
+  return result;
 }

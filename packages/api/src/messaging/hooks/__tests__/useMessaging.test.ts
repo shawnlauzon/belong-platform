@@ -76,7 +76,7 @@ describe('useMessaging', () => {
       });
 
       expect(result.current.conversations).toEqual(mockConversations);
-      expect(mockService.fetchConversations).toHaveBeenCalledWith(userId, undefined);
+      expect(mockService.fetchConversations).toHaveBeenCalledWith(userId);
     });
 
     it('should be disabled when userId is not provided', () => {
@@ -105,61 +105,6 @@ describe('useMessaging', () => {
     });
   });
 
-  describe('getConversations with filters', () => {
-    it('should call service with filters', async () => {
-      const filters = { hasUnread: true };
-      mockService.fetchConversations.mockResolvedValue(mockConversations);
-
-      const { result } = renderHook(
-        () => {
-          const messaging = useMessaging(userId);
-          return messaging.getConversations(filters);
-        },
-        { wrapper: createWrapper() }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isPending).toBe(false);
-      });
-
-      expect(mockService.fetchConversations).toHaveBeenCalledWith(userId, filters);
-    });
-  });
-
-  describe('getMessages', () => {
-    it('should fetch messages for conversation', async () => {
-      const conversationId = '123e4567-e89b-12d3-a456-426614174001';
-      mockService.fetchMessages.mockResolvedValue(mockMessages);
-
-      const { result } = renderHook(
-        () => {
-          const messaging = useMessaging(userId);
-          return messaging.getMessages(conversationId);
-        },
-        { wrapper: createWrapper() }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isPending).toBe(false);
-      });
-
-      expect(result.current.data).toEqual(mockMessages);
-      expect(mockService.fetchMessages).toHaveBeenCalledWith(conversationId, undefined);
-    });
-
-    it('should be disabled when conversationId is not provided', () => {
-      const { result } = renderHook(
-        () => {
-          const messaging = useMessaging(userId);
-          return messaging.getMessages('');
-        },
-        { wrapper: createWrapper() }
-      );
-
-      expect(result.current.isFetching).toBe(false);
-      expect(mockService.fetchMessages).not.toHaveBeenCalled();
-    });
-  });
 
   describe('sendMessage mutation', () => {
     it('should send message successfully', async () => {
@@ -231,25 +176,4 @@ describe('useMessaging', () => {
     });
   });
 
-  describe('sync mutations', () => {
-    it('should provide sync versions of mutations', async () => {
-      mockService.sendMessage.mockResolvedValue(mockMessages[0]);
-      mockService.markAsRead.mockResolvedValue(undefined);
-
-      const { result } = renderHook(
-        () => useMessaging(userId),
-        { wrapper: createWrapper() }
-      );
-
-      // These should not throw (they don't return promises)
-      expect(() => {
-        result.current.sendMessageSync({
-          conversationId: 'conv-1',
-          senderId: userId,
-          content: 'Test'
-        });
-        result.current.markAsReadSync('msg-1');
-      }).not.toThrow();
-    });
-  });
 });

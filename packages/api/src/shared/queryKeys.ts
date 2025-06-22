@@ -61,9 +61,12 @@ export const queryKeys = {
       ["thanks", "filtered", filter] as const,
   },
 
-  // Messaging queries
+  // Messaging
   messaging: {
-    conversations: (userId: string) => ['conversations', userId] as const,
-    messages: (conversationId: string) => ['messages', conversationId] as const,
+    all: ["messaging"] as const,
+    conversations: (userId: string) => ["messaging", "conversations", userId] as const,
+    conversation: (id: string) => ["conversation", id] as const,
+    messages: (conversationId: string) => ["messaging", "messages", conversationId] as const,
+    userConversations: (userId: string) => ["user", userId, "conversations"] as const,
   },
 } as const;

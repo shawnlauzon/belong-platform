@@ -10,7 +10,7 @@ export function useConversations(userId: string, filters?: ConversationFilter) {
   const messagingService = createMessagingService(supabase);
 
   const result = useQuery<ConversationInfo[], Error>({
-    queryKey: [...queryKeys.messaging.conversations(userId), filters],
+    queryKey: [...queryKeys.messaging.userConversations(userId), filters],
     queryFn: () => messagingService.fetchConversations(userId, filters),
     enabled: !!userId,
   });
