@@ -1,15 +1,80 @@
 // @belongnetwork/platform - Main entry point
 
-// Re-export everything from packages using barrel exports
-export * from "../packages/api/src";
-export * from "../packages/types/src";
-// Note: Core exports are handled explicitly below to avoid duplication
+// Auth exports
+export {
+  useAuth,
+  useSignIn,
+  useSignUp,
+  useSignOut,
+  BelongProvider,
+  type BelongConfig,
+  type AuthState,
+} from "../packages/api/src/auth/index.js";
 
-// Named exports for better organization
-export * as hooks from "../packages/api/src";
-export * as types from "../packages/types/src";
+// Community exports
+export {
+  useCommunities,
+  useCommunity,
+  useCommunityMemberships,
+  useUserMemberships,
+} from "../packages/api/src/communities/index.js";
 
-// Explicit core exports to ensure single source of truth
+// Community types
+export {
+  type Community,
+  type CommunityMembership,
+  type CommunityInfo,
+} from "../packages/types/src/types.js";
+
+// Resource exports
+export {
+  useResources,
+  useResource,
+} from "../packages/api/src/resources/index.js";
+
+// Event exports
+export {
+  useEvents,
+  useEvent,
+  useEventAttendees,
+  useUserEventAttendances,
+} from "../packages/api/src/events/index.js";
+
+// Thanks exports
+export {
+  useThanks,
+  useThank,
+} from "../packages/api/src/thanks/index.js";
+
+// User exports
+export {
+  useUsers,
+  useUser,
+} from "../packages/api/src/users/index.js";
+
+// Type exports
+export {
+  type Database,
+  type Tables,
+  type Enums,
+  ResourceCategory,
+  MeetupFlexibility,
+  EventAttendanceStatus,
+  type Resource,
+  type ResourceInfo,
+  type ResourceFilter,
+  type Event,
+  type EventInfo,
+  type EventAttendance,
+  type EventFilter,
+  type Thanks,
+  type ThanksInfo,
+  type ThanksFilter,
+  type User,
+  type UserInfo,
+} from "../packages/types/src/types.js";
+
+// Core exports
 export {
   createBelongClient,
   createSupabaseClient,
@@ -24,4 +89,9 @@ export {
   logUserAction,
   calculateDrivingTime,
   StorageManager,
-} from "../packages/core/src";
+} from "../packages/core/src/index.js";
+
+// Import and re-export namespaces (workaround for vite-plugin-dts limitation)
+import * as hooks from "./hooks.js";
+import * as types from "./types.js";
+export { hooks, types };

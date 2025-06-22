@@ -42,7 +42,8 @@
     "packages/core"
   ],
   "scripts": {
-    "build": "pnpm -r build && vite build --config vite.config.mts",
+    "build": "pnpm -r build && vite build --config vite.config.mts && pnpm build:validate",
+    "build:validate": "vitest run --config vitest.npm-package.config.mts",
     "test": "pnpm -r --parallel --no-bail test",
     "test:coverage": "pnpm -r --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
@@ -50,6 +51,7 @@
     "test:integration:watch": "vitest --config vitest.integration.config.mts",
     "test:database": "vitest run --config vitest.database.config.mts",
     "test:database:watch": "vitest --config vitest.database.config.mts",
+    "test:npm-package": "vitest run --config vitest.npm-package.config.mts",
     "typecheck": "pnpm -r typecheck",
     "typecheck:api": "pnpm --filter=@belongnetwork/platform typecheck",
     "lint": "pnpm -r lint",
