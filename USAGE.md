@@ -76,15 +76,25 @@ function App() {
 
 ```typescript
 import { useCommunities } from '@belongnetwork/platform';
+import { useEffect, useState } from 'react';
 
 function CommunityList() {
-  const { communities, isLoading } = useCommunities();
+  const { list } = useCommunities();
+  const [communityList, setCommunityList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    list().then((data) => {
+      setCommunityList(data);
+      setIsLoading(false);
+    });
+  }, [list]);
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>
-      {communities?.map(community => (
+      {communityList?.map(community => (
         <div key={community.id}>{community.name}</div>
       ))}
     </div>
@@ -137,35 +147,73 @@ function AuthExample() {
 ### Data Fetching
 
 ```typescript
-// Using the consolidated hooks
-const communities = useCommunities();
-const resources = useResources();
-const events = useEvents();
+// Using the consolidated hooks with new { list, byId } pattern
+const { list: listCommunities, byId: getCommunity } = useCommunities();
+const { list: listResources, byId: getResource } = useResources();
+const { list: listEvents, byId: getEvent } = useEvents();
+const { list: listThanks, byId: getThank } = useThanks();
+const { list: listUsers, byId: getUser } = useUsers();
 
-// Fetching lists
-const communityList = communities.communities;
-const resourceList = resources.resources({ communityId: "abc123" });
-const eventList = events.events({ communityId: "abc123" });
+// Fetching lists - returns lightweight Info objects
+const communityList = await listCommunities();
+const resourceList = await listResources({ communityId: "abc123" });
+const eventList = await listEvents({ communityId: "abc123" });
+const thanksList = await listThanks({ sentBy: "user-123" });
+const userList = await listUsers({ communityId: "abc123" });
 
-// Fetching single items
-const { data: community } = communities.getCommunity("abc123");
-const { data: resource } = resources.getResource("def456");
-const { data: event } = events.getEvent("ghi789");
+// Fetching with options
+const communitiesWithDeleted = await listCommunities({ includeDeleted: true });
+
+// Fetching single items - returns full objects with relations
+const community = await getCommunity("abc123");
+const resource = await getResource("def456");
+const event = await getEvent("ghi789");
+const thank = await getThank("xyz999");
+const user = await getUser("user-123");
 
 // Using mutations
-await resources.create({
+const { create, update, delete: remove } = useResources();
+
+await create({
   title: "Garden Tools",
   type: "offer",
   category: ResourceCategory.TOOLS,
   communityId: "abc123",
 });
 
-await resources.update("def456", {
+await update("def456", {
   title: "Updated Garden Tools",
 });
 
-await resources.delete("def456");
+await remove("def456");
 ```
+
+### New { list, byId } Pattern
+
+All entity hooks now follow a consistent pattern for optimal performance:
+
+```typescript
+const { list, byId } = useEntities(); // useThanks, useUsers, etc.
+
+// List operations - returns lightweight Info objects with IDs for relations
+const items = await list(); // Returns EntityInfo[]
+const filtered = await list({ communityId: "abc" }); // Filtered results
+
+// Individual operations - returns full objects with nested relations  
+const fullItem = await byId("item-id"); // Returns full Entity object
+```
+
+**Key Benefits:**
+- **Consistent API** - Same pattern across all entities
+- **Performance Optimized** - Lists return lightweight data, details return full objects
+- **Predictable** - Always know what data structure you'll receive
+- **Cache Efficient** - Separate caching for list vs detail operations
+
+**Performance Pattern:**
+| Method | Returns | Use Case |
+|--------|---------|----------|
+| `list()` | `EntityInfo[]` (IDs for relations) | Displaying lists, tables, dropdowns |
+| `byId()` | `Entity` (full nested objects) | Detail views, editing, full data needs |
 
 ## Best Practices
 
@@ -190,14 +238,43 @@ function ResourceForm() {
 
 ```typescript
 function CommunityPage({ id }: { id: string }) {
-  const communities = useCommunities();
-  const { data: community, isLoading, error } = communities.getCommunity(id);
+  const { byId } = useCommunities();
+  const [community, setCommunity] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (isLoading) return <Skeleton />;
+  useEffect(() => {
+    byId(id)
+      .then(setCommunity)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [byId, id]);
+
+  if (loading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
   if (!community) return <NotFound />;
 
   return <CommunityDetails community={community} />;
+}
+
+// For list data with manual fetching
+function CommunityList() {
+  const { list } = useCommunities();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    list()
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [list]);
+
+  if (loading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+
+  return <CommunityListView data={data} />;
 }
 ```
 
@@ -239,66 +316,111 @@ Returns an object with:
 
 Returns an object with:
 
-- **Queries**:
-  - `communities` - List of communities
-  - `getCommunity(id)` - Get single community by ID
-  - `getMemberships(communityId)` - List community members
-  - `getUserMemberships(userId)` - List user's communities
+- **Data Fetching**:
+  - `list(options?)` - Fetch communities list (returns `CommunityInfo[]`)
+    - `options.includeDeleted?: boolean` - Include deleted communities
+  - `byId(id)` - Fetch single community (returns full `Community` object)
+  - `memberships(communityId)` - Fetch community memberships
+  - `userMemberships(userId)` - Fetch user's community memberships
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new community
   - `update(id, data)` - Update community
   - `delete(id)` - Delete community
-  - `join(communityId)` - Join community
+  - `join(communityId, role?)` - Join community
   - `leave(communityId)` - Leave community
+
+**Performance**: `list()` returns lightweight `CommunityInfo` objects, `byId()` returns full `Community` objects with relations.
 
 ### `useResources()`
 
 Returns an object with:
 
-- **Queries**:
-  - `resources` - List of resources (accepts filter)
-  - `getResource(id)` - Get single resource by ID
+- **Data Fetching**:
+  - `list(filters?)` - Fetch resources list (returns `ResourceInfo[]`)
+    - `filters.communityId?: string` - Filter by community
+    - `filters.category?: ResourceCategory` - Filter by category
+    - `filters.type?: "offer" | "request"` - Filter by type
+  - `byId(id)` - Fetch single resource (returns full `Resource` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new resource
   - `update(id, data)` - Update resource
   - `delete(id)` - Delete resource
 
+**Performance**: `list()` returns lightweight `ResourceInfo` objects, `byId()` returns full `Resource` objects with owner and community relations.
+
 ### `useEvents()`
 
 Returns an object with:
 
-- **Queries**:
-  - `events` - List of events (accepts filter)
-  - `getEvent(id)` - Get single event by ID
-  - `getAttendees(eventId)` - List event attendees
+- **Data Fetching**:
+  - `list(filters?)` - Fetch events list (returns `EventInfo[]`)
+    - `filters.communityId?: string` - Filter by community
+    - `filters.organizerId?: string` - Filter by organizer
+    - `filters.startDate?: Date` - Filter by start date
+  - `byId(id)` - Fetch single event (returns full `Event` object)
+  - `attendees(eventId)` - Fetch event attendees
+  - `userAttendances(userId)` - Fetch user's event attendances
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new event
   - `update(id, data)` - Update event
   - `delete(id)` - Delete event
-  - `join(eventId)` - Join event
+  - `join(eventId, status?)` - Join event with attendance status
   - `leave(eventId)` - Leave event
+
+**Performance**: `list()` returns lightweight `EventInfo` objects, `byId()` returns full `Event` objects with organizer and community relations.
 
 ### `useThanks()`
 
 Returns an object with:
 
-- **Queries**:
-  - `thanks` - List of thanks (accepts filter)
-  - `getThank(id)` - Get single thank by ID
+- **Data Fetching**:
+  - `list(filters?)` - Fetch thanks list (returns `ThanksInfo[]`)
+    - `filters.sentBy?: string` - Filter by sender user ID
+    - `filters.receivedBy?: string` - Filter by receiver user ID
+    - `filters.communityId?: string` - Filter by community
+    - `filters.resourceId?: string` - Filter by resource
+  - `byId(id)` - Fetch single thanks (returns full `Thanks` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new thanks
   - `update(id, data)` - Update thanks
   - `delete(id)` - Delete thanks
 
+**Performance**: `list()` returns lightweight `ThanksInfo` objects, `byId()` returns full `Thanks` objects with user, resource, and community relations.
+
 ### `useUsers()`
 
 Returns an object with:
 
-- **Queries**:
-  - `users` - List of users (accepts filter)
-  - `getUser(id)` - Get single user by ID
+- **Data Fetching**:
+  - `list(filters?)` - Fetch users list (returns `UserInfo[]`)
+    - `filters.communityId?: string` - Filter by community membership
+    - `filters.role?: UserRole` - Filter by role
+  - `byId(id)` - Fetch single user (returns full `User` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
-  - `update(id, data)` - Update user
+  - `update(user)` - Update user profile
+  - `delete(id)` - Delete user
+
+**Performance**: `list()` returns `UserInfo` objects, `byId()` returns full `User` objects. For users, these are currently identical since User has no nested relations, but the pattern ensures consistency.
 
 ---
 

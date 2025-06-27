@@ -53,6 +53,7 @@
     "test:database:watch": "vitest --config vitest.database.config.mts",
     "test:acceptance": "vitest run --config vitest.acceptance.config.mts",
     "test:acceptance:watch": "vitest --config vitest.acceptance.config.mts",
+    "test:complete": "pnpm test && pnpm test:integration && pnpm test:database && pnpm test:acceptance",
     "typecheck": "pnpm -r typecheck",
     "typecheck:api": "pnpm --filter=@belongnetwork/platform typecheck",
     "lint": "pnpm -r lint",

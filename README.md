@@ -54,10 +54,22 @@ REACT_APP_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
 
 ```tsx
 import { useAuth, useCommunities } from "@belongnetwork/platform";
+import { useEffect, useState } from "react";
 
 function CommunityList() {
   const { currentUser, isAuthenticated } = useAuth();
-  const { communities, isLoading } = useCommunities();
+  const { list } = useCommunities();
+  const [communityList, setCommunityList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      list().then((data) => {
+        setCommunityList(data);
+        setIsLoading(false);
+      });
+    }
+  }, [isAuthenticated, list]);
 
   if (isLoading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Please sign in</div>;
@@ -66,7 +78,7 @@ function CommunityList() {
     <div>
       <h1>Welcome {currentUser?.firstName}!</h1>
       <h2>Communities Near You</h2>
-      {communities?.map((community) => (
+      {communityList?.map((community) => (
         <div key={community.id}>{community.name}</div>
       ))}
     </div>
