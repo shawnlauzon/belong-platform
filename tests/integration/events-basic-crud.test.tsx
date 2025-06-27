@@ -75,7 +75,6 @@ describe("Events Basic CRUD Integration Tests", () => {
       wrapper,
       "event",
       () => renderHook(() => useEvents(), { wrapper }),
-      () => renderHook(() => useEvents(), { wrapper }),
       act,
       waitFor,
     );
@@ -107,11 +106,9 @@ describe("Events Basic CRUD Integration Tests", () => {
       expect(eventsResult.current).not.toBeNull();
     }, { timeout: 5000 });
 
-    // Then wait for data to load
-    await waitFor(() => {
-      expect(eventsResult.current.events).toEqual(expect.any(Array));
-      expect(eventsResult.current.error).toBe(null);
-    }, { timeout: 5000 });
+    // Fetch events using new API
+    const events = await eventsResult.current.list();
+    expect(events).toEqual(expect.any(Array));
   });
 
   test("should successfully create an event when authenticated", async () => {
@@ -151,17 +148,19 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(eventsResult.current.events).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdEvent.id,
-            title: eventData.title,
-            location: eventData.location,
-          }),
-        ])
-      );
-      expect(eventsResult.current.error).toBe(null);
+      expect(typeof eventsResult.current.list).toBe('function');
     });
+
+    const eventsList = await eventsResult.current.list();
+    expect(eventsList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdEvent.id,
+          title: eventData.title,
+          location: eventData.location,
+        }),
+      ])
+    );
   });
 
   test("should successfully update an event when authenticated as organizer", async () => {
@@ -218,16 +217,18 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyUpdateResult.current.events).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdEvent.id,
-            title: updatedTitle,
-          }),
-        ])
-      );
-      expect(verifyUpdateResult.current.error).toBe(null);
+      expect(typeof verifyUpdateResult.current.list).toBe('function');
     });
+
+    const updatedEventsList = await verifyUpdateResult.current.list();
+    expect(updatedEventsList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdEvent.id,
+          title: updatedTitle,
+        }),
+      ])
+    );
   });
 
   test("should successfully delete an event when authenticated as organizer", async () => {
@@ -267,14 +268,16 @@ describe("Events Basic CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyDeleteResult.current.events).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({
-            id: createdEvent.id,
-          }),
-        ])
-      );
-      expect(verifyDeleteResult.current.error).toBe(null);
+      expect(typeof verifyDeleteResult.current.list).toBe('function');
     });
+
+    const deletedEventsList = await verifyDeleteResult.current.list();
+    expect(deletedEventsList).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          id: createdEvent.id,
+        }),
+      ])
+    );
   });
 });

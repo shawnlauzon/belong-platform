@@ -161,7 +161,6 @@ export async function cleanupTestResources(
   wrapper: any,
   resourceType: "resource" | "event" | "community" | "thanks",
   useListHook: any,
-  useDeleteHook: any,
   act: any,
   waitFor: any,
 ) {
@@ -169,20 +168,18 @@ export async function cleanupTestResources(
     // Get list of all items using consolidated hook
     const { result: listResult } = useListHook(wrapper);
 
-    // Wait for data to load
+    // Wait for hook to initialize
     await waitFor(() => {
       expect(listResult.current).toBeDefined();
+      expect(typeof listResult.current.list).toBe('function');
     }, { timeout: 10000 });
 
-    // Get the appropriate data array from consolidated hook
-    const dataField = resourceType === "community" ? "communities" : 
-                     resourceType === "resource" ? "resources" :
-                     resourceType === "event" ? "events" :
-                     resourceType === "thanks" ? "thanks" : null;
+    // Fetch all items using new API
+    const allItems = await listResult.current.list();
     
-    if (dataField && listResult.current && listResult.current[dataField]) {
+    if (allItems && Array.isArray(allItems)) {
       // Find all items with INTEGRATION_TEST_ prefix
-      const testItems = listResult.current[dataField].filter((item: any) => {
+      const testItems = allItems.filter((item: any) => {
         const nameField = resourceType === "thanks" ? "message" : 
                          resourceType === "community" ? "name" : "title";
         return item[nameField]?.includes("INTEGRATION_TEST_");
@@ -198,12 +195,10 @@ export async function cleanupTestResources(
           console.warn(`Limiting cleanup to ${recentItems.length} most recent items out of ${testItems.length} total`);
         }
 
-        const { result: deleteResult } = useDeleteHook(wrapper);
-
-        // Delete items in parallel for better performance
+        // Delete items using the same hook (new API includes delete function)
         await act(async () => {
           const deletePromises = recentItems.map(item => 
-            deleteResult.current.delete(item.id)
+            listResult.current.delete(item.id)
           );
           await Promise.all(deletePromises);
         });

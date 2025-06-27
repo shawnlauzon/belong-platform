@@ -76,7 +76,6 @@ describe("Communities CRUD Integration Tests", () => {
       wrapper,
       "community",
       () => renderHook(() => useCommunities(), { wrapper }),
-      () => renderHook(() => useCommunities(), { wrapper }),
       act,
       waitFor,
     );
@@ -110,29 +109,24 @@ describe("Communities CRUD Integration Tests", () => {
       wrapper,
     });
 
-    // Wait for hook to load data
+    // Wait for hook to initialize
     await waitFor(() => {
       // Check that hook is properly initialized
       expect(communitiesResult.current).toBeDefined();
       expect(communitiesResult.current).not.toBeNull();
-      
-      // Check that we're not loading anymore
-      expect(communitiesResult.current.isLoading).toBe(false);
-      
-      // Check for no errors
-      expect(communitiesResult.current.error).toBe(null);
-      
-      // Expect communities to be an array (could be empty)
-      expect(communitiesResult.current.communities).toBeDefined();
-      expect(Array.isArray(communitiesResult.current.communities)).toBe(true);
-    }, { timeout: 10000 });
+      expect(typeof communitiesResult.current.list).toBe('function');
+    }, { timeout: 5000 });
+    
+    // Fetch communities using new API
+    const communities = await communitiesResult.current.list();
+    expect(Array.isArray(communities)).toBe(true);
     
     // Log what we found
-    console.log("Communities found:", communitiesResult.current.communities?.length || 0);
+    console.log("Communities found:", communities?.length || 0);
     
     // Verify the shape of communities if any exist
-    if (communitiesResult.current.communities && communitiesResult.current.communities.length > 0) {
-      const firstCommunity = communitiesResult.current.communities[0];
+    if (communities && communities.length > 0) {
+      const firstCommunity = communities[0];
       expect(firstCommunity).toHaveProperty('id');
       expect(firstCommunity).toHaveProperty('name');
       expect(firstCommunity).toHaveProperty('level');
@@ -193,16 +187,19 @@ describe("Communities CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(communitiesListResult.current.communities).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdCommunity.id,
-            name: communityData.name,
-            level: communityData.level,
-          }),
-        ]),
-      );
+      expect(typeof communitiesListResult.current.list).toBe('function');
     });
+
+    const communitiesList = await communitiesListResult.current.list();
+    expect(communitiesList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdCommunity.id,
+          name: communityData.name,
+          level: communityData.level,
+        }),
+      ])
+    );
   });
 
   test("should successfully update a community when authenticated as organizer", async () => {
@@ -273,15 +270,18 @@ describe("Communities CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyUpdateResult.current.communities).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdCommunity.id,
-            name: updatedName,
-          }),
-        ]),
-      );
+      expect(typeof verifyUpdateResult.current.list).toBe('function');
     });
+
+    const updatedCommunitiesList = await verifyUpdateResult.current.list();
+    expect(updatedCommunitiesList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdCommunity.id,
+          name: updatedName,
+        }),
+      ])
+    );
   });
 
   test("should successfully delete a community when authenticated as organizer", async () => {
@@ -331,13 +331,16 @@ describe("Communities CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyDeleteResult.current.communities).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({
-            id: createdCommunity.id,
-          }),
-        ]),
-      );
+      expect(typeof verifyDeleteResult.current.list).toBe('function');
     });
+
+    const deletedCommunitiesList = await verifyDeleteResult.current.list();
+    expect(deletedCommunitiesList).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          id: createdCommunity.id,
+        }),
+      ])
+    );
   });
 });

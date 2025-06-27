@@ -44,10 +44,13 @@ export async function createAndAuthenticateUser(
   });
 
   await waitFor(() => {
-    expect(communitiesResult.current.communities).toEqual(expect.any(Array));
-    expect(communitiesResult.current.error).toBe(null);
+    expect(communitiesResult.current).toBeDefined();
+    expect(typeof communitiesResult.current.list).toBe('function');
   });
-  const existingCommunity = communitiesResult.current.communities?.[0];
+  
+  const communities = await communitiesResult.current.list();
+  expect(communities).toEqual(expect.any(Array));
+  const existingCommunity = communities?.[0];
   expect(existingCommunity).toBeDefined();
   testCommunity.id = existingCommunity!.id;
 

@@ -179,7 +179,6 @@ describe("Thanks Validation Integration Tests", () => {
       wrapper,
       "thanks",
       () => renderHook(() => useThanks(), { wrapper }),
-      () => renderHook(() => useThanks(), { wrapper }),
       act,
       waitFor,
     );

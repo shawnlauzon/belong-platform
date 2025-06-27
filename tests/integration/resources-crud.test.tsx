@@ -78,7 +78,6 @@ describe("Resources CRUD Integration Tests", () => {
       wrapper,
       "resource",
       () => renderHook(() => useResources(), { wrapper }),
-      () => renderHook(() => useResources(), { wrapper }),
       act,
       waitFor,
     );
@@ -110,20 +109,18 @@ describe("Resources CRUD Integration Tests", () => {
       expect(resourcesResult.current).not.toBeNull();
     }, { timeout: 5000 });
 
-    // Then wait for data to load
-    await waitFor(() => {
-      expect(resourcesResult.current.resources).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(String),
-            title: expect.any(String),
-            category: expect.any(String),
-            type: expect.stringMatching(/^(offer|request)$/),
-          }),
-        ])
-      );
-      expect(resourcesResult.current.error).toBe(null);
-    }, { timeout: 5000 });
+    // Fetch resources using new API
+    const resources = await resourcesResult.current.list();
+    expect(resources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: expect.any(String),
+          title: expect.any(String),
+          category: expect.any(String),
+          type: expect.stringMatching(/^(offer|request)$/),
+        }),
+      ])
+    );
   });
 
   test("should successfully create a resource when authenticated", async () => {
@@ -167,18 +164,20 @@ describe("Resources CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(resourcesResult.current.resources).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdResource.id,
-            title: resourceData.title,
-            category: resourceData.category,
-            type: resourceData.type,
-          }),
-        ])
-      );
-      expect(resourcesResult.current.error).toBe(null);
+      expect(typeof resourcesResult.current.list).toBe('function');
     });
+
+    const resourcesList = await resourcesResult.current.list();
+    expect(resourcesList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdResource.id,
+          title: resourceData.title,
+          category: resourceData.category,
+          type: resourceData.type,
+        }),
+      ])
+    );
   });
 
   test("should successfully update a resource when authenticated as owner", async () => {
@@ -245,17 +244,19 @@ describe("Resources CRUD Integration Tests", () => {
     });
 
     await waitFor(() => {
-      expect(verifyUpdateResult.current.resources).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: createdResource.id,
-            title: updatedTitle,
-            category: ResourceCategory.TOOLS,
-          }),
-        ])
-      );
-      expect(verifyUpdateResult.current.error).toBe(null);
+      expect(typeof verifyUpdateResult.current.list).toBe('function');
     });
+
+    const updatedResourcesList = await verifyUpdateResult.current.list();
+    expect(updatedResourcesList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createdResource.id,
+          title: updatedTitle,
+          category: ResourceCategory.TOOLS,
+        }),
+      ])
+    );
   });
 
   test("should successfully delete a resource when authenticated as owner", async () => {

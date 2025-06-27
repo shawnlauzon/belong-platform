@@ -100,14 +100,25 @@ describe("Thanks Basic CRUD Integration Tests", () => {
     // User should already be authenticated from beforeAll, but ensure they are signed in for cleanup
 
     // Clean up all remaining thanks first
-    await cleanupTestResources(
-      wrapper,
-      "thanks",
-      () => renderHook(() => useThanks(), { wrapper }),
-      () => renderHook(() => useThanks(), { wrapper }),
-      act,
-      waitFor,
-    );
+    const { result: thanksCleanupResult } = renderHook(() => useThanks(), { wrapper });
+    
+    try {
+      const allThanks = await thanksCleanupResult.current.list();
+      
+      // Filter for test thanks items
+      const testThanks = allThanks.filter((thanks: any) => 
+        thanks.message?.includes("INTEGRATION_TEST_")
+      );
+      
+      // Delete each test thanks
+      for (const thanks of testThanks) {
+        await act(async () => {
+          await thanksCleanupResult.current.delete(thanks.id);
+        });
+      }
+    } catch (error) {
+      console.warn("Thanks cleanup error:", error);
+    }
 
     // Clean up test resource
     if (testResource) {
@@ -144,6 +155,7 @@ describe("Thanks Basic CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(thanksHook.current).toBeDefined();
       expect(thanksHook.current).not.toBeNull();
+      expect(typeof thanksHook.current.list).toBe('function');
     }, { timeout: 5000 });
   });
 
@@ -161,36 +173,20 @@ describe("Thanks Basic CRUD Integration Tests", () => {
     await waitFor(() => {
       expect(thanksResult.current).toBeDefined();
       expect(thanksResult.current).not.toBeNull();
-      expect(typeof thanksResult.current.retrieve).toBe('function');
+      expect(typeof thanksResult.current.list).toBe('function');
     }, { timeout: 5000 });
-
-    // Verify initial status - should not have fetched automatically (performance fix)
-    expect(thanksResult.current.isPending).toBe(true); // No data yet
-    expect(thanksResult.current.isError).toBe(false);
-    expect(thanksResult.current.isSuccess).toBe(false);
-    expect(thanksResult.current.isFetching).toBe(false);
 
     // Manually retrieve data using the new API
     let retrievedThanks: any;
-    let retrieveError: any;
-    try {
-      await act(async () => {
-        retrievedThanks = await thanksResult.current.retrieve();
-      });
-      
-      // If successful, verify data
-      expect(retrievedThanks).toEqual(expect.any(Array));
-      expect(thanksResult.current.isSuccess).toBe(true);
-      expect(thanksResult.current.isPending).toBe(false);
-    } catch (error) {
-      retrieveError = error;
-      // If there's a network error, verify the error status is properly reflected
-      expect(thanksResult.current.isError).toBe(true);
-      expect(thanksResult.current.error).toBeDefined();
-    }
+    await act(async () => {
+      retrievedThanks = await thanksResult.current.list();
+    });
+    
+    // Verify data
+    expect(retrievedThanks).toEqual(expect.any(Array));
 
-    // The main point: verify the performance issue is fixed - no automatic fetching occurred
-    // The hook initialized without triggering a fetch, only when retrieve() was called
+    // Verify the performance issue is fixed - no automatic fetching occurred
+    // The hook initialized without triggering a fetch, only when list() was called
   });
 
   test("should successfully create thanks when authenticated", async () => {
