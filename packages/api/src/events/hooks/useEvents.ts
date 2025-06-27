@@ -247,13 +247,43 @@ export function useEvents() {
     isFetching: eventsQuery.isFetching, // Only for query operations
     error: eventsQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error || joinMutation?.error || leaveMutation?.error,
 
-    // Manual fetch operation
-    retrieve: async (filters?: EventFilter) => {
+    // List fetch operation
+    list: async (filters?: EventFilter) => {
       const result = await queryClient.fetchQuery({
         queryKey: filters
           ? queryKeys.events.filtered(filters)
           : queryKeys.events.all,
         queryFn: () => eventService.fetchEvents(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.events.byId(id),
+        queryFn: () => eventService.fetchEventById(id),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Event attendees fetch operation
+    attendees: async (eventId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.events.attendees(eventId),
+        queryFn: () => eventService.fetchEventAttendees({ eventId }),
+        staleTime: 2 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // User event attendances fetch operation
+    userAttendances: async (userId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.events.userAttendances(userId),
+        queryFn: () => eventService.fetchUserEventAttendances(userId),
         staleTime: 5 * 60 * 1000,
       });
       return result;
@@ -280,47 +310,3 @@ export function useEvents() {
   };
 }
 
-/**
- * Hook to fetch a specific event by ID
- */
-export function useEvent(id: string) {
-  const supabase = useSupabase();
-  const eventService = createEventService(supabase);
-  
-  return useQuery<Event | null, Error>({
-    queryKey: queryKeys.events.byId(id),
-    queryFn: () => eventService.fetchEventById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-/**
- * Hook to fetch attendees for a specific event
- */
-export function useEventAttendees(eventId: string) {
-  const supabase = useSupabase();
-  const eventService = createEventService(supabase);
-  
-  return useQuery<EventAttendance[], Error>({
-    queryKey: queryKeys.events.attendees(eventId),
-    queryFn: () => eventService.fetchEventAttendees({ eventId }),
-    enabled: !!eventId,
-    staleTime: 2 * 60 * 1000, // 2 minutes (fresher for attendance)
-  });
-}
-
-/**
- * Hook to fetch user attendances across all events
- */
-export function useUserEventAttendances(userId: string) {
-  const supabase = useSupabase();
-  const eventService = createEventService(supabase);
-  
-  return useQuery<EventAttendance[], Error>({
-    queryKey: queryKeys.events.userAttendances(userId),
-    queryFn: () => eventService.fetchUserEventAttendances(userId),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-  });
-}

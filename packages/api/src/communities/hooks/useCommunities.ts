@@ -185,11 +185,41 @@ export function useCommunities() {
     isFetching: communitiesQuery.isFetching, // Only for query operations
     error: communitiesQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error || joinMutation?.error || leaveMutation?.error,
 
-    // Manual fetch operation
-    retrieve: async (options?: { includeDeleted?: boolean }) => {
+    // List fetch operation
+    list: async (options?: { includeDeleted?: boolean }) => {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.communities.all,
         queryFn: () => communityService.fetchCommunities(options),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.communities.byId(id),
+        queryFn: () => communityService.fetchCommunityById(id),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Community memberships fetch operation
+    memberships: async (communityId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.communities.memberships(communityId),
+        queryFn: () => communityService.fetchCommunityMemberships(communityId),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // User memberships fetch operation
+    userMemberships: async (userId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.communities.userMemberships(userId),
+        queryFn: () => communityService.fetchUserMemberships(userId),
         staleTime: 5 * 60 * 1000,
       });
       return result;
@@ -218,47 +248,3 @@ export function useCommunities() {
   return result;
 }
 
-/**
- * Hook to fetch a specific community by ID
- */
-export function useCommunity(id: string) {
-  const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
-  
-  return useQuery<Community | null, Error>({
-    queryKey: queryKeys.communities.byId(id),
-    queryFn: () => communityService.fetchCommunityById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-/**
- * Hook to fetch memberships for a specific community
- */
-export function useCommunityMemberships(communityId: string) {
-  const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
-  
-  return useQuery<CommunityMembership[], Error>({
-    queryKey: queryKeys.communities.memberships(communityId),
-    queryFn: () => communityService.fetchCommunityMemberships(communityId),
-    enabled: !!communityId,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-/**
- * Hook to fetch user memberships across all communities
- */
-export function useUserMemberships(userId: string) {
-  const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
-  
-  return useQuery<CommunityMembership[], Error>({
-    queryKey: queryKeys.communities.userMemberships(userId),
-    queryFn: () => communityService.fetchUserMemberships(userId),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-  });
-}

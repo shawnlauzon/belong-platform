@@ -14,9 +14,6 @@ export {
 // Community exports
 export {
   useCommunities,
-  useCommunity,
-  useCommunityMemberships,
-  useUserMemberships,
 } from "../packages/api/src/communities/index.js";
 
 // Community types
@@ -29,27 +26,21 @@ export {
 // Resource exports
 export {
   useResources,
-  useResource,
 } from "../packages/api/src/resources/index.js";
 
 // Event exports
 export {
   useEvents,
-  useEvent,
-  useEventAttendees,
-  useUserEventAttendances,
 } from "../packages/api/src/events/index.js";
 
 // Thanks exports
 export {
   useThanks,
-  useThank,
 } from "../packages/api/src/thanks/index.js";
 
 // User exports
 export {
   useUsers,
-  useUser,
 } from "../packages/api/src/users/index.js";
 
 // Type exports

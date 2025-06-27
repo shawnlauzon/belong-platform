@@ -89,13 +89,23 @@ export function useUsers() {
     isFetching: usersQuery.isFetching, // Only for query operations
     error: usersQuery.error || updateMutation?.error || deleteMutation?.error,
 
-    // Manual fetch operation
-    retrieve: async (filters?: UserFilter) => {
+    // List fetch operation
+    list: async (filters?: UserFilter) => {
       const result = await queryClient.fetchQuery({
         queryKey: filters && Object.keys(filters).length > 0
           ? ["users", "filtered", filters]
           : queryKeys.users.all,
         queryFn: () => userService.fetchUsers(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.users.byId(id),
+        queryFn: () => userService.fetchUserById(id),
         staleTime: 5 * 60 * 1000,
       });
       return result;
@@ -114,17 +124,3 @@ export function useUsers() {
   };
 }
 
-/**
- * Hook to fetch a specific user by ID
- */
-export function useUser(id: string) {
-  const supabase = useSupabase();
-  const userService = createUserService(supabase);
-  
-  return useQuery<User | null, Error>({
-    queryKey: queryKeys.users.byId(id),
-    queryFn: () => userService.fetchUserById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}

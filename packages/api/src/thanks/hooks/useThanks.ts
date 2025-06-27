@@ -121,13 +121,23 @@ export function useThanks() {
     isFetching: thanksQuery.isFetching, // Only for query operations
     error: thanksQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error,
 
-    // Manual fetch operation
-    retrieve: async (filters?: ThanksFilter) => {
+    // List fetch operation
+    list: async (filters?: ThanksFilter) => {
       const result = await queryClient.fetchQuery({
         queryKey: filters
           ? queryKeys.thanks.filtered(filters)
           : queryKeys.thanks.all,
         queryFn: () => thanksService.fetchThanks(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.thanks.byId(id),
+        queryFn: () => thanksService.fetchThanksById(id),
         staleTime: 5 * 60 * 1000,
       });
       return result;
@@ -149,17 +159,3 @@ export function useThanks() {
   };
 }
 
-/**
- * Hook to fetch a specific thanks by ID
- */
-export function useThank(id: string) {
-  const supabase = useSupabase();
-  const thanksService = createThanksService(supabase);
-  
-  return useQuery<Thanks | null, Error>({
-    queryKey: queryKeys.thanks.byId(id),
-    queryFn: () => thanksService.fetchThanksById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
-import type { ResourceInfo } from "@belongnetwork/types";
+import type { ResourceInfo, Resource } from "@belongnetwork/types";
 import { useResources } from "../hooks/useResources";
 
 // Mock the auth provider
@@ -21,6 +21,7 @@ import { createResourceService } from "../services/resource.service";
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResourceService = vi.mocked(createResourceService);
 const mockFetchResources = vi.fn();
+const mockFetchResourceById = vi.fn();
 
 describe("useResources", () => {
   let queryClient: QueryClient;
@@ -39,13 +40,14 @@ describe("useResources", () => {
     mockUseSupabase.mockReturnValue({} as any);
     mockCreateResourceService.mockReturnValue({
       fetchResources: mockFetchResources,
+      fetchResourceById: mockFetchResourceById,
     });
   });
 
   const wrapper = ({ children }: { children: any }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it("should return ResourceInfo[] instead of Resource[] via retrieve", async () => {
+  it("should return ResourceInfo[] instead of Resource[] via list", async () => {
     // Arrange: Mock return value should be ResourceInfo[]
     const mockResourceInfo: ResourceInfo[] = [
       {
@@ -66,21 +68,21 @@ describe("useResources", () => {
 
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
-    const retrievedData = await result.current.retrieve();
+    const listdData = await result.current.list();
 
     // Assert
-    expect(retrievedData).toEqual(mockResourceInfo);
+    expect(listdData).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const resource = retrievedData[0];
+    const resource = listdData[0];
     expect(typeof resource.ownerId).toBe("string");
     expect(typeof resource.communityId).toBe("string");
     expect(resource).not.toHaveProperty("owner");
     expect(resource).not.toHaveProperty("community");
   });
 
-  it("should pass filters to fetchResources via retrieve function", async () => {
+  it("should pass filters to fetchResources via list function", async () => {
     // Arrange
     const filters = { category: "tools" as const };
     const mockResourceInfo: ResourceInfo[] = [];
@@ -89,11 +91,11 @@ describe("useResources", () => {
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
     
-    // Manually retrieve data with filters
-    const retrievedData = await result.current.retrieve(filters);
+    // Manually list data with filters
+    const listdData = await result.current.list(filters);
 
     // Assert
-    expect(retrievedData).toEqual(mockResourceInfo);
+    expect(listdData).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(filters);
   });
 
@@ -111,7 +113,7 @@ describe("useResources", () => {
     expect(result.current.isFetching).toBe(false);
   });
 
-  it("should allow retrieve to be called without filters", async () => {
+  it("should allow list to be called without filters", async () => {
     // Arrange
     const mockResourceInfo: ResourceInfo[] = [];
     mockFetchResources.mockResolvedValue(mockResourceInfo);
@@ -124,21 +126,93 @@ describe("useResources", () => {
     expect(result.current.isPending).toBe(false);
 
     // Act - Retrieve without filters
-    const retrievedData = await result.current.retrieve();
+    const listdData = await result.current.list();
 
     // Assert
-    expect(retrievedData).toEqual(mockResourceInfo);
+    expect(listdData).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(undefined);
     expect(mockFetchResources).toHaveBeenCalledTimes(1);
   });
 
-  it("should have retrieve function available", () => {
+  it("should have list function available", () => {
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
     // Assert
-    expect(result.current.retrieve).toBeDefined();
-    expect(typeof result.current.retrieve).toBe("function");
+    expect(result.current.list).toBeDefined();
+    expect(typeof result.current.list).toBe("function");
+  });
+
+  it("should return full Resource object from byId() method", async () => {
+    // Arrange: Mock return value should be full Resource object
+    const mockResource: Resource = {
+      id: "resource-1",
+      type: "offer",
+      title: "Power Drill",
+      description: "High-quality power drill for all your DIY needs",
+      category: "tools",
+      owner: {
+        id: "user-1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      community: {
+        id: "community-1",
+        name: "Test Community",
+        organizerId: "user-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      ownerId: "user-1",
+      communityId: "community-1",
+      isAvailable: true,
+      condition: "excellent",
+      imageUrls: ["https://example.com/drill.jpg"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockFetchResourceById.mockResolvedValue(mockResource);
+
+    // Act
+    const { result } = renderHook(() => useResources(), { wrapper });
+    const fetchedResource = await result.current.byId("resource-1");
+
+    // Assert
+    expect(fetchedResource).toEqual(mockResource);
+    expect(mockFetchResourceById).toHaveBeenCalledWith("resource-1");
+
+    // Verify the returned data has full objects, not just IDs
+    expect(typeof fetchedResource.owner).toBe("object");
+    expect(typeof fetchedResource.community).toBe("object");
+    expect(fetchedResource.title).toBe("Power Drill");
+    expect(fetchedResource.owner.firstName).toBe("John");
+    expect(fetchedResource.community.name).toBe("Test Community");
+  });
+
+  it("should handle byId with non-existent ID", async () => {
+    // Arrange
+    mockFetchResourceById.mockResolvedValue(null);
+
+    // Act
+    const { result } = renderHook(() => useResources(), { wrapper });
+    const fetchedResource = await result.current.byId("non-existent-id");
+
+    // Assert
+    expect(fetchedResource).toBeNull();
+    expect(mockFetchResourceById).toHaveBeenCalledWith("non-existent-id");
+  });
+
+  it("should have byId function available", () => {
+    // Act
+    const { result } = renderHook(() => useResources(), { wrapper });
+
+    // Assert
+    expect(result.current.byId).toBeDefined();
+    expect(typeof result.current.byId).toBe("function");
   });
 
 });

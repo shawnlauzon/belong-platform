@@ -21,6 +21,7 @@ import { createUserService } from "../services/user.service";
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateUserService = vi.mocked(createUserService);
 const mockFetchUsers = vi.fn();
+const mockFetchUserById = vi.fn();
 const mockUpdateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 
@@ -45,12 +46,13 @@ describe("useUsers consolidated hook", () => {
     mockUseSupabase.mockReturnValue({} as any);
     mockCreateUserService.mockReturnValue({
       fetchUsers: mockFetchUsers,
+      fetchUserById: mockFetchUserById,
       updateUser: mockUpdateUser,
       deleteUser: mockDeleteUser,
     } as any);
   });
 
-  it("should pass filters to fetchUsers via retrieve function", async () => {
+  it("should pass filters to fetchUsers via list function", async () => {
     // Arrange
     const filters: UserFilter = { communityId: "community-1" };
     const mockUsers: User[] = [
@@ -68,11 +70,11 @@ describe("useUsers consolidated hook", () => {
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
     
-    // Manually retrieve data with filters
-    const retrievedData = await result.current.retrieve(filters);
+    // Manually list data with filters
+    const listdData = await result.current.list(filters);
 
     // Assert
-    expect(retrievedData).toEqual(mockUsers);
+    expect(listdData).toEqual(mockUsers);
     expect(mockFetchUsers).toHaveBeenCalledWith(filters);
   });
 
@@ -90,7 +92,7 @@ describe("useUsers consolidated hook", () => {
     expect(result.current.isFetching).toBe(false);
   });
 
-  it("should allow retrieve to be called without filters", async () => {
+  it("should allow list to be called without filters", async () => {
     // Arrange
     const mockUsers: User[] = [];
     mockFetchUsers.mockResolvedValue(mockUsers);
@@ -103,20 +105,72 @@ describe("useUsers consolidated hook", () => {
     expect(result.current.isPending).toBe(false);
 
     // Act - Retrieve without filters
-    const retrievedData = await result.current.retrieve();
+    const listdData = await result.current.list();
 
     // Assert
-    expect(retrievedData).toEqual(mockUsers);
+    expect(listdData).toEqual(mockUsers);
     expect(mockFetchUsers).toHaveBeenCalledWith(undefined);
     expect(mockFetchUsers).toHaveBeenCalledTimes(1);
   });
 
-  it("should have retrieve function available", () => {
+  it("should have list function available", () => {
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
 
     // Assert
-    expect(result.current.retrieve).toBeDefined();
-    expect(typeof result.current.retrieve).toBe("function");
+    expect(result.current.list).toBeDefined();
+    expect(typeof result.current.list).toBe("function");
+  });
+
+  it("should return full User object from byId() method", async () => {
+    // Arrange: Mock return value should be full User object
+    const mockUser: User = {
+      id: "user-1",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@example.com",
+      bio: "Software developer",
+      profilePictureUrl: "https://example.com/avatar.jpg",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockFetchUserById.mockResolvedValue(mockUser);
+
+    // Act
+    const { result } = renderHook(() => useUsers(), { wrapper });
+    const fetchedUser = await result.current.byId("user-1");
+
+    // Assert
+    expect(fetchedUser).toEqual(mockUser);
+    expect(mockFetchUserById).toHaveBeenCalledWith("user-1");
+
+    // Verify the returned data has full user object
+    expect(fetchedUser.firstName).toBe("John");
+    expect(fetchedUser.lastName).toBe("Doe");
+    expect(fetchedUser.email).toBe("john@example.com");
+    expect(fetchedUser.bio).toBe("Software developer");
+  });
+
+  it("should handle byId with non-existent ID", async () => {
+    // Arrange
+    mockFetchUserById.mockResolvedValue(null);
+
+    // Act
+    const { result } = renderHook(() => useUsers(), { wrapper });
+    const fetchedUser = await result.current.byId("non-existent-id");
+
+    // Assert
+    expect(fetchedUser).toBeNull();
+    expect(mockFetchUserById).toHaveBeenCalledWith("non-existent-id");
+  });
+
+  it("should have byId function available", () => {
+    // Act
+    const { result } = renderHook(() => useUsers(), { wrapper });
+
+    // Assert
+    expect(result.current.byId).toBeDefined();
+    expect(typeof result.current.byId).toBe("function");
   });
 });

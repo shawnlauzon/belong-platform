@@ -140,13 +140,23 @@ export function useResources() {
     isFetching: resourcesQuery.isFetching, // Only for query operations
     error: resourcesQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error,
 
-    // Manual fetch operation
-    retrieve: async (filters?: ResourceFilter) => {
+    // List fetch operation
+    list: async (filters?: ResourceFilter) => {
       const result = await queryClient.fetchQuery({
         queryKey: filters
           ? queryKeys.resources.filtered(filters)
           : queryKeys.resources.all,
         queryFn: () => resourceService.fetchResources(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.resources.byId(id),
+        queryFn: () => resourceService.fetchResourceById(id),
         staleTime: 5 * 60 * 1000,
       });
       return result;
@@ -168,17 +178,3 @@ export function useResources() {
   };
 }
 
-/**
- * Hook to fetch a specific resource by ID
- */
-export function useResource(id: string) {
-  const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
-  
-  return useQuery<Resource | null, Error>({
-    queryKey: queryKeys.resources.byId(id),
-    queryFn: () => resourceService.fetchResourceById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}
