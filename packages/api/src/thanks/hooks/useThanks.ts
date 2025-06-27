@@ -158,7 +158,10 @@ export function useThanks(filters?: ThanksFilter) {
     error: thanksQuery.error,
 
     // Manual fetch operation
-    retrieve: () => thanksQuery.refetch().then(result => result.data),
+    retrieve: async () => {
+      const result = await thanksQuery.refetch();
+      return result.data;
+    },
 
     // Mutations (with defensive null checks for testing environments)
     create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
