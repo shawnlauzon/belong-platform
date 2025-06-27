@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
-import type { User, UserFilter } from "@belongnetwork/types";
+import type { User, UserInfo, UserFilter } from "@belongnetwork/types";
 import { useUsers } from "../hooks/useUsers";
 
 // Mock the auth provider
@@ -55,7 +55,7 @@ describe("useUsers consolidated hook", () => {
   it("should pass filters to fetchUsers via list function", async () => {
     // Arrange
     const filters: UserFilter = { communityId: "community-1" };
-    const mockUsers: User[] = [
+    const mockUsers: UserInfo[] = [
       {
         id: "user-1",
         firstName: "John",
@@ -80,7 +80,7 @@ describe("useUsers consolidated hook", () => {
 
   it("should not fetch data automatically and have correct initial status", () => {
     // Arrange
-    const mockUsers: User[] = [];
+    const mockUsers: UserInfo[] = [];
     mockFetchUsers.mockResolvedValue(mockUsers);
 
     // Act
@@ -94,7 +94,7 @@ describe("useUsers consolidated hook", () => {
 
   it("should allow list to be called without filters", async () => {
     // Arrange
-    const mockUsers: User[] = [];
+    const mockUsers: UserInfo[] = [];
     mockFetchUsers.mockResolvedValue(mockUsers);
 
     // Act

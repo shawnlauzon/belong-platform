@@ -79,16 +79,16 @@ import { useCommunities } from '@belongnetwork/platform';
 import { useEffect, useState } from 'react';
 
 function CommunityList() {
-  const communities = useCommunities();
+  const { list } = useCommunities();
   const [communityList, setCommunityList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    communities.retrieve().then((data) => {
+    list().then((data) => {
       setCommunityList(data);
       setIsLoading(false);
     });
-  }, [communities]);
+  }, [list]);
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -147,42 +147,73 @@ function AuthExample() {
 ### Data Fetching
 
 ```typescript
-// Using the consolidated hooks
-const communities = useCommunities();
-const resources = useResources();
-const events = useEvents();
-const thanks = useThanks();
-const users = useUsers();
+// Using the consolidated hooks with new { list, byId } pattern
+const { list: listCommunities, byId: getCommunity } = useCommunities();
+const { list: listResources, byId: getResource } = useResources();
+const { list: listEvents, byId: getEvent } = useEvents();
+const { list: listThanks, byId: getThank } = useThanks();
+const { list: listUsers, byId: getUser } = useUsers();
 
-// Fetching lists with manual retrieve() calls
-const communityList = await communities.retrieve();
-const resourceList = await resources.retrieve({ communityId: "abc123" });
-const eventList = await events.retrieve({ communityId: "abc123" });
-const thanksList = await thanks.retrieve({ sentBy: "user-123" });
-const userList = await users.retrieve({ communityId: "abc123" });
+// Fetching lists - returns lightweight Info objects
+const communityList = await listCommunities();
+const resourceList = await listResources({ communityId: "abc123" });
+const eventList = await listEvents({ communityId: "abc123" });
+const thanksList = await listThanks({ sentBy: "user-123" });
+const userList = await listUsers({ communityId: "abc123" });
 
 // Fetching with options
-const communitiesWithDeleted = await communities.retrieve({ includeDeleted: true });
+const communitiesWithDeleted = await listCommunities({ includeDeleted: true });
 
-// Fetching single items (individual hooks still work the same)
-const { data: community } = useCommunity("abc123");
-const { data: resource } = useResource("def456");
-const { data: event } = useEvent("ghi789");
+// Fetching single items - returns full objects with relations
+const community = await getCommunity("abc123");
+const resource = await getResource("def456");
+const event = await getEvent("ghi789");
+const thank = await getThank("xyz999");
+const user = await getUser("user-123");
 
 // Using mutations
-await resources.create({
+const { create, update, delete: remove } = useResources();
+
+await create({
   title: "Garden Tools",
   type: "offer",
   category: ResourceCategory.TOOLS,
   communityId: "abc123",
 });
 
-await resources.update("def456", {
+await update("def456", {
   title: "Updated Garden Tools",
 });
 
-await resources.delete("def456");
+await remove("def456");
 ```
+
+### New { list, byId } Pattern
+
+All entity hooks now follow a consistent pattern for optimal performance:
+
+```typescript
+const { list, byId } = useEntities(); // useThanks, useUsers, etc.
+
+// List operations - returns lightweight Info objects with IDs for relations
+const items = await list(); // Returns EntityInfo[]
+const filtered = await list({ communityId: "abc" }); // Filtered results
+
+// Individual operations - returns full objects with nested relations  
+const fullItem = await byId("item-id"); // Returns full Entity object
+```
+
+**Key Benefits:**
+- **Consistent API** - Same pattern across all entities
+- **Performance Optimized** - Lists return lightweight data, details return full objects
+- **Predictable** - Always know what data structure you'll receive
+- **Cache Efficient** - Separate caching for list vs detail operations
+
+**Performance Pattern:**
+| Method | Returns | Use Case |
+|--------|---------|----------|
+| `list()` | `EntityInfo[]` (IDs for relations) | Displaying lists, tables, dropdowns |
+| `byId()` | `Entity` (full nested objects) | Detail views, editing, full data needs |
 
 ## Best Practices
 
@@ -207,9 +238,19 @@ function ResourceForm() {
 
 ```typescript
 function CommunityPage({ id }: { id: string }) {
-  const { data: community, isLoading, error } = useCommunity(id);
+  const { byId } = useCommunities();
+  const [community, setCommunity] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (isLoading) return <Skeleton />;
+  useEffect(() => {
+    byId(id)
+      .then(setCommunity)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [byId, id]);
+
+  if (loading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
   if (!community) return <NotFound />;
 
@@ -218,17 +259,17 @@ function CommunityPage({ id }: { id: string }) {
 
 // For list data with manual fetching
 function CommunityList() {
-  const communities = useCommunities();
+  const { list } = useCommunities();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    communities.retrieve()
+    list()
       .then(setData)
       .catch(setError)
       .finally(() => setLoading(false));
-  }, [communities]);
+  }, [list]);
 
   if (loading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
@@ -275,13 +316,16 @@ Returns an object with:
 
 Returns an object with:
 
-- **Manual Data Fetching**:
-  - `retrieve(options?)` - Fetch communities list with optional filters
+- **Data Fetching**:
+  - `list(options?)` - Fetch communities list (returns `CommunityInfo[]`)
     - `options.includeDeleted?: boolean` - Include deleted communities
-- **State** (for internal use - data not automatically populated):
-  - `communities` - Last fetched communities (initially undefined)
-  - `isLoading` - Loading state (false when enabled: false)
-  - `error` - Error state
+  - `byId(id)` - Fetch single community (returns full `Community` object)
+  - `memberships(communityId)` - Fetch community memberships
+  - `userMemberships(userId)` - Fetch user's community memberships
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new community
   - `update(id, data)` - Update community
@@ -289,41 +333,45 @@ Returns an object with:
   - `join(communityId, role?)` - Join community
   - `leave(communityId)` - Leave community
 
-**Note**: Use individual hooks like `useCommunity(id)`, `useCommunityMemberships(id)`, `useUserMemberships(userId)` for single-item queries with automatic fetching.
+**Performance**: `list()` returns lightweight `CommunityInfo` objects, `byId()` returns full `Community` objects with relations.
 
 ### `useResources()`
 
 Returns an object with:
 
-- **Manual Data Fetching**:
-  - `retrieve(filters?)` - Fetch resources list with optional filters
+- **Data Fetching**:
+  - `list(filters?)` - Fetch resources list (returns `ResourceInfo[]`)
     - `filters.communityId?: string` - Filter by community
     - `filters.category?: ResourceCategory` - Filter by category
     - `filters.type?: "offer" | "request"` - Filter by type
-- **State** (for internal use - data not automatically populated):
-  - `resources` - Last fetched resources (initially undefined)
-  - `isLoading` - Loading state (false when enabled: false)
-  - `error` - Error state
+  - `byId(id)` - Fetch single resource (returns full `Resource` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new resource
   - `update(id, data)` - Update resource
   - `delete(id)` - Delete resource
 
-**Note**: Use `useResource(id)` for single-item queries with automatic fetching.
+**Performance**: `list()` returns lightweight `ResourceInfo` objects, `byId()` returns full `Resource` objects with owner and community relations.
 
 ### `useEvents()`
 
 Returns an object with:
 
-- **Manual Data Fetching**:
-  - `retrieve(filters?)` - Fetch events list with optional filters
+- **Data Fetching**:
+  - `list(filters?)` - Fetch events list (returns `EventInfo[]`)
     - `filters.communityId?: string` - Filter by community
     - `filters.organizerId?: string` - Filter by organizer
     - `filters.startDate?: Date` - Filter by start date
-- **State** (for internal use - data not automatically populated):
-  - `events` - Last fetched events (initially undefined)
-  - `isLoading` - Loading state (false when enabled: false)
-  - `error` - Error state
+  - `byId(id)` - Fetch single event (returns full `Event` object)
+  - `attendees(eventId)` - Fetch event attendees
+  - `userAttendances(userId)` - Fetch user's event attendances
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new event
   - `update(id, data)` - Update event
@@ -331,46 +379,48 @@ Returns an object with:
   - `join(eventId, status?)` - Join event with attendance status
   - `leave(eventId)` - Leave event
 
-**Note**: Use individual hooks like `useEvent(id)`, `useEventAttendees(eventId)`, `useUserEventAttendances(userId)` for single-item queries with automatic fetching.
+**Performance**: `list()` returns lightweight `EventInfo` objects, `byId()` returns full `Event` objects with organizer and community relations.
 
 ### `useThanks()`
 
 Returns an object with:
 
-- **Manual Data Fetching**:
-  - `retrieve(filters?)` - Fetch thanks list with optional filters
+- **Data Fetching**:
+  - `list(filters?)` - Fetch thanks list (returns `ThanksInfo[]`)
     - `filters.sentBy?: string` - Filter by sender user ID
     - `filters.receivedBy?: string` - Filter by receiver user ID
     - `filters.communityId?: string` - Filter by community
     - `filters.resourceId?: string` - Filter by resource
-- **State** (for internal use - data not automatically populated):
-  - `thanks` - Last fetched thanks (initially undefined)
-  - `isLoading` - Loading state (false when enabled: false)
-  - `error` - Error state
+  - `byId(id)` - Fetch single thanks (returns full `Thanks` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `create(data)` - Create new thanks
   - `update(id, data)` - Update thanks
   - `delete(id)` - Delete thanks
 
-**Note**: Use `useThank(id)` for single-item queries with automatic fetching.
+**Performance**: `list()` returns lightweight `ThanksInfo` objects, `byId()` returns full `Thanks` objects with user, resource, and community relations.
 
 ### `useUsers()`
 
 Returns an object with:
 
-- **Manual Data Fetching**:
-  - `retrieve(filters?)` - Fetch users list with optional filters
+- **Data Fetching**:
+  - `list(filters?)` - Fetch users list (returns `UserInfo[]`)
     - `filters.communityId?: string` - Filter by community membership
     - `filters.role?: UserRole` - Filter by role
-- **State** (for internal use - data not automatically populated):
-  - `users` - Last fetched users (initially undefined)
-  - `isLoading` - Loading state (false when enabled: false)
-  - `error` - Error state
+  - `byId(id)` - Fetch single user (returns full `User` object)
+- **State** (unified across all operations):
+  - `isPending` - Loading state for any operation
+  - `isError` - Error state for any operation
+  - `error` - Error details
 - **Mutations**:
   - `update(user)` - Update user profile
   - `delete(id)` - Delete user
 
-**Note**: Use `useUser(id)` for single-item queries with automatic fetching.
+**Performance**: `list()` returns `UserInfo` objects, `byId()` returns full `User` objects. For users, these are currently identical since User has no nested relations, but the pattern ensures consistency.
 
 ---
 

@@ -58,18 +58,18 @@ import { useEffect, useState } from "react";
 
 function CommunityList() {
   const { currentUser, isAuthenticated } = useAuth();
-  const communities = useCommunities();
+  const { list } = useCommunities();
   const [communityList, setCommunityList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isAuthenticated) {
-      communities.retrieve().then((data) => {
+      list().then((data) => {
         setCommunityList(data);
         setIsLoading(false);
       });
     }
-  }, [isAuthenticated, communities]);
+  }, [isAuthenticated, list]);
 
   if (isLoading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Please sign in</div>;

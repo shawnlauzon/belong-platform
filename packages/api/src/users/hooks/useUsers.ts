@@ -7,7 +7,7 @@ import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createUserService } from "../services/user.service";
 import { queryKeys } from "../../shared/queryKeys";
-import type { User, UserFilter } from "@belongnetwork/types";
+import type { User, UserInfo, UserFilter } from "@belongnetwork/types";
 
 /**
  * Consolidated hook for all user operations
@@ -19,7 +19,7 @@ export function useUsers() {
   const userService = createUserService(supabase);
 
   // List users query - disabled by default to prevent automatic fetching
-  const usersQuery = useQuery<User[], Error>({
+  const usersQuery = useQuery<UserInfo[], Error>({
     queryKey: queryKeys.users.all,
     queryFn: () => userService.fetchUsers(),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -91,7 +91,7 @@ export function useUsers() {
 
     // List fetch operation
     list: async (filters?: UserFilter) => {
-      const result = await queryClient.fetchQuery({
+      const result = await queryClient.fetchQuery<UserInfo[]>({
         queryKey: filters && Object.keys(filters).length > 0
           ? ["users", "filtered", filters]
           : queryKeys.users.all,

@@ -1,5 +1,5 @@
 import { logger } from "@belongnetwork/core";
-import type { User, UserData, UserFilter } from "@belongnetwork/types";
+import type { User, UserInfo, UserData, UserFilter } from "@belongnetwork/types";
 import {
   toDomainUser,
   forDbInsert,
@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
-  async fetchUsers(options?: UserFilter): Promise<User[]> {
+  async fetchUsers(options?: UserFilter): Promise<UserInfo[]> {
     logger.debug("👤 API: Fetching users", { options });
 
     try {
