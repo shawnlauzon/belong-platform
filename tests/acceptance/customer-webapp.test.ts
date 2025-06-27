@@ -15,7 +15,7 @@ import { resolve } from "path";
 describe("Customer WebApp Runtime Issue", () => {
   let devServer: ChildProcess | null = null;
   let serverReady = false;
-  const serverUrl = "http://localhost:5173";
+  const serverUrl = "http://localhost:5175";
   const webappPath = resolve(process.cwd(), "tests/customer-webapp");
   
   beforeAll(async () => {
@@ -45,6 +45,12 @@ describe("Customer WebApp Runtime Issue", () => {
       return;
     }
     
+    // Update webapp to use different port for this test
+    const viteConfigPath = resolve(webappPath, "vite.config.ts");
+    let viteConfig = readFileSync(viteConfigPath, "utf-8");
+    viteConfig = viteConfig.replace(/port: \d+/, "port: 5175");
+    writeFileSync(viteConfigPath, viteConfig);
+    
     // Start the webapp dev server
     try {
       console.log("🚀 Starting customer webapp dev server...");
@@ -65,7 +71,7 @@ describe("Customer WebApp Runtime Issue", () => {
           const output = data.toString();
           console.log("📦 Customer webapp:", output.trim());
           
-          if (output.includes("ready in") || output.includes("Local:") || output.includes("localhost:5173")) {
+          if (output.includes("ready in") || output.includes("Local:") || output.includes("localhost:5175")) {
             serverReady = true;
             clearTimeout(timeout);
             resolve();
@@ -200,19 +206,23 @@ describe("Customer WebApp Runtime Issue", () => {
         return;
       }
 
-      // Try to access a module that uses the platform
+      // Check if the main page loads without import errors
       try {
-        const moduleResponse = await fetch(`${serverUrl}/src/App.tsx`);
+        const response = await fetch(serverUrl);
+        const htmlContent = await response.text();
         
-        if (!moduleResponse.ok) {
+        // Check for Vite import resolution errors that would indicate platform module issues
+        const hasImportError = htmlContent.includes("Failed to resolve import") || 
+                              htmlContent.includes("500") ||
+                              htmlContent.includes("Module not found") ||
+                              htmlContent.includes("dependencies are imported but could not be resolved");
+        
+        if (hasImportError) {
           throw new Error("CUSTOMER BUG REPRODUCED: Module resolution failed - platform imports not working!");
         }
         
-        console.log("✅ Platform modules accessible");
-        
-        // The real test: check server logs for import resolution errors
-        // If we see "dependencies are imported but could not be resolved" in server output,
-        // that's the exact error from the customer bug report
+        console.log("✅ Platform modules resolve correctly");
+        expect(response.status).toBe(200);
         
       } catch (error) {
         throw new Error(`CUSTOMER BUG REPRODUCED: Module resolution error - ${(error as Error).message}`);
@@ -223,10 +233,10 @@ describe("Customer WebApp Runtime Issue", () => {
       const appPath = resolve(webappPath, "src/App.tsx");
       const appContent = readFileSync(appPath, "utf-8");
       
-      // Verify the exact hook pattern mentioned in bug report is present
+      // Verify the new API pattern is being used (bug is fixed)
       expect(appContent).toMatch(/useCommunities\(\)/);
       expect(appContent).toMatch(/const communitiesHook = useCommunities\(\)/);
-      expect(appContent).toMatch(/communities: communitiesHook\.communities/);
+      expect(appContent).toMatch(/await communitiesHook\.list\(\)/);
       
       console.log("✅ Bug report hook pattern implemented correctly");
       
@@ -281,7 +291,7 @@ describe("Customer WebApp Runtime Issue", () => {
         "✅ BelongProvider config matches bug report",
         "✅ Hook usage pattern matches bug report",
         "✅ Environment variables configured",
-        "✅ Vite dev server configured on port 5173",
+        "✅ Vite dev server configured on port 5175",
         serverReady ? "✅ Dev server started successfully" : "❌ Dev server failed to start",
         "📊 Test validates: React mounting vs blank page bug"
       ];

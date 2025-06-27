@@ -10,21 +10,40 @@ function App() {
   try {
     console.log('🔍 Hook execution check starting...')
     
-    // Use the exact hook pattern mentioned in the bug report
+    // Use the new API pattern with { list, byId }
     const communitiesHook = useCommunities()
-    const { communities, isLoading: communitiesLoading } = { 
-      communities: communitiesHook.communities, 
-      isLoading: false 
-    }
+    const resourcesHook = useResources()
+    const eventsHook = useEvents()
+    const authHook = useAuth()
     
     console.log('🔍 Hook execution check:', { 
       communitiesHook,
-      authHook: useAuth(),
-      resourcesHook: useResources(),
-      eventsHook: useEvents()
+      authHook,
+      resourcesHook,
+      eventsHook
     })
     
-    console.log('📊 Communities data:', { communities, communitiesLoading })
+    // Test fetching communities with new API
+    const [communities, setCommunities] = React.useState([])
+    const [communitiesLoading, setCommunitiesLoading] = React.useState(true)
+    
+    React.useEffect(() => {
+      const fetchCommunities = async () => {
+        try {
+          const data = await communitiesHook.list()
+          setCommunities(data || [])
+          console.log('📊 Communities data:', data)
+        } catch (error) {
+          console.error('❌ Error fetching communities:', error)
+        } finally {
+          setCommunitiesLoading(false)
+        }
+      }
+      
+      if (communitiesHook.list) {
+        fetchCommunities()
+      }
+    }, [communitiesHook])
     
     return (
       <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
@@ -34,10 +53,10 @@ function App() {
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0' }}>
           <h3>Platform Hook Status:</h3>
           <p>✅ BelongProvider: Working</p>
-          <p>✅ useAuth: {useAuth() ? 'Working' : 'Not initialized'}</p>
-          <p>✅ useCommunities: {communitiesHook ? 'Working' : 'Failed'}</p>
-          <p>✅ useResources: {useResources() ? 'Working' : 'Failed'}</p>
-          <p>✅ useEvents: {useEvents() ? 'Working' : 'Failed'}</p>
+          <p>✅ useAuth: {authHook ? 'Working' : 'Not initialized'}</p>
+          <p>✅ useCommunities: {communitiesHook?.list ? 'Working' : 'Failed'}</p>
+          <p>✅ useResources: {resourcesHook?.list ? 'Working' : 'Failed'}</p>
+          <p>✅ useEvents: {eventsHook?.list ? 'Working' : 'Failed'}</p>
         </div>
         
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#e8f5e8' }}>
