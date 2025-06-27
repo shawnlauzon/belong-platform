@@ -150,12 +150,12 @@ export function useThanks(filters?: ThanksFilter) {
   }
 
   return {
-    // React Query status properties (aligned with v5 standards)
-    isPending: thanksQuery.isPending,
-    isError: thanksQuery.isError,
-    isSuccess: thanksQuery.isSuccess,
-    isFetching: thanksQuery.isFetching,
-    error: thanksQuery.error,
+    // Unified React Query status properties (query + mutations)
+    isPending: thanksQuery.isPending || (createMutation?.isPending || false) || (updateMutation?.isPending || false) || (deleteMutation?.isPending || false),
+    isError: thanksQuery.isError || (createMutation?.isError || false) || (updateMutation?.isError || false) || (deleteMutation?.isError || false),
+    isSuccess: thanksQuery.isSuccess || (createMutation?.isSuccess || false) || (updateMutation?.isSuccess || false) || (deleteMutation?.isSuccess || false),
+    isFetching: thanksQuery.isFetching, // Only for query operations
+    error: thanksQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error,
 
     // Manual fetch operation
     retrieve: async () => {
@@ -169,10 +169,10 @@ export function useThanks(filters?: ThanksFilter) {
       updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
     delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states (with defensive null checks)
-    isCreating: createMutation?.isPending || false,
-    isUpdating: updateMutation?.isPending || false,
-    isDeleting: deleteMutation?.isPending || false,
+    // Individual mutation objects for specific access when needed
+    createMutation,
+    updateMutation,
+    deleteMutation,
 
     // Raw queries for advanced usage
     thanksQuery,

@@ -164,4 +164,28 @@ describe("useThanks", () => {
     expect(mockFetchThanks).toHaveBeenCalledWith(initialFilters);
     expect(mockFetchThanks).toHaveBeenCalledTimes(1);
   });
+
+  it("should provide unified states that represent any operation (query + mutations)", async () => {
+    // Arrange
+    const mockThanksInfo: ThanksInfo[] = [];
+    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+
+    // Act
+    const { result } = renderHook(() => useThanks(), { wrapper });
+
+    // Assert - Initial state (query enabled: false, no mutations running)
+    expect(result.current.isPending).toBe(true); // Query is pending (enabled: false = pending state)
+    expect(result.current.isError).toBe(false);
+    expect(result.current.isSuccess).toBe(false);
+
+    // Verify individual mutation objects are available
+    expect(result.current.createMutation).toBeDefined();
+    expect(result.current.updateMutation).toBeDefined();
+    expect(result.current.deleteMutation).toBeDefined();
+
+    // Verify mutation functions are available
+    expect(typeof result.current.create).toBe('function');
+    expect(typeof result.current.update).toBe('function');
+    expect(typeof result.current.delete).toBe('function');
+  });
 });
