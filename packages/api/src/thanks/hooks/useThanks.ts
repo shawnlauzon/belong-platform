@@ -110,7 +110,12 @@ export function useThanks() {
 
   return {
     // Unified React Query status properties (query + mutations)
-    isPending: thanksQuery.isPending || (createMutation?.isPending || false) || (updateMutation?.isPending || false) || (deleteMutation?.isPending || false),
+    // Note: For disabled queries, we only consider them pending if they're actually fetching
+    isPending: thanksQuery.isFetching || 
+               (createMutation && createMutation.isPending) || 
+               (updateMutation && updateMutation.isPending) || 
+               (deleteMutation && deleteMutation.isPending) || 
+               false,
     isError: thanksQuery.isError || (createMutation?.isError || false) || (updateMutation?.isError || false) || (deleteMutation?.isError || false),
     isSuccess: thanksQuery.isSuccess || (createMutation?.isSuccess || false) || (updateMutation?.isSuccess || false) || (deleteMutation?.isSuccess || false),
     isFetching: thanksQuery.isFetching, // Only for query operations

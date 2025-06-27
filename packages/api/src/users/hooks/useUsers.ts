@@ -2,7 +2,6 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
-  keepPreviousData,
 } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
@@ -14,20 +13,17 @@ import type { User, UserFilter } from "@belongnetwork/types";
  * Consolidated hook for all user operations
  * Provides queries, mutations, and state management for users
  */
-export function useUsers(filter: UserFilter = {}) {
+export function useUsers() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const userService = createUserService(supabase);
 
-  // List users query
-  const usersQuery = useQuery({
-    queryKey:
-      filter && Object.keys(filter).length > 0
-        ? ["users", "filtered", filter]
-        : queryKeys.users.all,
-    queryFn: () => userService.fetchUsers(filter),
+  // List users query - disabled by default to prevent automatic fetching
+  const usersQuery = useQuery<User[], Error>({
+    queryKey: queryKeys.users.all,
+    queryFn: () => userService.fetchUsers(),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: keepPreviousData,
+    enabled: false, // Prevent automatic fetching
   });
 
   // Note: Individual query hooks should be called separately by consumers
@@ -43,8 +39,8 @@ export function useUsers(filter: UserFilter = {}) {
         updatedUser,
       );
 
-      // Invalidate users list to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      // Invalidate all users queries
+      queryClient.invalidateQueries({ queryKey: ["users"] });
 
       logger.info("👤 API: Successfully updated user via consolidated hook", {
         id: updatedUser.id,
@@ -68,8 +64,8 @@ export function useUsers(filter: UserFilter = {}) {
         queryKey: queryKeys.users.byId(userId),
       });
 
-      // Invalidate users list to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      // Invalidate all users queries
+      queryClient.invalidateQueries({ queryKey: ["users"] });
 
       logger.info("👤 API: Successfully deleted user via consolidated hook", {
         id: userId,
@@ -83,18 +79,35 @@ export function useUsers(filter: UserFilter = {}) {
   });
 
   return {
-    // Queries
-    users: usersQuery.data,
-    isLoading: usersQuery.isLoading,
-    error: usersQuery.error,
+    // Unified React Query status properties (query + mutations)
+    isPending: usersQuery.isFetching || 
+               (updateMutation && updateMutation.isPending) || 
+               (deleteMutation && deleteMutation.isPending) || 
+               false,
+    isError: usersQuery.isError || (updateMutation?.isError || false) || (deleteMutation?.isError || false),
+    isSuccess: usersQuery.isSuccess || (updateMutation?.isSuccess || false) || (deleteMutation?.isSuccess || false),
+    isFetching: usersQuery.isFetching, // Only for query operations
+    error: usersQuery.error || updateMutation?.error || deleteMutation?.error,
+
+    // Manual fetch operation
+    retrieve: async (filters?: UserFilter) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: filters && Object.keys(filters).length > 0
+          ? ["users", "filtered", filters]
+          : queryKeys.users.all,
+        queryFn: () => userService.fetchUsers(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
 
     // Mutations (with defensive null checks for testing environments)
     update: updateMutation?.mutateAsync || (() => Promise.reject(new Error('Update mutation not ready'))),
     delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states (with defensive null checks)
-    isUpdating: updateMutation?.isPending || false,
-    isDeleting: deleteMutation?.isPending || false,
+    // Individual mutation objects for specific access when needed
+    updateMutation,
+    deleteMutation,
 
     // Raw queries for advanced usage
     usersQuery,

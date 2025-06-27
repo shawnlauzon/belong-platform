@@ -19,7 +19,7 @@ type JoinCommunityInput = {
  * Consolidated hook for all community operations
  * Provides queries, mutations, and state management for communities
  */
-export function useCommunities(options?: { includeDeleted?: boolean }) {
+export function useCommunities() {
   const queryClient = useQueryClient();
   if (!queryClient) {
     throw new Error("QueryClient not available. Make sure your component is wrapped with QueryClientProvider.");
@@ -27,11 +27,12 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
   const supabase = useSupabase();
   const communityService = createCommunityService(supabase);
 
-  // List communities query
+  // List communities query - disabled by default to prevent automatic fetching
   const communitiesQuery = useQuery<CommunityInfo[], Error>({
     queryKey: queryKeys.communities.all,
-    queryFn: () => communityService.fetchCommunities(options),
+    queryFn: () => communityService.fetchCommunities(),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: false, // Prevent automatic fetching
   });
 
   // Note: Individual query hooks should be called separately by consumers
@@ -41,8 +42,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
   const createMutation = useMutation({
     mutationFn: (data: CommunityData) => communityService.createCommunity(data),
     onSuccess: (newCommunity) => {
-      // Invalidate the communities list to reflect the new community
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Invalidate all communities queries
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
 
       logger.info(
         "🏘️ API: Successfully created community via consolidated hook",
@@ -64,8 +65,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
     mutationFn: ({ id, data }: { id: string; data: Partial<CommunityData> }) =>
       communityService.updateCommunity({ id, ...data }),
     onSuccess: (updatedCommunity) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Invalidate all communities queries
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
       queryClient.invalidateQueries({
         queryKey: queryKeys.communities.byId(updatedCommunity.id),
       });
@@ -89,8 +90,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => communityService.deleteCommunity(id),
     onSuccess: (_, communityId) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Invalidate all communities queries
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
       queryClient.removeQueries({
         queryKey: queryKeys.communities.byId(communityId),
       });
@@ -114,8 +115,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
     mutationFn: ({ communityId, role = "member" }: JoinCommunityInput) =>
       communityService.joinCommunity(communityId, role),
     onSuccess: (newMembership) => {
-      // Invalidate relevant queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Invalidate all communities queries
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
       queryClient.invalidateQueries({
         queryKey: queryKeys.communities.byId(newMembership.communityId),
       });
@@ -147,8 +148,8 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
     mutationFn: (communityId: string) =>
       communityService.leaveCommunity(communityId),
     onSuccess: (_, communityId) => {
-      // Invalidate relevant queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Invalidate all communities queries
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
       queryClient.invalidateQueries({
         queryKey: queryKeys.communities.byId(communityId),
       });
@@ -171,10 +172,28 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
   });
 
   const result = {
-    // Queries
-    communities: communitiesQuery.data,
-    isLoading: communitiesQuery.isLoading,
-    error: communitiesQuery.error,
+    // Unified React Query status properties (query + mutations)
+    isPending: communitiesQuery.isFetching || 
+               (createMutation && createMutation.isPending) || 
+               (updateMutation && updateMutation.isPending) || 
+               (deleteMutation && deleteMutation.isPending) || 
+               (joinMutation && joinMutation.isPending) || 
+               (leaveMutation && leaveMutation.isPending) || 
+               false,
+    isError: communitiesQuery.isError || (createMutation?.isError || false) || (updateMutation?.isError || false) || (deleteMutation?.isError || false) || (joinMutation?.isError || false) || (leaveMutation?.isError || false),
+    isSuccess: communitiesQuery.isSuccess || (createMutation?.isSuccess || false) || (updateMutation?.isSuccess || false) || (deleteMutation?.isSuccess || false) || (joinMutation?.isSuccess || false) || (leaveMutation?.isSuccess || false),
+    isFetching: communitiesQuery.isFetching, // Only for query operations
+    error: communitiesQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error || joinMutation?.error || leaveMutation?.error,
+
+    // Manual fetch operation
+    retrieve: async (options?: { includeDeleted?: boolean }) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.communities.all,
+        queryFn: () => communityService.fetchCommunities(options),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
 
     // Mutations (with defensive null checks for testing environments)
     create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
@@ -185,12 +204,12 @@ export function useCommunities(options?: { includeDeleted?: boolean }) {
       joinMutation?.mutateAsync ? joinMutation.mutateAsync({ communityId, role }) : Promise.reject(new Error('Join mutation not ready')),
     leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
 
-    // Mutation states (with defensive null checks)
-    isCreating: createMutation?.isPending || false,
-    isUpdating: updateMutation?.isPending || false,
-    isDeleting: deleteMutation?.isPending || false,
-    isJoining: joinMutation?.isPending || false,
-    isLeaving: leaveMutation?.isPending || false,
+    // Individual mutation objects for specific access when needed
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    joinMutation,
+    leaveMutation,
 
     // Raw queries for advanced usage
     communitiesQuery,

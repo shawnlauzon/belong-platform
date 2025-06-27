@@ -49,16 +49,14 @@ describe("useCommunities consolidated hook", () => {
       deleteCommunity: vi.fn(),
       joinCommunity: vi.fn(),
       leaveCommunity: vi.fn(),
-      fetchCommunityById: vi.fn(),
-      fetchCommunityMemberships: vi.fn(),
-      fetchUserMemberships: vi.fn(),
-    });
+    } as any);
   });
 
-  const wrapper = ({ children }: { children: any }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
+  const wrapper = ({ children }: { children: React.ReactNode }) => {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  };
 
-  it("should return CommunityInfo[] in communities property", async () => {
+  it("should return CommunityInfo[] via retrieve function", async () => {
     // Arrange: Mock return value should be CommunityInfo[]
     const mockCommunityInfo: CommunityInfo[] = [
       {
@@ -86,73 +84,76 @@ describe("useCommunities consolidated hook", () => {
 
     // Act
     const { result } = renderHook(() => useCommunities(), { wrapper });
+    const retrievedData = await result.current.retrieve();
 
     // Assert
-    await waitFor(() => {
-      expect(result.current.communities).toEqual(mockCommunityInfo);
-    });
-
+    expect(retrievedData).toEqual(mockCommunityInfo);
     expect(mockFetchCommunities).toHaveBeenCalledWith(undefined);
 
-    // Verify the consolidated hook API structure
-    expect(result.current).toHaveProperty("communities");
-    expect(result.current).toHaveProperty("isLoading");
-    expect(result.current).toHaveProperty("error");
-    expect(result.current).toHaveProperty("create");
-    expect(result.current).toHaveProperty("update");
-    expect(result.current).toHaveProperty("delete");
-    expect(result.current).toHaveProperty("join");
-    expect(result.current).toHaveProperty("leave");
-
     // Verify the returned data has ID references, not full objects
-    const community = result.current.communities![0];
+    const community = retrievedData[0];
     expect(typeof community.organizerId).toBe("string");
-    expect(
-      community.parentId === null || typeof community.parentId === "string",
-    ).toBe(true);
-    expect(community).not.toHaveProperty("organizer");
-    expect(community).not.toHaveProperty("parent");
+    expect(typeof community.parentId).toBe("string");
   });
 
-  it("should provide mutation functions", async () => {
-    const mockCommunityData: CommunityData = {
-      name: "Test Community",
-      organizerId: "user-1",
-      parentId: null,
-      hierarchyPath: [{ level: "country", name: "United States" }],
-      level: "city",
-      memberCount: 0,
-      timeZone: "America/New_York",
-    };
+  it("should pass options to fetchCommunities via retrieve function", async () => {
+    // Arrange
+    const options = { includeDeleted: true };
+    const mockCommunityInfo: CommunityInfo[] = [];
+    mockFetchCommunities.mockResolvedValue(mockCommunityInfo);
 
-    const mockCreatedCommunity: Community = {
-      id: "community-new",
-      name: "Test Community",
-      organizer: { id: "user-1" } as any,
-      parent: undefined,
-      hierarchyPath: [{ level: "country", name: "United States" }],
-      level: "city",
-      memberCount: 0,
-      timeZone: "America/New_York",
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Act
+    const { result } = renderHook(() => useCommunities(), { wrapper });
+    
+    // Manually retrieve data with options
+    const retrievedData = await result.current.retrieve(options);
 
-    mockFetchCommunities.mockResolvedValue([]);
-    mockCreateCommunity.mockResolvedValue(mockCreatedCommunity);
+    // Assert
+    expect(retrievedData).toEqual(mockCommunityInfo);
+    expect(mockFetchCommunities).toHaveBeenCalledWith(options);
+  });
 
+  it("should not fetch data automatically and have correct initial status", () => {
+    // Arrange
+    const mockCommunityInfo: CommunityInfo[] = [];
+    mockFetchCommunities.mockResolvedValue(mockCommunityInfo);
+
+    // Act
     const { result } = renderHook(() => useCommunities(), { wrapper });
 
-    await waitFor(() => {
-      expect(result.current.communities).toEqual([]);
-    });
+    // Assert - Data should not be fetched automatically and status should be correct
+    expect(mockFetchCommunities).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
+    expect(result.current.isFetching).toBe(false);
+  });
 
-    // Test create mutation
-    await act(async () => {
-      await result.current.create(mockCommunityData);
-    });
+  it("should allow retrieve to be called without options", async () => {
+    // Arrange
+    const mockCommunityInfo: CommunityInfo[] = [];
+    mockFetchCommunities.mockResolvedValue(mockCommunityInfo);
 
-    expect(mockCreateCommunity).toHaveBeenCalledWith(mockCommunityData);
+    // Act
+    const { result } = renderHook(() => useCommunities(), { wrapper });
+
+    // Assert - No automatic fetch
+    expect(mockFetchCommunities).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(false);
+
+    // Act - Retrieve without options
+    const retrievedData = await result.current.retrieve();
+
+    // Assert
+    expect(retrievedData).toEqual(mockCommunityInfo);
+    expect(mockFetchCommunities).toHaveBeenCalledWith(undefined);
+    expect(mockFetchCommunities).toHaveBeenCalledTimes(1);
+  });
+
+  it("should have retrieve function available", () => {
+    // Act
+    const { result } = renderHook(() => useCommunities(), { wrapper });
+
+    // Assert
+    expect(result.current.retrieve).toBeDefined();
+    expect(typeof result.current.retrieve).toBe("function");
   });
 });

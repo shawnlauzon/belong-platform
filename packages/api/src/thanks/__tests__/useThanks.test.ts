@@ -124,7 +124,7 @@ describe("useThanks", () => {
 
     // Assert - Data should not be fetched automatically and status should be correct
     expect(mockFetchThanks).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(true); // No data yet, enabled: false
+    expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
     expect(result.current.isError).toBe(false);
     expect(result.current.isSuccess).toBe(false);
     expect(result.current.isFetching).toBe(false);
@@ -154,7 +154,7 @@ describe("useThanks", () => {
 
     // Assert - No automatic fetch
     expect(mockFetchThanks).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(true);
+    expect(result.current.isPending).toBe(false);
 
     // Act - Retrieve with filters
     const retrievedData = await result.current.retrieve(filters);
@@ -174,7 +174,7 @@ describe("useThanks", () => {
     const { result } = renderHook(() => useThanks(), { wrapper });
 
     // Assert - Initial state (query enabled: false, no mutations running)
-    expect(result.current.isPending).toBe(true); // Query is pending (enabled: false = pending state)
+    expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
     expect(result.current.isError).toBe(false);
     expect(result.current.isSuccess).toBe(false);
 

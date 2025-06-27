@@ -45,7 +45,7 @@ describe("useResources", () => {
   const wrapper = ({ children }: { children: any }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it("should return ResourceInfo[] instead of Resource[]", async () => {
+  it("should return ResourceInfo[] instead of Resource[] via retrieve", async () => {
     // Arrange: Mock return value should be ResourceInfo[]
     const mockResourceInfo: ResourceInfo[] = [
       {
@@ -66,73 +66,79 @@ describe("useResources", () => {
 
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
+    const retrievedData = await result.current.retrieve();
 
     // Assert
-    await waitFor(() => {
-      expect(result.current.resources).toEqual(mockResourceInfo);
-    });
-
+    expect(retrievedData).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const resource = result.current.resources![0];
+    const resource = retrievedData[0];
     expect(typeof resource.ownerId).toBe("string");
     expect(typeof resource.communityId).toBe("string");
     expect(resource).not.toHaveProperty("owner");
     expect(resource).not.toHaveProperty("community");
   });
 
-  it("should pass filters to fetchResources and return ResourceInfo[]", async () => {
+  it("should pass filters to fetchResources via retrieve function", async () => {
     // Arrange
     const filters = { category: "tools" as const };
     const mockResourceInfo: ResourceInfo[] = [];
     mockFetchResources.mockResolvedValue(mockResourceInfo);
 
     // Act
-    const { result } = renderHook(() => useResources(filters), { wrapper });
+    const { result } = renderHook(() => useResources(), { wrapper });
+    
+    // Manually retrieve data with filters
+    const retrievedData = await result.current.retrieve(filters);
 
     // Assert
-    await waitFor(() => {
-      expect(result.current.resources).toEqual(mockResourceInfo);
-    });
-
+    expect(retrievedData).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(filters);
   });
 
-  it("should only return active resources by default (fixed service now filters correctly)", async () => {
-    // Arrange: Mock service now correctly returns only active resources (after our fix)
-    const mockActiveResourcesOnly: ResourceInfo[] = [
-      {
-        id: "resource-active",
-        type: "offer",
-        category: "tools" as const,
-        title: "Active Resource",
-        description: "This should appear",
-        ownerId: "user-1",
-        communityId: "community-1",
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      // Note: No inactive resources - the service filtering now works correctly
-    ];
+  it("should not fetch data automatically and have correct initial status", () => {
+    // Arrange
+    const mockResourceInfo: ResourceInfo[] = [];
+    mockFetchResources.mockResolvedValue(mockResourceInfo);
 
-    mockFetchResources.mockResolvedValue(mockActiveResourcesOnly);
-
-    // Act: Call useResources with no filters (should default to active only)
+    // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    // Assert: Should only return active resources
-    await waitFor(() => {
-      expect(result.current.resources).toHaveLength(1);
-      expect(result.current.resources![0].isActive).toBe(true);
-      expect(result.current.resources![0].id).toBe("resource-active");
-    });
-
-    // Verify service was called with no filters initially
-    expect(mockFetchResources).toHaveBeenCalledWith(undefined);
-    
-    // The key assertion: only active resources appear in results
-    expect(result.current.resources!.every(r => r.isActive === true)).toBe(true);
+    // Assert - Data should not be fetched automatically and status should be correct
+    expect(mockFetchResources).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(false); // No pending since enabled: false
+    expect(result.current.isFetching).toBe(false);
   });
+
+  it("should allow retrieve to be called without filters", async () => {
+    // Arrange
+    const mockResourceInfo: ResourceInfo[] = [];
+    mockFetchResources.mockResolvedValue(mockResourceInfo);
+
+    // Act
+    const { result } = renderHook(() => useResources(), { wrapper });
+
+    // Assert - No automatic fetch
+    expect(mockFetchResources).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(false);
+
+    // Act - Retrieve without filters
+    const retrievedData = await result.current.retrieve();
+
+    // Assert
+    expect(retrievedData).toEqual(mockResourceInfo);
+    expect(mockFetchResources).toHaveBeenCalledWith(undefined);
+    expect(mockFetchResources).toHaveBeenCalledTimes(1);
+  });
+
+  it("should have retrieve function available", () => {
+    // Act
+    const { result } = renderHook(() => useResources(), { wrapper });
+
+    // Assert
+    expect(result.current.retrieve).toBeDefined();
+    expect(typeof result.current.retrieve).toBe("function");
+  });
+
 });
