@@ -45,7 +45,7 @@ describe("useThanks", () => {
   const wrapper = ({ children }: { children: any }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it("should return ThanksInfo[] instead of Thanks[]", async () => {
+  it("should return ThanksInfo[] from retrieve() method", async () => {
     // Arrange: Mock return value should be ThanksInfo[]
     const mockThanksInfo: ThanksInfo[] = [
       {
@@ -66,17 +66,16 @@ describe("useThanks", () => {
 
     // Act
     const { result } = renderHook(() => useThanks(), { wrapper });
+    
+    // Manually retrieve data
+    const retrievedData = await result.current.retrieve();
 
     // Assert
-    await waitFor(() => {
-      expect(result.current.thanks).toEqual(mockThanksInfo);
-    });
-
-    // Already checked in waitFor above
+    expect(retrievedData).toEqual(mockThanksInfo);
     expect(mockFetchThanks).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const thanks = result.current.thanks![0];
+    const thanks = retrievedData![0];
     expect(typeof thanks.fromUserId).toBe("string");
     expect(typeof thanks.toUserId).toBe("string");
     expect(typeof thanks.resourceId).toBe("string");
@@ -94,13 +93,75 @@ describe("useThanks", () => {
 
     // Act
     const { result } = renderHook(() => useThanks(filters), { wrapper });
+    
+    // Manually retrieve data
+    const retrievedData = await result.current.retrieve();
 
     // Assert
-    await waitFor(() => {
-      expect(result.current.thanks).toEqual(mockThanksInfo);
-    });
-
+    expect(retrievedData).toEqual(mockThanksInfo);
     expect(mockFetchThanks).toHaveBeenCalledWith(filters);
-    // Already checked in waitFor above
+  });
+
+  it("should not fetch data automatically and have correct initial status", async () => {
+    // Arrange
+    const mockThanksInfo: ThanksInfo[] = [
+      {
+        id: "thanks-1",
+        message: "Thank you!",
+        fromUserId: "user-1",
+        toUserId: "user-2",
+        resourceId: "resource-1",
+        communityId: "community-1",
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+
+    // Act
+    const { result } = renderHook(() => useThanks(), { wrapper });
+
+    // Assert - Data should not be fetched automatically and status should be correct
+    expect(mockFetchThanks).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(true); // No data yet, enabled: false
+    expect(result.current.isError).toBe(false);
+    expect(result.current.isSuccess).toBe(false);
+    expect(result.current.isFetching).toBe(false);
+
+    // Act - Call retrieve manually
+    const retrievedData = await result.current.retrieve();
+
+    // Assert - Data should be fetched after manual retrieve
+    expect(retrievedData).toEqual(mockThanksInfo);
+    expect(mockFetchThanks).toHaveBeenCalledTimes(1);
+    
+    // Status should update after successful fetch
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.isPending).toBe(false);
+    });
+  });
+
+  it("should allow retrieve to be called with filters", async () => {
+    // Arrange
+    const initialFilters = { sentBy: "user-1" };
+    const mockThanksInfo: ThanksInfo[] = [];
+    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+
+    // Act
+    const { result } = renderHook(() => useThanks(initialFilters), { wrapper });
+
+    // Assert - No automatic fetch
+    expect(mockFetchThanks).not.toHaveBeenCalled();
+    expect(result.current.isPending).toBe(true);
+
+    // Act - Retrieve with initial filters
+    const retrievedData = await result.current.retrieve();
+
+    // Assert
+    expect(retrievedData).toEqual(mockThanksInfo);
+    expect(mockFetchThanks).toHaveBeenCalledWith(initialFilters);
+    expect(mockFetchThanks).toHaveBeenCalledTimes(1);
   });
 });

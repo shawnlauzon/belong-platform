@@ -19,13 +19,14 @@ export function useThanks(filters?: ThanksFilter) {
   const supabase = useSupabase();
   const thanksService = createThanksService(supabase);
 
-  // List thanks query
+  // List thanks query - disabled by default to prevent automatic fetching
   const thanksQuery = useQuery<ThanksInfo[], Error>({
     queryKey: filters
       ? queryKeys.thanks.filtered(filters)
       : queryKeys.thanks.all,
     queryFn: () => thanksService.fetchThanks(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: false, // Prevent automatic fetching
   });
 
   // Note: Individual query hooks should be called separately by consumers
@@ -149,10 +150,15 @@ export function useThanks(filters?: ThanksFilter) {
   }
 
   return {
-    // Queries
-    thanks: thanksQuery.data,
-    isLoading: thanksQuery.isLoading,
+    // React Query status properties (aligned with v5 standards)
+    isPending: thanksQuery.isPending,
+    isError: thanksQuery.isError,
+    isSuccess: thanksQuery.isSuccess,
+    isFetching: thanksQuery.isFetching,
     error: thanksQuery.error,
+
+    // Manual fetch operation
+    retrieve: () => thanksQuery.refetch().then(result => result.data),
 
     // Mutations (with defensive null checks for testing environments)
     create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
