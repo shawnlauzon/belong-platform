@@ -76,15 +76,25 @@ function App() {
 
 ```typescript
 import { useCommunities } from '@belongnetwork/platform';
+import { useEffect, useState } from 'react';
 
 function CommunityList() {
-  const { communities, isLoading } = useCommunities();
+  const communities = useCommunities();
+  const [communityList, setCommunityList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    communities.retrieve().then((data) => {
+      setCommunityList(data);
+      setIsLoading(false);
+    });
+  }, [communities]);
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>
-      {communities?.map(community => (
+      {communityList?.map(community => (
         <div key={community.id}>{community.name}</div>
       ))}
     </div>
@@ -141,16 +151,23 @@ function AuthExample() {
 const communities = useCommunities();
 const resources = useResources();
 const events = useEvents();
+const thanks = useThanks();
+const users = useUsers();
 
-// Fetching lists
-const communityList = communities.communities;
-const resourceList = resources.resources({ communityId: "abc123" });
-const eventList = events.events({ communityId: "abc123" });
+// Fetching lists with manual retrieve() calls
+const communityList = await communities.retrieve();
+const resourceList = await resources.retrieve({ communityId: "abc123" });
+const eventList = await events.retrieve({ communityId: "abc123" });
+const thanksList = await thanks.retrieve({ sentBy: "user-123" });
+const userList = await users.retrieve({ communityId: "abc123" });
 
-// Fetching single items
-const { data: community } = communities.getCommunity("abc123");
-const { data: resource } = resources.getResource("def456");
-const { data: event } = events.getEvent("ghi789");
+// Fetching with options
+const communitiesWithDeleted = await communities.retrieve({ includeDeleted: true });
+
+// Fetching single items (individual hooks still work the same)
+const { data: community } = useCommunity("abc123");
+const { data: resource } = useResource("def456");
+const { data: event } = useEvent("ghi789");
 
 // Using mutations
 await resources.create({
@@ -190,14 +207,33 @@ function ResourceForm() {
 
 ```typescript
 function CommunityPage({ id }: { id: string }) {
-  const communities = useCommunities();
-  const { data: community, isLoading, error } = communities.getCommunity(id);
+  const { data: community, isLoading, error } = useCommunity(id);
 
   if (isLoading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
   if (!community) return <NotFound />;
 
   return <CommunityDetails community={community} />;
+}
+
+// For list data with manual fetching
+function CommunityList() {
+  const communities = useCommunities();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    communities.retrieve()
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [communities]);
+
+  if (loading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+
+  return <CommunityListView data={data} />;
 }
 ```
 
@@ -239,66 +275,102 @@ Returns an object with:
 
 Returns an object with:
 
-- **Queries**:
-  - `communities` - List of communities
-  - `getCommunity(id)` - Get single community by ID
-  - `getMemberships(communityId)` - List community members
-  - `getUserMemberships(userId)` - List user's communities
+- **Manual Data Fetching**:
+  - `retrieve(options?)` - Fetch communities list with optional filters
+    - `options.includeDeleted?: boolean` - Include deleted communities
+- **State** (for internal use - data not automatically populated):
+  - `communities` - Last fetched communities (initially undefined)
+  - `isLoading` - Loading state (false when enabled: false)
+  - `error` - Error state
 - **Mutations**:
   - `create(data)` - Create new community
   - `update(id, data)` - Update community
   - `delete(id)` - Delete community
-  - `join(communityId)` - Join community
+  - `join(communityId, role?)` - Join community
   - `leave(communityId)` - Leave community
+
+**Note**: Use individual hooks like `useCommunity(id)`, `useCommunityMemberships(id)`, `useUserMemberships(userId)` for single-item queries with automatic fetching.
 
 ### `useResources()`
 
 Returns an object with:
 
-- **Queries**:
-  - `resources` - List of resources (accepts filter)
-  - `getResource(id)` - Get single resource by ID
+- **Manual Data Fetching**:
+  - `retrieve(filters?)` - Fetch resources list with optional filters
+    - `filters.communityId?: string` - Filter by community
+    - `filters.category?: ResourceCategory` - Filter by category
+    - `filters.type?: "offer" | "request"` - Filter by type
+- **State** (for internal use - data not automatically populated):
+  - `resources` - Last fetched resources (initially undefined)
+  - `isLoading` - Loading state (false when enabled: false)
+  - `error` - Error state
 - **Mutations**:
   - `create(data)` - Create new resource
   - `update(id, data)` - Update resource
   - `delete(id)` - Delete resource
 
+**Note**: Use `useResource(id)` for single-item queries with automatic fetching.
+
 ### `useEvents()`
 
 Returns an object with:
 
-- **Queries**:
-  - `events` - List of events (accepts filter)
-  - `getEvent(id)` - Get single event by ID
-  - `getAttendees(eventId)` - List event attendees
+- **Manual Data Fetching**:
+  - `retrieve(filters?)` - Fetch events list with optional filters
+    - `filters.communityId?: string` - Filter by community
+    - `filters.organizerId?: string` - Filter by organizer
+    - `filters.startDate?: Date` - Filter by start date
+- **State** (for internal use - data not automatically populated):
+  - `events` - Last fetched events (initially undefined)
+  - `isLoading` - Loading state (false when enabled: false)
+  - `error` - Error state
 - **Mutations**:
   - `create(data)` - Create new event
   - `update(id, data)` - Update event
   - `delete(id)` - Delete event
-  - `join(eventId)` - Join event
+  - `join(eventId, status?)` - Join event with attendance status
   - `leave(eventId)` - Leave event
+
+**Note**: Use individual hooks like `useEvent(id)`, `useEventAttendees(eventId)`, `useUserEventAttendances(userId)` for single-item queries with automatic fetching.
 
 ### `useThanks()`
 
 Returns an object with:
 
-- **Queries**:
-  - `thanks` - List of thanks (accepts filter)
-  - `getThank(id)` - Get single thank by ID
+- **Manual Data Fetching**:
+  - `retrieve(filters?)` - Fetch thanks list with optional filters
+    - `filters.sentBy?: string` - Filter by sender user ID
+    - `filters.receivedBy?: string` - Filter by receiver user ID
+    - `filters.communityId?: string` - Filter by community
+    - `filters.resourceId?: string` - Filter by resource
+- **State** (for internal use - data not automatically populated):
+  - `thanks` - Last fetched thanks (initially undefined)
+  - `isLoading` - Loading state (false when enabled: false)
+  - `error` - Error state
 - **Mutations**:
   - `create(data)` - Create new thanks
   - `update(id, data)` - Update thanks
   - `delete(id)` - Delete thanks
 
+**Note**: Use `useThank(id)` for single-item queries with automatic fetching.
+
 ### `useUsers()`
 
 Returns an object with:
 
-- **Queries**:
-  - `users` - List of users (accepts filter)
-  - `getUser(id)` - Get single user by ID
+- **Manual Data Fetching**:
+  - `retrieve(filters?)` - Fetch users list with optional filters
+    - `filters.communityId?: string` - Filter by community membership
+    - `filters.role?: UserRole` - Filter by role
+- **State** (for internal use - data not automatically populated):
+  - `users` - Last fetched users (initially undefined)
+  - `isLoading` - Loading state (false when enabled: false)
+  - `error` - Error state
 - **Mutations**:
-  - `update(id, data)` - Update user
+  - `update(user)` - Update user profile
+  - `delete(id)` - Delete user
+
+**Note**: Use `useUser(id)` for single-item queries with automatic fetching.
 
 ---
 
