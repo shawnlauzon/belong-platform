@@ -168,7 +168,8 @@ describe("logger utilities", () => {
 
     it("should handle invalid log levels by throwing", () => {
       // loglevel library throws on invalid levels
-      expect(() => createLogger("invalid" as any)).toThrow();
+      // @ts-expect-error - testing invalid input
+      expect(() => createLogger("invalid")).toThrow();
     });
   });
 
