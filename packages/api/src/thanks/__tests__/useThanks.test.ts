@@ -92,10 +92,10 @@ describe("useThanks", () => {
     mockFetchThanks.mockResolvedValue(mockThanksInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(filters), { wrapper });
+    const { result } = renderHook(() => useThanks(), { wrapper });
     
-    // Manually retrieve data
-    const retrievedData = await result.current.retrieve();
+    // Manually retrieve data with filters
+    const retrievedData = await result.current.retrieve(filters);
 
     // Assert
     expect(retrievedData).toEqual(mockThanksInfo);
@@ -145,23 +145,23 @@ describe("useThanks", () => {
 
   it("should allow retrieve to be called with filters", async () => {
     // Arrange
-    const initialFilters = { sentBy: "user-1" };
+    const filters = { sentBy: "user-1" };
     const mockThanksInfo: ThanksInfo[] = [];
     mockFetchThanks.mockResolvedValue(mockThanksInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(initialFilters), { wrapper });
+    const { result } = renderHook(() => useThanks(), { wrapper });
 
     // Assert - No automatic fetch
     expect(mockFetchThanks).not.toHaveBeenCalled();
     expect(result.current.isPending).toBe(true);
 
-    // Act - Retrieve with initial filters
-    const retrievedData = await result.current.retrieve();
+    // Act - Retrieve with filters
+    const retrievedData = await result.current.retrieve(filters);
 
     // Assert
     expect(retrievedData).toEqual(mockThanksInfo);
-    expect(mockFetchThanks).toHaveBeenCalledWith(initialFilters);
+    expect(mockFetchThanks).toHaveBeenCalledWith(filters);
     expect(mockFetchThanks).toHaveBeenCalledTimes(1);
   });
 

@@ -14,17 +14,15 @@ import type {
  * Consolidated hook for all thanks operations
  * Provides queries, mutations, and state management for thanks
  */
-export function useThanks(filters?: ThanksFilter) {
+export function useThanks() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const thanksService = createThanksService(supabase);
 
   // List thanks query - disabled by default to prevent automatic fetching
   const thanksQuery = useQuery<ThanksInfo[], Error>({
-    queryKey: filters
-      ? queryKeys.thanks.filtered(filters)
-      : queryKeys.thanks.all,
-    queryFn: () => thanksService.fetchThanks(filters),
+    queryKey: queryKeys.thanks.all,
+    queryFn: () => thanksService.fetchThanks(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: false, // Prevent automatic fetching
   });
@@ -36,27 +34,8 @@ export function useThanks(filters?: ThanksFilter) {
   const createMutation = useMutation({
     mutationFn: (data: ThanksData) => thanksService.createThanks(data),
     onSuccess: (newThanks) => {
-      // Invalidate the thanks list to reflect the new thanks
-      queryClient.invalidateQueries({ queryKey: queryKeys.thanks.all });
-
-      // Invalidate filtered queries that might include this thanks
-      if (newThanks.fromUser?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.sentBy(newThanks.fromUser.id),
-        });
-      }
-      if (newThanks.toUser?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.receivedBy(newThanks.toUser.id),
-        });
-      }
-      if (newThanks.resource?.community?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.byCommunity(
-            newThanks.resource.community.id,
-          ),
-        });
-      }
+      // Invalidate all thanks queries
+      queryClient.invalidateQueries({ queryKey: ["thanks"] });
 
       // Update the cache for this specific thanks
       queryClient.setQueryData(queryKeys.thanks.byId(newThanks.id), newThanks);
@@ -80,27 +59,8 @@ export function useThanks(filters?: ThanksFilter) {
     mutationFn: ({ id, data }: { id: string; data: Partial<ThanksData> }) =>
       thanksService.updateThanks(id, data),
     onSuccess: (updatedThanks) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.thanks.all });
-
-      // Invalidate filtered queries
-      if (updatedThanks.fromUser?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.sentBy(updatedThanks.fromUser.id),
-        });
-      }
-      if (updatedThanks.toUser?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.receivedBy(updatedThanks.toUser.id),
-        });
-      }
-      if (updatedThanks.resource?.community?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.thanks.byCommunity(
-            updatedThanks.resource.community.id,
-          ),
-        });
-      }
+      // Invalidate all thanks queries
+      queryClient.invalidateQueries({ queryKey: ["thanks"] });
 
       // Update the cache for this specific thanks
       queryClient.setQueryData(
@@ -124,8 +84,8 @@ export function useThanks(filters?: ThanksFilter) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => thanksService.deleteThanks(id),
     onSuccess: (_, thanksId) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.thanks.all });
+      // Invalidate all thanks queries
+      queryClient.invalidateQueries({ queryKey: ["thanks"] });
       queryClient.removeQueries({
         queryKey: queryKeys.thanks.byId(thanksId),
       });
@@ -145,7 +105,6 @@ export function useThanks(filters?: ThanksFilter) {
   if (thanksQuery.error) {
     logger.error("🙏 API: Error fetching thanks via consolidated hook", {
       error: thanksQuery.error,
-      filters,
     });
   }
 
@@ -158,9 +117,15 @@ export function useThanks(filters?: ThanksFilter) {
     error: thanksQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error,
 
     // Manual fetch operation
-    retrieve: async () => {
-      const result = await thanksQuery.refetch();
-      return result.data;
+    retrieve: async (filters?: ThanksFilter) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: filters
+          ? queryKeys.thanks.filtered(filters)
+          : queryKeys.thanks.all,
+        queryFn: () => thanksService.fetchThanks(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
     },
 
     // Mutations (with defensive null checks for testing environments)
