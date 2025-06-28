@@ -15,7 +15,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@belongnetwork/platform": ["./packages/api/src"],
+      "@belongnetwork/api": ["./packages/api/src"],
       "@belongnetwork/core": ["./packages/core/src"],
       "@belongnetwork/types": ["./packages/types/src"],
       "@belongnetwork/types/database": ["./packages/types/src/database"],

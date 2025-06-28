@@ -9,7 +9,6 @@ import type {
 } from "@belongnetwork/types";
 import type { Resource } from "@belongnetwork/types";
 import { parsePostGisPoint, toPostGisPoint } from "../../utils";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
 
 export type ResourceRow = Database["public"]["Tables"]["resources"]["Row"];
 export type ResourceInsertDbData =

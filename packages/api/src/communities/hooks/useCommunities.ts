@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createCommunityService } from "../services/community.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type {
   Community,
   CommunityInfo,
@@ -31,7 +31,7 @@ export function useCommunities() {
   const communitiesQuery = useQuery<CommunityInfo[], Error>({
     queryKey: queryKeys.communities.all,
     queryFn: () => communityService.fetchCommunities(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     enabled: false, // Prevent automatic fetching
   });
 
@@ -190,7 +190,7 @@ export function useCommunities() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.communities.all,
         queryFn: () => communityService.fetchCommunities(options),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -200,7 +200,7 @@ export function useCommunities() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.communities.byId(id),
         queryFn: () => communityService.fetchCommunityById(id),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -210,7 +210,7 @@ export function useCommunities() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.communities.memberships(communityId),
         queryFn: () => communityService.fetchCommunityMemberships(communityId),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -220,7 +220,7 @@ export function useCommunities() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.communities.userMemberships(userId),
         queryFn: () => communityService.fetchUserMemberships(userId),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },

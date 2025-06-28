@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createThanksService } from "../services/thanks.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type {
   Thanks,
   ThanksInfo,
@@ -23,7 +23,7 @@ export function useThanks() {
   const thanksQuery = useQuery<ThanksInfo[], Error>({
     queryKey: queryKeys.thanks.all,
     queryFn: () => thanksService.fetchThanks(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     enabled: false, // Prevent automatic fetching
   });
 
@@ -128,7 +128,7 @@ export function useThanks() {
           ? queryKeys.thanks.filtered(filters)
           : queryKeys.thanks.all,
         queryFn: () => thanksService.fetchThanks(filters),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -138,7 +138,7 @@ export function useThanks() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.thanks.byId(id),
         queryFn: () => thanksService.fetchThanksById(id),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },

@@ -6,7 +6,8 @@ import type {
   CommunityMembership,
   User,
 } from "@belongnetwork/types";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
+import { requireAuthentication } from "../../shared/auth-helpers";
+import { ERROR_CODES } from "../../constants";
 import {
   toCommunityInfo,
   toDomainCommunity,
@@ -74,7 +75,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       const { data, error } = await query.single();
 
       if (error) {
-        if (error.code === "PGRST116") {
+        if (error.code === ERROR_CODES.NOT_FOUND) {
           return null; // Community not found
         }
         throw error;
@@ -97,12 +98,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     logger.debug("🏘️ API: Creating community", { name: data.name });
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
+      await requireAuthentication(supabase, "create community");
 
       const { data: newCommunity, error } = await supabase
         .from("communities")
@@ -158,12 +154,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     logger.debug("🏘️ API: Updating community", { id: updateData.id });
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
+      const userId = await requireAuthentication(supabase, "update community");
 
       const { error } = await supabase
         .from("communities")
@@ -185,7 +176,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
       // Return a simplified community object
       const organizer: User = {
-        id: user.id,
+        id: userId,
         email: "",
         firstName: "",
         lastName: "",
@@ -223,19 +214,14 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     logger.debug("🏘️ API: Deleting community", { id });
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
+      const userId = await requireAuthentication(supabase, "delete community");
 
       const { error } = await supabase
         .from("communities")
         .update({
           is_active: false,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id,
+          deleted_by: userId,
         })
         .eq("id", id);
 
@@ -260,17 +246,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error("🏘️ API: User must be authenticated to join a community", {
-          error: userError,
-        });
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "join community");
 
       // Check if user is already a member
       const { data: existingMembership, error: checkError } = await supabase
@@ -280,8 +256,8 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .eq("community_id", communityId)
         .single();
 
-      if (checkError && checkError.code !== "PGRST116") {
-        // PGRST116 is "No rows found" - which is what we want
+      if (checkError && checkError.code !== ERROR_CODES.NOT_FOUND) {
+        // ERROR_CODES.NOT_FOUND is "No rows found" - which is what we want
         logger.error("🏘️ API: Failed to check existing membership", {
           error: checkError,
         });
@@ -351,20 +327,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🏘️ API: User must be authenticated to leave a community",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "leave community");
 
       // Check if user is a member
       const { data: existingMembership, error: checkError } = await supabase
@@ -485,20 +448,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
       // If no userId provided, get current user
       if (!targetUserId) {
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-
-        if (userError || !userData?.user?.id) {
-          logger.error(
-            "🏘️ API: User must be authenticated or userId must be provided",
-            {
-              error: userError,
-            },
-          );
-          throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-        }
-
-        targetUserId = userData.user.id;
+        targetUserId = await requireAuthentication(supabase, "fetch user communities");
       }
 
       const { data, error } = await supabase

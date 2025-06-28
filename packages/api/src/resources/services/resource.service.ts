@@ -13,7 +13,8 @@ import {
 } from "../transformers/resourceTransformer";
 import { createUserService } from "../../users/services/user.service";
 import { createCommunityService } from "../../communities/services/community.service";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
+import { requireAuthentication } from "../../shared/auth-helpers";
+import { ERROR_CODES } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
@@ -120,7 +121,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (error) {
-        if (error.code === "PGRST116") {
+        if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
           logger.debug("📚 API: Resource not found", { id });
           return null;
@@ -173,20 +174,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "📚 API: User must be authenticated to create a resource",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "create resource");
 
       // Transform to database format
       const dbResource = forDbInsert(data, userId);
@@ -248,18 +236,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "📚 API: User must be authenticated to update a resource",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
+      await requireAuthentication(supabase, "update resource");
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
@@ -319,26 +296,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
     try {
       logger.debug("📚 Resource Service: Starting delete operation", { id });
       // Get current user
-      logger.debug("📚 Resource Service: Getting current user", { id });
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-      logger.debug("📚 Resource Service: Got user data", {
-        id,
-        hasUser: !!userData?.user?.id,
-        userError: !!userError,
-      });
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "📚 Resource Service: User must be authenticated to delete a resource",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "delete resource");
       logger.debug("📚 Resource Service: Authenticated user", { id, userId });
 
       // First, fetch the existing resource to verify ownership
@@ -360,7 +318,7 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
       });
 
       if (fetchError) {
-        if (fetchError.code === "PGRST116") {
+        if (fetchError.code === ERROR_CODES.NOT_FOUND) {
           // Resource not found - we can consider this a success
           logger.debug("📚 Resource Service: Resource not found for deletion", {
             id,

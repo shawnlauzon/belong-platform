@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createEventService } from "../services/event.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME, SHORT_CACHE_TIME } from "../../shared";
 import type {
   Event,
   EventInfo,
@@ -25,7 +25,7 @@ export function useEvents() {
   const eventsQuery = useQuery<EventInfo[], Error>({
     queryKey: queryKeys.events.all,
     queryFn: () => eventService.fetchEvents(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     enabled: false, // Prevent automatic fetching
   });
 
@@ -254,7 +254,7 @@ export function useEvents() {
           ? queryKeys.events.filtered(filters)
           : queryKeys.events.all,
         queryFn: () => eventService.fetchEvents(filters),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -264,7 +264,7 @@ export function useEvents() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.events.byId(id),
         queryFn: () => eventService.fetchEventById(id),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -274,7 +274,7 @@ export function useEvents() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.events.attendees(eventId),
         queryFn: () => eventService.fetchEventAttendees({ eventId }),
-        staleTime: 2 * 60 * 1000,
+        staleTime: SHORT_CACHE_TIME,
       });
       return result;
     },
@@ -284,7 +284,7 @@ export function useEvents() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.events.userAttendances(userId),
         queryFn: () => eventService.fetchUserEventAttendances(userId),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
