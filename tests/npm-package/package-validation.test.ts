@@ -24,9 +24,6 @@ describe("NPM Package Validation", () => {
         "types.es.js",
         "types.cjs.js",
         "types.d.ts",
-        "providers.es.js",
-        "providers.cjs.js",
-        "providers.d.ts",
       ];
 
       for (const file of requiredFiles) {
@@ -93,13 +90,6 @@ describe("NPM Package Validation", () => {
       expect(content).not.toMatch(/from ['"]\.\.\/\.\.\/packages\//);
     });
 
-    it("should not contain broken relative paths in providers.d.ts", () => {
-      const providersDtsPath = join(distPath, "providers.d.ts");
-      const content = readFileSync(providersDtsPath, "utf-8");
-      
-      expect(content).not.toMatch(/from ['"]\.\.\/packages\//);
-      expect(content).not.toMatch(/from ['"]\.\.\/\.\.\/packages\//);
-    });
   });
 
   describe("JavaScript Bundles", () => {
@@ -160,7 +150,6 @@ describe("NPM Package Validation", () => {
       // Check subpath exports
       expect(packageJson.exports["./hooks"]).toBeDefined();
       expect(packageJson.exports["./types"]).toBeDefined();
-      expect(packageJson.exports["./providers"]).toBeDefined();
     });
   });
 });

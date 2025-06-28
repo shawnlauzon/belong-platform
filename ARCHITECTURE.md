@@ -89,7 +89,7 @@ packages/api/
 │   ├── auth/
 │   │   ├── hooks/         # Authentication hooks
 │   │   ├── services/      # Auth service layer
-│   │   └── providers/     # BelongProvider component
+│   │   └── providers/     # BelongProvider component (exported from main package)
 │   ├── communities/
 │   │   ├── hooks/         # Community data hooks
 │   │   ├── services/      # Community service layer

@@ -14,11 +14,6 @@
       "import": "./dist/index.es.js",
       "require": "./dist/index.cjs.js"
     },
-    "./providers": {
-      "types": "./dist/providers.d.ts",
-      "import": "./dist/providers.es.js",
-      "require": "./dist/providers.cjs.js"
-    },
     "./hooks": {
       "types": "./dist/hooks.d.ts",
       "import": "./dist/hooks.es.js",

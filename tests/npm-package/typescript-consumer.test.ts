@@ -38,9 +38,5 @@ describe("TypeScript Consumer Experience", () => {
     const typesModule: TypesImport = {} as any;
     expect(() => typesModule.ResourceCategory).not.toThrow();
     
-    // Test providers subpath
-    type ProvidersImport = typeof import("../../dist/providers.js");
-    const providersModule: ProvidersImport = {} as any;
-    expect(() => providersModule.BelongProvider).not.toThrow();
   });
 });
