@@ -9,7 +9,6 @@ import type {
 } from "@belongnetwork/types";
 import type { Resource } from "@belongnetwork/types";
 import { parsePostGisPoint, toPostGisPoint } from "../../utils";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
 
 export type ResourceRow = Database["public"]["Tables"]["resources"]["Row"];
 export type ResourceInsertDbData =
@@ -24,10 +23,6 @@ export function toDomainResource(
   dbResource: ResourceRow,
   refs: { owner: User; community?: Community },
 ): Resource {
-  if (!dbResource) {
-    throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-  }
-
   if (dbResource.owner_id !== refs.owner.id) {
     throw new Error("Owner ID does not match");
   }
@@ -123,10 +118,6 @@ export function toResourceInfo(
   ownerId: string,
   communityId: string,
 ): ResourceInfo {
-  if (!dbResource) {
-    throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-  }
-
   return {
     id: dbResource.id,
     type: dbResource.type as "offer" | "request",

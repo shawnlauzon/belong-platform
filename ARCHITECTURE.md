@@ -89,7 +89,7 @@ packages/api/
 │   ├── auth/
 │   │   ├── hooks/         # Authentication hooks
 │   │   ├── services/      # Auth service layer
-│   │   └── providers/     # BelongProvider component
+│   │   └── providers/     # BelongProvider component (exported from main package)
 │   ├── communities/
 │   │   ├── hooks/         # Community data hooks
 │   │   ├── services/      # Community service layer
@@ -191,7 +191,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
 ### Hook Implementation Pattern
 
-Consolidated hook pattern for each entity:
+Consolidated hook pattern for each entity with manual data fetching:
 
 ```typescript
 export function useCommunities() {
@@ -199,27 +199,51 @@ export function useCommunities() {
   const supabase = useSupabase();
   const service = createCommunityService(supabase);
 
+  // List communities query - disabled by default to prevent automatic fetching
   const communitiesQuery = useQuery<CommunityInfo[], Error>({
     queryKey: queryKeys.communities.all,
-    queryFn: service.fetchCommunities,
+    queryFn: () => service.fetchCommunities(),
     staleTime: 5 * 60 * 1000,
+    enabled: false, // Prevent automatic fetching
   });
 
   const createMutation = useMutation({
     mutationFn: service.createCommunity,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.communities.all });
+      // Simplified cache invalidation
+      queryClient.invalidateQueries({ queryKey: ["communities"] });
     },
   });
 
   return {
+    // State (for internal use - data not automatically populated)
     communities: communitiesQuery.data,
     isLoading: communitiesQuery.isLoading,
+    error: communitiesQuery.error,
+
+    // Manual fetch operation
+    retrieve: async (options?: { includeDeleted?: boolean }) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.communities.all,
+        queryFn: () => service.fetchCommunities(options),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Mutations
     create: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
   };
 }
 ```
+
+**Key Pattern Changes**:
+- **No Constructor Parameters**: Hooks take no initial parameters
+- **Manual Fetching**: Use `retrieve(filters?)` for data fetching with dynamic filters
+- **Disabled Auto-fetch**: `enabled: false` prevents automatic query execution
+- **Simplified Caching**: Broad invalidation patterns using base entity keys
+- **Flexible Filtering**: Apply different filters per call without recreating hooks
 
 ### File Organization
 
@@ -374,9 +398,11 @@ When adding new features to the platform:
    - `forDbInsert()` and `forDbUpdate()` functions
 
 3. **Create Consolidated Hook**
-   - One hook per entity with all operations
-   - Return object with queries and mutations
-   - Handle loading and error states
+   - One hook per entity with all operations (no constructor parameters)
+   - Include `retrieve(filters?)` function for manual data fetching
+   - Disable automatic query fetching with `enabled: false`
+   - Return object with state, retrieve function, and mutations
+   - Implement simplified cache invalidation patterns
 
 4. **Add Tests**
    - Unit tests can mock platform code when needed
@@ -409,15 +435,43 @@ export const toEntityInfo = (row: DbRow): EntityInfo => ({
 
 // 3. Create hook (hooks/useEntities.ts)
 export function useEntities() {
+  const queryClient = useQueryClient();
   const service = createEntityService(useSupabase());
   
+  // Disabled query for manual fetching
   const entitiesQuery = useQuery({
     queryKey: queryKeys.entities.all,
-    queryFn: service.fetchEntities,
+    queryFn: () => service.fetchEntities(),
+    staleTime: 5 * 60 * 1000,
+    enabled: false,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: service.createEntity,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["entities"] });
+    },
   });
   
   return {
+    // State (not automatically populated)
     entities: entitiesQuery.data,
+    isLoading: entitiesQuery.isLoading,
+    error: entitiesQuery.error,
+
+    // Manual fetch operation
+    retrieve: async (filters?: EntityFilter) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: filters 
+          ? queryKeys.entities.filtered(filters)
+          : queryKeys.entities.all,
+        queryFn: () => service.fetchEntities(filters),
+        staleTime: 5 * 60 * 1000,
+      });
+      return result;
+    },
+
+    // Mutations
     create: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
   };

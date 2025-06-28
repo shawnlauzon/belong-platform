@@ -116,13 +116,6 @@ export function forDbUpdate(
   eventData: Partial<EventData>,
   organizerId?: string,
 ): EventUpdateDbData {
-  // Handle undefined or null eventData gracefully
-  if (!eventData) {
-    return {
-      organizer_id: organizerId,
-    };
-  }
-
   const {
     communityId,
     organizerId: _organizerId,

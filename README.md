@@ -101,7 +101,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 ```
 
-### Using the Hooks
+### Environment Variables
+
+Create a `.env` file:
+
+```env
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key
+REACT_APP_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
+```
+
+### Your First Component
 
 ```tsx
 import {
@@ -120,17 +130,6 @@ function CommunityDashboard() {
   const { data: conversations } = useConversations();
   const createResource = useCreateResource();
   const sendMessage = useSendMessage();
-
-  const handleShareResource = async () => {
-    await createResource.mutateAsync({
-      title: "Power Drill",
-      category: "tools",
-      type: "offer",
-      communityId: "community-123",
-      meetupType: "pickup",
-      // ... other fields
-    });
-  };
 
   const handleSendMessage = async (conversationId: string, content: string) => {
     await sendMessage.mutateAsync({
@@ -552,28 +551,26 @@ function MessagingInterface() {
 }
 ```
 
-## 🛠️ Development Setup
+## Documentation
 
-### Prerequisites
+- **[Usage Guide](./USAGE.md)** - Complete API documentation, hooks reference, and examples
+- **[Architecture](./ARCHITECTURE.md)** - Internal architecture, development guidelines, and contributing
+
+## Requirements
 
 - Node.js 18+
-- pnpm (recommended) or npm
-- Supabase project
-- Mapbox account
+- React 18+
+- TypeScript 5+
+- Supabase account
+- Mapbox account (for location features)
 
-### Local Development
+## Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/belong-platform.git
+# Clone and install
+git clone https://github.com/belongnetwork/belong-platform.git
 cd belong-platform
-
-# Install dependencies
 pnpm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your Supabase and Mapbox credentials
 
 # Run tests
 pnpm test
@@ -583,9 +580,6 @@ pnpm typecheck
 
 # Build packages
 pnpm build
-
-# Lint code
-pnpm lint
 ```
 
 ### Environment Variables
@@ -839,15 +833,9 @@ pnpm --filter @belongnetwork/core build
 4. **Documentation**: Update README and JSDoc comments
 5. **Export**: Ensure new features are exported from the appropriate barrel files
 
-## 📝 License
+## License
 
 [Add your license here]
-
-## 🆘 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-org/belong-platform/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/belong-platform/discussions)
-- **Documentation**: This README and inline JSDoc comments
 
 ---
 

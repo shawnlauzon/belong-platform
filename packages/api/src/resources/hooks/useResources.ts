@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createResourceService } from "../services/resource.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type {
   Resource,
   ResourceInfo,
@@ -14,18 +14,17 @@ import type {
  * Consolidated hook for all resource operations
  * Provides queries, mutations, and state management for resources
  */
-export function useResources(filters?: ResourceFilter) {
+export function useResources() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const resourceService = createResourceService(supabase);
 
-  // List resources query
+  // List resources query - disabled by default to prevent automatic fetching
   const resourcesQuery = useQuery<ResourceInfo[], Error>({
-    queryKey: filters
-      ? queryKeys.resources.filtered(filters)
-      : queryKeys.resources.all,
-    queryFn: () => resourceService.fetchResources(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: queryKeys.resources.all,
+    queryFn: () => resourceService.fetchResources(),
+    staleTime: STANDARD_CACHE_TIME,
+    enabled: false, // Prevent automatic fetching
   });
 
   // Note: Individual query hooks should be called separately by consumers
@@ -35,16 +34,8 @@ export function useResources(filters?: ResourceFilter) {
   const createMutation = useMutation({
     mutationFn: (data: ResourceData) => resourceService.createResource(data),
     onSuccess: (newResource) => {
-      // Invalidate the resources list to reflect the new resource
-      queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byCommunity(
-          newResource.community?.id || "",
-        ),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byOwner(newResource.owner.id),
-      });
+      // Invalidate all resources queries
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
 
       // Update the cache for this specific resource
       queryClient.setQueryData(
@@ -72,16 +63,8 @@ export function useResources(filters?: ResourceFilter) {
     mutationFn: ({ id, data }: { id: string; data: Partial<ResourceData> }) =>
       resourceService.updateResource(id, data),
     onSuccess: (updatedResource) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byCommunity(
-          updatedResource.community?.id || "",
-        ),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byOwner(updatedResource.owner.id),
-      });
+      // Invalidate all resources queries
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
 
       // Update the cache for this specific resource
       queryClient.setQueryData(
@@ -142,15 +125,42 @@ export function useResources(filters?: ResourceFilter) {
   if (resourcesQuery.error) {
     logger.error("📚 API: Error fetching resources via consolidated hook", {
       error: resourcesQuery.error,
-      filters,
     });
   }
 
   return {
-    // Queries
-    resources: resourcesQuery.data,
-    isLoading: resourcesQuery.isLoading,
-    error: resourcesQuery.error,
+    // Unified React Query status properties (query + mutations)
+    isPending: resourcesQuery.isFetching || 
+               (createMutation && createMutation.isPending) || 
+               (updateMutation && updateMutation.isPending) || 
+               (deleteMutation && deleteMutation.isPending) || 
+               false,
+    isError: resourcesQuery.isError || (createMutation?.isError || false) || (updateMutation?.isError || false) || (deleteMutation?.isError || false),
+    isSuccess: resourcesQuery.isSuccess || (createMutation?.isSuccess || false) || (updateMutation?.isSuccess || false) || (deleteMutation?.isSuccess || false),
+    isFetching: resourcesQuery.isFetching, // Only for query operations
+    error: resourcesQuery.error || createMutation?.error || updateMutation?.error || deleteMutation?.error,
+
+    // List fetch operation
+    list: async (filters?: ResourceFilter) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: filters
+          ? queryKeys.resources.filtered(filters)
+          : queryKeys.resources.all,
+        queryFn: () => resourceService.fetchResources(filters),
+        staleTime: STANDARD_CACHE_TIME,
+      });
+      return result;
+    },
+
+    // Individual item fetch operation
+    byId: async (id: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.resources.byId(id),
+        queryFn: () => resourceService.fetchResourceById(id),
+        staleTime: STANDARD_CACHE_TIME,
+      });
+      return result;
+    },
 
     // Mutations (with defensive null checks for testing environments)
     create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
@@ -158,27 +168,13 @@ export function useResources(filters?: ResourceFilter) {
       updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
     delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
 
-    // Mutation states (with defensive null checks)
-    isCreating: createMutation?.isPending || false,
-    isUpdating: updateMutation?.isPending || false,
-    isDeleting: deleteMutation?.isPending || false,
+    // Individual mutation objects for specific access when needed
+    createMutation,
+    updateMutation,
+    deleteMutation,
 
     // Raw queries for advanced usage
     resourcesQuery,
   };
 }
 
-/**
- * Hook to fetch a specific resource by ID
- */
-export function useResource(id: string) {
-  const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
-  
-  return useQuery<Resource | null, Error>({
-    queryKey: queryKeys.resources.byId(id),
-    queryFn: () => resourceService.fetchResourceById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-}

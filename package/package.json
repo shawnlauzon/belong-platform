@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.1.1",
+  "version": "0.1.9",
   "private": false,
   "description": "A platform for building hyper-local community applications with resource sharing, event management, and social features.",
   "type": "module",
@@ -13,11 +13,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.es.js",
       "require": "./dist/index.cjs.js"
-    },
-    "./providers": {
-      "types": "./dist/providers.d.ts",
-      "import": "./dist/providers.es.js",
-      "require": "./dist/providers.cjs.js"
     },
     "./hooks": {
       "types": "./dist/hooks.d.ts",
@@ -51,7 +46,7 @@
     "test:database": "vitest run --config vitest.database.config.mts",
     "test:database:watch": "vitest --config vitest.database.config.mts",
     "typecheck": "pnpm -r typecheck",
-    "typecheck:api": "pnpm --filter=@belongnetwork/platform typecheck",
+    "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",

@@ -162,6 +162,9 @@ export interface User {
   updatedAt: Date;
 }
 
+// Info version for list operations - currently identical to User since User has no nested relations
+export interface UserInfo extends User {}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UserData
   extends Omit<User, "id" | "createdAt" | "updatedAt"> {}

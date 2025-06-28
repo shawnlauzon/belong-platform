@@ -263,27 +263,6 @@ describe("Event Transformer", () => {
       });
     });
 
-    it("should handle undefined eventData gracefully", () => {
-      const eventData = undefined as any;
-      const organizerId = faker.string.uuid();
-
-      const dbEvent = forDbUpdate(eventData, organizerId);
-
-      expect(dbEvent).toMatchObject({
-        organizer_id: organizerId,
-      });
-    });
-
-    it("should handle null eventData gracefully", () => {
-      const eventData = null as any;
-      const organizerId = faker.string.uuid();
-
-      const dbEvent = forDbUpdate(eventData, organizerId);
-
-      expect(dbEvent).toMatchObject({
-        organizer_id: organizerId,
-      });
-    });
 
     it("should handle date transformations correctly", () => {
       const startDateTime = faker.date.future();

@@ -22,10 +22,6 @@ type UserMetadata = {
  * Transforms a database profile record to a domain user object
  */
 export function toDomainUser(profile: ProfileRow): User {
-  if (!profile) {
-    throw new Error("Profile is required");
-  }
-
   const metadata = (profile.user_metadata || {}) as UserMetadata;
   const { first_name, last_name, full_name, avatar_url, location } = metadata;
 

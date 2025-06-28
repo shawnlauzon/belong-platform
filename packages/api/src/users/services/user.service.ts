@@ -1,15 +1,16 @@
 import { logger } from "@belongnetwork/core";
-import type { User, UserData, UserFilter } from "@belongnetwork/types";
+import type { User, UserInfo, UserData, UserFilter } from "@belongnetwork/types";
 import {
   toDomainUser,
   forDbInsert,
   forDbUpdate,
 } from "../transformers/userTransformer";
+import { ERROR_CODES } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
-  async fetchUsers(options?: UserFilter): Promise<User[]> {
+  async fetchUsers(options?: UserFilter): Promise<UserInfo[]> {
     logger.debug("👤 API: Fetching users", { options });
 
     try {
@@ -65,7 +66,7 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (error) {
-        if (error.code === "PGRST116") {
+        if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
           logger.debug("👤 API: User not found", { id });
           return null;
@@ -181,7 +182,7 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (fetchError) {
-        if (fetchError.code === "PGRST116") {
+        if (fetchError.code === ERROR_CODES.NOT_FOUND) {
           // Not found
           logger.debug("👤 API: User not found for deletion", { id });
           return;

@@ -9,7 +9,7 @@ describe("logger utilities", () => {
   describe("createLogger", () => {
     it("should create a logger with default info level", () => {
       const testLogger = createLogger();
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.info).toBe("function");
       expect(typeof testLogger.debug).toBe("function");
@@ -20,35 +20,35 @@ describe("logger utilities", () => {
 
     it("should create a logger with specified log level", () => {
       const testLogger = createLogger("debug");
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.debug).toBe("function");
     });
 
     it("should create a logger with trace level", () => {
       const testLogger = createLogger("trace");
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.trace).toBe("function");
     });
 
     it("should create a logger with warn level", () => {
       const testLogger = createLogger("warn");
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.warn).toBe("function");
     });
 
     it("should create a logger with error level", () => {
       const testLogger = createLogger("error");
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.error).toBe("function");
     });
 
     it("should create a logger with silent level", () => {
       const testLogger = createLogger("silent");
-      
+
       expect(testLogger).toBeDefined();
       expect(typeof testLogger.info).toBe("function");
     });
@@ -56,7 +56,7 @@ describe("logger utilities", () => {
     it("should create working logger instances", () => {
       const logger1 = createLogger("info");
       const logger2 = createLogger("debug");
-      
+
       expect(logger1).toBeDefined();
       expect(logger2).toBeDefined();
       expect(typeof logger1.info).toBe("function");
@@ -65,7 +65,7 @@ describe("logger utilities", () => {
 
     it("should have all required logging methods", () => {
       const testLogger = createLogger("trace");
-      
+
       expect(testLogger.trace).toBeDefined();
       expect(testLogger.debug).toBeDefined();
       expect(testLogger.info).toBeDefined();
@@ -75,21 +75,21 @@ describe("logger utilities", () => {
 
     it("should have setLevel method", () => {
       const testLogger = createLogger("info");
-      
+
       expect(testLogger.setLevel).toBeDefined();
       expect(typeof testLogger.setLevel).toBe("function");
     });
 
     it("should have getLevel method", () => {
       const testLogger = createLogger("info");
-      
+
       expect(testLogger.getLevel).toBeDefined();
       expect(typeof testLogger.getLevel).toBe("function");
     });
 
     it("should not throw when calling logging methods", () => {
       const testLogger = createLogger("trace");
-      
+
       expect(() => testLogger.trace("trace message")).not.toThrow();
       expect(() => testLogger.debug("debug message")).not.toThrow();
       expect(() => testLogger.info("info message")).not.toThrow();
@@ -99,8 +99,10 @@ describe("logger utilities", () => {
 
     it("should handle multiple arguments", () => {
       const testLogger = createLogger("info");
-      
-      expect(() => testLogger.info("Message", { data: "test" }, "extra")).not.toThrow();
+
+      expect(() =>
+        testLogger.info("Message", { data: "test" }, "extra"),
+      ).not.toThrow();
     });
 
     it("should handle complex objects", () => {
@@ -110,27 +112,31 @@ describe("logger utilities", () => {
         array: [1, 2, 3],
         date: new Date(),
       };
-      
-      expect(() => testLogger.info("Complex object:", complexObject)).not.toThrow();
+
+      expect(() =>
+        testLogger.info("Complex object:", complexObject),
+      ).not.toThrow();
     });
 
     it("should handle null and undefined values", () => {
       const testLogger = createLogger("info");
-      
+
       expect(() => testLogger.info("Null value:", null)).not.toThrow();
-      expect(() => testLogger.info("Undefined value:", undefined)).not.toThrow();
+      expect(() =>
+        testLogger.info("Undefined value:", undefined),
+      ).not.toThrow();
     });
 
     it("should handle error objects", () => {
       const testLogger = createLogger("error");
       const error = new Error("Test error");
-      
+
       expect(() => testLogger.error("Error occurred:", error)).not.toThrow();
     });
 
     it("should create logger with methodFactory", () => {
       const testLogger = createLogger("info");
-      
+
       expect(testLogger.methodFactory).toBeDefined();
       expect(typeof testLogger.methodFactory).toBe("function");
     });
@@ -168,7 +174,8 @@ describe("logger utilities", () => {
 
     it("should handle invalid log levels by throwing", () => {
       // loglevel library throws on invalid levels
-      expect(() => createLogger("invalid" as any)).toThrow();
+      // @ts-expect-error - testing invalid input
+      expect(() => createLogger("invalid")).toThrow();
     });
   });
 
@@ -213,43 +220,51 @@ describe("logger utilities", () => {
   describe("convenience functions don't throw", () => {
     it("logComponentRender should not throw", async () => {
       const { logComponentRender } = await import("../logger");
-      
+
       expect(() => logComponentRender("TestComponent")).not.toThrow();
-      expect(() => logComponentRender("TestComponent", { prop: "value" })).not.toThrow();
+      expect(() =>
+        logComponentRender("TestComponent", { prop: "value" }),
+      ).not.toThrow();
     });
 
     it("logApiCall should not throw", async () => {
       const { logApiCall } = await import("../logger");
-      
+
       expect(() => logApiCall("GET", "/api/test")).not.toThrow();
-      expect(() => logApiCall("POST", "/api/test", { data: "test" })).not.toThrow();
+      expect(() =>
+        logApiCall("POST", "/api/test", { data: "test" }),
+      ).not.toThrow();
     });
 
     it("logApiResponse should not throw", async () => {
       const { logApiResponse } = await import("../logger");
-      
+
       expect(() => logApiResponse("GET", "/api/test")).not.toThrow();
-      expect(() => logApiResponse("GET", "/api/test", { result: "data" })).not.toThrow();
-      expect(() => logApiResponse("GET", "/api/test", undefined, new Error("API error"))).not.toThrow();
+      expect(() =>
+        logApiResponse("GET", "/api/test", { result: "data" }),
+      ).not.toThrow();
+      expect(() =>
+        logApiResponse("GET", "/api/test", undefined, new Error("API error")),
+      ).not.toThrow();
     });
 
     it("logUserAction should not throw", async () => {
       const { logUserAction } = await import("../logger");
-      
+
       expect(() => logUserAction("click")).not.toThrow();
       expect(() => logUserAction("click", { button: "save" })).not.toThrow();
     });
 
     it("logStateChange should not throw", async () => {
       const { logStateChange } = await import("../logger");
-      
+
       expect(() => logStateChange("count")).not.toThrow();
       expect(() => logStateChange("count", 1, 2)).not.toThrow();
     });
 
     it("logEvent should not throw", async () => {
       const { logEvent } = await import("../logger");
-      
+
       expect(() => logEvent("user_action")).not.toThrow();
       expect(() => logEvent("user_action", { userId: "123" })).not.toThrow();
     });
