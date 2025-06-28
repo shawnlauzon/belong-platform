@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
-import type { ConversationInfo, ConversationFilter } from '@belongnetwork/types';
+import type { ConversationInfo, ConversationFilter, Conversation, MessageInfo } from '@belongnetwork/types';
 import { useSupabase } from '../../auth/providers/CurrentUserProvider';
 import { createMessagingService } from '../services/messaging.service';
 import { queryKeys } from '../../shared/queryKeys';
@@ -20,6 +20,19 @@ export function useConversations() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.messaging.all,
         queryFn: () => messagingService.fetchConversations('', filters),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      });
+      return result;
+    },
+
+    // Note: Individual conversation fetch (byId) not implemented yet in messaging service
+    // This would require adding a fetchConversationById method to messaging.service.ts
+
+    // Sub-entity operation - following communities.memberships pattern
+    messages: async (conversationId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.messaging.messages(conversationId),
+        queryFn: () => messagingService.fetchMessages(conversationId),
         staleTime: 5 * 60 * 1000, // 5 minutes
       });
       return result;

@@ -1,18 +1,18 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMessaging } from '../useMessaging';
-import { createMessagingService } from '../../services/messaging.service';
-import { createWrapper } from '../../../test-utils';
+import { createMessagingService } from '@belongnetwork/api/messaging/services/messaging.service';
+import { createWrapper } from '@belongnetwork/api/test-utils';
 
 // Mock the service
-vi.mock('../../services/messaging.service');
+vi.mock('@belongnetwork/api/messaging/services/messaging.service');
 
 // Mock useSupabase hook
-vi.mock('../../../auth/providers/CurrentUserProvider', () => ({
+vi.mock('@belongnetwork/api/auth/providers/CurrentUserProvider', () => ({
   useSupabase: vi.fn(() => ({}))
 }));
 
-import { useSupabase } from '../../../auth/providers/CurrentUserProvider';
+import { useSupabase } from '@belongnetwork/api/auth/providers/CurrentUserProvider';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateMessagingService = vi.mocked(createMessagingService);

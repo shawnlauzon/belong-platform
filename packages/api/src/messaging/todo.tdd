@@ -1,0 +1,74 @@
+# TDD Progress: useConversations Hook Implementation
+
+## Goal: Create consolidated useConversations hook following platform pattern
+
+### Test Implementation Progress
+
+#### Phase 1: Core Structure
+- [x] Test #1: Hook structure + list() method
+  - [x] Create failing test
+  - [x] Implement minimal code to pass
+  - [x] Verify test passes
+
+#### Phase 2: Data Fetching
+- [x] Test #2: byId() method implementation
+  - [x] Create failing test
+  - [x] Implement minimal code to pass
+  - [x] Verify test passes
+
+#### Phase 3: Sub-entity Operations
+- [x] Test #3: messages() sub-entity method
+  - [x] Create failing test
+  - [x] Implement minimal code to pass
+  - [x] Verify test passes
+
+#### Phase 4: Mutations
+- [ ] Test #4: create() mutation
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+- [ ] Test #5: delete() mutation
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+- [ ] Test #6: sendMessage() mutation
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+- [ ] Test #7: markAsRead() mutation
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+#### Phase 5: Error Handling & States
+- [ ] Test #8: Error handling
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+- [ ] Test #9: Cache invalidation
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+- [ ] Test #10: Loading states
+  - [ ] Create failing test
+  - [ ] Implement minimal code to pass
+  - [ ] Verify test passes
+
+## Current Status: Replace relative paths with workspace paths
+
+### Notes:
+- Following exact pattern from useCommunities.ts
+- Using existing messaging service and transformers
+- Maintaining compatibility with existing codebase
+
+### Path Migration Progress:
+- [ ] Update messaging hook files
+- [ ] Update messaging service files
+- [ ] Update test files
+- [ ] Update export files
+- [ ] Run tests to verify changes

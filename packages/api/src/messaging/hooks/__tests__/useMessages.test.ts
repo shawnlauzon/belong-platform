@@ -1,22 +1,22 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMessages } from '../useMessages';
-import { createWrapper } from '../../../test-utils';
-import { createMockMessage } from '../../../test-utils';
+import { createWrapper } from '@belongnetwork/api/test-utils';
+import { createMockMessage } from '@belongnetwork/api/test-utils';
 import type { MessageFilter } from '@belongnetwork/types';
 
 // Mock the auth provider
-vi.mock('../../../auth/providers/CurrentUserProvider', () => ({
+vi.mock('@belongnetwork/api/auth/providers/CurrentUserProvider', () => ({
   useSupabase: vi.fn(),
 }));
 
 // Mock the messaging service
-vi.mock('../../services/messaging.service', () => ({
+vi.mock('@belongnetwork/api/messaging/services/messaging.service', () => ({
   createMessagingService: vi.fn(),
 }));
 
-import { useSupabase } from '../../../auth/providers/CurrentUserProvider';
-import { createMessagingService } from '../../services/messaging.service';
+import { useSupabase } from '@belongnetwork/api/auth/providers/CurrentUserProvider';
+import { createMessagingService } from '@belongnetwork/api/messaging/services/messaging.service';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateMessagingService = vi.mocked(createMessagingService);
