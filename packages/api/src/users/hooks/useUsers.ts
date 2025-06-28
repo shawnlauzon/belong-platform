@@ -6,7 +6,7 @@ import {
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createUserService } from "../services/user.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type { User, UserInfo, UserFilter } from "@belongnetwork/types";
 
 /**
@@ -22,7 +22,7 @@ export function useUsers() {
   const usersQuery = useQuery<UserInfo[], Error>({
     queryKey: queryKeys.users.all,
     queryFn: () => userService.fetchUsers(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     enabled: false, // Prevent automatic fetching
   });
 
@@ -96,7 +96,7 @@ export function useUsers() {
           ? ["users", "filtered", filters]
           : queryKeys.users.all,
         queryFn: () => userService.fetchUsers(filters),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -106,7 +106,7 @@ export function useUsers() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.users.byId(id),
         queryFn: () => userService.fetchUserById(id),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },

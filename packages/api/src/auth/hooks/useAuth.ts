@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User } from "@belongnetwork/types";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import { createAuthService } from "../services/auth.service";
 import { createUserService } from "../../users/services/user.service";
 import { useSupabase } from "../providers/CurrentUserProvider";
@@ -19,7 +19,7 @@ export function useAuth() {
   const currentUserQuery = useQuery({
     queryKey: ["auth"],
     queryFn: authService.getCurrentUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors

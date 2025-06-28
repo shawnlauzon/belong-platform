@@ -13,7 +13,8 @@ import {
 } from "../transformers/thanksTransformer";
 import { createUserService } from "../../users/services/user.service";
 import { createResourceService } from "../../resources/services/resource.service";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
+import { requireAuthentication } from "../../shared/auth-helpers";
+import { ERROR_CODES } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
@@ -149,7 +150,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (error) {
-        if (error.code === "PGRST116") {
+        if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
           logger.debug("🙏 Thanks Service: Thanks not found", { id });
           return null;
@@ -200,20 +201,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🙏 Thanks Service: User must be authenticated to create thanks",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "create thanks");
 
       // Validate business rules before database operation
       validateThanksCreation(data, userId);
@@ -275,20 +263,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🙏 Thanks Service: User must be authenticated to update thanks",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "update thanks");
 
       // Fetch existing thanks to validate business rules
       const { data: existingThanks, error: fetchError } = await supabase
@@ -298,7 +273,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (fetchError) {
-        if (fetchError.code === "PGRST116") {
+        if (fetchError.code === ERROR_CODES.NOT_FOUND) {
           logger.debug("🙏 Thanks Service: Thanks not found for update", { id });
           throw new Error("Thanks not found");
         }
@@ -372,20 +347,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🙏 Thanks Service: User must be authenticated to delete thanks",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "delete thanks");
 
       // First, fetch the existing thanks to verify ownership
       const { data: existingThanks, error: fetchError } = await supabase
@@ -395,7 +357,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (fetchError) {
-        if (fetchError.code === "PGRST116") {
+        if (fetchError.code === ERROR_CODES.NOT_FOUND) {
           // Thanks not found - we can consider this a success
           logger.debug("🙏 Thanks Service: Thanks not found for deletion", {
             id,

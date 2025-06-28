@@ -53,7 +53,7 @@
     "test:acceptance:watch": "vitest --config vitest.acceptance.config.mts",
     "test:complete": "pnpm test && pnpm test:integration && pnpm test:acceptance",
     "typecheck": "pnpm -r typecheck",
-    "typecheck:api": "pnpm --filter=@belongnetwork/platform typecheck",
+    "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",

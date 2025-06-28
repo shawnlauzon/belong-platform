@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@belongnetwork/core";
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
 import { createResourceService } from "../services/resource.service";
-import { queryKeys } from "../../shared/queryKeys";
+import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type {
   Resource,
   ResourceInfo,
@@ -23,7 +23,7 @@ export function useResources() {
   const resourcesQuery = useQuery<ResourceInfo[], Error>({
     queryKey: queryKeys.resources.all,
     queryFn: () => resourceService.fetchResources(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STANDARD_CACHE_TIME,
     enabled: false, // Prevent automatic fetching
   });
 
@@ -147,7 +147,7 @@ export function useResources() {
           ? queryKeys.resources.filtered(filters)
           : queryKeys.resources.all,
         queryFn: () => resourceService.fetchResources(filters),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },
@@ -157,7 +157,7 @@ export function useResources() {
       const result = await queryClient.fetchQuery({
         queryKey: queryKeys.resources.byId(id),
         queryFn: () => resourceService.fetchResourceById(id),
-        staleTime: 5 * 60 * 1000,
+        staleTime: STANDARD_CACHE_TIME,
       });
       return result;
     },

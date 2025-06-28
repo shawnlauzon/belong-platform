@@ -20,7 +20,8 @@ import {
 } from "../transformers/eventAttendanceTransformer";
 import { createUserService } from "../../users/services/user.service";
 import { createCommunityService } from "../../communities/services/community.service";
-import { MESSAGE_AUTHENTICATION_REQUIRED } from "../../constants";
+import { requireAuthentication } from "../../shared/auth-helpers";
+import { ERROR_CODES } from "../../constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
@@ -120,7 +121,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (error) {
-        if (error.code === "PGRST116") {
+        if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
           logger.debug("🎉 Event Service: Event not found", { id });
           return null;
@@ -174,20 +175,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🎉 Event Service: User must be authenticated to create an event",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "create event");
 
       // Transform to database format
       const dbEvent = forDbInsert(data, userId);
@@ -247,18 +235,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🎉 Event Service: User must be authenticated to update an event",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
+      await requireAuthentication(supabase, "update event");
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
@@ -318,20 +295,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🎉 Event Service: User must be authenticated to delete an event",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "delete event");
 
       // First, fetch the existing event to verify ownership
       const { data: existingEvent, error: fetchError } = await supabase
@@ -341,7 +305,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         .single();
 
       if (fetchError) {
-        if (fetchError.code === "PGRST116") {
+        if (fetchError.code === ERROR_CODES.NOT_FOUND) {
           // Event not found - we can consider this a success
           logger.debug("🎉 Event Service: Event not found for deletion", {
             id,
@@ -408,20 +372,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🎉 Event Service: User must be authenticated to join an event",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "join event");
 
       // Check if event exists and get its details
       const event = await this.fetchEventById(eventId);
@@ -458,7 +409,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         .eq("user_id", userId)
         .single();
 
-      if (checkError && checkError.code !== "PGRST116") {
+      if (checkError && checkError.code !== ERROR_CODES.NOT_FOUND) {
         logger.error("🎉 Event Service: Failed to check existing attendance", {
           eventId,
           userId,
@@ -554,20 +505,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-
-      if (userError || !userData?.user?.id) {
-        logger.error(
-          "🎉 Event Service: User must be authenticated to leave an event",
-          {
-            error: userError,
-          },
-        );
-        throw new Error(MESSAGE_AUTHENTICATION_REQUIRED);
-      }
-
-      const userId = userData.user.id;
+      const userId = await requireAuthentication(supabase, "leave event");
 
       // Delete the attendance record
       const { error: deleteError } = await supabase

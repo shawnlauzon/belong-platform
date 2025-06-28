@@ -1,5 +1,5 @@
 {
-  "name": "@belongnetwork/platform",
+  "name": "@belongnetwork/api",
   "version": "0.1.8",
   "private": true,
   "type": "module",
