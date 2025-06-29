@@ -105,6 +105,7 @@ export function createMockResourceData(
 export function createMockEventData(
   overrides: Partial<EventData> = {},
 ): EventData {
+  const isAllDay = overrides.isAllDay ?? faker.datatype.boolean();
   const startDateTime = faker.date.future();
   const endDateTime = faker.datatype.boolean()
     ? new Date(
@@ -120,6 +121,7 @@ export function createMockEventData(
     organizerId: faker.string.uuid(),
     startDateTime,
     endDateTime,
+    isAllDay,
     location: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),

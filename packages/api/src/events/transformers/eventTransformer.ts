@@ -33,6 +33,7 @@ export function toDomainEvent(
     max_attendees,
     registration_required,
     is_active,
+    is_all_day,
     image_urls,
     attendee_count,
     created_at,
@@ -61,6 +62,7 @@ export function toDomainEvent(
     maxAttendees: max_attendees || undefined,
     registrationRequired: registration_required === true, // Default to false if not set
     isActive: is_active === true, // Only active if explicitly true
+    isAllDay: is_all_day === true, // Default to false if not set
     tags: rest.tags || [],
     imageUrls: image_urls || [],
     attendeeCount: attendee_count || 0,
@@ -88,6 +90,7 @@ export function forDbInsert(
     maxAttendees,
     registrationRequired,
     isActive,
+    isAllDay,
     tags,
     imageUrls,
     ...rest
@@ -104,6 +107,7 @@ export function forDbInsert(
     max_attendees: maxAttendees || null,
     registration_required: registrationRequired || false,
     is_active: isActive !== false, // Default to true
+    is_all_day: isAllDay || false,
     tags: tags || [],
     image_urls: imageUrls || [],
   };
@@ -126,6 +130,7 @@ export function forDbUpdate(
     maxAttendees,
     registrationRequired,
     isActive,
+    isAllDay,
     tags,
     imageUrls,
     ...rest
@@ -142,6 +147,7 @@ export function forDbUpdate(
     max_attendees: maxAttendees,
     registration_required: registrationRequired,
     is_active: isActive,
+    is_all_day: isAllDay,
     tags: tags,
     image_urls: imageUrls,
   };
@@ -169,6 +175,7 @@ export function toEventInfo(
     maxAttendees: dbEvent.max_attendees || undefined,
     registrationRequired: dbEvent.registration_required === true, // Default to false if not set
     isActive: dbEvent.is_active === true, // Only active if explicitly true
+    isAllDay: dbEvent.is_all_day === true, // Default to false if not set
     tags: dbEvent.tags || [],
     imageUrls: dbEvent.image_urls || [],
     attendeeCount: dbEvent.attendee_count || 0,

@@ -141,6 +141,7 @@ export function createMockCommunity(
  */
 export function createMockEvent(overrides: Partial<Event> = {}): Event {
   const now = new Date();
+  const isAllDay = overrides.isAllDay ?? faker.datatype.boolean();
   const startDateTime = faker.date.future();
   const endDateTime = faker.datatype.boolean()
     ? new Date(
@@ -158,6 +159,7 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
     description: faker.lorem.paragraphs(2),
     startDateTime,
     endDateTime,
+    isAllDay,
     location: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),

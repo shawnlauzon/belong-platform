@@ -273,6 +273,7 @@ export type Database = {
           id: string
           image_urls: string[]
           is_active: boolean
+          is_all_day: boolean
           location: string
           max_attendees: number | null
           organizer_id: string
@@ -293,6 +294,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_active?: boolean
+          is_all_day?: boolean
           location: string
           max_attendees?: number | null
           organizer_id: string
@@ -313,6 +315,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_active?: boolean
+          is_all_day?: boolean
           location?: string
           max_attendees?: number | null
           organizer_id?: string

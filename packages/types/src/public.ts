@@ -227,6 +227,7 @@ export interface EventData {
   organizerId: string;
   startDateTime: Date;
   endDateTime?: Date;
+  isAllDay: boolean;
   location: string;
   coordinates: Coordinates;
   parkingInfo?: string;
@@ -244,6 +245,7 @@ export interface Event extends Omit<EventData, "communityId" | "organizerId"> {
   attendeeCount: number;
   registrationRequired: boolean;
   isActive: boolean;
+  isAllDay: boolean;
   tags: string[];
   imageUrls: string[];
   createdAt: Date;

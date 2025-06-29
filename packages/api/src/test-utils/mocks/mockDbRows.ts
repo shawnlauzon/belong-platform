@@ -205,6 +205,7 @@ export function createMockDbEvent(overrides: Partial<EventRow> = {}): EventRow {
       : null,
     registration_required: faker.datatype.boolean(),
     is_active: faker.datatype.boolean(),
+    is_all_day: faker.datatype.boolean(),
     tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
       faker.lorem.word(),
     ),
