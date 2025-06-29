@@ -29,3 +29,9 @@ tsconfig.tsbuildinfo
 
 # Supabase
 supabase/.temp
+
+# Playwright
+playwright-report/
+playwright/.cache/
+test-results/
+screenshots/
