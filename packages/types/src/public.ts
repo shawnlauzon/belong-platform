@@ -59,6 +59,7 @@ export interface CommunityData {
   // Core Identity
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
+  icon?: string; // Visual icon for the community
 
   organizerId: string;
   parentId: string | null; // Null only for global root
@@ -226,6 +227,7 @@ export interface EventData {
   organizerId: string;
   startDateTime: Date;
   endDateTime?: Date;
+  isAllDay: boolean;
   location: string;
   coordinates: Coordinates;
   parkingInfo?: string;
@@ -243,6 +245,7 @@ export interface Event extends Omit<EventData, "communityId" | "organizerId"> {
   attendeeCount: number;
   registrationRequired: boolean;
   isActive: boolean;
+  isAllDay: boolean;
   tags: string[];
   imageUrls: string[];
   createdAt: Date;

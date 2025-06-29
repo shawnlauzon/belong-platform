@@ -181,6 +181,57 @@ describe("Event Transformer", () => {
       const underscoreKeys = eventKeys.filter((key) => key.includes("_"));
       expect(underscoreKeys).toEqual([]);
     });
+
+    it("should handle all-day events correctly", () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+        is_all_day: true,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      expect(event.isAllDay).toBe(true);
+    });
+
+    it("should default is_all_day to false when not provided", () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+        is_all_day: undefined,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      expect(event.isAllDay).toBe(false);
+    });
+
+    it("should handle is_all_day null as false", () => {
+      const mockOrganizer = createMockUser();
+      const mockCommunity = createMockCommunity();
+      const dbEvent = createMockDbEvent({
+        organizer_id: mockOrganizer.id,
+        community_id: mockCommunity.id,
+        is_all_day: null,
+      });
+
+      const event = toDomainEvent(dbEvent, {
+        organizer: mockOrganizer,
+        community: mockCommunity,
+      });
+
+      expect(event.isAllDay).toBe(false);
+    });
   });
 
   describe("forDbInsert", () => {
@@ -230,6 +281,28 @@ describe("Event Transformer", () => {
 
       expect(dbEvent.registration_required).toBe(false);
       expect(dbEvent.is_active).toBe(true);
+    });
+
+    it("should map isAllDay to is_all_day for database insertion", () => {
+      const eventData = createMockEventData({
+        isAllDay: true,
+      });
+      const organizerId = "test-organizer-id";
+
+      const dbEvent = forDbInsert(eventData, organizerId);
+
+      expect(dbEvent.is_all_day).toBe(true);
+    });
+
+    it("should handle isAllDay false correctly", () => {
+      const eventData = createMockEventData({
+        isAllDay: false,
+      });
+      const organizerId = "test-organizer-id";
+
+      const dbEvent = forDbInsert(eventData, organizerId);
+
+      expect(dbEvent.is_all_day).toBe(false);
     });
   });
 
@@ -299,6 +372,28 @@ describe("Event Transformer", () => {
       expect(dbEvent.is_active).toBeUndefined();
       expect(dbEvent.tags).toBeUndefined();
       expect(dbEvent.image_urls).toBeUndefined();
+    });
+
+    it("should map isAllDay to is_all_day for database update", () => {
+      const eventData = {
+        isAllDay: true,
+      };
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent.is_all_day).toBe(true);
+    });
+
+    it("should handle undefined isAllDay in update", () => {
+      const eventData = {
+        isAllDay: undefined,
+      };
+      const organizerId = faker.string.uuid();
+
+      const dbEvent = forDbUpdate(eventData, organizerId);
+
+      expect(dbEvent.is_all_day).toBeUndefined();
     });
   });
 });
