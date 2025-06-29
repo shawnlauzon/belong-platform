@@ -59,7 +59,7 @@ export class CleanupHelper {
   }
 
   async cleanupByResourceType(
-    resourceType: 'communities' | 'resources' | 'events' | 'thanks' | 'messages',
+    resourceType: 'communities' | 'resources' | 'events' | 'shoutouts' | 'messages',
     namePattern: string = "TEST"
   ): Promise<void> {
     try {
@@ -73,7 +73,7 @@ export class CleanupHelper {
         case 'events':
           await dbHelper.cleanupTestData(namePattern);
           break;
-        case 'thanks':
+        case 'shoutouts':
           await dbHelper.cleanupTestData(namePattern);
           break;
         case 'messages':

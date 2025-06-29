@@ -42,7 +42,7 @@ export class DatabaseTestHelper {
         .delete()
         .like("title", `%${namePattern}%`);
 
-      // Clean up thanks records (by user IDs that have test emails)
+      // Clean up shoutouts records (by user IDs that have test emails)
       const { data: testUsers } = await this.client
         .from("profiles")
         .select("id")
@@ -52,12 +52,12 @@ export class DatabaseTestHelper {
         const testUserIds = testUsers.map(user => user.id);
         
         await this.client
-          .from("thanks")
+          .from("shoutouts")
           .delete()
           .in("giver_id", testUserIds);
 
         await this.client
-          .from("thanks")
+          .from("shoutouts")
           .delete()
           .in("receiver_id", testUserIds);
       }

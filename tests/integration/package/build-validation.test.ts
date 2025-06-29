@@ -91,7 +91,7 @@ describe("Build Validation", () => {
       "useCommunities",
       "useResources",
       "useEvents",
-      "useThanks",
+      "useShoutouts",
       "useUsers",
       "ResourceCategory",
       "User",
@@ -176,7 +176,7 @@ describe("Build Validation", () => {
         "useCommunities", 
         "useResources",
         "useEvents",
-        "useThanks",
+        "useShoutouts",
         "useUsers",
         "ResourceCategory",
       ];

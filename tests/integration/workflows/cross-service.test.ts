@@ -17,7 +17,7 @@ import {
   useCommunities,
   useResources,
   useEvents,
-  useThanks,
+  useShoutouts,
   useUsers,
 } from "@belongnetwork/platform";
 import {
@@ -35,7 +35,7 @@ describe("Cross-Service Integration Tests", () => {
   let sharedTestUser: any = null;
   let sharedUserCredentials: any = null;
   let sharedCommunity: any = null;
-  let secondTestUser: any = null; // For thanks giving tests
+  let secondTestUser: any = null; // For shoutouts giving tests
 
   beforeAll(async () => {
     testWrapperManager.reset();
@@ -69,7 +69,7 @@ describe("Cross-Service Integration Tests", () => {
         parentId: null,
       });
 
-      // Create a second user for thanks giving tests
+      // Create a second user for shoutouts giving tests
       const secondUser = TestDataFactory.createUser();
       secondTestUser = await authResult.current.signUp(secondUser);
 
@@ -243,7 +243,7 @@ describe("Cross-Service Integration Tests", () => {
     // Initialize service hooks
     const { result: resourcesResult } = await testUtils.renderHookWithWrapper(() => useResources());
     const { result: eventsResult } = await testUtils.renderHookWithWrapper(() => useEvents());
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
 
     await testUtils.waitForHookToInitialize(
       resourcesResult,
@@ -256,8 +256,8 @@ describe("Cross-Service Integration Tests", () => {
     );
 
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
     // Test concurrent creation of multiple resources
@@ -303,13 +303,13 @@ describe("Cross-Service Integration Tests", () => {
     const createdEvents = await Promise.all(eventPromises);
     expect(createdEvents).toHaveLength(2);
 
-    // Test concurrent thanks giving
-    const thanksPromises = [];
+    // Test concurrent shoutouts giving
+    const shoutoutsPromises = [];
     for (let i = 0; i < 2; i++) {
       if (createdResources[i]) {
-        thanksPromises.push(
-          thanksResult.current.create({
-            message: `Concurrent thanks ${i + 1}`,
+        shoutoutsPromises.push(
+          shoutoutsResult.current.create({
+            message: `Concurrent shoutouts ${i + 1}`,
             isPublic: true,
             resourceId: createdResources[i].id,
             toUserId: secondTestUser.id,
@@ -318,8 +318,8 @@ describe("Cross-Service Integration Tests", () => {
       }
     }
 
-    const createdThanks = await Promise.all(thanksPromises);
-    expect(createdThanks.length).toBeGreaterThan(0);
+    const createdShoutouts = await Promise.all(shoutoutsPromises);
+    expect(createdShoutouts.length).toBeGreaterThan(0);
 
     console.log("✅ Concurrent operations test successful");
   });
@@ -349,7 +349,7 @@ describe("Cross-Service Integration Tests", () => {
     // Initialize service hooks
     const { result: resourcesResult } = await testUtils.renderHookWithWrapper(() => useResources());
     const { result: eventsResult } = await testUtils.renderHookWithWrapper(() => useEvents());
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
 
     await testUtils.waitForHookToInitialize(
       resourcesResult,
@@ -362,8 +362,8 @@ describe("Cross-Service Integration Tests", () => {
     );
 
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
     // Test 1: Create valid resource first
@@ -408,9 +408,9 @@ describe("Cross-Service Integration Tests", () => {
 
     expect(recoveryResource.title).toBe("Recovery Resource");
 
-    // Test 4: Test error recovery with thanks (invalid resource reference)
+    // Test 4: Test error recovery with shoutouts (invalid resource reference)
     try {
-      await thanksResult.current.create({
+      await shoutoutsResult.current.create({
         message: "Thanks for non-existent resource",
         isPublic: true,
         resourceId: "non-existent-resource-id",
@@ -422,15 +422,15 @@ describe("Cross-Service Integration Tests", () => {
       expect(error).toBeDefined();
     }
 
-    // Test 5: Verify thanks still works with valid data after error
+    // Test 5: Verify shoutouts still works with valid data after error
     const validThanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.create({
+      () => shoutoutsResult.current.create({
         message: "Thanks after error recovery",
         isPublic: true,
         resourceId: validResource.id,
         toUserId: secondTestUser.id,
       }),
-      "create thanks after error"
+      "create shoutouts after error"
     );
 
     expect(validThanks.message).toBe("Thanks after error recovery");
@@ -463,7 +463,7 @@ describe("Cross-Service Integration Tests", () => {
     // Initialize service hooks
     const { result: resourcesResult } = await testUtils.renderHookWithWrapper(() => useResources());
     const { result: eventsResult } = await testUtils.renderHookWithWrapper(() => useEvents());
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
 
     await testUtils.waitForHookToInitialize(
       resourcesResult,
@@ -476,11 +476,11 @@ describe("Cross-Service Integration Tests", () => {
     );
 
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
-    // Test 1: Create resource and immediately reference it in thanks
+    // Test 1: Create resource and immediately reference it in shoutouts
     const resource = await testUtils.performAsyncAction(
       () => resourcesResult.current.create({
         ...TestDataFactory.createResource(),
@@ -490,18 +490,18 @@ describe("Cross-Service Integration Tests", () => {
       "create resource for transaction test"
     );
 
-    // Immediately create thanks referencing the new resource
-    const thanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.create({
+    // Immediately create shoutouts referencing the new resource
+    const shoutout = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.create({
         message: "Thanks for the new resource",
         isPublic: true,
         resourceId: resource.id,
         toUserId: secondTestUser.id,
       }),
-      "create thanks immediately after resource"
+      "create shoutout immediately after resource"
     );
 
-    expect(thanks.resource.id).toBe(resource.id);
+    expect(shoutout.resource.id).toBe(resource.id);
 
     // Test 2: Create event and immediately join it
     const eventData = TestDataFactory.createEvent();
@@ -536,24 +536,24 @@ describe("Cross-Service Integration Tests", () => {
 
     expect(eventAttendees.some(attendee => attendee.user.id === sharedTestUser.id)).toBe(true);
 
-    // Test 4: Update resource and verify thanks still reference it correctly
+    // Test 4: Update resource and verify shoutouts still reference it correctly
     const updatedResource = await testUtils.performAsyncAction(
       () => resourcesResult.current.update(resource.id, {
         title: "Updated Resource Title",
         description: "Updated description",
       }),
-      "update resource that has thanks"
+      "update resource that has shoutouts"
     );
 
     expect(updatedResource.title).toBe("Updated Resource Title");
 
-    // Verify thanks still reference the updated resource
-    const thanksForResource = await testUtils.performAsyncAction(
-      () => thanksResult.current.list({ resourceId: resource.id }),
-      "get thanks for updated resource"
+    // Verify shoutouts still reference the updated resource
+    const shoutoutsForResource = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.list({ resourceId: resource.id }),
+      "get shoutouts for updated resource"
     );
 
-    expect(thanksForResource.some(t => t.resourceId === resource.id)).toBe(true);
+    expect(shoutoutsForResource.some(t => t.resourceId === resource.id)).toBe(true);
 
     console.log("✅ Transaction integrity test successful");
   });
@@ -585,7 +585,7 @@ describe("Cross-Service Integration Tests", () => {
     const { result: communitiesResult } = await testUtils.renderHookWithWrapper(() => useCommunities());
     const { result: resourcesResult } = await testUtils.renderHookWithWrapper(() => useResources());
     const { result: eventsResult } = await testUtils.renderHookWithWrapper(() => useEvents());
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
 
     await testUtils.waitForHookToInitialize(
       resourcesResult,
@@ -598,8 +598,8 @@ describe("Cross-Service Integration Tests", () => {
     );
 
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
     // Test 1: Create interconnected data
@@ -627,14 +627,14 @@ describe("Cross-Service Integration Tests", () => {
       "create event for relationship test"
     );
 
-    const thanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.create({
+    const shoutout = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.create({
         message: "Thanks for the relationship test resource",
         isPublic: true,
         resourceId: resource.id,
         toUserId: secondTestUser.id,
       }),
-      "create thanks for relationship test"
+      "create shoutout for relationship test"
     );
 
     // Test 2: Verify cross-service data consistency
@@ -648,9 +648,9 @@ describe("Cross-Service Integration Tests", () => {
     expect(event.community.id).toBe(sharedCommunity.id);
     expect(event.organizer.id).toBe(sharedTestUser.id);
 
-    // Check that thanks references correct user and resource
-    expect(thanks.resource.id).toBe(resource.id);
-    expect(thanks.toUser.id).toBe(secondTestUser.id);
+    // Check that shoutout references correct user and resource
+    expect(shoutout.resource.id).toBe(resource.id);
+    expect(shoutout.toUser.id).toBe(secondTestUser.id);
 
     // Test 3: Test filtering and querying across services
     const communityResources = await testUtils.performAsyncAction(
@@ -663,22 +663,22 @@ describe("Cross-Service Integration Tests", () => {
       "get events by community"
     );
 
-    const userThanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.list({ toUserId: secondTestUser.id }),
-      "get thanks for user"
+    const userShoutouts = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.list({ toUserId: secondTestUser.id }),
+      "get shoutouts for user"
     );
 
     expect(communityResources.some(r => r.id === resource.id)).toBe(true);
     expect(communityEvents.some(e => e.id === event.id)).toBe(true);
-    expect(userThanks.some(t => t.id === thanks.id)).toBe(true);
+    expect(userShoutouts.some(t => t.id === shoutout.id)).toBe(true);
 
     // Test 4: Test cascading queries
-    const resourceThanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.list({ resourceId: resource.id }),
-      "get thanks for specific resource"
+    const resourceShoutouts = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.list({ resourceId: resource.id }),
+      "get shoutouts for specific resource"
     );
 
-    expect(resourceThanks.some(t => t.id === thanks.id)).toBe(true);
+    expect(resourceShoutouts.some(t => t.id === shoutout.id)).toBe(true);
 
     console.log("✅ Cross-service data relationships test successful");
   });
