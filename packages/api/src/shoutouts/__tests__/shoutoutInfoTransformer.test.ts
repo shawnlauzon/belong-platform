@@ -1,25 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { toThanksInfo } from "../transformers/thanksTransformer";
-import { createMockDbThanks } from "../../test-utils";
+import { toShoutoutInfo } from "../transformers/shoutoutsTransformer";
+import { createMockDbShoutout } from "../../test-utils";
 
-describe("ThanksInfo Transformer", () => {
-  it("should transform database thanks to ThanksInfo without snake_case properties", () => {
+describe("ShoutoutInfo Transformer", () => {
+  it("should transform database shoutout to ShoutoutInfo without snake_case properties", () => {
     // Arrange
-    const dbThanks = createMockDbThanks({
-      id: "thanks-123",
-      message: "Thank you so much!",
+    const dbShoutout = createMockDbShoutout({
+      id: "shoutout-123",
+      message: "Shoutout so much!",
       from_user_id: "user-123",
       to_user_id: "user-456",
       resource_id: "resource-789",
-      image_urls: ["thanks1.jpg", "thanks2.jpg"],
+      image_urls: ["shoutout1.jpg", "shoutout2.jpg"],
       impact_description: "This really helped me fix my bike",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-02T00:00:00Z",
     });
 
     // Act
-    const result = toThanksInfo(
-      dbThanks,
+    const result = toShoutoutInfo(
+      dbShoutout,
       "user-123",
       "user-456",
       "resource-789",
@@ -27,13 +27,13 @@ describe("ThanksInfo Transformer", () => {
     );
 
     // Assert - Should have camelCase properties
-    expect(result).toHaveProperty("id", "thanks-123");
-    expect(result).toHaveProperty("message", "Thank you so much!");
+    expect(result).toHaveProperty("id", "shoutout-123");
+    expect(result).toHaveProperty("message", "Shoutout so much!");
     expect(result).toHaveProperty("fromUserId", "user-123");
     expect(result).toHaveProperty("toUserId", "user-456");
     expect(result).toHaveProperty("resourceId", "resource-789");
     expect(result).toHaveProperty("communityId", "community-123");
-    expect(result).toHaveProperty("imageUrls", ["thanks1.jpg", "thanks2.jpg"]);
+    expect(result).toHaveProperty("imageUrls", ["shoutout1.jpg", "shoutout2.jpg"]);
     expect(result).toHaveProperty(
       "impactDescription",
       "This really helped me fix my bike",
@@ -56,11 +56,11 @@ describe("ThanksInfo Transformer", () => {
     expect(result).not.toHaveProperty("resource");
   });
 
-  it("should handle optional fields correctly in ThanksInfo", () => {
+  it("should handle optional fields correctly in ShoutoutInfo", () => {
     // Arrange
-    const dbThanks = createMockDbThanks({
-      id: "thanks-456",
-      message: "Simple thanks",
+    const dbShoutout = createMockDbShoutout({
+      id: "shoutout-456",
+      message: "Simple shoutout",
       from_user_id: "user-456",
       to_user_id: "user-789",
       resource_id: "resource-123",
@@ -69,8 +69,8 @@ describe("ThanksInfo Transformer", () => {
     });
 
     // Act
-    const result = toThanksInfo(
-      dbThanks,
+    const result = toShoutoutInfo(
+      dbShoutout,
       "user-456",
       "user-789",
       "resource-123",
@@ -78,7 +78,7 @@ describe("ThanksInfo Transformer", () => {
     );
 
     // Assert
-    expect(result.message).toBe("Simple thanks");
+    expect(result.message).toBe("Simple shoutout");
     expect(result.imageUrls).toEqual([]);
     expect(result.impactDescription).toBeUndefined();
     expect(result.fromUserId).toBe("user-456");

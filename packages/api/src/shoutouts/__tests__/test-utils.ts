@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker";
 import type { Database } from "@belongnetwork/types/database";
-import type { ThanksData } from "@belongnetwork/types";
+import type { ShoutoutData } from "@belongnetwork/types";
 
-type ThanksRow = Database["public"]["Tables"]["thanks"]["Row"];
+type ShoutoutRow = Database["public"]["Tables"]["shoutouts"]["Row"];
 
-export function createMockDbThanks(
-  overrides: Partial<ThanksRow> = {},
-): ThanksRow {
+export function createMockDbShoutout(
+  overrides: Partial<ShoutoutRow> = {},
+): ShoutoutRow {
   const now = new Date().toISOString();
 
   return {
@@ -28,9 +28,9 @@ export function createMockDbThanks(
   };
 }
 
-export function createMockThanksData(
-  overrides: Partial<ThanksData> = {},
-): ThanksData {
+export function createMockShoutoutData(
+  overrides: Partial<ShoutoutData> = {},
+): ShoutoutData {
   return {
     fromUserId: faker.string.uuid(),
     toUserId: faker.string.uuid(),

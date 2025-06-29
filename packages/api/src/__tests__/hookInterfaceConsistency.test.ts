@@ -64,18 +64,18 @@ describe("Update Hook Interface Consistency", () => {
       );
     });
 
-    it("should validate that Thanks hook follows standard pattern", () => {
-      // useUpdateThanks should use: Partial<ThanksData> & { id: string }
+    it("should validate that Shoutout hook follows standard pattern", () => {
+      // useUpdateShoutouts should use: Partial<ShoutoutData> & { id: string }
 
-      const expectedThanksPattern = {
-        hookName: "useUpdateThanks",
-        inputType: "Partial<ThanksData> & { id: string }",
-        mutationFn: "updateThanks",
+      const expectedShoutoutPattern = {
+        hookName: "useUpdateShoutouts",
+        inputType: "Partial<ShoutoutData> & { id: string }",
+        mutationFn: "updateShoutout",
         callPattern: "direct call with single object",
       };
 
-      expect(expectedThanksPattern.inputType).toBe(
-        "Partial<ThanksData> & { id: string }",
+      expect(expectedShoutoutPattern.inputType).toBe(
+        "Partial<ShoutoutData> & { id: string }",
       );
     });
 

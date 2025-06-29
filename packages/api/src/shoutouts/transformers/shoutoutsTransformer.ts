@@ -1,25 +1,25 @@
 import type { Database } from "@belongnetwork/types/database";
 import type {
-  ThanksData,
-  Thanks,
-  ThanksInfo,
+  ShoutoutData,
+  Shoutout,
+  ShoutoutInfo,
   User,
   Resource,
 } from "@belongnetwork/types";
 
-export type ThanksRow = Database["public"]["Tables"]["thanks"]["Row"];
-export type ThanksInsertDbData =
-  Database["public"]["Tables"]["thanks"]["Insert"];
-export type ThanksUpdateDbData =
-  Database["public"]["Tables"]["thanks"]["Update"];
+export type ShoutoutRow = Database["public"]["Tables"]["shoutouts"]["Row"];
+export type ShoutoutInsertDbData =
+  Database["public"]["Tables"]["shoutouts"]["Insert"];
+export type ShoutoutUpdateDbData =
+  Database["public"]["Tables"]["shoutouts"]["Update"];
 
 /**
- * Transform a database thanks record to a domain thanks object
+ * Transform a database shoutout record to a domain shoutout object
  */
-export function toDomainThanks(
-  dbThanks: ThanksRow,
+export function toDomainShoutout(
+  dbShoutout: ShoutoutRow,
   refs: { fromUser: User; toUser: User; resource: Resource },
-): Thanks {
+): Shoutout {
   const {
     from_user_id,
     to_user_id,
@@ -29,7 +29,7 @@ export function toDomainThanks(
     created_at,
     updated_at,
     ...rest
-  } = dbThanks;
+  } = dbShoutout;
 
   if (from_user_id !== refs.fromUser.id) {
     throw new Error("From user ID does not match");
@@ -45,7 +45,7 @@ export function toDomainThanks(
 
   return {
     ...rest,
-    id: dbThanks.id,
+    id: dbShoutout.id,
     message: rest.message,
     imageUrls: image_urls || [],
     impactDescription: impact_description || undefined,
@@ -58,12 +58,12 @@ export function toDomainThanks(
 }
 
 /**
- * Transform a domain thanks data object to a database thanks insert record
+ * Transform a domain shoutout data object to a database shoutout insert record
  */
 export function forDbInsert(
-  thanksData: ThanksData,
+  shoutoutData: ShoutoutData,
   fromUserId: string,
-): ThanksInsertDbData {
+): ShoutoutInsertDbData {
   const {
     fromUserId: _fromUserId, // Extract and ignore the fromUserId from data
     toUserId,
@@ -71,7 +71,7 @@ export function forDbInsert(
     imageUrls,
     impactDescription,
     message,
-  } = thanksData;
+  } = shoutoutData;
 
   return {
     message,
@@ -84,11 +84,11 @@ export function forDbInsert(
 }
 
 /**
- * Transform a domain thanks data object to a database thanks update record
+ * Transform a domain shoutout data object to a database shoutout update record
  */
 export function forDbUpdate(
-  thanksData: Partial<ThanksData>,
-): ThanksUpdateDbData {
+  shoutoutData: Partial<ShoutoutData>,
+): ShoutoutUpdateDbData {
   const {
     fromUserId,
     toUserId,
@@ -96,7 +96,7 @@ export function forDbUpdate(
     imageUrls,
     impactDescription,
     message,
-  } = thanksData;
+  } = shoutoutData;
 
   return {
     message,
@@ -109,22 +109,22 @@ export function forDbUpdate(
 }
 
 /**
- * Transform a database thanks record to a ThanksInfo object (lightweight for lists)
+ * Transform a database shoutout record to a ShoutoutInfo object (lightweight for lists)
  */
-export function toThanksInfo(
-  dbThanks: ThanksRow,
+export function toShoutoutInfo(
+  dbShoutout: ShoutoutRow,
   fromUserId: string,
   toUserId: string,
   resourceId: string,
   communityId: string,
-): ThanksInfo {
+): ShoutoutInfo {
   return {
-    id: dbThanks.id,
-    message: dbThanks.message,
-    imageUrls: dbThanks.image_urls || [],
-    impactDescription: dbThanks.impact_description || undefined,
-    createdAt: new Date(dbThanks.created_at),
-    updatedAt: new Date(dbThanks.updated_at),
+    id: dbShoutout.id,
+    message: dbShoutout.message,
+    imageUrls: dbShoutout.image_urls || [],
+    impactDescription: dbShoutout.impact_description || undefined,
+    createdAt: new Date(dbShoutout.created_at),
+    updatedAt: new Date(dbShoutout.updated_at),
     fromUserId: fromUserId,
     toUserId: toUserId,
     resourceId: resourceId,

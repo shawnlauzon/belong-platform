@@ -13,7 +13,7 @@ type CommunityUpdateDbData =
   Database["public"]["Tables"]["communities"]["Update"];
 type ResourceUpdateDbData = Database["public"]["Tables"]["resources"]["Update"];
 type EventUpdateDbData = Database["public"]["Tables"]["events"]["Update"];
-type ThanksUpdateDbData = Database["public"]["Tables"]["thanks"]["Update"];
+type ShoutoutUpdateDbData = Database["public"]["Tables"]["shoutouts"]["Update"];
 
 describe("Update Operations Schema Validation", () => {
   describe("Community updates", () => {
@@ -132,15 +132,15 @@ describe("Update Operations Schema Validation", () => {
     });
   });
 
-  describe("Thanks updates", () => {
-    it("should only allow fields that exist in thanks Update schema", () => {
-      const validUpdate: ThanksUpdateDbData = {
-        message: "Updated thanks message",
+  describe("Shoutout updates", () => {
+    it("should only allow fields that exist in shoutouts Update schema", () => {
+      const validUpdate: ShoutoutUpdateDbData = {
+        message: "Updated shoutout message",
         from_user_id: "user-123",
         to_user_id: "user-456",
       };
 
-      // Thanks table has user IDs, not updated_by
+      // Shoutouts table has user IDs, not updated_by
       expect(validUpdate).toHaveProperty("from_user_id");
       expect(validUpdate).toHaveProperty("to_user_id");
       expect(validUpdate).not.toHaveProperty("updated_by");
@@ -167,9 +167,9 @@ describe("Update Operations Schema Validation", () => {
         // Fields that exist in some tables but not others (easy to mix up)
         tableSpecific: {
           owner_id: ["resources"], // Only in resources, not communities/events
-          organizer_id: ["communities", "events"], // Not in resources/thanks
-          from_user_id: ["thanks"], // Only in thanks
-          to_user_id: ["thanks"], // Only in thanks
+          organizer_id: ["communities", "events"], // Not in resources/shoutouts
+          from_user_id: ["shoutouts"], // Only in shoutouts
+          to_user_id: ["shoutouts"], // Only in shoutouts
         },
 
         // CamelCase variants that should never appear in DB operations

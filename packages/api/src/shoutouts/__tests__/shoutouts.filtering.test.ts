@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createThanksService } from "../services/thanks.service";
+import { createShoutoutsService } from "../services/shoutouts.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
@@ -26,9 +26,9 @@ import { createResourceService } from "../../resources/services/resource.service
 
 const mockCreateResourceService = vi.mocked(createResourceService);
 
-describe("Thanks Service - Resource Filtering Integration", () => {
+describe("Shoutouts Service - Resource Filtering Integration", () => {
   let mockSupabase: any;
-  let thanksService: ReturnType<typeof createThanksService>;
+  let shoutoutService: ReturnType<typeof createShoutoutsService>;
   let mockResourceService: any;
 
   beforeEach(() => {
@@ -41,43 +41,43 @@ describe("Thanks Service - Resource Filtering Integration", () => {
     };
 
     mockCreateResourceService.mockReturnValue(mockResourceService as any);
-    thanksService = createThanksService(mockSupabase as SupabaseClient<Database>);
+    shoutoutService = createShoutoutsService(mockSupabase as SupabaseClient<Database>);
     vi.clearAllMocks();
   });
 
-  it("should handle thanks for resources correctly regardless of resource state", () => {
-    // Test documents that thanks service correctly handles resource lookups
-    // This validates that thanks service integrates properly with resources service
+  it("should handle shoutout for resources correctly regardless of resource state", () => {
+    // Test documents that shoutout service correctly handles resource lookups
+    // This validates that shoutout service integrates properly with resources service
     
-    // Key insight: Thanks service uses resourceService.fetchResourceById() which:
+    // Key insight: Shoutout service uses resourceService.fetchResourceById() which:
     // 1. Fetches resources by ID directly (no active/inactive filtering)
     // 2. Returns full resource data including isActive state
-    // 3. Allows thanks to display even for inactive resources
+    // 3. Allows shoutout to display even for inactive resources
     
-    // This design ensures thanks remain visible even if referenced resource
-    // becomes inactive, preserving historical thanks data integrity
+    // This design ensures shoutout remain visible even if referenced resource
+    // becomes inactive, preserving historical shoutout data integrity
     
     expect(true).toBe(true);
   });
 
-  it("should filter out thanks when referenced resource is truly deleted", () => {
+  it("should filter out shoutout when referenced resource is truly deleted", () => {
     // Test documents expected behavior when resource is hard-deleted
-    // Thanks service should gracefully handle missing resources by:
+    // Shoutout service should gracefully handle missing resources by:
     // 1. Calling resourceService.fetchResourceById() 
     // 2. Getting null for deleted resources
-    // 3. Filtering out thanks with missing resources
+    // 3. Filtering out shoutout with missing resources
     // 4. Logging warnings for missing resources
     
-    // This ensures thanks list doesn't break when resources are deleted
+    // This ensures shoutout list doesn't break when resources are deleted
     expect(true).toBe(true);
   });
 
-  it("should apply thanks filters independently of resource state", () => {
-    // Test documents that thanks filtering (sentBy, receivedBy, resourceId)
+  it("should apply shoutout filters independently of resource state", () => {
+    // Test documents that shoutout filtering (sentBy, receivedBy, resourceId)
     // operates independently of resource active/inactive state
     
-    // Thanks filtering only affects which thanks records are queried
-    // Resource state filtering happens at resource level, not thanks level
+    // Shoutout filtering only affects which shoutout records are queried
+    // Resource state filtering happens at resource level, not shoutout level
     expect(true).toBe(true);
   });
 });

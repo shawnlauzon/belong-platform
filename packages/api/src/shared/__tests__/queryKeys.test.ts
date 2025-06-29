@@ -165,47 +165,47 @@ describe("queryKeys", () => {
     });
   });
 
-  describe("thanks keys", () => {
-    it("should provide all thanks query key", () => {
-      expect(queryKeys.thanks.all).toEqual(["thanks"]);
+  describe("shoutouts keys", () => {
+    it("should provide all shoutouts query key", () => {
+      expect(queryKeys.shoutouts.all).toEqual(["shoutouts"]);
     });
 
-    it("should provide thanks by ID query key", () => {
-      const thanksId = "thanks-123";
-      expect(queryKeys.thanks.byId(thanksId)).toEqual(["thanks", thanksId]);
+    it("should provide shoutout by ID query key", () => {
+      const shoutoutId = "shoutout-123";
+      expect(queryKeys.shoutouts.byId(shoutoutId)).toEqual(["shoutout", shoutoutId]);
     });
 
-    it("should provide thanks by community query key", () => {
+    it("should provide shoutouts by community query key", () => {
       const communityId = "community-123";
-      expect(queryKeys.thanks.byCommunity(communityId)).toEqual([
-        "thanks",
+      expect(queryKeys.shoutouts.byCommunity(communityId)).toEqual([
+        "shoutouts",
         "community",
         communityId,
       ]);
     });
 
-    it("should provide thanks sent by user query key", () => {
+    it("should provide shoutouts sent by user query key", () => {
       const userId = "user-123";
-      expect(queryKeys.thanks.sentBy(userId)).toEqual([
-        "thanks",
+      expect(queryKeys.shoutouts.sentBy(userId)).toEqual([
+        "shoutouts",
         "sent",
         userId,
       ]);
     });
 
-    it("should provide thanks received by user query key", () => {
+    it("should provide shoutouts received by user query key", () => {
       const userId = "user-123";
-      expect(queryKeys.thanks.receivedBy(userId)).toEqual([
-        "thanks",
+      expect(queryKeys.shoutouts.receivedBy(userId)).toEqual([
+        "shoutouts",
         "received",
         userId,
       ]);
     });
 
-    it("should provide filtered thanks query key", () => {
+    it("should provide filtered shoutouts query key", () => {
       const filter = { resourceId: "resource-123", fromUserId: "user-456" };
-      expect(queryKeys.thanks.filtered(filter)).toEqual([
-        "thanks",
+      expect(queryKeys.shoutouts.filtered(filter)).toEqual([
+        "shoutouts",
         "filtered",
         filter,
       ]);
@@ -219,7 +219,7 @@ describe("queryKeys", () => {
       expect(queryKeys.communities.all[0]).toBe("communities");
       expect(queryKeys.resources.all[0]).toBe("resources");
       expect(queryKeys.events.all[0]).toBe("events");
-      expect(queryKeys.thanks.all[0]).toBe("thanks");
+      expect(queryKeys.shoutouts.all[0]).toBe("shoutouts");
     });
 
     it("should use singular form for byId keys", () => {
@@ -227,7 +227,7 @@ describe("queryKeys", () => {
       expect(queryKeys.communities.byId("123")[0]).toBe("community");
       expect(queryKeys.resources.byId("123")[0]).toBe("resource");
       expect(queryKeys.events.byId("123")[0]).toBe("event");
-      expect(queryKeys.thanks.byId("123")[0]).toBe("thanks");
+      expect(queryKeys.shoutouts.byId("123")[0]).toBe("shoutout");
     });
 
     it("should maintain referential stability for static keys", () => {
@@ -318,7 +318,7 @@ describe("queryKeys", () => {
 
       expect(() => queryKeys.resources.filtered(stringFilter)).not.toThrow();
       expect(() => queryKeys.events.filtered(numberFilter)).not.toThrow();
-      expect(() => queryKeys.thanks.filtered(booleanFilter)).not.toThrow();
+      expect(() => queryKeys.shoutouts.filtered(booleanFilter)).not.toThrow();
       expect(() => queryKeys.resources.filtered(mixedFilter)).not.toThrow();
     });
   });

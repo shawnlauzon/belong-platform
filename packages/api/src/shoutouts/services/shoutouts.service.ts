@@ -1,16 +1,16 @@
 import { logger } from "@belongnetwork/core";
 import type {
-  Thanks,
-  ThanksData,
-  ThanksInfo,
-  ThanksFilter,
+  Shoutout,
+  ShoutoutData,
+  ShoutoutInfo,
+  ShoutoutFilter,
 } from "@belongnetwork/types";
 import {
-  toDomainThanks,
-  toThanksInfo,
+  toDomainShoutout,
+  toShoutoutInfo,
   forDbInsert,
   forDbUpdate,
-} from "../transformers/thanksTransformer";
+} from "../transformers/shoutoutsTransformer";
 import { createUserService } from "../../users/services/user.service";
 import { createResourceService } from "../../resources/services/resource.service";
 import { requireAuthentication } from "../../shared/auth-helpers";
@@ -19,9 +19,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 
 /**
- * Validates thanks creation business rules
+ * Validates shoutout creation business rules
  */
-function validateThanksCreation(data: ThanksData, currentUserId: string): void {
+function validateShoutoutsCreation(data: ShoutoutsData, currentUserId: string): void {
   // Rule: User cannot thank themselves
   if (data.fromUserId === data.toUserId) {
     throw new Error("Cannot thank yourself");
@@ -29,31 +29,31 @@ function validateThanksCreation(data: ThanksData, currentUserId: string): void {
 }
 
 /**
- * Validates thanks update business rules
+ * Validates shoutout update business rules
  */
-function validateThanksUpdate(
-  existingThanks: any,
-  updateData: Partial<ThanksData>,
+function validateShoutoutsUpdate(
+  existingShoutouts: any,
+  updateData: Partial<ShoutoutsData>,
   currentUserId: string
 ): void {
-  // Rule: Cannot change the sender of thanks
-  if (updateData.fromUserId && updateData.fromUserId !== existingThanks.from_user_id) {
-    throw new Error("Cannot change the sender of thanks");
+  // Rule: Cannot change the sender of shoutout
+  if (updateData.fromUserId && updateData.fromUserId !== existingShoutouts.from_user_id) {
+    throw new Error("Cannot change the sender of shoutout");
   }
 
   // Rule: Cannot change receiver to yourself (the sender)
-  if (updateData.toUserId && updateData.toUserId === existingThanks.from_user_id) {
+  if (updateData.toUserId && updateData.toUserId === existingShoutouts.from_user_id) {
     throw new Error("Cannot change receiver to yourself");
   }
 }
 
-export const createThanksService = (supabase: SupabaseClient<Database>) => ({
-  async fetchThanks(filters?: ThanksFilter): Promise<ThanksInfo[]> {
-    logger.debug("🙏 Thanks Service: Fetching thanks", { filters });
+export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
+  async fetchShoutouts(filters?: ShoutoutsFilter): Promise<ShoutoutsInfo[]> {
+    logger.debug("📢 Shoutouts Service: Fetching shoutout", { filters });
 
     try {
       let query = supabase
-        .from("thanks")
+        .from("shoutouts")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -73,7 +73,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       const { data, error } = await query;
 
       if (error) {
-        logger.error("🙏 Thanks Service: Failed to fetch thanks", { error });
+        logger.error("📢 Shoutouts Service: Failed to fetch shoutout", { error });
         throw error;
       }
 
@@ -81,7 +81,7 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         return [];
       }
 
-      // For ThanksInfo[], we need to get communityId from resources
+      // For ShoutoutsInfo[], we need to get communityId from resources
       const resourceIds = Array.from(new Set(data.map((t) => t.resource_id)));
 
       // Fetch resources to get community IDs using resource service
@@ -93,44 +93,44 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         resources.filter(Boolean).map((resource) => [resource!.id, resource!]),
       );
 
-      // Convert to ThanksInfo objects
-      const thanks = data
-        .map((dbThanks) => {
+      // Convert to ShoutoutsInfo objects
+      const shoutout = data
+        .map((dbShoutouts) => {
           try {
-            const resource = resourceMap.get(dbThanks.resource_id);
+            const resource = resourceMap.get(dbShoutouts.resource_id);
             if (!resource) {
-              logger.warn("🙏 Thanks Service: Resource not found for thanks", {
-                thanksId: dbThanks.id,
-                resourceId: dbThanks.resource_id,
+              logger.warn("📢 Shoutouts Service: Resource not found for shoutout", {
+                shoutoutId: dbShoutouts.id,
+                resourceId: dbShoutouts.resource_id,
               });
               return null;
             }
 
-            return toThanksInfo(
-              dbThanks,
-              dbThanks.from_user_id,
-              dbThanks.to_user_id,
-              dbThanks.resource_id,
+            return toShoutoutsInfo(
+              dbShoutouts,
+              dbShoutouts.from_user_id,
+              dbShoutouts.to_user_id,
+              dbShoutouts.resource_id,
               resource.community?.id || "",
             );
           } catch (error) {
-            logger.error("🙏 Thanks Service: Error transforming thanks", {
-              thanksId: dbThanks.id,
+            logger.error("📢 Shoutouts Service: Error transforming shoutout", {
+              shoutoutId: dbShoutouts.id,
               error: error instanceof Error ? error.message : "Unknown error",
             });
             return null;
           }
         })
-        .filter((thanks): thanks is ThanksInfo => thanks !== null);
+        .filter((shoutout): shoutout is ShoutoutsInfo => shoutout !== null);
 
-      logger.debug("🙏 Thanks Service: Successfully fetched thanks", {
-        count: thanks.length,
+      logger.debug("📢 Shoutouts Service: Successfully fetched shoutout", {
+        count: shoutout.length,
         filters,
       });
 
-      return thanks;
+      return shoutout;
     } catch (error) {
-      logger.error("🙏 Thanks Service: Error fetching thanks", {
+      logger.error("📢 Shoutouts Service: Error fetching shoutout", {
         filters,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
@@ -139,12 +139,12 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchThanksById(id: string): Promise<Thanks | null> {
-    logger.debug("🙏 Thanks Service: Fetching thanks by ID", { id });
+  async fetchShoutoutsById(id: string): Promise<Shoutouts | null> {
+    logger.debug("📢 Shoutouts Service: Fetching shoutout by ID", { id });
 
     try {
       const { data, error } = await supabase
-        .from("thanks")
+        .from("shoutouts")
         .select("*")
         .eq("id", id)
         .single();
@@ -152,10 +152,10 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
-          logger.debug("🙏 Thanks Service: Thanks not found", { id });
+          logger.debug("📢 Shoutouts Service: Shoutouts not found", { id });
           return null;
         }
-        logger.error("🙏 Thanks Service: Failed to fetch thanks", {
+        logger.error("📢 Shoutouts Service: Failed to fetch shoutout", {
           id,
           error,
         });
@@ -176,18 +176,18 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         throw new Error("Required related entities not found");
       }
 
-      const thanks = toDomainThanks(data, { fromUser, toUser, resource });
+      const shoutout = toDomainShoutouts(data, { fromUser, toUser, resource });
 
-      logger.debug("🙏 Thanks Service: Successfully fetched thanks", {
+      logger.debug("📢 Shoutouts Service: Successfully fetched shoutout", {
         id,
-        fromUserId: thanks.fromUser.id,
-        toUserId: thanks.toUser.id,
-        resourceId: thanks.resource.id,
+        fromUserId: shoutout.fromUser.id,
+        toUserId: shoutout.toUser.id,
+        resourceId: shoutout.resource.id,
       });
 
-      return thanks;
+      return shoutout;
     } catch (error) {
-      logger.error("🙏 Thanks Service: Error fetching thanks", {
+      logger.error("📢 Shoutouts Service: Error fetching shoutout", {
         id,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
@@ -196,28 +196,28 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async createThanks(data: ThanksData): Promise<Thanks> {
-    logger.debug("🙏 Thanks Service: Creating thanks", { data });
+  async createShoutout(data: ShoutoutData): Promise<Shoutout> {
+    logger.debug("📢 Shoutouts Service: Creating shoutout", { data });
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, "create thanks");
+      const userId = await requireAuthentication(supabase, "create shoutout");
 
       // Validate business rules before database operation
-      validateThanksCreation(data, userId);
+      validateShoutoutCreation(data, userId);
 
       // Transform to database format
-      const dbThanks = forDbInsert(data, userId);
+      const dbShoutout = forDbInsert(data, userId);
 
       // Insert into database
-      const { data: createdThanks, error } = await supabase
-        .from("thanks")
-        .insert([dbThanks])
+      const { data: createdShoutout, error } = await supabase
+        .from("shoutouts")
+        .insert([dbShoutout])
         .select("*")
         .single();
 
       if (error) {
-        logger.error("🙏 Thanks Service: Failed to create thanks", { error });
+        logger.error("📢 Shoutouts Service: Failed to create shoutout", { error });
         throw error;
       }
 
@@ -226,31 +226,31 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       const resourceService = createResourceService(supabase);
 
       const [fromUser, toUser, resource] = await Promise.all([
-        userService.fetchUserById(createdThanks.from_user_id),
-        userService.fetchUserById(createdThanks.to_user_id),
-        resourceService.fetchResourceById(createdThanks.resource_id),
+        userService.fetchUserById(createdShoutouts.from_user_id),
+        userService.fetchUserById(createdShoutouts.to_user_id),
+        resourceService.fetchResourceById(createdShoutouts.resource_id),
       ]);
 
       if (!fromUser || !toUser || !resource) {
         throw new Error("Required related entities not found");
       }
 
-      const thanks = toDomainThanks(createdThanks, {
+      const shoutout = toDomainShoutouts(createdShoutouts, {
         fromUser,
         toUser,
         resource,
       });
 
-      logger.info("🙏 Thanks Service: Successfully created thanks", {
-        id: thanks.id,
-        fromUserId: thanks.fromUser.id,
-        toUserId: thanks.toUser.id,
-        resourceId: thanks.resource.id,
+      logger.info("📢 Shoutouts Service: Successfully created shoutout", {
+        id: shoutout.id,
+        fromUserId: shoutout.fromUser.id,
+        toUserId: shoutout.toUser.id,
+        resourceId: shoutout.resource.id,
       });
 
-      return thanks;
+      return shoutout;
     } catch (error) {
-      logger.error("🙏 Thanks Service: Error creating thanks", {
+      logger.error("📢 Shoutouts Service: Error creating shoutout", {
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -258,26 +258,26 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async updateThanks(id: string, data: Partial<ThanksData>): Promise<Thanks> {
-    logger.debug("🙏 Thanks Service: Updating thanks", { id, data });
+  async updateShoutouts(id: string, data: Partial<ShoutoutsData>): Promise<Shoutouts> {
+    logger.debug("📢 Shoutouts Service: Updating shoutout", { id, data });
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, "update thanks");
+      const userId = await requireAuthentication(supabase, "update shoutout");
 
-      // Fetch existing thanks to validate business rules
-      const { data: existingThanks, error: fetchError } = await supabase
-        .from("thanks")
+      // Fetch existing shoutout to validate business rules
+      const { data: existingShoutouts, error: fetchError } = await supabase
+        .from("shoutouts")
         .select("*")
         .eq("id", id)
         .single();
 
       if (fetchError) {
         if (fetchError.code === ERROR_CODES.NOT_FOUND) {
-          logger.debug("🙏 Thanks Service: Thanks not found for update", { id });
-          throw new Error("Thanks not found");
+          logger.debug("📢 Shoutouts Service: Shoutouts not found for update", { id });
+          throw new Error("Shoutouts not found");
         }
-        logger.error("🙏 Thanks Service: Failed to fetch thanks for update", {
+        logger.error("📢 Shoutouts Service: Failed to fetch shoutout for update", {
           id,
           error: fetchError,
         });
@@ -285,21 +285,21 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Validate business rules before database operation
-      validateThanksUpdate(existingThanks, data, userId);
+      validateShoutoutsUpdate(existingShoutouts, data, userId);
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
 
       // Update in database
-      const { data: updatedThanks, error } = await supabase
-        .from("thanks")
+      const { data: updatedShoutouts, error } = await supabase
+        .from("shoutouts")
         .update(dbUpdate)
         .eq("id", id)
         .select("*")
         .single();
 
       if (error) {
-        logger.error("🙏 Thanks Service: Failed to update thanks", {
+        logger.error("📢 Shoutouts Service: Failed to update shoutout", {
           id,
           error,
         });
@@ -311,29 +311,29 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       const resourceService = createResourceService(supabase);
 
       const [fromUser, toUser, resource] = await Promise.all([
-        userService.fetchUserById(updatedThanks.from_user_id),
-        userService.fetchUserById(updatedThanks.to_user_id),
-        resourceService.fetchResourceById(updatedThanks.resource_id),
+        userService.fetchUserById(updatedShoutouts.from_user_id),
+        userService.fetchUserById(updatedShoutouts.to_user_id),
+        resourceService.fetchResourceById(updatedShoutouts.resource_id),
       ]);
 
       if (!fromUser || !toUser || !resource) {
         throw new Error("Required related entities not found");
       }
 
-      const thanks = toDomainThanks(updatedThanks, {
+      const shoutout = toDomainShoutouts(updatedShoutouts, {
         fromUser,
         toUser,
         resource,
       });
 
-      logger.info("🙏 Thanks Service: Successfully updated thanks", {
-        id: thanks.id,
-        message: thanks.message,
+      logger.info("📢 Shoutouts Service: Successfully updated shoutout", {
+        id: shoutout.id,
+        message: shoutout.message,
       });
 
-      return thanks;
+      return shoutout;
     } catch (error) {
-      logger.error("🙏 Thanks Service: Error updating thanks", {
+      logger.error("📢 Shoutouts Service: Error updating shoutout", {
         id,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
@@ -342,30 +342,30 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async deleteThanks(id: string): Promise<void> {
-    logger.debug("🙏 Thanks Service: Deleting thanks", { id });
+  async deleteShoutouts(id: string): Promise<void> {
+    logger.debug("📢 Shoutouts Service: Deleting shoutout", { id });
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, "delete thanks");
+      const userId = await requireAuthentication(supabase, "delete shoutout");
 
-      // First, fetch the existing thanks to verify ownership
-      const { data: existingThanks, error: fetchError } = await supabase
-        .from("thanks")
+      // First, fetch the existing shoutout to verify ownership
+      const { data: existingShoutouts, error: fetchError } = await supabase
+        .from("shoutouts")
         .select("from_user_id")
         .eq("id", id)
         .single();
 
       if (fetchError) {
         if (fetchError.code === ERROR_CODES.NOT_FOUND) {
-          // Thanks not found - we can consider this a success
-          logger.debug("🙏 Thanks Service: Thanks not found for deletion", {
+          // Shoutouts not found - we can consider this a success
+          logger.debug("📢 Shoutouts Service: Shoutouts not found for deletion", {
             id,
           });
           return;
         }
 
-        logger.error("🙏 Thanks Service: Failed to fetch thanks for deletion", {
+        logger.error("📢 Shoutouts Service: Failed to fetch shoutout for deletion", {
           id,
           error: fetchError.message,
           code: fetchError.code,
@@ -374,26 +374,26 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Check if the current user is the sender
-      if (existingThanks.from_user_id !== userId) {
+      if (existingShoutouts.from_user_id !== userId) {
         logger.error(
-          "🙏 Thanks Service: User is not authorized to delete this thanks",
+          "📢 Shoutouts Service: User is not authorized to delete this shoutout",
           {
             userId,
-            fromUserId: existingThanks.from_user_id,
-            thanksId: id,
+            fromUserId: existingShoutouts.from_user_id,
+            shoutoutId: id,
           },
         );
-        throw new Error("You are not authorized to delete this thanks");
+        throw new Error("You are not authorized to delete this shoutout");
       }
 
       // Perform the delete
       const { error: deleteError } = await supabase
-        .from("thanks")
+        .from("shoutouts")
         .delete()
         .eq("id", id);
 
       if (deleteError) {
-        logger.error("🙏 Thanks Service: Failed to delete thanks", {
+        logger.error("📢 Shoutouts Service: Failed to delete shoutout", {
           id,
           error: deleteError.message,
           code: deleteError.code,
@@ -401,10 +401,10 @@ export const createThanksService = (supabase: SupabaseClient<Database>) => ({
         throw deleteError;
       }
 
-      logger.info("🙏 Thanks Service: Successfully deleted thanks", { id });
+      logger.info("📢 Shoutouts Service: Successfully deleted shoutout", { id });
       return;
     } catch (error) {
-      logger.error("🙏 Thanks Service: Error deleting thanks", {
+      logger.error("📢 Shoutouts Service: Error deleting shoutout", {
         id,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,

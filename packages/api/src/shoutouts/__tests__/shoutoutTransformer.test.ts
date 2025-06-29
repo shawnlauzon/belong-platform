@@ -1,117 +1,117 @@
 import { describe, it, expect } from "vitest";
 import { faker } from "@faker-js/faker";
 import {
-  toDomainThanks,
+  toDomainShoutout,
   forDbInsert,
   forDbUpdate,
-} from "../transformers/thanksTransformer";
-import { createMockDbThanks, createMockThanksData } from "./test-utils";
+} from "../transformers/shoutoutsTransformer";
+import { createMockDbShoutout, createMockShoutoutData } from "./test-utils";
 import { createMockUser, createMockResource } from "../../test-utils/mocks";
 
-describe("Thanks Transformer", () => {
-  describe("toDomainThanks", () => {
-    it("should transform a database thanks to a domain thanks", () => {
+describe("Shoutout Transformer", () => {
+  describe("toDomainShoutout", () => {
+    it("should transform a database shoutout to a domain shoutout", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
-      const thanks = toDomainThanks(dbThanks, {
+      const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
       });
 
-      expect(thanks).toMatchObject({
-        id: dbThanks.id,
-        message: dbThanks.message,
-        imageUrls: dbThanks.image_urls,
-        impactDescription: dbThanks.impact_description || undefined,
+      expect(shoutout).toMatchObject({
+        id: dbShoutout.id,
+        message: dbShoutout.message,
+        imageUrls: dbShoutout.image_urls,
+        impactDescription: dbShoutout.impact_description || undefined,
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
       });
-      expect(thanks.createdAt).toBeInstanceOf(Date);
-      expect(thanks.updatedAt).toBeInstanceOf(Date);
+      expect(shoutout.createdAt).toBeInstanceOf(Date);
+      expect(shoutout.updatedAt).toBeInstanceOf(Date);
     });
 
     it("should include users and resource if provided", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
-      const thanks = toDomainThanks(dbThanks, {
+      const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
       });
 
-      expect(thanks.fromUser).toEqual(mockFromUser);
-      expect(thanks.toUser).toEqual(mockToUser);
-      expect(thanks.resource).toEqual(mockResource);
+      expect(shoutout.fromUser).toEqual(mockFromUser);
+      expect(shoutout.toUser).toEqual(mockToUser);
+      expect(shoutout.resource).toEqual(mockResource);
     });
 
     it("should handle null impact_description", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
         impact_description: null,
       });
 
-      const thanks = toDomainThanks(dbThanks, {
+      const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
       });
 
-      expect(thanks.impactDescription).toBeUndefined();
+      expect(shoutout.impactDescription).toBeUndefined();
     });
 
     it("should handle empty image_urls array", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
         image_urls: [],
       });
 
-      const thanks = toDomainThanks(dbThanks, {
+      const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
       });
 
-      expect(thanks.imageUrls).toEqual([]);
+      expect(shoutout.imageUrls).toEqual([]);
     });
 
     it("should throw an error if from user ID does not match", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: "different-id",
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
       expect(() =>
-        toDomainThanks(dbThanks, {
+        toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
@@ -123,14 +123,14 @@ describe("Thanks Transformer", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: "different-id",
         resource_id: mockResource.id,
       });
 
       expect(() =>
-        toDomainThanks(dbThanks, {
+        toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
@@ -142,14 +142,14 @@ describe("Thanks Transformer", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: "different-id",
       });
 
       expect(() =>
-        toDomainThanks(dbThanks, {
+        toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
@@ -162,14 +162,14 @@ describe("Thanks Transformer", () => {
       const mockFromUser = createMockUser();
       const mockToUser = createMockUser();
       const mockResource = createMockResource();
-      const dbThanks = createMockDbThanks({
+      const dbShoutout = createMockDbShoutout({
         from_user_id: mockFromUser.id,
         to_user_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
       // Act
-      const result = toDomainThanks(dbThanks, {
+      const result = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
@@ -183,71 +183,71 @@ describe("Thanks Transformer", () => {
   });
 
   describe("forDbInsert", () => {
-    it("should transform domain thanks data to database insert format", () => {
-      const thanksData = createMockThanksData();
+    it("should transform domain shoutout data to database insert format", () => {
+      const shoutoutData = createMockShoutoutData();
       const fromUserId = faker.string.uuid();
 
-      const dbThanks = forDbInsert(thanksData, fromUserId);
+      const dbShoutout = forDbInsert(shoutoutData, fromUserId);
 
-      expect(dbThanks).toMatchObject({
-        message: thanksData.message,
+      expect(dbShoutout).toMatchObject({
+        message: shoutoutData.message,
         from_user_id: fromUserId,
-        to_user_id: thanksData.toUserId,
-        resource_id: thanksData.resourceId,
-        image_urls: thanksData.imageUrls || [],
-        impact_description: thanksData.impactDescription || null,
+        to_user_id: shoutoutData.toUserId,
+        resource_id: shoutoutData.resourceId,
+        image_urls: shoutoutData.imageUrls || [],
+        impact_description: shoutoutData.impactDescription || null,
       });
     });
 
     it("should handle undefined imageUrls", () => {
-      const thanksData = createMockThanksData({
+      const shoutoutData = createMockShoutoutData({
         imageUrls: undefined,
       });
       const fromUserId = faker.string.uuid();
 
-      const dbThanks = forDbInsert(thanksData, fromUserId);
+      const dbShoutout = forDbInsert(shoutoutData, fromUserId);
 
-      expect(dbThanks.image_urls).toEqual([]);
+      expect(dbShoutout.image_urls).toEqual([]);
     });
 
     it("should handle undefined impactDescription", () => {
-      const thanksData = createMockThanksData({
+      const shoutoutData = createMockShoutoutData({
         impactDescription: undefined,
       });
       const fromUserId = faker.string.uuid();
 
-      const dbThanks = forDbInsert(thanksData, fromUserId);
+      const dbShoutout = forDbInsert(shoutoutData, fromUserId);
 
-      expect(dbThanks.impact_description).toBeNull();
+      expect(dbShoutout.impact_description).toBeNull();
     });
   });
 
   describe("forDbUpdate", () => {
-    it("should transform partial domain thanks data to database update format", () => {
-      const partialThanksData = {
+    it("should transform partial domain shoutout data to database update format", () => {
+      const partialShoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
         impactDescription: faker.lorem.sentence(),
       };
 
-      const dbThanks = forDbUpdate(partialThanksData);
+      const dbShoutout = forDbUpdate(partialShoutoutData);
 
-      expect(dbThanks).toMatchObject({
-        message: partialThanksData.message,
-        image_urls: partialThanksData.imageUrls,
-        impact_description: partialThanksData.impactDescription,
+      expect(dbShoutout).toMatchObject({
+        message: partialShoutoutData.message,
+        image_urls: partialShoutoutData.imageUrls,
+        impact_description: partialShoutoutData.impactDescription,
       });
     });
 
     it("should handle undefined values", () => {
-      const partialThanksData = {
+      const partialShoutoutData = {
         message: faker.lorem.paragraph(),
       };
 
-      const dbThanks = forDbUpdate(partialThanksData);
+      const dbShoutout = forDbUpdate(partialShoutoutData);
 
-      expect(dbThanks).toMatchObject({
-        message: partialThanksData.message,
+      expect(dbShoutout).toMatchObject({
+        message: partialShoutoutData.message,
         from_user_id: undefined,
         to_user_id: undefined,
         resource_id: undefined,
@@ -257,13 +257,13 @@ describe("Thanks Transformer", () => {
     });
 
     it("should convert undefined impactDescription to null", () => {
-      const partialThanksData = {
+      const partialShoutoutData = {
         impactDescription: undefined,
       };
 
-      const dbThanks = forDbUpdate(partialThanksData);
+      const dbShoutout = forDbUpdate(partialShoutoutData);
 
-      expect(dbThanks.impact_description).toBeNull();
+      expect(dbShoutout.impact_description).toBeNull();
     });
   });
 });

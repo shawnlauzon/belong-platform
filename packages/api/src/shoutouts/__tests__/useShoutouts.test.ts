@@ -2,28 +2,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
-import type { ThanksInfo, Thanks } from "@belongnetwork/types";
-import { useThanks } from "../hooks/useThanks";
+import type { ShoutoutInfo, Shoutout } from "@belongnetwork/types";
+import { useShoutouts } from "../hooks/useShoutouts";
 
 // Mock the auth provider
 vi.mock("../../auth/providers/CurrentUserProvider", () => ({
   useSupabase: vi.fn(),
 }));
 
-// Mock the thanks service
-vi.mock("../services/thanks.service", () => ({
-  createThanksService: vi.fn(),
+// Mock the shoutout service
+vi.mock("../services/shoutouts.service", () => ({
+  createShoutoutsService: vi.fn(),
 }));
 
 import { useSupabase } from "../../auth/providers/CurrentUserProvider";
-import { createThanksService } from "../services/thanks.service";
+import { createShoutoutsService } from "../services/shoutouts.service";
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockCreateThanksService = vi.mocked(createThanksService);
-const mockFetchThanks = vi.fn();
-const mockFetchThanksById = vi.fn();
+const mockCreateShoutoutsService = vi.mocked(createShoutoutsService);
+const mockFetchShoutouts = vi.fn();
+const mockFetchShoutoutsById = vi.fn();
 
-describe("useThanks", () => {
+describe("useShoutouts", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -38,21 +38,21 @@ describe("useThanks", () => {
 
     // Setup mocks
     mockUseSupabase.mockReturnValue({} as any);
-    mockCreateThanksService.mockReturnValue({
-      fetchThanks: mockFetchThanks,
-      fetchThanksById: mockFetchThanksById,
+    mockCreateShoutoutsService.mockReturnValue({
+      fetchShoutouts: mockFetchShoutouts,
+      fetchShoutoutById: mockFetchShoutoutsById,
     });
   });
 
   const wrapper = ({ children }: { children: any }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it("should return ThanksInfo[] from list() method", async () => {
-    // Arrange: Mock return value should be ThanksInfo[]
-    const mockThanksInfo: ThanksInfo[] = [
+  it("should return ShoutoutInfo[] from list() method", async () => {
+    // Arrange: Mock return value should be ShoutoutInfo[]
+    const mockShoutoutInfo: ShoutoutInfo[] = [
       {
-        id: "thanks-1",
-        message: "Thank you for the awesome drill!",
+        id: "shoutout-1",
+        message: "Shoutout for the awesome drill!",
         fromUserId: "user-1", // ID instead of User object
         toUserId: "user-2", // ID instead of User object
         resourceId: "resource-1", // ID instead of Resource object
@@ -64,52 +64,52 @@ describe("useThanks", () => {
       },
     ];
 
-    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+    mockFetchShoutouts.mockResolvedValue(mockShoutoutInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
     
     // Manually list data
     const listdData = await result.current.list();
 
     // Assert
-    expect(listdData).toEqual(mockThanksInfo);
-    expect(mockFetchThanks).toHaveBeenCalledWith(undefined);
+    expect(listdData).toEqual(mockShoutoutInfo);
+    expect(mockFetchShoutouts).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const thanks = listdData![0];
-    expect(typeof thanks.fromUserId).toBe("string");
-    expect(typeof thanks.toUserId).toBe("string");
-    expect(typeof thanks.resourceId).toBe("string");
-    expect(typeof thanks.communityId).toBe("string");
-    expect(thanks).not.toHaveProperty("fromUser");
-    expect(thanks).not.toHaveProperty("toUser");
-    expect(thanks).not.toHaveProperty("resource");
+    const shoutout = listdData![0];
+    expect(typeof shoutout.fromUserId).toBe("string");
+    expect(typeof shoutout.toUserId).toBe("string");
+    expect(typeof shoutout.resourceId).toBe("string");
+    expect(typeof shoutout.communityId).toBe("string");
+    expect(shoutout).not.toHaveProperty("fromUser");
+    expect(shoutout).not.toHaveProperty("toUser");
+    expect(shoutout).not.toHaveProperty("resource");
   });
 
-  it("should pass filters to fetchThanks and return ThanksInfo[]", async () => {
+  it("should pass filters to fetchShoutout and return ShoutoutInfo[]", async () => {
     // Arrange
     const filters = { sentBy: "user-1" };
-    const mockThanksInfo: ThanksInfo[] = [];
-    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+    const mockShoutoutInfo: ShoutoutInfo[] = [];
+    mockFetchShoutouts.mockResolvedValue(mockShoutoutInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
     
     // Manually list data with filters
     const listdData = await result.current.list(filters);
 
     // Assert
-    expect(listdData).toEqual(mockThanksInfo);
-    expect(mockFetchThanks).toHaveBeenCalledWith(filters);
+    expect(listdData).toEqual(mockShoutoutInfo);
+    expect(mockFetchShoutouts).toHaveBeenCalledWith(filters);
   });
 
   it("should not fetch data automatically and have correct initial status", async () => {
     // Arrange
-    const mockThanksInfo: ThanksInfo[] = [
+    const mockShoutoutInfo: ShoutoutInfo[] = [
       {
-        id: "thanks-1",
-        message: "Thank you!",
+        id: "shoutout-1",
+        message: "Shoutout!",
         fromUserId: "user-1",
         toUserId: "user-2",
         resourceId: "resource-1",
@@ -119,13 +119,13 @@ describe("useThanks", () => {
         updatedAt: new Date(),
       },
     ];
-    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+    mockFetchShoutouts.mockResolvedValue(mockShoutoutInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
 
     // Assert - Data should not be fetched automatically and status should be correct
-    expect(mockFetchThanks).not.toHaveBeenCalled();
+    expect(mockFetchShoutouts).not.toHaveBeenCalled();
     expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
     expect(result.current.isError).toBe(false);
     expect(result.current.isSuccess).toBe(false);
@@ -135,8 +135,8 @@ describe("useThanks", () => {
     const listdData = await result.current.list();
 
     // Assert - Data should be fetched after manual list
-    expect(listdData).toEqual(mockThanksInfo);
-    expect(mockFetchThanks).toHaveBeenCalledTimes(1);
+    expect(listdData).toEqual(mockShoutoutInfo);
+    expect(mockFetchShoutouts).toHaveBeenCalledTimes(1);
     
     // Status should update after successful fetch
     await waitFor(() => {
@@ -148,32 +148,32 @@ describe("useThanks", () => {
   it("should allow list to be called with filters", async () => {
     // Arrange
     const filters = { sentBy: "user-1" };
-    const mockThanksInfo: ThanksInfo[] = [];
-    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+    const mockShoutoutInfo: ShoutoutInfo[] = [];
+    mockFetchShoutouts.mockResolvedValue(mockShoutoutInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
 
     // Assert - No automatic fetch
-    expect(mockFetchThanks).not.toHaveBeenCalled();
+    expect(mockFetchShoutouts).not.toHaveBeenCalled();
     expect(result.current.isPending).toBe(false);
 
     // Act - Retrieve with filters
     const listdData = await result.current.list(filters);
 
     // Assert
-    expect(listdData).toEqual(mockThanksInfo);
-    expect(mockFetchThanks).toHaveBeenCalledWith(filters);
-    expect(mockFetchThanks).toHaveBeenCalledTimes(1);
+    expect(listdData).toEqual(mockShoutoutInfo);
+    expect(mockFetchShoutouts).toHaveBeenCalledWith(filters);
+    expect(mockFetchShoutouts).toHaveBeenCalledTimes(1);
   });
 
   it("should provide unified states that represent any operation (query + mutations)", async () => {
     // Arrange
-    const mockThanksInfo: ThanksInfo[] = [];
-    mockFetchThanks.mockResolvedValue(mockThanksInfo);
+    const mockShoutoutInfo: ShoutoutInfo[] = [];
+    mockFetchShoutouts.mockResolvedValue(mockShoutoutInfo);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
 
     // Assert - Initial state (query enabled: false, no mutations running)
     expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
@@ -191,11 +191,11 @@ describe("useThanks", () => {
     expect(typeof result.current.delete).toBe('function');
   });
 
-  it("should return full Thanks object from byId() method", async () => {
-    // Arrange: Mock return value should be full Thanks object
-    const mockThanks: Thanks = {
-      id: "thanks-1",
-      message: "Thank you for the awesome drill!",
+  it("should return full Shoutout object from byId() method", async () => {
+    // Arrange: Mock return value should be full Shoutout object
+    const mockShoutout: Shoutout = {
+      id: "shoutout-1",
+      message: "Shoutout for the awesome drill!",
       fromUser: {
         id: "user-1",
         firstName: "John",
@@ -236,43 +236,43 @@ describe("useThanks", () => {
       updatedAt: new Date(),
     };
 
-    mockFetchThanksById.mockResolvedValue(mockThanks);
+    mockFetchShoutoutsById.mockResolvedValue(mockShoutout);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
-    const fetchedThanks = await result.current.byId("thanks-1");
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
+    const fetchedShoutout = await result.current.byId("shoutout-1");
 
     // Assert
-    expect(fetchedThanks).toEqual(mockThanks);
-    expect(mockFetchThanksById).toHaveBeenCalledWith("thanks-1");
+    expect(fetchedShoutout).toEqual(mockShoutout);
+    expect(mockFetchShoutoutsById).toHaveBeenCalledWith("shoutout-1");
 
     // Verify the returned data has full objects, not just IDs
-    expect(typeof fetchedThanks.fromUser).toBe("object");
-    expect(typeof fetchedThanks.toUser).toBe("object");
-    expect(typeof fetchedThanks.resource).toBe("object");
-    expect(typeof fetchedThanks.community).toBe("object");
-    expect(fetchedThanks.fromUser.firstName).toBe("John");
-    expect(fetchedThanks.toUser.firstName).toBe("Jane");
-    expect(fetchedThanks.resource.title).toBe("Power Drill");
-    expect(fetchedThanks.community.name).toBe("Test Community");
+    expect(typeof fetchedShoutout.fromUser).toBe("object");
+    expect(typeof fetchedShoutout.toUser).toBe("object");
+    expect(typeof fetchedShoutout.resource).toBe("object");
+    expect(typeof fetchedShoutout.community).toBe("object");
+    expect(fetchedShoutout.fromUser.firstName).toBe("John");
+    expect(fetchedShoutout.toUser.firstName).toBe("Jane");
+    expect(fetchedShoutout.resource.title).toBe("Power Drill");
+    expect(fetchedShoutout.community.name).toBe("Test Community");
   });
 
   it("should handle byId with non-existent ID", async () => {
     // Arrange
-    mockFetchThanksById.mockResolvedValue(null);
+    mockFetchShoutoutsById.mockResolvedValue(null);
 
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
-    const fetchedThanks = await result.current.byId("non-existent-id");
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
+    const fetchedShoutout = await result.current.byId("non-existent-id");
 
     // Assert
-    expect(fetchedThanks).toBeNull();
-    expect(mockFetchThanksById).toHaveBeenCalledWith("non-existent-id");
+    expect(fetchedShoutout).toBeNull();
+    expect(mockFetchShoutoutsById).toHaveBeenCalledWith("non-existent-id");
   });
 
   it("should have byId function available", () => {
     // Act
-    const { result } = renderHook(() => useThanks(), { wrapper });
+    const { result } = renderHook(() => useShoutouts(), { wrapper });
 
     // Assert
     expect(result.current.byId).toBeDefined();
