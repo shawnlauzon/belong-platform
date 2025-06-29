@@ -20,10 +20,10 @@ function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/communities" element={<CommunitiesPage />} />
-        <Route path="/resources" element={<ResourcesPage />} />
-        <Route path="/events" element={<EventsPage />} />
+        <Route path="/auth" element={<PageWrapper><AuthPage /></PageWrapper>} />
+        <Route path="/communities" element={<PageWrapper><CommunitiesPage /></PageWrapper>} />
+        <Route path="/resources" element={<PageWrapper><ResourcesPage /></PageWrapper>} />
+        <Route path="/events" element={<PageWrapper><EventsPage /></PageWrapper>} />
       </Routes>
     </div>
   )
@@ -36,6 +36,14 @@ function HomePage() {
       <p>This app is used for E2E testing of the @belongnetwork/platform package.</p>
       <p data-testid="status">App loaded successfully</p>
     </div>
+  )
+}
+
+function PageWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      {children}
+    </React.Suspense>
   )
 }
 

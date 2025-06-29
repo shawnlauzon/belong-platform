@@ -12,7 +12,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.26.0",
-    "@belongnetwork/platform": "file:/Users/shawn/Development/github/belong-platform-qa/dist"
+    "@belongnetwork/platform": "file:../../.."
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
