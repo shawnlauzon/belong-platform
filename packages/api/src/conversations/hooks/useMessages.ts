@@ -2,16 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
 import type { MessageInfo, MessageFilter } from '@belongnetwork/types';
 import { useSupabase } from '../../auth/providers/CurrentUserProvider';
-import { createMessagingService } from '../services/messaging.service';
+import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../shared/queryKeys';
 
 export function useMessages(conversationId: string, filters?: MessageFilter) {
   const supabase = useSupabase();
-  const messagingService = createMessagingService(supabase);
+  const conversationsService = createConversationsService(supabase);
 
   const result = useQuery<MessageInfo[], Error>({
-    queryKey: [...queryKeys.messaging.messages(conversationId), filters],
-    queryFn: () => messagingService.fetchMessages(conversationId, filters),
+    queryKey: [...queryKeys.conversations.messages(conversationId), filters],
+    queryFn: () => conversationsService.fetchMessages(conversationId, filters),
     enabled: !!conversationId,
   });
 

@@ -28,7 +28,7 @@ export function createMessageBetweenUsers(
 }
 
 /**
- * Creates two mock users that can be used in messaging tests
+ * Creates two mock users that can be used in conversation tests
  */
 export function createMockUserPair() {
   const user1 = createMockUser({ firstName: 'Alice' });

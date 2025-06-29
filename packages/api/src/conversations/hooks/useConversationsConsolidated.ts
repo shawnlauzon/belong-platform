@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
 import type { ConversationInfo, ConversationFilter, Conversation, MessageInfo } from '@belongnetwork/types';
 import { useSupabase } from '../../auth/providers/CurrentUserProvider';
-import { createMessagingService } from '../services/messaging.service';
+import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../shared/queryKeys';
 
 /**
@@ -12,27 +12,27 @@ import { queryKeys } from '../../shared/queryKeys';
 export function useConversations() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const messagingService = createMessagingService(supabase);
+  const conversationsService = createConversationsService(supabase);
 
   const result = {
     // List fetch operation - following platform pattern
     list: async (filters?: ConversationFilter) => {
       const result = await queryClient.fetchQuery({
-        queryKey: queryKeys.messaging.all,
-        queryFn: () => messagingService.fetchConversations('', filters),
+        queryKey: queryKeys.conversations.all,
+        queryFn: () => conversationsService.fetchConversations('', filters),
         staleTime: 5 * 60 * 1000, // 5 minutes
       });
       return result;
     },
 
-    // Note: Individual conversation fetch (byId) not implemented yet in messaging service
-    // This would require adding a fetchConversationById method to messaging.service.ts
+    // Note: Individual conversation fetch (byId) not implemented yet in conversations service
+    // This would require adding a fetchConversationById method to conversations.service.ts
 
     // Sub-entity operation - following communities.memberships pattern
     messages: async (conversationId: string) => {
       const result = await queryClient.fetchQuery({
-        queryKey: queryKeys.messaging.messages(conversationId),
-        queryFn: () => messagingService.fetchMessages(conversationId),
+        queryKey: queryKeys.conversations.messages(conversationId),
+        queryFn: () => conversationsService.fetchMessages(conversationId),
         staleTime: 5 * 60 * 1000, // 5 minutes
       });
       return result;

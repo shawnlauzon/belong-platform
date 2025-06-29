@@ -24,7 +24,7 @@ import {
   commonExpectations,
 } from "../helpers";
 
-describe("Messaging Integration Tests", () => {
+describe("Conversations Integration Tests", () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
@@ -91,7 +91,7 @@ describe("Messaging Integration Tests", () => {
     expect(shortMessage.content).toBe("Hi");
 
     const longMessage = TestDataFactory.createMessage({
-      content: "This is a very long message that contains multiple sentences and should be handled properly by the messaging system. It includes various punctuation marks and special characters! @ # $ % ^ & * ( ) - _ = + [ ] { } | \\ : ; \" ' < > , . ? / ~ `",
+      content: "This is a very long message that contains multiple sentences and should be handled properly by the conversation system. It includes various punctuation marks and special characters! @ # $ % ^ & * ( ) - _ = + [ ] { } | \ : ; \" ' < > , . ? / ~ `",
     });
     expect(longMessage.content.length).toBeGreaterThan(100);
 
@@ -233,10 +233,10 @@ describe("Messaging Integration Tests", () => {
     expect(messages[2].createdAt.getTime()).toBeGreaterThan(messages[1].createdAt.getTime());
   });
 
-  test("should support messaging integration infrastructure", async () => {
-    // Test that basic messaging infrastructure components work
+  test("should support conversation integration infrastructure", async () => {
+    // Test that basic conversation infrastructure components work
     
-    // Test user creation for messaging participants
+    // Test user creation for conversation participants
     const user1 = TestDataFactory.createUser();
     const user2 = TestDataFactory.createUser();
     

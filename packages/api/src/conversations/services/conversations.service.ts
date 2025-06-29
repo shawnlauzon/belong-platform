@@ -19,11 +19,11 @@ import {
 import { createUserService } from '../../users/services/user.service';
 
 /**
- * Messaging Service Factory
- * Creates messaging service with the provided Supabase client
+ * Conversations Service Factory
+ * Creates conversations service with the provided Supabase client
  * Handles conversations and messages with proper dependency injection
  */
-export const createMessagingService = (supabase: SupabaseClient<Database>) => ({
+export const createConversationsService = (supabase: SupabaseClient<Database>) => ({
   /**
    * Fetch conversations for a user with optional filtering
    */
@@ -267,4 +267,4 @@ export const createMessagingService = (supabase: SupabaseClient<Database>) => ({
   }
 });
 
-export type MessagingService = ReturnType<typeof createMessagingService>;
+export type ConversationsService = ReturnType<typeof createConversationsService>;

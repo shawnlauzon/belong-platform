@@ -61,12 +61,12 @@ export const queryKeys = {
       ["shoutouts", "filtered", filter] as const,
   },
 
-  // Messaging
-  messaging: {
-    all: ["messaging"] as const,
-    conversations: (userId: string) => ["messaging", "conversations", userId] as const,
-    conversation: (id: string) => ["conversation", id] as const,
-    messages: (conversationId: string) => ["messaging", "messages", conversationId] as const,
-    userConversations: (userId: string) => ["user", userId, "conversations"] as const,
+  // Conversations
+  conversations: {
+    all: ["conversations"] as const,
+    list: (userId: string) => ["conversations", "list", userId] as const,
+    byId: (id: string) => ["conversation", id] as const,
+    messages: (conversationId: string) => ["conversations", "messages", conversationId] as const,
+    userList: (userId: string) => ["user", userId, "conversations"] as const,
   },
 } as const;

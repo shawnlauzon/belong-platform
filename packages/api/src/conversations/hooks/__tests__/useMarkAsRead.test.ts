@@ -8,16 +8,16 @@ vi.mock('@belongnetwork/api/auth/providers/CurrentUserProvider', () => ({
   useSupabase: vi.fn(),
 }));
 
-// Mock the messaging service
-vi.mock('@belongnetwork/api/messaging/services/messaging.service', () => ({
-  createMessagingService: vi.fn(),
+// Mock the conversation service
+vi.mock('@belongnetwork/api/conversations/services/conversations.service', () => ({
+  createConversationsService: vi.fn(),
 }));
 
 import { useSupabase } from '@belongnetwork/api/auth/providers/CurrentUserProvider';
-import { createMessagingService } from '@belongnetwork/api/messaging/services/messaging.service';
+import { createConversationsService } from '@belongnetwork/api/conversations/services/conversations.service';
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockCreateMessagingService = vi.mocked(createMessagingService);
+const mockCreateConversationsService = vi.mocked(createConversationsService);
 const mockMarkAsRead = vi.fn();
 
 describe('useMarkAsRead', () => {
@@ -26,7 +26,7 @@ describe('useMarkAsRead', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseSupabase.mockReturnValue({} as any);
-    mockCreateMessagingService.mockReturnValue({
+    mockCreateConversationsService.mockReturnValue({
       markAsRead: mockMarkAsRead,
     } as any);
   });

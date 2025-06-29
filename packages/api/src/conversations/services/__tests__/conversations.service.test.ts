@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMessagingService } from '../messaging.service';
+import { createConversationsService } from '../conversations.service';
 import { createUserService } from '../../../users/services/user.service';
 
 // Mock dependencies
 vi.mock('../../../users/services/user.service');
 const mockCreateUserService = vi.mocked(createUserService);
 
-describe('createMessagingService', () => {
+describe('createConversationsService', () => {
   const mockSupabase = {
     from: vi.fn(() => mockSupabase),
     select: vi.fn(() => mockSupabase),
@@ -26,7 +26,7 @@ describe('createMessagingService', () => {
     fetchUserById: vi.fn(),
   };
 
-  const service = createMessagingService(mockSupabase as any);
+  const service = createConversationsService(mockSupabase as any);
   const userId = '123e4567-e89b-12d3-a456-426614174000';
 
   beforeEach(() => {

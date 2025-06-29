@@ -14,16 +14,16 @@ vi.mock("../../../auth/providers/CurrentUserProvider", () => ({
   useSupabase: vi.fn(),
 }));
 
-// Mock the messaging service
-vi.mock("../../services/messaging.service", () => ({
-  createMessagingService: vi.fn(),
+// Mock the conversation service
+vi.mock("../../services/conversations.service", () => ({
+  createConversationsService: vi.fn(),
 }));
 
 import { useSupabase } from "../../../auth/providers/CurrentUserProvider";
-import { createMessagingService } from "../../services/messaging.service";
+import { createConversationsService } from "../../services/conversations.service";
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockCreateMessagingService = vi.mocked(createMessagingService);
+const mockCreateConversationsService = vi.mocked(createConversationsService);
 const mockFetchConversations = vi.fn();
 // Note: fetchConversationById not implemented yet
 const mockFetchMessages = vi.fn();
@@ -43,7 +43,7 @@ describe("useConversations consolidated hook", () => {
 
     // Setup mocks
     mockUseSupabase.mockReturnValue({} as any);
-    mockCreateMessagingService.mockReturnValue({
+    mockCreateConversationsService.mockReturnValue({
       fetchConversations: mockFetchConversations,
       fetchMessages: mockFetchMessages,
     } as any);
@@ -86,7 +86,7 @@ describe("useConversations consolidated hook", () => {
   });
 
   // Note: byId() method test removed since fetchConversationById is not implemented yet
-  // This test can be added back when the messaging service includes that method
+  // This test can be added back when the conversations service includes that method
 
   describe("Test #3: messages() sub-entity method", () => {
     it("should provide messages method that fetches conversation messages", async () => {

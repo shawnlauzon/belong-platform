@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMessaging } from '../useMessaging';
-import { createMessagingService } from '@belongnetwork/api/messaging/services/messaging.service';
+import { createConversationsService } from '@belongnetwork/api/conversations/services/conversations.service';
 import { createWrapper } from '@belongnetwork/api/test-utils';
 
 // Mock the service
-vi.mock('@belongnetwork/api/messaging/services/messaging.service');
+vi.mock('@belongnetwork/api/conversations/services/conversations.service');
 
 // Mock useSupabase hook
 vi.mock('@belongnetwork/api/auth/providers/CurrentUserProvider', () => ({
@@ -15,7 +15,7 @@ vi.mock('@belongnetwork/api/auth/providers/CurrentUserProvider', () => ({
 import { useSupabase } from '@belongnetwork/api/auth/providers/CurrentUserProvider';
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockCreateMessagingService = vi.mocked(createMessagingService);
+const mockCreateConversationsService = vi.mocked(createConversationsService);
 
 describe('useMessaging', () => {
   const userId = '123e4567-e89b-12d3-a456-426614174000';
@@ -59,7 +59,7 @@ describe('useMessaging', () => {
     
     // Setup mocks
     mockUseSupabase.mockReturnValue({} as any);
-    mockCreateMessagingService.mockReturnValue(mockService);
+    mockCreateConversationsService.mockReturnValue(mockService);
   });
 
   describe('conversations query', () => {

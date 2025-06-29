@@ -2,16 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
 import type { MessageInfo, MessageData } from '@belongnetwork/types';
 import { useSupabase } from '../../auth/providers/CurrentUserProvider';
-import { createMessagingService } from '../services/messaging.service';
+import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../shared/queryKeys';
 
 export function useSendMessage() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const messagingService = createMessagingService(supabase);
+  const conversationsService = createConversationsService(supabase);
 
   return useMutation<MessageInfo, Error, MessageData>({
-    mutationFn: (messageData) => messagingService.sendMessage(messageData),
+    mutationFn: (messageData) => conversationsService.sendMessage(messageData),
     onSuccess: (newMessage) => {
       // Invalidate all user conversations to reflect new message
       queryClient.invalidateQueries({ 
@@ -20,7 +20,7 @@ export function useSendMessage() {
 
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({ 
-        queryKey: queryKeys.messaging.messages(newMessage.conversationId)
+        queryKey: queryKeys.conversations.messages(newMessage.conversationId)
       });
 
       logger.info('💬 useSendMessage: Successfully sent message', {

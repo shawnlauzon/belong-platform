@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@belongnetwork/core';
 import { useSupabase } from '../../auth/providers/CurrentUserProvider';
-import { createMessagingService } from '../services/messaging.service';
+import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../shared/queryKeys';
 import type { 
   ConversationInfo,
@@ -14,19 +14,19 @@ import type {
 /**
  * Consolidated Messaging Hook
  * Following the new architecture pattern of single hook per entity
- * Returns object with all messaging operations (queries and mutations)
+ * Returns object with all conversation operations (queries and mutations)
  */
 export function useMessaging(userId?: string, options?: { includeConversations?: boolean }) {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const messagingService = createMessagingService(supabase);
+  const conversationsService = createConversationsService(supabase);
 
   // Default conversations query (most common use case)
   const conversationsQuery = useQuery<ConversationInfo[], Error>({
-    queryKey: queryKeys.messaging.userConversations(userId || ''),
+    queryKey: queryKeys.conversations.userList(userId || ''),
     queryFn: () => {
       if (!userId) throw new Error('User ID required');
-      return messagingService.fetchConversations(userId);
+      return conversationsService.fetchConversations(userId);
     },
     enabled: !!userId && (options?.includeConversations !== false),
     staleTime: 30 * 1000, // 30 seconds
@@ -34,12 +34,12 @@ export function useMessaging(userId?: string, options?: { includeConversations?:
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: (data: MessageData) => messagingService.sendMessage(data),
+    mutationFn: (data: MessageData) => conversationsService.sendMessage(data),
     onSuccess: (message) => {
       // Invalidate conversations list to update last message
-      queryClient.invalidateQueries({ queryKey: queryKeys.messaging.userConversations(userId || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations.userList(userId || '') });
       // Invalidate messages for this conversation
-      queryClient.invalidateQueries({ queryKey: queryKeys.messaging.messages(message.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations.messages(message.conversationId) });
       
       logger.info('💬 useMessaging: Successfully sent message', {
         id: message.id,
@@ -53,11 +53,11 @@ export function useMessaging(userId?: string, options?: { includeConversations?:
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
-    mutationFn: (messageId: string) => messagingService.markAsRead(messageId),
+    mutationFn: (messageId: string) => conversationsService.markAsRead(messageId),
     onSuccess: (_, messageId) => {
       // Invalidate all conversations and messages queries since read status affects unread counts
       queryClient.invalidateQueries({ queryKey: ['user', userId, 'conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messaging', 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'messages'] });
       
       logger.info('💬 useMessaging: Successfully marked message as read', {
         messageId,
