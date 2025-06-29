@@ -7,8 +7,10 @@ import {
   ResourceData,
   CommunityData,
   UserData,
-} from "@belongnetwork/types";
-import { faker } from "@faker-js/faker";
+  MessageData,
+  ConversationData,
+} from '@belongnetwork/types';
+import { faker } from '@faker-js/faker';
 
 export function createMockUserData(
   overrides: Partial<UserData> = {},
@@ -155,6 +157,26 @@ export function createMockEventAttendanceData(
       "not_attending",
       "maybe",
     ]) as EventAttendanceStatus,
+    ...overrides,
+  };
+}
+
+export function createMockMessageData(
+  overrides: Partial<MessageData> = {}
+): MessageData {
+  return {
+    conversationId: faker.string.uuid(),
+    content: faker.lorem.paragraph(),
+    ...overrides,
+  };
+}
+
+export function createMockConversationData(
+  overrides: Partial<ConversationData> = {}
+): ConversationData {
+  return {
+    participant1Id: faker.string.uuid(),
+    participant2Id: faker.string.uuid(),
     ...overrides,
   };
 }

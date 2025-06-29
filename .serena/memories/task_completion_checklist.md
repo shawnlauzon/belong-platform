@@ -1,35 +1,37 @@
 # Task Completion Checklist
 
-## Before Committing Changes
-1. **Run unit tests**: `pnpm test` - All tests must pass
-2. **Type checking**: `pnpm typecheck` - No type errors
-3. **Linting**: `pnpm lint` - Fix all warnings and errors  
-4. **Build validation**: `pnpm build` - Must build successfully
+## Before Any Commit
+1. Run `pnpm tdd` and fix any warnings and errors
+2. All unit tests must be green before adding new features
+3. Always run unit tests before committing
 
-## TDD Process (Mandatory)
-1. **Write failing test first** - Test must demonstrate the problem
-2. **Implement minimal code** - Make the test pass
-3. **Refactor if needed** - Keep tests green
-4. **All unit tests must be green before continuing**
+## Development Workflow
+1. **Write a Failing Test First** - Always create a unit test that reproduces the exact problem before attempting any fixes
+2. **Fix the Root Cause, Not Symptoms** - Don't mask problems with workarounds
+3. **Verify the Fix Completely** - Both unit tests and integration tests should pass
+4. Run type checking: `pnpm typecheck`
+5. Run linting: `pnpm lint`  
+6. Run tests: `pnpm test`
+7. Run build: `pnpm build`
 
-## Full QA Process  
-Run the full QA suite:
-```bash
-pnpm qa
-```
-This runs: `pnpm tdd && pnpm build && pnpm test:integration && pnpm test:acceptance`
-
-## For Publishing
-1. Run complete test suite: `pnpm test:complete`
-2. Bump patch version in all package.json files
+## Before Publishing
+1. Run `pnpm qa` and fix any warnings and errors
+2. Bump the patch version in all package.json files
 3. Commit changes
-4. Tag with version
+4. Tag with the version
 5. Publish
 
-## Integration Testing
-- Run integration tests: `pnpm test:integration` 
-- Integration tests validate real database interactions
-- Must pass before considering feature complete
+## Database Changes
+- Never update the `database.ts` file directly
+- Always make changes via a database migration
+- After any database change, run `gen:db-types` from the types package to update `database.ts`
+- Run integration tests with `pnpm test:integration` from the project directory
 
-## Pre-commit Hook
-The project uses Husky for pre-commit hooks, so some checks run automatically on commit.
+## Version Management
+- Keep versions of all packages aligned
+- When you commit after bumping a version, tag with that version
+- Do not deprecate; remove
+
+## Quality Gates
+- A task is only complete when build, typecheck, and tests are all successful
+- When you believe you have fixed a problem, run the test to confirm before continuing

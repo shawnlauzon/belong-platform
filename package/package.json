@@ -41,16 +41,18 @@
     "test": "pnpm -r --parallel --no-bail test",
     "test:coverage": "pnpm -r --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
-    "test:integration": "vitest run --config vitest.integration.config.mts",
-    "test:integration:watch": "vitest --config vitest.integration.config.mts",
-    "test:database": "vitest run --config vitest.database.config.mts",
-    "test:database:watch": "vitest --config vitest.database.config.mts",
+    "test:integration": "vitest run --config tests/integration/vitest.config.ts --run",
+    "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
     "typecheck": "pnpm -r typecheck",
     "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "manypkg": "manypkg check",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "tdd": "pnpm lint && pnpm typecheck && pnpm test",
+    "qa": "pnpm lint && pnpm typecheck && pnpm test:complete && pnpm build",
+    "test:complete": "pnpm test && pnpm test:integration",
+    "prepublishOnly": "pnpm test:complete"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

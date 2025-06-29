@@ -1,98 +1,65 @@
-# Suggested Commands for Belong Platform
+# Essential Development Commands
 
-## Development Commands
-
-### Installation
+## Core Development
 ```bash
+# Install dependencies
 pnpm install
-```
 
-### Testing
-```bash
-# Run all unit tests
+# Run tests (API package only)
 pnpm test
 
-# Run unit tests with coverage
-pnpm test:coverage
-
-# Run unit tests in watch mode
-pnpm test:watch
-
-# Run integration tests
-pnpm test:integration
-
-# Run integration tests in watch mode
-pnpm test:integration:watch
-
-# Run acceptance tests
-pnpm test:acceptance
-
-# Run acceptance tests in watch mode  
-pnpm test:acceptance:watch
-
-# Run all tests (unit + integration + acceptance)
-pnpm test:complete
-
-# Run verbose tests (shows console.log statements)
+# Run tests with verbose logging (shows console.log statements)
 VITEST_VERBOSE=true pnpm test
-```
 
-### TypeScript & Linting
-```bash
-# Type checking (all packages)
-pnpm typecheck
+# TypeScript type checking
+pnpm typecheck          # Check all packages
+pnpm typecheck:api      # Check API package only
 
-# Type checking (API package only)
-pnpm typecheck:api
+# Build all packages
+pnpm build
 
 # Lint all packages
 pnpm lint
 
 # Format code
 pnpm format
-
-# Check package dependencies
-pnpm manypkg
 ```
 
-### Build
+## Testing Commands
 ```bash
-# Build all packages
-pnpm build
+# Run integration tests
+pnpm test:integration
 
-# Build with validation
-pnpm build:validate
+# Run acceptance tests  
+pnpm test:acceptance
+
+# Run all tests
+pnpm test:complete
+
+# Watch mode for different test types
+pnpm test:watch
+pnpm test:integration:watch
+pnpm test:acceptance:watch
 ```
 
-### Development Workflow
+## Quality Assurance
 ```bash
-# TDD workflow (lint + typecheck + test)
+# Pre-commit verification (lint, typecheck, tests, and clean build)
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+
+# TDD workflow
 pnpm tdd
 
-# QA workflow (full validation)
+# Full QA process
 pnpm qa
-
-# Pre-commit verification
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-## Git Commands
+## Database Commands
 ```bash
-# Standard git commands for Darwin system
-git status
-git add .
-git commit -m "message"
-git push
-git pull
-git log --oneline
+# Update database types (from types package directory)
+pnpm run gen:db-types
 ```
 
 ## System Commands (Darwin)
-```bash
-# File operations
-ls -la
-find . -name "*.ts" -type f
-grep -r "pattern" .
-cd directory
-pwd
-```
+- Standard Unix commands: `git`, `ls`, `cd`, `grep`, `find`
+- Package manager: `pnpm` (specified version 8.10.0)

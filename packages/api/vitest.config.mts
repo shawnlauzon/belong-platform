@@ -24,6 +24,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@belongnetwork/api": path.resolve(__dirname, "./src"),
       "@belongnetwork/types": path.resolve(__dirname, "../types/src"),
       "@belongnetwork/core": path.resolve(__dirname, "../core/src"),
     },

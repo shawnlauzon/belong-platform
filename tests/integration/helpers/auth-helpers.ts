@@ -1,156 +1,149 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { faker } from "@faker-js/faker";
-import {
-  useSignUp,
-  useSignIn,
-  useSignOut,
-  useCommunities,
-} from "@belongnetwork/platform";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { useAuth } from "@belongnetwork/platform";
+import { TestDataFactory, type TestUser } from "./test-data-factory";
+import { testWrapperManager } from "./react-query-wrapper";
 
-export interface TestUser {
+export interface AuthenticatedUser {
+  userId: string;
   email: string;
-  password: string;
-  userId?: string;
-}
-
-export interface TestCommunity {
-  id?: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  testUser: TestUser;
 }
 
 export interface AuthSetupResult {
+  user: AuthenticatedUser;
   testUser: TestUser;
-  testCommunity: TestCommunity;
+  signOut: () => Promise<void>;
 }
 
-/**
- * Creates and authenticates a user with community access for use in beforeAll
- */
-export async function createAndAuthenticateUser(
-  wrapper: any,
-): Promise<AuthSetupResult> {
-  const testUser: TestUser = {
-    email: faker.internet.email(),
-    password: faker.internet.password({ length: 12 }),
-  };
+export class AuthTestHelper {
+  private wrapper = testWrapperManager.getWrapper();
 
-  const testCommunity: TestCommunity = {
-    name: `Test Community ${Date.now()}`,
-  };
+  async createAndAuthenticateUser(
+    userData?: Partial<TestUser>
+  ): Promise<AuthSetupResult> {
+    const testUser = TestDataFactory.createUser(userData);
+    
+    // Create hook instance
+    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
 
-  // Get existing communities to use for testing
-  const { result: communitiesResult } = renderHook(() => useCommunities(), {
-    wrapper,
-  });
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+      expect(result.current).not.toBeNull();
+      expect(typeof result.current.signUp).toBe('function');
+      expect(typeof result.current.signIn).toBe('function');
+    }, { timeout: 10000 });
 
-  await waitFor(() => {
-    expect(communitiesResult.current).toBeDefined();
-    expect(typeof communitiesResult.current.list).toBe('function');
-  });
-  
-  const communities = await communitiesResult.current.list();
-  expect(communities).toEqual(expect.any(Array));
-  const existingCommunity = communities?.[0];
-  expect(existingCommunity).toBeDefined();
-  testCommunity.id = existingCommunity!.id;
+    // Sign up the user
+    let signUpResult: any;
+    await act(async () => {
+      signUpResult = await result.current.signUp(testUser);
+    });
 
-  // Sign up test user
-  const { result: signUpResult } = renderHook(() => useSignUp(), {
-    wrapper,
-  });
+    expect(signUpResult).toMatchObject({
+      id: expect.any(String),
+      email: testUser.email.toLowerCase(),
+      firstName: testUser.firstName,
+      lastName: testUser.lastName,
+    });
 
-  await act(async () => {
-    signUpResult.current.mutate({
+    // Sign in the user
+    let signInResult: any;
+    await act(async () => {
+      signInResult = await result.current.signIn({
+        email: testUser.email,
+        password: testUser.password,
+      });
+    });
+
+    expect(signInResult).toMatchObject({
+      id: expect.any(String),
+      email: testUser.email.toLowerCase(),
+    });
+
+    const authenticatedUser: AuthenticatedUser = {
+      userId: signInResult.id,
+      email: signInResult.email,
+      firstName: signInResult.firstName,
+      lastName: signInResult.lastName,
+      testUser,
+    };
+
+    const signOut = async () => {
+      await act(async () => {
+        await result.current.signOut();
+      });
+    };
+
+    return {
+      user: authenticatedUser,
+      testUser,
+      signOut,
+    };
+  }
+
+  async signOutUser(): Promise<void> {
+    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
+    
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+      expect(result.current.signOut).toBeDefined();
+    }, { timeout: 5000 });
+
+    if (result.current.isAuthenticated) {
+      await act(async () => {
+        await result.current.signOut();
+      });
+    }
+  }
+
+  async ensureSignedOut(): Promise<void> {
+    try {
+      await this.signOutUser();
+    } catch (error) {
+      // Ignore errors during cleanup
+      console.warn("Sign out cleanup failed:", error);
+    }
+    
+    // Clear cache regardless
+    testWrapperManager.clearCache();
+  }
+
+  async createTestCredentials(): Promise<{ email: string; password: string }> {
+    const testUser = TestDataFactory.createUser();
+    return {
       email: testUser.email,
       password: testUser.password,
-    });
-  });
+    };
+  }
 
-  await waitFor(() => {
-    expect(signUpResult.current).toMatchObject({
-      isSuccess: true,
-      data: expect.objectContaining({
-        id: expect.any(String),
-      }),
-      error: null,
-    });
-  });
-  testUser.userId = signUpResult.current.data?.id;
+  async createMultipleAuthenticatedUsers(count: number): Promise<AuthSetupResult[]> {
+    const users: AuthSetupResult[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const userData = TestDataFactory.createUser();
+      const authResult = await this.createAndAuthenticateUser(userData);
+      users.push(authResult);
+    }
+    
+    return users;
+  }
 
-  // Sign in test user
-  const { result: signInResult } = renderHook(() => useSignIn(), {
-    wrapper,
-  });
-
-  await act(async () => {
-    signInResult.current.mutate({
-      email: testUser.email,
-      password: testUser.password,
-    });
-  });
-
-  await waitFor(() => {
-    expect(signInResult.current).toMatchObject({
-      isSuccess: true,
-      data: expect.objectContaining({
-        id: expect.any(String),
-      }),
-      error: null,
-    });
-  });
-
-  return { testUser, testCommunity };
+  async waitForAuthState(expectedState: 'authenticated' | 'unauthenticated'): Promise<void> {
+    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
+    
+    await waitFor(() => {
+      if (expectedState === 'authenticated') {
+        expect(result.current.isAuthenticated).toBe(true);
+        expect(result.current.currentUser).toBeDefined();
+      } else {
+        expect(result.current.isAuthenticated).toBe(false);
+        expect(result.current.currentUser).toBeNull();
+      }
+    }, { timeout: 10000 });
+  }
 }
 
-/**
- * Creates an additional user but maintains authentication of the primary user
- * Use this to create users for multi-user scenarios without affecting authentication state
- */
-export async function createAdditionalUser(
-  wrapper: any,
-  primaryUser: TestUser,
-): Promise<TestUser> {
-  const additionalUser: TestUser = {
-    email: `integration-test-${faker.string.alphanumeric(8)}-${Date.now()}@example.com`,
-    password: faker.internet.password({ length: 12 }),
-  };
-
-  // Sign up the user (this automatically authenticates them)
-  const { result: signUpResult } = renderHook(() => useSignUp(), {
-    wrapper,
-  });
-
-  await act(async () => {
-    signUpResult.current.mutate({
-      email: additionalUser.email,
-      password: additionalUser.password,
-    });
-  });
-
-  await waitFor(() => {
-    expect(signUpResult.current).toMatchObject({
-      isSuccess: true,
-      data: expect.objectContaining({
-        id: expect.any(String),
-      }),
-      error: null,
-    });
-  });
-  additionalUser.userId = signUpResult.current.data?.id;
-
-  // Re-authenticate the primary user to restore the correct authentication state
-  const { result: signInResult } = renderHook(() => useSignIn(), {
-    wrapper,
-  });
-
-  await act(async () => {
-    signInResult.current.mutate({
-      email: primaryUser.email,
-      password: primaryUser.password,
-    });
-  });
-
-  await waitFor(() => expect(signInResult.current.isSuccess).toBe(true));
-
-  return additionalUser;
-}
+export const authHelper = new AuthTestHelper();

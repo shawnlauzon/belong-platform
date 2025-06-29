@@ -24,3 +24,6 @@ export {
 // Utils
 export { calculateDrivingTime } from "./utils/distance";
 export { StorageManager, type UploadResult } from "./utils/storage";
+
+// Legacy functions (deprecated)
+export { getBelongClient } from "./config/legacy";

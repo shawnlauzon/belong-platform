@@ -60,4 +60,13 @@ export const queryKeys = {
     filtered: (filter: Record<string, any>) =>
       ["thanks", "filtered", filter] as const,
   },
+
+  // Messaging
+  messaging: {
+    all: ["messaging"] as const,
+    conversations: (userId: string) => ["messaging", "conversations", userId] as const,
+    conversation: (id: string) => ["conversation", id] as const,
+    messages: (conversationId: string) => ["messaging", "messages", conversationId] as const,
+    userConversations: (userId: string) => ["user", userId, "conversations"] as const,
+  },
 } as const;
