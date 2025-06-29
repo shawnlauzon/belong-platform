@@ -32,3 +32,12 @@ export {
 export {
   useUsers,
 } from "../packages/api/src/users/index.js";
+
+// Messaging hooks
+export {
+  useConversations,
+  useMessages,
+  useSendMessage,
+  useMarkAsRead,
+  useMessaging,
+} from "../packages/api/src/messaging/index.js";

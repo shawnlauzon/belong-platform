@@ -5,3 +5,4 @@ export * from "./auth/index.js";
 export * from "./users/index.js";
 export * from "./thanks/index.js";
 export * from "./events/index.js";
+export * from "./messaging/index.js";

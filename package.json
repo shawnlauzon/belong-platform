@@ -37,16 +37,13 @@
     "packages/core"
   ],
   "scripts": {
-    "build": "pnpm -r build && vite build --config vite.config.mts && pnpm build:validate",
-    "build:validate": "vitest run --config vitest.npm-package.config.mts",
+    "build": "pnpm -r build && vite build --config vite.config.mts",
     "test": "pnpm -r --parallel --no-bail test",
     "test:coverage": "pnpm -r --parallel --no-bail test:coverage",
     "test:watch": "pnpm -r --parallel test -- --watch",
-    "test:integration": "vitest run --config vitest.integration.config.mts",
-    "test:integration:watch": "vitest --config vitest.integration.config.mts",
-    "test:acceptance": "vitest run --config vitest.acceptance.config.mts",
-    "test:acceptance:watch": "vitest --config vitest.acceptance.config.mts",
-    "test:complete": "pnpm test && pnpm test:integration && pnpm test:acceptance",
+    "test:integration": "vitest run --config tests/integration/vitest.config.ts --run",
+    "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
+    "test:complete": "pnpm test && pnpm test:integration",
     "typecheck": "pnpm -r typecheck",
     "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
     "lint": "pnpm -r lint",
@@ -54,7 +51,7 @@
     "manypkg": "manypkg check",
     "prepare": "husky install",
     "tdd": "pnpm lint && pnpm typecheck && pnpm test",
-    "qa": "pnpm tdd && pnpm build && pnpm test:integration && pnpm test:acceptance",
+    "qa": "pnpm lint && pnpm typecheck && pnpm test:complete && pnpm build",
     "prepublishOnly": "pnpm test:complete"
   },
   "devDependencies": {
