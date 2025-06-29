@@ -59,6 +59,7 @@ export interface CommunityData {
   // Core Identity
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
+  icon?: string; // Visual icon for the community
 
   organizerId: string;
   parentId: string | null; // Null only for global root

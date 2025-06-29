@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import {
   toDomainCommunity,
   forDbInsert,
+  forDbUpdate,
+  toCommunityInfo,
 } from "../transformers/communityTransformer";
 import {
   createMockCommunity,
@@ -130,6 +132,36 @@ describe("Community Transformer", () => {
       const underscoreFields = fieldNames.filter((name) => name.includes("_"));
       expect(underscoreFields).toEqual([]);
     });
+
+    it("should transform icon field from database to domain model", () => {
+      // Create a mock database community with icon
+      const mockDbCommunity = {
+        ...createMockDbCommunity({ icon: "🏘️" }),
+        organizer: createMockDbProfile(),
+        parent: null,
+      };
+
+      // Call the transformer
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
+
+      // Verify the icon is included
+      expect(domainCommunity.icon).toBe("🏘️");
+    });
+
+    it("should handle missing icon field gracefully", () => {
+      // Create a mock database community without icon
+      const mockDbCommunity = {
+        ...createMockDbCommunity({ icon: null }),
+        organizer: createMockDbProfile(),
+        parent: null,
+      };
+
+      // Call the transformer
+      const domainCommunity = toDomainCommunity(mockDbCommunity);
+
+      // Verify icon is undefined
+      expect(domainCommunity.icon).toBeUndefined();
+    });
   });
 
   describe("forDbInsert", () => {
@@ -153,6 +185,32 @@ describe("Community Transformer", () => {
         parent_id: communityData.parentId,
         time_zone: communityData.timeZone,
       });
+    });
+
+    it("should transform icon field correctly", () => {
+      // Create mock data with icon
+      const communityData = createMockCommunityData({
+        icon: "🏘️",
+      });
+
+      // Call the transformer
+      const dbCommunity = forDbInsert(communityData);
+
+      // Verify the icon is included
+      expect(dbCommunity.icon).toBe("🏘️");
+    });
+
+    it("should handle missing icon field", () => {
+      // Create mock data without icon
+      const communityData = createMockCommunityData({
+        icon: undefined,
+      });
+
+      // Call the transformer
+      const dbCommunity = forDbInsert(communityData);
+
+      // Verify icon is undefined
+      expect(dbCommunity.icon).toBeUndefined();
     });
 
     it("should handle missing center", () => {
@@ -230,6 +288,60 @@ describe("Community Transformer", () => {
     it("should handle edge cases", () => {
       expect(toPostGisPoint({ lat: 0, lng: 0 })).toBe("POINT(0 0)");
       expect(toPostGisPoint({ lat: -90, lng: 180 })).toBe("POINT(180 -90)");
+    });
+  });
+
+  describe("forDbUpdate", () => {
+    it("should transform icon field in update", () => {
+      // Create mock data with icon
+      const communityData = {
+        id: "test-id",
+        icon: "🏘️",
+      };
+
+      // Call the transformer
+      const dbCommunity = forDbUpdate(communityData);
+
+      // Verify the icon is included
+      expect(dbCommunity.icon).toBe("🏘️");
+    });
+
+    it("should handle missing icon field in update", () => {
+      // Create mock data without icon
+      const communityData = {
+        id: "test-id",
+        icon: undefined,
+      };
+
+      // Call the transformer
+      const dbCommunity = forDbUpdate(communityData);
+
+      // Verify icon is undefined
+      expect(dbCommunity.icon).toBeUndefined();
+    });
+  });
+
+  describe("toCommunityInfo", () => {
+    it("should transform icon field to community info", () => {
+      // Create a mock database community with icon
+      const mockDbCommunity = createMockDbCommunity({ icon: "🏘️" });
+
+      // Call the transformer
+      const communityInfo = toCommunityInfo(mockDbCommunity);
+
+      // Verify the icon is included
+      expect(communityInfo.icon).toBe("🏘️");
+    });
+
+    it("should handle missing icon field in community info", () => {
+      // Create a mock database community without icon
+      const mockDbCommunity = createMockDbCommunity({ icon: null });
+
+      // Call the transformer
+      const communityInfo = toCommunityInfo(mockDbCommunity);
+
+      // Verify icon is undefined
+      expect(communityInfo.icon).toBeUndefined();
     });
   });
 });

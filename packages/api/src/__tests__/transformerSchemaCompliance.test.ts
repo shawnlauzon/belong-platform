@@ -69,6 +69,7 @@ describe("Transformer Schema Compliance", () => {
         "deleted_by",
         "description",
         "hierarchy_path",
+        "icon",
         "id",
         "is_active",
         "level",

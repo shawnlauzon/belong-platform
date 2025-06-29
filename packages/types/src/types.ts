@@ -50,6 +50,7 @@ export interface CommunityData {
   // Core Identity
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
+  icon?: string; // Visual icon for the community
 
   organizerId: string;
   parentId: string | null; // Null only for global root
@@ -77,8 +78,20 @@ export interface Community extends Omit<CommunityData, "organizerId"> {
   memberCount: number;
   createdAt: Date;
   updatedAt: Date;
+
+  // Soft delete fields
+  isActive: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+
   // Optional membership status for current user
   currentUserMembership?: CommunityMembership;
+}
+
+// Info version for list operations - includes all domain properties but only IDs for references
+export interface CommunityInfo extends Omit<Community, "organizer" | "parent"> {
+  organizerId: string; // Replaces organizer: User
+  parentId: string | null; // Replaces parent?: Community
 }
 
 // Community membership types

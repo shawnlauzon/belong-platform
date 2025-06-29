@@ -103,6 +103,7 @@ export function createMockDbCommunity(
     organizer_id: faker.string.uuid(),
     name: faker.location.country() + " " + faker.company.buzzNoun(),
     description: faker.lorem.sentence(),
+    icon: faker.helpers.arrayElement(["🏘️", "🏙️", "🌆", "🏞️", "🌳", null]),
     center: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     parent_id: faker.string.uuid(),
     member_count: faker.number.int({ min: 1, max: 10000 }),

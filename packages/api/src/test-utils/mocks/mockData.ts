@@ -51,6 +51,7 @@ export function createMockCommunityData(
     level,
     hierarchyPath: hierarchyPath.slice(0, level === "city" ? 2 : 3),
     description: faker.lorem.sentence(),
+    icon: faker.helpers.arrayElement(["🏘️", "🏙️", "🌆", "🏞️", "🌳"]),
     organizerId: faker.string.uuid(),
     parentId: faker.string.uuid(),
     center: {
