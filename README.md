@@ -13,7 +13,7 @@ npm install @belongnetwork/platform
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
 - 📅 **Event Management** - Create and attend community gatherings and activities
 - 💬 **Direct Messaging** - Send private messages to other community members
-- 💌 **Gratitude System** - Send thanks messages to community members who have helped
+- 💌 **Gratitude System** - Send shoutouts to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
 - 🔔 **Real-time Updates** - Stay connected with your community
 
@@ -284,7 +284,7 @@ const resourceData: ResourceData = {
 
 **Key Types:**
 
-- **Entities**: `User`, `Community`, `Resource`, `Event`, `Thanks`, `Message`, `Conversation`
+- **Entities**: `User`, `Community`, `Resource`, `Event`, `Shoutout`, `Message`, `Conversation`
 - **Data Transfer**: `ResourceData`, `EventData`, `MessageData`, `ConversationData`, etc.
 - **Filters**: `ResourceFilter`, `EventFilter`, `MessageFilter`, `ConversationFilter`, etc.
 - **Geography**: `Coordinates`, `AddressSearchResult`
@@ -454,19 +454,19 @@ function EventManager() {
 }
 ```
 
-#### Thanks and Gratitude
+#### Shoutouts and Gratitude
 
 ```tsx
-import { useThanks, useCreateThanks } from "@belongnetwork/platform";
+import { useShoutouts, useCreateShoutout } from "@belongnetwork/platform";
 
 function GratitudeManager() {
-  const { data: thanksMessages } = useThanks({
+  const { data: shoutoutMessages } = useShoutouts({
     resourceId: "resource-123",
   });
-  const createThanks = useCreateThanks();
+  const createShoutout = useCreateShoutout();
 
-  const handleSendThanks = () => {
-    createThanks.mutate({
+  const handleSendShoutout = () => {
+    createShoutout.mutate({
       toUserId: "user-456",
       resourceId: "resource-123",
       message: "Thank you for sharing this!",
@@ -475,12 +475,12 @@ function GratitudeManager() {
 
   return (
     <div>
-      <button onClick={handleSendThanks}>Send Thanks</button>
+      <button onClick={handleSendShoutout}>Send Shoutout</button>
 
-      {thanksMessages?.map((thanks) => (
-        <div key={thanks.id}>
-          <p>"{thanks.message}"</p>
-          <small>From {thanks.fromUser.firstName}</small>
+      {shoutoutMessages?.map((shoutout) => (
+        <div key={shoutout.id}>
+          <p>"{shoutout.message}"</p>
+          <small>From {shoutout.fromUser.firstName}</small>
         </div>
       ))}
     </div>
@@ -613,7 +613,7 @@ The platform uses Supabase with PostGIS for geographic features:
 - resources            -- Shared items/skills
 - events               -- Community events
 - event_attendances    -- RSVP tracking
-- thanks              -- Gratitude messages
+- shoutouts           -- Gratitude messages
 - conversations       -- Direct message conversations
 - direct_messages     -- Private messages between users
 ```

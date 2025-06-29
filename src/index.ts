@@ -33,10 +33,10 @@ export {
   useEvents,
 } from "../packages/api/src/events/index.js";
 
-// Thanks exports
+// Shoutouts exports
 export {
-  useThanks,
-} from "../packages/api/src/thanks/index.js";
+  useShoutouts,
+} from "../packages/api/src/shoutouts/index.js";
 
 // User exports
 export {
@@ -58,9 +58,9 @@ export {
   type EventInfo,
   type EventAttendance,
   type EventFilter,
-  type Thanks,
-  type ThanksInfo,
-  type ThanksFilter,
+  type Shoutout,
+  type ShoutoutInfo,
+  type ShoutoutFilter,
   type User,
   type UserInfo,
 } from "../packages/types/src/types.js";

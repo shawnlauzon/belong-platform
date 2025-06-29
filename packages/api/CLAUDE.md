@@ -8,11 +8,11 @@ This file provides specific guidance for working with the @belongnetwork/platfor
 
 **Resources**: Use cache assembly pattern - fetch base entity first, then assemble related owner and community data through separate cached calls.
 
-**Thanks**: Use cache assembly pattern like resources - fetch base thanks records, then batch fetch related user and resource data.
+**Shoutouts**: Use cache assembly pattern like resources - fetch base shoutouts records, then batch fetch related user and resource data.
 
 **Events**: Use cache assembly pattern like resources - fetch base events, then assemble related organizer and community data through separate cached calls.
 
-**Activity Feeds**: Aggregate activities from existing data sources (resources, events, thanks, community memberships) rather than creating dedicated activity tables.
+**Activity Feeds**: Aggregate activities from existing data sources (resources, events, shoutouts, community memberships) rather than creating dedicated activity tables.
 
 ## Testing Guidelines
 

@@ -28,9 +28,9 @@ export {
   type EventInfo,
   type EventAttendance,
   type EventFilter,
-  type Thanks,
-  type ThanksInfo,
-  type ThanksFilter,
+  type Shoutout,
+  type ShoutoutInfo,
+  type ShoutoutFilter,
 } from "../packages/types/src/types.js";
 
 // Auth types
