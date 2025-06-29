@@ -21,7 +21,7 @@ import type { Database } from "@belongnetwork/types/database";
 /**
  * Validates shoutout creation business rules
  */
-function validateShoutoutsCreation(data: ShoutoutsData, currentUserId: string): void {
+function validateShoutoutCreation(data: ShoutoutData, currentUserId: string): void {
   // Rule: User cannot thank themselves
   if (data.fromUserId === data.toUserId) {
     throw new Error("Cannot thank yourself");
@@ -31,24 +31,24 @@ function validateShoutoutsCreation(data: ShoutoutsData, currentUserId: string): 
 /**
  * Validates shoutout update business rules
  */
-function validateShoutoutsUpdate(
-  existingShoutouts: any,
-  updateData: Partial<ShoutoutsData>,
+function validateShoutoutUpdate(
+  existingShoutout: any,
+  updateData: Partial<ShoutoutData>,
   currentUserId: string
 ): void {
   // Rule: Cannot change the sender of shoutout
-  if (updateData.fromUserId && updateData.fromUserId !== existingShoutouts.from_user_id) {
+  if (updateData.fromUserId && updateData.fromUserId !== existingShoutout.from_user_id) {
     throw new Error("Cannot change the sender of shoutout");
   }
 
   // Rule: Cannot change receiver to yourself (the sender)
-  if (updateData.toUserId && updateData.toUserId === existingShoutouts.from_user_id) {
+  if (updateData.toUserId && updateData.toUserId === existingShoutout.from_user_id) {
     throw new Error("Cannot change receiver to yourself");
   }
 }
 
 export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
-  async fetchShoutouts(filters?: ShoutoutsFilter): Promise<ShoutoutsInfo[]> {
+  async fetchShoutouts(filters?: ShoutoutFilter): Promise<ShoutoutInfo[]> {
     logger.debug("📢 Shoutouts Service: Fetching shoutout", { filters });
 
     try {
@@ -81,7 +81,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         return [];
       }
 
-      // For ShoutoutsInfo[], we need to get communityId from resources
+      // For ShoutoutInfo[], we need to get communityId from resources
       const resourceIds = Array.from(new Set(data.map((t) => t.resource_id)));
 
       // Fetch resources to get community IDs using resource service
@@ -93,35 +93,35 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         resources.filter(Boolean).map((resource) => [resource!.id, resource!]),
       );
 
-      // Convert to ShoutoutsInfo objects
+      // Convert to ShoutoutInfo objects
       const shoutout = data
-        .map((dbShoutouts) => {
+        .map((dbShoutout) => {
           try {
-            const resource = resourceMap.get(dbShoutouts.resource_id);
+            const resource = resourceMap.get(dbShoutout.resource_id);
             if (!resource) {
               logger.warn("📢 Shoutouts Service: Resource not found for shoutout", {
-                shoutoutId: dbShoutouts.id,
-                resourceId: dbShoutouts.resource_id,
+                shoutoutId: dbShoutout.id,
+                resourceId: dbShoutout.resource_id,
               });
               return null;
             }
 
-            return toShoutoutsInfo(
-              dbShoutouts,
-              dbShoutouts.from_user_id,
-              dbShoutouts.to_user_id,
-              dbShoutouts.resource_id,
+            return toShoutoutInfo(
+              dbShoutout,
+              dbShoutout.from_user_id,
+              dbShoutout.to_user_id,
+              dbShoutout.resource_id,
               resource.community?.id || "",
             );
           } catch (error) {
             logger.error("📢 Shoutouts Service: Error transforming shoutout", {
-              shoutoutId: dbShoutouts.id,
+              shoutoutId: dbShoutout.id,
               error: error instanceof Error ? error.message : "Unknown error",
             });
             return null;
           }
         })
-        .filter((shoutout): shoutout is ShoutoutsInfo => shoutout !== null);
+        .filter((shoutout): shoutout is ShoutoutInfo => shoutout !== null);
 
       logger.debug("📢 Shoutouts Service: Successfully fetched shoutout", {
         count: shoutout.length,
@@ -139,7 +139,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchShoutoutsById(id: string): Promise<Shoutouts | null> {
+  async fetchShoutoutById(id: string): Promise<Shoutout | null> {
     logger.debug("📢 Shoutouts Service: Fetching shoutout by ID", { id });
 
     try {
@@ -152,7 +152,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
           // Not found
-          logger.debug("📢 Shoutouts Service: Shoutouts not found", { id });
+          logger.debug("📢 Shoutouts Service: Shoutout not found", { id });
           return null;
         }
         logger.error("📢 Shoutouts Service: Failed to fetch shoutout", {
@@ -176,7 +176,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         throw new Error("Required related entities not found");
       }
 
-      const shoutout = toDomainShoutouts(data, { fromUser, toUser, resource });
+      const shoutout = toDomainShoutout(data, { fromUser, toUser, resource });
 
       logger.debug("📢 Shoutouts Service: Successfully fetched shoutout", {
         id,
@@ -226,16 +226,16 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       const resourceService = createResourceService(supabase);
 
       const [fromUser, toUser, resource] = await Promise.all([
-        userService.fetchUserById(createdShoutouts.from_user_id),
-        userService.fetchUserById(createdShoutouts.to_user_id),
-        resourceService.fetchResourceById(createdShoutouts.resource_id),
+        userService.fetchUserById(createdShoutout.from_user_id),
+        userService.fetchUserById(createdShoutout.to_user_id),
+        resourceService.fetchResourceById(createdShoutout.resource_id),
       ]);
 
       if (!fromUser || !toUser || !resource) {
         throw new Error("Required related entities not found");
       }
 
-      const shoutout = toDomainShoutouts(createdShoutouts, {
+      const shoutout = toDomainShoutout(createdShoutout, {
         fromUser,
         toUser,
         resource,
@@ -258,7 +258,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async updateShoutouts(id: string, data: Partial<ShoutoutsData>): Promise<Shoutouts> {
+  async updateShoutout(id: string, data: Partial<ShoutoutData>): Promise<Shoutout> {
     logger.debug("📢 Shoutouts Service: Updating shoutout", { id, data });
 
     try {
@@ -266,7 +266,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       const userId = await requireAuthentication(supabase, "update shoutout");
 
       // Fetch existing shoutout to validate business rules
-      const { data: existingShoutouts, error: fetchError } = await supabase
+      const { data: existingShoutout, error: fetchError } = await supabase
         .from("shoutouts")
         .select("*")
         .eq("id", id)
@@ -274,8 +274,8 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       if (fetchError) {
         if (fetchError.code === ERROR_CODES.NOT_FOUND) {
-          logger.debug("📢 Shoutouts Service: Shoutouts not found for update", { id });
-          throw new Error("Shoutouts not found");
+          logger.debug("📢 Shoutouts Service: Shoutout not found for update", { id });
+          throw new Error("Shoutout not found");
         }
         logger.error("📢 Shoutouts Service: Failed to fetch shoutout for update", {
           id,
@@ -285,13 +285,13 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Validate business rules before database operation
-      validateShoutoutsUpdate(existingShoutouts, data, userId);
+      validateShoutoutUpdate(existingShoutout, data, userId);
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
 
       // Update in database
-      const { data: updatedShoutouts, error } = await supabase
+      const { data: updatedShoutout, error } = await supabase
         .from("shoutouts")
         .update(dbUpdate)
         .eq("id", id)
@@ -311,16 +311,16 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       const resourceService = createResourceService(supabase);
 
       const [fromUser, toUser, resource] = await Promise.all([
-        userService.fetchUserById(updatedShoutouts.from_user_id),
-        userService.fetchUserById(updatedShoutouts.to_user_id),
-        resourceService.fetchResourceById(updatedShoutouts.resource_id),
+        userService.fetchUserById(updatedShoutout.from_user_id),
+        userService.fetchUserById(updatedShoutout.to_user_id),
+        resourceService.fetchResourceById(updatedShoutout.resource_id),
       ]);
 
       if (!fromUser || !toUser || !resource) {
         throw new Error("Required related entities not found");
       }
 
-      const shoutout = toDomainShoutouts(updatedShoutouts, {
+      const shoutout = toDomainShoutout(updatedShoutout, {
         fromUser,
         toUser,
         resource,
@@ -342,7 +342,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async deleteShoutouts(id: string): Promise<void> {
+  async deleteShoutout(id: string): Promise<void> {
     logger.debug("📢 Shoutouts Service: Deleting shoutout", { id });
 
     try {
@@ -350,7 +350,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       const userId = await requireAuthentication(supabase, "delete shoutout");
 
       // First, fetch the existing shoutout to verify ownership
-      const { data: existingShoutouts, error: fetchError } = await supabase
+      const { data: existingShoutout, error: fetchError } = await supabase
         .from("shoutouts")
         .select("from_user_id")
         .eq("id", id)
@@ -358,8 +358,8 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       if (fetchError) {
         if (fetchError.code === ERROR_CODES.NOT_FOUND) {
-          // Shoutouts not found - we can consider this a success
-          logger.debug("📢 Shoutouts Service: Shoutouts not found for deletion", {
+          // Shoutout not found - we can consider this a success
+          logger.debug("📢 Shoutouts Service: Shoutout not found for deletion", {
             id,
           });
           return;
@@ -374,12 +374,12 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Check if the current user is the sender
-      if (existingShoutouts.from_user_id !== userId) {
+      if (existingShoutout.from_user_id !== userId) {
         logger.error(
           "📢 Shoutouts Service: User is not authorized to delete this shoutout",
           {
             userId,
-            fromUserId: existingShoutouts.from_user_id,
+            fromUserId: existingShoutout.from_user_id,
             shoutoutId: id,
           },
         );
