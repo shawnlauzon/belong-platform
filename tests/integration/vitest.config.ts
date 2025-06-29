@@ -3,22 +3,22 @@ import { config } from "dotenv";
 import { resolve } from "path";
 
 // Load environment variables from root directory
-config({ path: resolve(__dirname, "../../.env") });
+config({ path: resolve(__dirname, "../../.env.local") });
 
 export default defineConfig({
   root: resolve(__dirname, "../../"),
   test: {
     include: ["tests/integration/**/*.test.{ts,tsx}"],
     exclude: [
-      "**/node_modules/**", 
-      "**/dist/**", 
-      "**/setup/**", 
-      "**/*.backup/**", 
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/setup/**",
+      "**/*.backup/**",
       "**/integration-backup/**",
       "**/acceptance/**",
       "**/npm-package/**",
       "**/customer-webapp/**",
-      "packages/**"
+      "packages/**",
     ],
     environment: "jsdom",
     setupFiles: ["tests/integration/setup/test-environment.ts"],

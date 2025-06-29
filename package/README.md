@@ -444,7 +444,7 @@ cd belong-platform
 pnpm install
 
 # Set up environment variables
-cp .env.example .env
+cp .env.example .env.local
 # Edit .env with your Supabase and Mapbox credentials
 
 # Run tests
@@ -462,7 +462,7 @@ pnpm lint
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env.local` file in the root directory:
 
 ```env
 # Required for development
