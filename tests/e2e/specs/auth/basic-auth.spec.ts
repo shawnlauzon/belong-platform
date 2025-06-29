@@ -57,15 +57,29 @@ test.describe('Basic Authentication', () => {
     expect(error).toBeTruthy()
   })
 
-  test.skip('should successfully sign up and sign in', async () => {
-    // This test is skipped by default as it requires a real Supabase instance
-    // Enable when running against a test database
+  test('should successfully sign up and sign in', async () => {
+    // This test requires a real Supabase instance with email sign-ups enabled
     
     const email = faker.internet.email()
     const password = faker.internet.password({ length: 10 })
     
     // Sign up
     await authPage.signUp(email, password)
+    
+    // Should not show any auth errors
+    try {
+      await authPage.authError.waitFor({ timeout: 2000 })
+      const error = await authPage.getAuthError()
+      if (error) {
+        throw new Error(`Sign-up failed with error: ${error}`)
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('Sign-up failed')) {
+        throw e
+      }
+      // No error element found, which is expected for successful sign-up
+    }
+    
     await expect(authPage.authStatus).toBeVisible({ timeout: 15000 })
     
     // Verify authenticated state
