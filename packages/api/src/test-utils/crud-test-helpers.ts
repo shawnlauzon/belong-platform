@@ -19,7 +19,6 @@ import * as core from "@belongnetwork/core";
 export interface CrudTestMocks {
   mockSupabase: any;
   mockMapbox: any;
-  mockLogger: any;
   mockBelongClient: any;
 }
 
@@ -30,7 +29,7 @@ export function setupCrudTestMocks(): CrudTestMocks {
   const mocks = setupSupabaseMocks();
 
   // Set up getBelongClient mock
-  const { getBelongClient, mockLogger } = createGetBelongClientMock(
+  const { getBelongClient } = createGetBelongClientMock(
     mocks.mockSupabase,
   );
   const mockBelongClient = { supabase: mocks.mockSupabase, mapbox: {} as any };
@@ -43,7 +42,6 @@ export function setupCrudTestMocks(): CrudTestMocks {
   return {
     mockSupabase: mocks.mockSupabase,
     mockMapbox: mocks.mockMapbox,
-    mockLogger,
     mockBelongClient,
   };
 }

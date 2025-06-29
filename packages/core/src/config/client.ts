@@ -24,8 +24,6 @@ export interface BelongClient {
   supabase: SupabaseClient<Database>;
   /** Configured Mapbox client */
   mapbox: ReturnType<typeof createMapboxClient>;
-  /** Configured logger */
-  logger: typeof defaultLogger;
 }
 
 /**
@@ -72,7 +70,6 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   return {
     supabase,
     mapbox,
-    logger: defaultLogger,
   };
 }
 

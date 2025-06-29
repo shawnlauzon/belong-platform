@@ -102,9 +102,9 @@ packages/api/
 │   │   ├── hooks/         # Event data hooks
 │   │   ├── services/      # Event service layer
 │   │   └── transformers/  # Data transformation logic
-│   ├── thanks/
-│   │   ├── hooks/         # Thanks data hooks
-│   │   ├── services/      # Thanks service layer
+│   ├── shoutouts/
+│   │   ├── hooks/         # Shoutouts data hooks
+│   │   ├── services/      # Shoutouts service layer
 │   │   └── transformers/  # Data transformation logic
 │   ├── users/
 │   │   ├── hooks/         # User data hooks
@@ -281,7 +281,7 @@ The platform uses two main data fetching strategies:
 
 #### 1. Cache Assembly Pattern
 
-Default pattern, used for: Resources, Events, Thanks - where related data is often already cached
+Default pattern, used for: Resources, Events, Shoutouts - where related data is often already cached
 
 ```typescript
 async fetchResourceWithRelations(id: string) {

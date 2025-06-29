@@ -12,7 +12,7 @@ This document outlines the migration from the current three-tier type system (Da
 - **Community** (4 transformer functions, 9 hooks)
 - **Resource** (4 transformer functions, 5 hooks)
 - **Event** (4 transformer functions, 8 hooks)
-- **Thanks** (4 transformer functions, 5 hooks)
+- **Shoutouts** (4 transformer functions, 5 hooks)
 - **EventAttendance** (3 transformer functions, included in Event hooks)
 
 ### Total Scope
@@ -45,7 +45,7 @@ packages/types/src/
 │   ├── community.schema.ts
 │   ├── resource.schema.ts
 │   ├── event.schema.ts
-│   ├── thanks.schema.ts
+│   ├── shoutouts.schema.ts
 │   └── index.ts
 ├── utils/
 │   ├── transformers.ts     # Case transformation utilities
@@ -136,7 +136,7 @@ Migrate remaining entities in dependency order:
 - Handle date/time fields
 - Migrate 8 hooks to 1
 
-#### 3.4 Thanks Entity
+#### 3.4 Shoutouts Entity
 
 - Depends on User and Resource
 - Simplest relationship structure

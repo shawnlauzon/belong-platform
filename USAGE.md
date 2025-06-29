@@ -151,14 +151,14 @@ function AuthExample() {
 const { list: listCommunities, byId: getCommunity } = useCommunities();
 const { list: listResources, byId: getResource } = useResources();
 const { list: listEvents, byId: getEvent } = useEvents();
-const { list: listThanks, byId: getThank } = useThanks();
+const { list: listShoutouts, byId: getShoutout } = useShoutouts();
 const { list: listUsers, byId: getUser } = useUsers();
 
 // Fetching lists - returns lightweight Info objects
 const communityList = await listCommunities();
 const resourceList = await listResources({ communityId: "abc123" });
 const eventList = await listEvents({ communityId: "abc123" });
-const thanksList = await listThanks({ sentBy: "user-123" });
+const shoutoutsList = await listShoutouts({ sentBy: "user-123" });
 const userList = await listUsers({ communityId: "abc123" });
 
 // Fetching with options
@@ -168,7 +168,7 @@ const communitiesWithDeleted = await listCommunities({ includeDeleted: true });
 const community = await getCommunity("abc123");
 const resource = await getResource("def456");
 const event = await getEvent("ghi789");
-const thank = await getThank("xyz999");
+const shoutout = await getShoutout("xyz999");
 const user = await getUser("user-123");
 
 // Using mutations
@@ -193,7 +193,7 @@ await remove("def456");
 All entity hooks now follow a consistent pattern for optimal performance:
 
 ```typescript
-const { list, byId } = useEntities(); // useThanks, useUsers, etc.
+const { list, byId } = useEntities(); // useShoutouts, useUsers, etc.
 
 // List operations - returns lightweight Info objects with IDs for relations
 const items = await list(); // Returns EntityInfo[]
@@ -381,27 +381,27 @@ Returns an object with:
 
 **Performance**: `list()` returns lightweight `EventInfo` objects, `byId()` returns full `Event` objects with organizer and community relations.
 
-### `useThanks()`
+### `useShoutouts()`
 
 Returns an object with:
 
 - **Data Fetching**:
-  - `list(filters?)` - Fetch thanks list (returns `ThanksInfo[]`)
+  - `list(filters?)` - Fetch shoutouts list (returns `ShoutoutInfo[]`)
     - `filters.sentBy?: string` - Filter by sender user ID
     - `filters.receivedBy?: string` - Filter by receiver user ID
     - `filters.communityId?: string` - Filter by community
     - `filters.resourceId?: string` - Filter by resource
-  - `byId(id)` - Fetch single thanks (returns full `Thanks` object)
+  - `byId(id)` - Fetch single shoutout (returns full `Shoutout` object)
 - **State** (unified across all operations):
   - `isPending` - Loading state for any operation
   - `isError` - Error state for any operation
   - `error` - Error details
 - **Mutations**:
-  - `create(data)` - Create new thanks
-  - `update(id, data)` - Update thanks
-  - `delete(id)` - Delete thanks
+  - `create(data)` - Create new shoutout
+  - `update(id, data)` - Update shoutout
+  - `delete(id)` - Delete shoutout
 
-**Performance**: `list()` returns lightweight `ThanksInfo` objects, `byId()` returns full `Thanks` objects with user, resource, and community relations.
+**Performance**: `list()` returns lightweight `ShoutoutInfo` objects, `byId()` returns full `Shoutout` objects with user, resource, and community relations.
 
 ### `useUsers()`
 
