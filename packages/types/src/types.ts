@@ -107,7 +107,7 @@ export interface CommunityMembership extends CommunityMembershipData {
   community?: Community;
 }
 
-export interface ThanksData {
+export interface ShoutoutData {
   fromUserId: string;
   toUserId: string;
   resourceId: string;
@@ -116,8 +116,8 @@ export interface ThanksData {
   impactDescription?: string;
 }
 
-export interface Thanks
-  extends Omit<ThanksData, "fromUserId" | "toUserId" | "resourceId"> {
+export interface Shoutout
+  extends Omit<ShoutoutData, "fromUserId" | "toUserId" | "resourceId"> {
   id: string;
   fromUser: User;
   toUser: User;
@@ -126,7 +126,7 @@ export interface Thanks
   updatedAt: Date;
 }
 
-export interface ThanksFilter {
+export interface ShoutoutFilter {
   sentBy?: string;
   receivedBy?: string;
   resourceId?: string;
@@ -267,7 +267,7 @@ export enum ActivityType {
   RESOURCE_UPDATED = "resource_updated",
   EVENT_CREATED = "event_created",
   EVENT_UPDATED = "event_updated",
-  THANKS_GIVEN = "thanks_given",
+  SHOUTOUT_GIVEN = "shoutout_given",
   USER_JOINED = "user_joined",
   COMMUNITY_CREATED = "community_created",
 }
@@ -283,7 +283,7 @@ export interface ActivityItem {
   // Assembled data
   community?: Community;
   actor: User;
-  target?: Resource | Event | Thanks | User | Community;
+  target?: Resource | Event | Shoutout | User | Community;
 }
 
 export interface ActivityFeedFilter {

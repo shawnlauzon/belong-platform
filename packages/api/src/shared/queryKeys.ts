@@ -49,24 +49,24 @@ export const queryKeys = {
       ["events", "filtered", filter] as const,
   },
 
-  // Thanks
-  thanks: {
-    all: ["thanks"] as const,
-    byId: (id: string) => ["thanks", id] as const,
+  // Shoutouts
+  shoutouts: {
+    all: ["shoutouts"] as const,
+    byId: (id: string) => ["shoutout", id] as const,
     byCommunity: (communityId: string) =>
-      ["thanks", "community", communityId] as const,
-    sentBy: (userId: string) => ["thanks", "sent", userId] as const,
-    receivedBy: (userId: string) => ["thanks", "received", userId] as const,
+      ["shoutouts", "community", communityId] as const,
+    sentBy: (userId: string) => ["shoutouts", "sent", userId] as const,
+    receivedBy: (userId: string) => ["shoutouts", "received", userId] as const,
     filtered: (filter: Record<string, any>) =>
-      ["thanks", "filtered", filter] as const,
+      ["shoutouts", "filtered", filter] as const,
   },
 
-  // Messaging
-  messaging: {
-    all: ["messaging"] as const,
-    conversations: (userId: string) => ["messaging", "conversations", userId] as const,
-    conversation: (id: string) => ["conversation", id] as const,
-    messages: (conversationId: string) => ["messaging", "messages", conversationId] as const,
-    userConversations: (userId: string) => ["user", userId, "conversations"] as const,
+  // Conversations
+  conversations: {
+    all: ["conversations"] as const,
+    list: (userId: string) => ["conversations", "list", userId] as const,
+    byId: (id: string) => ["conversation", id] as const,
+    messages: (conversationId: string) => ["conversations", "messages", conversationId] as const,
+    userList: (userId: string) => ["user", userId, "conversations"] as const,
   },
 } as const;

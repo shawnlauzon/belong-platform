@@ -11,7 +11,7 @@ import type { Database } from "@belongnetwork/types/database";
 type CommunityRow = Database["public"]["Tables"]["communities"]["Row"];
 type ResourceRow = Database["public"]["Tables"]["resources"]["Row"];
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
-type ThanksRow = Database["public"]["Tables"]["thanks"]["Row"];
+type ShoutoutRow = Database["public"]["Tables"]["shoutout"]["Row"];
 
 describe("Database Schema Validation", () => {
   describe("Communities table schema", () => {
@@ -131,9 +131,9 @@ describe("Database Schema Validation", () => {
     });
   });
 
-  describe("Thanks table schema", () => {
+  describe("Shoutout table schema", () => {
     it("should not include common misnamed fields", () => {
-      const thanksKeys = [
+      const shoutoutKeys = [
         "id",
         "message",
         "from_user_id",
@@ -156,7 +156,7 @@ describe("Database Schema Validation", () => {
       ];
 
       for (const field of invalidFields) {
-        expect(thanksKeys).not.toContain(field as any);
+        expect(shoutoutKeys).not.toContain(field as any);
       }
     });
   });
@@ -193,9 +193,9 @@ describe("Database Schema Validation", () => {
         "organizer_id", // communities, events
         "owner_id", // resources
         "community_id", // resources, events
-        "from_user_id", // thanks
-        "to_user_id", // thanks
-        "resource_id", // thanks
+        "from_user_id", // shoutout
+        "to_user_id", // shoutout
+        "resource_id", // shoutout
         "parent_id", // communities
       ] as const;
 

@@ -40,4 +40,4 @@ export {
   useSendMessage,
   useMarkAsRead,
   useMessaging,
-} from "../packages/api/src/messaging/index.js";
+} from "../packages/api/src/conversations/index.js";

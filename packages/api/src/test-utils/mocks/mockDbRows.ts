@@ -5,7 +5,7 @@ type UserRow = Database['public']['Tables']['profiles']['Row'];
 type ResourceRow = Database['public']['Tables']['resources']['Row'];
 type CommunityRow = Database['public']['Tables']['communities']['Row'];
 type EventRow = Database['public']['Tables']['events']['Row'];
-type ThanksRow = Database['public']['Tables']['thanks']['Row'];
+type ShoutoutRow = Database['public']['Tables']['shoutouts']['Row'];
 type ConversationRow = Database['public']['Tables']['conversations']['Row'];
 type DirectMessageRow = Database['public']['Tables']['direct_messages']['Row'];
 
@@ -223,11 +223,11 @@ export function createMockDbEvent(overrides: Partial<EventRow> = {}): EventRow {
 }
 
 /**
- * Creates a mock database Thanks row
+ * Creates a mock database Shoutout row
  */
-export function createMockDbThanks(
-  overrides: Partial<ThanksRow> = {},
-): ThanksRow {
+export function createMockDbShoutout(
+  overrides: Partial<ShoutoutRow> = {},
+): ShoutoutRow {
   const now = new Date().toISOString();
 
   return {

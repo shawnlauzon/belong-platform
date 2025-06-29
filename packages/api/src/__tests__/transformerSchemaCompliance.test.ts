@@ -13,14 +13,14 @@ import {
   toDomainEvent,
 } from "../events/transformers/eventTransformer";
 import {
-  forDbUpdate as thanksForDbUpdate,
-  toDomainThanks,
-} from "../thanks/transformers/thanksTransformer";
+  forDbUpdate as shoutoutForDbUpdate,
+  toDomainShoutout,
+} from "../shoutouts/transformers/shoutoutsTransformer";
 import {
   createMockDbCommunityWithOrganizer,
   createMockDbResourceWithOwner,
   createMockDbEvent,
-  createMockDbThanks,
+  createMockDbShoutout,
   createMockDbProfile,
 } from "../test-utils/mocks/mockDbRows";
 import {
@@ -42,7 +42,7 @@ type CommunityUpdateDbData =
   Database["public"]["Tables"]["communities"]["Update"];
 type ResourceUpdateDbData = Database["public"]["Tables"]["resources"]["Update"];
 type EventUpdateDbData = Database["public"]["Tables"]["events"]["Update"];
-type ThanksUpdateDbData = Database["public"]["Tables"]["thanks"]["Update"];
+type ShoutoutUpdateDbData = Database["public"]["Tables"]["shoutouts"]["Update"];
 
 describe("Transformer Schema Compliance", () => {
   describe("Community transformer compliance", () => {
@@ -178,14 +178,14 @@ describe("Transformer Schema Compliance", () => {
     });
   });
 
-  describe("Thanks transformer compliance", () => {
-    it("should only generate valid thanks update fields", () => {
+  describe("Shoutout transformer compliance", () => {
+    it("should only generate valid shoutout update fields", () => {
       const updateData = {
-        message: "Updated thanks",
+        message: "Updated shoutout",
         impactDescription: "Great impact",
       };
 
-      const dbUpdateData = thanksForDbUpdate(updateData);
+      const dbUpdateData = shoutoutForDbUpdate(updateData);
 
       // Should not have fields from other tables
       expect(dbUpdateData).not.toHaveProperty("updated_by");
@@ -215,13 +215,13 @@ describe("Transformer Schema Compliance", () => {
         { id: "test", title: "Test" },
         "user-123",
       );
-      const thanksUpdate = thanksForDbUpdate({ message: "Test" });
+      const shoutoutUpdate = shoutoutForDbUpdate({ message: "Test" });
 
       // None should have the problematic field
       expect(communityUpdate).not.toHaveProperty("updated_by");
       expect(resourceUpdate).not.toHaveProperty("updated_by");
       expect(eventUpdate).not.toHaveProperty("updated_by");
-      expect(thanksUpdate).not.toHaveProperty("updated_by");
+      expect(shoutoutUpdate).not.toHaveProperty("updated_by");
     });
 
     it("should never generate camelCase field names in database objects", () => {
@@ -346,35 +346,35 @@ describe("Transformer Schema Compliance", () => {
       });
     });
 
-    describe("toDomainThanks should not leak database fields", () => {
+    describe("toDomainShoutout should not leak database fields", () => {
       it("should not include snake_case database field names in domain object", () => {
-        const mockDbThanks = createMockDbThanks();
+        const mockDbShoutout = createMockDbShoutout();
 
         const refs = {
-          fromUser: createMockUser({ id: mockDbThanks.from_user_id }),
-          toUser: createMockUser({ id: mockDbThanks.to_user_id }),
-          resource: createMockResource({ id: mockDbThanks.resource_id }),
+          fromUser: createMockUser({ id: mockDbShoutout.from_user_id }),
+          toUser: createMockUser({ id: mockDbShoutout.to_user_id }),
+          resource: createMockResource({ id: mockDbShoutout.resource_id }),
         };
 
-        const domainThanks = toDomainThanks(mockDbThanks, refs);
+        const domainShoutout = toDomainShoutout(mockDbShoutout, refs);
 
         // Should NOT have snake_case database field names
-        expect(domainThanks).not.toHaveProperty("created_at");
-        expect(domainThanks).not.toHaveProperty("updated_at");
-        expect(domainThanks).not.toHaveProperty("impact_description");
-        expect(domainThanks).not.toHaveProperty("from_user_id");
-        expect(domainThanks).not.toHaveProperty("to_user_id");
-        expect(domainThanks).not.toHaveProperty("resource_id");
-        expect(domainThanks).not.toHaveProperty("image_urls");
+        expect(domainShoutout).not.toHaveProperty("created_at");
+        expect(domainShoutout).not.toHaveProperty("updated_at");
+        expect(domainShoutout).not.toHaveProperty("impact_description");
+        expect(domainShoutout).not.toHaveProperty("from_user_id");
+        expect(domainShoutout).not.toHaveProperty("to_user_id");
+        expect(domainShoutout).not.toHaveProperty("resource_id");
+        expect(domainShoutout).not.toHaveProperty("image_urls");
 
         // Should HAVE correct camelCase domain properties
-        expect(domainThanks).toHaveProperty("createdAt");
-        expect(domainThanks).toHaveProperty("updatedAt");
-        expect(domainThanks).toHaveProperty("impactDescription");
-        expect(domainThanks).toHaveProperty("fromUser");
-        expect(domainThanks).toHaveProperty("toUser");
-        expect(domainThanks).toHaveProperty("resource");
-        expect(domainThanks).toHaveProperty("imageUrls");
+        expect(domainShoutout).toHaveProperty("createdAt");
+        expect(domainShoutout).toHaveProperty("updatedAt");
+        expect(domainShoutout).toHaveProperty("impactDescription");
+        expect(domainShoutout).toHaveProperty("fromUser");
+        expect(domainShoutout).toHaveProperty("toUser");
+        expect(domainShoutout).toHaveProperty("resource");
+        expect(domainShoutout).toHaveProperty("imageUrls");
       });
     });
   });
