@@ -23,10 +23,10 @@ export {
   useEvents,
 } from "../packages/api/src/events/index.js";
 
-// Thanks hooks
+// Shoutouts hooks
 export {
-  useThanks,
-} from "../packages/api/src/thanks/index.js";
+  useShoutouts,
+} from "../packages/api/src/shoutouts/index.js";
 
 // User hooks
 export {

@@ -17,7 +17,7 @@ import {
   useCommunities,
   useResources,
   useEvents,
-  useThanks,
+  useShoutouts,
   useUsers,
 } from "@belongnetwork/platform";
 import {
@@ -396,26 +396,26 @@ describe("Multi-Step Workflow Integration Tests", () => {
       "user B joins event"
     );
 
-    // User B gives thanks for the resource
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    // User B gives shoutout for the resource
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
-    const thanksData = TestDataFactory.createThanks();
-    const thanks = await testUtils.performAsyncAction(
-      () => thanksResult.current.create({
-        message: thanksData.message,
-        isPublic: thanksData.isPublic,
+    const shoutoutData = TestDataFactory.createShoutout();
+    const shoutout = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.create({
+        message: shoutoutData.message,
+        isPublic: shoutoutData.isPublic,
         resourceId: resource.id,
         toUserId: userAAccount.id,
       }),
-      "user B gives thanks"
+      "user B gives shoutout"
     );
 
-    expect(thanks.toUser.id).toBe(userAAccount.id);
-    expect(thanks.resource.id).toBe(resource.id);
+    expect(shoutout.toUser.id).toBe(userAAccount.id);
+    expect(shoutout.resource.id).toBe(resource.id);
 
     // Sign out User B
     await authResult.current.signOut();
@@ -438,14 +438,14 @@ describe("Multi-Step Workflow Integration Tests", () => {
     expect(eventAttendees.length).toBeGreaterThan(0);
     expect(eventAttendees.some(attendee => attendee.user.id === userBAccount.id)).toBe(true);
 
-    // Check thanks received
-    const thanksReceived = await testUtils.performAsyncAction(
-      () => thanksResult.current.list({ toUserId: userAAccount.id }),
-      "check thanks received"
+    // Check shoutouts received
+    const shoutoutsReceived = await testUtils.performAsyncAction(
+      () => shoutoutsResult.current.list({ toUserId: userAAccount.id }),
+      "check shoutouts received"
     );
 
-    expect(thanksReceived.length).toBeGreaterThan(0);
-    expect(thanksReceived.some(t => t.resourceId === resource.id)).toBe(true);
+    expect(shoutoutsReceived.length).toBeGreaterThan(0);
+    expect(shoutoutsReceived.some(s => s.resourceId === resource.id)).toBe(true);
 
     console.log("✅ Content creation and interaction cycle successful");
   });
@@ -553,10 +553,10 @@ describe("Multi-Step Workflow Integration Tests", () => {
     }
 
     // Step 4: Cross-user interactions
-    const { result: thanksResult } = await testUtils.renderHookWithWrapper(() => useThanks());
+    const { result: shoutoutsResult } = await testUtils.renderHookWithWrapper(() => useShoutouts());
     await testUtils.waitForHookToInitialize(
-      thanksResult,
-      (thanks) => typeof thanks.create === 'function'
+      shoutoutsResult,
+      (shoutouts) => typeof shoutouts.create === 'function'
     );
 
     // Each user interacts with content from others
@@ -579,22 +579,22 @@ describe("Multi-Step Workflow Integration Tests", () => {
         );
       }
 
-      // Give thanks for resources created by others
-      const resourcesToThank = createdContent.filter(c => 
+      // Give shoutouts for resources created by others
+      const resourcesToShoutout = createdContent.filter(c => 
         c.type === 'resource' && 
         c.item.owner?.id !== userAccounts[i].account.id
       );
 
-      if (resourcesToThank.length > 0) {
-        const resourceToThank = resourcesToThank[0];
+      if (resourcesToShoutout.length > 0) {
+        const resourceToShoutout = resourcesToShoutout[0];
         await testUtils.performAsyncAction(
-          () => thanksResult.current.create({
+          () => shoutoutsResult.current.create({
             message: "Thanks for sharing this!",
             isPublic: true,
-            resourceId: resourceToThank.item.id,
-            toUserId: resourceToThank.item.owner?.id || userAccounts[0].account.id,
+            resourceId: resourceToShoutout.item.id,
+            toUserId: resourceToShoutout.item.owner?.id || userAccounts[0].account.id,
           }),
-          `user ${i + 1} gives thanks`
+          `user ${i + 1} gives shoutout`
         );
       }
 

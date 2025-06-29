@@ -36,7 +36,7 @@ export interface TestEvent {
   maxAttendees?: number;
 }
 
-export interface TestThanks {
+export interface TestShoutout {
   message: string;
   isPublic: boolean;
 }
@@ -126,7 +126,7 @@ export class TestDataFactory {
     };
   }
 
-  static createThanks(overrides: Partial<TestThanks> = {}): TestThanks {
+  static createShoutout(overrides: Partial<TestShoutout> = {}): TestShoutout {
     const messages = [
       "Thank you so much for your help!",
       "Really appreciate you sharing this resource.",
@@ -184,18 +184,18 @@ export class TestDataFactory {
     };
   }
 
-  static createTestThanks(fromUserId: string, toUserId: string, resourceId: string): TestThanks & {
+  static createTestShoutout(fromUserId: string, toUserId: string, resourceId: string): TestShoutout & {
     fromUserId: string;
     toUserId: string; 
     resourceId: string;
   } {
-    const baseThanks = this.createThanks();
+    const baseShoutout = this.createShoutout();
     return {
-      ...baseThanks,
+      ...baseShoutout,
       fromUserId,
       toUserId,
       resourceId,
-      message: this.generateTestName("THANKS") + " - " + faker.lorem.sentence(),
+      message: this.generateTestName("SHOUTOUT") + " - " + faker.lorem.sentence(),
     };
   }
 
@@ -245,7 +245,7 @@ export class TestDataFactory {
     return item?.title?.includes("INTEGRATION_TEST_") || false;
   }
 
-  static isTestThanks(item: any): boolean {
+  static isTestShoutout(item: any): boolean {
     return item?.message?.includes("INTEGRATION_TEST_") || false;
   }
 }
