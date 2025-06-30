@@ -111,9 +111,13 @@ export function useUsers() {
       return result;
     },
 
-    // Mutations (with defensive null checks for testing environments)
-    update: updateMutation?.mutateAsync || (() => Promise.reject(new Error('Update mutation not ready'))),
-    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
+    // Mutations - type-safe wrapper functions to prevent parameter misuse
+    update: (user: User) => {
+      return updateMutation?.mutateAsync ? updateMutation.mutateAsync(user) : Promise.reject(new Error('Update mutation not ready'));
+    },
+    delete: (id: string) => {
+      return deleteMutation?.mutateAsync ? deleteMutation.mutateAsync(id) : Promise.reject(new Error('Delete mutation not ready'));
+    },
 
     // Individual mutation objects for specific access when needed
     updateMutation,

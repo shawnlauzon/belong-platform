@@ -74,9 +74,13 @@ export function useMessaging(userId?: string, options?: { includeConversations?:
     isLoading: conversationsQuery.isLoading,
     error: conversationsQuery.error,
 
-    // Mutations (with defensive null checks for testing environments)
-    sendMessage: sendMessageMutation?.mutateAsync || (() => Promise.reject(new Error('Send message mutation not ready'))),
-    markAsRead: markAsReadMutation?.mutateAsync || (() => Promise.reject(new Error('Mark as read mutation not ready'))),
+    // Mutations - type-safe wrapper functions to prevent parameter misuse
+    sendMessage: (data: MessageData) => {
+      return sendMessageMutation?.mutateAsync ? sendMessageMutation.mutateAsync(data) : Promise.reject(new Error('Send message mutation not ready'));
+    },
+    markAsRead: (messageId: string) => {
+      return markAsReadMutation?.mutateAsync ? markAsReadMutation.mutateAsync(messageId) : Promise.reject(new Error('Mark as read mutation not ready'));
+    },
 
     // Mutation states (with defensive null checks)
     isSending: sendMessageMutation?.isPending || false,

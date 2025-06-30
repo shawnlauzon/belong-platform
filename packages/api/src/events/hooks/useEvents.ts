@@ -289,14 +289,20 @@ export function useEvents() {
       return result;
     },
 
-    // Mutations (with defensive null checks for testing environments)
-    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
+    // Mutations - type-safe wrapper functions to prevent parameter misuse
+    create: (data: EventData) => {
+      return createMutation?.mutateAsync ? createMutation.mutateAsync(data) : Promise.reject(new Error('Create mutation not ready'));
+    },
     update: (id: string, data: Partial<EventData>) =>
       updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
-    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
+    delete: (id: string) => {
+      return deleteMutation?.mutateAsync ? deleteMutation.mutateAsync(id) : Promise.reject(new Error('Delete mutation not ready'));
+    },
     join: (eventId: string, status?: EventAttendanceStatus) =>
       joinMutation?.mutateAsync ? joinMutation.mutateAsync({ eventId, status }) : Promise.reject(new Error('Join mutation not ready')),
-    leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
+    leave: (eventId: string) => {
+      return leaveMutation?.mutateAsync ? leaveMutation.mutateAsync(eventId) : Promise.reject(new Error('Leave mutation not ready'));
+    },
 
     // Individual mutation objects for specific access when needed
     createMutation,

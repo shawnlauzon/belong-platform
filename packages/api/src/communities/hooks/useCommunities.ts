@@ -225,14 +225,20 @@ export function useCommunities() {
       return result;
     },
 
-    // Mutations (with defensive null checks for testing environments)
-    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
+    // Mutations - type-safe wrapper functions to prevent parameter misuse
+    create: (data: CommunityData) => {
+      return createMutation?.mutateAsync ? createMutation.mutateAsync(data) : Promise.reject(new Error('Create mutation not ready'));
+    },
     update: (id: string, data: Partial<CommunityData>) =>
       updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
-    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
+    delete: (id: string) => {
+      return deleteMutation?.mutateAsync ? deleteMutation.mutateAsync(id) : Promise.reject(new Error('Delete mutation not ready'));
+    },
     join: (communityId: string, role?: "member" | "admin" | "organizer") =>
       joinMutation?.mutateAsync ? joinMutation.mutateAsync({ communityId, role }) : Promise.reject(new Error('Join mutation not ready')),
-    leave: leaveMutation?.mutateAsync || (() => Promise.reject(new Error('Leave mutation not ready'))),
+    leave: (communityId: string) => {
+      return leaveMutation?.mutateAsync ? leaveMutation.mutateAsync(communityId) : Promise.reject(new Error('Leave mutation not ready'));
+    },
 
     // Individual mutation objects for specific access when needed
     createMutation,
