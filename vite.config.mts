@@ -16,24 +16,6 @@ export default defineConfig({
       rollupTypes: true,
       copyDtsFiles: false,
       bundledPackages: ["@belongnetwork/api", "@belongnetwork/types", "@belongnetwork/core"],
-      beforeWriteFile: (filePath, content) => {
-        // Remove any remaining relative imports to packages
-        const fixedContent = content
-          .replace(/from ['"]\.\.\/packages\/[^'"]+['"]/g, (match) => {
-            // Extract the package name
-            const packageMatch = match.match(/\.\.\/packages\/(api|types|core)/);
-            if (packageMatch) {
-              return `from '@belongnetwork/platform'`;
-            }
-            return match;
-          })
-          .replace(/import\(['"]\.\.\/packages\/[^'"]+['"]\)/g, "import('@belongnetwork/platform')");
-        
-        return {
-          filePath,
-          content: fixedContent,
-        };
-      },
     }),
   ],
   build: {

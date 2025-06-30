@@ -128,10 +128,18 @@ export function useAuth() {
     isError: currentUserQuery.isError,
     error: currentUserQuery.error,
 
-    // Auth mutations - ensure we always return functions for consistent API
-    signIn: signInMutation.mutateAsync || (() => Promise.reject(new Error("SignIn mutation not ready"))),
-    signUp: signUpMutation.mutateAsync || (() => Promise.reject(new Error("SignUp mutation not ready"))),
-    signOut: signOutMutation.mutateAsync || (() => Promise.reject(new Error("SignOut mutation not ready"))),
-    updateProfile: updateProfileMutation.mutateAsync || (() => Promise.reject(new Error("UpdateProfile mutation not ready"))),
+    // Auth mutations - type-safe wrapper functions to prevent parameter misuse
+    signIn: (params: { email: string; password: string }) => {
+      return signInMutation.mutateAsync(params);
+    },
+    signUp: (params: { email: string; password: string; firstName: string; lastName?: string }) => {
+      return signUpMutation.mutateAsync(params);
+    },
+    signOut: () => {
+      return signOutMutation.mutateAsync();
+    },
+    updateProfile: (updates: Partial<User>) => {
+      return updateProfileMutation.mutateAsync(updates);
+    },
   };
 }
