@@ -11,8 +11,56 @@ import type {
 } from "@belongnetwork/types";
 
 /**
- * Consolidated hook for all shoutout operations
- * Provides queries, mutations, and state management for shoutouts
+ * Comprehensive hook for shoutout operations including fetching, creating, and filtering.
+ * 
+ * This hook provides functionality for managing community appreciation posts (shoutouts)
+ * where users can publicly recognize and thank others for their contributions.
+ * Must be used within a BelongProvider context.
+ * 
+ * @returns Shoutout queries, mutations, and utility functions
+ * 
+ * @example
+ * ```tsx
+ * function ShoutoutList() {
+ *   const { 
+ *     fetchShoutouts, 
+ *     createShoutout, 
+ *     shoutoutsQuery 
+ *   } = useShoutouts();
+ * 
+ *   // Load shoutouts manually
+ *   const handleLoad = () => {
+ *     fetchShoutouts();
+ *   };
+ * 
+ *   // Create a new shoutout
+ *   const handleCreate = async () => {
+ *     try {
+ *       const shoutout = await createShoutout.mutateAsync({
+ *         message: 'Thanks for organizing the cleanup event!',
+ *         recipientId: 'user-456',
+ *         resourceId: 'resource-123', // optional - related resource
+ *         isPublic: true
+ *       });
+ *       console.log('Created shoutout:', shoutout.message);
+ *     } catch (error) {
+ *       console.error('Failed to create shoutout:', error);
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleLoad}>Load Shoutouts</button>
+ *       <button onClick={handleCreate}>Give Thanks</button>
+ *       {shoutoutsQuery.data?.map(shoutout => (
+ *         <div key={shoutout.id}>{shoutout.message}</div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useShoutouts() {
   const queryClient = useQueryClient();

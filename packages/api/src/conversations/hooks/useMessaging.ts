@@ -12,9 +12,75 @@ import type {
 } from '@belongnetwork/types';
 
 /**
- * Consolidated Messaging Hook
- * Following the new architecture pattern of single hook per entity
- * Returns object with all conversation operations (queries and mutations)
+ * Comprehensive messaging hook that combines all conversation and message operations.
+ * 
+ * This hook provides a complete messaging interface including conversation listing,
+ * message sending, and read status management. Follows the platform pattern of
+ * consolidated entity hooks. Must be used within a BelongProvider context.
+ * 
+ * @param userId - The ID of the current user (optional, but required for conversations)
+ * @param options - Configuration options for the hook behavior
+ * @returns Complete messaging interface with queries and mutations
+ * 
+ * @example
+ * ```tsx
+ * function MessagingApp() {
+ *   const { currentUser } = useAuth();
+ *   const {
+ *     conversations,
+ *     sendMessage,
+ *     markAsRead,
+ *     isLoading
+ *   } = useMessaging(currentUser?.id);
+ * 
+ *   const handleSendMessage = async (conversationId, content) => {
+ *     try {
+ *       await sendMessage.mutateAsync({
+ *         conversationId,
+ *         content
+ *       });
+ *     } catch (error) {
+ *       console.error('Failed to send message:', error);
+ *     }
+ *   };
+ * 
+ *   if (isLoading) return <div>Loading conversations...</div>;
+ * 
+ *   return (
+ *     <div>
+ *       {conversations?.map(conversation => (
+ *         <div key={conversation.id}>
+ *           {conversation.lastMessagePreview}
+ *           {conversation.unreadCount > 0 && (
+ *             <span>({conversation.unreadCount})</span>
+ *           )}
+ *         </div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @example
+ * ```tsx
+ * // Messaging without auto-loading conversations
+ * function MessageComposer() {
+ *   const { sendMessage } = useMessaging(undefined, { 
+ *     includeConversations: false 
+ *   });
+ * 
+ *   const startNewConversation = async (recipientId, message) => {
+ *     await sendMessage.mutateAsync({
+ *       recipientId,
+ *       content: message
+ *     });
+ *   };
+ * 
+ *   return <div>{/\* Message composer UI *\/}</div>;
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useMessaging(userId?: string, options?: { includeConversations?: boolean }) {
   const queryClient = useQueryClient();

@@ -7,8 +7,44 @@ import { useSupabase } from "../providers/CurrentUserProvider";
 import { logger } from "@belongnetwork/core";
 
 /**
- * Main authentication hook for consumers
- * Provides simplified interface matching architecture document
+ * Main authentication hook that provides complete authentication functionality.
+ * 
+ * This hook combines user authentication state with sign in, sign up, sign out, 
+ * and profile update operations in a single convenient interface.
+ * 
+ * @returns Authentication state and methods
+ * 
+ * @example
+ * ```tsx
+ * function AuthComponent() {
+ *   const { 
+ *     currentUser, 
+ *     isAuthenticated, 
+ *     signIn, 
+ *     signUp, 
+ *     signOut 
+ *   } = useAuth();
+ * 
+ *   const handleSignIn = async () => {
+ *     try {
+ *       await signIn({ 
+ *         email: 'user@example.com', 
+ *         password: 'password123' 
+ *       });
+ *     } catch (error) {
+ *       console.error('Sign in failed:', error);
+ *     }
+ *   };
+ * 
+ *   if (isAuthenticated) {
+ *     return <div>Welcome, {currentUser?.firstName}!</div>;
+ *   }
+ * 
+ *   return <button onClick={handleSignIn}>Sign In</button>;
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useAuth() {
   const queryClient = useQueryClient();

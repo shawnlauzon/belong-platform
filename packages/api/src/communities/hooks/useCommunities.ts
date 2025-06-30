@@ -16,8 +16,53 @@ type JoinCommunityInput = {
 };
 
 /**
- * Consolidated hook for all community operations
- * Provides queries, mutations, and state management for communities
+ * Comprehensive hook for community operations including fetching, creating, updating, and membership management.
+ * 
+ * This hook provides all community-related functionality in a single interface,
+ * including listing communities, managing memberships, and CRUD operations.
+ * Must be used within a BelongProvider context.
+ * 
+ * @returns Community queries, mutations, and utility functions
+ * 
+ * @example
+ * ```tsx
+ * function CommunityList() {
+ *   const { 
+ *     fetchCommunities, 
+ *     createCommunity, 
+ *     joinCommunity,
+ *     communitiesQuery 
+ *   } = useCommunities();
+ * 
+ *   // Fetch communities manually
+ *   const handleLoadCommunities = () => {
+ *     fetchCommunities();
+ *   };
+ * 
+ *   // Create a new community
+ *   const handleCreate = async (communityData) => {
+ *     try {
+ *       const community = await createCommunity.mutateAsync(communityData);
+ *       console.log('Created community:', community.name);
+ *     } catch (error) {
+ *       console.error('Failed to create community:', error);
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleLoadCommunities}>
+ *         Load Communities
+ *       </button>
+ *       {communitiesQuery.data?.map(community => (
+ *         <div key={community.id}>{community.name}</div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useCommunities() {
   const queryClient = useQueryClient();

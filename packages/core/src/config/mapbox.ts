@@ -11,10 +11,52 @@ export interface Coordinates {
 }
 
 /**
- * Creates a configured Mapbox client instance
- * @param mapboxPublicToken - Mapbox public access token
- * @param logger - Logger instance (optional, uses default if not provided)
- * @returns Configured Mapbox client
+ * Creates a configured Mapbox client instance for geolocation and mapping services.
+ * 
+ * This function creates a Mapbox client with address search capabilities, coordinate
+ * handling, and distance calculations. Includes automatic API call logging and
+ * error handling for all Mapbox services used by the Belong Network platform.
+ * 
+ * @param mapboxPublicToken - Your Mapbox public access token
+ * @param logger - Logger instance for API debugging (optional, uses platform default)
+ * @returns Configured Mapbox client with search and geocoding methods
+ * 
+ * @example
+ * ```typescript
+ * import { createMapboxClient } from '@belongnetwork/core';
+ * 
+ * const mapbox = createMapboxClient('your-mapbox-token');
+ * 
+ * // Search for addresses
+ * const addresses = await mapbox.searchAddresses('1600 Pennsylvania Avenue');
+ * console.log(addresses[0].place_name); // "1600 Pennsylvania Avenue NW, Washington, DC"
+ * 
+ * // Get coordinates
+ * const coords = addresses[0].center; // [lng, lat]
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Integration with React components
+ * function LocationPicker() {
+ *   const mapbox = createMapboxClient(process.env.REACT_APP_MAPBOX_TOKEN);
+ *   const [suggestions, setSuggestions] = useState([]);
+ * 
+ *   const handleSearch = async (query) => {
+ *     const results = await mapbox.searchAddresses(query);
+ *     setSuggestions(results);
+ *   };
+ * 
+ *   return (
+ *     <input 
+ *       onChange={(e) => handleSearch(e.target.value)}
+ *       placeholder="Search for location..."
+ *     />
+ *   );
+ * }
+ * ```
+ * 
+ * @category Client Functions
  */
 export function createMapboxClient(
   mapboxPublicToken: string,

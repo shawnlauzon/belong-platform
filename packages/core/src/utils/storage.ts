@@ -2,11 +2,61 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@belongnetwork/types/database";
 import { logger, logApiCall, logApiResponse } from "./logger";
 
+/**
+ * Result of a successful file upload operation.
+ */
 export interface UploadResult {
+  /** Public URL to access the uploaded file */
   url: string;
+  /** Storage path where the file was saved */
   path: string;
 }
 
+/**
+ * Utility class for managing file uploads and storage operations using Supabase Storage.
+ * 
+ * This class provides methods for uploading images, initializing storage buckets,
+ * and generating public URLs for files. Includes automatic logging and error handling
+ * for all storage operations in the Belong Network platform.
+ * 
+ * @example
+ * ```typescript
+ * import { StorageManager } from '@belongnetwork/core';
+ * import { createSupabaseClient } from '@belongnetwork/core';
+ * 
+ * const supabase = createSupabaseClient(url, key);
+ * 
+ * // Initialize storage bucket
+ * await StorageManager.initializeBucket(supabase);
+ * 
+ * // Upload an image file
+ * const file = new File(['...'], 'profile.jpg', { type: 'image/jpeg' });
+ * const result = await StorageManager.uploadImage(supabase, file, 'user-123');
+ * 
+ * console.log('Image uploaded:', result.url);
+ * // Uses the public URL in your application
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Upload with custom path
+ * async function uploadResourceImage(file: File, resourceId: string) {
+ *   try {
+ *     const result = await StorageManager.uploadImage(
+ *       supabase, 
+ *       file, 
+ *       `resources/${resourceId}`
+ *     );
+ *     return result.url;
+ *   } catch (error) {
+ *     console.error('Upload failed:', error);
+ *     throw error;
+ *   }
+ * }
+ * ```
+ * 
+ * @category Utilities
+ */
 export class StorageManager {
   private static bucketName = "images";
 
