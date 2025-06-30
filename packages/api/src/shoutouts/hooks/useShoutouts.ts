@@ -143,11 +143,15 @@ export function useShoutouts() {
       return result;
     },
 
-    // Mutations (with defensive null checks for testing environments)
-    create: createMutation?.mutateAsync || (() => Promise.reject(new Error('Create mutation not ready'))),
+    // Mutations - type-safe wrapper functions to prevent parameter misuse
+    create: (data: ShoutoutData) => {
+      return createMutation?.mutateAsync ? createMutation.mutateAsync(data) : Promise.reject(new Error('Create mutation not ready'));
+    },
     update: (id: string, data: Partial<ShoutoutData>) =>
       updateMutation?.mutateAsync ? updateMutation.mutateAsync({ id, data }) : Promise.reject(new Error('Update mutation not ready')),
-    delete: deleteMutation?.mutateAsync || (() => Promise.reject(new Error('Delete mutation not ready'))),
+    delete: (id: string) => {
+      return deleteMutation?.mutateAsync ? deleteMutation.mutateAsync(id) : Promise.reject(new Error('Delete mutation not ready'));
+    },
 
     // Individual mutation objects for specific access when needed
     createMutation,
