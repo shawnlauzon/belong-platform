@@ -6,7 +6,50 @@ const isValidCoordinate = (value: number): boolean => {
   return typeof value === "number" && !isNaN(value) && isFinite(value);
 };
 
-// Calculate driving time between two points (using Mapbox Directions API)
+/**
+ * Calculates driving time between two geographic coordinates using Mapbox Directions API.
+ * 
+ * This function provides accurate driving time estimates by calling the Mapbox Directions API.
+ * Includes automatic fallback to mathematical approximation if the API is unavailable,
+ * coordinate validation, and comprehensive error handling.
+ * 
+ * @param origin - Starting location coordinates
+ * @param destination - Ending location coordinates  
+ * @param mapboxClient - Optional Mapbox client for API calls (uses approximation if not provided)
+ * @returns Driving time in minutes
+ * 
+ * @example
+ * ```typescript
+ * import { calculateDrivingTime, createMapboxClient } from '@belongnetwork/core';
+ * 
+ * const mapbox = createMapboxClient('your-token');
+ * 
+ * const drivingTime = await calculateDrivingTime(
+ *   { lat: 37.7749, lng: -122.4194 }, // San Francisco
+ *   { lat: 37.3382, lng: -121.8863 }, // San Jose
+ *   mapbox
+ * );
+ * 
+ * console.log(`Driving time: ${drivingTime} minutes`);
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Without Mapbox client (uses approximation)
+ * const approximateTime = await calculateDrivingTime(
+ *   { lat: 40.7128, lng: -74.0060 }, // NYC
+ *   { lat: 40.6892, lng: -74.0445 }  // Statue of Liberty
+ * );
+ * 
+ * // Handles invalid coordinates gracefully
+ * const safeTime = await calculateDrivingTime(
+ *   { lat: NaN, lng: -74.0060 },
+ *   { lat: 40.6892, lng: -74.0445 }
+ * ); // Returns default fallback time
+ * ```
+ * 
+ * @category Utilities
+ */
 export const calculateDrivingTime = async (
   origin: { lat: number; lng: number },
   destination: { lat: number; lng: number },

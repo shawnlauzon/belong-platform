@@ -3,11 +3,52 @@ import type { Database } from "@belongnetwork/types/database";
 import { logger as defaultLogger } from "../utils/logger";
 
 /**
- * Creates a configured Supabase client instance
- * @param supabaseUrl - Supabase project URL
- * @param supabaseAnonKey - Supabase anonymous key
- * @param logger - Logger instance (optional, uses default if not provided)
- * @returns Configured Supabase client
+ * Creates a configured Supabase client instance with type safety for the Belong Network database.
+ * 
+ * This function creates a Supabase client with proper TypeScript types for the database schema,
+ * authentication handling, and logging integration. The client is configured for the Belong
+ * Network platform with all necessary type definitions.
+ * 
+ * @param supabaseUrl - Your Supabase project URL (e.g., 'https://your-project.supabase.co')
+ * @param supabaseAnonKey - Your Supabase anonymous/public key
+ * @param logger - Logger instance for debugging (optional, uses platform default)
+ * @returns Configured Supabase client with Belong Network types
+ * 
+ * @example
+ * ```typescript
+ * import { createSupabaseClient } from '@belongnetwork/core';
+ * 
+ * const supabase = createSupabaseClient(
+ *   'https://your-project.supabase.co',
+ *   'your-anon-key'
+ * );
+ * 
+ * // Type-safe database queries
+ * const { data: communities } = await supabase
+ *   .from('communities')
+ *   .select('*');
+ * 
+ * // Authentication
+ * const { data } = await supabase.auth.signInWithPassword({
+ *   email: 'user@example.com',
+ *   password: 'password'
+ * });
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // With custom logger
+ * import { createLogger } from '@belongnetwork/core';
+ * 
+ * const logger = createLogger('MyApp');
+ * const supabase = createSupabaseClient(
+ *   process.env.SUPABASE_URL,
+ *   process.env.SUPABASE_ANON_KEY,
+ *   logger
+ * );
+ * ```
+ * 
+ * @category Client Functions
  */
 export function createSupabaseClient(
   supabaseUrl: string,

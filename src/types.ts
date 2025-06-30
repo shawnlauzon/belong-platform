@@ -31,6 +31,12 @@ export {
   type Shoutout,
   type ShoutoutInfo,
   type ShoutoutFilter,
+  type Conversation,
+  type ConversationInfo,
+  type ConversationFilter,
+  type Message,
+  type MessageInfo,
+  type MessageFilter,
 } from "../packages/types/src/types.js";
 
 // Auth types

@@ -11,8 +11,59 @@ import type {
 } from "@belongnetwork/types";
 
 /**
- * Consolidated hook for all resource operations
- * Provides queries, mutations, and state management for resources
+ * Comprehensive hook for resource operations including fetching, creating, updating, and filtering.
+ * 
+ * This hook provides all resource-related functionality for managing community resources
+ * such as offers and requests. Supports filtering by category, community, and location.
+ * Must be used within a BelongProvider context.
+ * 
+ * @returns Resource queries, mutations, and utility functions
+ * 
+ * @example
+ * ```tsx
+ * function ResourceList() {
+ *   const { 
+ *     fetchResources, 
+ *     createResource, 
+ *     updateResource,
+ *     resourcesQuery 
+ *   } = useResources();
+ * 
+ *   // Load resources manually
+ *   const handleLoad = () => {
+ *     fetchResources();
+ *   };
+ * 
+ *   // Create a new resource
+ *   const handleCreate = async () => {
+ *     try {
+ *       const resource = await createResource.mutateAsync({
+ *         type: 'offer',
+ *         category: 'household',
+ *         title: 'Free Moving Boxes',
+ *         description: 'Clean boxes from recent move',
+ *         communityId: 'community-123',
+ *         isActive: true
+ *       });
+ *       console.log('Created resource:', resource.title);
+ *     } catch (error) {
+ *       console.error('Failed to create resource:', error);
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleLoad}>Load Resources</button>
+ *       <button onClick={handleCreate}>Add Resource</button>
+ *       {resourcesQuery.data?.map(resource => (
+ *         <div key={resource.id}>{resource.title}</div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useResources() {
   const queryClient = useQueryClient();

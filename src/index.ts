@@ -43,6 +43,15 @@ export {
   useUsers,
 } from "../packages/api/src/users/index.js";
 
+// Messaging exports
+export {
+  useConversations,
+  useMessages,
+  useSendMessage,
+  useMarkAsRead,
+  useMessaging,
+} from "../packages/api/src/conversations/index.js";
+
 // Type exports
 export {
   type Database,
@@ -63,6 +72,12 @@ export {
   type ShoutoutFilter,
   type User,
   type UserInfo,
+  type Conversation,
+  type ConversationInfo,
+  type ConversationFilter,
+  type Message,
+  type MessageInfo,
+  type MessageFilter,
 } from "../packages/types/src/types.js";
 
 // Core exports

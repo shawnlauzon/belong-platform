@@ -10,8 +10,58 @@ import { queryKeys, STANDARD_CACHE_TIME } from "../../shared";
 import type { User, UserInfo, UserFilter } from "@belongnetwork/types";
 
 /**
- * Consolidated hook for all user operations
- * Provides queries, mutations, and state management for users
+ * Comprehensive hook for user operations including fetching, updating, and user management.
+ * 
+ * This hook provides functionality for managing user profiles, searching users,
+ * and updating user information within communities. Must be used within 
+ * a BelongProvider context.
+ * 
+ * @returns User queries, mutations, and utility functions
+ * 
+ * @example
+ * ```tsx
+ * function UserDirectory() {
+ *   const { 
+ *     fetchUsers, 
+ *     updateUser, 
+ *     usersQuery 
+ *   } = useUsers();
+ * 
+ *   // Load users manually
+ *   const handleLoad = () => {
+ *     fetchUsers();
+ *   };
+ * 
+ *   // Update user profile
+ *   const handleUpdate = async (userId, updates) => {
+ *     try {
+ *       const user = await updateUser.mutateAsync({
+ *         id: userId,
+ *         ...updates
+ *       });
+ *       console.log('Updated user:', user.fullName);
+ *     } catch (error) {
+ *       console.error('Failed to update user:', error);
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleLoad}>Load Users</button>
+ *       {usersQuery.data?.map(user => (
+ *         <div key={user.id}>
+ *           {user.fullName}
+ *           <button onClick={() => handleUpdate(user.id, { firstName: 'Updated' })}>
+ *             Update
+ *           </button>
+ *         </div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useUsers() {
   const queryClient = useQueryClient();

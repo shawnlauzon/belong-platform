@@ -1,9 +1,43 @@
 import log from "loglevel";
 
 /**
- * Creates a configured logger instance
- * @param logLevel - Log level (default: 'info')
- * @returns Configured logger instance
+ * Creates a configured logger instance with enhanced formatting and emoji indicators.
+ * 
+ * This function creates a logger with timestamp formatting, emoji prefixes for different
+ * log levels, and configurable verbosity. Used throughout the Belong Network platform
+ * for consistent logging and debugging.
+ * 
+ * @param logLevel - The minimum log level to display (default: 'info')
+ * @returns Configured logger instance with enhanced formatting
+ * 
+ * @example
+ * ```typescript
+ * import { createLogger } from '@belongnetwork/core';
+ * 
+ * const logger = createLogger('debug');
+ * 
+ * logger.info('Application started'); // ℹ️ [timestamp] INFO  Application started
+ * logger.warn('Deprecated API used'); // ⚠️ [timestamp] WARN  Deprecated API used
+ * logger.error('Connection failed'); // ❌ [timestamp] ERROR Connection failed
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Production logger with minimal output
+ * const productionLogger = createLogger('error');
+ * 
+ * // Development logger with full verbosity
+ * const devLogger = createLogger('trace');
+ * 
+ * // Custom logger for specific module
+ * const apiLogger = createLogger('info');
+ * apiLogger.info('🌐 API: Request completed', { 
+ *   endpoint: '/api/communities',
+ *   duration: 245 
+ * });
+ * ```
+ * 
+ * @category Utilities
  */
 export function createLogger(
   logLevel: "trace" | "debug" | "info" | "warn" | "error" | "silent" = "info",

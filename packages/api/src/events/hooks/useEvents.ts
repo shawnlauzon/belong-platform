@@ -13,8 +13,60 @@ import type {
 } from "@belongnetwork/types";
 
 /**
- * Consolidated hook for all event operations
- * Provides queries, mutations, and state management for events
+ * Comprehensive hook for event operations including fetching, creating, updating, and attendance management.
+ * 
+ * This hook provides all event-related functionality for managing community events,
+ * including RSVP management, attendance tracking, and event CRUD operations.
+ * Must be used within a BelongProvider context.
+ * 
+ * @returns Event queries, mutations, and utility functions
+ * 
+ * @example
+ * ```tsx
+ * function EventList() {
+ *   const { 
+ *     fetchEvents, 
+ *     createEvent, 
+ *     updateAttendance,
+ *     eventsQuery 
+ *   } = useEvents();
+ * 
+ *   // Load events manually
+ *   const handleLoad = () => {
+ *     fetchEvents();
+ *   };
+ * 
+ *   // Create a new event
+ *   const handleCreate = async () => {
+ *     try {
+ *       const event = await createEvent.mutateAsync({
+ *         title: 'Community Garden Cleanup',
+ *         description: 'Join us for spring cleaning!',
+ *         startTime: new Date('2024-04-15T10:00:00'),
+ *         endTime: new Date('2024-04-15T14:00:00'),
+ *         location: { lat: 37.7749, lng: -122.4194 },
+ *         communityId: 'community-123',
+ *         maxAttendees: 20
+ *       });
+ *       console.log('Created event:', event.title);
+ *     } catch (error) {
+ *       console.error('Failed to create event:', error);
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleLoad}>Load Events</button>
+ *       <button onClick={handleCreate}>Add Event</button>
+ *       {eventsQuery.data?.map(event => (
+ *         <div key={event.id}>{event.title}</div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @category React Hooks
  */
 export function useEvents() {
   const queryClient = useQueryClient();

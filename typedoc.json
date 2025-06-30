@@ -1,0 +1,72 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "src/index.ts",
+    "src/hooks.ts", 
+    "src/types.ts"
+  ],
+  "out": "docs",
+  "name": "@belongnetwork/platform",
+  "readme": "README.md",
+  "tsconfig": "tsconfig.build.json",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**/*",
+    "**/test-utils/**/*",
+    "**/mocks/**/*",
+    "packages/*/src/**/*.test.ts",
+    "packages/*/src/**/*.test.tsx",
+    "packages/*/src/**/__tests__/**/*",
+    "packages/*/src/**/test-utils/**/*",
+    "packages/*/src/**/mocks/**/*",
+    "tests/**/*",
+    "scripts/**/*",
+    "supabase/**/*"
+  ],
+  "theme": "default",
+  "hideGenerator": true,
+  "sort": ["source-order"],
+  "kindSortOrder": [
+    "Document",
+    "Project",
+    "Module",
+    "Namespace", 
+    "Enum",
+    "EnumMember",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Constructor",
+    "Property",
+    "Variable",
+    "Function",
+    "Accessor",
+    "Method",
+    "Parameter",
+    "TypeParameter",
+    "TypeLiteral",
+    "CallSignature",
+    "ConstructorSignature",
+    "IndexSignature",
+    "GetSignature",
+    "SetSignature"
+  ],
+  "categorizeByGroup": false,
+  "categoryOrder": [
+    "React Hooks",
+    "Providers", 
+    "Client Functions",
+    "Types",
+    "Utilities",
+    "*"
+  ],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}
