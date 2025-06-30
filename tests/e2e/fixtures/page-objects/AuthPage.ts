@@ -4,6 +4,7 @@ import { BasePage } from './BasePage'
 export class AuthPage extends BasePage {
   readonly emailInput: Locator
   readonly passwordInput: Locator
+  readonly firstNameInput: Locator
   readonly signInButton: Locator
   readonly signUpButton: Locator
   readonly signOutButton: Locator
@@ -17,6 +18,7 @@ export class AuthPage extends BasePage {
     super(page)
     this.emailInput = page.getByTestId('email-input')
     this.passwordInput = page.getByTestId('password-input')
+    this.firstNameInput = page.getByTestId('first-name-input')
     this.signInButton = page.getByTestId('sign-in-button')
     this.signUpButton = page.getByTestId('sign-up-button')
     this.signOutButton = page.getByTestId('sign-out-button')
@@ -37,10 +39,13 @@ export class AuthPage extends BasePage {
     await this.signInButton.click()
   }
 
-  async signUp(email: string, password: string) {
+  async signUp(email: string, password: string, firstName?: string) {
     await this.toggleAuthMode.click()
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
+    if (firstName) {
+      await this.firstNameInput.fill(firstName)
+    }
     await this.signUpButton.click()
   }
 
@@ -49,12 +54,10 @@ export class AuthPage extends BasePage {
   }
 
   async isAuthenticated() {
-    try {
-      await this.authStatus.waitFor({ timeout: 5000 })
-      return true
-    } catch {
-      return false
-    }
+    // Get the platform's authentication state from the data attribute
+    const authContainer = this.page.getByTestId('auth-container')
+    const isAuthenticatedAttr = await authContainer.getAttribute('data-is-authenticated')
+    return isAuthenticatedAttr === 'true'
   }
 
   async getAuthError() {

@@ -1,3 +1,6 @@
 export { BasePage } from './BasePage'
 export { AuthPage } from './AuthPage'
 export { CommunitiesPage } from './CommunitiesPage'
+export { ResourcesPage } from './ResourcesPage'
+export { EventsPage } from './EventsPage'
+export { UsersPage } from './UsersPage'

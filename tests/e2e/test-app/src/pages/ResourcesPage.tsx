@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useResources } from '@belongnetwork/platform'
 
 function ResourcesPage() {

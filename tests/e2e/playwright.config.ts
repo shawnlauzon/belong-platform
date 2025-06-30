@@ -5,12 +5,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default defineConfig({
-  testDir: "./tests/e2e/specs",
+  testDir: "./specs",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
+  globalSetup: './global-setup.ts',
+  globalTeardown: './global-teardown.ts',
   use: {
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
@@ -51,7 +53,7 @@ export default defineConfig({
 
   // Run local dev server before starting tests
   webServer: {
-    command: "pnpm e2e:dev",
+    command: "cd ../../ && pnpm e2e:dev",
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
