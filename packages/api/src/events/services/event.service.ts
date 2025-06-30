@@ -578,8 +578,10 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         return [];
       }
 
-      // Get unique user IDs
-      const userIds = Array.from(new Set(data.map((a) => a.user_id)));
+      // Get unique user IDs (filter out null/undefined values)
+      const userIds = Array.from(new Set(
+        data.map((a) => a.user_id).filter((id): id is string => Boolean(id))
+      ));
 
       // Fetch all users using the user service
       const userService = createUserService(supabase);

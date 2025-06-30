@@ -5,14 +5,14 @@ export {
   type Database,
   type Tables,
   type Enums,
-} from "../packages/types/src/database.js";
+} from "../packages/types/src/database";
 
 // Enum exports
 export {
   ResourceCategory,
   MeetupFlexibility,
   EventAttendanceStatus,
-} from "../packages/types/src/types.js";
+} from "../packages/types/src/types";
 
 // Domain types
 export {
@@ -31,10 +31,10 @@ export {
   type Shoutout,
   type ShoutoutInfo,
   type ShoutoutFilter,
-} from "../packages/types/src/types.js";
+} from "../packages/types/src/types";
 
 // Auth types
 export {
   type AuthState,
   type BelongConfig,
-} from "../packages/api/src/auth/index.js";
+} from "../packages/api/src/auth/index";
