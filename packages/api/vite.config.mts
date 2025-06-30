@@ -27,6 +27,19 @@ export default defineConfig({
       exclude: ["**/*.test.ts"],
       strictOutput: true,
       noEmitOnError: true,
+      aliasesExclude: [
+        "@belongnetwork/types",
+        "@belongnetwork/core",
+        "@belongnetwork/types/database",
+      ],
+      compilerOptions: {
+        baseUrl: ".",
+        paths: {
+          "@belongnetwork/types": ["../../types/src"],
+          "@belongnetwork/core": ["../../core/src"],
+          "@belongnetwork/types/database": ["../../types/src/database"],
+        },
+      },
     }),
   ],
   build: {
