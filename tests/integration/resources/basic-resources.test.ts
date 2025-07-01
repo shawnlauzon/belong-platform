@@ -108,7 +108,7 @@ describe('Basic Resources Integration', () => {
 
       // Create a community for the resource
       const { result: communityResult } = await testUtils.renderHookWithWrapper(
-        ()() => import('../../../src').then((m) => m.useCommunities)
+        () => import('../../../src').then((m) => m.useCommunities)
       );
 
       if (typeof communityResult?.current?.create === 'function') {

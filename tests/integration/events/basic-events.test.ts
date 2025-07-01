@@ -16,7 +16,7 @@ import {
   useEvents,
   useAuth,
   useCommunities,
-} from \"../../../src\";
+} from "../../../src";
 import {
   TestDataFactory,
   authHelper,

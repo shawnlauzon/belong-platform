@@ -15,7 +15,7 @@ import {
 import {
   useAuth,
   useUsers,
-} from \"../../../src\";
+} from "../../../src";
 import {
   TestDataFactory,
   authHelper,
