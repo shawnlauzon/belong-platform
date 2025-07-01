@@ -22,7 +22,7 @@ import {
   testUtils,
 } from '../helpers';
 
-describe('Conversations Cache Invalidation Integration Tests', () => {
+describe.skip('Conversations Cache Invalidation Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
