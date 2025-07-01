@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toResourceInfo } from '../transformers/resourceTransformer';
 import { createMockDbResource } from '../__mocks__';
+import { 
+  assertNoSnakeCaseProperties, 
+  COMMON_SNAKE_CASE_PROPERTIES 
+} from '../../../shared/__test__/transformerTestUtils';
 
 describe('ResourceInfo Transformer', () => {
   it('should transform database resource to ResourceInfo without snake_case properties', () => {
@@ -30,15 +34,14 @@ describe('ResourceInfo Transformer', () => {
     expect(result).toHaveProperty('updatedAt');
 
     // Assert - Should NOT have snake_case properties
-    expect(result).not.toHaveProperty('owner_id');
-    expect(result).not.toHaveProperty('community_id');
-    expect(result).not.toHaveProperty('is_active');
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('pickup_instructions');
-    expect(result).not.toHaveProperty('parking_info');
-    expect(result).not.toHaveProperty('meetup_flexibility');
-    expect(result).not.toHaveProperty('created_at');
-    expect(result).not.toHaveProperty('updated_at');
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.RESOURCE_FIELDS,
+      'image_urls',
+      'pickup_instructions',
+      'meetup_flexibility'
+    ]);
 
     // Assert - Should not have nested objects
     expect(result).not.toHaveProperty('owner');
@@ -82,8 +85,10 @@ describe('ResourceInfo Transformer', () => {
     expect(result.isActive).toBe(false);
 
     // Verify no snake_case leakage
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('pickup_instructions');
-    expect(result).not.toHaveProperty('parking_info');
+    assertNoSnakeCaseProperties(result, [
+      'image_urls',
+      'pickup_instructions', 
+      'parking_info'
+    ]);
   });
 });

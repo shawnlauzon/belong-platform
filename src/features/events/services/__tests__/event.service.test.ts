@@ -93,7 +93,7 @@ vi.mock('../../../communities/services/community.service', () => ({
   })),
 }));
 
-describe.skip('createEventService', () => {
+describe('createEventService', () => {
   let mockSupabase: Partial<SupabaseClient>;
   let eventService: ReturnType<typeof createEventService>;
   let mockEvent: ReturnType<typeof createMockEvent>;

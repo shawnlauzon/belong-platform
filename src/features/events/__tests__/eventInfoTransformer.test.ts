@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toEventInfo } from '../transformers/eventTransformer';
 import { createMockDbEvent } from '../__mocks__';
+import { 
+  assertNoSnakeCaseProperties, 
+  COMMON_SNAKE_CASE_PROPERTIES 
+} from '../../../shared/__test__/transformerTestUtils';
 
 describe('EventInfo Transformer', () => {
   it('should transform database event to EventInfo without snake_case properties', () => {
@@ -50,18 +54,11 @@ describe('EventInfo Transformer', () => {
     expect(result).toHaveProperty('updatedAt');
 
     // Assert - Should NOT have snake_case properties
-    expect(result).not.toHaveProperty('organizer_id');
-    expect(result).not.toHaveProperty('community_id');
-    expect(result).not.toHaveProperty('start_date_time');
-    expect(result).not.toHaveProperty('end_date_time');
-    expect(result).not.toHaveProperty('parking_info');
-    expect(result).not.toHaveProperty('max_attendees');
-    expect(result).not.toHaveProperty('registration_required');
-    expect(result).not.toHaveProperty('is_active');
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('attendee_count');
-    expect(result).not.toHaveProperty('created_at');
-    expect(result).not.toHaveProperty('updated_at');
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.EVENT_FIELDS
+    ]);
 
     // Assert - Should not have nested objects
     expect(result).not.toHaveProperty('organizer');
@@ -102,13 +99,15 @@ describe('EventInfo Transformer', () => {
     expect(result.imageUrls).toEqual([]);
     expect(result.attendeeCount).toBe(0);
 
-    // Verify no snake_case leakage
-    expect(result).not.toHaveProperty('end_date_time');
-    expect(result).not.toHaveProperty('parking_info');
-    expect(result).not.toHaveProperty('max_attendees');
-    expect(result).not.toHaveProperty('registration_required');
-    expect(result).not.toHaveProperty('is_active');
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('attendee_count');
+    // Verify no snake_case leakage  
+    assertNoSnakeCaseProperties(result, [
+      'end_date_time',
+      'parking_info', 
+      'max_attendees',
+      'registration_required',
+      'is_active',
+      'image_urls',
+      'attendee_count'
+    ]);
   });
 });

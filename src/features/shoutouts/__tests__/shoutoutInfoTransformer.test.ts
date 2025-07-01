@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toShoutoutInfo } from '../transformers/shoutoutsTransformer';
 import { createMockDbShoutout } from '../__mocks__';
+import { 
+  assertNoSnakeCaseProperties, 
+  COMMON_SNAKE_CASE_PROPERTIES 
+} from '../../../shared/__test__/transformerTestUtils';
 
 describe('ShoutoutInfo Transformer', () => {
   it('should transform database shoutout to ShoutoutInfo without snake_case properties', () => {
@@ -43,13 +47,14 @@ describe('ShoutoutInfo Transformer', () => {
     expect(result).toHaveProperty('updatedAt');
 
     // Assert - Should NOT have snake_case properties
-    expect(result).not.toHaveProperty('from_user_id');
-    expect(result).not.toHaveProperty('to_user_id');
-    expect(result).not.toHaveProperty('resource_id');
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('impact_description');
-    expect(result).not.toHaveProperty('created_at');
-    expect(result).not.toHaveProperty('updated_at');
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      'from_user_id',
+      'to_user_id',
+      'resource_id',
+      'image_urls',
+      'impact_description'
+    ]);
 
     // Assert - Should not have nested objects
     expect(result).not.toHaveProperty('fromUser');
@@ -86,10 +91,12 @@ describe('ShoutoutInfo Transformer', () => {
     expect(result.resourceId).toBe('resource-123');
 
     // Verify no snake_case leakage
-    expect(result).not.toHaveProperty('image_urls');
-    expect(result).not.toHaveProperty('impact_description');
-    expect(result).not.toHaveProperty('from_user_id');
-    expect(result).not.toHaveProperty('to_user_id');
-    expect(result).not.toHaveProperty('resource_id');
+    assertNoSnakeCaseProperties(result, [
+      'image_urls',
+      'impact_description',
+      'from_user_id',
+      'to_user_id',
+      'resource_id'
+    ]);
   });
 });

@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { setupSupabaseMocks } from './mockSetup';
+import { setupSupabaseMocks } from '../../shared/__test__/mockSetup';
 import { createGetBelongClientMock } from './getBelongClientMock';
 import {
   createMockDbResource,

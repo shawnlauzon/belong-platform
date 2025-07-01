@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toCommunityInfo } from '../transformers/communityTransformer';
 import { createMockDbCommunity } from '../__mocks__';
+import { 
+  assertNoSnakeCaseProperties, 
+  COMMON_SNAKE_CASE_PROPERTIES 
+} from '../../../shared/__test__/transformerTestUtils';
 
 describe('CommunityInfo Transformer', () => {
   it('should transform database community to CommunityInfo without snake_case properties', () => {
@@ -47,17 +51,12 @@ describe('CommunityInfo Transformer', () => {
     expect(result).toHaveProperty('updatedAt');
 
     // Assert - Should NOT have snake_case properties
-    expect(result).not.toHaveProperty('organizer_id');
-    expect(result).not.toHaveProperty('parent_id');
-    expect(result).not.toHaveProperty('radius_km');
-    expect(result).not.toHaveProperty('hierarchy_path');
-    expect(result).not.toHaveProperty('time_zone');
-    expect(result).not.toHaveProperty('member_count');
-    expect(result).not.toHaveProperty('is_active');
-    expect(result).not.toHaveProperty('deleted_at');
-    expect(result).not.toHaveProperty('deleted_by');
-    expect(result).not.toHaveProperty('created_at');
-    expect(result).not.toHaveProperty('updated_at');
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
+      'is_active'
+    ]);
 
     // Assert - Should not have nested objects
     expect(result).not.toHaveProperty('organizer');
@@ -106,14 +105,11 @@ describe('CommunityInfo Transformer', () => {
     expect(result.deletedBy).toBe('admin-123');
 
     // Verify no snake_case leakage
-    expect(result).not.toHaveProperty('organizer_id');
-    expect(result).not.toHaveProperty('parent_id');
-    expect(result).not.toHaveProperty('radius_km');
-    expect(result).not.toHaveProperty('hierarchy_path');
-    expect(result).not.toHaveProperty('time_zone');
-    expect(result).not.toHaveProperty('member_count');
-    expect(result).not.toHaveProperty('is_active');
-    expect(result).not.toHaveProperty('deleted_at');
-    expect(result).not.toHaveProperty('deleted_by');
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
+      ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
+      'is_active'
+    ]);
   });
 });
