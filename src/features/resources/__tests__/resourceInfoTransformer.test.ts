@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toResourceInfo } from '../transformers/resourceTransformer';
 import { createMockDbResource } from '../__mocks__';
-import { 
-  assertNoSnakeCaseProperties, 
-  COMMON_SNAKE_CASE_PROPERTIES 
-} from '../../../shared/__test__/transformerTestUtils';
+import {
+  assertNoSnakeCaseProperties,
+  COMMON_SNAKE_CASE_PROPERTIES,
+} from '../../../shared/__tests__/transformerTestUtils';
 
 describe('ResourceInfo Transformer', () => {
   it('should transform database resource to ResourceInfo without snake_case properties', () => {
@@ -40,7 +40,7 @@ describe('ResourceInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.RESOURCE_FIELDS,
       'image_urls',
       'pickup_instructions',
-      'meetup_flexibility'
+      'meetup_flexibility',
     ]);
 
     // Assert - Should not have nested objects
@@ -87,8 +87,8 @@ describe('ResourceInfo Transformer', () => {
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
       'image_urls',
-      'pickup_instructions', 
-      'parking_info'
+      'pickup_instructions',
+      'parking_info',
     ]);
   });
 });

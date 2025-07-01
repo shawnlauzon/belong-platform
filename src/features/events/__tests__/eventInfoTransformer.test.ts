@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toEventInfo } from '../transformers/eventTransformer';
 import { createMockDbEvent } from '../__mocks__';
-import { 
-  assertNoSnakeCaseProperties, 
-  COMMON_SNAKE_CASE_PROPERTIES 
-} from '../../../shared/__test__/transformerTestUtils';
+import {
+  assertNoSnakeCaseProperties,
+  COMMON_SNAKE_CASE_PROPERTIES,
+} from '../../../shared/__tests__/transformerTestUtils';
 
 describe('EventInfo Transformer', () => {
   it('should transform database event to EventInfo without snake_case properties', () => {
@@ -57,7 +57,7 @@ describe('EventInfo Transformer', () => {
     assertNoSnakeCaseProperties(result, [
       ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
-      ...COMMON_SNAKE_CASE_PROPERTIES.EVENT_FIELDS
+      ...COMMON_SNAKE_CASE_PROPERTIES.EVENT_FIELDS,
     ]);
 
     // Assert - Should not have nested objects
@@ -99,15 +99,15 @@ describe('EventInfo Transformer', () => {
     expect(result.imageUrls).toEqual([]);
     expect(result.attendeeCount).toBe(0);
 
-    // Verify no snake_case leakage  
+    // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
       'end_date_time',
-      'parking_info', 
+      'parking_info',
       'max_attendees',
       'registration_required',
       'is_active',
       'image_urls',
-      'attendee_count'
+      'attendee_count',
     ]);
   });
 });

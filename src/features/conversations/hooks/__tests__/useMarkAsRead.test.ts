@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMarkAsRead } from '../useMarkAsRead';
-import { createWrapper } from '../../../../shared/__test__/';
+import { createWrapper } from '../../../../shared/__tests__/';
 
 // Mock shared utilities including useSupabase and logger
 vi.mock('../../../../shared', () => {
@@ -20,7 +20,11 @@ vi.mock('../../../../shared', () => {
         all: ['conversations'],
         list: (userId: string) => ['conversations', 'list', userId],
         byId: (id: string) => ['conversation', id],
-        messages: (conversationId: string) => ['conversations', 'messages', conversationId],
+        messages: (conversationId: string) => [
+          'conversations',
+          'messages',
+          conversationId,
+        ],
         userList: (userId: string) => ['user', userId, 'conversations'],
       },
     },

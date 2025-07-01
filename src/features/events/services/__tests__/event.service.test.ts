@@ -10,7 +10,7 @@ import {
   QuerySetups,
   EventServiceAssertions,
   TestData,
-} from '../../__test__/eventServiceTestUtils';
+} from '../../__tests__/eventServiceTestUtils';
 
 // Mock the logger
 vi.mock('../../../../shared', () => ({
@@ -171,7 +171,10 @@ describe('createEventService', () => {
     it('should apply community filter', async () => {
       // Arrange
       const mockDbEvents = createMockDbEvents(1, mockUser, mockCommunity);
-      const mockQuery = QuerySetups.fetchEventsWithFilter(mockSupabase, mockDbEvents);
+      const mockQuery = QuerySetups.fetchEventsWithFilter(
+        mockSupabase,
+        mockDbEvents
+      );
 
       // Act
       const result = await eventService.fetchEvents({
@@ -187,7 +190,10 @@ describe('createEventService', () => {
     it('should apply organizer filter', async () => {
       // Arrange
       const mockDbEvents = createMockDbEvents(1, mockUser, mockCommunity);
-      const mockQuery = QuerySetups.fetchEventsWithFilter(mockSupabase, mockDbEvents);
+      const mockQuery = QuerySetups.fetchEventsWithFilter(
+        mockSupabase,
+        mockDbEvents
+      );
 
       // Act
       const result = await eventService.fetchEvents({

@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import type { Database } from '../../../../shared';
 import type { Message, MessageInfo, MessageData } from '../../types';
 import { createMockUser } from '../../../users/__mocks__';
 import {
@@ -133,13 +132,15 @@ describe('messageTransformer', () => {
 
   describe('forDbMessageInsert', () => {
     it('should transform MessageData to database insert format', () => {
+      const fromUserId = 'user-123';
+      const toUserId = 'user-456';
+
       // Arrange
       const messageData: MessageData = {
         conversationId: 'conv-123',
+        recipientId: toUserId,
         content: 'Hello world!',
       };
-      const fromUserId = 'user-123';
-      const toUserId = 'user-456';
 
       // Act
       const result = forDbMessageInsert(messageData, fromUserId, toUserId);

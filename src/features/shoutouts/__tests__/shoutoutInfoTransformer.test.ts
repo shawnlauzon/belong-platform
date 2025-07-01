@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toShoutoutInfo } from '../transformers/shoutoutsTransformer';
 import { createMockDbShoutout } from '../__mocks__';
-import { 
-  assertNoSnakeCaseProperties, 
-  COMMON_SNAKE_CASE_PROPERTIES 
-} from '../../../shared/__test__/transformerTestUtils';
+import {
+  assertNoSnakeCaseProperties,
+  COMMON_SNAKE_CASE_PROPERTIES,
+} from '../../../shared/__tests__/transformerTestUtils';
 
 describe('ShoutoutInfo Transformer', () => {
   it('should transform database shoutout to ShoutoutInfo without snake_case properties', () => {
@@ -53,7 +53,7 @@ describe('ShoutoutInfo Transformer', () => {
       'to_user_id',
       'resource_id',
       'image_urls',
-      'impact_description'
+      'impact_description',
     ]);
 
     // Assert - Should not have nested objects
@@ -96,7 +96,7 @@ describe('ShoutoutInfo Transformer', () => {
       'impact_description',
       'from_user_id',
       'to_user_id',
-      'resource_id'
+      'resource_id',
     ]);
   });
 });

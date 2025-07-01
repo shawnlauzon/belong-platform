@@ -10,7 +10,7 @@ import {
   CommunityServiceAssertions,
   AuthMocks,
   TestData,
-} from '../../__test__/communityServiceTestUtils';
+} from '../../__tests__/communityServiceTestUtils';
 
 // Mock the logger
 vi.mock('../../../../shared', () => ({
@@ -99,14 +99,22 @@ describe('createCommunityService', () => {
   describe('fetchCommunities', () => {
     it('should fetch active communities by default', async () => {
       // Arrange
-      const mockDbCommunities = createMockDbCommunities(2, mockUser, { is_active: true });
-      const mockQuery = QuerySetups.fetchCommunities(mockSupabase, mockDbCommunities);
+      const mockDbCommunities = createMockDbCommunities(2, mockUser, {
+        is_active: true,
+      });
+      const mockQuery = QuerySetups.fetchCommunities(
+        mockSupabase,
+        mockDbCommunities
+      );
 
       // Act
       const result = await communityService.fetchCommunities();
 
       // Assert
-      CommunityServiceAssertions.expectFetchCommunitiesQuery(mockSupabase, mockQuery);
+      CommunityServiceAssertions.expectFetchCommunitiesQuery(
+        mockSupabase,
+        mockQuery
+      );
       CommunityServiceAssertions.expectResultLength(result, 2);
     });
 
@@ -277,7 +285,7 @@ describe('createCommunityService', () => {
       vi.mocked(mockSupabase.from)
         .mockReturnValueOnce(mockQuery as any) // First call for community creation
         .mockReturnValueOnce(mockMembershipQuery as any); // Second call for membership creation
-        
+
       mockQuery.single.mockResolvedValue({
         data: { id: 'new-community-id' },
         error: null,
@@ -658,8 +666,9 @@ describe('createCommunityService', () => {
         error: null,
       });
 
-      vi.mocked(mockSupabase.from)
-        .mockReturnValueOnce(mockSelectCommunityQuery as any);
+      vi.mocked(mockSupabase.from).mockReturnValueOnce(
+        mockSelectCommunityQuery as any
+      );
 
       // Act & Assert
       await expect(

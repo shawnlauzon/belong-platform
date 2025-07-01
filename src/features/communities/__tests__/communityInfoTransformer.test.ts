@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { toCommunityInfo } from '../transformers/communityTransformer';
 import { createMockDbCommunity } from '../__mocks__';
-import { 
-  assertNoSnakeCaseProperties, 
-  COMMON_SNAKE_CASE_PROPERTIES 
-} from '../../../shared/__test__/transformerTestUtils';
+import {
+  assertNoSnakeCaseProperties,
+  COMMON_SNAKE_CASE_PROPERTIES,
+} from '../../../shared/__tests__/transformerTestUtils';
 
 describe('CommunityInfo Transformer', () => {
   it('should transform database community to CommunityInfo without snake_case properties', () => {
@@ -55,7 +55,7 @@ describe('CommunityInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
-      'is_active'
+      'is_active',
     ]);
 
     // Assert - Should not have nested objects
@@ -109,7 +109,7 @@ describe('CommunityInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
-      'is_active'
+      'is_active',
     ]);
   });
 });

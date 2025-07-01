@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { SHARED_MODULE_MOCK, CONFIG_MODULE_MOCK } from '../../shared/__test__/mockSetup';
+import {
+  SHARED_MODULE_MOCK,
+  CONFIG_MODULE_MOCK,
+} from '../../shared/__tests__/mockSetup';
 
 // Mock the useAuth hook
 vi.mock('../../features/auth/hooks/useAuth', () => ({
@@ -34,10 +37,10 @@ vi.mock('../../shared', () => ({
     error: vi.fn(),
   },
   queryKeys: {
-    auth: ["auth"] as const,
+    auth: ['auth'] as const,
     users: {
-      all: ["users"] as const,
-      byId: (id: string) => ["user", id] as const,
+      all: ['users'] as const,
+      byId: (id: string) => ['user', id] as const,
     },
   },
 }));
