@@ -131,6 +131,7 @@ test.describe('Authentication Persistence and Session Management', () => {
   });
 
   test('should handle session timeout gracefully', async ({ page }) => {
+    test.setTimeout(60000); // Set 60 second timeout for this test that waits 30 seconds
     const testUser = getGlobalTestUser();
     
     // Authenticate
