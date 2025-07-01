@@ -232,8 +232,10 @@ describe('createAuthService', () => {
           },
         },
       });
-      expect(result.firstName).toBe(firstName);
-      expect(result.lastName).toBeUndefined();
+      expect(result).toMatchObject({
+        firstName,
+        lastName: undefined,
+      });
     });
 
     it('should throw error when Supabase returns error', async () => {

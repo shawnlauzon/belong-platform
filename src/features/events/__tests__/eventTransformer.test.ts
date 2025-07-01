@@ -53,8 +53,10 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.startDateTime).toEqual(startDateTime);
-      expect(event.endDateTime).toEqual(endDateTime);
+      expect(event).toMatchObject({
+        startDateTime,
+        endDateTime,
+      });
     });
 
     it('should handle arrays with proper defaults', () => {
@@ -72,8 +74,10 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.tags).toEqual([]);
-      expect(event.imageUrls).toEqual([]);
+      expect(event).toMatchObject({
+        tags: [],
+        imageUrls: [],
+      });
     });
 
     it('should handle boolean defaults correctly', () => {
@@ -91,8 +95,10 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.registrationRequired).toBe(false);
-      expect(event.isActive).toBe(false); // null is_active should be false
+      expect(event).toMatchObject({
+        registrationRequired: false,
+        isActive: false, // null is_active should be false
+      });
     });
 
     it('should handle explicitly true is_active', () => {

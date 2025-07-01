@@ -377,13 +377,15 @@ describe('userTransformer', () => {
       const finalDomainUser = toDomainUser(reconstructedProfile);
 
       // Assert - Key user data should be preserved
-      expect(finalDomainUser.id).toBe(domainUser.id);
-      expect(finalDomainUser.email).toBe(domainUser.email);
-      expect(finalDomainUser.firstName).toBe(domainUser.firstName);
-      expect(finalDomainUser.lastName).toBe(domainUser.lastName);
-      expect(finalDomainUser.fullName).toBe(domainUser.fullName);
-      expect(finalDomainUser.avatarUrl).toBe(domainUser.avatarUrl);
-      expect(finalDomainUser.location).toEqual(domainUser.location);
+      expect(finalDomainUser).toMatchObject({
+        id: domainUser.id,
+        email: domainUser.email,
+        firstName: domainUser.firstName,
+        lastName: domainUser.lastName,
+        fullName: domainUser.fullName,
+        avatarUrl: domainUser.avatarUrl,
+        location: domainUser.location,
+      });
     });
   });
 });

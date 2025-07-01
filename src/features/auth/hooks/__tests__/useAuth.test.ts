@@ -159,8 +159,10 @@ describe('useAuth', () => {
       await waitFor(() => expect(result.current.isPending).toBe(false));
 
       // Assert
-      expect(result.current.currentUser).toBeNull();
-      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current).toMatchObject({
+        currentUser: null,
+        isAuthenticated: false,
+      });
     });
 
     it('should return user data when authenticated', async () => {
@@ -184,8 +186,10 @@ describe('useAuth', () => {
       await waitFor(() => expect(result.current.currentUser).toEqual(mockUser));
 
       // Assert
-      expect(result.current.currentUser).toEqual(mockUser);
-      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current).toMatchObject({
+        currentUser: mockUser,
+        isAuthenticated: true,
+      });
       expect(mockUserService.fetchUserById).toHaveBeenCalledWith(mockUser.id);
     });
 
@@ -203,8 +207,10 @@ describe('useAuth', () => {
       await waitFor(() => expect(result.current.isPending).toBe(false));
 
       // Assert
-      expect(result.current.currentUser).toBeNull();
-      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current).toMatchObject({
+        currentUser: null,
+        isAuthenticated: false,
+      });
       expect(mockSupabase.auth.getUser).toHaveBeenCalledTimes(1); // No retries
     });
   });
@@ -476,11 +482,13 @@ describe('useAuth', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Assert
-      expect(result.current.currentUser).toBeNull();
-      expect(result.current.isAuthenticated).toBe(false);
-      expect(result.current.isPending).toBe(true);
-      expect(result.current.isError).toBe(false);
-      expect(result.current.error).toBeNull();
+      expect(result.current).toMatchObject({
+        currentUser: null,
+        isAuthenticated: false,
+        isPending: true,
+        isError: false,
+        error: null,
+      });
     });
   });
 });
