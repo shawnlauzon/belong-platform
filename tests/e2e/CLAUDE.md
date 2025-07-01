@@ -41,34 +41,40 @@ The E2E tests in this directory are designed to validate that the **platform pac
 
 ### Current Test Files
 
-**Authentication Tests** (`auth/basic-auth.spec.ts`)
-- `should show error for invalid credentials` - Platform auth error handling
-- `should successfully sign up and sign in` - Core platform auth functionality
+**Authentication Tests**
+- `auth/basic-auth.spec.ts` - Core platform authentication (sign up/in, error handling)
+- `auth/auth-persistence.spec.ts` - Platform session management and persistence
+- `auth/platform-auth-behavior.spec.ts` - Platform authentication behavior validation
 
-**Communities Tests** (`communities/basic-communities.spec.ts`)
-- `should load communities page without authentication` - Platform hook behavior
-- `should handle communities data with authentication` - Auth + data integration
+**Communities Tests**
+- `communities/basic-communities.spec.ts` - Platform communities hook behavior and auth integration
+- `communities/community-crud.spec.ts` - Platform community CRUD operations
+- `communities/community-crud-with-auth-validation.spec.ts` - Platform community operations with authentication reliability testing
 
-**Resources Tests** (`resources/basic-resources.spec.ts`)
-- `should load resources page without authentication` - Platform hook behavior
-- `should handle resources data with authentication` - Auth + data integration
-- `should display resource details correctly` - Data structure validation
+**Resources Tests**
+- `resources/basic-resources.spec.ts` - Platform resources hook behavior and auth integration
 
-**User Journey Tests** (`user-journeys/complete-workflow.spec.ts`)
-- `complete user onboarding and platform exploration` - End-to-end platform workflow
+**User Journey Tests**
+- `user-journeys/complete-workflow.spec.ts` - End-to-end platform workflow validation
 
 ## Cleanup History
 
 The following tests were removed because they tested the test app rather than the platform:
 
-### Removed Files (17 tests total)
+### Removed Files (20 tests total)
 - `smoke/basic-navigation.spec.ts` - All React Router navigation tests
 - `smoke/platform-integration.spec.ts` - All console error and app loading tests
+- `auth/ui-navigation-auth-test.spec.ts` - React Router vs page.goto() navigation tests
+- `auth/auth-state-validation.spec.ts` - DOM attribute and UI element auth state checks
+- `communities/community-crud-simple.spec.ts` - Diagnostic test focused on error reporting
 
 ### Removed Individual Tests
 - Network error handling tests (tested test app error boundaries)
 - Cross-page navigation tests (tested React Router)
 - UI form validation tests (tested HTML5 validation, not platform)
+- Browser storage inspection tests (tested test app storage handling)
+- React Strict Mode impact tests (tested test app configuration)
+- Page object pattern comparison tests (tested test infrastructure)
 
 ## Writing New E2E Tests
 
