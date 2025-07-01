@@ -606,7 +606,7 @@ describe('Cross-Service Integration Tests', () => {
     console.log('✅ Transaction integrity test successful');
   });
 
-  test.skip('cross-service data relationships', async () => {
+  test('cross-service data relationships', async () => {
     if (!sharedTestUser || !sharedUserCredentials || !sharedCommunity) {
       console.warn('Skipping test - missing shared test data');
       return;

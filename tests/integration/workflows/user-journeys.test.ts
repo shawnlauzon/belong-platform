@@ -324,7 +324,7 @@ describe('Multi-Step Workflow Integration Tests', () => {
     console.log('✅ Community organizer workflow successful');
   });
 
-  test.skip('content creation and interaction cycle', async () => {
+  test('content creation and interaction cycle', async () => {
     // Step 1: User A creates community and content
     const userA = TestDataFactory.createUser();
     const { result: authResult } = await testUtils.renderHookWithWrapper(() =>
