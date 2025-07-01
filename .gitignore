@@ -35,3 +35,6 @@ playwright-report/
 playwright/.cache/
 test-results/
 screenshots/
+
+# Serena (coding assistant) cache files
+.serena/
