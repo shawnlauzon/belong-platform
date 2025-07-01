@@ -62,7 +62,7 @@ describe('Conversations Integration Tests', () => {
 
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
-          recipientId: user1.id,
+          recipientId: user1.userId,
           content: 'Hello from integration test!',
         });
       });
@@ -80,8 +80,8 @@ describe('Conversations Integration Tests', () => {
       const conversations =
         conversationsResult.current.data?.pages[0]?.data || [];
       expect(conversations).toHaveLength(1);
-      expect(conversations[0].participants).toContain(user1.id);
-      expect(conversations[0].participants).toContain(user2.id);
+      expect(conversations[0].participants).toContain(user1.userId);
+      expect(conversations[0].participants).toContain(user2.userId);
       expect(conversations[0].lastMessage?.content).toBe(
         'Hello from integration test!'
       );
