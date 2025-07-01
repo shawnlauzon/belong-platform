@@ -141,6 +141,40 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         id: community.id,
         name: community.name,
       });
+
+      // Automatically add organizer as a member with 'organizer' role
+      try {
+        const { error: membershipError } = await supabase
+          .from('community_memberships')
+          .insert({
+            user_id: data.organizerId,
+            community_id: newCommunity.id,
+            role: 'organizer',
+          });
+
+        if (membershipError) {
+          logger.error('🏘️ API: Failed to add organizer as member', { 
+            error: membershipError,
+            communityId: newCommunity.id,
+            organizerId: data.organizerId 
+          });
+          // Don't throw here - community was created successfully
+          // This is a non-critical error that can be fixed later
+        } else {
+          logger.info('🏘️ API: Successfully added organizer as member', {
+            communityId: newCommunity.id,
+            organizerId: data.organizerId,
+          });
+        }
+      } catch (membershipError) {
+        logger.error('🏘️ API: Error adding organizer as member', { 
+          error: membershipError,
+          communityId: newCommunity.id,
+          organizerId: data.organizerId 
+        });
+        // Don't throw here - community was created successfully
+      }
+
       return community;
     } catch (error) {
       logger.error('🏘️ API: Error creating community', { error });
@@ -329,7 +363,29 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       // Get current user
       const userId = await requireAuthentication(supabase, 'leave community');
 
-      // Check if user is a member
+      // First check if user is the organizer - they cannot leave their own community
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('organizer_id')
+        .eq('id', communityId)
+        .single();
+
+      if (communityError) {
+        logger.error('🏘️ API: Failed to fetch community details', {
+          error: communityError,
+        });
+        throw communityError;
+      }
+
+      if (community.organizer_id === userId) {
+        logger.info('🏘️ API: Organizer cannot leave their own community', {
+          userId,
+          communityId,
+        });
+        throw new Error('Organizer cannot leave their own community');
+      }
+
+      // Then check if user is a member
       const { data: existingMembership, error: checkError } = await supabase
         .from('community_memberships')
         .select('*')
@@ -350,28 +406,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           error: checkError,
         });
         throw checkError;
-      }
-
-      // Check if user is the organizer - they cannot leave their own community
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('organizer_id')
-        .eq('id', communityId)
-        .single();
-
-      if (communityError) {
-        logger.error('🏘️ API: Failed to fetch community details', {
-          error: communityError,
-        });
-        throw communityError;
-      }
-
-      if (community.organizer_id === userId) {
-        logger.info('🏘️ API: Organizer cannot leave their own community', {
-          userId,
-          communityId,
-        });
-        throw new Error('Organizer cannot leave their own community');
       }
 
       // Delete membership

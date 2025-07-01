@@ -84,9 +84,17 @@ export function useCommunities() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CommunityData) => communityService.createCommunity(data),
-    onSuccess: (newCommunity) => {
+    onSuccess: (newCommunity, data) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });
+      
+      // Also invalidate membership queries since organizer is auto-added as member
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.communities.memberships(newCommunity.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.communities.userMemberships(data.organizerId),
+      });
 
       logger.info(
         '🏘️ API: Successfully created community via consolidated hook',
