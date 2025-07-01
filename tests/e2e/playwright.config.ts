@@ -10,7 +10,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
+  reporter: [
+    ["html", { outputFolder: "playwright-report" }], 
+    ["list", { printSteps: false }]  // Clean terminal output - detailed logs available in HTML UI
+  ],
   globalSetup: './global-setup.ts',
   globalTeardown: './global-teardown.ts',
   use: {

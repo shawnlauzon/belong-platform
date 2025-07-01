@@ -29,7 +29,7 @@ test.describe('Complete User Journey', () => {
     const email = faker.internet.email()
     const password = faker.internet.password({ length: 10 })
     
-    console.log(`Testing with email: ${email}`)
+    test.info().annotations.push({ type: 'info', description: `Testing with email: ${email}` });
     
     try {
       await authPage.signUp(email, password)
@@ -41,7 +41,7 @@ test.describe('Complete User Journey', () => {
       const isAuthenticated = await authPage.isAuthenticated()
       
       if (isAuthenticated) {
-        console.log('✅ User successfully signed up and authenticated')
+        test.info().annotations.push({ type: 'success', description: 'User successfully signed up and authenticated' });
         
         // Verify user information is displayed
         const userEmail = await authPage.getUserEmail()
@@ -104,17 +104,17 @@ test.describe('Complete User Journey', () => {
         await authPage.signOut()
         await expect(authPage.signInButton).toBeVisible()
         
-        console.log('✅ User successfully signed out')
+        test.info().annotations.push({ type: 'success', description: 'User successfully signed out' });
         
       } else {
-        console.log('ℹ️ Sign up completed but not authenticated (likely requires email confirmation)')
+        test.info().annotations.push({ type: 'info', description: 'Sign up completed but not authenticated (likely requires email confirmation)' });
         
         // This is expected behavior for many Supabase setups
         // The test should still pass as the platform is working correctly
       }
       
     } catch (error) {
-      console.log('ℹ️ Sign up failed (expected with fake credentials):', error)
+      test.info().annotations.push({ type: 'info', description: `Sign up failed (expected with fake credentials): ${error}` });
       
       // This is expected behavior - the test should still verify
       // that the error handling works correctly
@@ -136,7 +136,7 @@ test.describe('Complete User Journey', () => {
     await page.goto('/')
     await expect(page.getByText('E2E Test Home')).toBeVisible()
     
-    console.log('✅ Complete user journey test finished successfully')
+    test.info().annotations.push({ type: 'success', description: 'Complete user journey test finished successfully' });
   })
 
 })
