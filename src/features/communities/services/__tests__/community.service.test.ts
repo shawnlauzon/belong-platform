@@ -270,9 +270,21 @@ describe('createCommunityService', () => {
         single: vi.fn(),
       };
 
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
+      const mockMembershipQuery = {
+        insert: vi.fn().mockReturnThis(),
+      };
+
+      vi.mocked(mockSupabase.from)
+        .mockReturnValueOnce(mockQuery as any) // First call for community creation
+        .mockReturnValueOnce(mockMembershipQuery as any); // Second call for membership creation
+        
       mockQuery.single.mockResolvedValue({
         data: { id: 'new-community-id' },
+        error: null,
+      });
+
+      mockMembershipQuery.insert.mockResolvedValue({
+        data: null,
         error: null,
       });
 
@@ -594,17 +606,31 @@ describe('createCommunityService', () => {
         error: null,
       });
 
-      const mockQuery = {
+      // Mock community check (user is not organizer)
+      const mockCommunityQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn(),
       };
-      mockQuery.single.mockResolvedValue({
+      mockCommunityQuery.single.mockResolvedValue({
+        data: { organizer_id: 'different-user-id' },
+        error: null,
+      });
+
+      // Mock membership check (user is not a member)
+      const mockMembershipQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn(),
+      };
+      mockMembershipQuery.single.mockResolvedValue({
         data: null,
         error: { code: 'PGRST116' }, // Not found
       });
 
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
+      vi.mocked(mockSupabase.from)
+        .mockReturnValueOnce(mockCommunityQuery as any) // First call checks organizer
+        .mockReturnValueOnce(mockMembershipQuery as any); // Second call checks membership
 
       // Act & Assert
       await expect(
@@ -621,17 +647,6 @@ describe('createCommunityService', () => {
         error: null,
       });
 
-      // Mock check for existing membership
-      const mockSelectMembershipQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn(),
-      };
-      mockSelectMembershipQuery.single.mockResolvedValue({
-        data: { user_id: mockUser.id, community_id: communityId },
-        error: null,
-      });
-
       // Mock check for community organizer (user is organizer)
       const mockSelectCommunityQuery = {
         select: vi.fn().mockReturnThis(),
@@ -644,7 +659,6 @@ describe('createCommunityService', () => {
       });
 
       vi.mocked(mockSupabase.from)
-        .mockReturnValueOnce(mockSelectMembershipQuery as any)
         .mockReturnValueOnce(mockSelectCommunityQuery as any);
 
       // Act & Assert
