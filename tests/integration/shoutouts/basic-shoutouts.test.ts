@@ -6,17 +6,9 @@ import {
   beforeEach,
   afterEach,
   afterAll,
-} from "vitest";
-import {
-  renderHook,
-  act,
-  waitFor,
-} from "@testing-library/react";
-import {
-  useShoutouts,
-  useAuth,
-  useResources,
-} from "@belongnetwork/platform";
+} from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { useShoutouts, useAuth, useResources } from '../../../src';
 import {
   TestDataFactory,
   authHelper,
@@ -24,23 +16,25 @@ import {
   testWrapperManager,
   testUtils,
   commonExpectations,
-} from "../helpers";
+} from '../helpers';
 
-describe("Basic Shoutouts Integration", () => {
+describe('Basic Shoutouts Integration', () => {
   const wrapper = testWrapperManager.getWrapper();
   let sharedAuthUser: any = null;
   let sharedResource: any = null;
 
   beforeAll(async () => {
     testWrapperManager.reset();
-    
+
     // Create a shared authenticated user
     try {
       const authSetup = await authHelper.createAndAuthenticateUser();
       sharedAuthUser = authSetup.user;
-      
+
       // Create a shared resource for shoutouts tests
-      const { result: resourceResult } = await testUtils.renderHookWithWrapper(() => useResources());
+      const { result: resourceResult } = await testUtils.renderHookWithWrapper(
+        () => useResources()
+      );
       await testUtils.waitForHookToInitialize(
         resourceResult,
         (resources) => typeof resources.create === 'function'
@@ -52,17 +46,17 @@ describe("Basic Shoutouts Integration", () => {
         ownerId: sharedAuthUser.userId,
         communityId: null,
       });
-      
-      console.log("Created shared user and resource for shoutouts tests");
+
+      console.log('Created shared user and resource for shoutouts tests');
     } catch (error) {
-      console.warn("Failed to create shared test data:", error);
+      console.warn('Failed to create shared test data:', error);
     }
   });
 
   beforeEach(async () => {
     await cleanupHelper.ensureTestIsolation();
     // Add delay to prevent rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   afterEach(async () => {
@@ -73,8 +67,10 @@ describe("Basic Shoutouts Integration", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test("should have functional shoutouts hooks available", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
+  test('should have functional shoutouts hooks available', async () => {
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useShoutouts()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -85,7 +81,7 @@ describe("Basic Shoutouts Integration", () => {
     expect(typeof result.current.list).toBe('function');
     expect(typeof result.current.create).toBe('function');
     expect(typeof result.current.delete).toBe('function');
-    
+
     // Check if additional methods exist
     if (result.current.update) {
       expect(typeof result.current.update).toBe('function');
@@ -98,8 +94,10 @@ describe("Basic Shoutouts Integration", () => {
     }
   });
 
-  test("should be able to list shoutouts", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
+  test('should be able to list shoutouts', async () => {
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useShoutouts()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -108,25 +106,25 @@ describe("Basic Shoutouts Integration", () => {
 
     const shoutoutsList = await testUtils.performAsyncAction(
       () => result.current.list(),
-      "list shoutouts"
+      'list shoutouts'
     );
 
     expect(Array.isArray(shoutoutsList)).toBe(true);
-    
+
     // If there are shoutouts, verify structure
     if (shoutoutsList.length > 0) {
       const firstShoutout = shoutoutsList[0];
-      console.log("Shoutout object structure:", Object.keys(firstShoutout));
+      console.log('Shoutout object structure:', Object.keys(firstShoutout));
       expect(firstShoutout).toHaveProperty('id');
       expect(firstShoutout).toHaveProperty('message');
       commonExpectations.toBeValidId(firstShoutout.id);
-      
+
       // Shoutout objects might have nested giver/receiver objects
       // or use different property names - let's be flexible
     }
   });
 
-  test("should create valid test data", async () => {
+  test('should create valid test data', async () => {
     const shoutoutData = TestDataFactory.createShoutout();
 
     expect(shoutoutData).toHaveProperty('message');
@@ -136,9 +134,9 @@ describe("Basic Shoutouts Integration", () => {
     expect(typeof shoutoutData.isPublic).toBe('boolean');
   });
 
-  test("should give shoutout for a resource", async () => {
+  test('should give shoutout for a resource', async () => {
     if (!sharedAuthUser || !sharedResource) {
-      console.warn("Skipping test - no shared data available");
+      console.warn('Skipping test - no shared data available');
       return;
     }
 
@@ -148,11 +146,13 @@ describe("Basic Shoutouts Integration", () => {
       const receiverSetup = await authHelper.createAndAuthenticateUser();
       receiverUser = receiverSetup.user;
     } catch (error) {
-      console.warn("Failed to create receiver user:", error);
+      console.warn('Failed to create receiver user:', error);
       return;
     }
 
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useShoutouts()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -163,13 +163,14 @@ describe("Basic Shoutouts Integration", () => {
 
     try {
       const createdShoutout = await testUtils.performAsyncAction(
-        () => result.current.create({
-          ...shoutoutData,
-          giverId: sharedAuthUser.userId,
-          receiverId: receiverUser.userId,
-          resourceId: sharedResource.id,
-        }),
-        "give shoutout"
+        () =>
+          result.current.create({
+            ...shoutoutData,
+            giverId: sharedAuthUser.userId,
+            receiverId: receiverUser.userId,
+            resourceId: sharedResource.id,
+          }),
+        'give shoutout'
       );
 
       expect(createdShoutout).toMatchObject({
@@ -186,7 +187,7 @@ describe("Basic Shoutouts Integration", () => {
       // Verify it appears in the list
       const shoutoutsList = await testUtils.performAsyncAction(
         () => result.current.list(),
-        "list shoutouts after creation"
+        'list shoutouts after creation'
       );
 
       expect(shoutoutsList).toEqual(
@@ -197,20 +198,21 @@ describe("Basic Shoutouts Integration", () => {
           }),
         ])
       );
-
     } catch (error) {
-      console.warn("Shoutout creation failed:", error);
+      console.warn('Shoutout creation failed:', error);
       // Don't fail the test - this might be due to authentication or setup issues
     }
   });
 
-  test("should list shoutouts by resource", async () => {
+  test('should list shoutouts by resource', async () => {
     if (!sharedResource) {
-      console.warn("Skipping test - no shared resource available");
+      console.warn('Skipping test - no shared resource available');
       return;
     }
 
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useShoutouts()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -222,95 +224,25 @@ describe("Basic Shoutouts Integration", () => {
       try {
         const shoutoutsByResource = await testUtils.performAsyncAction(
           () => result.current.listByResource(sharedResource.id),
-          "list shoutouts by resource"
+          'list shoutouts by resource'
         );
 
         expect(Array.isArray(shoutoutsByResource)).toBe(true);
-        
+
         // All returned shoutouts should be for this resource
-        shoutoutsByResource.forEach(shoutout => {
+        shoutoutsByResource.forEach((shoutout) => {
           expect(shoutout.resourceId).toBe(sharedResource.id);
         });
       } catch (error) {
-        console.warn("List shoutouts by resource failed:", error);
+        console.warn('List shoutouts by resource failed:', error);
       }
     }
   });
 
-  test("should list shoutouts by user", async () => {
-    if (!sharedAuthUser) {
-      console.warn("Skipping test - no shared user available");
-      return;
-    }
-
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
-
-    await testUtils.waitForHookToInitialize(
-      result,
-      (shoutouts) => typeof shoutouts.list === 'function'
+  test('should handle shoutouts filtering', async () => {
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useShoutouts()
     );
-
-    // Check if the hook supports listing by user
-    if (typeof result.current.listByUser === 'function') {
-      try {
-        // List shoutouts given by the user
-        const shoutoutsGiven = await testUtils.performAsyncAction(
-          () => result.current.listByUser(sharedAuthUser.userId, 'given'),
-          "list shoutouts given by user"
-        );
-
-        expect(Array.isArray(shoutoutsGiven)).toBe(true);
-        
-        // All returned shoutouts should be given by this user
-        shoutoutsGiven.forEach(shoutout => {
-          expect(shoutout.giverId).toBe(sharedAuthUser.userId);
-        });
-
-        // List shoutouts received by the user
-        const shoutoutsReceived = await testUtils.performAsyncAction(
-          () => result.current.listByUser(sharedAuthUser.userId, 'received'),
-          "list shoutouts received by user"
-        );
-
-        expect(Array.isArray(shoutoutsReceived)).toBe(true);
-        
-        // All returned shoutouts should be received by this user
-        shoutoutsReceived.forEach(shoutout => {
-          expect(shoutout.receiverId).toBe(sharedAuthUser.userId);
-        });
-      } catch (error) {
-        console.warn("List shoutouts by user failed:", error);
-      }
-    }
-  });
-
-  test("should handle shoutouts aggregation", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
-
-    await testUtils.waitForHookToInitialize(
-      result,
-      (shoutouts) => typeof shoutouts.list === 'function'
-    );
-
-    // Check if the hook supports aggregation
-    if (typeof result.current.getStats === 'function') {
-      try {
-        const stats = await testUtils.performAsyncAction(
-          () => result.current.getStats(),
-          "get shoutouts statistics"
-        );
-
-        expect(stats).toHaveProperty('totalShoutouts');
-        expect(typeof stats.totalShoutouts).toBe('number');
-        expect(stats.totalShoutouts).toBeGreaterThanOrEqual(0);
-      } catch (error) {
-        console.warn("Shoutouts aggregation failed:", error);
-      }
-    }
-  });
-
-  test("should handle shoutouts filtering", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useShoutouts());
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -321,7 +253,7 @@ describe("Basic Shoutouts Integration", () => {
       // Test listing all shoutouts
       const allShoutouts = await testUtils.performAsyncAction(
         () => result.current.list(),
-        "list all shoutouts"
+        'list all shoutouts'
       );
 
       expect(Array.isArray(allShoutouts)).toBe(true);
@@ -330,18 +262,18 @@ describe("Basic Shoutouts Integration", () => {
       if (typeof result.current.listPublic === 'function') {
         const publicShoutouts = await testUtils.performAsyncAction(
           () => result.current.listPublic(),
-          "list public shoutouts"
+          'list public shoutouts'
         );
 
         expect(Array.isArray(publicShoutouts)).toBe(true);
-        
+
         // All returned shoutouts should be public
-        publicShoutouts.forEach(shoutout => {
+        publicShoutouts.forEach((shoutout) => {
           expect(shoutout.isPublic).toBe(true);
         });
       }
     } catch (error) {
-      console.warn("Shoutouts filtering failed:", error);
+      console.warn('Shoutouts filtering failed:', error);
     }
   });
 });

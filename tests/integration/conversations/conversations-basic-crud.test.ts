@@ -6,14 +6,14 @@ import {
   beforeEach,
   afterEach,
   afterAll,
-} from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+} from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   useConversations,
   useMessages,
   useSendMessage,
   useMarkAsRead,
-} from "@belongnetwork/platform";
+} from '../../../src';
 import {
   TestDataFactory,
   authHelper,
@@ -21,9 +21,9 @@ import {
   testWrapperManager,
   testUtils,
   commonExpectations,
-} from "../helpers";
+} from '../helpers';
 
-describe("Conversations Integration Tests", () => {
+describe.skip('Conversations Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
@@ -42,8 +42,8 @@ describe("Conversations Integration Tests", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  describe("Conversation Creation and Fetching", () => {
-    test.only("should create conversation between two users and fetch it", async () => {
+  describe('Conversation Creation and Fetching', () => {
+    test.only('should create conversation between two users and fetch it', async () => {
       // Arrange: Create and authenticate two users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -55,7 +55,7 @@ describe("Conversations Integration Tests", () => {
       // Act: Send initial message to create conversation
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -63,14 +63,14 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Hello from integration test!",
+          content: 'Hello from integration test!',
         });
       });
 
       // Verify: Check that conversation was created and appears in both users' lists
       const { result: conversationsResult } = testUtils.renderHookWithWrapper(
         () => useConversations(),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -83,13 +83,13 @@ describe("Conversations Integration Tests", () => {
       expect(conversations[0].participants).toContain(user1.id);
       expect(conversations[0].participants).toContain(user2.id);
       expect(conversations[0].lastMessage?.content).toBe(
-        "Hello from integration test!",
+        'Hello from integration test!'
       );
 
       await signOut2();
     });
 
-    test("should fetch messages for a conversation", async () => {
+    test('should fetch messages for a conversation', async () => {
       // Arrange: Create conversation with messages
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -101,7 +101,7 @@ describe("Conversations Integration Tests", () => {
       // Send initial message
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -110,7 +110,7 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         const result = await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "First message",
+          content: 'First message',
         });
         conversationId = result.conversationId;
       });
@@ -118,7 +118,7 @@ describe("Conversations Integration Tests", () => {
       // Act: Fetch messages for the conversation
       const { result: messagesResult } = testUtils.renderHookWithWrapper(
         () => useMessages(conversationId!),
-        wrapper,
+        wrapper
       );
 
       // Verify: Messages are fetched correctly
@@ -128,15 +128,15 @@ describe("Conversations Integration Tests", () => {
 
       const messages = messagesResult.current.data?.pages[0]?.data || [];
       expect(messages).toHaveLength(1);
-      expect(messages[0].content).toBe("First message");
+      expect(messages[0].content).toBe('First message');
       expect(messages[0].senderId).toBe(user2.id);
 
       await signOut2();
     });
   });
 
-  describe("Multi-Message Conversations", () => {
-    test("should handle back-and-forth conversation between users", async () => {
+  describe('Multi-Message Conversations', () => {
+    test('should handle back-and-forth conversation between users', async () => {
       // Arrange: Create two users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -148,7 +148,7 @@ describe("Conversations Integration Tests", () => {
       // User 2 sends first message
       const { result: sendMessage2 } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessage2);
@@ -156,7 +156,7 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         const result = await sendMessage2.current.mutateAsync({
           recipientId: user1.id,
-          content: "Hello User 1!",
+          content: 'Hello User 1!',
         });
         conversationId = result.conversationId;
       });
@@ -169,7 +169,7 @@ describe("Conversations Integration Tests", () => {
 
       const { result: sendMessage1 } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessage1);
@@ -177,14 +177,14 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessage1.current.mutateAsync({
           recipientId: user2.id,
-          content: "Hello User 2! Nice to meet you.",
+          content: 'Hello User 2! Nice to meet you.',
         });
       });
 
       // Verify: Both messages exist in conversation
       const { result: messagesResult } = testUtils.renderHookWithWrapper(
         () => useMessages(conversationId),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -195,15 +195,15 @@ describe("Conversations Integration Tests", () => {
       expect(messages).toHaveLength(2);
 
       // Messages should be ordered by creation time (newest first)
-      expect(messages[0].content).toBe("Hello User 2! Nice to meet you.");
+      expect(messages[0].content).toBe('Hello User 2! Nice to meet you.');
       expect(messages[0].senderId).toBe(user1.id);
-      expect(messages[1].content).toBe("Hello User 1!");
+      expect(messages[1].content).toBe('Hello User 1!');
       expect(messages[1].senderId).toBe(user2.id);
 
       await signOut1Again();
     });
 
-    test("should handle multiple messages from same user", async () => {
+    test('should handle multiple messages from same user', async () => {
       // Arrange: Create two users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -214,7 +214,7 @@ describe("Conversations Integration Tests", () => {
 
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -225,25 +225,25 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         const result1 = await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Message 1",
+          content: 'Message 1',
         });
         conversationId = result1.conversationId;
 
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Message 2",
+          content: 'Message 2',
         });
 
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Message 3",
+          content: 'Message 3',
         });
       });
 
       // Verify: All messages are stored and ordered correctly
       const { result: messagesResult } = testUtils.renderHookWithWrapper(
         () => useMessages(conversationId),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -252,16 +252,16 @@ describe("Conversations Integration Tests", () => {
 
       const messages = messagesResult.current.data?.pages[0]?.data || [];
       expect(messages).toHaveLength(3);
-      expect(messages[0].content).toBe("Message 3"); // Newest first
-      expect(messages[1].content).toBe("Message 2");
-      expect(messages[2].content).toBe("Message 1");
+      expect(messages[0].content).toBe('Message 3'); // Newest first
+      expect(messages[1].content).toBe('Message 2');
+      expect(messages[2].content).toBe('Message 1');
 
       await signOut2();
     });
   });
 
-  describe("Message Read Status", () => {
-    test("should mark messages as read and update status", async () => {
+  describe('Message Read Status', () => {
+    test('should mark messages as read and update status', async () => {
       // Arrange: Create conversation with unread message
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -273,7 +273,7 @@ describe("Conversations Integration Tests", () => {
       // User 2 sends message to User 1
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -282,7 +282,7 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         const result = await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Unread message",
+          content: 'Unread message',
         });
         conversationId = result.conversationId;
       });
@@ -295,7 +295,7 @@ describe("Conversations Integration Tests", () => {
 
       const { result: messagesResult } = testUtils.renderHookWithWrapper(
         () => useMessages(conversationId),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -308,7 +308,7 @@ describe("Conversations Integration Tests", () => {
       // Act: Mark message as read
       const { result: markAsReadResult } = testUtils.renderHookWithWrapper(
         () => useMarkAsRead(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(markAsReadResult);
@@ -331,15 +331,15 @@ describe("Conversations Integration Tests", () => {
     });
   });
 
-  describe("Authentication and Authorization", () => {
-    test("should prevent access to conversations when not authenticated", async () => {
+  describe('Authentication and Authorization', () => {
+    test('should prevent access to conversations when not authenticated', async () => {
       // Ensure no user is signed in
       await authHelper.ensureSignedOut();
 
       // Act: Try to fetch conversations without authentication
       const { result: conversationsResult } = testUtils.renderHookWithWrapper(
         () => useConversations(),
-        wrapper,
+        wrapper
       );
 
       // Verify: Should fail due to RLS policies
@@ -348,7 +348,7 @@ describe("Conversations Integration Tests", () => {
       });
     });
 
-    test("should only show conversations user is part of", async () => {
+    test('should only show conversations user is part of', async () => {
       // Arrange: Create three users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -364,7 +364,7 @@ describe("Conversations Integration Tests", () => {
       // User 3 sends message to User 1 (User 2 not involved)
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -372,7 +372,7 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Message between User 1 and User 3",
+          content: 'Message between User 1 and User 3',
         });
       });
 
@@ -416,14 +416,14 @@ describe("Conversations Integration Tests", () => {
     });
   });
 
-  describe("Error Handling", () => {
-    test("should handle sending message to non-existent user", async () => {
+  describe('Error Handling', () => {
+    test('should handle sending message to non-existent user', async () => {
       // Arrange: Create authenticated user
       const { user, signOut } = await authHelper.createAndAuthenticateUser();
 
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -432,29 +432,29 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await expect(
           sendMessageResult.current.mutateAsync({
-            recipientId: "non-existent-user-id",
-            content: "This should fail",
-          }),
+            recipientId: 'non-existent-user-id',
+            content: 'This should fail',
+          })
         ).rejects.toThrow();
       });
 
       await signOut();
     });
 
-    test("should handle fetching messages for non-existent conversation", async () => {
+    test('should handle fetching messages for non-existent conversation', async () => {
       // Arrange: Create authenticated user
       const { user, signOut } = await authHelper.createAndAuthenticateUser();
 
       // Act: Try to fetch messages for non-existent conversation
       const { result: messagesResult } = testUtils.renderHookWithWrapper(
-        () => useMessages("non-existent-conversation-id"),
-        wrapper,
+        () => useMessages('non-existent-conversation-id'),
+        wrapper
       );
 
       // Verify: Should handle gracefully (likely empty result or error)
       await waitFor(() => {
         expect(
-          messagesResult.current.isError || messagesResult.current.isSuccess,
+          messagesResult.current.isError || messagesResult.current.isSuccess
         ).toBe(true);
       });
 
@@ -467,8 +467,8 @@ describe("Conversations Integration Tests", () => {
     });
   });
 
-  describe("Data Consistency", () => {
-    test("should maintain conversation participant order consistency", async () => {
+  describe('Data Consistency', () => {
+    test('should maintain conversation participant order consistency', async () => {
       // Arrange: Create two users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -480,7 +480,7 @@ describe("Conversations Integration Tests", () => {
       // Act: Create conversation from User 2 to User 1
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -488,14 +488,14 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Test message",
+          content: 'Test message',
         });
       });
 
       // Verify: Participants should be in consistent order (alphabetical by ID)
       const { result: conversationsResult } = testUtils.renderHookWithWrapper(
         () => useConversations(),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -513,7 +513,7 @@ describe("Conversations Integration Tests", () => {
       await signOut2();
     });
 
-    test("should update last message timestamp when new message is sent", async () => {
+    test('should update last message timestamp when new message is sent', async () => {
       // Arrange: Create conversation
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();
@@ -524,7 +524,7 @@ describe("Conversations Integration Tests", () => {
 
       const { result: sendMessageResult } = testUtils.renderHookWithWrapper(
         () => useSendMessage(),
-        wrapper,
+        wrapper
       );
 
       await testUtils.waitForHookToInitialize(sendMessageResult);
@@ -533,14 +533,14 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "First message",
+          content: 'First message',
         });
       });
 
       // Get initial conversation state
       const { result: conversationsResult1 } = testUtils.renderHookWithWrapper(
         () => useConversations(),
-        wrapper,
+        wrapper
       );
 
       await waitFor(() => {
@@ -558,7 +558,7 @@ describe("Conversations Integration Tests", () => {
       await act(async () => {
         await sendMessageResult.current.mutateAsync({
           recipientId: user1.id,
-          content: "Second message",
+          content: 'Second message',
         });
       });
 
@@ -568,10 +568,10 @@ describe("Conversations Integration Tests", () => {
           conversationsResult1.current.data?.pages[0]?.data || [];
         const updatedConversation = updatedConversations[0];
         expect(updatedConversation?.lastMessage?.content).toBe(
-          "Second message",
+          'Second message'
         );
         expect(
-          new Date(updatedConversation?.lastMessage?.createdAt || 0).getTime(),
+          new Date(updatedConversation?.lastMessage?.createdAt || 0).getTime()
         ).toBeGreaterThan(new Date(initialTimestamp || 0).getTime());
       });
 

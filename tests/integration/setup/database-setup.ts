@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@belongnetwork/types";
+import type { Database } from "../../../src/types";
 
 export const createTestSupabaseClient = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL!;

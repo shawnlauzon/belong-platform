@@ -9,20 +9,14 @@
     "emitDeclarationOnly": true,
     "composite": false,
     "incremental": false,
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
     "paths": {
-      "@belongnetwork/api": ["./packages/api/src"],
-      "@belongnetwork/api/*": ["./packages/api/src/*"],
-      "@belongnetwork/types": ["./packages/types/src"],
-      "@belongnetwork/types/*": ["./packages/types/src/*"],
-      "@belongnetwork/core": ["./packages/core/src"],
-      "@belongnetwork/core/*": ["./packages/core/src/*"]
+      "~/shared": ["./src/shared"]
     }
   },
   "include": [
-    "src/**/*",
-    "packages/api/src/**/*",
-    "packages/types/src/**/*", 
-    "packages/core/src/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

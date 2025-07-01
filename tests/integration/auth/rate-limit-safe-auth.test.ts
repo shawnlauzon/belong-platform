@@ -14,7 +14,7 @@ import {
 } from "@testing-library/react";
 import {
   useAuth,
-} from "@belongnetwork/platform";
+} from "../../../src";
 import {
   TestDataFactory,
   authHelper,

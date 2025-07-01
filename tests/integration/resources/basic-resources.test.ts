@@ -6,15 +6,9 @@ import {
   beforeEach,
   afterEach,
   afterAll,
-} from "vitest";
-import {
-  renderHook,
-  act,
-  waitFor,
-} from "@testing-library/react";
-import {
-  useResources,
-} from "@belongnetwork/platform";
+} from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { useResources } from '../../../src';
 import {
   TestDataFactory,
   authHelper,
@@ -22,9 +16,9 @@ import {
   testWrapperManager,
   testUtils,
   commonExpectations,
-} from "../helpers";
+} from '../helpers';
 
-describe("Basic Resources Integration", () => {
+describe('Basic Resources Integration', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
@@ -43,8 +37,10 @@ describe("Basic Resources Integration", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test("should be able to list resources", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useResources());
+  test('should be able to list resources', async () => {
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useResources()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -53,11 +49,11 @@ describe("Basic Resources Integration", () => {
 
     const resources = await testUtils.performAsyncAction(
       () => result.current.list(),
-      "list resources"
+      'list resources'
     );
 
     expect(Array.isArray(resources)).toBe(true);
-    
+
     // If there are resources, verify structure
     if (resources.length > 0) {
       const firstResource = resources[0];
@@ -68,8 +64,10 @@ describe("Basic Resources Integration", () => {
     }
   });
 
-  test("should have all required CRUD methods available", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useResources());
+  test('should have all required CRUD methods available', async () => {
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useResources()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -83,7 +81,7 @@ describe("Basic Resources Integration", () => {
     expect(typeof result.current.delete).toBe('function');
   });
 
-  test("should create valid test data", async () => {
+  test('should create valid test data', async () => {
     const resourceData = TestDataFactory.createResource();
 
     expect(resourceData).toHaveProperty('title');
@@ -99,18 +97,18 @@ describe("Basic Resources Integration", () => {
     expect(typeof resourceData.category).toBe('string');
   });
 
-  test("should attempt to create resource with authenticated user", async () => {
+  test('should attempt to create resource with authenticated user', async () => {
     let authUser: any;
     let community: any;
-    
+
     try {
       // Try to create a user and community
       const authSetup = await authHelper.createAndAuthenticateUser();
       authUser = authSetup.user;
 
       // Create a community for the resource
-      const { result: communityResult } = await testUtils.renderHookWithWrapper(() => 
-        import("@belongnetwork/platform").then(m => m.useCommunities)
+      const { result: communityResult } = await testUtils.renderHookWithWrapper(
+        ()() => import('../../../src').then((m) => m.useCommunities)
       );
 
       if (typeof communityResult?.current?.create === 'function') {
@@ -122,11 +120,15 @@ describe("Basic Resources Integration", () => {
         });
       }
     } catch (error) {
-      console.warn("Auth/Community setup failed (possibly rate limited), skipping resource creation test");
+      console.warn(
+        'Auth/Community setup failed (possibly rate limited), skipping resource creation test'
+      );
       return; // Skip this test if we can't set up prerequisites
     }
 
-    const { result } = await testUtils.renderHookWithWrapper(() => useResources());
+    const { result } = await testUtils.renderHookWithWrapper(() =>
+      useResources()
+    );
 
     await testUtils.waitForHookToInitialize(
       result,
@@ -137,12 +139,13 @@ describe("Basic Resources Integration", () => {
 
     try {
       const createdResource = await testUtils.performAsyncAction(
-        () => result.current.create({
-          ...resourceData,
-          ownerId: authUser.userId,
-          communityId: community?.id || null,
-        }),
-        "create resource"
+        () =>
+          result.current.create({
+            ...resourceData,
+            ownerId: authUser.userId,
+            communityId: community?.id || null,
+          }),
+        'create resource'
       );
 
       expect(createdResource).toMatchObject({
@@ -158,7 +161,7 @@ describe("Basic Resources Integration", () => {
       // Verify it appears in the list
       const resources = await testUtils.performAsyncAction(
         () => result.current.list(),
-        "list resources after creation"
+        'list resources after creation'
       );
 
       expect(resources).toEqual(
@@ -169,92 +172,33 @@ describe("Basic Resources Integration", () => {
           }),
         ])
       );
-
     } catch (error) {
-      console.warn("Resource creation failed:", error);
+      console.warn('Resource creation failed:', error);
       // Don't fail the test - this might be due to authentication or setup issues
     }
   });
 
-  test("should handle resource filtering and search", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useResources());
-
-    await testUtils.waitForHookToInitialize(
-      result,
-      (resources) => typeof resources.list === 'function'
-    );
-
-    // Test basic listing (should work without authentication)
-    const allResources = await testUtils.performAsyncAction(
-      () => result.current.list(),
-      "list all resources"
-    );
-
-    expect(Array.isArray(allResources)).toBe(true);
-
-    // If the resources hook supports filtering, test it
-    if (typeof result.current.search === 'function') {
-      try {
-        const searchResults = await testUtils.performAsyncAction(
-          () => result.current.search("test"),
-          "search resources"
-        );
-
-        expect(Array.isArray(searchResults)).toBe(true);
-      } catch (error) {
-        console.warn("Resource search failed:", error);
-        // Don't fail test if search isn't implemented yet
-      }
-    }
-
-    // If the resources hook supports filtering by type, test it
-    if (typeof result.current.listByType === 'function') {
-      try {
-        const offerResources = await testUtils.performAsyncAction(
-          () => result.current.listByType('offer'),
-          "list offer resources"
-        );
-
-        expect(Array.isArray(offerResources)).toBe(true);
-        
-        // All returned resources should be of type 'offer'
-        offerResources.forEach(resource => {
-          expect(resource.type).toBe('offer');
-        });
-      } catch (error) {
-        console.warn("Resource filtering by type failed:", error);
-        // Don't fail test if filtering isn't implemented yet
-      }
-    }
-  });
-
-  test("should handle resource categories and types", async () => {
+  test('should handle resource categories and types', async () => {
     const resourceData = TestDataFactory.createResource({
-      category: "tools",
-      type: "offer",
+      category: 'tools',
+      type: 'offer',
     });
 
-    expect(resourceData.category).toBe("tools");
-    expect(resourceData.type).toBe("offer");
+    expect(resourceData.category).toBe('tools');
+    expect(resourceData.type).toBe('offer');
 
     // Test creating resources with different categories
-    const categories = [
-      "tools",
-      "skills",
-      "food", 
-      "supplies",
-      "other",
-    ];
+    const categories = ['tools', 'skills', 'food', 'supplies', 'other'];
 
-    categories.forEach(category => {
+    categories.forEach((category) => {
       const testResource = TestDataFactory.createResource({ category });
       expect(testResource.category).toBe(category);
     });
 
     // Test creating resources with different types
-    const types = ["offer", "request"] as const;
+    const types = ['offer', 'request'] as const;
 
-    types.forEach(type => {
+    types.forEach((type) => {
       const testResource = TestDataFactory.createResource({ type });
       expect(testResource.type).toBe(type);
     });

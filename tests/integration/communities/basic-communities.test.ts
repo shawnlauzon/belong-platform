@@ -15,7 +15,7 @@ import {
 import {
   useCommunities,
   useAuth,
-} from "@belongnetwork/platform";
+} from "../../../src";
 import {
   TestDataFactory,
   authHelper,

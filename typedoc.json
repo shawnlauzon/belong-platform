@@ -2,8 +2,6 @@
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
     "src/index.ts",
-    "src/hooks.ts", 
-    "src/types.ts"
   ],
   "out": "docs",
   "name": "@belongnetwork/platform",
@@ -29,12 +27,14 @@
   ],
   "theme": "default",
   "hideGenerator": true,
-  "sort": ["source-order"],
+  "sort": [
+    "source-order"
+  ],
   "kindSortOrder": [
     "Document",
     "Project",
     "Module",
-    "Namespace", 
+    "Namespace",
     "Enum",
     "EnumMember",
     "Class",
@@ -58,7 +58,7 @@
   "categorizeByGroup": false,
   "categoryOrder": [
     "React Hooks",
-    "Providers", 
+    "Providers",
     "Client Functions",
     "Types",
     "Utilities",

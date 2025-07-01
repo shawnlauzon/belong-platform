@@ -344,27 +344,212 @@ This centralized approach ensures:
 
 ### Platform Testing Principles
 
-1. **Flexible Mocking Strategy**: Mock external dependencies and platform code when it improves test clarity and maintainability
+The testing architecture follows specific patterns optimized for this dependency injection-based platform:
+
+#### 1. **Dependency Injection-Aware Mocking**
+
+The platform uses React Context for dependency injection, which requires careful mocking strategy:
 
 ```typescript
-// ✅ Good - Mock Supabase for unit tests
-vi.mock("@supabase/supabase-js");
+// ✅ Correct: Mock at the client creation level
+vi.mock('../../../../config/client', () => {
+  const mockSupabaseAuth = {
+    signUp: vi.fn(),
+    getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+    onAuthStateChange: vi.fn(() => ({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    })),
+  };
 
-// ✅ Good - Mock hooks when testing components
-vi.mock("@belongnetwork/platform", () => ({
-  useCommunities: () => ({
-    communities: mockCommunities,
-    create: vi.fn(),
-  }),
+  const mockClient = {
+    supabase: { auth: mockSupabaseAuth },
+    logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    mapbox: { autocomplete: vi.fn(), reverseGeocode: vi.fn() },
+  };
+
+  return { createBelongClient: vi.fn(() => mockClient) };
+});
+
+// ❌ Avoid: Complex multi-level mocking that creates circular dependencies
+vi.mock('useSupabase');
+vi.mock('createBelongClient');
+vi.mock('shared'); // Creates conflicts
+```
+
+#### 2. **Mock Strategy Hierarchy**
+
+Follow this hierarchy for effective mocking:
+
+1. **External Dependencies Only** (Preferred): Mock Supabase client, external APIs
+2. **Configuration Level**: Mock `createBelongClient` for controlled dependency injection
+3. **Hook Level**: Mock platform hooks when testing UI components
+4. **Service Level**: Rarely needed - prefer dependency injection
+
+```typescript
+// Level 1: External Dependencies (Best for unit tests)
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => mockSupabaseClient),
+}));
+
+// Level 2: Configuration Level (Good for integration-style tests)
+vi.mock('./config/client', () => ({
+  createBelongClient: vi.fn(() => mockClient),
+}));
+
+// Level 3: Hook Level (Good for component tests)
+vi.mock('@belongnetwork/platform', () => ({
+  useCommunities: () => ({ communities: mockData, create: vi.fn() }),
 }));
 ```
 
-2. **Use Factory Functions for Test Data**:
+#### 3. **Provider Pattern Testing**
+
+When testing with `BelongProvider`, ensure proper mock application:
 
 ```typescript
-// Use createMock* utilities
-const mockUser = createMockUser();
+describe('Feature Tests', () => {
+  let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: any }) => any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    // Get mocked client after module mocking
+    const { createBelongClient } = await import('./config/client');
+    const mockClient = vi.mocked(createBelongClient)({
+      supabaseUrl: 'test-url',
+      supabaseAnonKey: 'test-key',
+      mapboxPublicToken: 'test-token',
+    });
+
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    wrapper = ({ children }) =>
+      createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        createElement(BelongProvider, { config: testConfig }, children)
+      );
+  });
+});
 ```
+
+#### 4. **Common Mocking Anti-Patterns to Avoid**
+
+```typescript
+// ❌ Don't mock platform code when testing platform code
+vi.mock('../services/auth.service'); // Testing auth hook? Use real service
+
+// ❌ Don't create circular dependencies
+vi.mock('useSupabase', () => /* depends on BelongProvider context */);
+
+// ❌ Don't over-mock - creates complexity and hides real issues
+vi.mock('useSupabase');
+vi.mock('createBelongClient');  
+vi.mock('shared');
+vi.mock('BelongProvider'); // Way too much!
+
+// ❌ Don't mock at multiple levels simultaneously
+vi.mock('config/client');
+vi.mock('shared/hooks/useSupabase'); // Conflicts with above
+```
+
+#### 5. **Testing Real Code Paths**
+
+The goal is to test as much real code as possible while controlling external dependencies:
+
+```typescript
+// ✅ This test exercises real platform code
+// useSignUp → createAuthService → authService.signUp → mocked Supabase
+const signUp = useSignUp();
+await signUp.mutateAsync({ email, password, firstName });
+
+// ❌ This test doesn't exercise any real code
+const mockSignUp = vi.fn();
+vi.mock('useSignUp', () => ({ useSignUp: () => ({ mutateAsync: mockSignUp }) }));
+```
+
+### Testing Architecture Best Practices
+
+#### Unit Testing Strategy
+
+1. **Mock External Dependencies**: Supabase, external APIs, browser APIs
+2. **Use Real Platform Code**: Services, transformers, hooks, components
+3. **Dependency Injection**: Mock at the client creation level for full integration
+4. **Test Data**: Use `createMock*` utilities for consistent test data
+
+```typescript
+// ✅ Proper unit test structure
+describe('useSignUp', () => {
+  beforeEach(() => {
+    // Mock only external dependency
+    vi.mock('config/client', () => ({
+      createBelongClient: vi.fn(() => mockClientWithControlledSupabase),
+    }));
+  });
+
+  it('should call Supabase with correct parameters', async () => {
+    const signUp = useSignUp(); // Real hook
+    await signUp.mutateAsync(mockSignUpData); // Real execution path
+    
+    expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
+      email: mockSignUpData.email,
+      password: mockSignUpData.password,
+      options: { data: { first_name: mockSignUpData.firstName } },
+    });
+  });
+});
+```
+
+#### Component Testing Strategy
+
+1. **Mock Platform Hooks**: When testing UI components, mock the data layer
+2. **Test User Interactions**: Focus on component behavior, not data fetching
+3. **Use Testing Library**: For user-centric testing approaches
+
+```typescript
+// ✅ Component test with mocked hooks
+vi.mock('@belongnetwork/platform', () => ({
+  useSignUp: () => ({
+    mutateAsync: mockSignUp,
+    isPending: false,
+    error: null,
+  }),
+}));
+
+test('SignUpForm submits with correct data', async () => {
+  render(<SignUpForm />);
+  
+  await userEvent.type(screen.getByLabelText(/email/i), 'test@example.com');
+  await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
+  
+  expect(mockSignUp).toHaveBeenCalledWith({
+    email: 'test@example.com',
+    // ... other expected data
+  });
+});
+```
+
+### Critical Lessons from useSignUp Test Fix
+
+The `useSignUp` test failures revealed key insights about mocking in this architecture:
+
+#### Problem: Over-Complex Mocking
+- **Issue**: Mocking at multiple levels (`useSupabase`, `createBelongClient`, `shared`) created conflicts
+- **Root Cause**: Circular dependencies between mocks and real provider code
+- **Result**: Mocks weren't applied correctly, tests failed with 0 function calls
+
+#### Solution: Simplified Strategic Mocking
+- **Strategy**: Mock only `createBelongClient` at the configuration level
+- **Benefit**: Real application code path executes while controlling external dependencies
+- **Result**: All tests pass, real code coverage, proper behavior validation
+
+#### Architecture Implications
+1. **Provider Pattern Works**: When mocked correctly, dependency injection enables clean testing
+2. **Mock Hierarchy Matters**: Lower-level mocks (config) are more stable than higher-level mocks (hooks)
+3. **Real Code Testing**: Testing real platform code provides better confidence than mock-heavy tests
 
 ### Integration Testing
 
@@ -380,6 +565,12 @@ export default defineConfig({
   },
 });
 ```
+
+Integration tests should:
+- Use real Supabase instances (test databases)
+- Test actual network requests and responses
+- Validate end-to-end user workflows
+- Complement unit tests by catching integration issues
 
 ## Contributing Guidelines
 
@@ -404,14 +595,47 @@ When adding new features to the platform:
    - Return object with state, retrieve function, and mutations
    - Implement simplified cache invalidation patterns
 
-4. **Add Tests**
-   - Unit tests can mock platform code when needed
-   - Use transformer functions in tests
-   - Integration tests for critical paths
+4. **Add Tests (Critical Requirements)**
+   - **Unit Tests**: Follow dependency injection mocking patterns (mock at config level)
+   - **Test Real Code**: Use real services, transformers, and hooks with mocked external dependencies
+   - **Avoid Over-Mocking**: Don't mock platform code when testing platform functionality
+   - **Use Mock Factories**: Leverage `createMock*` utilities for consistent test data
+   - **Test Coverage**: Ensure both success and error paths are covered
+   - **Integration Tests**: Add for critical user workflows with real Supabase connections
 
 5. **Update Exports**
    - Export hook from feature index.ts
    - Update package exports if needed
+
+### Testing Quick Reference
+
+**When to use each mocking level:**
+
+| Test Type | Mock Level | Use Case | Example |
+|-----------|------------|----------|---------|
+| Unit Tests (Platform Code) | Config Level | Testing hooks, services, transformers | `vi.mock('config/client')` |
+| Unit Tests (External) | External Dependencies | Testing with isolated externals | `vi.mock('@supabase/supabase-js')` |
+| Component Tests | Hook Level | Testing UI components | `vi.mock('@belongnetwork/platform')` |
+| Integration Tests | None | End-to-end workflows | Real Supabase, no mocks |
+
+**Essential Test Patterns:**
+
+```typescript
+// ✅ Platform unit test pattern
+vi.mock('config/client', () => ({
+  createBelongClient: vi.fn(() => mockClientWithControlledDependencies)
+}));
+
+// ✅ Component test pattern  
+vi.mock('@belongnetwork/platform', () => ({
+  useFeature: () => ({ data: mockData, action: vi.fn() })
+}));
+
+// ✅ Real code testing
+const hook = useFeature(); // Real hook execution
+const result = await hook.action(input); // Real service call
+expect(mockExternalDependency).toHaveBeenCalledWith(expectedParams);
+```
 
 ### Example: Adding a New Entity
 

@@ -25,32 +25,25 @@
       "require": "./dist/types.cjs.js"
     },
     "./database": {
-      "types": "./packages/types/src/database.ts"
+      "types": "./src/types/database.ts"
     }
   },
   "files": [
     "dist"
   ],
-  "workspaces": [
-    "packages/api",
-    "packages/types",
-    "packages/core"
-  ],
   "scripts": {
-    "build": "pnpm -r build && vite build --config vite.config.mts",
-    "test": "pnpm -r --parallel --no-bail test",
-    "test:coverage": "pnpm -r --parallel --no-bail test:coverage",
-    "test:watch": "pnpm -r --parallel test -- --watch",
+    "build": "vite build --config vite.config.mts",
+    "test": "vitest run src ",
+    "test:coverage": "vitest run src/ --coverage",
+    "test:watch": "vitest src/ --watch",
     "test:integration": "vitest run --config tests/integration/vitest.config.ts --run",
     "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
     "test:complete": "pnpm test && pnpm test:integration",
-    "typecheck": "pnpm -r typecheck",
-    "typecheck:api": "pnpm --filter=@belongnetwork/api typecheck",
-    "lint": "pnpm -r lint",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write .",
     "docs": "typedoc",
     "docs:serve": "typedoc --watch",
-    "manypkg": "manypkg check",
     "prepare": "husky install",
     "tdd": "pnpm lint && pnpm typecheck && pnpm test",
     "qa": "pnpm lint && pnpm typecheck && pnpm test:complete && pnpm build",
@@ -60,15 +53,24 @@
     "test:e2e:debug": "playwright test --config tests/e2e/playwright.config.ts --debug",
     "test:e2e:report": "playwright show-report",
     "e2e:install": "playwright install",
-    "e2e:dev": "cd tests/e2e/test-app && vite"
+    "e2e:dev": "cd tests/e2e/test-app && vite",
+    "gen:db-types": "dotenv -e .env .env.local supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "@tanstack/react-query": "^5.0.0",
+    "loglevel": "^1.9.2",
+    "nanoid": "^5.1.5",
+    "zod": "^3.22.4"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@faker-js/faker": "^9.8.0",
     "@manypkg/cli": "^0.24.0",
     "@playwright/test": "^1.53.1",
-    "@supabase/supabase-js": "^2.39.7",
-    "@tanstack/react-query": "^5.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.3.1",
     "@types/jest": "^29.5.14",
@@ -80,8 +82,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^15.9.0",
     "husky": "^9.1.7",
-    "loglevel": "^1.9.2",
-    "nanoid": "^5.1.5",
     "prettier": "^3.5.3",
     "react": "18",
     "react-dom": "18",
@@ -93,7 +93,11 @@
     "vite-plugin-dts": "^4.5.4",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^1.6.1",
-    "zod": "^3.22.4"
+    "@vitest/coverage-v8": "^1.6.1",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^24.1.3",
+    "dotenv-cli": "^8.0.0",
+    "supabase": "^2.26.9"
   },
   "packageManager": "pnpm@8.10.0"
 }

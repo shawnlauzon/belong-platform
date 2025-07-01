@@ -1,6 +1,6 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BelongProvider } from "@belongnetwork/platform";
+import { BelongProvider } from "../../../src";
 import { testConfig } from "../setup/database-setup";
 
 export interface TestWrapperProps {

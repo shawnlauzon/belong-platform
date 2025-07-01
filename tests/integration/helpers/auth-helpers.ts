@@ -1,5 +1,5 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { useAuth } from "@belongnetwork/platform";
+import { useAuth } from "../../../src";
 import { TestDataFactory, type TestUser } from "./test-data-factory";
 import { testWrapperManager } from "./react-query-wrapper";
 
