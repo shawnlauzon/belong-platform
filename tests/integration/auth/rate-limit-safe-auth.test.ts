@@ -53,6 +53,12 @@ describe("Authentication Integration (Rate Limit Safe)", () => {
 
       // Sign out after creation
       await result.current.signOut();
+      
+      // Wait for sign out to complete and auth state to clear
+      await testUtils.waitForCondition(
+        () => result.current.isAuthenticated === false,
+        { timeout: 5000 }
+      );
 
       console.log("Created shared test user for auth tests");
     } catch (error) {
@@ -62,6 +68,8 @@ describe("Authentication Integration (Rate Limit Safe)", () => {
 
   beforeEach(async () => {
     await cleanupHelper.ensureTestIsolation();
+    // Ensure clean auth state
+    testWrapperManager.clearCache();
     // Add delay to prevent rate limiting
     await new Promise(resolve => setTimeout(resolve, 1500));
   });
@@ -77,6 +85,9 @@ describe("Authentication Integration (Rate Limit Safe)", () => {
   });
 
   test("should have functional auth hooks available", async () => {
+    // Ensure we have a fresh wrapper for this test
+    testWrapperManager.reset();
+    
     const { result } = await testUtils.renderHookWithWrapper(() => useAuth());
 
     await testUtils.waitForHookToInitialize(
@@ -89,6 +100,12 @@ describe("Authentication Integration (Rate Limit Safe)", () => {
     expect(typeof result.current.signIn).toBe('function');
     expect(typeof result.current.signOut).toBe('function');
     expect(typeof result.current.isAuthenticated).toBe('boolean');
+    
+    // Wait for auth state to settle (not pending)
+    await testUtils.waitForCondition(
+      () => result.current.isPending === false,
+      { timeout: 5000 }
+    );
     
     // Should start unauthenticated
     expect(result.current.isAuthenticated).toBe(false);
