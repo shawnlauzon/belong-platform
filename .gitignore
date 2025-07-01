@@ -37,4 +37,4 @@ test-results/
 screenshots/
 
 # Serena (coding assistant) cache files
-.serena/
+.serena/cache
