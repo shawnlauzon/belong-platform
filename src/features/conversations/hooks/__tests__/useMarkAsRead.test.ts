@@ -3,10 +3,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMarkAsRead } from '../useMarkAsRead';
 import { createWrapper } from '../../../../shared/__test__/';
 
-// Mock the auth provider
-vi.mock('../../../../config', () => ({
-  useSupabase: vi.fn(),
-}));
+// Mock shared utilities including useSupabase and logger
+vi.mock('../../../../shared', () => {
+  const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
+
+  return {
+    useSupabase: vi.fn(),
+    logger: mockLogger,
+    queryKeys: {
+      conversations: {
+        all: ['conversations'],
+        list: (userId: string) => ['conversations', 'list', userId],
+        byId: (id: string) => ['conversation', id],
+        messages: (conversationId: string) => ['conversations', 'messages', conversationId],
+        userList: (userId: string) => ['user', userId, 'conversations'],
+      },
+    },
+  };
+});
 
 // Mock the conversation service
 vi.mock('../../services/conversations.service', () => ({
@@ -20,7 +39,7 @@ const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateConversationsService = vi.mocked(createConversationsService);
 const mockMarkAsRead = vi.fn();
 
-describe.skip('useMarkAsRead', () => {
+describe('useMarkAsRead', () => {
   const messageId = 'message-123';
 
   beforeEach(() => {

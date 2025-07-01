@@ -5,24 +5,42 @@ import { createElement } from 'react';
 import type { ConversationInfo, Conversation } from '../../types';
 import { useConversations } from '../useConversations';
 
-// Mock the auth provider
-vi.mock('../../../../config', () => ({
+// Mock shared utilities including useSupabase
+vi.mock('../../../../shared', () => ({
   useSupabase: vi.fn(),
+  queryKeys: {
+    conversations: {
+      all: ['conversations'],
+      list: (userId: string) => ['conversations', 'list', userId],
+      byId: (id: string) => ['conversation', id],
+      messages: (conversationId: string) => ['conversations', 'messages', conversationId],
+      userList: (userId: string) => ['user', userId, 'conversations'],
+    },
+  },
 }));
+
+// Mock the auth provider for BelongProvider
+vi.mock('../../../../config', () => {
+  const mockBelongProvider = ({ children, config }: any) => children;
+  return {
+    BelongProvider: mockBelongProvider,
+  };
+});
 
 // Mock the conversation service
 vi.mock('../../services/conversations.service', () => ({
   createConversationsService: vi.fn(),
 }));
 
-import { useSupabase } from '../../../../config';
+import { useSupabase } from '../../../../shared';
+import { BelongProvider } from '../../../../config';
 import { createConversationsService } from '../../services/conversations.service';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateConversationsService = vi.mocked(createConversationsService);
 const mockFetchConversations = vi.fn();
 
-describe.skip('useConversations consolidated hook', () => {
+describe('useConversations consolidated hook', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -42,8 +60,18 @@ describe.skip('useConversations consolidated hook', () => {
     } as any);
   });
 
+  const testConfig = {
+    supabaseUrl: 'https://test.supabase.co',
+    supabaseAnonKey: 'test-key',
+    mapboxPublicToken: 'test-token',
+  };
+
   const wrapper = ({ children }: { children: React.ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
+    createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      createElement(BelongProvider, { config: testConfig }, children)
+    );
 
   describe('Test #1: Hook structure + list() method', () => {
     it('should provide list method that fetches conversations', async () => {

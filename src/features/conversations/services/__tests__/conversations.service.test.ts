@@ -6,7 +6,7 @@ import { createUserService } from '../../../users/services/user.service';
 vi.mock('../../../users/services/user.service');
 const mockCreateUserService = vi.mocked(createUserService);
 
-describe.skip('createConversationsService', () => {
+describe('createConversationsService', () => {
   const mockSupabase = {
     from: vi.fn(() => mockSupabase),
     select: vi.fn(() => mockSupabase),

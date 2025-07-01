@@ -12,7 +12,7 @@ import {
 } from '../conversationTransformer';
 import { createMockUser } from '../../../users/__mocks__';
 
-describe.skip('conversationTransformer', () => {
+describe('conversationTransformer', () => {
   describe('toDomainConversation', () => {
     it('should transform database conversation to domain conversation with participants', () => {
       // Arrange

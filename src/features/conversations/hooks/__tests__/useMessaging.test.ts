@@ -4,20 +4,39 @@ import { useMessaging } from '../useMessaging';
 import { createConversationsService } from '../../services/conversations.service';
 import { createWrapper } from '../../../../shared/__test__/';
 
+// Mock shared utilities including useSupabase and logger
+vi.mock('../../../../shared', () => {
+  const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
+
+  return {
+    useSupabase: vi.fn(),
+    logger: mockLogger,
+    queryKeys: {
+      conversations: {
+        all: ['conversations'],
+        list: (userId: string) => ['conversations', 'list', userId],
+        byId: (id: string) => ['conversation', id],
+        messages: (conversationId: string) => ['conversations', 'messages', conversationId],
+        userList: (userId: string) => ['user', userId, 'conversations'],
+      },
+    },
+  };
+});
+
 // Mock the service
 vi.mock('../../services/conversations.service');
-
-// Mock useSupabase hook
-vi.mock('../../../../config', () => ({
-  useSupabase: vi.fn(() => ({})),
-}));
 
 import { useSupabase } from '../../../../shared';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateConversationsService = vi.mocked(createConversationsService);
 
-describe.skip('useMessaging', () => {
+describe('useMessaging', () => {
   const userId = '123e4567-e89b-12d3-a456-426614174000';
 
   const mockConversations = [

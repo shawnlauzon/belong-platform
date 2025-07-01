@@ -23,7 +23,7 @@ import {
   commonExpectations,
 } from '../helpers';
 
-describe.skip('Conversations Integration Tests', () => {
+describe('Conversations Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
@@ -43,7 +43,7 @@ describe.skip('Conversations Integration Tests', () => {
   });
 
   describe('Conversation Creation and Fetching', () => {
-    test.only('should create conversation between two users and fetch it', async () => {
+    test('should create conversation between two users and fetch it', async () => {
       // Arrange: Create and authenticate two users
       const { user: user1, signOut: signOut1 } =
         await authHelper.createAndAuthenticateUser();

@@ -21,7 +21,7 @@ import {
   testUtils,
 } from '../helpers';
 
-describe.skip('Conversations User Integration Tests', () => {
+describe('Conversations User Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {

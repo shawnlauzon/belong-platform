@@ -9,7 +9,7 @@ import {
 } from '../messageTransformer';
 import { createMockDbDirectMessage } from '../../__mocks__';
 
-describe.skip('messageTransformer', () => {
+describe('messageTransformer', () => {
   describe('toDomainMessage', () => {
     it('should transform database message to domain message with user references', () => {
       // Arrange

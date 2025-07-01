@@ -21,7 +21,7 @@ import {
   testUtils,
 } from '../helpers';
 
-describe.skip('Conversations Pagination Integration Tests', () => {
+describe('Conversations Pagination Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
