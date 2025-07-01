@@ -7,9 +7,10 @@ export interface MessageData {
   content: string;
 }
 
-export interface Message extends MessageData {
+export interface Message {
   id: string;
   conversationId: string;
+  content: string;
   readAt?: Date;
   createdAt: Date;
   updatedAt: Date;

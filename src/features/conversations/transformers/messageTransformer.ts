@@ -28,7 +28,6 @@ export function toDomainMessage(
   return {
     id: dbMessage.id,
     conversationId: dbMessage.conversation_id,
-    recipientId: dbMessage.to_user_id,
     content: dbMessage.content,
     readAt: dbMessage.read_at ? new Date(dbMessage.read_at) : undefined,
     createdAt: new Date(dbMessage.created_at),
@@ -45,7 +44,6 @@ export function toMessageInfo(dbMessage: DirectMessageRow): MessageInfo {
   return {
     id: dbMessage.id,
     conversationId: dbMessage.conversation_id,
-    recipientId: dbMessage.to_user_id,
     fromUserId: dbMessage.from_user_id,
     toUserId: dbMessage.to_user_id,
     content: dbMessage.content,
