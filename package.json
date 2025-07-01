@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "The platform for building a network of independent, organizer-led communities where trust is built through acts of kindness and shared experiences.",
   "type": "module",
@@ -8,26 +8,6 @@
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.cjs.js"
-    },
-    "./hooks": {
-      "types": "./dist/hooks.d.ts",
-      "import": "./dist/hooks.es.js",
-      "require": "./dist/hooks.cjs.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.es.js",
-      "require": "./dist/types.cjs.js"
-    },
-    "./database": {
-      "types": "./src/types/database.ts"
-    }
-  },
   "files": [
     "dist"
   ],
