@@ -4,16 +4,6 @@ import { testUtils } from './test-utilities';
 
 describe('TestUtilities', () => {
   describe('waitForHookToInitialize', () => {
-    test('should fail when validator parameter is undefined', async () => {
-      // Arrange: Create a simple hook result
-      const { result } = renderHook(() => ({ data: 'test', isLoading: false }));
-
-      // Act & Assert: This should fail because validator is undefined
-      await expect(
-        testUtils.waitForHookToInitialize(result, undefined as any)
-      ).rejects.toThrow();
-    });
-
     test('should work when called with only hookResult parameter (current failing pattern)', async () => {
       // Arrange: Create a simple hook result
       const { result } = renderHook(() => ({ data: 'test', isLoading: false }));

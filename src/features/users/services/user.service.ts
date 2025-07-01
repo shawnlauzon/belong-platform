@@ -23,7 +23,7 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       if (options?.searchTerm) {
         const searchPattern = `%${options.searchTerm}%`;
         query = query.or(
-          `email.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`
+          `email.ilike.${searchPattern},user_metadata->>'first_name'.ilike.${searchPattern},user_metadata->>'last_name'.ilike.${searchPattern}`
         );
       }
 

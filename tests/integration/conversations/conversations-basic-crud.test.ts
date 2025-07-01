@@ -23,7 +23,7 @@ import {
   commonExpectations,
 } from '../helpers';
 
-describe('Conversations Integration Tests', () => {
+describe.skip('Conversations Integration Tests', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {

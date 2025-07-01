@@ -1,7 +1,7 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import type { RenderHookResult } from "@testing-library/react";
-import type React from "react";
-import { testWrapperManager } from "./react-query-wrapper";
+import { renderHook, act, waitFor } from '@testing-library/react';
+import type { RenderHookResult } from '@testing-library/react';
+import type React from 'react';
+import { testWrapperManager } from './react-query-wrapper';
 
 export interface TestHookOptions {
   timeout?: number;
@@ -28,11 +28,12 @@ export class TestUtilities {
     options: TestHookOptions = {}
   ): Promise<void> {
     const { timeout = 10000, interval = 100 } = options;
-    
+
     // Default validator: just check that the hook result exists and is not null
-    const defaultValidator = (current: T) => current !== undefined && current !== null;
+    const defaultValidator = (current: T) =>
+      current !== undefined && current !== null;
     const validatorFn = validator || defaultValidator;
-    
+
     await waitFor(
       () => {
         expect(hookResult.current).toBeDefined();
@@ -48,16 +49,19 @@ export class TestUtilities {
     description?: string
   ): Promise<T> {
     let result: T;
-    
+
     await act(async () => {
       try {
         result = await action();
       } catch (error) {
-        console.error(`Action failed${description ? ` (${description})` : ''}:`, error);
+        console.error(
+          `Action failed${description ? ` (${description})` : ''}:`,
+          error
+        );
         throw error;
       }
     });
-    
+
     return result!;
   }
 
@@ -66,7 +70,7 @@ export class TestUtilities {
     options: TestHookOptions = {}
   ): Promise<void> {
     const { timeout = 5000, interval = 100 } = options;
-    
+
     await waitFor(
       () => {
         expect(condition()).toBe(true);
@@ -81,22 +85,22 @@ export class TestUtilities {
     delay: number = 1000
   ): Promise<T> {
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxRetries) {
           throw lastError;
         }
-        
+
         // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError!;
   }
 
@@ -108,11 +112,13 @@ export class TestUtilities {
     return `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  async measureExecutionTime<T>(operation: () => Promise<T>): Promise<{ result: T; duration: number }> {
+  async measureExecutionTime<T>(
+    operation: () => Promise<T>
+  ): Promise<{ result: T; duration: number }> {
     const startTime = performance.now();
     const result = await operation();
     const endTime = performance.now();
-    
+
     return {
       result,
       duration: endTime - startTime,
@@ -124,9 +130,9 @@ export class TestUtilities {
     expectedShape: Partial<Record<keyof T, any>>
   ): void {
     expect(response).toMatchObject(expectedShape);
-    
+
     // Verify all expected keys are present
-    Object.keys(expectedShape).forEach(key => {
+    Object.keys(expectedShape).forEach((key) => {
       expect(response).toHaveProperty(key);
     });
   }
@@ -137,9 +143,9 @@ export class TestUtilities {
     options: TestHookOptions = {}
   ): Promise<T> {
     const { timeout = 5000 } = options;
-    
+
     let lastResult: T;
-    
+
     await waitFor(
       async () => {
         lastResult = await fetchFunction();
@@ -147,7 +153,7 @@ export class TestUtilities {
       },
       { timeout }
     );
-    
+
     return lastResult!;
   }
 
@@ -158,20 +164,20 @@ export class TestUtilities {
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       },
-      
+
       toBeValidEmail: (value: any) => {
         expect(value).toBeDefined();
         expect(typeof value).toBe('string');
         expect(value).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       },
-      
+
       toBeValidTimestamp: (value: any) => {
         expect(value).toBeDefined();
         const date = new Date(value);
         expect(date).toBeInstanceOf(Date);
         expect(date.getTime()).not.toBeNaN();
       },
-      
+
       toBeRecentTimestamp: (value: any, maxAgeMs: number = 60000) => {
         const date = new Date(value);
         const now = new Date();
@@ -188,7 +194,11 @@ export const testUtils = new TestUtilities();
 export const commonExpectations = testUtils.createTestExpectations();
 
 // Helper for common test patterns
-export async function testCRUDOperation<TCreate, TUpdate, TEntity extends { id: string }>(
+export async function testCRUDOperation<
+  TCreate,
+  TUpdate,
+  TEntity extends { id: string },
+>(
   service: {
     create: (data: TCreate) => Promise<TEntity>;
     update: (id: string, data: TUpdate) => Promise<TEntity>;
@@ -204,38 +214,34 @@ export async function testCRUDOperation<TCreate, TUpdate, TEntity extends { id: 
     () => service.create(createData),
     'create operation'
   );
-  
+
   validateEntity(created);
   commonExpectations.toBeValidId(created.id);
-  
+
   // Read (verify in list)
   const listAfterCreate = await service.list();
   expect(listAfterCreate).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ id: created.id })
-    ])
+    expect.arrayContaining([expect.objectContaining({ id: created.id })])
   );
-  
+
   // Update
   const updated = await testUtils.performAsyncAction(
     () => service.update(created.id, updateData),
     'update operation'
   );
-  
+
   expect(updated.id).toBe(created.id);
   validateEntity(updated);
-  
+
   // Delete
   await testUtils.performAsyncAction(
     () => service.delete(created.id),
     'delete operation'
   );
-  
+
   // Verify deletion
   const listAfterDelete = await service.list();
   expect(listAfterDelete).not.toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ id: created.id })
-    ])
+    expect.arrayContaining([expect.objectContaining({ id: created.id })])
   );
 }
