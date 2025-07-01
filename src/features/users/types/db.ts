@@ -1,4 +1,4 @@
-import { Database } from '../../../types';
+import { Database } from '../../../shared/types/database';
 
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type ProfileInsertDbData =

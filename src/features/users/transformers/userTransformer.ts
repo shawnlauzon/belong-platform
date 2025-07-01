@@ -1,5 +1,5 @@
 import type { Database } from '../../../shared/types/database';
-import type { User, UserData } from '../../../types';
+import type { User, UserData } from '../../users';
 
 // Types for database rows
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];

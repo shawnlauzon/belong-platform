@@ -7,6 +7,7 @@ import type {
   MessageInfo,
   MessageFilter,
   MessageData,
+  Message,
 } from '../types';
 import {
   toConversationInfo,
@@ -213,12 +214,14 @@ export const createConversationsService = (
       if (messageData.recipientId) {
         // Pattern 1: recipientId provided - find or create conversation
         toUserId = messageData.recipientId;
-        
+
         // Try to find existing conversation between these users
         const { data: existingConversation } = await supabase
           .from('conversations')
           .select('id, participant_1_id, participant_2_id')
-          .or(`and(participant_1_id.eq.${fromUserId},participant_2_id.eq.${toUserId}),and(participant_1_id.eq.${toUserId},participant_2_id.eq.${fromUserId})`)
+          .or(
+            `and(participant_1_id.eq.${fromUserId},participant_2_id.eq.${toUserId}),and(participant_1_id.eq.${toUserId},participant_2_id.eq.${fromUserId})`
+          )
           .single();
 
         if (existingConversation) {
@@ -276,8 +279,8 @@ export const createConversationsService = (
 
       // Transform to database format
       const dbData = forDbMessageInsert(
-        { ...messageData, conversationId }, 
-        fromUserId, 
+        { ...messageData, conversationId },
+        fromUserId,
         toUserId
       );
 

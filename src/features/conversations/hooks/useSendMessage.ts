@@ -95,7 +95,7 @@ export function useSendMessage() {
 
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.messages(newMessage.conversationId),
+        queryKey: queryKeys.conversations.messages(newMessage.id),
       });
 
       logger.info('💬 useSendMessage: Successfully sent message', {

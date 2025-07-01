@@ -1,17 +1,11 @@
-import type { Database } from '../../../shared/types/database';
-import type {
-  ShoutoutData,
-  Shoutout,
-  ShoutoutInfo,
-  User,
-  Resource,
-} from '../../../types';
-
-export type ShoutoutRow = Database['public']['Tables']['shoutouts']['Row'];
-export type ShoutoutInsertDbData =
-  Database['public']['Tables']['shoutouts']['Insert'];
-export type ShoutoutUpdateDbData =
-  Database['public']['Tables']['shoutouts']['Update'];
+import { Resource } from '../../resources';
+import { User } from '../../users';
+import type { ShoutoutData, Shoutout, ShoutoutInfo } from '../types';
+import {
+  ShoutoutInsertDbData,
+  ShoutoutRow,
+  ShoutoutUpdateDbData,
+} from '../types/db';
 
 /**
  * Transform a database shoutout record to a domain shoutout object

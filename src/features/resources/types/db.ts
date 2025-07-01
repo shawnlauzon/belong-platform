@@ -2,6 +2,10 @@ import { Database } from '../../../shared';
 import { ResourceCategory } from './domain';
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
+export type ResourceInsertDbData =
+  Database['public']['Tables']['resources']['Insert'];
+export type ResourceUpdateDbData =
+  Database['public']['Tables']['resources']['Update'];
 
 // TODO Replace with fields from Database
 export interface CreateResourceData {

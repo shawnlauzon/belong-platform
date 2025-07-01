@@ -1,5 +1,6 @@
-import { Coordinates, User } from '../../../shared';
+import { Coordinates } from '../../../shared';
 import { Community } from '../../communities';
+import { User } from '../../users';
 
 export enum EventAttendanceStatus {
   ATTENDING = 'attending',

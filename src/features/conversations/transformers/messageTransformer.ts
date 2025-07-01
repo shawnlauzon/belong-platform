@@ -1,11 +1,6 @@
-import type { Database } from '../../../shared/types/database';
 import { User } from '../../users';
 import type { Message, MessageInfo, MessageData } from '../types';
-
-export type DirectMessageRow =
-  Database['public']['Tables']['direct_messages']['Row'];
-export type DirectMessageInsertDbData =
-  Database['public']['Tables']['direct_messages']['Insert'];
+import { DirectMessageInsertDbData, DirectMessageRow } from '../types/db';
 
 /**
  * Transform a database message record to a domain message object
@@ -33,6 +28,7 @@ export function toDomainMessage(
   return {
     id: dbMessage.id,
     conversationId: dbMessage.conversation_id,
+    recipientId: dbMessage.to_user_id,
     content: dbMessage.content,
     readAt: dbMessage.read_at ? new Date(dbMessage.read_at) : undefined,
     createdAt: new Date(dbMessage.created_at),
@@ -49,6 +45,7 @@ export function toMessageInfo(dbMessage: DirectMessageRow): MessageInfo {
   return {
     id: dbMessage.id,
     conversationId: dbMessage.conversation_id,
+    recipientId: dbMessage.to_user_id,
     fromUserId: dbMessage.from_user_id,
     toUserId: dbMessage.to_user_id,
     content: dbMessage.content,

@@ -1,19 +1,15 @@
-import type { Database } from '../../../shared/types/database';
+import { User } from '../../users';
 import type {
   EventAttendanceData,
   EventAttendance,
   EventAttendanceStatus,
-  User,
   Event,
-} from '../../../types';
-
-// Database types for event_attendances table (will be available once migrations are applied)
-export type EventAttendanceRow =
-  Database['public']['Tables']['event_attendances']['Row'];
-export type EventAttendanceInsertDbData =
-  Database['public']['Tables']['event_attendances']['Insert'];
-export type EventAttendanceUpdateDbData =
-  Database['public']['Tables']['event_attendances']['Update'];
+} from '../types';
+import {
+  EventAttendanceInsertDbData,
+  EventAttendanceRow,
+  EventAttendanceUpdateDbData,
+} from '../types/db';
 
 /**
  * Transform a database event attendance record to a domain event attendance object

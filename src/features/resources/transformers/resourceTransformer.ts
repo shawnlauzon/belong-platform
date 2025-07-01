@@ -1,20 +1,16 @@
-import type { Database } from '../../../shared/types/database';
 import type {
-  Community,
   MeetupFlexibility,
   ResourceCategory,
+  Resource,
   ResourceData,
   ResourceInfo,
-  User,
-} from '../../../types';
-import type { Resource } from '../../../types';
+  ResourceRow,
+  ResourceInsertDbData,
+  ResourceUpdateDbData,
+} from '../types';
 import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
-
-export type ResourceRow = Database['public']['Tables']['resources']['Row'];
-export type ResourceInsertDbData =
-  Database['public']['Tables']['resources']['Insert'];
-export type ResourceUpdateDbData =
-  Database['public']['Tables']['resources']['Update'];
+import { User } from '../../users';
+import { Community } from '../../communities';
 
 /**
  * Transform a database resource record to a domain resource object

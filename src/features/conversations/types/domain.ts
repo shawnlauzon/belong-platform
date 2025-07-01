@@ -1,15 +1,15 @@
-import { Database } from '../../../types';
 import { User } from '../../users';
 
 // Messaging Types
 export interface MessageData {
-  conversationId?: string;  // Optional for existing conversations
-  recipientId?: string;     // Optional for new conversations
+  conversationId: string;
+  recipientId: string;
   content: string;
 }
 
 export interface Message extends MessageData {
   id: string;
+  conversationId: string;
   readAt?: Date;
   createdAt: Date;
   updatedAt: Date;

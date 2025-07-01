@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, useSupabase } from '../../../shared';
 import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../../api/shared/queryKeys';
-import type { ConversationInfo, MessageData } from '../types';
+import type {
+  ConversationInfo,
+  Message,
+  MessageData,
+  MessageInfo,
+} from '../types';
 
 /**
  * Comprehensive messaging hook that combines all conversation and message operations.
@@ -95,7 +100,7 @@ export function useMessaging(
   });
 
   // Send message mutation
-  const sendMessageMutation = useMutation({
+  const sendMessageMutation = useMutation<MessageInfo, Error, MessageData>({
     mutationFn: (data: MessageData) => conversationsService.sendMessage(data),
     onSuccess: (message) => {
       // Invalidate conversations list to update last message
@@ -104,7 +109,7 @@ export function useMessaging(
       });
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.messages(message.conversationId),
+        queryKey: queryKeys.conversations.messages(message.id),
       });
 
       logger.info('💬 useMessaging: Successfully sent message', {
