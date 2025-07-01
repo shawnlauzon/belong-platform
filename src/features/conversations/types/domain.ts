@@ -3,7 +3,8 @@ import { User } from '../../users';
 
 // Messaging Types
 export interface MessageData {
-  conversationId: string;
+  conversationId?: string;  // Optional for existing conversations
+  recipientId?: string;     // Optional for new conversations
   content: string;
 }
 

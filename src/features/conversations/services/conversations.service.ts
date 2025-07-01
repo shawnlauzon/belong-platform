@@ -206,29 +206,80 @@ export const createConversationsService = (
 
       const fromUserId = userData.user.id;
 
-      // Get conversation to determine the recipient
-      const { data: conversation, error: convError } = await supabase
-        .from('conversations')
-        .select('participant_1_id, participant_2_id')
-        .eq('id', messageData.conversationId)
-        .single();
+      let conversationId: string;
+      let toUserId: string;
 
-      if (convError || !conversation) {
-        logger.error('💬 API: Failed to find conversation', {
-          convError,
-          conversationId: messageData.conversationId,
-        });
-        throw new Error('Conversation not found');
+      // Handle two patterns: recipientId (new/existing conversation) or conversationId (existing conversation)
+      if (messageData.recipientId) {
+        // Pattern 1: recipientId provided - find or create conversation
+        toUserId = messageData.recipientId;
+        
+        // Try to find existing conversation between these users
+        const { data: existingConversation } = await supabase
+          .from('conversations')
+          .select('id, participant_1_id, participant_2_id')
+          .or(`and(participant_1_id.eq.${fromUserId},participant_2_id.eq.${toUserId}),and(participant_1_id.eq.${toUserId},participant_2_id.eq.${fromUserId})`)
+          .single();
+
+        if (existingConversation) {
+          // Use existing conversation
+          conversationId = existingConversation.id;
+        } else {
+          // Create new conversation
+          const conversationData = {
+            participant_1_id: fromUserId < toUserId ? fromUserId : toUserId,
+            participant_2_id: fromUserId < toUserId ? toUserId : fromUserId,
+          };
+
+          const { data: newConversation, error: createError } = await supabase
+            .from('conversations')
+            .insert(conversationData)
+            .select('id')
+            .single();
+
+          if (createError || !newConversation) {
+            logger.error('💬 API: Failed to create conversation', {
+              createError,
+              conversationData,
+            });
+            throw new Error('Failed to create conversation');
+          }
+
+          conversationId = newConversation.id;
+        }
+      } else if (messageData.conversationId) {
+        // Pattern 2: conversationId provided - find existing conversation
+        const { data: conversation, error: convError } = await supabase
+          .from('conversations')
+          .select('participant_1_id, participant_2_id')
+          .eq('id', messageData.conversationId)
+          .single();
+
+        if (convError || !conversation) {
+          logger.error('💬 API: Failed to find conversation', {
+            convError,
+            conversationId: messageData.conversationId,
+          });
+          throw new Error('Conversation not found');
+        }
+
+        // Determine the recipient (the other participant)
+        toUserId =
+          conversation.participant_1_id === fromUserId
+            ? conversation.participant_2_id
+            : conversation.participant_1_id;
+
+        conversationId = messageData.conversationId;
+      } else {
+        throw new Error('Must provide either conversationId or recipientId');
       }
 
-      // Determine the recipient (the other participant)
-      const toUserId =
-        conversation.participant_1_id === fromUserId
-          ? conversation.participant_2_id
-          : conversation.participant_1_id;
-
       // Transform to database format
-      const dbData = forDbMessageInsert(messageData, fromUserId, toUserId);
+      const dbData = forDbMessageInsert(
+        { ...messageData, conversationId }, 
+        fromUserId, 
+        toUserId
+      );
 
       const { data, error } = await supabase
         .from('direct_messages')
