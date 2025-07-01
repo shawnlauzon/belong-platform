@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { RenderHookResult } from "@testing-library/react";
+import type React from "react";
 import { testWrapperManager } from "./react-query-wrapper";
 
 export interface TestHookOptions {
@@ -10,28 +11,33 @@ export interface TestHookOptions {
 export class TestUtilities {
   private wrapper = testWrapperManager.getWrapper();
 
-  async renderHookWithWrapper<TProps, TResult>(
+  renderHookWithWrapper<TProps, TResult>(
     hook: (props: TProps) => TResult,
+    wrapper?: React.ComponentType<any>,
     options?: { initialProps?: TProps }
-  ): Promise<RenderHookResult<TResult, TProps>> {
+  ): RenderHookResult<TResult, TProps> {
     return renderHook(hook, {
-      wrapper: this.wrapper,
+      wrapper: wrapper || this.wrapper,
       ...options,
     });
   }
 
   async waitForHookToInitialize<T>(
     hookResult: { current: T },
-    validator: (current: T) => boolean,
+    validator?: (current: T) => boolean,
     options: TestHookOptions = {}
   ): Promise<void> {
     const { timeout = 10000, interval = 100 } = options;
+    
+    // Default validator: just check that the hook result exists and is not null
+    const defaultValidator = (current: T) => current !== undefined && current !== null;
+    const validatorFn = validator || defaultValidator;
     
     await waitFor(
       () => {
         expect(hookResult.current).toBeDefined();
         expect(hookResult.current).not.toBeNull();
-        expect(validator(hookResult.current)).toBe(true);
+        expect(validatorFn(hookResult.current)).toBe(true);
       },
       { timeout, interval }
     );
