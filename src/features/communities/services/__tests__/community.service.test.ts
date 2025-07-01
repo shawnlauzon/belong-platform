@@ -4,6 +4,13 @@ import { createMockCommunity } from '../../__mocks__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../../../shared/constants';
 import { createMockUser } from '../../../users/__mocks__';
+import {
+  createMockDbCommunities,
+  QuerySetups,
+  CommunityServiceAssertions,
+  AuthMocks,
+  TestData,
+} from '../../__test__/communityServiceTestUtils';
 
 // Mock the logger
 vi.mock('../../../../shared', () => ({
@@ -92,31 +99,15 @@ describe('createCommunityService', () => {
   describe('fetchCommunities', () => {
     it('should fetch active communities by default', async () => {
       // Arrange
-      const mockDbCommunities = [
-        { id: '1', name: 'Community 1', is_active: true },
-        { id: '2', name: 'Community 2', is_active: true },
-      ];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.eq.mockResolvedValue({ data: mockDbCommunities, error: null });
+      const mockDbCommunities = createMockDbCommunities(2, mockUser, { is_active: true });
+      const mockQuery = QuerySetups.fetchCommunities(mockSupabase, mockDbCommunities);
 
       // Act
       const result = await communityService.fetchCommunities();
 
       // Assert
-      expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-      expect(mockQuery.select).toHaveBeenCalledWith('*');
-      expect(mockQuery.order).toHaveBeenCalledWith('created_at', {
-        ascending: false,
-      });
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
-      expect(result).toHaveLength(2);
+      CommunityServiceAssertions.expectFetchCommunitiesQuery(mockSupabase, mockQuery);
+      CommunityServiceAssertions.expectResultLength(result, 2);
     });
 
     it('should include deleted communities when requested', async () => {

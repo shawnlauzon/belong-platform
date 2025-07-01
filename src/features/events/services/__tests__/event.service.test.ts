@@ -5,6 +5,12 @@ import { createMockCommunity } from '../../../communities/__mocks__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../../../shared/constants';
 import { createMockEvent } from '../../__mocks__';
+import {
+  createMockDbEvents,
+  QuerySetups,
+  EventServiceAssertions,
+  TestData,
+} from '../../__test__/eventServiceTestUtils';
 
 // Mock the logger
 vi.mock('../../../../shared', () => ({
@@ -151,77 +157,21 @@ describe('createEventService', () => {
   describe('fetchEvents', () => {
     it('should fetch events without filters', async () => {
       // Arrange
-      const mockDbEvents = [
-        {
-          id: '1',
-          title: 'Event 1',
-          description: 'Description 1',
-          start_date_time: new Date().toISOString(),
-          organizer_id: mockUser.id,
-          community_id: mockCommunity.id,
-          is_active: true,
-          tags: ['tag1'],
-        },
-        {
-          id: '2',
-          title: 'Event 2',
-          description: 'Description 2',
-          start_date_time: new Date().toISOString(),
-          organizer_id: mockUser.id,
-          community_id: mockCommunity.id,
-          is_active: true,
-          tags: ['tag2'],
-        },
-      ];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.order.mockResolvedValue({ data: mockDbEvents, error: null });
+      const mockDbEvents = createMockDbEvents(2, mockUser, mockCommunity);
+      const mockQuery = QuerySetups.fetchEvents(mockSupabase, mockDbEvents);
 
       // Act
       const result = await eventService.fetchEvents();
 
       // Assert
-      expect(mockSupabase.from).toHaveBeenCalledWith('events');
-      expect(mockQuery.select).toHaveBeenCalledWith('*');
-      expect(mockQuery.order).toHaveBeenCalledWith('start_date_time', {
-        ascending: true,
-      });
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true); // New default behavior
-      expect(result).toHaveLength(2);
+      EventServiceAssertions.expectFetchEventsQuery(mockSupabase, mockQuery);
+      EventServiceAssertions.expectResultLength(result, 2);
     });
 
     it('should apply community filter', async () => {
       // Arrange
-      const mockDbEvents = [
-        {
-          id: '1',
-          title: 'Event 1',
-          description: 'Description 1',
-          start_date_time: new Date().toISOString(),
-          organizer_id: mockUser.id,
-          community_id: mockCommunity.id,
-          is_active: true,
-        },
-      ];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      // First eq call returns this, second eq call resolves
-      mockQuery.eq
-        .mockReturnValueOnce(mockQuery)
-        .mockResolvedValue({ data: mockDbEvents, error: null });
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
+      const mockDbEvents = createMockDbEvents(1, mockUser, mockCommunity);
+      const mockQuery = QuerySetups.fetchEventsWithFilter(mockSupabase, mockDbEvents);
 
       // Act
       const result = await eventService.fetchEvents({
@@ -229,40 +179,15 @@ describe('createEventService', () => {
       });
 
       // Assert
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true); // Default behavior
-      expect(mockQuery.eq).toHaveBeenCalledWith(
-        'community_id',
-        mockCommunity.id
-      );
-      expect(result).toHaveLength(1);
+      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      EventServiceAssertions.expectCommunityFilter(mockQuery, mockCommunity.id);
+      EventServiceAssertions.expectResultLength(result, 1);
     });
 
     it('should apply organizer filter', async () => {
       // Arrange
-      const mockDbEvents = [
-        {
-          id: '1',
-          title: 'Event 1',
-          description: 'Description 1',
-          start_date_time: new Date().toISOString(),
-          organizer_id: mockUser.id,
-          community_id: mockCommunity.id,
-          is_active: true,
-        },
-      ];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      // First eq call returns this, second eq call resolves
-      mockQuery.eq
-        .mockReturnValueOnce(mockQuery)
-        .mockResolvedValue({ data: mockDbEvents, error: null });
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
+      const mockDbEvents = createMockDbEvents(1, mockUser, mockCommunity);
+      const mockQuery = QuerySetups.fetchEventsWithFilter(mockSupabase, mockDbEvents);
 
       // Act
       const result = await eventService.fetchEvents({
@@ -270,9 +195,9 @@ describe('createEventService', () => {
       });
 
       // Assert
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true); // Default behavior
-      expect(mockQuery.eq).toHaveBeenCalledWith('organizer_id', mockUser.id);
-      expect(result).toHaveLength(1);
+      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      EventServiceAssertions.expectOrganizerFilter(mockQuery, mockUser.id);
+      EventServiceAssertions.expectResultLength(result, 1);
     });
 
     it('should apply date range filters', async () => {
@@ -354,14 +279,7 @@ describe('createEventService', () => {
 
     it('should handle empty results', async () => {
       // Arrange
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.order.mockResolvedValue({ data: null, error: null });
+      const mockQuery = QuerySetups.fetchEvents(mockSupabase, null);
 
       // Act
       const result = await eventService.fetchEvents();
@@ -373,14 +291,7 @@ describe('createEventService', () => {
     it('should throw error when database query fails', async () => {
       // Arrange
       const error = new Error('Database error');
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.order.mockResolvedValue({ data: null, error });
+      const mockQuery = QuerySetups.fetchEvents(mockSupabase, null, error);
 
       // Act & Assert
       await expect(eventService.fetchEvents()).rejects.toThrow(
@@ -393,14 +304,7 @@ describe('createEventService', () => {
     it('should return null when event not found', async () => {
       // Arrange
       const error = { code: 'PGRST116' }; // Not found error
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.single.mockResolvedValue({ data: null, error });
+      const mockQuery = QuerySetups.fetchEventById(mockSupabase, null, error);
 
       // Act
       const result = await eventService.fetchEventById('nonexistent-id');
