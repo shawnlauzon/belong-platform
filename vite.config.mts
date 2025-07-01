@@ -15,7 +15,7 @@ export default defineConfig({
         '**/__mocks__/**',
       ],
       tsconfigPath: './tsconfig.types.json',
-      rollupTypes: false,
+      rollupTypes: true,
       copyDtsFiles: true,
       entryRoot: 'src',
       outDir: 'dist',
