@@ -1,6 +1,5 @@
 import { Community } from '../../communities';
 import { User } from '../../users';
-import { ResourceCategory } from './database';
 
 export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
@@ -12,13 +11,20 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
   updatedAt: Date;
 }
 
+// Enum needed for database operations
+export enum ResourceCategory {
+  TOOLS = 'tools',
+  SKILLS = 'skills',
+  FOOD = 'food',
+  SUPPLIES = 'supplies',
+  OTHER = 'other',
+}
+
 export enum MeetupFlexibility {
   HOME_ONLY = 'home_only',
   PUBLIC_MEETUP_OK = 'public_meetup_ok',
   DELIVERY_POSSIBLE = 'delivery_possible',
 }
-
-// ResourceCategory is re-exported from database types
 
 export interface ResourceData {
   type: 'offer' | 'request';
