@@ -32,7 +32,8 @@ vi.mock('../transformers/eventTransformer', () => ({
     location: data.location,
     organizer: data.organizer,
     community: data.community,
-    isActive: data.is_active,
+    deletedAt: data.deleted_at ? new Date(data.deleted_at) : null,
+    deletedBy: data.deleted_by,
     tags: data.tags || [],
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at),
@@ -46,7 +47,8 @@ vi.mock('../transformers/eventTransformer', () => ({
     location: data.location,
     organizerId,
     communityId,
-    isActive: data.is_active,
+    deletedAt: data.deleted_at ? new Date(data.deleted_at) : null,
+    deletedBy: data.deleted_by,
     tags: data.tags || [],
   })),
   forDbInsert: vi.fn((data) => ({
@@ -182,7 +184,7 @@ describe('createEventService', () => {
       });
 
       // Assert
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
       EventServiceAssertions.expectCommunityFilter(mockQuery, mockCommunity.id);
       EventServiceAssertions.expectResultLength(result, 1);
     });
@@ -201,7 +203,7 @@ describe('createEventService', () => {
       });
 
       // Assert
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
       EventServiceAssertions.expectOrganizerFilter(mockQuery, mockUser.id);
       EventServiceAssertions.expectResultLength(result, 1);
     });
@@ -218,14 +220,15 @@ describe('createEventService', () => {
           start_date_time: new Date('2024-06-01').toISOString(),
           organizer_id: mockUser.id,
           community_id: mockCommunity.id,
-          is_active: true,
+          deleted_at: null,
+          deleted_by: null,
         },
       ];
 
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
         gte: vi.fn().mockReturnThis(),
         lte: vi.fn().mockReturnThis(),
       };
@@ -259,14 +262,15 @@ describe('createEventService', () => {
           start_date_time: new Date().toISOString(),
           organizer_id: mockUser.id,
           community_id: mockCommunity.id,
-          is_active: true,
+          deleted_at: null,
+          deleted_by: null,
         },
       ];
 
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
         or: vi.fn().mockReturnThis(),
       };
 
@@ -356,7 +360,8 @@ describe('createEventService', () => {
           end_date_time: eventData.endDateTime?.toISOString(),
           location: eventData.location,
           tags: eventData.tags,
-          is_active: true,
+          deleted_at: null,
+          deleted_by: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -431,7 +436,8 @@ describe('createEventService', () => {
           description: updateData.description,
           start_date_time: new Date().toISOString(),
           location: 'Test Location',
-          is_active: true,
+          deleted_at: null,
+          deleted_by: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -503,8 +509,8 @@ describe('createEventService', () => {
       expect(mockSupabase.auth!.getUser).toHaveBeenCalled();
       expect(mockSupabase.from).toHaveBeenCalledWith('events');
       expect(mockUpdateQuery.update).toHaveBeenCalledWith({
-        is_active: false,
-        updated_at: expect.any(String),
+        deleted_at: expect.any(String),
+        deleted_by: mockUser.id,
       });
       expect(mockUpdateQuery.eq).toHaveBeenCalledWith('id', mockEvent.id);
     });
@@ -534,7 +540,8 @@ describe('createEventService', () => {
         community_id: mockCommunity.id,
         start_date_time: new Date().toISOString(),
         location: 'Test Location',
-        is_active: true,
+        deleted_at: null,
+        deleted_by: null,
         tags: [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -548,7 +555,8 @@ describe('createEventService', () => {
         community_id: mockCommunity.id,
         start_date_time: new Date().toISOString(),
         location: 'Test Location',
-        is_active: false, // Soft deleted
+        deleted_at: '2024-01-01T00:00:00Z', // Soft deleted
+        deleted_by: 'admin-123',
         tags: [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -558,9 +566,11 @@ describe('createEventService', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({
+          data: [activeEvent], // After soft deletion filter, should return only non-deleted events
+          error: null,
+        }),
         eq: vi.fn().mockReturnThis(),
-        data: [activeEvent], // After fix, should return only active event
-        error: null,
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
@@ -574,26 +584,27 @@ describe('createEventService', () => {
       expect(mockQuery.order).toHaveBeenCalledWith('start_date_time', {
         ascending: true,
       });
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true); // Key assertion - defaults to active only
+      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null); // Key assertion - soft deletion filter
 
       // Assert: Verify the output behavior
       expect(result).toHaveLength(1);
-      expect(result.every((event) => event.isActive)).toBe(true);
       expect(
         result.find((event) => event.id === 'inactive-event-1')
       ).toBeUndefined();
     });
 
-    it('should verify the isActive filter logic with undefined filters', async () => {
-      // This test specifically checks the logic: filters?.isActive !== undefined ? filters.isActive : true
+    it('should verify the soft deletion filter logic with undefined filters', async () => {
+      // This test specifically checks the soft deletion logic: applyDeletedFilter(query, filters?.includeDeleted)
 
       // Mock query object
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
         eq: vi.fn().mockReturnThis(),
-        data: [],
-        error: null,
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
@@ -601,20 +612,22 @@ describe('createEventService', () => {
       // Act: Call fetchEvents with undefined filters (like integration test)
       await eventService.fetchEvents(undefined);
 
-      // Assert: Verify the isActive logic produces true when filters is undefined
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      // Assert: Verify the soft deletion filter produces deleted_at IS NULL when filters is undefined
+      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
     });
 
-    it('should verify the isActive filter logic with empty filters object', async () => {
+    it('should verify the soft deletion filter logic with empty filters object', async () => {
       // This test specifically checks the logic with empty object: {}
 
       // Mock query object
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
         eq: vi.fn().mockReturnThis(),
-        data: [],
-        error: null,
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
@@ -622,8 +635,8 @@ describe('createEventService', () => {
       // Act: Call fetchEvents with empty filters object
       await eventService.fetchEvents({});
 
-      // Assert: Verify the isActive logic produces true when filters.isActive is undefined
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+      // Assert: Verify the soft deletion filter produces deleted_at IS NULL when filters.includeDeleted is undefined
+      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
     });
 
     it('should demonstrate the actual logic flaw', () => {

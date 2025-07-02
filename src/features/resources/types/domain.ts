@@ -6,6 +6,8 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
   owner: User;
   community?: Community;
+  deletedAt?: Date;
+  deletedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,7 +32,6 @@ export interface ResourceData {
   parkingInfo?: string;
   meetupFlexibility?: MeetupFlexibility;
   availability?: string;
-  isActive: boolean;
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
@@ -51,7 +52,7 @@ export interface ResourceFilter {
   type?: 'offer' | 'request' | 'all';
   communityId?: string;
   ownerId?: string;
-  isActive?: boolean;
+  includeDeleted?: boolean;
   maxDriveMinutes?: number;
   searchTerm?: string;
   minTrustScore?: number;

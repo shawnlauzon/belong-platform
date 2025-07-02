@@ -16,6 +16,8 @@ export interface Shoutout
   fromUser: User;
   toUser: User;
   resource: Resource;
+  deletedAt?: Date;
+  deletedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +26,7 @@ export interface ShoutoutFilter {
   sentBy?: string;
   receivedBy?: string;
   resourceId?: string;
+  includeDeleted?: boolean;
   page?: number;
   pageSize?: number;
 }

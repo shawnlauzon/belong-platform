@@ -42,7 +42,6 @@ export function toDomainCommunity(
     center: coords,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
-    isActive: dbCommunity.is_active,
     deletedAt: dbCommunity.deleted_at
       ? new Date(dbCommunity.deleted_at)
       : undefined,
@@ -87,7 +86,6 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     time_zone: timeZone,
     radius_km: radiusKm,
     member_count: memberCount,
-    is_active: true, // New communities are always active
   };
 }
 
@@ -169,7 +167,6 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     level: dbCommunity.level,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
-    isActive: dbCommunity.is_active,
     deletedAt: dbCommunity.deleted_at
       ? new Date(dbCommunity.deleted_at)
       : undefined,

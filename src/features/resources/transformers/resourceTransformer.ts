@@ -40,12 +40,13 @@ export function toDomainResource(
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    isActive: dbResource.is_active === true, // CRITICAL FIX: Only true when explicitly true
     availability: dbResource.availability ?? 'available',
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
     pickupInstructions: dbResource.pickup_instructions ?? undefined,
     imageUrls: dbResource.image_urls || [],
+    deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
+    deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     owner: refs.owner,
@@ -66,7 +67,6 @@ export function forDbInsert(
     pickupInstructions,
     parkingInfo,
     meetupFlexibility,
-    isActive,
     ...rest
   } = resource;
 
@@ -78,7 +78,6 @@ export function forDbInsert(
     pickup_instructions: pickupInstructions,
     parking_info: parkingInfo,
     meetup_flexibility: meetupFlexibility,
-    is_active: isActive,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
   };
 }
@@ -99,7 +98,6 @@ export function forDbUpdate(
     parking_info: resource.parkingInfo,
     pickup_instructions: resource.pickupInstructions,
     image_urls: resource.imageUrls,
-    is_active: resource.isActive,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
     community_id: resource.communityId,
@@ -123,12 +121,13 @@ export function toResourceInfo(
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    isActive: dbResource.is_active === true, // CRITICAL FIX: Only true when explicitly true
     availability: dbResource.availability ?? 'available',
     meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
     parkingInfo: dbResource.parking_info ?? undefined,
     pickupInstructions: dbResource.pickup_instructions ?? undefined,
     imageUrls: dbResource.image_urls || [],
+    deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
+    deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: ownerId,

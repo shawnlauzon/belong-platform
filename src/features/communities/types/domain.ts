@@ -11,7 +11,6 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   updatedAt: Date;
 
   // Soft delete fields
-  isActive: boolean;
   deletedAt?: Date;
   deletedBy?: string;
 
@@ -61,7 +60,7 @@ export interface CommunityFilter {
   level?: string;
   organizerId?: string;
   parentId?: string;
-  isActive?: boolean;
+  includeDeleted?: boolean;
 }
 
 // Community membership types

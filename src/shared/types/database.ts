@@ -19,7 +19,6 @@ export type Database = {
           hierarchy_path: Json
           icon: string | null
           id: string
-          is_active: boolean
           level: string
           member_count: number
           name: string
@@ -38,7 +37,6 @@ export type Database = {
           hierarchy_path: Json
           icon?: string | null
           id?: string
-          is_active?: boolean
           level: string
           member_count?: number
           name: string
@@ -57,7 +55,6 @@ export type Database = {
           hierarchy_path?: Json
           icon?: string | null
           id?: string
-          is_active?: boolean
           level?: string
           member_count?: number
           name?: string
@@ -123,6 +120,8 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           last_activity_at: string
           last_message_id: string | null
@@ -132,6 +131,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -141,6 +142,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -177,6 +180,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           from_user_id: string
           id: string
           read_at: string | null
@@ -187,6 +192,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id: string
           id?: string
           read_at?: string | null
@@ -197,6 +204,8 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id?: string
           id?: string
           read_at?: string | null
@@ -268,11 +277,12 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           end_date_time: string | null
           id: string
           image_urls: string[]
-          is_active: boolean
           is_all_day: boolean
           location: string
           max_attendees: number | null
@@ -289,11 +299,12 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           end_date_time?: string | null
           id?: string
           image_urls?: string[]
-          is_active?: boolean
           is_all_day?: boolean
           location: string
           max_attendees?: number | null
@@ -310,11 +321,12 @@ export type Database = {
           community_id?: string
           coordinates?: unknown
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           end_date_time?: string | null
           id?: string
           image_urls?: string[]
-          is_active?: boolean
           is_all_day?: boolean
           location?: string
           max_attendees?: number | null
@@ -375,6 +387,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
           email: string
           id: string
           updated_at: string
@@ -382,6 +395,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           email: string
           id: string
           updated_at?: string
@@ -389,6 +403,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           email?: string
           id?: string
           updated_at?: string
@@ -402,10 +417,11 @@ export type Database = {
           category: string
           community_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           id: string
           image_urls: string[]
-          is_active: boolean
           location: unknown | null
           meetup_flexibility: string | null
           owner_id: string
@@ -420,10 +436,11 @@ export type Database = {
           category: string
           community_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           id?: string
           image_urls?: string[]
-          is_active?: boolean
           location?: unknown | null
           meetup_flexibility?: string | null
           owner_id: string
@@ -438,10 +455,11 @@ export type Database = {
           category?: string
           community_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           id?: string
           image_urls?: string[]
-          is_active?: boolean
           location?: unknown | null
           meetup_flexibility?: string | null
           owner_id?: string
@@ -471,6 +489,8 @@ export type Database = {
       shoutouts: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           from_user_id: string
           id: string
           image_urls: string[]
@@ -482,6 +502,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id: string
           id?: string
           image_urls?: string[]
@@ -493,6 +515,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id?: string
           id?: string
           image_urls?: string[]

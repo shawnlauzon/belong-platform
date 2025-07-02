@@ -24,7 +24,7 @@ export function createMockResource(
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.enumValue(ResourceCategory),
+    category: faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other']),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     imageUrls: Array.from(

@@ -21,7 +21,6 @@ export interface EventData {
   parkingInfo?: string;
   maxAttendees?: number;
   registrationRequired?: boolean;
-  isActive?: boolean;
   tags?: string[];
   imageUrls?: string[];
 }
@@ -32,9 +31,10 @@ export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
   organizer: User;
   attendeeCount: number;
   registrationRequired: boolean;
-  isActive: boolean;
   tags: string[];
   imageUrls: string[];
+  deletedAt?: Date;
+  deletedBy?: string;
   createdAt: Date;
   updatedAt: Date;
   // Optional current user's attendance status
@@ -51,7 +51,7 @@ export interface EventFilter {
   organizerId?: string;
   startDate?: Date;
   endDate?: Date;
-  isActive?: boolean;
+  includeDeleted?: boolean;
   tags?: string[];
   maxDriveMinutes?: number;
   searchTerm?: string;

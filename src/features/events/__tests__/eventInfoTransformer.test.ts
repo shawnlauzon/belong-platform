@@ -22,10 +22,11 @@ describe('EventInfo Transformer', () => {
       parking_info: 'Street parking available',
       max_attendees: 50,
       registration_required: true,
-      is_active: true,
       tags: ['social', 'outdoor'],
       image_urls: ['event1.jpg', 'event2.jpg'],
       attendee_count: 25,
+      deleted_at: null,
+      deleted_by: null,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-02T00:00:00Z',
     });
@@ -46,7 +47,6 @@ describe('EventInfo Transformer', () => {
     expect(result).toHaveProperty('parkingInfo', 'Street parking available');
     expect(result).toHaveProperty('maxAttendees', 50);
     expect(result).toHaveProperty('registrationRequired', true);
-    expect(result).toHaveProperty('isActive', true);
     expect(result).toHaveProperty('tags', ['social', 'outdoor']);
     expect(result).toHaveProperty('imageUrls', ['event1.jpg', 'event2.jpg']);
     expect(result).toHaveProperty('attendeeCount', 25);
@@ -80,7 +80,6 @@ describe('EventInfo Transformer', () => {
       parking_info: null,
       max_attendees: null,
       registration_required: false,
-      is_active: true,
       tags: [],
       image_urls: [],
       attendee_count: 0,
@@ -94,7 +93,6 @@ describe('EventInfo Transformer', () => {
     expect(result.parkingInfo).toBeUndefined();
     expect(result.maxAttendees).toBeUndefined();
     expect(result.registrationRequired).toBe(false);
-    expect(result.isActive).toBe(true);
     expect(result.tags).toEqual([]);
     expect(result.imageUrls).toEqual([]);
     expect(result.attendeeCount).toBe(0);
@@ -105,7 +103,6 @@ describe('EventInfo Transformer', () => {
       'parking_info',
       'max_attendees',
       'registration_required',
-      'is_active',
       'image_urls',
       'attendee_count',
     ]);

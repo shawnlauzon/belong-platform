@@ -17,7 +17,6 @@ export type EventInsertDbData = {
   parking_info?: string;
   max_attendees?: number;
   registration_required?: boolean;
-  is_active?: boolean;
   is_all_day?: boolean;
   tags?: string[];
   image_urls?: string[];
@@ -41,10 +40,11 @@ export function toDomainEvent(
     parking_info,
     max_attendees,
     registration_required,
-    is_active,
     is_all_day,
     image_urls,
     attendee_count,
+    deleted_at,
+    deleted_by,
     created_at,
     updated_at,
     ...rest
@@ -70,11 +70,12 @@ export function toDomainEvent(
     parkingInfo: parking_info || undefined,
     maxAttendees: max_attendees || undefined,
     registrationRequired: registration_required === true, // Default to false if not set
-    isActive: is_active === true, // Only active if explicitly true
     isAllDay: is_all_day === true, // Default to false if not set
     tags: rest.tags || [],
     imageUrls: image_urls || [],
     attendeeCount: attendee_count || 0,
+    deletedAt: deleted_at ? new Date(deleted_at) : null,
+    deletedBy: deleted_by || null,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
     organizer: refs.organizer,
@@ -98,7 +99,6 @@ export function forDbInsert(
     parkingInfo,
     maxAttendees,
     registrationRequired,
-    isActive,
     isAllDay,
     tags,
     imageUrls,
@@ -115,7 +115,6 @@ export function forDbInsert(
     parking_info: parkingInfo || null,
     max_attendees: maxAttendees || null,
     registration_required: registrationRequired || false,
-    is_active: isActive !== false, // Default to true
     is_all_day: isAllDay || false,
     tags: tags || [],
     image_urls: imageUrls || [],
@@ -138,7 +137,6 @@ export function forDbUpdate(
     parkingInfo,
     maxAttendees,
     registrationRequired,
-    isActive,
     isAllDay,
     tags,
     imageUrls,
@@ -155,7 +153,6 @@ export function forDbUpdate(
     parking_info: parkingInfo,
     max_attendees: maxAttendees,
     registration_required: registrationRequired,
-    is_active: isActive,
     is_all_day: isAllDay,
     tags: tags,
     image_urls: imageUrls,
@@ -183,11 +180,12 @@ export function toEventInfo(
     parkingInfo: dbEvent.parking_info || undefined,
     maxAttendees: dbEvent.max_attendees || undefined,
     registrationRequired: dbEvent.registration_required === true, // Default to false if not set
-    isActive: dbEvent.is_active === true, // Only active if explicitly true
     isAllDay: dbEvent.is_all_day === true, // Default to false if not set
     tags: dbEvent.tags || [],
     imageUrls: dbEvent.image_urls || [],
     attendeeCount: dbEvent.attendee_count || 0,
+    deletedAt: dbEvent.deleted_at ? new Date(dbEvent.deleted_at) : null,
+    deletedBy: dbEvent.deleted_by || null,
     createdAt: new Date(dbEvent.created_at),
     updatedAt: new Date(dbEvent.updated_at),
     organizerId: organizerId,

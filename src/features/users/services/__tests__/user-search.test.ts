@@ -16,6 +16,7 @@ describe('User Search Functionality (Database Schema Fix)', () => {
     from: vi.fn(() => mockSupabase),
     select: vi.fn(() => mockSupabase),
     eq: vi.fn(() => mockSupabase),
+    is: vi.fn(() => mockSupabase),
     or: vi.fn(() => mockSupabase),
     order: vi.fn(() => mockSupabase),
     range: vi.fn(() => mockSupabase),
@@ -47,6 +48,8 @@ describe('User Search Functionality (Database Schema Fix)', () => {
     ];
 
     // Mock the final query result  
+    mockSupabase.order.mockReturnValue(mockSupabase);
+    mockSupabase.is.mockReturnValue(mockSupabase);
     const mockQuery = mockSupabase.or.mockResolvedValue({
       data: mockUsers,
       error: null,
@@ -64,6 +67,8 @@ describe('User Search Functionality (Database Schema Fix)', () => {
   test('should handle search with email, first name, and last name using proper JSON syntax', async () => {
     // Arrange: Mock successful query response
     // Mock the final query result
+    mockSupabase.order.mockReturnValue(mockSupabase);
+    mockSupabase.is.mockReturnValue(mockSupabase);
     mockSupabase.or.mockResolvedValue({
       data: [],
       error: null,
@@ -98,7 +103,8 @@ describe('User Search Functionality (Database Schema Fix)', () => {
     ];
 
     // Mock the query result (no search term, so no .or() call)
-    mockSupabase.order.mockResolvedValue({
+    mockSupabase.order.mockReturnValue(mockSupabase);
+    mockSupabase.is.mockResolvedValue({
       data: mockUsers,
       error: null,
     });

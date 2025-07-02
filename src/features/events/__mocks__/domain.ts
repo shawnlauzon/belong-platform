@@ -44,7 +44,6 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
       ? faker.number.int({ min: 5, max: 100 })
       : undefined,
     registrationRequired: false, // Default to false
-    isActive: true, // Default to true
     tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
       faker.lorem.word()
     ),
@@ -53,6 +52,8 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
       () => faker.image.urlLoremFlickr({ category: 'event' })
     ),
     attendeeCount: faker.number.int({ min: 0, max: 50 }),
+    deletedAt: undefined,
+    deletedBy: undefined,
     createdAt: now,
     updatedAt: now,
     organizer,
@@ -132,7 +133,6 @@ export function createMockEventData(
       ? faker.number.int({ min: 5, max: 100 })
       : undefined,
     registrationRequired: faker.datatype.boolean(),
-    isActive: faker.datatype.boolean(),
     tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
       faker.lorem.word()
     ),

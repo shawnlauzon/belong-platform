@@ -33,7 +33,6 @@ describe('Community Schema Validation Tests', () => {
         'hierarchy_path',
         'icon',
         'id',
-        'is_active',
         'level',
         'member_count',
         'name',
@@ -109,7 +108,6 @@ describe('Community Schema Validation Tests', () => {
         'description',
         'hierarchy_path',
         'id',
-        'is_active',
         'level',
         'member_count',
         'name',
@@ -143,7 +141,8 @@ describe('Community Schema Validation Tests', () => {
       expect(mockRow).toHaveProperty('organizer_id');
       expect(mockRow).toHaveProperty('created_at');
       expect(mockRow).toHaveProperty('updated_at');
-      expect(mockRow).toHaveProperty('is_active');
+      expect(mockRow).toHaveProperty('deleted_at');
+      expect(mockRow).toHaveProperty('deleted_by');
 
       // Fields that we know should NOT exist (would catch copy-paste errors)
       expect(mockRow).not.toHaveProperty('updated_by');

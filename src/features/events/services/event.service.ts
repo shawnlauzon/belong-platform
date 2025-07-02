@@ -24,27 +24,20 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
 import { User } from '../../users';
+import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
 
 export const createEventService = (supabase: SupabaseClient<Database>) => ({
   async fetchEvents(filters?: EventFilter): Promise<EventInfo[]> {
     logger.debug('🎉 Event Service: Fetching events', { filters });
 
     try {
-      // CRITICAL FIX: Always filter for active events first, then apply other filters
       let query = supabase
         .from('events')
         .select('*')
-        .eq('is_active', true) // Force active events only
         .order('start_date_time', { ascending: true });
 
-      // Only allow explicit inactive filtering if specifically requested
-      if (filters?.isActive === false) {
-        query = supabase
-          .from('events')
-          .select('*')
-          .eq('is_active', false)
-          .order('start_date_time', { ascending: true });
-      }
+      // Apply deleted filter
+      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply other filters if provided
       if (filters) {
@@ -86,18 +79,22 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id)
       );
 
-      // CRITICAL FIX: Filter out inactive events at the application level
-      // This ensures soft-deleted events never appear regardless of database filtering issues
-      const activeEvents = events.filter((event) => event.isActive === true);
+      // Defensive application-level filtering as safety net
+      const filteredEvents = events.filter((event) => {
+        if (!filters?.includeDeleted && event.deletedAt) {
+          return false;
+        }
+        return true;
+      });
 
       logger.debug('🎉 Event Service: Successfully fetched events', {
         totalCount: events.length,
-        activeCount: activeEvents.length,
-        filteredOut: events.length - activeEvents.length,
+        filteredCount: filteredEvents.length,
+        filteredOut: events.length - filteredEvents.length,
         filters,
       });
 
-      return activeEvents;
+      return filteredEvents;
     } catch (error) {
       logger.error('🎉 Event Service: Error fetching events', {
         filters,
@@ -108,15 +105,19 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchEventById(id: string): Promise<Event | null> {
-    logger.debug('🎉 Event Service: Fetching event by ID', { id });
+  async fetchEventById(id: string, options?: { includeDeleted?: boolean }): Promise<Event | null> {
+    logger.debug('🎉 Event Service: Fetching event by ID', { id, options });
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('events')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, options?.includeDeleted);
+
+      const { data, error } = await query.single();
 
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
@@ -149,10 +150,16 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
       const event = toDomainEvent(data, { organizer, community });
 
+      // Defensive application-level check
+      if (!options?.includeDeleted && event.deletedAt) {
+        return null;
+      }
+
       logger.debug('🎉 Event Service: Successfully fetched event', {
         id,
         organizerId: event.organizer.id,
         communityId: event.community?.id,
+        deletedAt: event.deletedAt,
       });
 
       return event;
@@ -332,13 +339,10 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('You are not authorized to delete this event');
       }
 
-      // Perform the soft delete (set is_active to false)
+      // Perform the soft delete
       const { error: deleteError } = await supabase
         .from('events')
-        .update({
-          is_active: false,
-          updated_at: new Date().toISOString(),
-        })
+        .update(createSoftDeleteUpdate(userId))
         .eq('id', id);
 
       if (deleteError) {

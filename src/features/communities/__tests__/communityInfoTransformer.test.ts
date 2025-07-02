@@ -23,7 +23,6 @@ describe('CommunityInfo Transformer', () => {
       ]),
       time_zone: 'America/New_York',
       member_count: 150,
-      is_active: true,
       deleted_at: null,
       deleted_by: null,
       created_at: '2024-01-01T00:00:00Z',
@@ -44,7 +43,6 @@ describe('CommunityInfo Transformer', () => {
     expect(result).toHaveProperty('hierarchyPath');
     expect(result).toHaveProperty('timeZone', 'America/New_York');
     expect(result).toHaveProperty('memberCount', 150);
-    expect(result).toHaveProperty('isActive', true);
     expect(result).toHaveProperty('deletedAt', undefined);
     expect(result).toHaveProperty('deletedBy', undefined);
     expect(result).toHaveProperty('createdAt');
@@ -55,7 +53,6 @@ describe('CommunityInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
-      'is_active',
     ]);
 
     // Assert - Should not have nested objects
@@ -82,7 +79,6 @@ describe('CommunityInfo Transformer', () => {
       hierarchy_path: null,
       time_zone: 'UTC',
       member_count: 1,
-      is_active: false,
       deleted_at: '2024-01-15T00:00:00Z',
       deleted_by: 'admin-123',
     });
@@ -100,7 +96,6 @@ describe('CommunityInfo Transformer', () => {
     expect(result.hierarchyPath).toEqual([]);
     expect(result.timeZone).toBe('UTC');
     expect(result.memberCount).toBe(1);
-    expect(result.isActive).toBe(false);
     expect(result.deletedAt).toEqual(new Date('2024-01-15T00:00:00Z'));
     expect(result.deletedBy).toBe('admin-123');
 
@@ -109,7 +104,6 @@ describe('CommunityInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.COMMUNITY_FIELDS,
-      'is_active',
     ]);
   });
 });

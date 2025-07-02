@@ -20,6 +20,7 @@ import type {
   PostgrestFilterBuilder,
 } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
+import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
 
 // Helper function to apply common filters to a query
 const applyResourceFilters = (
@@ -41,16 +42,17 @@ const applyResourceFilters = (
   return query;
 };
 
-// Helper function to build base query with activity filter
+// Helper function to build base query with deletion filter
 const buildResourceQuery = (
   supabase: SupabaseClient<Database>,
-  isActive: boolean
+  includeDeleted?: boolean
 ) => {
-  return supabase
+  let query = supabase
     .from('resources')
     .select('*')
-    .eq('is_active', isActive)
     .order('created_at', { ascending: false });
+  
+  return applyDeletedFilter(query, includeDeleted);
 };
 
 export const createResourceService = (supabase: SupabaseClient<Database>) => ({
@@ -58,11 +60,8 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
     logger.debug('📚 API: Fetching resources', { filters });
 
     try {
-      // CRITICAL FIX: Determine activity filter (defaults to active)
-      const requestedActiveState = filters?.isActive !== false;
-
-      // Build base query with activity filter
-      let query = buildResourceQuery(supabase, requestedActiveState);
+      // Build base query with deletion filter
+      let query = buildResourceQuery(supabase, filters?.includeDeleted);
 
       // Apply additional filters if provided
       if (filters) {
@@ -85,16 +84,17 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         toResourceInfo(dbResource, dbResource.owner_id, dbResource.community_id)
       );
 
-      // CRITICAL FIX: Defensive application-level filtering as safety net
-      const expectedActiveState = filters?.isActive !== false;
-      const filteredResources = resources.filter(
-        (resource) => resource.isActive === expectedActiveState
-      );
+      // Defensive application-level filtering as safety net
+      const filteredResources = resources.filter((resource) => {
+        if (!filters?.includeDeleted && resource.deletedAt) {
+          return false;
+        }
+        return true;
+      });
 
       logger.debug('📚 API: Successfully fetched resources', {
         count: filteredResources.length,
         totalFromDb: resources.length,
-        expectedActiveState,
         filters,
       });
 
@@ -109,15 +109,19 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchResourceById(id: string): Promise<Resource | null> {
-    logger.debug('📚 API: Fetching resource by ID', { id });
+  async fetchResourceById(id: string, options?: { includeDeleted?: boolean }): Promise<Resource | null> {
+    logger.debug('📚 API: Fetching resource by ID', { id, options });
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('resources')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, options?.includeDeleted);
+
+      const { data, error } = await query.single();
 
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
@@ -159,10 +163,16 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         community: community || undefined,
       });
 
+      // Defensive application-level check
+      if (!options?.includeDeleted && resource.deletedAt) {
+        return null;
+      }
+
       logger.debug('📚 API: Successfully fetched resource', {
         id,
         ownerId: resource.owner.id,
         communityId: resource.community?.id,
+        deletedAt: resource.deletedAt,
       });
 
       return resource;
@@ -359,16 +369,13 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('You are not authorized to delete this resource');
       }
 
-      // Perform the soft delete (set is_active to false)
+      // Perform the soft delete
       logger.debug('📚 Resource Service: Performing soft delete update', {
         id,
       });
       const { error: deleteError } = await supabase
         .from('resources')
-        .update({
-          is_active: false,
-          updated_at: new Date().toISOString(),
-        })
+        .update(createSoftDeleteUpdate(userId))
         .eq('id', id);
 
       logger.debug('📚 Resource Service: Update result', {

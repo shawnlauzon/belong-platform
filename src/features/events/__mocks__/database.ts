@@ -26,7 +26,6 @@ export function createMockDbEvent(overrides: Partial<EventRow> = {}): EventRow {
       ? faker.number.int({ min: 5, max: 100 })
       : null,
     registration_required: faker.datatype.boolean(),
-    is_active: faker.datatype.boolean(),
     is_all_day: faker.datatype.boolean(),
     tags: Array.from({ length: faker.number.int({ min: 0, max: 5 }) }, () =>
       faker.lorem.word()
@@ -36,6 +35,8 @@ export function createMockDbEvent(overrides: Partial<EventRow> = {}): EventRow {
       () => faker.image.urlLoremFlickr({ category: 'event' })
     ),
     attendee_count: faker.number.int({ min: 0, max: 50 }),
+    deleted_at: null,
+    deleted_by: null,
     created_at: now,
     updated_at: now,
     ...overrides,

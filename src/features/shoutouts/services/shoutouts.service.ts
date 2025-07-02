@@ -18,6 +18,7 @@ import { ERROR_CODES } from '../../../api/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { ShoutoutRow } from '../types/database';
+import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
 
 /**
  * Validates shoutout creation business rules
@@ -67,6 +68,9 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
+      // Apply deleted filter
+      query = applyDeletedFilter(query, filters?.includeDeleted);
+
       // Apply filters if provided
       if (filters) {
         if (filters.sentBy) {
@@ -113,12 +117,21 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         })
         .filter((shoutout): shoutout is ShoutoutInfo => shoutout !== null);
 
+      // Defensive application-level filtering as safety net
+      const filteredShoutouts = shoutout.filter((shoutout) => {
+        if (!filters?.includeDeleted && shoutout.deletedAt) {
+          return false;
+        }
+        return true;
+      });
+
       logger.debug('📢 Shoutouts Service: Successfully fetched shoutout', {
-        count: shoutout.length,
+        count: filteredShoutouts.length,
+        totalFromDb: shoutout.length,
         filters,
       });
 
-      return shoutout;
+      return filteredShoutouts;
     } catch (error) {
       logger.error('📢 Shoutouts Service: Error fetching shoutout', {
         filters,
@@ -129,15 +142,19 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchShoutoutById(id: string): Promise<Shoutout | null> {
-    logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', { id });
+  async fetchShoutoutById(id: string, options?: { includeDeleted?: boolean }): Promise<Shoutout | null> {
+    logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', { id, options });
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('shoutouts')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, options?.includeDeleted);
+
+      const { data, error } = await query.single();
 
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
@@ -168,11 +185,17 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       const shoutout = toDomainShoutout(data, { fromUser, toUser, resource });
 
+      // Defensive application-level check
+      if (!options?.includeDeleted && shoutout.deletedAt) {
+        return null;
+      }
+
       logger.debug('📢 Shoutouts Service: Successfully fetched shoutout', {
         id,
         fromUserId: shoutout.fromUser.id,
         toUserId: shoutout.toUser.id,
         resourceId: shoutout.resource.id,
+        deletedAt: shoutout.deletedAt,
       });
 
       return shoutout;
@@ -392,10 +415,10 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('You are not authorized to delete this shoutout');
       }
 
-      // Perform the delete
+      // Perform the soft delete
       const { error: deleteError } = await supabase
         .from('shoutouts')
-        .delete()
+        .update(createSoftDeleteUpdate(userId))
         .eq('id', id);
 
       if (deleteError) {

@@ -9,6 +9,7 @@ import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
 import { ProfileUpdateDbData } from '../types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
   async fetchUsers(options?: UserFilter): Promise<User[]> {
@@ -19,6 +20,9 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, options?.includeDeleted);
 
       // Apply search filter if provided
       if (options?.searchTerm) {
@@ -43,10 +47,20 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       }
 
       const users = (data || []).map(toDomainUser);
-      logger.debug('👤 API: Successfully fetched users', {
-        count: users.length,
+
+      // Defensive application-level filtering as safety net
+      const filteredUsers = users.filter((user) => {
+        if (!options?.includeDeleted && user.deletedAt) {
+          return false;
+        }
+        return true;
       });
-      return users;
+
+      logger.debug('👤 API: Successfully fetched users', {
+        count: filteredUsers.length,
+        totalFromDb: users.length,
+      });
+      return filteredUsers;
     } catch (error) {
       logger.error('👤 API: Error fetching users', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -56,15 +70,19 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchUserById(id: string): Promise<User | null> {
-    logger.debug('👤 API: Fetching user by ID', { id });
+  async fetchUserById(id: string, options?: { includeDeleted?: boolean }): Promise<User | null> {
+    logger.debug('👤 API: Fetching user by ID', { id, options });
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, options?.includeDeleted);
+
+      const { data, error } = await query.single();
 
       if (error) {
         if (error.code === ERROR_CODES.NOT_FOUND) {
@@ -77,9 +95,16 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       }
 
       const user = toDomainUser(data);
+
+      // Defensive application-level check
+      if (!options?.includeDeleted && user.deletedAt) {
+        return null;
+      }
+
       logger.debug('👤 API: Successfully fetched user', {
         id,
         email: user.email,
+        deletedAt: user.deletedAt,
       });
       return user;
     } catch (error) {

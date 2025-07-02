@@ -27,6 +27,7 @@ describe('Resource Service - Soft Delete Bug Fix', () => {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
     } as any;
 
@@ -50,9 +51,8 @@ describe('Resource Service - Soft Delete Bug Fix', () => {
     // Assert: Service should have applied default active filtering
     ResourceServiceAssertions.expectFetchResourcesQuery(mockSupabase);
 
-    // Should only return active resources due to application-level filtering
+    // Should only return non-deleted resources due to soft deletion filtering
     expect(result).toHaveLength(1);
-    expect(result[0].isActive).toBe(true);
     expect(result[0].id).toBe('resource-active');
 
     // Verify inactive resource was filtered out
@@ -80,18 +80,17 @@ describe('Resource Service - Soft Delete Bug Fix', () => {
     mockSupabase.from.mockReturnValue(mockSupabase);
     mockSupabase.select.mockReturnValue(mockSupabase);
     mockSupabase.eq.mockReturnValue(mockSupabase);
+    mockSupabase.is.mockReturnValue(mockSupabase);
     mockSupabase.order.mockReturnValue({
       data: mockInactiveResources,
       error: null,
     });
 
-    // Act: Explicitly request inactive resources
-    const result = await resourceService.fetchResources({ isActive: false });
+    // Act: Explicitly request including deleted resources
+    const result = await resourceService.fetchResources({ includeDeleted: true });
 
-    // Assert: Should query for inactive resources when explicitly requested
-    expect(mockSupabase.eq).toHaveBeenCalledWith('is_active', false);
+    // Assert: Should include deleted resources when explicitly requested
     expect(result).toHaveLength(1);
-    expect(result[0].isActive).toBe(false);
     expect(result[0].id).toBe('resource-inactive');
   });
 });
@@ -105,6 +104,7 @@ describe('fetchResourceById', () => {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       single: vi
         .fn()
         .mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
@@ -124,7 +124,8 @@ describe('fetchResourceById', () => {
       description: 'Test description',
       owner_id: 'user-1',
       community_id: 'community-1',
-      is_active: true,
+      deleted_at: null,
+      deleted_by: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -134,6 +135,7 @@ describe('fetchResourceById', () => {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: mockResourceData,
         error: null,
@@ -145,6 +147,7 @@ describe('fetchResourceById', () => {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: null,
         error: { code: 'PGRST116' },

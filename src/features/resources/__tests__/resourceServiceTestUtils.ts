@@ -11,17 +11,18 @@ import { vi } from 'vitest';
  * 
  * @param mockSupabase - The mock Supabase client object
  * @param finalMethodResult - Result to return from the final method
- * @param finalMethod - The method that resolves (defaults to 'order')
+ * @param finalMethod - The method that resolves (defaults to 'is')
  */
 export function setupChainableResourceQuery(
   mockSupabase: any,
   finalMethodResult: { data: any; error: any },
-  finalMethod: string = 'order'
+  finalMethod: string = 'is'
 ) {
   mockSupabase.from.mockReturnValue(mockSupabase);
   mockSupabase.select.mockReturnValue(mockSupabase);
+  mockSupabase.order.mockReturnValue(mockSupabase);
   mockSupabase.eq.mockReturnValue(mockSupabase);
-  mockSupabase[finalMethod].mockReturnValue(finalMethodResult);
+  mockSupabase.is.mockReturnValue(finalMethodResult);
   
   return mockSupabase;
 }
@@ -41,7 +42,8 @@ export function createMockDbResource(overrides: Partial<any> = {}) {
     description: 'Test Description',
     owner_id: 'user-1',
     community_id: 'community-1',
-    is_active: true,
+    deleted_at: null,
+    deleted_by: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -79,10 +81,10 @@ export const ResourceServiceAssertions = {
   expectFetchResourcesQuery: (mockSupabase: any) => {
     expect(mockSupabase.from).toHaveBeenCalledWith('resources');
     expect(mockSupabase.select).toHaveBeenCalledWith('*');
-    expect(mockSupabase.eq).toHaveBeenCalledWith('is_active', true);
     expect(mockSupabase.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
     });
+    expect(mockSupabase.is).toHaveBeenCalledWith('deleted_at', null);
   },
 
   /**
@@ -93,11 +95,11 @@ export const ResourceServiceAssertions = {
   },
 
   /**
-   * Asserts only active resources in result
+   * Asserts only non-deleted resources in result
    */
-  expectOnlyActiveResources: (result: any[]) => {
+  expectOnlyNonDeletedResources: (result: any[]) => {
     result.forEach(resource => {
-      expect(resource.is_active).toBe(true);
+      expect(resource.deletedAt).toBeUndefined();
     });
   },
 };
@@ -107,30 +109,32 @@ export const ResourceServiceAssertions = {
  */
 export const TestData = {
   /**
-   * Active resource for testing fetch operations
+   * Non-deleted resource for testing fetch operations
    */
   activeResource: () =>
     createMockDbResource({
       id: 'resource-active',
       title: 'Active Resource',
-      is_active: true,
+      deleted_at: null,
+      deleted_by: null,
     }),
 
   /**
-   * Inactive resource for testing soft delete behavior
+   * Deleted resource for testing soft delete behavior
    */
-  inactiveResource: () =>
+  deletedResource: () =>
     createMockDbResource({
-      id: 'resource-inactive', 
-      title: 'Inactive Resource',
-      is_active: false,
+      id: 'resource-deleted', 
+      title: 'Deleted Resource',
+      deleted_at: new Date().toISOString(),
+      deleted_by: 'user-admin',
     }),
 
   /**
-   * Mixed active and inactive resources for testing filtering
+   * Mixed active and deleted resources for testing filtering
    */
   mixedResources: () => [
     TestData.activeResource(),
-    TestData.inactiveResource(),
+    TestData.deletedResource(),
   ],
 };

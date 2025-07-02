@@ -11,6 +11,7 @@ import { vi } from 'vitest';
 export type QueryMethod = 
   | 'select' 
   | 'eq' 
+  | 'is'
   | 'order' 
   | 'single' 
   | 'update' 
@@ -124,13 +125,13 @@ export function createMockDbCommunities(
  */
 export const CommunityServiceAssertions = {
   /**
-   * Asserts standard fetchCommunities query pattern
+   * Asserts standard fetchCommunities query pattern with soft deletion
    */
   expectFetchCommunitiesQuery: (mockSupabase: any, mockQuery: any) => {
     expect(mockSupabase.from).toHaveBeenCalledWith('communities');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
+    expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
   },
 
   /**
@@ -187,13 +188,13 @@ export const CommunityServiceAssertions = {
  */
 export const QuerySetups = {
   /**
-   * Standard fetchCommunities query (select, order, eq) - eq resolves last
+   * Standard fetchCommunities query (select, order, is) - is resolves last for soft deletion
    */
   fetchCommunities: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'order', 'eq'],
-      'eq',
+      ['select', 'order', 'is'],
+      'is',
       { data, error }
     ),
 

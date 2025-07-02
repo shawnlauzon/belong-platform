@@ -18,6 +18,7 @@ import {
   forDbInsert as forDbMessageInsert,
 } from '../transformers/messageTransformer';
 import { createUserService } from '../../users/services/user.service';
+import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
 
 /**
  * Conversations Service Factory
@@ -42,6 +43,9 @@ export const createConversationsService = (
         .select('*')
         .or(`participant_1_id.eq.${userId},participant_2_id.eq.${userId}`)
         .order('last_message_at', { ascending: false });
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply filters if provided
       if (filters?.hasUnread !== undefined) {
@@ -98,12 +102,21 @@ export const createConversationsService = (
       // Transform conversations with user data
       const conversations = data.map((conv) => toConversationInfo(conv));
 
+      // Defensive application-level filtering as safety net
+      const filteredConversations = conversations.filter((conversation) => {
+        if (!filters?.includeDeleted && conversation.deletedAt) {
+          return false;
+        }
+        return true;
+      });
+
       logger.info('💬 API: Successfully fetched conversations', {
-        count: conversations.length,
+        count: filteredConversations.length,
+        totalFromDb: conversations.length,
         userId,
       });
 
-      return conversations;
+      return filteredConversations;
     } catch (error) {
       logger.error('💬 API: Failed to fetch conversations', { error, userId });
       throw error;
@@ -125,6 +138,9 @@ export const createConversationsService = (
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false });
+
+      // Apply deleted filter
+      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply pagination
       const page = filters?.page || 1;
@@ -172,12 +188,21 @@ export const createConversationsService = (
       // Transform messages with user data
       const messages = data.map((msg) => toMessageInfo(msg));
 
+      // Defensive application-level filtering as safety net
+      const filteredMessages = messages.filter((message) => {
+        if (!filters?.includeDeleted && message.deletedAt) {
+          return false;
+        }
+        return true;
+      });
+
       logger.info('💬 API: Successfully fetched messages', {
-        count: messages.length,
+        count: filteredMessages.length,
+        totalFromDb: messages.length,
         conversationId,
       });
 
-      return messages;
+      return filteredMessages;
     } catch (error) {
       logger.error('💬 API: Failed to fetch messages', {
         error,
@@ -333,6 +358,146 @@ export const createConversationsService = (
       logger.info('💬 API: Successfully marked message as read', { messageId });
     } catch (error) {
       logger.error('💬 API: Failed to mark message as read', {
+        error,
+        messageId,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * Soft delete a conversation
+   */
+  async deleteConversation(conversationId: string): Promise<void> {
+    logger.debug('💬 API: Deleting conversation', { conversationId });
+
+    try {
+      // Get current user
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+
+      if (userError || !userData?.user?.id) {
+        logger.error('💬 API: User must be authenticated to delete a conversation', {
+          error: userError,
+        });
+        throw new Error('User must be authenticated to delete a conversation');
+      }
+
+      const userId = userData.user.id;
+
+      // Fetch existing conversation to verify user is a participant
+      const { data: existingConversation, error: fetchError } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('id', conversationId)
+        .single();
+
+      if (fetchError) {
+        logger.error('💬 API: Failed to fetch conversation for deletion', {
+          conversationId,
+          error: fetchError,
+        });
+        throw fetchError;
+      }
+
+      // Check if the current user is a participant
+      if (
+        existingConversation.participant_1_id !== userId &&
+        existingConversation.participant_2_id !== userId
+      ) {
+        logger.error('💬 API: User is not a participant in this conversation', {
+          userId,
+          conversationId,
+        });
+        throw new Error('You are not authorized to delete this conversation');
+      }
+
+      // Perform the soft delete
+      const { error: deleteError } = await supabase
+        .from('conversations')
+        .update(createSoftDeleteUpdate(userId))
+        .eq('id', conversationId);
+
+      if (deleteError) {
+        logger.error('💬 API: Failed to delete conversation', {
+          conversationId,
+          error: deleteError,
+        });
+        throw deleteError;
+      }
+
+      logger.info('💬 API: Successfully deleted conversation', { conversationId });
+    } catch (error) {
+      logger.error('💬 API: Failed to delete conversation', {
+        error,
+        conversationId,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * Soft delete a message
+   */
+  async deleteMessage(messageId: string): Promise<void> {
+    logger.debug('💬 API: Deleting message', { messageId });
+
+    try {
+      // Get current user
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+
+      if (userError || !userData?.user?.id) {
+        logger.error('💬 API: User must be authenticated to delete a message', {
+          error: userError,
+        });
+        throw new Error('User must be authenticated to delete a message');
+      }
+
+      const userId = userData.user.id;
+
+      // Fetch existing message to verify user is the sender
+      const { data: existingMessage, error: fetchError } = await supabase
+        .from('direct_messages')
+        .select('from_user_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) {
+        logger.error('💬 API: Failed to fetch message for deletion', {
+          messageId,
+          error: fetchError,
+        });
+        throw fetchError;
+      }
+
+      // Check if the current user is the sender
+      if (existingMessage.from_user_id !== userId) {
+        logger.error('💬 API: User is not the sender of this message', {
+          userId,
+          messageId,
+          senderId: existingMessage.from_user_id,
+        });
+        throw new Error('You are not authorized to delete this message');
+      }
+
+      // Perform the soft delete
+      const { error: deleteError } = await supabase
+        .from('direct_messages')
+        .update(createSoftDeleteUpdate(userId))
+        .eq('id', messageId);
+
+      if (deleteError) {
+        logger.error('💬 API: Failed to delete message', {
+          messageId,
+          error: deleteError,
+        });
+        throw deleteError;
+      }
+
+      logger.info('💬 API: Successfully deleted message', { messageId });
+    } catch (error) {
+      logger.error('💬 API: Failed to delete message', {
         error,
         messageId,
       });

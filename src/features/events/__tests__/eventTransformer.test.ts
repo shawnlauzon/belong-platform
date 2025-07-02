@@ -87,7 +87,8 @@ describe('Event Transformer', () => {
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
         registration_required: undefined,
-        is_active: undefined,
+        deleted_at: null,
+        deleted_by: null,
       });
 
       const event = toDomainEvent(dbEvent, {
@@ -97,17 +98,18 @@ describe('Event Transformer', () => {
 
       expect(event).toMatchObject({
         registrationRequired: false,
-        isActive: false, // null is_active should be false
+        deletedAt: null, // null deleted_at should be null
       });
     });
 
-    it('should handle explicitly true is_active', () => {
+    it('should handle non-deleted events correctly', () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
-        is_active: true,
+        deleted_at: null,
+        deleted_by: null,
       });
 
       const event = toDomainEvent(dbEvent, {
@@ -115,16 +117,19 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.isActive).toBe(true); // explicitly true is_active should be true
+      expect(event.deletedAt).toBe(null); // null deleted_at should be null
+      expect(event.deletedBy).toBe(null); // null deleted_by should be null
     });
 
-    it('should handle explicitly false is_active', () => {
+    it('should handle soft-deleted events correctly', () => {
       const mockOrganizer = createMockUser();
       const mockCommunity = createMockCommunity();
+      const deleteDate = new Date('2024-01-01T00:00:00Z');
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
-        is_active: false,
+        deleted_at: deleteDate.toISOString(),
+        deleted_by: 'admin-123',
       });
 
       const event = toDomainEvent(dbEvent, {
@@ -132,7 +137,8 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.isActive).toBe(false); // explicitly false is_active should be false
+      expect(event.deletedAt).toEqual(deleteDate); // should parse deleted_at to Date
+      expect(event.deletedBy).toBe('admin-123'); // should preserve deleted_by
     });
 
     it('should throw an error if organizer ID does not match', () => {
@@ -277,14 +283,13 @@ describe('Event Transformer', () => {
     it('should handle boolean defaults correctly', () => {
       const eventData = createMockEventData({
         registrationRequired: undefined,
-        isActive: undefined,
       });
       const organizerId = 'test-organizer-id';
 
       const dbEvent = forDbInsert(eventData, organizerId);
 
       expect(dbEvent.registration_required).toBe(false);
-      expect(dbEvent.is_active).toBe(true);
+      // No longer expecting is_active - soft deletion doesn't set this on insert
     });
 
     it('should map isAllDay to is_all_day for database insertion', () => {
@@ -361,7 +366,6 @@ describe('Event Transformer', () => {
         parkingInfo: undefined,
         maxAttendees: undefined,
         registrationRequired: undefined,
-        isActive: undefined,
         tags: undefined,
         imageUrls: undefined,
       };
@@ -372,7 +376,7 @@ describe('Event Transformer', () => {
       expect(dbEvent.parking_info).toBeUndefined();
       expect(dbEvent.max_attendees).toBeUndefined();
       expect(dbEvent.registration_required).toBeUndefined();
-      expect(dbEvent.is_active).toBeUndefined();
+      // No longer expecting is_active - soft deletion doesn't use this field
       expect(dbEvent.tags).toBeUndefined();
       expect(dbEvent.image_urls).toBeUndefined();
     });

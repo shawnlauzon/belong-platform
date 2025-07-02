@@ -11,6 +11,7 @@ import { vi } from 'vitest';
 export type QueryMethod = 
   | 'select' 
   | 'eq' 
+  | 'is'
   | 'order' 
   | 'gte' 
   | 'lte' 
@@ -131,7 +132,8 @@ export function createMockDbEvent(
     start_date_time: new Date().toISOString(),
     organizer_id: baseUser?.id || 'user-123',
     community_id: baseCommunity?.id || 'community-123',
-    is_active: true,
+    deleted_at: null,
+    deleted_by: null,
     tags: ['test'],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -174,15 +176,15 @@ export function createMockDbEvents(
  */
 export const EventServiceAssertions = {
   /**
-   * Asserts standard fetchEvents query pattern
+   * Asserts standard fetchEvents query pattern with soft deletion
    */
   expectFetchEventsQuery: (mockSupabase: any, mockQuery: any) => {
     expect(mockSupabase.from).toHaveBeenCalledWith('events');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
-    expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
     expect(mockQuery.order).toHaveBeenCalledWith('start_date_time', {
       ascending: true,
     });
+    expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
   },
 
   /**
@@ -242,51 +244,56 @@ export const EventServiceAssertions = {
  */
 export const QuerySetups = {
   /**
-   * Standard fetchEvents query (select, eq, order)
+   * Standard fetchEvents query (select, order, is) - is resolves last for soft deletion
    */
   fetchEvents: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'eq', 'order'],
-      'order',
+      ['select', 'order', 'is'],
+      'is',
       { data, error }
     ),
 
   /**
-   * FetchEvents with community filter (select, eq, order with chained eq)
+   * FetchEvents with community/organizer filter (select, order, is, eq) - eq resolves last for filtering
    */
   fetchEventsWithFilter: (mockSupabase: any, data: any[] = [], error: any = null) =>
-    setupMockQueryWithChainedEq(mockSupabase, { data, error }),
+    setupMockQuery(
+      mockSupabase,
+      ['select', 'order', 'is', 'eq'],
+      'eq',
+      { data, error }
+    ),
 
   /**
-   * FetchEvents with date range (select, eq, order, gte, lte)
+   * FetchEvents with date range (select, order, is, gte, lte) - lte resolves last
    */
   fetchEventsWithDateRange: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'eq', 'order', 'gte', 'lte'],
+      ['select', 'order', 'is', 'gte', 'lte'],
       'lte',
       { data, error }
     ),
 
   /**
-   * FetchEvents with search (select, eq, order, or)
+   * FetchEvents with search (select, order, is, or) - or resolves last
    */
   fetchEventsWithSearch: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'eq', 'order', 'or'],
+      ['select', 'order', 'is', 'or'],
       'or',
       { data, error }
     ),
 
   /**
-   * FetchEventById query (select, eq, single)
+   * FetchEventById query (select, eq, is, single) - single resolves last
    */
   fetchEventById: (mockSupabase: any, data: any = null, error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'eq', 'single'],
+      ['select', 'eq', 'is', 'single'],
       'single',
       { data, error }
     ),
@@ -315,7 +322,8 @@ export const TestData = {
       {
         id: 'active-event',
         title: 'Active Event',
-        is_active: true,
+        deleted_at: null,
+        deleted_by: null,
       },
       baseUser,
       baseCommunity
@@ -329,7 +337,8 @@ export const TestData = {
       {
         id: 'inactive-event',
         title: 'Inactive Event',
-        is_active: false,
+        deleted_at: '2024-01-01T00:00:00Z',
+        deleted_by: 'admin-123',
       },
       baseUser,
       baseCommunity

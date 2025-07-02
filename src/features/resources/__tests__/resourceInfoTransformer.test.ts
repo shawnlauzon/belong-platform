@@ -25,7 +25,6 @@ describe('ResourceInfo Transformer', () => {
     expect(result).toHaveProperty('type', dbResource.type);
     expect(result).toHaveProperty('ownerId', ownerId);
     expect(result).toHaveProperty('communityId', communityId);
-    expect(result).toHaveProperty('isActive', dbResource.is_active);
     expect(result).toHaveProperty('imageUrls');
     expect(result).toHaveProperty('pickupInstructions');
     expect(result).toHaveProperty('parkingInfo');
@@ -64,7 +63,6 @@ describe('ResourceInfo Transformer', () => {
       type: 'request',
       owner_id: ownerId,
       community_id: communityId,
-      is_active: false,
       image_urls: [],
       pickup_instructions: null,
       parking_info: null,
@@ -82,7 +80,6 @@ describe('ResourceInfo Transformer', () => {
     expect(result.parkingInfo).toBeUndefined();
     expect(result.location).toBeUndefined();
     expect(result.availability).toBe('available'); // Default value
-    expect(result.isActive).toBe(false);
 
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
