@@ -1,19 +1,12 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "composite": true,
     "rootDir": ".",
     "outDir": "dist",
-    "declaration": true,
     "declarationMap": false,
     "emitDeclarationOnly": true,
-    "composite": false,
-    "incremental": false,
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "paths": {
-      "~/shared": ["./src/shared"]
-    }
+    "noEmit": false
   },
   "include": [
     "src/**/*"

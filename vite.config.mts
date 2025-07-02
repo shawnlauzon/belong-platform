@@ -21,6 +21,11 @@ export default defineConfig({
       outDir: 'dist',
     }),
   ],
+  resolve: {
+    alias: {
+      '~': resolve(__dirname, 'src'),
+    },
+  },
   build: {
     lib: {
       entry: {
