@@ -39,7 +39,6 @@ export function createMockEvent(overrides: Partial<Event> = {}): Event {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    parkingInfo: faker.lorem.sentence(),
     maxAttendees: faker.datatype.boolean()
       ? faker.number.int({ min: 5, max: 100 })
       : undefined,
@@ -128,7 +127,6 @@ export function createMockEventData(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    parkingInfo: faker.lorem.sentence(),
     maxAttendees: faker.datatype.boolean()
       ? faker.number.int({ min: 5, max: 100 })
       : undefined,

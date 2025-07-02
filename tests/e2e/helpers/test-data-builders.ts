@@ -19,7 +19,6 @@ export function createTestResource(overrides?: Partial<ResourceTestData>) {
     name: faker.company.name() + ' Resource',
     description: faker.lorem.paragraph(),
     category: faker.helpers.arrayElement(['space', 'equipment', 'service', 'knowledge']),
-    meetupFlexibility: faker.helpers.arrayElement(['flexible', 'scheduled', 'by_appointment']),
     ...overrides
   };
 }

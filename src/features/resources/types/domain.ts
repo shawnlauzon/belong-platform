@@ -28,9 +28,6 @@ export interface ResourceData {
   communityId: string;
   imageUrls?: string[];
   location?: { lat: number; lng: number };
-  pickupInstructions?: string;
-  parkingInfo?: string;
-  meetupFlexibility?: MeetupFlexibility;
   availability?: string;
 }
 

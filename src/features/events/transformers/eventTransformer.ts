@@ -14,7 +14,6 @@ export type EventInsertDbData = {
   end_date_time?: string;
   location?: string;
   coordinates?: string;
-  parking_info?: string;
   max_attendees?: number;
   registration_required?: boolean;
   is_all_day?: boolean;
@@ -67,7 +66,6 @@ export function toDomainEvent(
     endDateTime: end_date_time ? new Date(end_date_time) : undefined,
     location: rest.location,
     coordinates: parsePostGisPoint(coordinates),
-    parkingInfo: parking_info || undefined,
     maxAttendees: max_attendees || undefined,
     registrationRequired: registration_required === true, // Default to false if not set
     isAllDay: is_all_day === true, // Default to false if not set
@@ -96,7 +94,6 @@ export function forDbInsert(
     startDateTime,
     endDateTime,
     coordinates,
-    parkingInfo,
     maxAttendees,
     registrationRequired,
     isAllDay,
@@ -112,7 +109,6 @@ export function forDbInsert(
     start_date_time: startDateTime.toISOString(),
     end_date_time: endDateTime?.toISOString() || null,
     coordinates: coordinates ? toPostGisPoint(coordinates) : null,
-    parking_info: parkingInfo || null,
     max_attendees: maxAttendees || null,
     registration_required: registrationRequired || false,
     is_all_day: isAllDay || false,
@@ -134,7 +130,6 @@ export function forDbUpdate(
     startDateTime,
     endDateTime,
     coordinates,
-    parkingInfo,
     maxAttendees,
     registrationRequired,
     isAllDay,
@@ -150,7 +145,6 @@ export function forDbUpdate(
     start_date_time: startDateTime?.toISOString(),
     end_date_time: endDateTime?.toISOString() || null,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
-    parking_info: parkingInfo,
     max_attendees: maxAttendees,
     registration_required: registrationRequired,
     is_all_day: isAllDay,
@@ -177,7 +171,6 @@ export function toEventInfo(
       : undefined,
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
-    parkingInfo: dbEvent.parking_info || undefined,
     maxAttendees: dbEvent.max_attendees || undefined,
     registrationRequired: dbEvent.registration_required === true, // Default to false if not set
     isAllDay: dbEvent.is_all_day === true, // Default to false if not set

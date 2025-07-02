@@ -1,13 +1,14 @@
 import type {
-  MeetupFlexibility,
   ResourceCategory,
   Resource,
   ResourceData,
   ResourceInfo,
+} from '../types';
+import type {
   ResourceRow,
   ResourceInsertDbData,
   ResourceUpdateDbData,
-} from '../types';
+} from '../types/database';
 import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
 import { User } from '../../users';
 import { Community } from '../../communities';
@@ -41,9 +42,6 @@ export function toDomainResource(
       ? parsePostGisPoint(dbResource.location)
       : undefined,
     availability: dbResource.availability ?? 'available',
-    meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
-    parkingInfo: dbResource.parking_info ?? undefined,
-    pickupInstructions: dbResource.pickup_instructions ?? undefined,
     imageUrls: dbResource.image_urls || [],
     deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
     deletedBy: dbResource.deleted_by ?? undefined,
@@ -64,9 +62,6 @@ export function forDbInsert(
   const {
     communityId,
     imageUrls,
-    pickupInstructions,
-    parkingInfo,
-    meetupFlexibility,
     ...rest
   } = resource;
 
@@ -75,9 +70,6 @@ export function forDbInsert(
     owner_id: ownerId,
     community_id: communityId,
     image_urls: imageUrls,
-    pickup_instructions: pickupInstructions,
-    parking_info: parkingInfo,
-    meetup_flexibility: meetupFlexibility,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
   };
 }
@@ -94,9 +86,6 @@ export function forDbUpdate(
     category: resource.category,
     type: resource.type,
     availability: resource.availability,
-    meetup_flexibility: resource.meetupFlexibility,
-    parking_info: resource.parkingInfo,
-    pickup_instructions: resource.pickupInstructions,
     image_urls: resource.imageUrls,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
@@ -122,9 +111,6 @@ export function toResourceInfo(
       ? parsePostGisPoint(dbResource.location)
       : undefined,
     availability: dbResource.availability ?? 'available',
-    meetupFlexibility: dbResource.meetup_flexibility as MeetupFlexibility,
-    parkingInfo: dbResource.parking_info ?? undefined,
-    pickupInstructions: dbResource.pickup_instructions ?? undefined,
     imageUrls: dbResource.image_urls || [],
     deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
     deletedBy: dbResource.deleted_by ?? undefined,

@@ -264,7 +264,6 @@ describe('Event Transformer', () => {
     it('should handle optional fields correctly', () => {
       const eventData = createMockEventData({
         endDateTime: undefined,
-        parkingInfo: undefined,
         maxAttendees: undefined,
         tags: undefined,
         imageUrls: undefined,
@@ -274,7 +273,6 @@ describe('Event Transformer', () => {
       const dbEvent = forDbInsert(eventData, organizerId);
 
       expect(dbEvent.end_date_time).toBe(null);
-      expect(dbEvent.parking_info).toBe(null);
       expect(dbEvent.max_attendees).toBe(null);
       expect(dbEvent.tags).toEqual([]);
       expect(dbEvent.image_urls).toEqual([]);
@@ -363,7 +361,6 @@ describe('Event Transformer', () => {
 
     it('should handle optional fields correctly', () => {
       const eventData = {
-        parkingInfo: undefined,
         maxAttendees: undefined,
         registrationRequired: undefined,
         tags: undefined,
@@ -373,7 +370,6 @@ describe('Event Transformer', () => {
 
       const dbEvent = forDbUpdate(eventData, organizerId);
 
-      expect(dbEvent.parking_info).toBeUndefined();
       expect(dbEvent.max_attendees).toBeUndefined();
       expect(dbEvent.registration_required).toBeUndefined();
       // No longer expecting is_active - soft deletion doesn't use this field

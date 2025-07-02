@@ -26,9 +26,6 @@ describe('ResourceInfo Transformer', () => {
     expect(result).toHaveProperty('ownerId', ownerId);
     expect(result).toHaveProperty('communityId', communityId);
     expect(result).toHaveProperty('imageUrls');
-    expect(result).toHaveProperty('pickupInstructions');
-    expect(result).toHaveProperty('parkingInfo');
-    expect(result).toHaveProperty('meetupFlexibility');
     expect(result).toHaveProperty('createdAt');
     expect(result).toHaveProperty('updatedAt');
 
@@ -38,8 +35,6 @@ describe('ResourceInfo Transformer', () => {
       ...COMMON_SNAKE_CASE_PROPERTIES.USER_COMMUNITY_FIELDS,
       ...COMMON_SNAKE_CASE_PROPERTIES.RESOURCE_FIELDS,
       'image_urls',
-      'pickup_instructions',
-      'meetup_flexibility',
     ]);
 
     // Assert - Should not have nested objects
@@ -64,9 +59,6 @@ describe('ResourceInfo Transformer', () => {
       owner_id: ownerId,
       community_id: communityId,
       image_urls: [],
-      pickup_instructions: null,
-      parking_info: null,
-      meetup_flexibility: null,
       location: null,
       availability: null,
     });
@@ -76,16 +68,12 @@ describe('ResourceInfo Transformer', () => {
 
     // Assert
     expect(result.imageUrls).toEqual([]);
-    expect(result.pickupInstructions).toBeUndefined();
-    expect(result.parkingInfo).toBeUndefined();
     expect(result.location).toBeUndefined();
     expect(result.availability).toBe('available'); // Default value
 
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
       'image_urls',
-      'pickup_instructions',
-      'parking_info',
     ]);
   });
 });
