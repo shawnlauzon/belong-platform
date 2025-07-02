@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
-import type { EventInfo, Event } from '../types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { EventInfo } from '../types';
 import { useEvents } from '../hooks/useEvents';
 
 // Mock the shared module
@@ -17,20 +17,7 @@ vi.mock('../../../shared', () => ({
   queryKeys: {
     events: {
       all: ['events'],
-      byId: (id: string) => ['events', id],
-      byCommunity: (communityId: string) => [
-        'events',
-        'community',
-        communityId,
-      ],
-      byOrganizer: (organizerId: string) => [
-        'events',
-        'organizer',
-        organizerId,
-      ],
-      attendees: (eventId: string) => ['event', eventId, 'attendees'],
-      userAttendances: (userId: string) => ['user', userId, 'attendances'],
-      filtered: (filter: Record<string, any>) => ['events', 'filtered', filter],
+      filtered: (filters: any) => ['events', 'filtered', filters],
     },
   },
 }));
@@ -40,14 +27,17 @@ vi.mock('../services/event.service', () => ({
   createEventService: vi.fn(),
 }));
 
+// Mock the config
+vi.mock('../../../config', () => ({
+  STANDARD_CACHE_TIME: 5 * 60 * 1000, // 5 minutes
+}));
+
 import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateEventService = vi.mocked(createEventService);
 const mockFetchEvents = vi.fn();
-const mockFetchEventById = vi.fn();
-const mockDeleteEvent = vi.fn();
 
 describe('useEvents', () => {
   let queryClient: QueryClient;
@@ -55,192 +45,62 @@ describe('useEvents', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: {
-          retry: false,
-        },
+        queries: { retry: false },
+        mutations: { retry: false },
       },
     });
-    vi.clearAllMocks();
 
-    // Setup mocks
-    mockUseSupabase.mockReturnValue({} as any);
     mockCreateEventService.mockReturnValue({
       fetchEvents: mockFetchEvents,
-      fetchEventById: mockFetchEventById,
-      deleteEvent: mockDeleteEvent,
-    });
+    } as any);
+
+    vi.clearAllMocks();
   });
 
   const wrapper = ({ children }: { children: any }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it('should return EventInfo[] instead of Event[] via list', async () => {
-    // Arrange: Mock return value should be EventInfo[]
-    const mockEventInfo: EventInfo[] = [
-      {
-        id: 'event-1',
-        title: 'Community BBQ',
-        description: 'Join us for a summer BBQ',
-        organizerId: 'user-1', // ID instead of User object
-        communityId: 'community-1', // ID instead of Community object
-        startDateTime: new Date('2024-07-15T18:00:00Z'),
-        location: 'Central Park',
-        coordinates: { lat: 40.7829, lng: -73.9654 },
-        attendeeCount: 25,
-        registrationRequired: false,
-        isActive: true,
-        tags: ['food', 'social'],
-        imageUrls: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+  it('should fetch events successfully', async () => {
+    const mockEvents: EventInfo[] = [
+      { id: '1', title: 'Test Event 1' } as EventInfo,
+      { id: '2', title: 'Test Event 2' } as EventInfo,
     ];
+    mockFetchEvents.mockResolvedValue(mockEvents);
 
-    mockFetchEvents.mockResolvedValue(mockEventInfo);
-
-    // Act
     const { result } = renderHook(() => useEvents(), { wrapper });
-    const listdData = await result.current.list();
 
-    // Assert
-    expect(listdData).toEqual(mockEventInfo);
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(result.current.data).toEqual(mockEvents);
     expect(mockFetchEvents).toHaveBeenCalledWith(undefined);
-
-    // Verify the returned data has ID references, not full objects
-    const event = listdData[0];
-    expect(typeof event.organizerId).toBe('string');
-    expect(typeof event.communityId).toBe('string');
-    expect(event).not.toHaveProperty('organizer');
-    expect(event).not.toHaveProperty('community');
   });
 
-  it('should pass filters to fetchEvents via list function', async () => {
-    // Arrange
-    const filters = { communityId: 'community-1' };
-    const mockEventInfo: EventInfo[] = [];
-    mockFetchEvents.mockResolvedValue(mockEventInfo);
+  it('should apply filters when provided', async () => {
+    const filters = { startDate: '2023-01-01', isActive: true };
+    const mockEvents: EventInfo[] = [{ id: '1', title: 'Active Event' } as EventInfo];
+    mockFetchEvents.mockResolvedValue(mockEvents);
 
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
+    const { result } = renderHook(() => useEvents(filters), { wrapper });
 
-    // Manually list data with filters
-    const listdData = await result.current.list(filters);
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
 
-    // Assert
-    expect(listdData).toEqual(mockEventInfo);
     expect(mockFetchEvents).toHaveBeenCalledWith(filters);
   });
 
-  it('should not fetch data automatically and have correct initial status', () => {
-    // Arrange
-    const mockEventInfo: EventInfo[] = [];
-    mockFetchEvents.mockResolvedValue(mockEventInfo);
+  it('should handle errors gracefully', async () => {
+    const error = new Error('Failed to fetch events');
+    mockFetchEvents.mockRejectedValue(error);
 
-    // Act
     const { result } = renderHook(() => useEvents(), { wrapper });
 
-    // Assert - Data should not be fetched automatically and status should be correct
-    expect(mockFetchEvents).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(false); // Query is idle (enabled: false = not pending)
-    expect(result.current.isFetching).toBe(false);
-  });
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
 
-  it('should allow list to be called without filters', async () => {
-    // Arrange
-    const mockEventInfo: EventInfo[] = [];
-    mockFetchEvents.mockResolvedValue(mockEventInfo);
-
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
-
-    // Assert - No automatic fetch
-    expect(mockFetchEvents).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(false);
-
-    // Act - Retrieve without filters
-    const listdData = await result.current.list();
-
-    // Assert
-    expect(listdData).toEqual(mockEventInfo);
-    expect(mockFetchEvents).toHaveBeenCalledWith(undefined);
-    expect(mockFetchEvents).toHaveBeenCalledTimes(1);
-  });
-
-  it('should have list function available', () => {
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
-
-    // Assert
-    expect(result.current.list).toBeDefined();
-    expect(typeof result.current.list).toBe('function');
-  });
-
-  it('should return full Event object from byId() method', async () => {
-    // Arrange: Mock return value should be full Event object
-    const mockEvent: Event = {
-      id: 'event-1',
-      title: 'Community BBQ',
-      description: 'Annual neighborhood BBQ event',
-      startDateTime: new Date('2024-07-15T18:00:00Z'),
-      endDateTime: new Date('2024-07-15T21:00:00Z'),
-      location: 'Community Park',
-      maxAttendees: 50,
-      organizer: {
-        id: 'user-1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      community: {
-        id: 'community-1',
-        name: 'Test Community',
-        organizerId: 'user-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    mockFetchEventById.mockResolvedValue(mockEvent);
-
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
-    const fetchedEvent = await result.current.byId('event-1');
-
-    // Assert
-    expect(fetchedEvent).toEqual(mockEvent);
-    expect(mockFetchEventById).toHaveBeenCalledWith('event-1');
-
-    // Verify the returned data has full objects, not just IDs
-    expect(typeof fetchedEvent!.organizer).toBe('object');
-    expect(typeof fetchedEvent!.community).toBe('object');
-    expect(fetchedEvent!.title).toBe('Community BBQ');
-    expect(fetchedEvent!.organizer.firstName).toBe('John');
-    expect(fetchedEvent!.community.name).toBe('Test Community');
-  });
-
-  it('should handle byId with non-existent ID', async () => {
-    // Arrange
-    mockFetchEventById.mockResolvedValue(null);
-
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
-    const fetchedEvent = await result.current.byId('non-existent-id');
-
-    // Assert
-    expect(fetchedEvent).toBeNull();
-    expect(mockFetchEventById).toHaveBeenCalledWith('non-existent-id');
-  });
-
-  it('should have byId function available', () => {
-    // Act
-    const { result } = renderHook(() => useEvents(), { wrapper });
-
-    // Assert
-    expect(result.current.byId).toBeDefined();
-    expect(typeof result.current.byId).toBe('function');
+    expect(result.current.error).toEqual(error);
   });
 });

@@ -103,9 +103,7 @@ describe('useSignUp', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const signUpResult = await result.current(signUpData);
 
     // Assert
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
@@ -118,7 +116,7 @@ describe('useSignUp', () => {
         },
       },
     });
-    expect(result.current.data).toEqual({
+    expect(signUpResult).toEqual({
       id: mockAccount.id,
       email: signUpData.email,
       firstName: signUpData.firstName,
@@ -158,9 +156,7 @@ describe('useSignUp', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const signUpResult = await result.current(signUpData);
 
     // Assert
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
@@ -173,8 +169,8 @@ describe('useSignUp', () => {
         },
       },
     });
-    expect(result.current.data!.firstName).toBe(signUpData.firstName);
-    expect(result.current.data!.lastName).toBeUndefined();
+    expect(signUpResult.firstName).toBe(signUpData.firstName);
+    expect(signUpResult.lastName).toBeUndefined();
   });
 
   it('should handle sign up errors properly', async () => {
@@ -194,12 +190,8 @@ describe('useSignUp', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
     // Assert
-    expect(result.current.error).toBeDefined();
+    await expect(result.current(signUpData)).rejects.toThrow('Email already exists');
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
       email: signUpData.email,
       password: signUpData.password,
@@ -228,12 +220,8 @@ describe('useSignUp', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
     // Assert
-    expect(result.current.error).toBeDefined();
+    await expect(result.current(signUpData)).rejects.toThrow('No user data returned from sign up');
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
       email: signUpData.email,
       password: signUpData.password,
@@ -260,12 +248,8 @@ describe('useSignUp', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
     // Assert
-    expect(result.current.error).toBeDefined();
+    await expect(result.current(signUpData)).rejects.toThrow('Network error');
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
       email: signUpData.email,
       password: signUpData.password,
@@ -278,49 +262,23 @@ describe('useSignUp', () => {
     });
   });
 
-  it('should be idle initially', () => {
+  it('should return a function', () => {
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
 
     // Assert
-    expect(result.current.isIdle).toBe(true);
-    expect(result.current.isPending).toBe(false);
-    expect(result.current.isError).toBe(false);
-    expect(result.current.isSuccess).toBe(false);
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.error).toBeNull();
+    expect(typeof result.current).toBe('function');
   });
 
-  it('should be pending during sign up', async () => {
-    // Arrange
-    const signUpData = {
-      email: 'test@example.com',
-      password: 'password123',
-      firstName: 'John',
-    };
-    let resolveSignUp: (value: any) => void;
-
-    const signUpPromise = new Promise((resolve) => {
-      resolveSignUp = resolve;
-    });
-
-    mockSupabase.auth.signUp.mockReturnValue(signUpPromise);
-
+  it('should return a stable function reference', () => {
     // Act
-    const { result } = renderHook(() => useSignUp(), { wrapper });
-
-    result.current.mutate(signUpData);
-
-    await waitFor(() => expect(result.current.isPending).toBe(true));
-
+    const { result, rerender } = renderHook(() => useSignUp(), { wrapper });
+    
+    const firstReference = result.current;
+    rerender();
+    const secondReference = result.current;
+    
     // Assert
-    expect(result.current.isPending).toBe(true);
-    expect(result.current.isIdle).toBe(false);
-
-    // Clean up
-    resolveSignUp!({
-      data: { user: null },
-      error: new Error('Cleanup'),
-    });
+    expect(firstReference).toBe(secondReference);
   });
 });

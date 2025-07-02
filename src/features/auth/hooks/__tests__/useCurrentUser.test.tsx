@@ -1,194 +1,110 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { BelongProvider } from '../../../../config';
-import { useAuth } from '../useAuth';
+import { useCurrentUser } from '../useCurrentUser';
+import { createMockUser } from '../../../users/__mocks__';
 
-// Mock the useAuth hook
-vi.mock('../../hooks/useAuth', () => ({
-  useAuth: vi.fn(),
-}));
-
-// Mock dependencies needed for BelongProvider
-vi.mock('../../../../shared/hooks/useSupabase', () => ({
-  useSupabase: vi.fn(() => ({
-    auth: {
-      onAuthStateChange: vi.fn(() => ({
-        data: {
-          subscription: {
-            unsubscribe: vi.fn(),
-          },
-        },
-      })),
-    },
-  })),
-}));
-
-// Mock client creation
-vi.mock('../../../../config/client', () => ({
-  createBelongClient: vi.fn(() => ({
-    supabase: {
-      auth: {
-        onAuthStateChange: vi.fn(() => ({
-          data: {
-            subscription: {
-              unsubscribe: vi.fn(),
-            },
-          },
-        })),
-      },
-    },
-    logger: {
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    },
-    mapbox: {
-      autocomplete: vi.fn(),
-      reverseGeocode: vi.fn(),
-    },
-  })),
-}));
-
-vi.mock('../../../../shared', () => {
-  const mockLogger = {
+// Mock shared module
+vi.mock('../../../../shared', () => ({
+  useSupabase: vi.fn(),
+  logger: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  };
+  },
+  queryKeys: {
+    auth: ['auth'],
+  },
+}));
 
-  const mockSupabase = {
-    auth: {
-      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-    },
-  };
+// Mock the auth service
+vi.mock('../../services/auth.service', () => ({
+  createAuthService: vi.fn(() => ({
+    getCurrentUser: vi.fn(),
+  })),
+}));
 
-  const mockMapbox = {
-    autocomplete: vi.fn(),
-    reverseGeocode: vi.fn(),
-  };
+// Import mocked modules
+import { useSupabase } from '../../../../shared';
+import { createAuthService } from '../../services/auth.service';
 
-  const mockClient = {
-    supabase: mockSupabase as any,
-    logger: mockLogger as any,
-    mapbox: mockMapbox as any,
-  };
-
-  return {
-    createBelongClient: vi.fn(() => mockClient),
-    logger: mockLogger,
-  };
-});
-
-const mockUseAuth = vi.mocked(await import('../useAuth')).useAuth;
-
-describe('useAuth', () => {
+describe('useCurrentUser', () => {
   let queryClient: QueryClient;
+  let mockAuthService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
         mutations: { retry: false },
       },
     });
+
+    mockAuthService = {
+      getCurrentUser: vi.fn(),
+    };
+    vi.mocked(createAuthService).mockReturnValue(mockAuthService);
   });
 
-  it('should return user data when used inside BelongProvider', () => {
-    const userData = {
-      id: 'user-123',
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
-    };
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 
-    mockUseAuth.mockReturnValue({
-      currentUser: userData,
-      isAuthenticated: true,
-      isPending: false,
-      isError: false,
-      error: null,
-      signIn: {} as any,
-      signUp: {} as any,
-      signOut: {} as any,
-      updateProfile: {} as any,
-    } as any);
+  it('should return current user when authenticated', async () => {
+    const mockUser = createMockUser();
+    mockAuthService.getCurrentUser.mockResolvedValue(mockUser);
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider
-          config={{
-            supabaseUrl: 'https://test.supabase.co',
-            supabaseAnonKey: 'test-key',
-            mapboxPublicToken: 'test-token',
-          }}
-        >
-          {children}
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
-    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
 
-    expect(result.current).toEqual(
-      expect.objectContaining({
-        currentUser: userData,
-        isAuthenticated: true,
-        isPending: false,
-        isError: false,
-        error: null,
-      })
-    );
+    expect(result.current.data).toEqual(mockUser);
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
   });
 
-  it('should have correct TypeScript types (no null checks needed)', () => {
-    const userData = {
-      id: 'user-123',
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
-    };
+  it('should return null when not authenticated', async () => {
+    mockAuthService.getCurrentUser.mockResolvedValue(null);
 
-    mockUseAuth.mockReturnValue({
-      currentUser: userData,
-      isAuthenticated: true,
-      isPending: false,
-      isError: false,
-      error: null,
-      signIn: {} as any,
-      signUp: {} as any,
-      signOut: {} as any,
-      updateProfile: {} as any,
-    } as any);
+    const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        <BelongProvider
-          config={{
-            supabaseUrl: 'https://test.supabase.co',
-            supabaseAnonKey: 'test-key',
-            mapboxPublicToken: 'test-token',
-          }}
-        >
-          {children}
-        </BelongProvider>
-      </QueryClientProvider>
-    );
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
 
-    const { result } = renderHook(() => useAuth(), { wrapper });
+    expect(result.current.data).toBeNull();
+  });
 
-    // TypeScript should allow direct property access through currentUser property
-    expect(result.current.currentUser?.id).toBe('user-123');
-    expect(result.current.currentUser?.email).toBe('test@example.com');
-    expect(result.current.currentUser?.firstName).toBe('Test');
-    expect(result.current.currentUser?.lastName).toBe('User');
+  it('should handle errors gracefully', async () => {
+    const error = new Error('Invalid Refresh Token');
+    mockAuthService.getCurrentUser.mockRejectedValue(error);
+
+    const { result } = renderHook(() => useCurrentUser(), { wrapper });
+
+    // Wait for the query to finish and enter error state (no retries for auth errors)
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    expect(result.current.error).toEqual(error);
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
+  });
+
+  it('should not retry on auth errors', async () => {
+    const authError = new Error('Invalid Refresh Token');
+    mockAuthService.getCurrentUser.mockRejectedValue(authError);
+
+    const { result } = renderHook(() => useCurrentUser(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    // Should only be called once, no retries
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
   });
 });

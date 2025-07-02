@@ -60,70 +60,72 @@ vi.mock('../../../shared', () => ({
   },
   queryKeys: {
     // Authentication state (not profile data)
-    auth: ["auth"] as const,
+    auth: ['auth'] as const,
 
     // User profile data - single source of truth for all user queries
     users: {
-      all: ["users"] as const,
-      byId: (id: string) => ["user", id] as const,
-      search: (term: string) => ["users", "search", term] as const,
+      all: ['users'] as const,
+      byId: (id: string) => ['user', id] as const,
+      search: (term: string) => ['users', 'search', term] as const,
     },
 
     // Communities
     communities: {
-      all: ["communities"] as const,
-      byId: (id: string) => ["community", id] as const,
+      all: ['communities'] as const,
+      byId: (id: string) => ['community', id] as const,
       memberships: (communityId: string) =>
-        ["community", communityId, "memberships"] as const,
+        ['community', communityId, 'memberships'] as const,
       userMemberships: (userId: string) =>
-        ["user", userId, "memberships"] as const,
+        ['user', userId, 'memberships'] as const,
     },
 
     // Resources
     resources: {
-      all: ["resources"] as const,
-      byId: (id: string) => ["resource", id] as const,
+      all: ['resources'] as const,
+      byId: (id: string) => ['resource', id] as const,
       byCommunity: (communityId: string) =>
-        ["resources", "community", communityId] as const,
-      byOwner: (ownerId: string) => ["resources", "owner", ownerId] as const,
+        ['resources', 'community', communityId] as const,
+      byOwner: (ownerId: string) => ['resources', 'owner', ownerId] as const,
       filtered: (filter: Record<string, any>) =>
-        ["resources", "filtered", filter] as const,
+        ['resources', 'filtered', filter] as const,
     },
 
     // Events
     events: {
-      all: ["events"] as const,
-      byId: (id: string) => ["event", id] as const,
+      all: ['events'] as const,
+      byId: (id: string) => ['event', id] as const,
       byCommunity: (communityId: string) =>
-        ["events", "community", communityId] as const,
+        ['events', 'community', communityId] as const,
       byOrganizer: (organizerId: string) =>
-        ["events", "organizer", organizerId] as const,
-      attendees: (eventId: string) => ["event", eventId, "attendees"] as const,
+        ['events', 'organizer', organizerId] as const,
+      attendees: (eventId: string) => ['event', eventId, 'attendees'] as const,
       userAttendances: (userId: string) =>
-        ["user", userId, "attendances"] as const,
+        ['user', userId, 'attendances'] as const,
       filtered: (filter: Record<string, any>) =>
-        ["events", "filtered", filter] as const,
+        ['events', 'filtered', filter] as const,
     },
 
     // Shoutouts
     shoutouts: {
-      all: ["shoutouts"] as const,
-      byId: (id: string) => ["shoutout", id] as const,
+      all: ['shoutouts'] as const,
+      byId: (id: string) => ['shoutout', id] as const,
       byCommunity: (communityId: string) =>
-        ["shoutouts", "community", communityId] as const,
-      sentBy: (userId: string) => ["shoutouts", "sent", userId] as const,
-      receivedBy: (userId: string) => ["shoutouts", "received", userId] as const,
+        ['shoutouts', 'community', communityId] as const,
+      sentBy: (userId: string) => ['shoutouts', 'sent', userId] as const,
+      receivedBy: (userId: string) =>
+        ['shoutouts', 'received', userId] as const,
       filtered: (filter: Record<string, any>) =>
-        ["shoutouts", "filtered", filter] as const,
+        ['shoutouts', 'filtered', filter] as const,
     },
 
     // Conversations
     conversations: {
-      all: ["conversations"] as const,
-      list: (userId: string) => ["conversations", "list", userId] as const,
-      byId: (id: string) => ["conversation", id] as const,
-      messages: (conversationId: string) => ["conversations", "messages", conversationId] as const,
-      userList: (userId: string) => ["user", userId, "conversations"] as const,
+      all: ['conversations'] as const,
+      list: (userId: string) => ['conversations', 'list', userId] as const,
+      byId: (id: string) => ['conversation', id] as const,
+      messages: (conversationId: string) =>
+        ['conversations', 'messages', conversationId] as const,
+      userList: (userId: string) => ['user', userId, 'conversations'] as const,
     },
   } as const,
 }));
@@ -135,10 +137,7 @@ vi.mock('../services/resource.service', () => ({
 
 import { useSupabase } from '../../../shared';
 import { createResourceService } from '../services/resource.service';
-import { Resource, ResourceCategory, ResourceInfo } from '../types';
-import { createMockCommunity } from '../../communities/__mocks__';
-import { createMockUser } from '../../users/__mocks__';
-import { BelongProvider } from '../../../config';
+import { ResourceCategory, ResourceInfo } from '../types';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResourceService = vi.mocked(createResourceService);
@@ -196,7 +195,7 @@ describe('useResources', () => {
     });
   });
 
-  it('should return ResourceInfo[] instead of Resource[] via list', async () => {
+  it('should return ResourceInfo[] instead of Resource[]', async () => {
     // Arrange: Mock return value should be ResourceInfo[]
     const mockResourceInfo: ResourceInfo[] = [
       {
@@ -217,38 +216,42 @@ describe('useResources', () => {
 
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
-    const listdData = await result.current.list();
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
 
     // Assert
-    expect(listdData).toEqual(mockResourceInfo);
+    expect(result.current.data).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const resource = listdData[0];
+    const resource = result.current.data![0];
     expect(typeof resource.ownerId).toBe('string');
     expect(typeof resource.communityId).toBe('string');
     expect(resource).not.toHaveProperty('owner');
     expect(resource).not.toHaveProperty('community');
   });
 
-  it('should pass filters to fetchResources via list function', async () => {
+  it('should pass filters to fetchResources', async () => {
     // Arrange
     const filters = { category: 'tools' as const };
     const mockResourceInfo: ResourceInfo[] = [];
     mockFetchResources.mockResolvedValue(mockResourceInfo);
 
     // Act
-    const { result } = renderHook(() => useResources(), { wrapper });
+    const { result } = renderHook(() => useResources(filters), { wrapper });
 
-    // Manually list data with filters
-    const listdData = await result.current.list(filters);
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
 
     // Assert
-    expect(listdData).toEqual(mockResourceInfo);
+    expect(result.current.data).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(filters);
   });
 
-  it('should not fetch data automatically and have correct initial status', () => {
+  it('should fetch data automatically and have correct initial status', async () => {
     // Arrange
     const mockResourceInfo: ResourceInfo[] = [];
     mockFetchResources.mockResolvedValue(mockResourceInfo);
@@ -256,96 +259,28 @@ describe('useResources', () => {
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    // Assert - Data should not be fetched automatically and status should be correct
-    expect(mockFetchResources).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(false); // No pending since enabled: false
-    expect(result.current.isFetching).toBe(false);
+    // Assert - Data should be fetched automatically
+    await waitFor(() => {
+      expect(mockFetchResources).toHaveBeenCalled();
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(result.current.data).toEqual(mockResourceInfo);
   });
 
-  it('should allow list to be called without filters', async () => {
+  it('should handle errors gracefully', async () => {
     // Arrange
-    const mockResourceInfo: ResourceInfo[] = [];
-    mockFetchResources.mockResolvedValue(mockResourceInfo);
+    const error = new Error('Failed to fetch resources');
+    mockFetchResources.mockRejectedValue(error);
 
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    // Assert - No automatic fetch
-    expect(mockFetchResources).not.toHaveBeenCalled();
-    expect(result.current.isPending).toBe(false);
-
-    // Act - Retrieve without filters
-    const listdData = await result.current.list();
-
     // Assert
-    expect(listdData).toEqual(mockResourceInfo);
-    expect(mockFetchResources).toHaveBeenCalledWith(undefined);
-    expect(mockFetchResources).toHaveBeenCalledTimes(1);
-  });
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
 
-  it('should have list function available', () => {
-    // Act
-    const { result } = renderHook(() => useResources(), { wrapper });
-
-    // Assert
-    expect(result.current.list).toBeDefined();
-    expect(typeof result.current.list).toBe('function');
-  });
-
-  it('should return full Resource object from byId() method', async () => {
-    // Arrange: Mock return value should be full Resource object
-    const mockResource: Resource = {
-      id: 'resource-1',
-      type: 'offer',
-      title: 'Power Drill',
-      description: 'High-quality power drill for all your DIY needs',
-      category: 'tools' as ResourceCategory,
-      community: createMockCommunity(),
-      owner: createMockUser(),
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    mockFetchResourceById.mockResolvedValue(mockResource);
-
-    // Act
-    const { result } = renderHook(() => useResources(), { wrapper });
-    const fetchedResource = await result.current.byId('resource-1');
-
-    // Assert
-    expect(fetchedResource).toEqual(mockResource);
-    expect(mockFetchResourceById).toHaveBeenCalledWith('resource-1');
-
-    // Verify the returned data has full objects, not just IDs
-    expect(typeof fetchedResource!.owner).toBe('object');
-    expect(typeof fetchedResource!.community).toBe('object');
-    expect(fetchedResource!.title).toBe('Power Drill');
-    expect(fetchedResource!.owner!.firstName).toBe(
-      mockResource.owner.firstName
-    );
-    expect(fetchedResource!.community!.name).toBe(mockResource.community?.name);
-  });
-
-  it('should handle byId with non-existent ID', async () => {
-    // Arrange
-    mockFetchResourceById.mockResolvedValue(null);
-
-    // Act
-    const { result } = renderHook(() => useResources(), { wrapper });
-    const fetchedResource = await result.current.byId('non-existent-id');
-
-    // Assert
-    expect(fetchedResource).toBeNull();
-    expect(mockFetchResourceById).toHaveBeenCalledWith('non-existent-id');
-  });
-
-  it('should have byId function available', () => {
-    // Act
-    const { result } = renderHook(() => useResources(), { wrapper });
-
-    // Assert
-    expect(result.current.byId).toBeDefined();
-    expect(typeof result.current.byId).toBe('function');
+    expect(result.current.error).toEqual(error);
   });
 });

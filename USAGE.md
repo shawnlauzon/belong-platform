@@ -76,25 +76,16 @@ function App() {
 
 ```typescript
 import { useCommunities } from '@belongnetwork/platform';
-import { useEffect, useState } from 'react';
 
 function CommunityList() {
-  const { list } = useCommunities();
-  const [communityList, setCommunityList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    list().then((data) => {
-      setCommunityList(data);
-      setIsLoading(false);
-    });
-  }, [list]);
+  const { data: communities, isLoading, error } = useCommunities();
 
   if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div>
-      {communityList?.map(community => (
+      {communities?.map(community => (
         <div key={community.id}>{community.name}</div>
       ))}
     </div>
@@ -107,37 +98,58 @@ function CommunityList() {
 ### Authentication
 
 ```typescript
-import { useAuth } from '@belongnetwork/platform';
+import { 
+  useCurrentUser, 
+  useSignIn, 
+  useSignOut, 
+  useSignUp,
+  useUpdateProfile 
+} from '@belongnetwork/platform';
 
 function AuthExample() {
-  const {
-    currentUser,
-    isAuthenticated,
-    isLoading,
-    signIn,
-    signUp,
-    signOut,
-    updateProfile
-  } = useAuth();
+  const { data: currentUser, isLoading } = useCurrentUser();
+  const signIn = useSignIn();
+  const signOut = useSignOut();
+  const signUp = useSignUp();
 
   const handleSignIn = async () => {
-    await signIn.mutateAsync({
-      email: 'user@example.com',
-      password: 'password'
-    });
+    try {
+      await signIn({
+        email: 'user@example.com',
+        password: 'password'
+      });
+    } catch (error) {
+      console.error('Sign in failed:', error);
+    }
+  };
+
+  const handleSignUp = async () => {
+    try {
+      await signUp({
+        email: 'user@example.com',
+        password: 'password',
+        firstName: 'John',
+        lastName: 'Doe'
+      });
+    } catch (error) {
+      console.error('Sign up failed:', error);
+    }
   };
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>
-      {isAuthenticated ? (
+      {currentUser ? (
         <>
-          <p>Welcome, {currentUser?.firstName}!</p>
-          <button onClick={() => signOut.mutate()}>Sign Out</button>
+          <p>Welcome, {currentUser.firstName}!</p>
+          <button onClick={() => signOut()}>Sign Out</button>
         </>
       ) : (
-        <button onClick={handleSignIn}>Sign In</button>
+        <div>
+          <button onClick={handleSignIn}>Sign In</button>
+          <button onClick={handleSignUp}>Sign Up</button>
+        </div>
       )}
     </div>
   );
@@ -147,73 +159,122 @@ function AuthExample() {
 ### Data Fetching
 
 ```typescript
-// Using the consolidated hooks with new { list, byId } pattern
-const { list: listCommunities, byId: getCommunity } = useCommunities();
-const { list: listResources, byId: getResource } = useResources();
-const { list: listEvents, byId: getEvent } = useEvents();
-const { list: listShoutouts, byId: getShoutout } = useShoutouts();
-const { list: listUsers, byId: getUser } = useUsers();
+import { 
+  useCommunities, 
+  useCommunity,
+  useResources, 
+  useResource,
+  useCreateResource,
+  useUpdateResource,
+  useDeleteResource 
+} from '@belongnetwork/platform';
 
-// Fetching lists - returns lightweight Info objects
-const communityList = await listCommunities();
-const resourceList = await listResources({ communityId: "abc123" });
-const eventList = await listEvents({ communityId: "abc123" });
-const shoutoutsList = await listShoutouts({ sentBy: "user-123" });
-const userList = await listUsers({ communityId: "abc123" });
+function DataFetchingExample() {
+  // Query hooks for fetching data
+  const { data: communities, isLoading: communitiesLoading } = useCommunities();
+  const { data: resources, isLoading: resourcesLoading } = useResources({ 
+    communityId: "abc123" 
+  });
+  const { data: community } = useCommunity("abc123");
+  const { data: resource } = useResource("def456");
 
-// Fetching with options
-const communitiesWithDeleted = await listCommunities({ includeDeleted: true });
+  // Mutation hooks for data modification
+  const createResource = useCreateResource();
+  const updateResource = useUpdateResource();
+  const deleteResource = useDeleteResource();
 
-// Fetching single items - returns full objects with relations
-const community = await getCommunity("abc123");
-const resource = await getResource("def456");
-const event = await getEvent("ghi789");
-const shoutout = await getShoutout("xyz999");
-const user = await getUser("user-123");
+  const handleCreateResource = async () => {
+    try {
+      await createResource({
+        title: "Garden Tools",
+        type: "offer",
+        category: "tools",
+        communityId: "abc123",
+      });
+    } catch (error) {
+      console.error('Failed to create resource:', error);
+    }
+  };
 
-// Using mutations
-const { create, update, delete: remove } = useResources();
+  const handleUpdateResource = async () => {
+    try {
+      await updateResource({
+        id: "def456",
+        title: "Updated Garden Tools",
+      });
+    } catch (error) {
+      console.error('Failed to update resource:', error);
+    }
+  };
 
-await create({
-  title: "Garden Tools",
-  type: "offer",
-  category: ResourceCategory.TOOLS,
-  communityId: "abc123",
-});
+  const handleDeleteResource = async () => {
+    try {
+      await deleteResource("def456");
+    } catch (error) {
+      console.error('Failed to delete resource:', error);
+    }
+  };
 
-await update("def456", {
-  title: "Updated Garden Tools",
-});
+  if (communitiesLoading || resourcesLoading) return <div>Loading...</div>;
 
-await remove("def456");
+  return (
+    <div>
+      <h2>Communities</h2>
+      {communities?.map(community => (
+        <div key={community.id}>{community.name}</div>
+      ))}
+
+      <h2>Resources</h2>
+      {resources?.map(resource => (
+        <div key={resource.id}>{resource.title}</div>
+      ))}
+
+      <button onClick={handleCreateResource}>Create Resource</button>
+      <button onClick={handleUpdateResource}>Update Resource</button>
+      <button onClick={handleDeleteResource}>Delete Resource</button>
+    </div>
+  );
+}
 ```
 
-### New { list, byId } Pattern
+### Single-Purpose Hook Pattern
 
-All entity hooks now follow a consistent pattern for optimal performance:
+All hooks follow React best practices with single-purpose design:
 
 ```typescript
-const { list, byId } = useEntities(); // useShoutouts, useUsers, etc.
+// Query hooks - automatic data fetching
+const { data: communities, isLoading, error } = useCommunities(filters?);
+const { data: community } = useCommunity(id);
+const { data: resources } = useResources(filters?);
+const { data: resource } = useResource(id);
 
-// List operations - returns lightweight Info objects with IDs for relations
-const items = await list(); // Returns EntityInfo[]
-const filtered = await list({ communityId: "abc" }); // Filtered results
+// Mutation hooks - return stable function references
+const createCommunity = useCreateCommunity();
+const updateCommunity = useUpdateCommunity();
+const deleteCommunity = useDeleteCommunity();
+const joinCommunity = useJoinCommunity();
+const leaveCommunity = useLeaveCommunity();
 
-// Individual operations - returns full objects with nested relations  
-const fullItem = await byId("item-id"); // Returns full Entity object
+// Usage
+await createCommunity({ name: "New Community", ... });
+await updateCommunity({ id: "123", name: "Updated Name" });
+await deleteCommunity("123");
 ```
 
 **Key Benefits:**
-- **Consistent API** - Same pattern across all entities
-- **Performance Optimized** - Lists return lightweight data, details return full objects
-- **Predictable** - Always know what data structure you'll receive
-- **Cache Efficient** - Separate caching for list vs detail operations
+- **React Best Practices** - Each hook has a single, clear purpose
+- **Automatic Fetching** - Query hooks fetch data when components mount
+- **Performance** - Components only subscribe to data they need
+- **Tree Shaking** - Unused hooks are eliminated from bundles
+- **Stable References** - Mutation hooks return stable function references
+- **Type Safety** - Full TypeScript support with proper return types
 
-**Performance Pattern:**
-| Method | Returns | Use Case |
-|--------|---------|----------|
-| `list()` | `EntityInfo[]` (IDs for relations) | Displaying lists, tables, dropdowns |
-| `byId()` | `Entity` (full nested objects) | Detail views, editing, full data needs |
+**Hook Categories:**
+| Hook Type | Purpose | Returns | Example |
+|-----------|---------|---------|---------|
+| Query (List) | Fetch multiple items | `{ data: Entity[], isLoading, error }` | `useCommunities()` |
+| Query (Single) | Fetch single item | `{ data: Entity, isLoading, error }` | `useCommunity(id)` |
+| Mutation | Modify data | `(params) => Promise<Entity>` | `useCreateCommunity()` |
 
 ## Best Practices
 
@@ -221,16 +282,27 @@ const fullItem = await byId("item-id"); // Returns full Entity object
 
 ```typescript
 function ResourceForm() {
-  const resources = useResources();
+  const createResource = useCreateResource();
+  const { data: resources, error: fetchError } = useResources();
 
   const handleSubmit = async (data: ResourceData) => {
     try {
-      await resources.create(data);
+      await createResource(data);
       toast.success("Resource created!");
     } catch (error) {
       toast.error(error.message);
     }
   };
+
+  if (fetchError) {
+    return <ErrorMessage error={fetchError} />;
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* form fields */}
+    </form>
+  );
 }
 ```
 
@@ -238,43 +310,28 @@ function ResourceForm() {
 
 ```typescript
 function CommunityPage({ id }: { id: string }) {
-  const { byId } = useCommunities();
-  const [community, setCommunity] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: community, isLoading, error } = useCommunity(id);
 
-  useEffect(() => {
-    byId(id)
-      .then(setCommunity)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [byId, id]);
-
-  if (loading) return <Skeleton />;
+  if (isLoading) return <Skeleton />;
   if (error) return <ErrorMessage error={error} />;
   if (!community) return <NotFound />;
 
   return <CommunityDetails community={community} />;
 }
 
-// For list data with manual fetching
+// For list data with automatic fetching
 function CommunityList() {
-  const { list } = useCommunities();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: communities, isLoading, error } = useCommunities();
 
-  useEffect(() => {
-    list()
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [list]);
+  if (isLoading) return <div>Loading communities...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
-  if (loading) return <Skeleton />;
-  if (error) return <ErrorMessage error={error} />;
-
-  return <CommunityListView data={data} />;
+  return (
+    <div>
+      {communities?.map(community => (
+        <CommunityCard key={community.id} community={community} />
+      ))}
+    </div>
 }
 ```
 
@@ -298,129 +355,162 @@ interface Props {
 
 ## Available Hooks
 
-### `useAuth()`
+### Authentication Hooks
 
-Returns an object with:
+#### `useCurrentUser()`
+Query hook for current authenticated user.
 
-- **State**:
-  - `currentUser` - Current authenticated user or null
-  - `isAuthenticated` - Boolean auth state
-  - `isLoading` - Loading state
-- **Operations**:
-  - `signIn(credentials)` - Sign in mutation
-  - `signUp(userData)` - Sign up mutation
-  - `signOut()` - Sign out mutation
-  - `updateProfile(updates)` - Update current user profile mutation
+**Returns**: `{ data: User | null, isLoading: boolean, error: Error | null }`
 
-### `useCommunities()`
+#### `useSignIn()`
+Mutation hook for user sign in.
 
-Returns an object with:
+**Returns**: `(credentials: { email: string; password: string }) => Promise<Account>`
 
-- **Data Fetching**:
-  - `list(options?)` - Fetch communities list (returns `CommunityInfo[]`)
-    - `options.includeDeleted?: boolean` - Include deleted communities
-  - `byId(id)` - Fetch single community (returns full `Community` object)
-  - `memberships(communityId)` - Fetch community memberships
-  - `userMemberships(userId)` - Fetch user's community memberships
-- **State** (unified across all operations):
-  - `isPending` - Loading state for any operation
-  - `isError` - Error state for any operation
-  - `error` - Error details
-- **Mutations**:
-  - `create(data)` - Create new community
-  - `update(id, data)` - Update community
-  - `delete(id)` - Delete community
-  - `join(communityId, role?)` - Join community
-  - `leave(communityId)` - Leave community
+#### `useSignUp()`
+Mutation hook for user registration.
 
-**Performance**: `list()` returns lightweight `CommunityInfo` objects, `byId()` returns full `Community` objects with relations.
+**Returns**: `(userData: { email: string; password: string; firstName: string; lastName?: string }) => Promise<Account>`
 
-### `useResources()`
+#### `useSignOut()`
+Mutation hook for user sign out.
 
-Returns an object with:
+**Returns**: `() => Promise<void>`
 
-- **Data Fetching**:
-  - `list(filters?)` - Fetch resources list (returns `ResourceInfo[]`)
-    - `filters.communityId?: string` - Filter by community
-    - `filters.category?: ResourceCategory` - Filter by category
-    - `filters.type?: "offer" | "request"` - Filter by type
-  - `byId(id)` - Fetch single resource (returns full `Resource` object)
-- **State** (unified across all operations):
-  - `isPending` - Loading state for any operation
-  - `isError` - Error state for any operation
-  - `error` - Error details
-- **Mutations**:
-  - `create(data)` - Create new resource
-  - `update(id, data)` - Update resource
-  - `delete(id)` - Delete resource
+#### `useUpdateProfile()`
+Mutation hook for updating user profile.
 
-**Performance**: `list()` returns lightweight `ResourceInfo` objects, `byId()` returns full `Resource` objects with owner and community relations.
+**Returns**: `(updates: Partial<UserData>) => Promise<User>`
 
-### `useEvents()`
+### Community Hooks
 
-Returns an object with:
+#### `useCommunities(filters?: CommunityFilter)`
+Query hook for fetching communities list.
 
-- **Data Fetching**:
-  - `list(filters?)` - Fetch events list (returns `EventInfo[]`)
-    - `filters.communityId?: string` - Filter by community
-    - `filters.organizerId?: string` - Filter by organizer
-    - `filters.startDate?: Date` - Filter by start date
-  - `byId(id)` - Fetch single event (returns full `Event` object)
-  - `attendees(eventId)` - Fetch event attendees
-  - `userAttendances(userId)` - Fetch user's event attendances
-- **State** (unified across all operations):
-  - `isPending` - Loading state for any operation
-  - `isError` - Error state for any operation
-  - `error` - Error details
-- **Mutations**:
-  - `create(data)` - Create new event
-  - `update(id, data)` - Update event
-  - `delete(id)` - Delete event
-  - `join(eventId, status?)` - Join event with attendance status
-  - `leave(eventId)` - Leave event
+**Returns**: `{ data: CommunityInfo[], isLoading: boolean, error: Error | null }`
 
-**Performance**: `list()` returns lightweight `EventInfo` objects, `byId()` returns full `Event` objects with organizer and community relations.
+#### `useCommunity(id: string)`
+Query hook for fetching single community.
 
-### `useShoutouts()`
+**Returns**: `{ data: Community | null, isLoading: boolean, error: Error | null }`
 
-Returns an object with:
+#### `useCreateCommunity()`
+Mutation hook for creating communities.
 
-- **Data Fetching**:
-  - `list(filters?)` - Fetch shoutouts list (returns `ShoutoutInfo[]`)
-    - `filters.sentBy?: string` - Filter by sender user ID
-    - `filters.receivedBy?: string` - Filter by receiver user ID
-    - `filters.communityId?: string` - Filter by community
-    - `filters.resourceId?: string` - Filter by resource
-  - `byId(id)` - Fetch single shoutout (returns full `Shoutout` object)
-- **State** (unified across all operations):
-  - `isPending` - Loading state for any operation
-  - `isError` - Error state for any operation
-  - `error` - Error details
-- **Mutations**:
-  - `create(data)` - Create new shoutout
-  - `update(id, data)` - Update shoutout
-  - `delete(id)` - Delete shoutout
+**Returns**: `(data: CommunityData) => Promise<Community>`
 
-**Performance**: `list()` returns lightweight `ShoutoutInfo` objects, `byId()` returns full `Shoutout` objects with user, resource, and community relations.
+#### `useUpdateCommunity()`
+Mutation hook for updating communities.
 
-### `useUsers()`
+**Returns**: `(data: { id: string } & Partial<CommunityData>) => Promise<Community>`
 
-Returns an object with:
+#### `useDeleteCommunity()`
+Mutation hook for deleting communities.
 
-- **Data Fetching**:
-  - `list(filters?)` - Fetch users list (returns `UserInfo[]`)
-    - `filters.communityId?: string` - Filter by community membership
-    - `filters.role?: UserRole` - Filter by role
-  - `byId(id)` - Fetch single user (returns full `User` object)
-- **State** (unified across all operations):
-  - `isPending` - Loading state for any operation
-  - `isError` - Error state for any operation
-  - `error` - Error details
-- **Mutations**:
-  - `update(user)` - Update user profile
-  - `delete(id)` - Delete user
+**Returns**: `(id: string) => Promise<void>`
 
-**Performance**: `list()` returns `UserInfo` objects, `byId()` returns full `User` objects. For users, these are currently identical since User has no nested relations, but the pattern ensures consistency.
+#### `useJoinCommunity()`
+Mutation hook for joining communities.
+
+**Returns**: `(communityId: string) => Promise<void>`
+
+#### `useLeaveCommunity()`
+Mutation hook for leaving communities.
+
+**Returns**: `(communityId: string) => Promise<void>`
+
+### Resource Hooks
+
+#### `useResources(filters?: ResourceFilter)`
+Query hook for fetching resources list.
+
+**Returns**: `{ data: ResourceInfo[], isLoading: boolean, error: Error | null }`
+
+#### `useResource(id: string)`
+Query hook for fetching single resource.
+
+**Returns**: `{ data: Resource | null, isLoading: boolean, error: Error | null }`
+
+#### `useCreateResource()`
+Mutation hook for creating resources.
+
+**Returns**: `(data: ResourceData) => Promise<Resource>`
+
+#### `useUpdateResource()`
+Mutation hook for updating resources.
+
+**Returns**: `(data: { id: string } & Partial<ResourceData>) => Promise<Resource>`
+
+#### `useDeleteResource()`
+Mutation hook for deleting resources.
+
+**Returns**: `(id: string) => Promise<void>`
+
+### Event Hooks
+
+#### `useEvents(filters?: EventFilter)`
+Query hook for fetching events list.
+
+**Returns**: `{ data: EventInfo[], isLoading: boolean, error: Error | null }`
+
+#### `useEvent(id: string)`
+Query hook for fetching single event.
+
+**Returns**: `{ data: Event | null, isLoading: boolean, error: Error | null }`
+
+#### `useCreateEvent()`
+Mutation hook for creating events.
+
+**Returns**: `(data: EventData) => Promise<Event>`
+
+#### `useUpdateEvent()`
+Mutation hook for updating events.
+
+**Returns**: `(data: { id: string } & Partial<EventData>) => Promise<Event>`
+
+#### `useDeleteEvent()`
+Mutation hook for deleting events.
+
+**Returns**: `(id: string) => Promise<void>`
+
+### User Hooks
+
+#### `useUsers(filters?: UserFilter)`
+Query hook for fetching users list.
+
+**Returns**: `{ data: UserInfo[], isLoading: boolean, error: Error | null }`
+
+#### `useUser(id: string)`
+Query hook for fetching single user.
+
+**Returns**: `{ data: User | null, isLoading: boolean, error: Error | null }`
+
+### Shoutout Hooks
+
+#### `useShoutouts(filters?: ShoutoutFilter)`
+Query hook for fetching shoutouts list.
+
+**Returns**: `{ data: ShoutoutInfo[], isLoading: boolean, error: Error | null }`
+
+#### `useShoutout(id: string)`
+Query hook for fetching single shoutout.
+
+**Returns**: `{ data: Shoutout | null, isLoading: boolean, error: Error | null }`
+
+#### `useCreateShoutout()`
+Mutation hook for creating shoutouts.
+
+**Returns**: `(data: ShoutoutData) => Promise<Shoutout>`
+
+#### `useUpdateShoutout()`
+Mutation hook for updating shoutouts.
+
+**Returns**: `(data: { id: string } & Partial<ShoutoutData>) => Promise<Shoutout>`
+
+#### `useDeleteShoutout()`
+Mutation hook for deleting shoutouts.
+
+**Returns**: `(id: string) => Promise<void>`
 
 ---
 

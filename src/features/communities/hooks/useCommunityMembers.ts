@@ -1,0 +1,59 @@
+import { useQuery } from '@tanstack/react-query';
+import { logger, queryKeys } from '../../../shared';
+import { useSupabase } from '../../../shared';
+import { createCommunityService } from '../services/community.service';
+import { STANDARD_CACHE_TIME } from '../../../config';
+
+import type { CommunityMembership } from '../types/domain';
+
+/**
+ * Hook for fetching community members.
+ * 
+ * Provides a list of all members in a specific community.
+ * 
+ * @param communityId - The community ID to fetch members for
+ * @returns Query state for community members
+ * 
+ * @example
+ * ```tsx
+ * function CommunityMembersList({ communityId }) {
+ *   const { data: members, isLoading, error } = useCommunityMembers(communityId);
+ *   
+ *   if (isLoading) return <div>Loading members...</div>;
+ *   if (error) return <div>Error: {error.message}</div>;
+ *   
+ *   return (
+ *     <div>
+ *       <h2>Community Members ({members?.length || 0})</h2>
+ *       {members?.map(member => (
+ *         <div key={member.userId}>
+ *           <span>{member.user.firstName} {member.user.lastName}</span>
+ *           <span>Role: {member.role}</span>
+ *           <span>Joined: {new Date(member.joinedAt).toLocaleDateString()}</span>
+ *         </div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useCommunityMembers(communityId: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+
+  const query = useQuery<CommunityMembership[], Error>({
+    queryKey: queryKeys.communities.memberships(communityId),
+    queryFn: () => communityService.fetchCommunityMemberships(communityId),
+    staleTime: STANDARD_CACHE_TIME,
+    enabled: !!communityId,
+  });
+
+  if (query.error) {
+    logger.error('🏘️ API: Error fetching community members', {
+      error: query.error,
+      communityId,
+    });
+  }
+
+  return query;
+}

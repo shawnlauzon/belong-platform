@@ -30,38 +30,52 @@ npm install @belongnetwork/platform
 
 ```
 @belongnetwork/platform     # Single unified package
-├── /hooks                  # All React Query hooks
+├── /features               # Feature-based organization
+│   ├── /auth               # Authentication hooks
+│   │   ├── useCurrentUser()
+│   │   ├── useSignIn()
+│   │   ├── useSignOut()
+│   │   └── useSignUp()
+│   ├── /communities        # Community hooks
+│   │   ├── useCommunities()
+│   │   ├── useCommunity()
+│   │   └── useCreateCommunity()
+│   └── /resources          # Resource hooks
+│       ├── useResources()
+│       ├── useResource()
+│       └── useCreateResource()
 ├── /types                  # TypeScript types and interfaces
-├── BelongProvider          # React context provider with config
-└── useBelong()            # Primary hook for current user
+└── BelongProvider          # React context provider with config
 ```
 
-### Authentication Architecture
+### Single-Purpose Hook Architecture
 
-The platform provides flexible authentication patterns to suit different use cases:
+The platform follows React best practices with single-purpose hooks:
 
-#### Two Usage Patterns
+#### Hook Categories
 
-**1. Unified Context Pattern (Recommended)**
+**Query Hooks (Data Fetching)**
+- `useCurrentUser()` - Get current authenticated user
+- `useCommunities()` - Fetch communities list
+- `useCommunity(id)` - Fetch single community
+- `useResources()` - Fetch resources list
+- `useResource(id)` - Fetch single resource
 
-- Use `BelongProvider` + `useBelong()` for unified auth state across your app
-- Provides current user data and auth mutations in one hook
-- Automatic cache management and auth state synchronization
-
-**2. Individual Hooks Pattern**
-
-- Use `useSignIn`, `useSignOut`, `useSignUp` hooks directly
-- Now requires `BelongProvider` for configuration access
-- Useful for focused authentication components within the provider
+**Mutation Hooks (Data Modification)**
+- `useSignIn()` - Sign in user
+- `useSignOut()` - Sign out user  
+- `useSignUp()` - Register new user
+- `useCreateCommunity()` - Create community
+- `useCreateResource()` - Create resource
 
 #### Core Architecture
 
-- **`useBelong()`**: Primary hook for current user data and auth mutations (requires `BelongProvider`)
-- **`useAuth()`**: Advanced hook with full authentication state control
-- **Individual Hooks**: `useSignIn`, `useSignOut`, `useSignUp` require `BelongProvider` context
-- **`BelongProvider`**: React context provider managing centralized auth state
-- **Service Layer**: Clean separation between auth services and React hooks
-- **Single Source of Truth**: Unified caching prevents state inconsistencies
+- **Single Responsibility**: Each hook serves one specific purpose
+- **Automatic Fetching**: Query hooks automatically fetch data when components mount
+- **Stable References**: Mutation hooks return stable function references
+- **Type Safety**: Full TypeScript support with proper return types
+- **Performance**: Components only subscribe to data they need
+- **Tree Shaking**: Unused hooks are eliminated from bundles
 
 ## 🚀 Quick Start
 
@@ -115,31 +129,51 @@ REACT_APP_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
 
 ```tsx
 import {
+  useCurrentUser,
   useCommunities,
   useResources,
-  useBelong,
   useCreateResource,
-  useConversations,
-  useSendMessage,
+  useSignIn,
+  useSignOut,
 } from "@belongnetwork/platform";
 
 function CommunityDashboard() {
-  const { currentUser, isPending } = useBelong();
-  const { data: communities } = useCommunities();
-  const { data: resources } = useResources({ type: "offer" });
-  const { data: conversations } = useConversations();
+  const { data: currentUser, isLoading } = useCurrentUser();
+  const { data: communities, isLoading: communitiesLoading } = useCommunities();
+  const { data: resources, isLoading: resourcesLoading } = useResources({ type: "offer" });
   const createResource = useCreateResource();
-  const sendMessage = useSendMessage();
+  const signIn = useSignIn();
+  const signOut = useSignOut();
 
-  const handleSendMessage = async (conversationId: string, content: string) => {
-    await sendMessage.mutateAsync({
-      conversationId,
-      content,
-    });
+  const handleCreateResource = async (resourceData) => {
+    try {
+      await createResource(resourceData);
+      alert("Resource created successfully!");
+    } catch (error) {
+      alert("Failed to create resource");
+    }
   };
 
-  if (isPending) return <div>Loading...</div>;
-  if (!currentUser) return <div>Please sign in</div>;
+  const handleSignIn = async () => {
+    try {
+      await signIn({
+        email: "user@example.com",
+        password: "password"
+      });
+    } catch (error) {
+      alert("Failed to sign in");
+    }
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!currentUser) {
+    return (
+      <div>
+        <h1>Welcome to Belong</h1>
+        <button onClick={handleSignIn}>Sign In</button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -154,26 +188,29 @@ function CommunityDashboard() {
 
       <section>
         <h2>Available Resources</h2>
-        {resources?.map((resource) => (
-          <div key={resource.id}>
-            <h3>{resource.title}</h3>
-            <p>Offered by {resource.owner.firstName}</p>
-          </div>
-        ))}
+        {resourcesLoading ? (
+          <div>Loading resources...</div>
+        ) : (
+          resources?.map((resource) => (
+            <div key={resource.id}>
+              <h3>{resource.title}</h3>
+              <p>{resource.type} - {resource.category}</p>
+            </div>
+          ))
+        )}
       </section>
 
-      <section>
-        <h2>Messages</h2>
-        {conversations?.map((conversation) => (
-          <div key={conversation.id}>
-            <p>Conversation with participants</p>
-            <p>Last message: {conversation.lastMessagePreview}</p>
-            <p>Unread: {conversation.unreadCount}</p>
-          </div>
-        ))}
-      </section>
-
-      <button onClick={handleShareResource}>Share a Resource</button>
+      <div>
+        <button onClick={() => handleCreateResource({
+          title: "Garden Tools",
+          type: "offer",
+          category: "tools",
+          communityId: communities?.[0]?.id
+        })}>
+          Share a Resource
+        </button>
+        <button onClick={() => signOut()}>Sign Out</button>
+      </div>
     </div>
   );
 }
@@ -182,26 +219,25 @@ function CommunityDashboard() {
 ### Key Setup Requirements
 
 1. **BelongProvider Configuration**: Pass configuration as `config` prop to `BelongProvider`
-2. **QueryClientProvider**: Required for React Query functionality
+2. **QueryClientProvider**: Required for React Query functionality  
 3. **Provider nesting order**: QueryClient → Belong → App components
-4. **Hook usage**: `useBelong()` must be called inside `BelongProvider`
-5. **Individual hooks**: `useSignIn`, `useSignOut`, `useSignUp` now require `BelongProvider` context
+4. **Hook usage**: All hooks must be called inside `BelongProvider`
 
 ### Quick Usage Pattern
 
 ```tsx
 // Get current user data anywhere in your app (must be inside BelongProvider)
 function UserNameDisplay() {
-  const { currentUser } = useBelong();
+  const { data: currentUser, isLoading } = useCurrentUser();
   return <div>User: {currentUser?.firstName || "Not signed in"}</div>;
 }
 
 // Handle loading and error states
 function AuthStatus() {
-  const { currentUser, isPending, isError } = useBelong();
+  const { data: currentUser, isLoading, error } = useCurrentUser();
 
-  if (isPending) return <div>Loading...</div>;
-  if (isError) return <div>Error loading user</div>;
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading user</div>;
 
   return currentUser ? (
     <div>Welcome, {currentUser.firstName}!</div>

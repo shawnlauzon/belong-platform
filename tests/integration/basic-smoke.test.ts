@@ -11,7 +11,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import {
-  useAuth,
+  useCurrentUser,
+  useSignIn,
+  useSignOut,
+  useSignUp,
   useCommunities,
 } from "../../src";
 import {
@@ -33,19 +36,30 @@ describe("Basic Smoke Tests", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test("should initialize auth hook without errors", async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() => useAuth());
+  test("should initialize auth hooks without errors", async () => {
+    // Test all auth hooks together
+    const { result } = await testUtils.renderHookWithWrapper(() => ({
+      currentUser: useCurrentUser(),
+      signIn: useSignIn(),
+      signOut: useSignOut(),
+      signUp: useSignUp(),
+    }));
 
+    // Wait for useCurrentUser to initialize
     await testUtils.waitForHookToInitialize(
-      result,
-      (auth) => typeof auth.signUp === 'function' && typeof auth.signIn === 'function'
+      { current: result.current.currentUser },
+      (query) => query.isLoading !== undefined
     );
 
-    expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.currentUser).toBeNull();
-    expect(typeof result.current.signUp).toBe('function');
+    // Check useCurrentUser returns React Query state
+    expect(result.current.currentUser.data ?? null).toBeNull(); // Not authenticated
+    expect(typeof result.current.currentUser.isLoading).toBe('boolean');
+    expect(result.current.currentUser.error).toBeNull();
+
+    // Check mutation hooks return functions
     expect(typeof result.current.signIn).toBe('function');
     expect(typeof result.current.signOut).toBe('function');
+    expect(typeof result.current.signUp).toBe('function');
   });
 
   test("should initialize communities hook without errors", async () => {
@@ -53,13 +67,13 @@ describe("Basic Smoke Tests", () => {
 
     await testUtils.waitForHookToInitialize(
       result,
-      (communities) => typeof communities.list === 'function'
+      (query) => query.isLoading !== undefined
     );
 
-    expect(typeof result.current.list).toBe('function');
-    expect(typeof result.current.create).toBe('function');
-    expect(typeof result.current.update).toBe('function');
-    expect(typeof result.current.delete).toBe('function');
+    // Check useCommunities returns React Query state
+    expect(typeof result.current.isLoading).toBe('boolean');
+    expect(result.current.error).toBeNull();
+    expect(Array.isArray(result.current.data) || result.current.data === undefined).toBe(true);
   });
 
   test("should be able to list communities without authentication", async () => {
@@ -67,15 +81,19 @@ describe("Basic Smoke Tests", () => {
 
     await testUtils.waitForHookToInitialize(
       result,
-      (communities) => typeof communities.list === 'function'
+      (query) => query.isLoading !== undefined
     );
 
-    const communities = await testUtils.performAsyncAction(
-      () => result.current.list(),
-      "list communities"
+    // Wait for query to complete
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 10000 }
     );
 
-    expect(Array.isArray(communities)).toBe(true);
+    // useCommunities should return data directly (auto-fetching)
+    expect(Array.isArray(result.current.data)).toBe(true);
     // Don't expect any specific communities, just that it returns an array
   });
 

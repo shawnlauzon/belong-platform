@@ -426,6 +426,8 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         userId,
         communityId,
       });
+      
+      return { userId, communityId };
     } catch (error) {
       logger.error('🏘️ API: Error leaving community', { error, communityId });
       throw error;

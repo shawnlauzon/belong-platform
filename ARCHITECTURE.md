@@ -35,7 +35,7 @@ The platform consists of three core packages:
 
 #### Current Transformer Architecture
 
-The platform currently uses manual transformer functions for data conversion between database and domain objects:
+The platform uses manual transformer functions for data conversion between database and domain objects:
 
 ```typescript
 // transformers/communityTransformer.ts
@@ -191,67 +191,170 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
 ### Hook Implementation Pattern
 
-Consolidated hook pattern for each entity with manual data fetching:
+Single-purpose hook pattern following React best practices:
+
+#### Query Hooks (Data Fetching)
 
 ```typescript
-export function useCommunities() {
-  const queryClient = useQueryClient();
+// Hook for fetching communities list
+export function useCommunities(filters?: CommunityFilter) {
   const supabase = useSupabase();
-  const service = createCommunityService(supabase);
+  const communityService = createCommunityService(supabase);
 
-  // List communities query - disabled by default to prevent automatic fetching
-  const communitiesQuery = useQuery<CommunityInfo[], Error>({
-    queryKey: queryKeys.communities.all,
-    queryFn: () => service.fetchCommunities(),
-    staleTime: 5 * 60 * 1000,
-    enabled: false, // Prevent automatic fetching
+  const query = useQuery<CommunityInfo[], Error>({
+    queryKey: filters 
+      ? queryKeys.communities.filtered(filters)
+      : queryKeys.communities.all,
+    queryFn: () => communityService.fetchCommunities(filters),
+    staleTime: STANDARD_CACHE_TIME,
   });
 
-  const createMutation = useMutation({
-    mutationFn: service.createCommunity,
-    onSuccess: () => {
-      // Simplified cache invalidation
-      queryClient.invalidateQueries({ queryKey: ["communities"] });
-    },
+  if (query.error) {
+    logger.error('🏘️ API: Error fetching communities', {
+      error: query.error,
+      filters,
+    });
+  }
+
+  return query;
+}
+
+// Hook for fetching single community
+export function useCommunity(id: string) {
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+
+  return useQuery<Community | null, Error>({
+    queryKey: queryKeys.communities.byId(id),
+    queryFn: () => communityService.fetchCommunityById(id),
+    staleTime: STANDARD_CACHE_TIME,
+    enabled: !!id,
   });
-
-  return {
-    // State (for internal use - data not automatically populated)
-    communities: communitiesQuery.data,
-    isLoading: communitiesQuery.isLoading,
-    error: communitiesQuery.error,
-
-    // Manual fetch operation
-    retrieve: async (options?: { includeDeleted?: boolean }) => {
-      const result = await queryClient.fetchQuery({
-        queryKey: queryKeys.communities.all,
-        queryFn: () => service.fetchCommunities(options),
-        staleTime: 5 * 60 * 1000,
-      });
-      return result;
-    },
-
-    // Mutations
-    create: createMutation.mutateAsync,
-    isCreating: createMutation.isPending,
-  };
 }
 ```
 
-**Key Pattern Changes**:
-- **No Constructor Parameters**: Hooks take no initial parameters
-- **Manual Fetching**: Use `retrieve(filters?)` for data fetching with dynamic filters
-- **Disabled Auto-fetch**: `enabled: false` prevents automatic query execution
-- **Simplified Caching**: Broad invalidation patterns using base entity keys
-- **Flexible Filtering**: Apply different filters per call without recreating hooks
+#### Mutation Hooks (Data Modification)
+
+```typescript
+// Hook for creating communities
+export function useCreateCommunity() {
+  const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const communityService = createCommunityService(supabase);
+
+  const mutation = useMutation({
+    mutationFn: (data: CommunityData) => communityService.createCommunity(data),
+    onSuccess: (newCommunity) => {
+      logger.info('🏘️ API: Community created successfully', {
+        communityId: newCommunity.id,
+      });
+
+      // Invalidate community lists to include new community
+      queryClient.invalidateQueries({ queryKey: ['communities'] });
+      
+      // Set the new community in cache
+      queryClient.setQueryData(
+        queryKeys.communities.byId(newCommunity.id), 
+        newCommunity
+      );
+    },
+    onError: (error) => {
+      logger.error('🏘️ API: Failed to create community', { error });
+    },
+  });
+
+  // Return stable function reference
+  return useCallback(
+    (data: CommunityData) => {
+      return mutation.mutateAsync(data);
+    },
+    [mutation.mutateAsync]
+  );
+}
+```
+
+#### Authentication Hooks
+
+```typescript
+// Query hook for current user
+export function useCurrentUser() {
+  const supabase = useSupabase();
+  const authService = createAuthService(supabase);
+
+  return useQuery({
+    queryKey: ['auth'],
+    queryFn: authService.getCurrentUser,
+    staleTime: STANDARD_CACHE_TIME,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if (
+        error?.message?.includes('Invalid Refresh Token') ||
+        error?.message?.includes('Auth session missing')
+      ) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+// Mutation hook for sign in
+export function useSignIn() {
+  const queryClient = useQueryClient();
+  const supabase = useSupabase();
+  const authService = createAuthService(supabase);
+
+  const mutation = useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      authService.signIn(email, password),
+    onSuccess: (account) => {
+      // Invalidate auth state to refetch with new session
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ['user', account.id] });
+    },
+  });
+
+  return useCallback(
+    (params: { email: string; password: string }) => {
+      return mutation.mutateAsync(params);
+    },
+    [mutation.mutateAsync]
+  );
+}
+```
+
+**Key Architectural Principles**:
+
+- **Single Responsibility**: Each hook serves one specific purpose (fetch communities, create community, sign in, etc.)
+- **Automatic Fetching**: Query hooks automatically fetch data when mounted (standard React Query behavior)
+- **Stable Function References**: Mutation hooks return stable function references using `useCallback`
+- **Focused Caching**: Each hook manages its own cache keys and invalidation logic
+- **Parameter-based Filtering**: Query hooks accept optional filters/parameters for dynamic behavior
+- **Error Handling**: Built-in error logging and retry logic where appropriate
+- **Type Safety**: Full TypeScript support with proper return types and parameter validation
+
+**Benefits**:
+
+- **Performance**: Components only subscribe to the data they need
+- **Tree Shaking**: Unused hooks can be eliminated from bundles
+- **Consistency**: Follows standard React Query and React Hooks patterns
+- **Composability**: Hooks can be easily combined in components
+- **Testability**: Each hook can be tested in isolation
+- **Maintainability**: Clear separation of concerns between queries and mutations
 
 ### File Organization
 
 ```
 feature/
-├── hooks/           # Public API - consolidated hooks
-│   ├── index.ts
-│   └── useCommunities.ts  # Single hook per entity
+├── hooks/           # Public API - single-purpose hooks
+│   ├── index.ts                    # Re-export all hooks
+│   ├── useCommunities.ts          # Query hook for communities list
+│   ├── useCommunity.ts            # Query hook for single community
+│   ├── useCreateCommunity.ts      # Mutation hook for creating
+│   ├── useUpdateCommunity.ts      # Mutation hook for updating
+│   ├── useDeleteCommunity.ts      # Mutation hook for deleting
+│   ├── useJoinCommunity.ts        # Mutation hook for joining
+│   └── useLeaveCommunity.ts       # Mutation hook for leaving
 ├── services/        # Service factories
 │   └── community.service.ts
 ├── transformers/    # Data transformation logic
@@ -261,9 +364,11 @@ feature/
 
 **Architecture Migration Notes**:
 - **Completed**: Migration from `impl/` pattern to `services/` + `transformers/` pattern
-- **Current Structure**: All business logic now centralized in service layer
+- **Completed**: Migration from monolithic hooks to single-purpose hook pattern
+- **Current Structure**: All business logic centralized in service layer
+- **Hook Pattern**: Each hook serves a single purpose following React best practices
 - **Transformation Logic**: Moved to dedicated transformer files for consistency
-- **Removed**: `impl/` directories have been eliminated across all features
+- **Removed**: `impl/` directories and consolidated "god hooks" have been eliminated
 
 ## Data Layer Architecture
 

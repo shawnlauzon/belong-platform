@@ -13,7 +13,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import {
-  useAuth,
+  useCurrentUser,
+  useSignIn,
+  useSignOut,
+  useSignUp,
 } from "../../../src";
 import {
   TestDataFactory,
@@ -58,96 +61,102 @@ describe("Auth State Synchronization", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test("BUG REPRODUCTION: useAuth returns null despite successful API user fetch", async () => {
+  test("BUG REPRODUCTION: useCurrentUser returns null despite successful API user fetch", async () => {
     // Create test user data matching customer pattern
     const testUser = TestDataFactory.createUser();
-    const { result: authResult } = await testUtils.renderHookWithWrapper(() => useAuth());
+    
+    // Use single component with all hooks to ensure proper state sharing
+    const { result } = renderHook(() => ({
+      currentUser: useCurrentUser(),
+      signUp: useSignUp(),
+      signIn: useSignIn(),
+    }), { wrapper });
 
-    await testUtils.waitForHookToInitialize(
-      authResult,
-      (auth) => typeof auth.signUp === 'function'
-    );
+    // Wait for hooks to initialize
+    await waitFor(() => {
+      expect(result.current.currentUser.isLoading).toBe(false);
+    });
 
     // Step 1: Sign up user (should work)
-    const signUpResult = await testUtils.performAsyncAction(
-      () => authResult.current.signUp(testUser),
+    const signUpUser = await testUtils.performAsyncAction(
+      () => result.current.signUp(testUser),
       "sign up user for state sync test"
     );
 
-    expect(signUpResult).toMatchObject({
+    expect(signUpUser).toMatchObject({
       id: expect.any(String),
       email: testUser.email.toLowerCase(),
       firstName: testUser.firstName,
     });
 
     // Step 2: Sign in user (should establish session)
-    const signInResult = await testUtils.performAsyncAction(
-      () => authResult.current.signIn({
+    const signInUser = await testUtils.performAsyncAction(
+      () => result.current.signIn({
         email: testUser.email,
         password: testUser.password,
       }),
       "sign in user for state sync test"
     );
 
-    expect(signInResult).toMatchObject({
+    expect(signInUser).toMatchObject({
       id: expect.any(String),
       email: testUser.email.toLowerCase(),
     });
 
     // Step 3: Check auth state immediately after sign-in
     // This is where the bug manifests - API may log success but hook returns null
-    const immediateAuthState = authResult.current;
+    const immediateAuthState = result.current.currentUser;
     console.log('🔍 Immediate auth state after sign-in:', {
-      currentUser: immediateAuthState.currentUser ? {
-        id: immediateAuthState.currentUser.id,
-        email: immediateAuthState.currentUser.email,
+      currentUser: immediateAuthState.data ? {
+        id: immediateAuthState.data.id,
+        email: immediateAuthState.data.email,
       } : null,
-      isAuthenticated: immediateAuthState.isAuthenticated,
-      isPending: immediateAuthState.isPending,
+      isLoading: immediateAuthState.isLoading,
       isError: immediateAuthState.isError,
     });
 
     // Step 4: Wait for auth state to stabilize and test the bug condition
-    await testUtils.waitForCondition(
-      () => {
-        const currentState = authResult.current;
-        console.log('🔍 Current auth state:', {
-          currentUser: currentState.currentUser ? {
-            id: currentState.currentUser.id,
-            email: currentState.currentUser.email,
-          } : null,
-          isAuthenticated: currentState.isAuthenticated,
-          isPending: currentState.isPending,
-          isError: currentState.isError,
-        });
+    await waitFor(() => {
+      const currentState = result.current.currentUser;
+      console.log('🔍 Current auth state:', {
+        currentUser: currentState.data ? {
+          id: currentState.data.id,
+          email: currentState.data.email,
+        } : null,
+        isLoading: currentState.isLoading,
+        isError: currentState.isError,
+      });
 
-        // The bug: API succeeds but useAuth returns null
-        // If this test fails, it means the bug has been reproduced
-        return currentState.currentUser !== null && 
-               currentState.isAuthenticated === true && 
-               currentState.isPending === false;
-      },
-      "wait for auth state to stabilize",
-      10000
-    );
+      // The bug: API succeeds but useCurrentUser returns null
+      // If this test fails, it means the bug has been reproduced
+      expect(currentState.data).toBeTruthy();
+      expect(currentState.isLoading).toBe(false);
+      expect(currentState.isError).toBeFalsy();
+    }, { timeout: 10000 });
 
     // If we reach here, the bug is NOT reproduced
-    expect(authResult.current.currentUser).toBeTruthy();
-    expect(authResult.current.currentUser?.email).toBe(testUser.email.toLowerCase());
-    expect(authResult.current.isAuthenticated).toBe(true);
-    expect(authResult.current.isPending).toBe(false);
+    expect(result.current.currentUser.data).toBeTruthy();
+    expect(result.current.currentUser.data?.email).toBe(testUser.email.toLowerCase());
+    expect(result.current.currentUser.isLoading).toBe(false);
+    expect(result.current.currentUser.isError).toBeFalsy();
 
     console.log("✅ Auth state synchronization test successful - no bug reproduced");
   });
 
-  test("TIMING ANALYSIS: useAuth state changes during authentication flow", async () => {
+  test("TIMING ANALYSIS: auth state changes during authentication flow", async () => {
     const testUser = TestDataFactory.createUser();
-    const { result: authResult } = await testUtils.renderHookWithWrapper(() => useAuth());
+    
+    // Use single component with all hooks to ensure proper state sharing
+    const { result } = renderHook(() => ({
+      currentUser: useCurrentUser(),
+      signUp: useSignUp(),
+      signIn: useSignIn(),
+    }), { wrapper });
 
-    await testUtils.waitForHookToInitialize(
-      authResult,
-      (auth) => typeof auth.signUp === 'function'
-    );
+    // Wait for hooks to initialize
+    await waitFor(() => {
+      expect(result.current.currentUser.isLoading).toBe(false);
+    });
 
     // Track auth state changes during the flow
     const stateChanges: Array<{
@@ -162,10 +171,10 @@ describe("Auth State Synchronization", () => {
     const trackState = (action: string) => {
       stateChanges.push({
         timestamp: Date.now(),
-        currentUser: !!authResult.current.currentUser,
-        isAuthenticated: authResult.current.isAuthenticated,
-        isPending: authResult.current.isPending,
-        isError: authResult.current.isError,
+        currentUser: !!result.current.currentUser.data,
+        isAuthenticated: !!result.current.currentUser.data && !result.current.currentUser.isLoading,
+        isPending: result.current.currentUser.isLoading,
+        isError: result.current.currentUser.isError,
         action,
       });
     };
@@ -176,9 +185,9 @@ describe("Auth State Synchronization", () => {
     // Sign up
     await testUtils.performAsyncAction(
       async () => {
-        const result = await authResult.current.signUp(testUser);
+        const signUpResult = await result.current.signUp(testUser);
         trackState('after_signup');
-        return result;
+        return signUpResult;
       },
       "sign up with timing tracking"
     );
@@ -186,25 +195,22 @@ describe("Auth State Synchronization", () => {
     // Sign in
     await testUtils.performAsyncAction(
       async () => {
-        const result = await authResult.current.signIn({
+        const signInResult = await result.current.signIn({
           email: testUser.email,
           password: testUser.password,
         });
         trackState('after_signin');
-        return result;
+        return signInResult;
       },
       "sign in with timing tracking"
     );
 
     // Wait for final state
-    await testUtils.waitForCondition(
-      () => {
-        trackState('polling');
-        return authResult.current.isAuthenticated && !authResult.current.isPending;
-      },
-      "wait for final authenticated state",
-      10000
-    );
+    await waitFor(() => {
+      trackState('polling');
+      expect(result.current.currentUser.data).toBeTruthy();
+      expect(result.current.currentUser.isLoading).toBe(false);
+    }, { timeout: 10000 });
 
     trackState('final');
 
@@ -220,10 +226,10 @@ describe("Auth State Synchronization", () => {
     })));
 
     // Verify final state is correct
-    const finalState = authResult.current;
-    expect(finalState.currentUser).toBeTruthy();
-    expect(finalState.isAuthenticated).toBe(true);
-    expect(finalState.isPending).toBe(false);
+    const finalState = result.current.currentUser;
+    expect(finalState.data).toBeTruthy();
+    expect(!!finalState.data).toBe(true);
+    expect(finalState.isLoading).toBe(false);
     expect(finalState.isError).toBe(false);
 
     // Check for concerning state transitions
@@ -249,49 +255,59 @@ describe("Auth State Synchronization", () => {
 
   test("CACHE INVALIDATION: auth state after sign out", async () => {
     const testUser = TestDataFactory.createUser();
-    const { result: authResult } = await testUtils.renderHookWithWrapper(() => useAuth());
+    
+    // Use single component with all hooks to ensure proper state sharing
+    const { result } = renderHook(() => ({
+      currentUser: useCurrentUser(),
+      signUp: useSignUp(),
+      signIn: useSignIn(),
+      signOut: useSignOut(),
+    }), { wrapper });
 
-    await testUtils.waitForHookToInitialize(
-      authResult,
-      (auth) => typeof auth.signUp === 'function'
-    );
+    // Wait for hooks to initialize
+    await waitFor(() => {
+      expect(result.current.currentUser.isLoading).toBe(false);
+    });
 
     // Authenticate user
     await testUtils.performAsyncAction(
-      () => authResult.current.signUp(testUser),
+      () => result.current.signUp(testUser),
       "sign up for cache invalidation test"
     );
 
     await testUtils.performAsyncAction(
-      () => authResult.current.signIn({
+      () => result.current.signIn({
         email: testUser.email,
         password: testUser.password,
       }),
       "sign in for cache invalidation test"
     );
 
-    await testUtils.waitForCondition(
-      () => authResult.current.isAuthenticated === true
-    );
+    await waitFor(() => {
+      expect(result.current.currentUser.data).toBeTruthy();
+      expect(result.current.currentUser.isLoading).toBe(false);
+    });
 
     // Verify authenticated state
-    expect(authResult.current.currentUser).toBeTruthy();
-    expect(authResult.current.isAuthenticated).toBe(true);
+    expect(result.current.currentUser.data).toBeTruthy();
+    expect(!!result.current.currentUser.data && !result.current.currentUser.isLoading).toBe(true);
 
     // Sign out and verify cache is properly invalidated
     await testUtils.performAsyncAction(
-      () => authResult.current.signOut(),
+      () => result.current.signOut(),
       "sign out for cache invalidation test"
     );
 
-    await testUtils.waitForCondition(
-      () => authResult.current.isAuthenticated === false
-    );
+    // Wait for auth state to clear
+    await waitFor(() => {
+      expect(result.current.currentUser.data ?? null).toBeNull();
+      expect(result.current.currentUser.isLoading).toBe(false);
+    }, { timeout: 10000 });
 
     // Critical test: user should be null after sign out
-    expect(authResult.current.currentUser).toBeNull();
-    expect(authResult.current.isAuthenticated).toBe(false);
-    expect(authResult.current.isPending).toBe(false);
+    expect(result.current.currentUser.data).toBeNull();
+    expect(!!result.current.currentUser.data).toBe(false);
+    expect(result.current.currentUser.isLoading).toBe(false);
 
     console.log("✅ Cache invalidation test successful - user properly cleared after sign out");
   });
@@ -299,47 +315,51 @@ describe("Auth State Synchronization", () => {
   test("STATE PERSISTENCE: auth state across hook remounts", async () => {
     const testUser = TestDataFactory.createUser();
 
-    // First hook instance - authenticate
-    const { result: authResult1 } = await testUtils.renderHookWithWrapper(() => useAuth());
+    // First hook instance - authenticate using single component
+    const { result: result1 } = renderHook(() => ({
+      currentUser: useCurrentUser(),
+      signUp: useSignUp(),
+      signIn: useSignIn(),
+    }), { wrapper });
 
-    await testUtils.waitForHookToInitialize(
-      authResult1,
-      (auth) => typeof auth.signUp === 'function'
-    );
+    // Wait for hooks to initialize
+    await waitFor(() => {
+      expect(result1.current.currentUser.isLoading).toBe(false);
+    });
 
     await testUtils.performAsyncAction(
-      () => authResult1.current.signUp(testUser),
+      () => result1.current.signUp(testUser),
       "sign up for persistence test"
     );
 
     await testUtils.performAsyncAction(
-      () => authResult1.current.signIn({
+      () => result1.current.signIn({
         email: testUser.email,
         password: testUser.password,
       }),
       "sign in for persistence test"
     );
 
-    await testUtils.waitForCondition(
-      () => authResult1.current.isAuthenticated === true
-    );
+    await waitFor(() => {
+      expect(result1.current.currentUser.data).toBeTruthy();
+      expect(result1.current.currentUser.isLoading).toBe(false);
+    });
 
-    const authenticatedUserId = authResult1.current.currentUser?.id;
+    const authenticatedUserId = result1.current.currentUser.data?.id;
     expect(authenticatedUserId).toBeTruthy();
 
     // Second hook instance - should maintain auth state
-    const { result: authResult2 } = await testUtils.renderHookWithWrapper(() => useAuth());
+    const { result: result2 } = renderHook(() => useCurrentUser(), { wrapper });
 
-    await testUtils.waitForCondition(
-      () => authResult2.current.currentUser !== null,
-      "wait for second hook to initialize with persisted auth state",
-      5000
-    );
+    await waitFor(() => {
+      expect(result2.current.data).toBeTruthy();
+      expect(result2.current.data?.id).toBe(authenticatedUserId);
+    }, { timeout: 5000 });
 
     // Verify auth state persisted across hook instances
-    expect(authResult2.current.currentUser?.id).toBe(authenticatedUserId);
-    expect(authResult2.current.isAuthenticated).toBe(true);
-    expect(authResult2.current.isPending).toBe(false);
+    expect(result2.current.data?.id).toBe(authenticatedUserId);
+    expect(!!result2.current.data).toBe(true);
+    expect(result2.current.isLoading).toBe(false);
 
     console.log("✅ State persistence test successful - auth state maintained across hook remounts");
   });

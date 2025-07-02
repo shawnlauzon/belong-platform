@@ -1,90 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
-import { useSignOut } from '../../hooks/useSignOut';
-import { BelongProvider } from '../../../../config';
+import { useSignOut } from '../useSignOut';
 
-// Mock shared module to provide useSupabase and logger
-vi.mock('../../../../shared', () => {
-  const mockLogger = {
+// Mock shared module
+vi.mock('../../../../shared', () => ({
+  useSupabase: vi.fn(),
+  logger: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  };
+  },
+}));
 
-  return {
-    useSupabase: vi.fn(),
-    logger: mockLogger,
-  };
-});
+// Mock the auth service
+vi.mock('../../services/auth.service', () => ({
+  createAuthService: vi.fn(() => ({
+    signOut: vi.fn(),
+  })),
+}));
 
-// Mock config to provide createBelongClient
-vi.mock('../../../../config', () => {
-  const mockLogger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  };
-
-  const mockSupabase = {
-    auth: {
-      signOut: vi.fn(),
-      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-    },
-  };
-
-  const mockMapbox = {
-    autocomplete: vi.fn(),
-    reverseGeocode: vi.fn(),
-  };
-
-  const mockClient = {
-    supabase: mockSupabase as any,
-    logger: mockLogger as any,
-    mapbox: mockMapbox as any,
-  };
-
-  const mockBelongProvider = ({ children, config }: any) => children;
-
-  return {
-    createBelongClient: vi.fn(() => mockClient),
-    logger: mockLogger,
-    BelongProvider: mockBelongProvider,
-    useSupabase: vi.fn(() => mockSupabase),
-  };
-});
-
-// Import mocked useSupabase
+// Import mocked modules
 import { useSupabase } from '../../../../shared';
+import { createAuthService } from '../../services/auth.service';
 
 describe('useSignOut', () => {
   let queryClient: QueryClient;
-  let wrapper: ({ children }: { children: any }) => any;
-  let mockSupabase: any;
+  let mockAuthService: any;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-
-    // Setup mock supabase
-    mockSupabase = {
-      auth: {
-        signOut: vi.fn(),
-        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-      },
-    };
-
-    // Mock useSupabase to return our mock
-    vi.mocked(useSupabase).mockReturnValue(mockSupabase);
-
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -92,49 +39,74 @@ describe('useSignOut', () => {
       },
     });
 
-    const testConfig = {
-      supabaseUrl: 'https://test.supabase.co',
-      supabaseAnonKey: 'test-key',
-      mapboxPublicToken: 'test-token',
+    mockAuthService = {
+      signOut: vi.fn(),
     };
-
-    wrapper = ({ children }: { children: any }) =>
-      createElement(
-        QueryClientProvider,
-        { client: queryClient },
-        createElement(BelongProvider, { config: testConfig }, children)
-      );
+    vi.mocked(createAuthService).mockReturnValue(mockAuthService);
   });
 
-  it('should call signOut implementation', async () => {
-    // Arrange
-    mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+  const wrapper = ({ children }: { children: any }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
 
-    // Act
+  it('should successfully sign out user', async () => {
+    mockAuthService.signOut.mockResolvedValue(undefined);
+
     const { result } = renderHook(() => useSignOut(), { wrapper });
 
-    result.current.mutate();
+    await result.current();
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    // Assert
-    expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+    expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle sign out errors properly', async () => {
-    // Arrange
+  it('should handle sign out errors', async () => {
     const error = new Error('Sign out failed');
-    mockSupabase.auth.signOut.mockResolvedValue({ error });
+    mockAuthService.signOut.mockRejectedValue(error);
 
-    // Act
     const { result } = renderHook(() => useSignOut(), { wrapper });
 
-    result.current.mutate();
+    await expect(result.current()).rejects.toThrow('Sign out failed');
+    expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
+  });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+  it('should successfully sign out without touching cache manually', async () => {
+    mockAuthService.signOut.mockResolvedValue(undefined);
 
-    // Assert
-    expect(result.current.error).toBeDefined();
-    expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+    // Add some cached data to verify it stays untouched
+    queryClient.setQueryData(['auth'], {
+      id: 'test-user',
+      email: 'test@example.com',
+    });
+
+    const { result } = renderHook(() => useSignOut(), { wrapper });
+
+    await result.current();
+
+    // Should have called auth service
+    expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
+
+    // Cache should remain untouched by signOut hook
+    // (cache invalidation should happen automatically via useCurrentUser)
+    expect(queryClient.getQueryData(['auth'])).toBeDefined();
+  });
+
+  it('should complete sign out operation cleanly', async () => {
+    mockAuthService.signOut.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useSignOut(), { wrapper });
+
+    await result.current();
+
+    // Should have successfully called the auth service
+    expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('should return a stable function reference', () => {
+    const { result, rerender } = renderHook(() => useSignOut(), { wrapper });
+
+    const firstReference = result.current;
+    rerender();
+    const secondReference = result.current;
+
+    expect(firstReference).toBe(secondReference);
   });
 });

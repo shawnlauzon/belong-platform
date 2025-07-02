@@ -1,59 +1,71 @@
-import { useMutation } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createAuthService } from '../services/auth.service';
-import { Account } from '../types';
 import { useSupabase } from '../../../shared';
+import { logger } from '../../../shared';
 
 /**
- * React Query mutation hook for signing in users with email and password.
- *
- * This hook handles user authentication by calling Supabase Auth and returns
- * an Account object containing the authenticated user's basic information.
- * Must be used within a BelongProvider context.
- *
- * @returns React Query mutation object for sign in operations
- *
+ * Hook for signing in a user.
+ * 
+ * Provides a mutation function for authenticating users with email and password.
+ * Automatically invalidates auth cache on successful sign in.
+ * 
+ * @returns Sign in mutation function
+ * 
  * @example
  * ```tsx
  * function SignInForm() {
  *   const signIn = useSignIn();
- *
- *   const handleSubmit = async (formData) => {
+ *   const [email, setEmail] = useState('');
+ *   const [password, setPassword] = useState('');
+ *   
+ *   const handleSubmit = async (e) => {
+ *     e.preventDefault();
  *     try {
- *       const account = await signIn.mutateAsync({
- *         email: formData.email,
- *         password: formData.password
- *       });
- *       console.log('Signed in user:', account.id);
+ *       await signIn({ email, password });
+ *       // User is now signed in
  *     } catch (error) {
- *       console.error('Sign in failed:', error.message);
+ *       console.error('Sign in failed:', error);
  *     }
  *   };
- *
+ *   
  *   return (
  *     <form onSubmit={handleSubmit}>
- *       <input type="email" placeholder="Email" />
- *       <input type="password" placeholder="Password" />
- *       <button
- *         type="submit"
- *         disabled={signIn.isPending}
- *       >
- *         {signIn.isPending ? 'Signing in...' : 'Sign In'}
- *       </button>
- *       {signIn.error && <div>Error: {signIn.error.message}</div>}
+ *       <input value={email} onChange={(e) => setEmail(e.target.value)} />
+ *       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+ *       <button type="submit">Sign In</button>
  *     </form>
  *   );
  * }
  * ```
- *
- * @category React Hooks
  */
 export function useSignIn() {
+  const queryClient = useQueryClient();
   const supabase = useSupabase();
   const authService = createAuthService(supabase);
 
-  return useMutation<Account, Error, { email: string; password: string }>({
-    mutationFn: async ({ email, password }) => {
-      return authService.signIn(email, password);
+  const mutation = useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      authService.signIn(email, password),
+    onSuccess: (account) => {
+      logger.info('🔐 API: User signed in successfully', {
+        userId: account.id,
+      });
+
+      // Invalidate auth state to refetch with new session
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ['user', account.id] });
+    },
+    onError: (error) => {
+      logger.error('🔐 API: Failed to sign in', { error });
     },
   });
+
+  // Return stable function reference
+  return useCallback(
+    (params: { email: string; password: string }) => {
+      return mutation.mutateAsync(params);
+    },
+    [mutation.mutateAsync]
+  );
 }

@@ -1,67 +1,104 @@
-import { useMutation } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createAuthService } from '../services/auth.service';
-import { Account } from '../types';
 import { useSupabase } from '../../../shared';
+import { logger } from '../../../shared';
 
 /**
- * React Query mutation hook for registering new users with email and password.
- *
- * This hook creates new user accounts by calling Supabase Auth and automatically
- * creates a user profile. Returns an Account object containing the new user's
- * basic information. Must be used within a BelongProvider context.
- *
- * @returns React Query mutation object for sign up operations
- *
+ * Hook for signing up a new user.
+ * 
+ * Provides a mutation function for creating new user accounts.
+ * Automatically invalidates auth cache on successful sign up.
+ * 
+ * @returns Sign up mutation function
+ * 
  * @example
  * ```tsx
  * function SignUpForm() {
  *   const signUp = useSignUp();
- *
- *   const handleSubmit = async (formData) => {
+ *   const [formData, setFormData] = useState({
+ *     email: '',
+ *     password: '',
+ *     firstName: '',
+ *     lastName: ''
+ *   });
+ *   
+ *   const handleSubmit = async (e) => {
+ *     e.preventDefault();
  *     try {
- *       const account = await signUp.mutateAsync({
- *         email: formData.email,
- *         password: formData.password,
- *         firstName: formData.firstName,
- *         lastName: formData.lastName // optional
- *       });
- *       console.log('Created account:', account.id);
+ *       await signUp(formData);
+ *       // User is now signed up and signed in
  *     } catch (error) {
- *       console.error('Sign up failed:', error.message);
+ *       console.error('Sign up failed:', error);
  *     }
  *   };
- *
+ *   
  *   return (
  *     <form onSubmit={handleSubmit}>
- *       <input type="email" placeholder="Email" required />
- *       <input type="password" placeholder="Password" required />
- *       <input type="text" placeholder="First Name" required />
- *       <input type="text" placeholder="Last Name" />
- *       <button
- *         type="submit"
- *         disabled={signUp.isPending}
- *       >
- *         {signUp.isPending ? 'Creating account...' : 'Sign Up'}
- *       </button>
- *       {signUp.error && <div>Error: {signUp.error.message}</div>}
+ *       <input 
+ *         value={formData.email} 
+ *         onChange={(e) => setFormData({...formData, email: e.target.value})} 
+ *       />
+ *       <input 
+ *         type="password" 
+ *         value={formData.password} 
+ *         onChange={(e) => setFormData({...formData, password: e.target.value})} 
+ *       />
+ *       <input 
+ *         value={formData.firstName} 
+ *         onChange={(e) => setFormData({...formData, firstName: e.target.value})} 
+ *       />
+ *       <input 
+ *         value={formData.lastName} 
+ *         onChange={(e) => setFormData({...formData, lastName: e.target.value})} 
+ *       />
+ *       <button type="submit">Sign Up</button>
  *     </form>
  *   );
  * }
  * ```
- *
- * @category React Hooks
  */
 export function useSignUp() {
+  const queryClient = useQueryClient();
   const supabase = useSupabase();
   const authService = createAuthService(supabase);
 
-  return useMutation<
-    Account,
-    Error,
-    { email: string; password: string; firstName: string; lastName?: string }
-  >({
-    mutationFn: async ({ email, password, firstName, lastName }) => {
-      return authService.signUp(email, password, firstName, lastName);
+  const mutation = useMutation({
+    mutationFn: ({
+      email,
+      password,
+      firstName,
+      lastName,
+    }: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName?: string;
+    }) => authService.signUp(email, password, firstName, lastName),
+    onSuccess: (account) => {
+      logger.info('🔐 API: User signed up successfully', {
+        userId: account.id,
+      });
+
+      // Invalidate auth state to refetch with new session
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ['user', account.id] });
+    },
+    onError: (error) => {
+      logger.error('🔐 API: Failed to sign up', { error });
     },
   });
+
+  // Return stable function reference
+  return useCallback(
+    (params: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName?: string;
+    }) => {
+      return mutation.mutateAsync(params);
+    },
+    [mutation.mutateAsync]
+  );
 }

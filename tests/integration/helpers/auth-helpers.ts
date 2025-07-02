@@ -1,5 +1,10 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { useAuth } from "../../../src";
+import { 
+  useCurrentUser,
+  useSignIn,
+  useSignOut,
+  useSignUp
+} from "../../../src";
 import { TestDataFactory, type TestUser } from "./test-data-factory";
 import { testWrapperManager } from "./react-query-wrapper";
 
@@ -25,55 +30,51 @@ export class AuthTestHelper {
   ): Promise<AuthSetupResult> {
     const testUser = TestDataFactory.createUser(userData);
     
-    // Create hook instance
-    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
+    // Create hooks using consolidated pattern
+    const { result } = renderHook(() => ({
+      signUp: useSignUp(),
+      signIn: useSignIn(),
+      signOut: useSignOut(),
+    }), { wrapper: this.wrapper });
 
-    // Wait for hook to initialize
-    await waitFor(() => {
-      expect(result.current).toBeDefined();
-      expect(result.current).not.toBeNull();
-      expect(typeof result.current.signUp).toBe('function');
-      expect(typeof result.current.signIn).toBe('function');
-    }, { timeout: 10000 });
-
-    // Sign up the user
-    let signUpResult: any;
+    // Sign up the user using the new useSignUp hook
+    let account: any;
     await act(async () => {
-      signUpResult = await result.current.signUp(testUser);
+      account = await result.current.signUp(testUser);
     });
 
-    expect(signUpResult).toMatchObject({
+    expect(account).toMatchObject({
       id: expect.any(String),
       email: testUser.email.toLowerCase(),
       firstName: testUser.firstName,
       lastName: testUser.lastName,
     });
 
-    // Sign in the user
-    let signInResult: any;
+    // Sign in the user using the new useSignIn hook
+    let signedInAccount: any;
     await act(async () => {
-      signInResult = await result.current.signIn({
+      signedInAccount = await result.current.signIn({
         email: testUser.email,
         password: testUser.password,
       });
     });
 
-    expect(signInResult).toMatchObject({
+    expect(signedInAccount).toMatchObject({
       id: expect.any(String),
       email: testUser.email.toLowerCase(),
     });
 
     const authenticatedUser: AuthenticatedUser = {
-      userId: signInResult.id,
-      email: signInResult.email,
-      firstName: signInResult.firstName,
-      lastName: signInResult.lastName,
+      userId: signedInAccount.id,
+      email: signedInAccount.email,
+      firstName: signedInAccount.firstName,
+      lastName: signedInAccount.lastName,
       testUser,
     };
 
     const signOut = async () => {
       await act(async () => {
-        await result.current.signOut();
+        await signOutResult.current();
       });
     };
 
@@ -85,14 +86,19 @@ export class AuthTestHelper {
   }
 
   async signOutUser(): Promise<void> {
-    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
+    // Check if user is currently authenticated using useCurrentUser
+    const { result } = renderHook(() => ({
+      currentUser: useCurrentUser(),
+      signOut: useSignOut(),
+    }), { wrapper: this.wrapper });
     
+    // Wait for current user hook to initialize
     await waitFor(() => {
-      expect(result.current).toBeDefined();
-      expect(result.current.signOut).toBeDefined();
+      expect(result.current.currentUser.isLoading).toBeDefined();
     }, { timeout: 5000 });
 
-    if (result.current.isAuthenticated) {
+    // Only sign out if user is authenticated (has user data)
+    if (result.current.currentUser.data) {
       await act(async () => {
         await result.current.signOut();
       });
@@ -132,15 +138,16 @@ export class AuthTestHelper {
   }
 
   async waitForAuthState(expectedState: 'authenticated' | 'unauthenticated'): Promise<void> {
-    const { result } = renderHook(() => useAuth(), { wrapper: this.wrapper });
+    const { result } = renderHook(() => useCurrentUser(), { wrapper: this.wrapper });
     
     await waitFor(() => {
       if (expectedState === 'authenticated') {
-        expect(result.current.isAuthenticated).toBe(true);
-        expect(result.current.currentUser).toBeDefined();
+        expect(result.current.data).toBeDefined();
+        expect(result.current.data).not.toBeNull();
+        expect(result.current.isLoading).toBe(false);
       } else {
-        expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.currentUser).toBeNull();
+        expect(result.current.data).toBeNull();
+        expect(result.current.isLoading).toBe(false);
       }
     }, { timeout: 10000 });
   }

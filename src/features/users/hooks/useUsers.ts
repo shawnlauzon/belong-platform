@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createUserService } from '../services/user.service';
@@ -6,50 +6,37 @@ import { STANDARD_CACHE_TIME } from '../../../config';
 import type { User, UserFilter } from '../types';
 
 /**
- * Comprehensive hook for user operations including fetching, updating, and user management.
+ * Hook for fetching a list of users with optional filtering.
  *
- * This hook provides functionality for managing user profiles, searching users,
- * and updating user information within communities. Must be used within
- * a BelongProvider context.
+ * This hook provides functionality for retrieving users with support for searching,
+ * pagination, and filtering. The query is enabled by default and supports various
+ * filter options for finding specific users. Must be used within a BelongProvider context.
  *
- * @returns User queries, mutations, and utility functions
+ * @param filters - Optional filters to apply to the users query
+ * @returns React Query result with user data and query state
  *
  * @example
  * ```tsx
  * function UserDirectory() {
- *   const {
- *     fetchUsers,
- *     updateUser,
- *     usersQuery
- *   } = useUsers();
+ *   // Load all users
+ *   const { data: allUsers, isPending, isError } = useUsers();
  *
- *   // Load users manually
- *   const handleLoad = () => {
- *     fetchUsers();
- *   };
+ *   // Search for users by name or email
+ *   const { data: searchResults } = useUsers({ searchTerm: 'john' });
  *
- *   // Update user profile
- *   const handleUpdate = async (userId, updates) => {
- *     try {
- *       const user = await updateUser.mutateAsync({
- *         id: userId,
- *         ...updates
- *       });
- *       console.log('Updated user:', user.fullName);
- *     } catch (error) {
- *       console.error('Failed to update user:', error);
- *     }
- *   };
+ *   // Load users with pagination
+ *   const { data: paginatedUsers } = useUsers({ page: 1, pageSize: 20 });
+ *
+ *   if (isPending) return <div>Loading users...</div>;
+ *   if (isError) return <div>Error loading users</div>;
  *
  *   return (
  *     <div>
- *       <button onClick={handleLoad}>Load Users</button>
- *       {usersQuery.data?.map(user => (
+ *       {allUsers?.map(user => (
  *         <div key={user.id}>
- *           {user.fullName}
- *           <button onClick={() => handleUpdate(user.id, { firstName: 'Updated' })}>
- *             Update
- *           </button>
+ *           <h3>{user.firstName} {user.lastName}</h3>
+ *           <p>{user.email}</p>
+ *           {user.bio && <p>{user.bio}</p>}
  *         </div>
  *       ))}
  *     </div>
@@ -59,133 +46,18 @@ import type { User, UserFilter } from '../types';
  *
  * @category React Hooks
  */
-export function useUsers() {
-  const queryClient = useQueryClient();
+export function useUsers(filters?: UserFilter) {
   const supabase = useSupabase();
   const userService = createUserService(supabase);
 
-  // List users query - disabled by default to prevent automatic fetching
-  const usersQuery = useQuery<User[], Error>({
-    queryKey: queryKeys.users.all,
-    queryFn: () => userService.fetchUsers(),
+  return useQuery<User[], Error>({
+    queryKey: filters 
+      ? queryKeys.users.filtered(filters) 
+      : queryKeys.users.all,
+    queryFn: () => {
+      logger.debug('👤 useUsers: Fetching users', { filters });
+      return userService.fetchUsers(filters);
+    },
     staleTime: STANDARD_CACHE_TIME,
-    enabled: false, // Prevent automatic fetching
   });
-
-  // Note: Individual query hooks should be called separately by consumers
-  // These factory functions violated Rules of Hooks and have been removed
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: (user: User) => userService.updateUser(user),
-    onSuccess: (updatedUser) => {
-      // Update the cache for this specific user
-      queryClient.setQueryData(
-        queryKeys.users.byId(updatedUser.id),
-        updatedUser
-      );
-
-      // Invalidate all users queries
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-
-      logger.info('👤 API: Successfully updated user via consolidated hook', {
-        id: updatedUser.id,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-      });
-    },
-    onError: (error) => {
-      logger.error('👤 API: Failed to update user via consolidated hook', {
-        error,
-      });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => userService.deleteUser(id),
-    onSuccess: (_, userId) => {
-      // Remove user from cache
-      queryClient.removeQueries({
-        queryKey: queryKeys.users.byId(userId),
-      });
-
-      // Invalidate all users queries
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-
-      logger.info('👤 API: Successfully deleted user via consolidated hook', {
-        id: userId,
-      });
-    },
-    onError: (error) => {
-      logger.error('👤 API: Failed to delete user via consolidated hook', {
-        error,
-      });
-    },
-  });
-
-  return {
-    // Unified React Query status properties (query + mutations)
-    isPending:
-      usersQuery.isFetching ||
-      (updateMutation && updateMutation.isPending) ||
-      (deleteMutation && deleteMutation.isPending) ||
-      false,
-    isError:
-      usersQuery.isError ||
-      updateMutation?.isError ||
-      false ||
-      deleteMutation?.isError ||
-      false,
-    isSuccess:
-      usersQuery.isSuccess ||
-      updateMutation?.isSuccess ||
-      false ||
-      deleteMutation?.isSuccess ||
-      false,
-    isFetching: usersQuery.isFetching, // Only for query operations
-    error: usersQuery.error || updateMutation?.error || deleteMutation?.error,
-
-    // List fetch operation
-    list: async (filters?: UserFilter) => {
-      const result = await queryClient.fetchQuery<User[]>({
-        queryKey:
-          filters && Object.keys(filters).length > 0
-            ? ['users', 'filtered', filters]
-            : queryKeys.users.all,
-        queryFn: () => userService.fetchUsers(filters),
-        staleTime: STANDARD_CACHE_TIME,
-      });
-      return result;
-    },
-
-    // Individual item fetch operation
-    byId: async (id: string) => {
-      const result = await queryClient.fetchQuery({
-        queryKey: queryKeys.users.byId(id),
-        queryFn: () => userService.fetchUserById(id),
-        staleTime: STANDARD_CACHE_TIME,
-      });
-      return result;
-    },
-
-    // Mutations - type-safe wrapper functions to prevent parameter misuse
-    update: (user: User) => {
-      return updateMutation?.mutateAsync
-        ? updateMutation.mutateAsync(user)
-        : Promise.reject(new Error('Update mutation not ready'));
-    },
-    delete: (id: string) => {
-      return deleteMutation?.mutateAsync
-        ? deleteMutation.mutateAsync(id)
-        : Promise.reject(new Error('Delete mutation not ready'));
-    },
-
-    // Individual mutation objects for specific access when needed
-    updateMutation,
-    deleteMutation,
-
-    // Raw queries for advanced usage
-    usersQuery,
-  };
 }
