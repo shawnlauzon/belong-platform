@@ -8,7 +8,7 @@ import { createMockDbConversation, createMockMessage } from '../../__mocks__';
 import {
   toDomainConversation,
   toConversationInfo,
-  forDbConversationInsert,
+  forDbInsert as forDbConversationInsert,
 } from '../conversationTransformer';
 import { createMockUser } from '../../../users/__mocks__';
 

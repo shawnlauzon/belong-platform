@@ -1,4 +1,5 @@
-import { faker } from "@faker-js/faker";
+import { faker } from '@faker-js/faker';
+import { Resource, ResourceCategory, ResourceData } from '../../../src';
 
 export interface TestUser {
   email: string;
@@ -11,7 +12,7 @@ export interface TestUser {
 export interface TestCommunity {
   name: string;
   description: string;
-  level: "neighborhood" | "city" | "region" | "state" | "country";
+  level: 'neighborhood' | 'city' | 'region' | 'state' | 'country';
   timeZone: string;
   hierarchyPath: Array<{ level: string; name: string }>;
   memberCount: number;
@@ -20,7 +21,7 @@ export interface TestCommunity {
 export interface TestResource {
   title: string;
   description: string;
-  type: "offer" | "request";
+  type: 'offer' | 'request';
   category: string;
   imageUrls?: string[];
   isActive: boolean;
@@ -62,10 +63,10 @@ export class TestDataFactory {
     const lastName = faker.person.lastName();
     const timestamp = Date.now();
     const random = faker.string.alphanumeric(4);
-    
+
     return {
       email: `test-user-${timestamp}-${random}@example.com`,
-      password: "TestPassword123!",
+      password: 'TestPassword123!',
       firstName,
       lastName,
       displayName: `${firstName} ${lastName}`,
@@ -73,37 +74,33 @@ export class TestDataFactory {
     };
   }
 
-  static createCommunity(overrides: Partial<TestCommunity> = {}): TestCommunity {
+  static createCommunity(
+    overrides: Partial<TestCommunity> = {}
+  ): TestCommunity {
     return {
-      name: this.generateTestName("COMMUNITY"),
+      name: this.generateTestName('COMMUNITY'),
       description: faker.lorem.paragraph(),
-      level: "neighborhood",
-      timeZone: "America/New_York",
+      level: 'neighborhood',
+      timeZone: 'America/New_York',
       hierarchyPath: [
-        { level: "state", name: "New York" },
-        { level: "city", name: "New York City" },
-        { level: "neighborhood", name: "Manhattan" },
+        { level: 'state', name: 'New York' },
+        { level: 'city', name: 'New York City' },
+        { level: 'neighborhood', name: 'Manhattan' },
       ],
       memberCount: 1,
       ...overrides,
     };
   }
 
-  static createResource(overrides: Partial<TestResource> = {}): TestResource {
-    const types = ["offer", "request"] as const;
-    const categories = [
-      "tools",
-      "skills",
-      "food", 
-      "supplies",
-      "other",
-    ];
+  static createResource(overrides: Partial<ResourceData> = {}): ResourceData {
+    const types = ['offer', 'request'] as const;
 
     return {
-      title: this.generateTestName("RESOURCE"),
+      title: this.generateTestName('RESOURCE'),
+      communityId: '',
       description: faker.lorem.paragraphs(2),
       type: faker.helpers.arrayElement(types),
-      category: faker.helpers.arrayElement(categories),
+      category: faker.helpers.enumValue(ResourceCategory),
       imageUrls: [], // Empty array to satisfy not-null constraint
       isActive: true, // Active by default
       ...overrides,
@@ -115,7 +112,7 @@ export class TestDataFactory {
     const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
     return {
-      title: this.generateTestName("EVENT"),
+      title: this.generateTestName('EVENT'),
       description: faker.lorem.paragraph(),
       startTime,
       endTime,
@@ -128,11 +125,11 @@ export class TestDataFactory {
 
   static createShoutout(overrides: Partial<TestShoutout> = {}): TestShoutout {
     const messages = [
-      "Thank you so much for your help!",
-      "Really appreciate you sharing this resource.",
-      "This was exactly what I was looking for!",
+      'Thank you so much for your help!',
+      'Really appreciate you sharing this resource.',
+      'This was exactly what I was looking for!',
       "You're amazing, thanks for organizing this.",
-      "Super helpful, thank you!",
+      'Super helpful, thank you!',
     ];
 
     return {
@@ -142,7 +139,9 @@ export class TestDataFactory {
     };
   }
 
-  static createMessage(overrides: { content?: string } = {}): { content: string } {
+  static createMessage(overrides: { content?: string } = {}): {
+    content: string;
+  } {
     return {
       content: faker.lorem.sentence(),
       ...overrides,
@@ -152,7 +151,7 @@ export class TestDataFactory {
   static createCredentials(): { email: string; password: string } {
     return {
       email: this.createUser().email,
-      password: "TestPassword123!",
+      password: 'TestPassword123!',
     };
   }
 
@@ -171,11 +170,16 @@ export class TestDataFactory {
   /**
    * Enhanced test data generators with specialized configurations
    */
-  static createTestResourceWithCategory(category: string): TestResource {
+  static createTestResourceWithCategory(
+    category: ResourceCategory
+  ): TestResource {
     return this.createResource({ category });
   }
 
-  static createTestEvent(communityId: string, organizerId: string): TestEvent & { communityId: string; organizerId: string } {
+  static createTestEvent(
+    communityId: string,
+    organizerId: string
+  ): TestEvent & { communityId: string; organizerId: string } {
     const baseEvent = this.createEvent();
     return {
       ...baseEvent,
@@ -184,9 +188,13 @@ export class TestDataFactory {
     };
   }
 
-  static createTestShoutout(fromUserId: string, toUserId: string, resourceId: string): TestShoutout & {
+  static createTestShoutout(
+    fromUserId: string,
+    toUserId: string,
+    resourceId: string
+  ): TestShoutout & {
     fromUserId: string;
-    toUserId: string; 
+    toUserId: string;
     resourceId: string;
   } {
     const baseShoutout = this.createShoutout();
@@ -195,7 +203,8 @@ export class TestDataFactory {
       fromUserId,
       toUserId,
       resourceId,
-      message: this.generateTestName("SHOUTOUT") + " - " + faker.lorem.sentence(),
+      message:
+        this.generateTestName('SHOUTOUT') + ' - ' + faker.lorem.sentence(),
     };
   }
 
@@ -220,7 +229,9 @@ export class TestDataFactory {
     }
 
     if (items.length < count) {
-      console.warn(`Only created ${items.length} of ${count} requested test items after ${attempts} attempts`);
+      console.warn(
+        `Only created ${items.length} of ${count} requested test items after ${attempts} attempts`
+      );
     }
 
     return items;
@@ -230,23 +241,23 @@ export class TestDataFactory {
    * Specialized cleanup utilities
    */
   static isTestResource(item: any): boolean {
-    return item?.title?.includes("INTEGRATION_TEST_") || false;
+    return item?.title?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestUser(item: any): boolean {
-    return item?.email?.includes("test-user-") || false;
+    return item?.email?.includes('test-user-') || false;
   }
 
   static isTestCommunity(item: any): boolean {
-    return item?.name?.includes("INTEGRATION_TEST_") || false;
+    return item?.name?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestEvent(item: any): boolean {
-    return item?.title?.includes("INTEGRATION_TEST_") || false;
+    return item?.title?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestShoutout(item: any): boolean {
-    return item?.message?.includes("INTEGRATION_TEST_") || false;
+    return item?.message?.includes('INTEGRATION_TEST_') || false;
   }
 }
 

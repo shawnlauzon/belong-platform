@@ -13,7 +13,7 @@ export const NotificationSchema = z.object({
   type: z.enum(['message', 'mention', 'system']),
   title: z.string().min(1).max(255),
   content: z.string().max(1000).optional(),
-  data: z.record(z.any()).optional(), // JSON data
+  data: z.record(z.unknown()).optional(), // JSON data - arbitrary data that should be validated at runtime
   read: z.boolean().default(false),
   createdAt: z.date(),
   updatedAt: z.date(),

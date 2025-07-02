@@ -1,4 +1,3 @@
-import type { Database } from '../../../shared/types/database';
 import { User } from '../../users';
 import type {
   Conversation,
@@ -6,7 +5,7 @@ import type {
   ConversationData,
   Message,
 } from '../types';
-import { ConversationInsertDbData, ConversationRow } from '../types/db';
+import { ConversationInsertDbData, ConversationRow } from '../types/database';
 
 /**
  * Transform a database conversation record to a domain conversation object
@@ -72,7 +71,7 @@ export function toConversationInfo(
 /**
  * Transform a domain conversation data to a database insert record
  */
-export function forDbConversationInsert(
+export function forDbInsert(
   conversationData: ConversationData
 ): ConversationInsertDbData {
   return {

@@ -17,6 +17,7 @@ import { requireAuthentication } from '../../../api/shared/auth-helpers';
 import { ERROR_CODES } from '../../../api/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
+import { ShoutoutRow } from '../types/database';
 
 /**
  * Validates shoutout creation business rules
@@ -35,7 +36,7 @@ function validateShoutoutCreation(
  * Validates shoutout update business rules
  */
 function validateShoutoutUpdate(
-  existingShoutout: any,
+  existingShoutout: ShoutoutRow,
   updateData: Partial<ShoutoutData>,
   currentUserId: string
 ): void {

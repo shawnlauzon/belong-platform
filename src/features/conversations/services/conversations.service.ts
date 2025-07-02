@@ -11,11 +11,11 @@ import type {
 } from '../types';
 import {
   toConversationInfo,
-  forDbConversationInsert,
+  forDbInsert as forDbConversationInsert,
 } from '../transformers/conversationTransformer';
 import {
   toMessageInfo,
-  forDbMessageInsert,
+  forDbInsert as forDbMessageInsert,
 } from '../transformers/messageTransformer';
 import { createUserService } from '../../users/services/user.service';
 

@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
-import type { Database } from "../../../types/database";
-import type { ShoutoutData } from "../../../types";
+import { ShoutoutRow } from "../types/database";
+import type { ShoutoutData } from "../types";
 
-type ShoutoutRow = Database["public"]["Tables"]["shoutouts"]["Row"];
 
 export function createMockDbShoutout(
   overrides: Partial<ShoutoutRow> = {},

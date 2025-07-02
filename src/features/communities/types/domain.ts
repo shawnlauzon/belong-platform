@@ -55,6 +55,15 @@ export interface CommunityInfo extends Omit<Community, 'organizer' | 'parent'> {
   parentId: string | null; // Replaces parent?: Community
 }
 
+// For filtering communities
+export interface CommunityFilter {
+  name?: string;
+  level?: string;
+  organizerId?: string;
+  parentId?: string;
+  isActive?: boolean;
+}
+
 // Community membership types
 export interface CommunityMembershipData {
   userId: string;

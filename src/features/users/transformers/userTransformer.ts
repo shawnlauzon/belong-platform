@@ -1,10 +1,9 @@
-import type { Database } from '../../../shared/types/database';
 import type { User, UserData } from '../../users';
-
-// Types for database rows
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-type ProfileInsertDbData = Database['public']['Tables']['profiles']['Insert'];
-type ProfileUpdateDbData = Database['public']['Tables']['profiles']['Update'];
+import type {
+  ProfileRow,
+  ProfileInsertDbData,
+  ProfileUpdateDbData,
+} from '../types/database';
 
 // Type for the user_metadata JSONB column
 type UserMetadata = {

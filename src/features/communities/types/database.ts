@@ -1,4 +1,4 @@
-import { Database } from '../../../shared';
+import type { Database } from '../../../shared/types/database';
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
 export type CommunityInsertDbData =

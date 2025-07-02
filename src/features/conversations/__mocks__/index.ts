@@ -8,7 +8,7 @@ import {
   MessageInfo,
 } from '../types';
 import { createMockUser } from '../../users/__mocks__';
-import { ConversationRow, DirectMessageRow } from '../types/db';
+import { ConversationRow, DirectMessageRow } from '../types/database';
 
 /**
  * Creates a mock domain Message object

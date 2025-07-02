@@ -7,6 +7,7 @@ import {
 import { ERROR_CODES } from '../../../api/constants';
 import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
+import { ProfileUpdateDbData } from '../types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
@@ -193,7 +194,9 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       // Perform the soft delete (set deleted_at)
       const { error: deleteError } = await supabase
         .from('profiles')
-        .update({ deleted_at: new Date().toISOString() } as any)
+        .update({
+          deleted_at: new Date().toISOString(),
+        } satisfies Partial<ProfileUpdateDbData>)
         .eq('id', id);
 
       if (deleteError) {

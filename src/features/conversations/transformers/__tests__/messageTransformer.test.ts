@@ -4,7 +4,7 @@ import { createMockUser } from '../../../users/__mocks__';
 import {
   toDomainMessage,
   toMessageInfo,
-  forDbMessageInsert,
+  forDbInsert as forDbMessageInsert,
 } from '../messageTransformer';
 import { createMockDbDirectMessage } from '../../__mocks__';
 

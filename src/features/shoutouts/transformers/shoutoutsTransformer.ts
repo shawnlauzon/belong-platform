@@ -5,7 +5,7 @@ import {
   ShoutoutInsertDbData,
   ShoutoutRow,
   ShoutoutUpdateDbData,
-} from '../types/db';
+} from '../types/database';
 
 /**
  * Transform a database shoutout record to a domain shoutout object

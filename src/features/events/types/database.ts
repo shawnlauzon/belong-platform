@@ -1,4 +1,4 @@
-import { Database } from '../../../shared/types/database';
+import type { Database } from '../../../shared/types/database';
 
 export type EventRow = Database['public']['Tables']['events']['Row'];
 

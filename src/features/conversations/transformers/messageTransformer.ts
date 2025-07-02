@@ -1,6 +1,6 @@
 import { User } from '../../users';
 import type { Message, MessageInfo, MessageData } from '../types';
-import { DirectMessageInsertDbData, DirectMessageRow } from '../types/db';
+import { DirectMessageInsertDbData, DirectMessageRow } from '../types/database';
 
 /**
  * Transform a database message record to a domain message object
@@ -56,7 +56,7 @@ export function toMessageInfo(dbMessage: DirectMessageRow): MessageInfo {
 /**
  * Transform a domain message data to a database insert record
  */
-export function forDbMessageInsert(
+export function forDbInsert(
   messageData: MessageData,
   fromUserId: string,
   toUserId: string

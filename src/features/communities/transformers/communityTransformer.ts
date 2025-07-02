@@ -13,10 +13,8 @@ import {
   CommunityMembershipRow,
   CommunityRow,
   CommunityUpdateDbData,
-} from '../types/db';
-import { Database } from '../../../shared';
-
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+} from '../types/database';
+import { ProfileRow } from '../../users/types/database';
 
 /**
  * Transform a database community record to a domain community object

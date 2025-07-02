@@ -15,11 +15,17 @@ import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
 import { requireAuthentication } from '../../../api/shared/auth-helpers';
 import { ERROR_CODES } from '../../../api/constants';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type {
+  SupabaseClient,
+  PostgrestFilterBuilder,
+} from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 
 // Helper function to apply common filters to a query
-const applyResourceFilters = (query: any, filters: ResourceFilter) => {
+const applyResourceFilters = (
+  query: PostgrestFilterBuilder<any, any, unknown>,
+  filters: ResourceFilter
+) => {
   if (filters.communityId) {
     query = query.eq('community_id', filters.communityId);
   }

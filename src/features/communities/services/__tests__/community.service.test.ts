@@ -88,6 +88,8 @@ describe('createCommunityService', () => {
         update: vi.fn().mockReturnThis(),
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         single: vi.fn(),
       })),
@@ -129,23 +131,26 @@ describe('createCommunityService', () => {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.order.mockResolvedValue({
+      mockQuery.eq.mockResolvedValue({
         data: mockDbCommunities,
         error: null,
       });
 
       // Act
       const result = await communityService.fetchCommunities({
-        includeDeleted: true,
+        isActive: false,
       });
 
       // Assert
-      expect(mockQuery.eq).not.toHaveBeenCalled();
-      expect(result).toHaveLength(2);
+      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', false);
+      expect(result).toHaveLength(1); // Only the inactive community should pass the filter
     });
+
 
     it('should throw error when database query fails', async () => {
       // Arrange
@@ -154,6 +159,8 @@ describe('createCommunityService', () => {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);

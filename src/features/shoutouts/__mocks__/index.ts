@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { ShoutoutRow } from '../types/db';
+import { ShoutoutRow } from '../types/database';
 
 /**
  * Creates a mock database Shoutout row

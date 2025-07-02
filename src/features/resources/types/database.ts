@@ -1,11 +1,19 @@
-import { Database } from '../../../shared';
-import { ResourceCategory } from './domain';
+import type { Database } from '../../../shared/types/database';
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ResourceInsertDbData =
   Database['public']['Tables']['resources']['Insert'];
 export type ResourceUpdateDbData =
   Database['public']['Tables']['resources']['Update'];
+
+// Enum needed for database operations
+export enum ResourceCategory {
+  TOOLS = 'tools',
+  SKILLS = 'skills',
+  FOOD = 'food',
+  SUPPLIES = 'supplies',
+  OTHER = 'other',
+}
 
 // TODO Replace with fields from Database
 export interface CreateResourceData {

@@ -15,7 +15,7 @@ for (const envVar of requiredEnvVars) {
 
 // Set up global test utilities
 import "@testing-library/jest-dom";
-import { beforeEach, afterEach } from "vitest";
+import { beforeEach, afterEach, beforeAll, afterAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 // Clean up React components after each test
@@ -29,5 +29,35 @@ beforeEach(() => {
   if (typeof window !== "undefined") {
     window.localStorage.clear();
     window.sessionStorage.clear();
+  }
+});
+
+// Global database cleanup configuration
+let globalCleanupHelper: any;
+
+beforeAll(async () => {
+  // Initialize cleanup helper
+  try {
+    const { cleanupHelper } = await import("../helpers/cleanup-patterns");
+    globalCleanupHelper = cleanupHelper;
+    
+    // Ensure clean state at start of test suite
+    await globalCleanupHelper.ensureTestIsolation();
+    
+    console.log('🚀 Test environment initialized with database cleanup');
+  } catch (error) {
+    console.warn('Failed to initialize global cleanup:', error);
+  }
+});
+
+afterAll(async () => {
+  // Perform final cleanup after all tests in this file
+  if (globalCleanupHelper) {
+    try {
+      console.log('🧹 Running global cleanup after all tests');
+      await globalCleanupHelper.cleanupAfterAllTests();
+    } catch (error) {
+      console.warn('Global cleanup failed:', error);
+    }
   }
 });

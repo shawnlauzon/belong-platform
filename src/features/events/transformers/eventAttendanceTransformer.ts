@@ -9,7 +9,7 @@ import {
   EventAttendanceInsertDbData,
   EventAttendanceRow,
   EventAttendanceUpdateDbData,
-} from '../types/db';
+} from '../types/database';
 
 /**
  * Transform a database event attendance record to a domain event attendance object

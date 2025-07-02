@@ -2,6 +2,7 @@ import { logger } from '../../../shared';
 import type {
   Community,
   CommunityData,
+  CommunityFilter,
   CommunityInfo,
   CommunityMembership,
 } from '../types';
@@ -12,15 +13,40 @@ import {
   toDomainCommunity,
   forDbInsert,
 } from '../transformers/communityTransformer';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type {
+  SupabaseClient,
+  PostgrestFilterBuilder,
+} from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { User } from '../../users';
 
+// Helper function to apply community filters to Supabase query
+const applyCommunityFilters = (
+  query: PostgrestFilterBuilder<any, any, unknown>,
+  filters: CommunityFilter
+) => {
+  if (filters.name) {
+    query = query.ilike('name', `%${filters.name}%`);
+  }
+  if (filters.level) {
+    query = query.eq('level', filters.level);
+  }
+  if (filters.organizerId) {
+    query = query.eq('organizer_id', filters.organizerId);
+  }
+  if (filters.parentId !== undefined) {
+    if (filters.parentId === null) {
+      query = query.is('parent_id', null);
+    } else {
+      query = query.eq('parent_id', filters.parentId);
+    }
+  }
+  return query;
+};
+
 export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
-  async fetchCommunities(options?: {
-    includeDeleted?: boolean;
-  }): Promise<CommunityInfo[]> {
-    logger.debug('🏘️ API: Fetching communities', { options });
+  async fetchCommunities(filter?: CommunityFilter): Promise<CommunityInfo[]> {
+    logger.debug('🏘️ API: Fetching communities', { filter });
 
     try {
       let query = supabase
@@ -28,9 +54,13 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-      // By default, only fetch active communities
-      if (!options?.includeDeleted) {
-        query = query.eq('is_active', true);
+      // Apply isActive filter - default to true unless explicitly set to false
+      const expectedActiveState = filter?.isActive !== false;
+      query = query.eq('is_active', expectedActiveState);
+
+      // Apply additional filters if provided
+      if (filter) {
+        query = applyCommunityFilters(query, filter);
       }
 
       const { data, error } = await query;
@@ -44,11 +74,44 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         toCommunityInfo(dbCommunity)
       );
 
-      logger.debug('🏘️ API: Successfully fetched communities', {
-        count: communities.length,
-        includeDeleted: options?.includeDeleted,
+      // CRITICAL FIX: Defensive application-level filtering as safety net
+      const filteredCommunities = communities.filter((community) => {
+        if (
+          filter?.isActive !== undefined &&
+          community.isActive !== filter.isActive
+        ) {
+          return false;
+        }
+        if (
+          filter?.name &&
+          !community.name.toLowerCase().includes(filter.name.toLowerCase())
+        ) {
+          return false;
+        }
+        if (filter?.level && community.level !== filter.level) {
+          return false;
+        }
+        if (
+          filter?.organizerId &&
+          community.organizerId !== filter.organizerId
+        ) {
+          return false;
+        }
+        if (
+          filter?.parentId !== undefined &&
+          community.parentId !== filter.parentId
+        ) {
+          return false;
+        }
+        return true;
       });
-      return communities;
+
+      logger.debug('🏘️ API: Successfully fetched communities', {
+        count: filteredCommunities.length,
+        totalFromDb: communities.length,
+        filter,
+      });
+      return filteredCommunities;
     } catch (error) {
       logger.error('🏘️ API: Error fetching communities', { error });
       throw error;
@@ -153,10 +216,10 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           });
 
         if (membershipError) {
-          logger.error('🏘️ API: Failed to add organizer as member', { 
+          logger.error('🏘️ API: Failed to add organizer as member', {
             error: membershipError,
             communityId: newCommunity.id,
-            organizerId: data.organizerId 
+            organizerId: data.organizerId,
           });
           // Don't throw here - community was created successfully
           // This is a non-critical error that can be fixed later
@@ -167,10 +230,10 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           });
         }
       } catch (membershipError) {
-        logger.error('🏘️ API: Error adding organizer as member', { 
+        logger.error('🏘️ API: Error adding organizer as member', {
           error: membershipError,
           communityId: newCommunity.id,
-          organizerId: data.organizerId 
+          organizerId: data.organizerId,
         });
         // Don't throw here - community was created successfully
       }
@@ -426,7 +489,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         userId,
         communityId,
       });
-      
+
       return { userId, communityId };
     } catch (error) {
       logger.error('🏘️ API: Error leaving community', { error, communityId });

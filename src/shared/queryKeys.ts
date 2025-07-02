@@ -4,69 +4,72 @@
  */
 export const queryKeys = {
   // Authentication state (not profile data)
-  auth: ["auth"] as const,
+  auth: ['auth'] as const,
 
   // User profile data - single source of truth for all user queries
   users: {
-    all: ["users"] as const,
-    byId: (id: string) => ["user", id] as const,
-    search: (term: string) => ["users", "search", term] as const,
+    all: ['users'] as const,
+    byId: (id: string) => ['user', id] as const,
+    search: (term: string) => ['users', 'search', term] as const,
   },
 
   // Communities
   communities: {
-    all: ["communities"] as const,
-    byId: (id: string) => ["community", id] as const,
+    all: ['communities'] as const,
+    byId: (id: string) => ['community', id] as const,
     memberships: (communityId: string) =>
-      ["community", communityId, "memberships"] as const,
+      ['community', communityId, 'memberships'] as const,
     userMemberships: (userId: string) =>
-      ["user", userId, "memberships"] as const,
+      ['user', userId, 'memberships'] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['communities', 'filtered', filter] as const,
   },
 
   // Resources
   resources: {
-    all: ["resources"] as const,
-    byId: (id: string) => ["resource", id] as const,
+    all: ['resources'] as const,
+    byId: (id: string) => ['resource', id] as const,
     byCommunity: (communityId: string) =>
-      ["resources", "community", communityId] as const,
-    byOwner: (ownerId: string) => ["resources", "owner", ownerId] as const,
-    filtered: (filter: Record<string, any>) =>
-      ["resources", "filtered", filter] as const,
+      ['resources', 'community', communityId] as const,
+    byOwner: (ownerId: string) => ['resources', 'owner', ownerId] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['resources', 'filtered', filter] as const,
   },
 
   // Events
   events: {
-    all: ["events"] as const,
-    byId: (id: string) => ["event", id] as const,
+    all: ['events'] as const,
+    byId: (id: string) => ['event', id] as const,
     byCommunity: (communityId: string) =>
-      ["events", "community", communityId] as const,
+      ['events', 'community', communityId] as const,
     byOrganizer: (organizerId: string) =>
-      ["events", "organizer", organizerId] as const,
-    attendees: (eventId: string) => ["event", eventId, "attendees"] as const,
+      ['events', 'organizer', organizerId] as const,
+    attendees: (eventId: string) => ['event', eventId, 'attendees'] as const,
     userAttendances: (userId: string) =>
-      ["user", userId, "attendances"] as const,
-    filtered: (filter: Record<string, any>) =>
-      ["events", "filtered", filter] as const,
+      ['user', userId, 'attendances'] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['events', 'filtered', filter] as const,
   },
 
   // Shoutouts
   shoutouts: {
-    all: ["shoutouts"] as const,
-    byId: (id: string) => ["shoutout", id] as const,
+    all: ['shoutouts'] as const,
+    byId: (id: string) => ['shoutout', id] as const,
     byCommunity: (communityId: string) =>
-      ["shoutouts", "community", communityId] as const,
-    sentBy: (userId: string) => ["shoutouts", "sent", userId] as const,
-    receivedBy: (userId: string) => ["shoutouts", "received", userId] as const,
-    filtered: (filter: Record<string, any>) =>
-      ["shoutouts", "filtered", filter] as const,
+      ['shoutouts', 'community', communityId] as const,
+    sentBy: (userId: string) => ['shoutouts', 'sent', userId] as const,
+    receivedBy: (userId: string) => ['shoutouts', 'received', userId] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['shoutouts', 'filtered', filter] as const,
   },
 
   // Conversations
   conversations: {
-    all: ["conversations"] as const,
-    list: (userId: string) => ["conversations", "list", userId] as const,
-    byId: (id: string) => ["conversation", id] as const,
-    messages: (conversationId: string) => ["conversations", "messages", conversationId] as const,
-    userList: (userId: string) => ["user", userId, "conversations"] as const,
+    all: ['conversations'] as const,
+    list: (userId: string) => ['conversations', 'list', userId] as const,
+    byId: (id: string) => ['conversation', id] as const,
+    messages: (conversationId: string) =>
+      ['conversations', 'messages', conversationId] as const,
+    userList: (userId: string) => ['user', userId, 'conversations'] as const,
   },
 } as const;

@@ -21,4 +21,12 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "warn",
     },
   },
+  // Stricter rules for production code (exclude test files)
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.*", "**/__tests__/**", "**/__mocks__/**", "**/test-utils/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
 );

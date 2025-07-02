@@ -14,6 +14,7 @@ import {
   useCreateCommunity,
   useSignUp,
   useSignIn,
+  ResourceCategory,
 } from '../../../src';
 import {
   TestDataFactory,
@@ -26,15 +27,13 @@ import {
 
 /**
  * Basic Resources Integration Tests
- * 
+ *
  * Tests the new resources hook patterns:
  * - useResources() - Returns React Query state { data, isLoading, error }
  * - useCreateResource() - Returns function (data) => Promise<Resource>
  */
 
 describe('Basic Resources Integration', () => {
-  const wrapper = testWrapperManager.getWrapper();
-
   beforeAll(() => {
     testWrapperManager.reset();
   });
@@ -102,7 +101,7 @@ describe('Basic Resources Integration', () => {
     // useCreateResource returns a function
     expect(typeof result.current.createResource).toBe('function');
 
-    console.log("✅ Resources hook signatures validated");
+    console.log('✅ Resources hook signatures validated');
   });
 
   test('should create valid test data', async () => {
@@ -131,18 +130,19 @@ describe('Basic Resources Integration', () => {
       authUser = authSetup.user;
 
       // Create a community for the resource
-      const { result: createCommunityResult } = await testUtils.renderHookWithWrapper(() => useCreateCommunity());
+      const { result: createCommunityResult } =
+        await testUtils.renderHookWithWrapper(() => useCreateCommunity());
 
       const communityData = TestDataFactory.createCommunity();
       community = await testUtils.performAsyncAction(
-        () => createCommunityResult.current({
-          ...communityData,
-          organizerId: authUser.userId,
-          parentId: null,
-        }),
-        "create community for resource test"
+        () =>
+          createCommunityResult.current({
+            ...communityData,
+            organizerId: authUser.userId,
+            parentId: null,
+          }),
+        'create community for resource test'
       );
-
     } catch (error) {
       console.warn(
         'Auth/Community setup failed (possibly rate limited), skipping resource creation test'
@@ -161,15 +161,13 @@ describe('Basic Resources Integration', () => {
       (query) => query.isLoading !== undefined
     );
 
-    const resourceData = TestDataFactory.createResource();
+    const resourceData = TestDataFactory.createResource({
+      communityId: community?.id || null,
+    });
 
     try {
       const createdResource = await testUtils.performAsyncAction(
-        () => result.current.createResource({
-          ...resourceData,
-          ownerId: authUser.userId,
-          communityId: community?.id || null,
-        }),
+        () => result.current.createResource(resourceData),
         'create resource with new hook pattern'
       );
 
@@ -187,12 +185,13 @@ describe('Basic Resources Integration', () => {
       await waitFor(
         () => {
           const resources = result.current.resources.data;
-          const found = resources?.some(resource => resource.id === createdResource.id);
+          const found = resources?.some(
+            (resource) => resource.id === createdResource.id
+          );
           expect(found).toBe(true);
         },
         { timeout: 10000 }
       );
-
     } catch (error) {
       console.warn('Resource creation failed:', error);
       // Don't fail the test - this might be due to authentication or setup issues
@@ -242,7 +241,7 @@ describe('Basic Resources Integration', () => {
 
   test('should handle resource categories and types', async () => {
     const resourceData = TestDataFactory.createResource({
-      category: 'tools',
+      category: ResourceCategory.TOOLS,
       type: 'offer',
     });
 
@@ -250,7 +249,13 @@ describe('Basic Resources Integration', () => {
     expect(resourceData.type).toBe('offer');
 
     // Test creating resources with different categories
-    const categories = ['tools', 'skills', 'food', 'supplies', 'other'];
+    const categories = [
+      ResourceCategory.TOOLS,
+      ResourceCategory.SKILLS,
+      ResourceCategory.FOOD,
+      ResourceCategory.SUPPLIES,
+      ResourceCategory.OTHER,
+    ];
 
     categories.forEach((category) => {
       const testResource = TestDataFactory.createResource({ category });

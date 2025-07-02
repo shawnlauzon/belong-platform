@@ -18,6 +18,7 @@
     "test:watch": "vitest src/ --watch",
     "test:integration": "vitest run --config tests/integration/vitest.config.ts --run",
     "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
+    "test:integration:cleanup": "node tests/integration/scripts/cleanup-database.js",
     "test:complete": "pnpm test && pnpm test:integration",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",

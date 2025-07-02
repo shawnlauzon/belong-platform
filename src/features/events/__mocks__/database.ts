@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { EventAttendanceRow, EventRow } from '../types/db';
+import { EventAttendanceRow, EventRow } from '../types/database';
 
 /**
  * Creates a mock database Event row

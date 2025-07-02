@@ -1,4 +1,4 @@
-import { Database } from '../../../shared';
+import type { Database } from '../../../shared/types/database';
 
 export type ShoutoutRow = Database['public']['Tables']['shoutouts']['Row'];
 export type ShoutoutInsertDbData =

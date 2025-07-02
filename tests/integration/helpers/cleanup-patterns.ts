@@ -1,6 +1,6 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { dbHelper } from "../setup/database-setup";
-import { testWrapperManager } from "./react-query-wrapper";
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { dbHelper } from '../setup/database-setup';
+import { testWrapperManager } from './react-query-wrapper';
 
 export interface CleanupOptions {
   cleanupUsers?: boolean;
@@ -15,7 +15,7 @@ export class CleanupHelper {
       cleanupUsers = false,
       cleanupData = true,
       clearCache = true,
-      namePattern = "TEST",
+      namePattern = 'TEST',
     } = options;
 
     try {
@@ -34,7 +34,7 @@ export class CleanupHelper {
         testWrapperManager.clearCache();
       }
     } catch (error) {
-      console.warn("Cleanup failed:", error);
+      console.warn('Cleanup failed:', error);
       // Don't throw - cleanup failures shouldn't fail tests
     }
   }
@@ -45,22 +45,40 @@ export class CleanupHelper {
       cleanupData: true,
       clearCache: true,
     });
-    
-    // Add delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   async cleanupAfterAllTests(): Promise<void> {
-    await this.performCleanup({
-      cleanupUsers: true, // Remove all test users
-      cleanupData: true,
-      clearCache: true,
-    });
+    console.log('🧹 Running final cleanup after all tests');
+
+    // Use complete cleanup for thorough cleanup after all tests
+    try {
+      await dbHelper.cleanupAllTestData();
+    } catch (error) {
+      console.warn(
+        'Complete cleanup failed, falling back to standard cleanup:',
+        error
+      );
+      await this.performCleanup({
+        cleanupUsers: true,
+        cleanupData: true,
+        clearCache: true,
+      });
+    }
+
+    // Clear React Query cache
+    testWrapperManager.clearCache();
+
+    console.log('✅ Final cleanup completed');
   }
 
   async cleanupByResourceType(
-    resourceType: 'communities' | 'resources' | 'events' | 'shoutouts' | 'messages',
-    namePattern: string = "TEST"
+    resourceType:
+      | 'communities'
+      | 'resources'
+      | 'events'
+      | 'shoutouts'
+      | 'messages',
+    namePattern: string = 'TEST'
   ): Promise<void> {
     try {
       switch (resourceType) {
@@ -88,9 +106,9 @@ export class CleanupHelper {
   async ensureTestIsolation(): Promise<void> {
     // Reset React Query wrapper to ensure fresh state
     testWrapperManager.reset();
-    
+
     // Clear any persistent storage
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.localStorage.clear();
       window.sessionStorage.clear();
     }
@@ -99,9 +117,9 @@ export class CleanupHelper {
   async waitForCleanupCompletion(): Promise<void> {
     // Wait for any pending queries to complete
     await testWrapperManager.waitForQueries();
-    
+
     // Small delay to ensure cleanup operations have completed
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
 
@@ -114,10 +132,10 @@ export async function withCleanup<T>(
   try {
     // Ensure clean state before test
     await cleanupHelper.ensureTestIsolation();
-    
+
     // Run the test
     const result = await testFunction();
-    
+
     return result;
   } finally {
     // Always clean up after test

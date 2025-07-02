@@ -30,7 +30,7 @@ export const queryKeys = {
     byCommunity: (communityId: string) =>
       ["resources", "community", communityId] as const,
     byOwner: (ownerId: string) => ["resources", "owner", ownerId] as const,
-    filtered: (filter: Record<string, any>) =>
+    filtered: (filter: Record<string, unknown>) =>
       ["resources", "filtered", filter] as const,
   },
 
@@ -45,7 +45,7 @@ export const queryKeys = {
     attendees: (eventId: string) => ["event", eventId, "attendees"] as const,
     userAttendances: (userId: string) =>
       ["user", userId, "attendances"] as const,
-    filtered: (filter: Record<string, any>) =>
+    filtered: (filter: Record<string, unknown>) =>
       ["events", "filtered", filter] as const,
   },
 
@@ -57,7 +57,7 @@ export const queryKeys = {
       ["shoutouts", "community", communityId] as const,
     sentBy: (userId: string) => ["shoutouts", "sent", userId] as const,
     receivedBy: (userId: string) => ["shoutouts", "received", userId] as const,
-    filtered: (filter: Record<string, any>) =>
+    filtered: (filter: Record<string, unknown>) =>
       ["shoutouts", "filtered", filter] as const,
   },
 

@@ -1,13 +1,27 @@
-import type { Database } from '../../../shared/types/database';
 import type { EventData, Event, EventInfo } from '../types';
 import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
 import { User } from '../../users';
 import { Community } from '../../communities';
+import { EventRow } from '../types/database';
 
 // Database types for events table (will be available once migrations are applied)
-export type EventRow = Database['public']['Tables']['events']['Row'];
-export type EventInsertDbData =
-  Database['public']['Tables']['events']['Insert'];
+export type EventInsertDbData = {
+  title: string;
+  description?: string;
+  organizer_id: string;
+  community_id?: string;
+  start_date_time: string;
+  end_date_time?: string;
+  location?: string;
+  coordinates?: string;
+  parking_info?: string;
+  max_attendees?: number;
+  registration_required?: boolean;
+  is_active?: boolean;
+  is_all_day?: boolean;
+  tags?: string[];
+  image_urls?: string[];
+};
 export type EventUpdateDbData =
   Database['public']['Tables']['events']['Update'];
 

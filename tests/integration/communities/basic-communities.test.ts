@@ -105,7 +105,7 @@ describe('Basic Communities Integration', () => {
     console.log('✅ Communities hook signatures validated');
   });
 
-  test('should create valid test data', async () => {
+  test.only('should create valid test data', async () => {
     const communityData = TestDataFactory.createCommunity();
 
     expect(typeof communityData.name).toBe('string');

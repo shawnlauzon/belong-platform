@@ -1,5 +1,6 @@
 import { Community } from '../../communities';
 import { User } from '../../users';
+import { ResourceCategory } from './database';
 
 export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
@@ -15,13 +16,7 @@ export enum MeetupFlexibility {
   DELIVERY_POSSIBLE = 'delivery_possible',
 }
 
-export enum ResourceCategory {
-  TOOLS = 'tools',
-  SKILLS = 'skills',
-  FOOD = 'food',
-  SUPPLIES = 'supplies',
-  OTHER = 'other',
-}
+// ResourceCategory is re-exported from database types
 
 export interface ResourceData {
   type: 'offer' | 'request';
@@ -62,27 +57,5 @@ export interface ResourceFilter {
   minTrustScore?: number;
 }
 
-export interface MeetupSpot {
-  name: string;
-  lat: number;
-  lng: number;
-  type: string;
-}
-
-export interface ResourceFilter {
-  category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
-  type?: 'offer' | 'request' | 'all';
-  communityId?: string;
-  ownerId?: string;
-  isActive?: boolean;
-  maxDriveMinutes?: number;
-  searchTerm?: string;
-  minTrustScore?: number;
-}
-
-export interface ResourceFilters {
-  category?: ResourceCategory;
-  communityId?: string;
-  search?: string;
-  isActive?: boolean;
-}
+// Note: ResourceFilters interface was a duplicate with different field names
+// Consider consolidating with ResourceFilter if needed
