@@ -22,7 +22,7 @@ export type Database = {
           hierarchy_path: Json
           icon: string | null
           id: string
-          level: string
+          level: string | null
           member_count: number
           name: string
           organizer_id: string
@@ -43,7 +43,7 @@ export type Database = {
           hierarchy_path: Json
           icon?: string | null
           id?: string
-          level: string
+          level?: string | null
           member_count?: number
           name: string
           organizer_id: string
@@ -64,7 +64,7 @@ export type Database = {
           hierarchy_path?: Json
           icon?: string | null
           id?: string
-          level?: string
+          level?: string | null
           member_count?: number
           name?: string
           organizer_id?: string
@@ -129,8 +129,6 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           id: string
           last_activity_at: string
           last_message_id: string | null
@@ -140,8 +138,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -151,8 +147,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -189,8 +183,6 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           from_user_id: string
           id: string
           read_at: string | null
@@ -201,8 +193,6 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id: string
           id?: string
           read_at?: string | null
@@ -213,8 +203,6 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id?: string
           id?: string
           read_at?: string | null
@@ -286,8 +274,6 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string
           end_date_time: string | null
           id: string
@@ -308,8 +294,6 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description: string
           end_date_time?: string | null
           id?: string
@@ -330,8 +314,6 @@ export type Database = {
           community_id?: string
           coordinates?: unknown
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string
           end_date_time?: string | null
           id?: string
@@ -498,8 +480,6 @@ export type Database = {
       shoutouts: {
         Row: {
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           from_user_id: string
           id: string
           image_urls: string[]
@@ -511,8 +491,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id: string
           id?: string
           image_urls?: string[]
@@ -524,8 +502,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id?: string
           id?: string
           image_urls?: string[]
@@ -1096,6 +1072,10 @@ export type Database = {
       geomfromewkt: {
         Args: { "": string }
         Returns: unknown
+      }
+      get_boundary_polygon: {
+        Args: { community_id: string }
+        Returns: Json
       }
       get_proj4_from_srid: {
         Args: { "": number }
@@ -2383,6 +2363,18 @@ export type Database = {
       st_zmin: {
         Args: { "": unknown }
         Returns: number
+      }
+      store_circular_boundary: {
+        Args: { community_id: string; boundary_data: Json }
+        Returns: undefined
+      }
+      store_isochrone_boundary: {
+        Args: {
+          community_id: string
+          boundary_data: Json
+          original_polygon: unknown
+        }
+        Returns: undefined
       }
       text: {
         Args: { "": unknown }

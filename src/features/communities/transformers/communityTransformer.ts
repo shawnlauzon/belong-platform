@@ -48,7 +48,7 @@ export function toDomainCommunity(
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
-    level: dbCommunity.level,
+    level: dbCommunity.level ?? undefined,
     memberCount: dbCommunity.member_count,
     
     // Boundary configuration (new isochrone support)
@@ -234,7 +234,7 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
     
-    level: dbCommunity.level,
+    level: dbCommunity.level ?? undefined,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
     deletedAt: dbCommunity.deleted_at
