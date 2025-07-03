@@ -6,15 +6,15 @@ import {
   beforeEach,
   afterEach,
   afterAll,
-} from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+} from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
 import {
   useCommunities,
   useCreateCommunity,
   useCurrentUser,
   useSignIn,
   useSignUp,
-} from '../../../src';
+} from "../../../src";
 import {
   TestDataFactory,
   authHelper,
@@ -22,7 +22,7 @@ import {
   testWrapperManager,
   testUtils,
   commonExpectations,
-} from '../helpers';
+} from "../helpers";
 
 /**
  * Basic Communities Integration Tests
@@ -32,7 +32,7 @@ import {
  * - useCreateCommunity() - Returns function (data) => Promise<Community>
  */
 
-describe('Basic Communities Integration', () => {
+describe("Basic Communities Integration", () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
@@ -51,14 +51,14 @@ describe('Basic Communities Integration', () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test('should be able to list communities using React Query pattern', async () => {
+  test("should be able to list communities using React Query pattern", async () => {
     const { result } = await testUtils.renderHookWithWrapper(() =>
-      useCommunities()
+      useCommunities(),
     );
 
     await testUtils.waitForHookToInitialize(
       result,
-      (query) => query.isLoading !== undefined
+      (query) => query.isLoading !== undefined,
     );
 
     // Wait for query to complete
@@ -66,12 +66,14 @@ describe('Basic Communities Integration', () => {
       () => {
         expect(result.current.isLoading).toBe(false);
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // Check for errors first, then verify data structure
     if (result.current.error) {
-      throw new Error(`Communities query failed: ${result.current.error.message || result.current.error}`);
+      throw new Error(
+        `Communities query failed: ${result.current.error.message || result.current.error}`,
+      );
     }
 
     // useCommunities returns data directly (auto-fetching)
@@ -80,14 +82,14 @@ describe('Basic Communities Integration', () => {
     // If there are communities, verify structure
     if (result.current.data && result.current.data.length > 0) {
       const firstCommunity = result.current.data[0];
-      expect(firstCommunity).toHaveProperty('id');
-      expect(firstCommunity).toHaveProperty('name');
-      expect(firstCommunity).toHaveProperty('level');
+      expect(firstCommunity).toHaveProperty("id");
+      expect(firstCommunity).toHaveProperty("name");
+      expect(firstCommunity).toHaveProperty("level");
       commonExpectations.toBeValidId(firstCommunity.id);
     }
   });
 
-  test('should validate hook signatures match API', async () => {
+  test("should validate hook signatures match API", async () => {
     const { result } = await testUtils.renderHookWithWrapper(() => ({
       communities: useCommunities(),
       createCommunity: useCreateCommunity(),
@@ -95,34 +97,34 @@ describe('Basic Communities Integration', () => {
 
     await testUtils.waitForHookToInitialize(
       { current: result.current.communities },
-      (query) => query.isLoading !== undefined
+      (query) => query.isLoading !== undefined,
     );
 
     // useCommunities returns React Query state
-    expect(result.current.communities).toHaveProperty('data');
-    expect(result.current.communities).toHaveProperty('isLoading');
-    expect(result.current.communities).toHaveProperty('error');
-    expect(typeof result.current.communities.isLoading).toBe('boolean');
+    expect(result.current.communities).toHaveProperty("data");
+    expect(result.current.communities).toHaveProperty("isLoading");
+    expect(result.current.communities).toHaveProperty("error");
+    expect(typeof result.current.communities.isLoading).toBe("boolean");
 
     // useCreateCommunity returns a function
-    expect(typeof result.current.createCommunity).toBe('function');
+    expect(typeof result.current.createCommunity).toBe("function");
 
-    console.log('✅ Communities hook signatures validated');
+    console.log("✅ Communities hook signatures validated");
   });
 
-  test.only('should create valid test data', async () => {
+  test("should create valid test data", async () => {
     const communityData = TestDataFactory.createCommunity();
 
-    expect(typeof communityData.name).toBe('string');
+    expect(typeof communityData.name).toBe("string");
     expect(communityData.name.length).toBeGreaterThan(0);
-    expect(['neighborhood', 'city', 'region', 'state', 'country']).toContain(
-      communityData.level
+    expect(["neighborhood", "city", "region", "state", "country"]).toContain(
+      communityData.level,
     );
     expect(Array.isArray(communityData.hierarchyPath)).toBe(true);
-    expect(typeof communityData.memberCount).toBe('number');
+    expect(typeof communityData.memberCount).toBe("number");
   });
 
-  test('should attempt to create community with authenticated user using new hook pattern', async () => {
+  test("should attempt to create community with authenticated user using new hook pattern", async () => {
     let authUser: any;
 
     try {
@@ -131,22 +133,22 @@ describe('Basic Communities Integration', () => {
       authUser = authSetup.user;
     } catch (error) {
       console.warn(
-        'Auth setup failed (possibly rate limited), skipping community creation test'
+        "Auth setup failed (possibly rate limited), skipping community creation test",
       );
       return; // Skip this test if we can't authenticate
     }
 
     // Set up hooks
     const { result: communitiesResult } = await testUtils.renderHookWithWrapper(
-      () => useCommunities()
+      () => useCommunities(),
     );
     const { result: createResult } = await testUtils.renderHookWithWrapper(() =>
-      useCreateCommunity()
+      useCreateCommunity(),
     );
 
     await testUtils.waitForHookToInitialize(
       communitiesResult,
-      (query) => query.isLoading !== undefined
+      (query) => query.isLoading !== undefined,
     );
 
     const communityData = TestDataFactory.createCommunity();
@@ -159,7 +161,7 @@ describe('Basic Communities Integration', () => {
             organizerId: authUser.userId,
             parentId: null,
           }),
-        'create community with new hook pattern'
+        "create community with new hook pattern",
       );
 
       expect(createdCommunity).toMatchObject({
@@ -176,14 +178,14 @@ describe('Basic Communities Integration', () => {
         () => {
           const communities = communitiesResult.current.data;
           const found = communities?.some(
-            (community) => community.id === createdCommunity.id
+            (community) => community.id === createdCommunity.id,
           );
           expect(found).toBe(true);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     } catch (error) {
-      console.warn('Community creation failed:', error);
+      console.warn("Community creation failed:", error);
       // Don't fail the test - this might be due to authentication issues
     }
   });
