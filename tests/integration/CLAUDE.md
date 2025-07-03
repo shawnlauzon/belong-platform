@@ -25,9 +25,6 @@ VITEST_VERBOSE=true pnpm test:integration
 
 # Complete QA workflow (run unit tests first, then integration)
 pnpm test:complete
-
-# From project root, run integration tests specifically
-pnpm -w test:integration
 ```
 
 ## Test Architecture
@@ -66,17 +63,20 @@ tests/integration/
 ### Key Testing Patterns
 
 **Test Data Generation**
+
 - All test data uses `TestDataFactory` with prefixed names (e.g., `INTEGRATION_TEST_RESOURCE_123`)
 - Unique identifiers include timestamps and random strings for conflict avoidance
 - Test data is automatically identifiable for cleanup
 
 **Database Cleanup Strategy**
+
 - Automatic cleanup runs before and after each test
 - Global cleanup runs after all tests in a file complete
 - Cleanup targets test data by name patterns, preserving non-test data
 - Fallback cleanup strategies handle partial cleanup failures
 
 **React Query Configuration**
+
 - Zero cache time and stale time for fresh data in each test
 - Disabled retries and window focus refetching
 - Silent logging to reduce test noise
@@ -98,30 +98,34 @@ Create `.env.local` file in the project root with these values.
 ## Test Writing Guidelines
 
 ### Test Data Management
+
 - Always use `TestDataFactory` for generating test data
 - Use descriptive test names that include the feature being tested
 - Ensure test data has unique identifiers to avoid conflicts
 - Let cleanup helpers handle data removal automatically
 
 ### Database Testing
+
 - Tests run against real Supabase database, not mocks
 - Each test gets isolated database state through cleanup patterns
 - Use `testWrapperManager.getWrapper()` for React Query provider
 - Authentication state is managed through `auth-helpers.ts`
 
 ### Test Isolation
+
 - Tests run sequentially to prevent database race conditions
-- Fresh React Query client for each test prevents cache pollution  
+- Fresh React Query client for each test prevents cache pollution
 - Local storage and session storage cleared between tests
 - Database cleanup ensures no test data persists between runs
 
 ### Common Test Utilities
+
 Import commonly used testing utilities from the helpers:
 
 ```typescript
 import {
   renderHook,
-  act, 
+  act,
   waitFor,
   describe,
   test,
@@ -129,8 +133,8 @@ import {
   beforeAll,
   beforeEach,
   afterEach,
-  faker
-} from '../helpers';
+  faker,
+} from "../helpers";
 ```
 
 ## Test Execution Configuration
@@ -143,16 +147,19 @@ import {
 ## Debugging Integration Tests
 
 ### Verbose Logging
+
 ```bash
 VITEST_VERBOSE=true pnpm test:integration
 ```
 
 ### Database State Inspection
+
 - Integration tests use real database data
 - Check Supabase dashboard for data state during debugging
 - Use test data prefixes to identify test-generated records
 
 ### Cache and State Issues
+
 - React Query cache is cleared between tests automatically
 - Local/session storage cleared in test setup
 - Use `testWrapperManager.reset()` for complete state reset
@@ -163,7 +170,7 @@ As QA engineers, focus testing on:
 
 - **API Integration**: Verify hooks work with real Supabase backend
 - **Data Flow**: Ensure data flows correctly through React Query layer
-- **Authentication**: Test sign-in/sign-out and user state management  
+- **Authentication**: Test sign-in/sign-out and user state management
 - **Cross-Feature Integration**: Verify features work together (e.g., resources + communities)
 - **Error Handling**: Test failure scenarios and error states
 - **Performance**: Ensure queries and mutations perform adequately
@@ -171,12 +178,14 @@ As QA engineers, focus testing on:
 ## Cleanup and Maintenance
 
 ### Manual Database Cleanup
+
 ```bash
 # If automated cleanup fails
 pnpm test:integration:cleanup
 ```
 
 ### Test Data Patterns
+
 - All test data includes `INTEGRATION_TEST_` or similar prefixes
 - Use `TestDataFactory.isTestResource()` etc. to identify test data
 - Cleanup helpers target these patterns for removal
