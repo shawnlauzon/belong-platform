@@ -35,7 +35,7 @@
     "test:e2e:report": "playwright show-report",
     "e2e:install": "playwright install",
     "e2e:dev": "cd tests/e2e/test-app && vite",
-    "gen:db-types": "dotenv -e .env.local supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types/database.ts"
+    "gen:db-types": "dotenv -e .env.local supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/shared/types/database.ts"
   },
   "dependencies": {
     "@supabase/postgrest-js": "^1.20.0",
