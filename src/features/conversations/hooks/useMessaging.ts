@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, useSupabase } from '../../../shared';
+import { logger, queryKeys, useSupabase } from '../../../shared';
 import { createConversationsService } from '../services/conversations.service';
-import { queryKeys } from '../../../api/shared/queryKeys';
 import type { ConversationInfo, MessageData, MessageInfo } from '../types';
 
 /**

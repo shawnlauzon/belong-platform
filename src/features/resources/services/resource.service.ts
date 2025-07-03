@@ -13,8 +13,8 @@ import {
 } from '../transformers/resourceTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
-import { requireAuthentication } from '../../../api/shared/auth-helpers';
-import { ERROR_CODES } from '../../../api/constants';
+import { requireAuthentication } from '../../../shared/utils/auth-helpers';
+import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import type { Database } from '../../../shared/types/database';

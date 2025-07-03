@@ -4,7 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { EventInfo, EventFilter } from '../types';
-import { toRecords } from '~/shared/utils';
+import { toRecords } from '../../../shared/utils';
 
 /**
  * Hook for fetching a list of events.

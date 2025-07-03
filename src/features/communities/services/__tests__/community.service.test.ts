@@ -310,7 +310,7 @@ describe('createCommunityService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('communities');
       expect(result.id).toBe('new-community-id');
       expect(result.name).toBe(communityData.name);
-      expect(result.deletedAt).toBe(null);
+      expect(result.deletedAt).toBe(undefined);
     });
 
     it('should throw error when user is not authenticated', async () => {

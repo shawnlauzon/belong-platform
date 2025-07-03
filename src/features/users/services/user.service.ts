@@ -4,7 +4,7 @@ import {
   forDbInsert,
   forDbUpdate,
 } from '../transformers/userTransformer';
-import { ERROR_CODES } from '../../../api/constants';
+import { ERROR_CODES } from '../../../shared/constants';
 import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
 import { ProfileUpdateDbData } from '../types/database';
@@ -19,7 +19,6 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       let query = supabase
         .from('profiles')
         .select('*')
-        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       query = applyDeletedFilter(query);

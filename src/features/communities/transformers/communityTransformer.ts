@@ -5,7 +5,7 @@ import type {
   CommunityMembership,
   CommunityMembershipData,
 } from '../types/domain';
-import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
+import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { toDomainUser } from '../../users/transformers/userTransformer';
 import {
   CommunityInsertDbData,

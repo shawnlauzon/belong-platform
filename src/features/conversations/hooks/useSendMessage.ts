@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, useSupabase } from '../../../shared';
+import { logger, queryKeys, useSupabase } from '../../../shared';
 import type { MessageData, MessageInfo } from '../types';
 import { createConversationsService } from '../services/conversations.service';
-import { queryKeys } from '../../../api/shared/queryKeys';
 
 /**
  * React Query mutation hook for sending messages in conversations.

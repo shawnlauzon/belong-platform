@@ -1,5 +1,5 @@
 import type { EventData, Event, EventInfo } from '../types';
-import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
+import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { User } from '../../users';
 import { Community } from '../../communities';
 import {

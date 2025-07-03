@@ -6,8 +6,8 @@ import type {
   CommunityInfo,
   CommunityMembership,
 } from '../types';
-import { requireAuthentication } from '../../../api/shared/auth-helpers';
-import { ERROR_CODES } from '../../../api/constants';
+import { requireAuthentication } from '../../../shared/utils/auth-helpers';
+import { ERROR_CODES } from '../../../shared/constants';
 import {
   toCommunityInfo,
   toDomainCommunity,

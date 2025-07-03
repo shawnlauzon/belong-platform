@@ -13,8 +13,8 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createResourceService } from '../../resources/services/resource.service';
-import { requireAuthentication } from '../../../api/shared/auth-helpers';
-import { ERROR_CODES } from '../../../api/constants';
+import { requireAuthentication } from '../../../shared/utils';
+import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { ShoutoutRow } from '../types/database';

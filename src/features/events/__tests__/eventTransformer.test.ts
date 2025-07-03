@@ -87,8 +87,6 @@ describe('Event Transformer', () => {
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
         registration_required: undefined,
-        deleted_at: null,
-        deleted_by: null,
       });
 
       const event = toDomainEvent(dbEvent, {
@@ -98,7 +96,7 @@ describe('Event Transformer', () => {
 
       expect(event).toMatchObject({
         registrationRequired: false,
-        deletedAt: null, // null deleted_at should be null
+        deletedAt: undefined,
       });
     });
 
@@ -108,8 +106,6 @@ describe('Event Transformer', () => {
       const dbEvent = createMockDbEvent({
         organizer_id: mockOrganizer.id,
         community_id: mockCommunity.id,
-        deleted_at: null,
-        deleted_by: null,
       });
 
       const event = toDomainEvent(dbEvent, {
@@ -117,8 +113,8 @@ describe('Event Transformer', () => {
         community: mockCommunity,
       });
 
-      expect(event.deletedAt).toBe(null); // null deleted_at should be null
-      expect(event.deletedBy).toBe(null); // null deleted_by should be null
+      expect(event.deletedAt).toBe(undefined);
+      expect(event.deletedBy).toBe(undefined);
     });
 
     it('should handle soft-deleted events correctly', () => {

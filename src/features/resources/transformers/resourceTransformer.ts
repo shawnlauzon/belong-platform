@@ -9,7 +9,7 @@ import type {
   ResourceInsertDbData,
   ResourceUpdateDbData,
 } from '../types/database';
-import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
+import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { User } from '../../users';
 import { Community } from '../../communities';
 
@@ -43,7 +43,9 @@ export function toDomainResource(
       : undefined,
     availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
-    deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
+    deletedAt: dbResource.deleted_at
+      ? new Date(dbResource.deleted_at)
+      : undefined,
     deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
@@ -59,11 +61,7 @@ export function forDbInsert(
   resource: ResourceData,
   ownerId: string
 ): ResourceInsertDbData {
-  const {
-    communityId,
-    imageUrls,
-    ...rest
-  } = resource;
+  const { communityId, imageUrls, ...rest } = resource;
 
   return {
     ...rest,
@@ -112,7 +110,9 @@ export function toResourceInfo(
       : undefined,
     availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
-    deletedAt: dbResource.deleted_at ? new Date(dbResource.deleted_at) : undefined,
+    deletedAt: dbResource.deleted_at
+      ? new Date(dbResource.deleted_at)
+      : undefined,
     deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),

@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, useSupabase } from '../../../shared';
+import { logger, queryKeys, useSupabase } from '../../../shared';
 import type { MessageInfo, MessageFilter } from '../types';
 import { createConversationsService } from '../services/conversations.service';
-import { queryKeys } from '../../../api/shared/queryKeys';
 
 /**
  * React Query hook for fetching messages within a specific conversation.
