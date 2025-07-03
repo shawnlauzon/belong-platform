@@ -6,16 +6,16 @@ import {
   beforeEach,
   afterEach,
   afterAll,
-} from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { useCurrentUser, useSignIn, useSignOut, useSignUp } from "../../../src";
+} from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useCurrentUser, useSignIn, useSignOut, useSignUp } from '../../../src';
 import {
   TestDataFactory,
   authHelper,
   cleanupHelper,
   testWrapperManager,
   testUtils,
-} from "../helpers";
+} from '../helpers';
 
 /**
  * Basic Auth Integration Tests
@@ -27,7 +27,7 @@ import {
  * - useSignUp() - Returns function (userData) => Promise<User>
  */
 
-describe("Basic Auth", () => {
+describe('Basic Auth', () => {
   const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(async () => {
@@ -48,7 +48,7 @@ describe("Basic Auth", () => {
     await cleanupHelper.cleanupAfterAllTests();
   });
 
-  test("should sign up a new user using useSignUp hook", async () => {
+  test('should sign up a new user using useSignUp hook', async () => {
     const testUser = TestDataFactory.createUser();
 
     // Use single component with all hooks
@@ -56,15 +56,15 @@ describe("Basic Auth", () => {
       () => ({
         signUp: useSignUp(),
       }),
-      { wrapper },
+      { wrapper }
     );
 
     // useSignUp returns a function
-    expect(typeof result.current.signUp).toBe("function");
+    expect(typeof result.current.signUp).toBe('function');
 
     const user = await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      "sign up new user",
+      'sign up new user'
     );
 
     expect(user).toMatchObject({
@@ -74,7 +74,7 @@ describe("Basic Auth", () => {
     });
   });
 
-  test("should sign in existing user and reflect in useCurrentUser", async () => {
+  test('should sign in existing user and reflect in useCurrentUser', async () => {
     const testUser = TestDataFactory.createUser();
 
     // Use single component with all hooks to ensure proper state sharing
@@ -85,7 +85,7 @@ describe("Basic Auth", () => {
         signIn: useSignIn(),
         signOut: useSignOut(), // Include signOut from the start for cleanup if needed
       }),
-      { wrapper },
+      { wrapper }
     );
 
     // Wait for hooks to initialize
@@ -96,12 +96,12 @@ describe("Basic Auth", () => {
     // If there's existing auth state from previous tests, clear it first
     if (result.current.currentUser.data) {
       console.log(
-        "⚠️ Found existing auth state from previous test, clearing it",
+        '⚠️ Found existing auth state from previous test, clearing it'
       );
 
       await testUtils.performAsyncAction(
         () => result.current.signOut(),
-        "clear existing auth state",
+        'clear existing auth state'
       );
 
       // Wait for state to clear
@@ -109,7 +109,7 @@ describe("Basic Auth", () => {
         () => {
           expect(result.current.currentUser.data ?? null).toBeNull();
         },
-        { timeout: 5000 },
+        { timeout: 5000 }
       );
     }
 
@@ -119,7 +119,7 @@ describe("Basic Auth", () => {
     // Sign up user
     await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      "sign up for sign in test",
+      'sign up for sign in test'
     );
 
     // Sign in user
@@ -129,7 +129,7 @@ describe("Basic Auth", () => {
           email: testUser.email,
           password: testUser.password,
         }),
-      "sign in user",
+      'sign in user'
     );
 
     expect(signedInUser).toMatchObject({
@@ -140,19 +140,24 @@ describe("Basic Auth", () => {
     // Wait for useCurrentUser to update
     await waitFor(
       () => {
-        expect(result.current.currentUser.data).toBeTruthy();
+        expect(
+          result.current.currentUser.data || result.current.currentUser.isError
+        ).toBeTruthy();
       },
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
+    if (result.current.currentUser.isError) {
+      throw result.current.currentUser.error;
+    }
 
     expect(result.current.currentUser.data?.email).toBe(
-      testUser.email.toLowerCase(),
+      testUser.email.toLowerCase()
     );
     expect(result.current.currentUser.isLoading).toBe(false);
     expect(result.current.currentUser.error).toBeFalsy();
   });
 
-  test("should sign out user and clear useCurrentUser state", async () => {
+  test('should sign out user and clear useCurrentUser state', async () => {
     const testUser = TestDataFactory.createUser();
 
     // Use single component with all hooks to ensure proper state sharing
@@ -163,7 +168,7 @@ describe("Basic Auth", () => {
         signIn: useSignIn(),
         signOut: useSignOut(),
       }),
-      { wrapper },
+      { wrapper }
     );
 
     // Wait for hooks to initialize
@@ -172,7 +177,7 @@ describe("Basic Auth", () => {
     });
 
     // Check and log initial state to debug test isolation issues
-    console.log("🔍 Initial auth state before sign out test:", {
+    console.log('🔍 Initial auth state before sign out test:', {
       hasData: !!result.current.currentUser.data,
       userData: result.current.currentUser.data
         ? {
@@ -190,7 +195,7 @@ describe("Basic Auth", () => {
     // Sign up and sign in user
     await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      "sign up for sign out test",
+      'sign up for sign out test'
     );
 
     await testUtils.performAsyncAction(
@@ -199,17 +204,17 @@ describe("Basic Auth", () => {
           email: testUser.email,
           password: testUser.password,
         }),
-      "sign in for sign out test",
+      'sign in for sign out test'
     );
 
     // Wait for auth state
     await waitFor(
       () => {
         expect(
-          result.current.currentUser.data || result.current.currentUser.isError,
+          result.current.currentUser.data || result.current.currentUser.isError
         ).toBeTruthy();
       },
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
 
     if (result.current.currentUser.isError) {
@@ -219,7 +224,7 @@ describe("Basic Auth", () => {
     // Sign out
     await testUtils.performAsyncAction(
       () => result.current.signOut(),
-      "sign out user",
+      'sign out user'
     );
 
     // Wait for auth state to clear
@@ -227,7 +232,7 @@ describe("Basic Auth", () => {
       () => {
         expect(result.current.currentUser.data ?? null).toBeNull();
       },
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
 
     expect(result.current.currentUser.data ?? null).toBeNull();
@@ -235,7 +240,7 @@ describe("Basic Auth", () => {
     expect(result.current.currentUser.error).toBeFalsy();
   });
 
-  test("should validate hook signatures match API", async () => {
+  test('should validate hook signatures match API', async () => {
     // Use single component with all hooks to ensure proper state sharing
     const { result } = renderHook(
       () => ({
@@ -244,7 +249,7 @@ describe("Basic Auth", () => {
         signOut: useSignOut(),
         signUp: useSignUp(),
       }),
-      { wrapper },
+      { wrapper }
     );
 
     // Wait for hooks to initialize
@@ -253,16 +258,16 @@ describe("Basic Auth", () => {
     });
 
     // useCurrentUser returns React Query state
-    expect(result.current.currentUser).toHaveProperty("data");
-    expect(result.current.currentUser).toHaveProperty("isLoading");
-    expect(result.current.currentUser).toHaveProperty("error");
-    expect(typeof result.current.currentUser.isLoading).toBe("boolean");
+    expect(result.current.currentUser).toHaveProperty('data');
+    expect(result.current.currentUser).toHaveProperty('isLoading');
+    expect(result.current.currentUser).toHaveProperty('error');
+    expect(typeof result.current.currentUser.isLoading).toBe('boolean');
 
     // Mutation hooks return functions
-    expect(typeof result.current.signIn).toBe("function");
-    expect(typeof result.current.signOut).toBe("function");
-    expect(typeof result.current.signUp).toBe("function");
+    expect(typeof result.current.signIn).toBe('function');
+    expect(typeof result.current.signOut).toBe('function');
+    expect(typeof result.current.signUp).toBe('function');
 
-    console.log("✅ Auth hook signatures validated");
+    console.log('✅ Auth hook signatures validated');
   });
 });
