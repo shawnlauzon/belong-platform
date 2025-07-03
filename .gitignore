@@ -12,7 +12,7 @@ node_modules
 dist
 dist-ssr
 *.local
-tsconfig.tsbuildinfo
+.tsbuildinfo
 **/vite.config.mts.timestamp-*
 
 # Editor directories and files
