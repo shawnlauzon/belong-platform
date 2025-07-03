@@ -40,7 +40,7 @@ import {
  * - Event data validation
  */
 
-describe.skip("Event Lifecycle Integration", () => {
+describe("Event Lifecycle Integration", () => {
   let testUser: any;
   let testCommunity: any;
 
@@ -141,7 +141,7 @@ describe.skip("Event Lifecycle Integration", () => {
     console.log("✅ Event hook signatures validated");
   });
 
-  test("should create an event with valid data", async () => {
+  test.only("should create an event with valid data", async () => {
     if (!testUser || !testCommunity) {
       console.warn("Skipping event creation test - setup failed");
       return;
