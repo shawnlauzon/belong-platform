@@ -74,7 +74,7 @@ export class AuthTestHelper {
 
     const signOut = async () => {
       await act(async () => {
-        await signOutResult.current();
+        await result.current.signOut();
       });
     };
 
@@ -150,6 +150,24 @@ export class AuthTestHelper {
         expect(result.current.isLoading).toBe(false);
       }
     }, { timeout: 10000 });
+  }
+
+  async signIn(email: string, password: string): Promise<any> {
+    const { result } = renderHook(() => useSignIn(), { wrapper: this.wrapper });
+    
+    let signedInAccount: any;
+    await act(async () => {
+      signedInAccount = await result.current({
+        email,
+        password,
+      });
+    });
+
+    return signedInAccount;
+  }
+
+  async signOut(): Promise<void> {
+    return this.signOutUser();
   }
 }
 

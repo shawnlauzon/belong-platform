@@ -104,14 +104,14 @@ export class CleanupHelper {
   }
 
   async ensureTestIsolation(): Promise<void> {
-    // Reset React Query wrapper to ensure fresh state
-    testWrapperManager.reset();
+    // Only clear cache, don't reset the entire wrapper (preserves auth state)
+    testWrapperManager.clearCache();
 
-    // Clear any persistent storage
-    if (typeof window !== 'undefined') {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
-    }
+    // Don't clear persistent storage as it may contain auth state
+    // if (typeof window !== 'undefined') {
+    //   window.localStorage.clear();
+    //   window.sessionStorage.clear();
+    // }
   }
 
   async waitForCleanupCompletion(): Promise<void> {

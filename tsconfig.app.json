@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
     /* Bundler mode */
@@ -13,9 +17,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "paths": {
-      "@belongnetwork/*": ["packages/*/src"]
-    },
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -25,14 +26,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "packages/app/src/**/*.ts",
-    "packages/app/src/**/*.tsx",
-    "packages/core/src/**/*.ts",
-    "packages/core/src/**/*.tsx"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ]
 }
