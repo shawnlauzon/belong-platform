@@ -15,16 +15,19 @@ import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
 import { requireAuthentication } from '../../../api/shared/auth-helpers';
 import { ERROR_CODES } from '../../../api/constants';
-import type {
-  SupabaseClient,
-  PostgrestFilterBuilder,
-} from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import type { Database } from '../../../shared/types/database';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
+import { ResourceRow } from '../types/database';
 
 // Helper function to apply common filters to a query
 const applyResourceFilters = (
-  query: PostgrestFilterBuilder<any, any, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: PostgrestFilterBuilder<any, any, any, any>,
   filters: ResourceFilter
 ) => {
   if (filters.communityId) {
@@ -47,11 +50,11 @@ const buildResourceQuery = (
   supabase: SupabaseClient<Database>,
   includeDeleted?: boolean
 ) => {
-  let query = supabase
+  const query = supabase
     .from('resources')
     .select('*')
     .order('created_at', { ascending: false });
-  
+
   return applyDeletedFilter(query, includeDeleted);
 };
 
@@ -80,12 +83,12 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Convert to ResourceInfo objects
-      const resources = data.map((dbResource) =>
+      const resources = data.map((dbResource: ResourceRow) =>
         toResourceInfo(dbResource, dbResource.owner_id, dbResource.community_id)
       );
 
       // Defensive application-level filtering as safety net
-      const filteredResources = resources.filter((resource) => {
+      const filteredResources = resources.filter((resource: ResourceInfo) => {
         if (!filters?.includeDeleted && resource.deletedAt) {
           return false;
         }
@@ -109,14 +112,14 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchResourceById(id: string, options?: { includeDeleted?: boolean }): Promise<Resource | null> {
+  async fetchResourceById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Resource | null> {
     logger.debug('📚 API: Fetching resource by ID', { id, options });
 
     try {
-      let query = supabase
-        .from('resources')
-        .select('*')
-        .eq('id', id);
+      let query = supabase.from('resources').select('*').eq('id', id);
 
       // Apply deleted filter
       query = applyDeletedFilter(query, options?.includeDeleted);

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 

@@ -24,7 +24,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
 import { User } from '../../users';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
 
 export const createEventService = (supabase: SupabaseClient<Database>) => ({
   async fetchEvents(filters?: EventFilter): Promise<EventInfo[]> {
@@ -105,14 +108,14 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchEventById(id: string, options?: { includeDeleted?: boolean }): Promise<Event | null> {
+  async fetchEventById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Event | null> {
     logger.debug('🎉 Event Service: Fetching event by ID', { id, options });
 
     try {
-      let query = supabase
-        .from('events')
-        .select('*')
-        .eq('id', id);
+      let query = supabase.from('events').select('*').eq('id', id);
 
       // Apply deleted filter
       query = applyDeletedFilter(query, options?.includeDeleted);

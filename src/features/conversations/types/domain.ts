@@ -2,8 +2,9 @@ import { User } from '../../users';
 
 // Messaging Types
 export interface MessageData {
-  conversationId?: string;
-  recipientId?: string;
+  conversationId: string;
+  fromUserId: string;
+  toUserId: string;
   content: string;
 }
 

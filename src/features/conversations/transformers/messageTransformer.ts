@@ -57,14 +57,12 @@ export function toMessageInfo(dbMessage: DirectMessageRow): MessageInfo {
  * Transform a domain message data to a database insert record
  */
 export function forDbInsert(
-  messageData: MessageData,
-  fromUserId: string,
-  toUserId: string
+  messageData: MessageData
 ): DirectMessageInsertDbData {
   return {
     conversation_id: messageData.conversationId,
     content: messageData.content,
-    from_user_id: fromUserId,
-    to_user_id: toUserId,
+    from_user_id: messageData.fromUserId,
+    to_user_id: messageData.toUserId,
   };
 }

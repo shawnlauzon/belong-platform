@@ -7,7 +7,7 @@
  * Convert string from camelCase to snake_case
  */
 function toSnakeCase(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
 
 /**
@@ -24,11 +24,14 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function transformKeysDeep(obj: unknown, transformer: (key: string) => string): unknown {
+function transformKeysDeep(
+  obj: unknown,
+  transformer: (key: string) => string
+): unknown {
   if (Array.isArray(obj)) {
     return obj.map((item: unknown) => transformKeysDeep(item, transformer));
   }
-  
+
   if (isObject(obj)) {
     const transformed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -37,8 +40,14 @@ function transformKeysDeep(obj: unknown, transformer: (key: string) => string): 
     }
     return transformed;
   }
-  
+
   return obj;
+}
+
+export function toRecords(filters: unknown): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(filters ?? {}).map(([key, value]) => [key, value])
+  );
 }
 
 export const caseTransform = {
@@ -47,12 +56,12 @@ export const caseTransform = {
    * Used when sending data to database
    */
   toSnakeCase: (obj: unknown) => transformKeysDeep(obj, toSnakeCase),
-  
+
   /**
    * Transform object keys from snake_case to camelCase
    * Used when receiving data from database
    */
-  toCamelCase: (obj: unknown) => transformKeysDeep(obj, toCamelCase)
+  toCamelCase: (obj: unknown) => transformKeysDeep(obj, toCamelCase),
 };
 
 /**
@@ -65,15 +74,15 @@ export const PointSchema = {
   fromPostGIS: (pointString: string) => {
     const match = pointString.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
     if (!match) throw new Error('Invalid PostGIS point format');
-    return { 
-      lng: parseFloat(match[1]), 
-      lat: parseFloat(match[2]) 
+    return {
+      lng: parseFloat(match[1]),
+      lat: parseFloat(match[2]),
     };
   },
-  
+
   /**
    * Convert lat/lng object to PostGIS POINT string
    */
-  toPostGIS: (point: { lat: number; lng: number }) => 
-    `POINT(${point.lng} ${point.lat})`
+  toPostGIS: (point: { lat: number; lng: number }) =>
+    `POINT(${point.lng} ${point.lat})`,
 };

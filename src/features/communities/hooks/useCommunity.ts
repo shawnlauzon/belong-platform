@@ -4,25 +4,25 @@ import { useSupabase } from '../../../shared';
 import { createCommunityService } from '../services/community.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 
-import type { CommunityInfo } from '../types/domain';
+import type { Community } from '../types/domain';
 
 /**
  * Hook for fetching a single community by ID.
- * 
+ *
  * Provides detailed community information including membership data.
- * 
+ *
  * @param id - The community ID to fetch
  * @returns Query state for the community
- * 
+ *
  * @example
  * ```tsx
  * function CommunityDetail({ communityId }) {
  *   const { data: community, isLoading, error } = useCommunity(communityId);
- *   
+ *
  *   if (isLoading) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *   if (!community) return <div>Community not found</div>;
- *   
+ *
  *   return (
  *     <div>
  *       <h1>{community.name}</h1>
@@ -37,7 +37,7 @@ export function useCommunity(id: string) {
   const supabase = useSupabase();
   const communityService = createCommunityService(supabase);
 
-  const query = useQuery<CommunityInfo | null, Error>({
+  const query = useQuery<Community | null, Error>({
     queryKey: queryKeys.communities.byId(id),
     queryFn: () => communityService.fetchCommunityById(id),
     staleTime: STANDARD_CACHE_TIME,

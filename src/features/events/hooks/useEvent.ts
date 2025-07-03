@@ -3,7 +3,7 @@ import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
-import type { EventInfo } from '../types';
+import type { Event } from '../types';
 
 /**
  * Hook for fetching a single event by ID.
@@ -19,7 +19,7 @@ export function useEvent(eventId: string) {
   const supabase = useSupabase();
   const eventService = createEventService(supabase);
 
-  const query = useQuery<EventInfo, Error>({
+  const query = useQuery<Event | null, Error>({
     queryKey: queryKeys.events.byId(eventId),
     queryFn: () => eventService.fetchEventById(eventId),
     staleTime: STANDARD_CACHE_TIME,

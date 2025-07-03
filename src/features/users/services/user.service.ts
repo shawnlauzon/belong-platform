@@ -9,7 +9,7 @@ import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
 import { ProfileUpdateDbData } from '../types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import { applyDeletedFilter } from '../../../shared/utils/soft-deletion';
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
   async fetchUsers(options?: UserFilter): Promise<User[]> {
@@ -19,10 +19,10 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
       let query = supabase
         .from('profiles')
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, options?.includeDeleted);
+      query = applyDeletedFilter(query);
 
       // Apply search filter if provided
       if (options?.searchTerm) {
@@ -70,17 +70,17 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchUserById(id: string, options?: { includeDeleted?: boolean }): Promise<User | null> {
+  async fetchUserById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<User | null> {
     logger.debug('👤 API: Fetching user by ID', { id, options });
 
     try {
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id);
-
-      // Apply deleted filter
-      query = applyDeletedFilter(query, options?.includeDeleted);
+      let query = supabase.from('profiles').select('*').eq('id', id);
+      if (!options?.includeDeleted) {
+        query = query.is('deleted_at', null);
+      }
 
       const { data, error } = await query.single();
 
@@ -201,7 +201,7 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Check if user exists before deletion
-      const { data: userData, error: fetchError } = await supabase
+      const { error: fetchError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', id)

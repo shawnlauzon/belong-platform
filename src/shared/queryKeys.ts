@@ -11,6 +11,8 @@ export const queryKeys = {
     all: ['users'] as const,
     byId: (id: string) => ['user', id] as const,
     search: (term: string) => ['users', 'search', term] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['users', 'filtered', filter] as const,
   },
 
   // Communities

@@ -12,37 +12,44 @@ import {
   toCommunityInfo,
   toDomainCommunity,
   forDbInsert,
+  toDomainMembership,
 } from '../transformers/communityTransformer';
-import type {
-  SupabaseClient,
-  PostgrestFilterBuilder,
-} from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { User } from '../../users';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
+import type { CommunityMembershipRow } from '../types/database';
 
-// Helper function to apply community filters to Supabase query
-const applyCommunityFilters = (
-  query: PostgrestFilterBuilder<any, any, unknown>,
-  filters: CommunityFilter
-) => {
+/**
+ * Applies community filters to a Supabase query
+ * @param query - The Supabase query builder
+ * @param filters - The filters to apply
+ * @returns The query builder with filters applied
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const applyCommunityFilters = (query: any, filters: CommunityFilter) => {
+  let filteredQuery = query;
+
   if (filters.name) {
-    query = query.ilike('name', `%${filters.name}%`);
+    filteredQuery = filteredQuery.ilike('name', `%${filters.name}%`);
   }
   if (filters.level) {
-    query = query.eq('level', filters.level);
+    filteredQuery = filteredQuery.eq('level', filters.level);
   }
   if (filters.organizerId) {
-    query = query.eq('organizer_id', filters.organizerId);
+    filteredQuery = filteredQuery.eq('organizer_id', filters.organizerId);
   }
   if (filters.parentId !== undefined) {
     if (filters.parentId === null) {
-      query = query.is('parent_id', null);
+      filteredQuery = filteredQuery.is('parent_id', null);
     } else {
-      query = query.eq('parent_id', filters.parentId);
+      filteredQuery = filteredQuery.eq('parent_id', filters.parentId);
     }
   }
-  return query;
+  return filteredQuery;
 };
 
 export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
@@ -76,10 +83,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
       // Defensive application-level filtering as safety net
       const filteredCommunities = communities.filter((community) => {
-        if (
-          !filter?.includeDeleted &&
-          community.deletedAt
-        ) {
+        if (!filter?.includeDeleted && community.deletedAt) {
           return false;
         }
         if (
@@ -143,7 +147,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       }
 
       const community = toDomainCommunity(data);
-      
+
       // Defensive application-level check
       if (!options?.includeDeleted && community.deletedAt) {
         return null;
@@ -199,7 +203,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         parentId: data.parentId || null,
         hierarchyPath: data.hierarchyPath,
         memberCount: data.memberCount,
-        deletedAt: null,
+        deletedAt: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -295,7 +299,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         parentId: updateData.parentId || null,
         hierarchyPath: updateData.hierarchyPath || [],
         memberCount: updateData.memberCount || 0,
-        deletedAt: null,
+        deletedAt: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -369,13 +373,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('User is already a member of this community');
       }
 
-      // Create membership data
-      const membershipData = {
-        userId,
-        communityId,
-        role,
-      };
-
       // Transform to database format
       const dbMembership = {
         user_id: userId,
@@ -419,7 +416,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async leaveCommunity(communityId: string): Promise<void> {
+  async leaveCommunity(communityId: string): Promise<CommunityMembership> {
     logger.debug('🏘️ API: Leaving community', { communityId });
 
     try {
@@ -490,7 +487,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         communityId,
       });
 
-      return { userId, communityId };
+      return toDomainMembership(existingMembership);
     } catch (error) {
       logger.error('🏘️ API: Error leaving community', { error, communityId });
       throw error;
@@ -516,13 +513,15 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         throw error;
       }
 
-      const memberships = (data || []).map((dbMembership: any) => ({
-        id: `${dbMembership.user_id}-${dbMembership.community_id}`,
-        userId: dbMembership.user_id,
-        communityId: dbMembership.community_id,
-        role: dbMembership.role as 'member' | 'admin' | 'organizer',
-        joinedAt: new Date(dbMembership.joined_at),
-      }));
+      const memberships = (data || []).map(
+        (dbMembership: CommunityMembershipRow) => ({
+          id: `${dbMembership.user_id}-${dbMembership.community_id}`,
+          userId: dbMembership.user_id,
+          communityId: dbMembership.community_id,
+          role: dbMembership.role as 'member' | 'admin' | 'organizer',
+          joinedAt: new Date(dbMembership.joined_at),
+        })
+      );
 
       logger.debug('🏘️ API: Successfully fetched community memberships', {
         communityId,
@@ -564,13 +563,15 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         throw error;
       }
 
-      const memberships = (data || []).map((dbMembership: any) => ({
-        id: `${dbMembership.user_id}-${dbMembership.community_id}`,
-        userId: dbMembership.user_id,
-        communityId: dbMembership.community_id,
-        role: dbMembership.role as 'member' | 'admin' | 'organizer',
-        joinedAt: new Date(dbMembership.joined_at),
-      }));
+      const memberships = (data || []).map(
+        (dbMembership: CommunityMembershipRow) => ({
+          id: `${dbMembership.user_id}-${dbMembership.community_id}`,
+          userId: dbMembership.user_id,
+          communityId: dbMembership.community_id,
+          role: dbMembership.role as 'member' | 'admin' | 'organizer',
+          joinedAt: new Date(dbMembership.joined_at),
+        })
+      );
 
       logger.debug('🏘️ API: Successfully fetched user memberships', {
         userId: targetUserId,

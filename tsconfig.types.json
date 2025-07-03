@@ -6,10 +6,12 @@
     "outDir": "dist",
     "declarationMap": false,
     "emitDeclarationOnly": true,
-    "noEmit": false
+    "noEmit": false,
+    "types": ["vite/client"]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "vite-env.d.ts"
   ],
   "exclude": [
     "node_modules",

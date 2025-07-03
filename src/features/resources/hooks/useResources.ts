@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger, queryKeys, toRecords } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createResourceService } from '../services/resource.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
@@ -8,21 +8,21 @@ import type { ResourceInfo, ResourceFilter } from '../types';
 
 /**
  * Hook for fetching resources list.
- * 
+ *
  * Provides resource listing functionality with optional filtering.
  * Supports filtering by type, category, community, and active status.
- * 
+ *
  * @param filters - Optional filters to apply to the resource list
  * @returns Query state for resources list
- * 
+ *
  * @example
  * ```tsx
  * function ResourceList() {
  *   const { data: resources, isLoading, error } = useResources();
- *   
+ *
  *   if (isLoading) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
- *   
+ *
  *   return (
  *     <div>
  *       {resources?.map(resource => (
@@ -36,17 +36,17 @@ import type { ResourceInfo, ResourceFilter } from '../types';
  *   );
  * }
  * ```
- * 
+ *
  * @example
  * ```tsx
  * // With filters
  * function CommunityOffers({ communityId }) {
- *   const { data: offers } = useResources({ 
+ *   const { data: offers } = useResources({
  *     communityId,
  *     type: 'offer',
- *     isActive: true 
+ *     isActive: true
  *   });
- *   
+ *
  *   return (
  *     <div>
  *       <h2>Available Offers ({offers?.length || 0})</h2>
@@ -63,8 +63,8 @@ export function useResources(filters?: ResourceFilter) {
   const resourceService = createResourceService(supabase);
 
   const query = useQuery<ResourceInfo[], Error>({
-    queryKey: filters 
-      ? queryKeys.resources.filtered(filters)
+    queryKey: filters
+      ? queryKeys.resources.filtered(toRecords(filters))
       : queryKeys.resources.all,
     queryFn: () => resourceService.fetchResources(filters),
     staleTime: STANDARD_CACHE_TIME,

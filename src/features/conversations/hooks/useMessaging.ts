@@ -2,12 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, useSupabase } from '../../../shared';
 import { createConversationsService } from '../services/conversations.service';
 import { queryKeys } from '../../../api/shared/queryKeys';
-import type {
-  ConversationInfo,
-  Message,
-  MessageData,
-  MessageInfo,
-} from '../types';
+import type { ConversationInfo, MessageData, MessageInfo } from '../types';
 
 /**
  * Comprehensive messaging hook that combines all conversation and message operations.
