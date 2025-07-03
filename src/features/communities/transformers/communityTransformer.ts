@@ -4,9 +4,14 @@ import type {
   CommunityInfo,
   CommunityMembership,
   CommunityMembershipData,
+  CommunityBoundary,
 } from '../types/domain';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { toDomainUser } from '../../users/transformers/userTransformer';
+import {
+  transformBoundaryFromDb,
+  transformBoundaryToDb,
+} from '../utils/boundaryUtils';
 import {
   CommunityInsertDbData,
   CommunityMembershipInsertDbData,
@@ -26,10 +31,17 @@ export function toDomainCommunity(
 ): Community {
   // Explicitly extract only the fields we need to avoid leaking database properties
 
-  // Parse PostGIS point to coordinates
+  // Parse PostGIS point to coordinates (legacy support)
   const coords = dbCommunity.center
     ? parsePostGisPoint(dbCommunity.center)
     : undefined;
+
+  // Transform boundary data from database format
+  const boundary = transformBoundaryFromDb({
+    boundary: dbCommunity.boundary as CommunityBoundary | null,
+    boundary_geometry: dbCommunity.boundary_geometry,
+    boundary_geometry_detailed: dbCommunity.boundary_geometry_detailed,
+  });
 
   return {
     id: dbCommunity.id,
@@ -38,8 +50,14 @@ export function toDomainCommunity(
     icon: dbCommunity.icon ?? undefined,
     level: dbCommunity.level,
     memberCount: dbCommunity.member_count,
+    
+    // Boundary configuration (new isochrone support)
+    boundary: boundary ?? undefined,
+    
+    // Legacy boundary fields (maintained for backward compatibility)
     radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
+    
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
     deletedAt: dbCommunity.deleted_at
@@ -74,11 +92,27 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     timeZone,
     radiusKm,
     memberCount,
+    boundary,
     ...rest
   } = community;
 
+  // Handle boundary transformation
+  let boundaryData = null;
+  let boundaryGeometry = null;
+  let boundaryGeometryDetailed = null;
+
+  if (boundary) {
+    const boundaryTransform = transformBoundaryToDb(boundary);
+    boundaryData = boundaryTransform.boundaryJson;
+    boundaryGeometry = boundaryTransform.boundaryGeometry;
+    boundaryGeometryDetailed = boundaryTransform.boundaryGeometryDetailed;
+  }
+
   return {
     ...rest,
+    boundary: boundaryData as any,
+    boundary_geometry: boundaryGeometry,
+    boundary_geometry_detailed: boundaryGeometryDetailed,
     center: center ? toPostGisPoint(center) : undefined,
     organizer_id: organizerId,
     hierarchy_path: JSON.stringify(hierarchyPath),
@@ -92,12 +126,35 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
 export function forDbUpdate(
   community: Partial<CommunityData> & { id: string }
 ): CommunityUpdateDbData {
+  // Handle boundary transformation if boundary is provided
+  let boundaryData = undefined;
+  let boundaryGeometry = undefined;
+  let boundaryGeometryDetailed = undefined;
+
+  if (community.boundary !== undefined) {
+    if (community.boundary === null) {
+      // Explicitly clearing boundary
+      boundaryData = null;
+      boundaryGeometry = null;
+      boundaryGeometryDetailed = null;
+    } else {
+      // Setting new boundary
+      const boundaryTransform = transformBoundaryToDb(community.boundary);
+      boundaryData = boundaryTransform.boundaryJson;
+      boundaryGeometry = boundaryTransform.boundaryGeometry;
+      boundaryGeometryDetailed = boundaryTransform.boundaryGeometryDetailed;
+    }
+  }
+
   return {
     id: community.id,
     name: community.name,
     description: community.description,
     icon: community.icon,
     level: community.level,
+    boundary: boundaryData as any,
+    boundary_geometry: boundaryGeometry,
+    boundary_geometry_detailed: boundaryGeometryDetailed,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     organizer_id: community.organizerId,
     hierarchy_path: community.hierarchyPath
@@ -151,10 +208,17 @@ export function forDbMembershipInsert(
  * Transform a database community record to a CommunityInfo object (lightweight for lists)
  */
 export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
-  // Parse PostGIS point to coordinates
+  // Parse PostGIS point to coordinates (legacy support)
   const coords = dbCommunity.center
     ? parsePostGisPoint(dbCommunity.center)
     : undefined;
+
+  // Transform boundary data from database format
+  const boundary = transformBoundaryFromDb({
+    boundary: dbCommunity.boundary as CommunityBoundary | null,
+    boundary_geometry: dbCommunity.boundary_geometry,
+    boundary_geometry_detailed: dbCommunity.boundary_geometry_detailed,
+  });
 
   return {
     id: dbCommunity.id,
@@ -162,8 +226,14 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     memberCount: dbCommunity.member_count,
+    
+    // Boundary configuration (new isochrone support)
+    boundary: boundary ?? undefined,
+    
+    // Legacy boundary fields (maintained for backward compatibility)
     radiusKm: dbCommunity.radius_km ?? undefined,
     center: coords,
+    
     level: dbCommunity.level,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),

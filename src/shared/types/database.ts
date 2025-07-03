@@ -11,6 +11,9 @@ export type Database = {
     Tables: {
       communities: {
         Row: {
+          boundary: Json | null
+          boundary_geometry: unknown | null
+          boundary_geometry_detailed: unknown | null
           center: unknown | null
           created_at: string
           deleted_at: string | null
@@ -29,6 +32,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          boundary?: Json | null
+          boundary_geometry?: unknown | null
+          boundary_geometry_detailed?: unknown | null
           center?: unknown | null
           created_at?: string
           deleted_at?: string | null
@@ -47,6 +53,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          boundary?: Json | null
+          boundary_geometry?: unknown | null
+          boundary_geometry_detailed?: unknown | null
           center?: unknown | null
           created_at?: string
           deleted_at?: string | null
