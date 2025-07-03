@@ -92,6 +92,11 @@ describe("Basic Smoke Tests", () => {
       { timeout: 10000 }
     );
 
+    // Check for errors first, then verify data structure
+    if (result.current.error) {
+      throw new Error(`Communities query failed: ${result.current.error.message || result.current.error}`);
+    }
+
     // useCommunities should return data directly (auto-fetching)
     expect(Array.isArray(result.current.data)).toBe(true);
     // Don't expect any specific communities, just that it returns an array

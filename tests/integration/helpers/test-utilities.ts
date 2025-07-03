@@ -112,6 +112,42 @@ export class TestUtilities {
     return `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
+  async waitForQueryResult<T>(
+    queryResult: { current: { data?: T | null; isError: boolean; error?: Error | null; isLoading?: boolean } },
+    options: TestHookOptions = {},
+    context?: string
+  ): Promise<T> {
+    const { timeout = 5000, interval = 100 } = options;
+    const contextMsg = context ? ` (${context})` : '';
+
+    await waitFor(
+      () => {
+        const result = queryResult.current;
+        expect(
+          result.data !== undefined || result.isError,
+          `Query result should have data or error${contextMsg}`
+        ).toBe(true);
+      },
+      { timeout, interval }
+    );
+
+    if (queryResult.current.isError) {
+      const error = queryResult.current.error;
+      throw new Error(
+        `Query failed${contextMsg}: ${error?.message || 'Unknown error'}`
+      );
+    }
+
+    const data = queryResult.current.data;
+    if (data === undefined || data === null) {
+      throw new Error(
+        `Expected query to have data but got ${data}${contextMsg}`
+      );
+    }
+
+    return data;
+  }
+
   async measureExecutionTime<T>(
     operation: () => Promise<T>
   ): Promise<{ result: T; duration: number }> {
