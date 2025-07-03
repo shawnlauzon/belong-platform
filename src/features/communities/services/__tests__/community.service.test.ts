@@ -335,6 +335,76 @@ describe('createCommunityService', () => {
       ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
     });
 
+    it('should return complete community data including boundary when provided', async () => {
+      // Arrange - Community data with isochrone boundary
+      const isochroneBoundary = {
+        type: 'isochrone' as const,
+        center: [-74.006, 40.7128] as [number, number],
+        travelMode: 'walking' as const,
+        minutes: 38,
+        polygon: {
+          type: 'Polygon' as const,
+          coordinates: [[[-74.01, 40.71], [-74.00, 40.71], [-74.00, 40.72], [-74.01, 40.72], [-74.01, 40.71]]]
+        },
+        area: 23.214793718159235
+      };
+
+      const communityData = {
+        name: 'New Community',
+        description: 'A test community',
+        level: 'neighborhood' as const,
+        timeZone: 'America/New_York',
+        organizerId: mockUser.id,
+        memberCount: 0,
+        boundary: isochroneBoundary,
+      };
+
+      vi.mocked(mockSupabase.auth!.getUser).mockResolvedValue({
+        data: { user: { id: mockUser.id } },
+        error: null,
+      });
+
+      const mockQuery = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn(),
+      };
+
+      const mockMembershipQuery = {
+        insert: vi.fn().mockReturnThis(),
+      };
+
+      vi.mocked(mockSupabase.from)
+        .mockReturnValueOnce(mockQuery as any)
+        .mockReturnValueOnce(mockMembershipQuery as any);
+
+      mockQuery.single.mockResolvedValue({
+        data: { id: 'new-community-id' },
+        error: null,
+      });
+
+      mockMembershipQuery.insert.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      // Act
+      const result = await communityService.createCommunity(communityData);
+
+      // Assert - The bug: boundary is expected but undefined
+      expect(result.id).toBe('new-community-id');
+      expect(result.name).toBe(communityData.name);
+      expect(result.boundary).toMatchObject({
+        type: 'isochrone',
+        center: isochroneBoundary.center,
+        travelMode: isochroneBoundary.travelMode,
+        minutes: isochroneBoundary.minutes,
+        area: isochroneBoundary.area,
+      });
+      expect(result.boundary?.polygon).toHaveProperty('type', 'Polygon');
+      expect(result.boundary?.polygon).toHaveProperty('coordinates');
+    });
+
     it('should throw error when database insert fails', async () => {
       // Arrange
       const communityData = {

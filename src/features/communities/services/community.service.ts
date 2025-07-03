@@ -203,6 +203,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         parentId: data.parentId || null,
         hierarchyPath: data.hierarchyPath,
         memberCount: data.memberCount,
+        boundary: data.boundary,
         deletedAt: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
