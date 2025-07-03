@@ -2,8 +2,8 @@ import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// Load environment variables from root directory
-config({ path: resolve(__dirname, "../../.env.local") });
+// Load environment variables from current directory
+config({ path: resolve(__dirname, ".env.local") });
 
 export default defineConfig({
   root: resolve(__dirname, "../../"),

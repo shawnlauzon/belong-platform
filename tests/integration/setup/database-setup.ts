@@ -3,9 +3,17 @@ import { Database } from '../../../src/shared';
 
 export const createTestSupabaseClient = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-  const supabaseRoKey = process.env.VITE_SUPABASE_ROLE_KEY!;
+  const supabaseRoleKey = process.env.VITE_SUPABASE_ROLE_KEY;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
-  return createClient<Database>(supabaseUrl, supabaseRoKey, {
+  // Use role key for admin operations if available, otherwise use anon key
+  const key = supabaseRoleKey || supabaseAnonKey;
+  
+  if (!supabaseRoleKey) {
+    console.warn('VITE_SUPABASE_ROLE_KEY not found. Using anon key - some cleanup operations may be limited.');
+  }
+
+  return createClient<Database>(supabaseUrl, key, {
     auth: {
       persistSession: false, // Don't persist sessions in tests
       autoRefreshToken: false, // Don't auto-refresh tokens in tests
@@ -21,6 +29,7 @@ export const testConfig = {
 
 export class DatabaseTestHelper {
   private client = createTestSupabaseClient();
+  private hasAdminAccess = !!process.env.VITE_SUPABASE_ROLE_KEY;
 
   async cleanupTestData(namePattern: string = 'test'): Promise<void> {
     try {
@@ -188,23 +197,27 @@ export class DatabaseTestHelper {
           await this.client.from('communities').delete().like('name', '%test%');
         },
         async () => {
-          // First get all auth users
-          const { data: users } = await this.client.auth.admin.listUsers();
+          if (this.hasAdminAccess) {
+            // First get all auth users
+            const { data: users } = await this.client.auth.admin.listUsers();
 
-          if (users.users && users.users.length > 0) {
-            // Delete from auth.users
-            for (const user of users.users) {
-              if (
-                user.email?.includes('test') ||
-                user.email?.includes('TEST')
-              ) {
-                try {
-                  await this.client.auth.admin.deleteUser(user.id);
-                } catch (error) {
-                  console.warn(`Failed to delete auth user ${user.id}:`, error);
+            if (users.users && users.users.length > 0) {
+              // Delete from auth.users
+              for (const user of users.users) {
+                if (
+                  user.email?.includes('test') ||
+                  user.email?.includes('TEST')
+                ) {
+                  try {
+                    await this.client.auth.admin.deleteUser(user.id);
+                  } catch (error) {
+                    console.warn(`Failed to delete auth user ${user.id}:`, error);
+                  }
                 }
               }
             }
+          } else {
+            console.warn('Skipping auth user cleanup - admin access not available');
           }
 
           // Then delete profiles (may already be cascaded)
@@ -242,7 +255,7 @@ export class DatabaseTestHelper {
         .select('id')
         .like('email', '%test%');
 
-      if (testProfiles && testProfiles.length > 0) {
+      if (testProfiles && testProfiles.length > 0 && this.hasAdminAccess) {
         // Delete from auth.users using the Admin API
         for (const profile of testProfiles) {
           try {
@@ -257,6 +270,8 @@ export class DatabaseTestHelper {
             console.warn(`Error deleting auth user ${profile.id}:`, error);
           }
         }
+      } else if (!this.hasAdminAccess) {
+        console.warn('Skipping auth user cleanup - admin access not available');
       }
 
       // Then clean up profiles table (this should cascade from auth.users deletion,
