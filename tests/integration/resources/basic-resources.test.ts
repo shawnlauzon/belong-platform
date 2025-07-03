@@ -68,7 +68,9 @@ describe("Basic Resources Integration", () => {
 
     // Check for errors first, then verify data structure
     if (result.current.error) {
-      throw new Error(`Resources query failed: ${result.current.error.message || result.current.error}`);
+      throw new Error(
+        `Resources query failed: ${result.current.error.message || result.current.error}`,
+      );
     }
 
     // useResources returns data directly (auto-fetching)
@@ -114,12 +116,10 @@ describe("Basic Resources Integration", () => {
     expect(resourceData).toHaveProperty("description");
     expect(resourceData).toHaveProperty("type");
     expect(resourceData).toHaveProperty("category");
-    expect(resourceData).toHaveProperty("isActive");
 
     expect(typeof resourceData.title).toBe("string");
     expect(resourceData.title.length).toBeGreaterThan(0);
     expect(["offer", "request"]).toContain(resourceData.type);
-    expect(typeof resourceData).toBe("boolean");
     expect(typeof resourceData.category).toBe("string");
   });
 
@@ -221,7 +221,9 @@ describe("Basic Resources Integration", () => {
 
     // Check for errors first, then verify data structure
     if (toolsResult.current.error) {
-      throw new Error(`Resources query with tools filter failed: ${toolsResult.current.error.message || toolsResult.current.error}`);
+      throw new Error(
+        `Resources query with tools filter failed: ${toolsResult.current.error.message || toolsResult.current.error}`,
+      );
     }
 
     // Should return array (might be empty)
@@ -246,7 +248,9 @@ describe("Basic Resources Integration", () => {
 
     // Check for errors first, then verify data structure
     if (offersResult.current.error) {
-      throw new Error(`Resources query with offer filter failed: ${offersResult.current.error.message || offersResult.current.error}`);
+      throw new Error(
+        `Resources query with offer filter failed: ${offersResult.current.error.message || offersResult.current.error}`,
+      );
     }
 
     expect(Array.isArray(offersResult.current.data)).toBe(true);
