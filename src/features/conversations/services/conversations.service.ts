@@ -7,18 +7,15 @@ import type {
   MessageInfo,
   MessageFilter,
   MessageData,
-  Message,
 } from '../types';
-import {
-  toConversationInfo,
-  forDbInsert as forDbConversationInsert,
-} from '../transformers/conversationTransformer';
-import {
-  toMessageInfo,
-  forDbInsert as forDbMessageInsert,
-} from '../transformers/messageTransformer';
+import { toConversationInfo } from '../transformers/conversationTransformer';
+import { forDbInsert as forDbMessageInsert } from '../transformers/messageTransformer';
+import { toMessageInfo } from '../transformers/messageTransformer';
 import { createUserService } from '../../users/services/user.service';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
 
 /**
  * Conversations Service Factory
@@ -236,9 +233,9 @@ export const createConversationsService = (
       let toUserId: string;
 
       // Handle two patterns: recipientId (new/existing conversation) or conversationId (existing conversation)
-      if (messageData.recipientId) {
+      if (messageData.toUserId) {
         // Pattern 1: recipientId provided - find or create conversation
-        toUserId = messageData.recipientId;
+        toUserId = messageData.toUserId;
 
         // Try to find existing conversation between these users
         const { data: existingConversation } = await supabase
@@ -303,15 +300,16 @@ export const createConversationsService = (
       }
 
       // Transform to database format
-      const dbData = forDbMessageInsert(
-        { ...messageData, conversationId },
+      const dbMessageData = forDbMessageInsert({
+        ...messageData,
+        conversationId,
         fromUserId,
-        toUserId
-      );
+        toUserId,
+      });
 
       const { data, error } = await supabase
         .from('direct_messages')
-        .insert(dbData)
+        .insert(dbMessageData)
         .select()
         .single();
 
@@ -377,9 +375,12 @@ export const createConversationsService = (
         await supabase.auth.getUser();
 
       if (userError || !userData?.user?.id) {
-        logger.error('💬 API: User must be authenticated to delete a conversation', {
-          error: userError,
-        });
+        logger.error(
+          '💬 API: User must be authenticated to delete a conversation',
+          {
+            error: userError,
+          }
+        );
         throw new Error('User must be authenticated to delete a conversation');
       }
 
@@ -426,7 +427,9 @@ export const createConversationsService = (
         throw deleteError;
       }
 
-      logger.info('💬 API: Successfully deleted conversation', { conversationId });
+      logger.info('💬 API: Successfully deleted conversation', {
+        conversationId,
+      });
     } catch (error) {
       logger.error('💬 API: Failed to delete conversation', {
         error,

@@ -20,14 +20,6 @@ export enum ResourceCategory {
   OTHER = "other",
 }
 
-export enum MeetupFlexibility {
-  HOME_ONLY = "home_only",
-  PUBLIC_MEETUP_OK = "public_meetup_ok",
-  DELIVERY_POSSIBLE = "delivery_possible",
-}
-
-// ResourceCategory is re-exported from database types
-
 export interface ResourceData {
   type: "offer" | "request";
   category: ResourceCategory;
@@ -36,9 +28,6 @@ export interface ResourceData {
   communityId: string;
   imageUrls?: string[];
   location?: { lat: number; lng: number };
-  pickupInstructions?: string;
-  parkingInfo?: string;
-  meetupFlexibility?: MeetupFlexibility;
   availability?: string;
 }
 
@@ -46,13 +35,6 @@ export interface ResourceData {
 export interface ResourceInfo extends Omit<Resource, "owner" | "community"> {
   ownerId: string; // Replaces owner: User
   communityId: string; // Replaces community?: Community
-}
-
-export interface MeetupSpot {
-  name: string;
-  lat: number;
-  lng: number;
-  type: string;
 }
 
 export interface ResourceFilter {

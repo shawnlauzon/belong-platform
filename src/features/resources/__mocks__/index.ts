@@ -2,10 +2,9 @@ import { faker } from '@faker-js/faker';
 import {
   Resource,
   ResourceData,
-  ResourceRow,
-  MeetupFlexibility,
   ResourceCategory,
 } from '../types';
+import { ResourceRow } from '../types/database';
 import { ProfileRow, User } from '../../users';
 import { createMockUser } from '../../users/__mocks__';
 import { createMockCommunity } from '../../communities/__mocks__';
@@ -35,9 +34,6 @@ export function createMockResource(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    pickupInstructions: faker.lorem.sentence(),
-    parkingInfo: faker.lorem.sentence(),
-    meetupFlexibility: faker.helpers.enumValue(MeetupFlexibility),
     availability: faker.lorem.word(),
     isActive: true,
     createdAt: now,
@@ -81,13 +77,6 @@ export function createMockResourceData(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    pickupInstructions: faker.lorem.sentences(2),
-    parkingInfo: faker.lorem.sentence(),
-    meetupFlexibility: faker.helpers.arrayElement([
-      'home_only',
-      'public_meetup_ok',
-      'delivery_possible',
-    ]) as MeetupFlexibility,
     availability: faker.helpers.arrayElement([
       'weekdays',
       'weekends',
@@ -127,13 +116,6 @@ export function createMockDbResource(
       'anytime',
       'mornings',
     ]),
-    meetup_flexibility: faker.helpers.arrayElement([
-      'home_only',
-      'public_meetup_ok',
-      'delivery_possible',
-    ]),
-    parking_info: faker.lorem.sentence(),
-    pickup_instructions: faker.lorem.sentences(2),
     ...overrides,
   };
 }

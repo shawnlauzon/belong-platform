@@ -1,15 +1,11 @@
-import { PostgrestQueryBuilder } from '@supabase/postgrest-js';
-
 /**
  * Apply deleted_at filtering to a Supabase query
  * @param query - The Supabase query builder
  * @param includeDeleted - Whether to include deleted records (default: false)
  * @returns The query with deletion filter applied
  */
-export function applyDeletedFilter<T>(
-  query: PostgrestQueryBuilder<unknown, T, unknown>,
-  includeDeleted = false
-): PostgrestQueryBuilder<unknown, T, unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function applyDeletedFilter(query: any, includeDeleted = false): any {
   if (!includeDeleted) {
     return query.is('deleted_at', null);
   }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger, queryKeys, toRecords } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createShoutoutsService } from '../services/shoutouts.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
@@ -8,7 +8,7 @@ import type { ShoutoutInfo, ShoutoutFilter } from '../types';
 /**
  * Hook for fetching a list of shoutouts with optional filtering.
  *
- * This hook provides functionality for retrieving shoutouts where users can 
+ * This hook provides functionality for retrieving shoutouts where users can
  * publicly recognize and thank others for their contributions. The query is
  * enabled by default and supports optional filtering by sender, receiver, or resource.
  * Must be used within a BelongProvider context.
@@ -51,8 +51,8 @@ export function useShoutouts(filters?: ShoutoutFilter) {
   const shoutoutsService = createShoutoutsService(supabase);
 
   return useQuery<ShoutoutInfo[], Error>({
-    queryKey: filters 
-      ? queryKeys.shoutouts.filtered(filters) 
+    queryKey: filters
+      ? queryKeys.shoutouts.filtered(toRecords(filters))
       : queryKeys.shoutouts.all,
     queryFn: () => {
       logger.debug('📢 useShoutouts: Fetching shoutouts', { filters });

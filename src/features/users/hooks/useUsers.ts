@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createUserService } from '../services/user.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { User, UserFilter } from '../types';
+import { toRecords } from '../../../shared';
 
 /**
  * Hook for fetching a list of users with optional filtering.
@@ -51,8 +52,8 @@ export function useUsers(filters?: UserFilter) {
   const userService = createUserService(supabase);
 
   return useQuery<User[], Error>({
-    queryKey: filters 
-      ? queryKeys.users.filtered(filters) 
+    queryKey: filters
+      ? queryKeys.users.filtered(toRecords(filters))
       : queryKeys.users.all,
     queryFn: () => {
       logger.debug('👤 useUsers: Fetching users', { filters });

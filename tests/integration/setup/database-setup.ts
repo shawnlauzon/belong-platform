@@ -1,5 +1,5 @@
 import { createClient, User } from '@supabase/supabase-js';
-import { Database } from '../../../src/shared';
+import { Database } from '../../../src/shared/types/database';
 
 export const createTestSupabaseClient = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL!;

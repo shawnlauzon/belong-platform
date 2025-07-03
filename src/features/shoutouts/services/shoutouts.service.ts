@@ -13,19 +13,22 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createResourceService } from '../../resources/services/resource.service';
-import { requireAuthentication } from '../../../api/shared/auth-helpers';
-import { ERROR_CODES } from '../../../api/constants';
+import { requireAuthentication } from '../../../shared/utils';
+import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { ShoutoutRow } from '../types/database';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
 
 /**
  * Validates shoutout creation business rules
  */
 function validateShoutoutCreation(
   data: ShoutoutData,
-  currentUserId: string
+  _currentUserId: string
 ): void {
   // Rule: User cannot thank themselves
   if (data.fromUserId === data.toUserId) {
@@ -39,7 +42,7 @@ function validateShoutoutCreation(
 function validateShoutoutUpdate(
   existingShoutout: ShoutoutRow,
   updateData: Partial<ShoutoutData>,
-  currentUserId: string
+  _currentUserId: string
 ): void {
   // Rule: Cannot change the sender of shoutout
   if (
@@ -142,14 +145,17 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchShoutoutById(id: string, options?: { includeDeleted?: boolean }): Promise<Shoutout | null> {
-    logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', { id, options });
+  async fetchShoutoutById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Shoutout | null> {
+    logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', {
+      id,
+      options,
+    });
 
     try {
-      let query = supabase
-        .from('shoutouts')
-        .select('*')
-        .eq('id', id);
+      let query = supabase.from('shoutouts').select('*').eq('id', id);
 
       // Apply deleted filter
       query = applyDeletedFilter(query, options?.includeDeleted);

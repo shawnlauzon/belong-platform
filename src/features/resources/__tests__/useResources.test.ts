@@ -49,7 +49,7 @@ vi.mock('../../../config/client', () => ({
   })),
 }));
 
-// Mock shared module to provide useSupabase, logger, and queryKeys
+// Mock shared module to provide useSupabase, logger, queryKeys, and toRecords
 vi.mock('../../../shared', () => ({
   useSupabase: vi.fn(),
   logger: {
@@ -58,6 +58,7 @@ vi.mock('../../../shared', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+  toRecords: vi.fn((obj) => obj),
   queryKeys: {
     // Authentication state (not profile data)
     auth: ['auth'] as const,

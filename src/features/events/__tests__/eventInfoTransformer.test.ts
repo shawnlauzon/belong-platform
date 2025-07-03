@@ -19,7 +19,6 @@ describe('EventInfo Transformer', () => {
       end_date_time: '2024-06-01T20:00:00Z',
       location: 'Test Location',
       coordinates: 'POINT(-73.9857 40.7484)',
-      parking_info: 'Street parking available',
       max_attendees: 50,
       registration_required: true,
       tags: ['social', 'outdoor'],
@@ -44,7 +43,6 @@ describe('EventInfo Transformer', () => {
     expect(result).toHaveProperty('endDateTime');
     expect(result).toHaveProperty('location', 'Test Location');
     expect(result).toHaveProperty('coordinates');
-    expect(result).toHaveProperty('parkingInfo', 'Street parking available');
     expect(result).toHaveProperty('maxAttendees', 50);
     expect(result).toHaveProperty('registrationRequired', true);
     expect(result).toHaveProperty('tags', ['social', 'outdoor']);
@@ -77,7 +75,6 @@ describe('EventInfo Transformer', () => {
       end_date_time: null,
       location: 'Basic Location',
       coordinates: 'POINT(0 0)',
-      parking_info: null,
       max_attendees: null,
       registration_required: false,
       tags: [],
@@ -90,7 +87,6 @@ describe('EventInfo Transformer', () => {
 
     // Assert
     expect(result.endDateTime).toBeUndefined();
-    expect(result.parkingInfo).toBeUndefined();
     expect(result.maxAttendees).toBeUndefined();
     expect(result.registrationRequired).toBe(false);
     expect(result.tags).toEqual([]);
@@ -100,7 +96,6 @@ describe('EventInfo Transformer', () => {
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
       'end_date_time',
-      'parking_info',
       'max_attendees',
       'registration_required',
       'image_urls',

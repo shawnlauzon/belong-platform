@@ -1,45 +1,68 @@
 # Development Guidelines
 
-## Code Safety Guidelines
-- Prefer function definition to prevent error conditions rather than checking at runtime
-- Do not make checks at runtime for conditions which are impossible by the function definition
+## Core Principles
+1. **Test-Driven Development (TDD) is MANDATORY**
+   - Always write a failing test before code
+   - Test guides the implementation
+   - Never fix code without reproducing the problem in a test first
 
-## Type Safety
-- NEVER use any types - always create proper interfaces, union types, or use type assertions
-- All functions and components must have explicit type annotations
-- Use generated database types from @belongnetwork/types
-- Prefer type-safe patterns over casting or type assertions
+2. **Type Safety First**
+   - Never use `any` types in production code
+   - All functions require explicit type annotations
+   - Use generated database types from @belongnetwork/types
+   - Prefer compile-time safety over runtime checks
 
-## TDD Requirements
-- Always write a test before writing the code
-- Use the test file to guide the implementation
-- A task is only complete when build and typecheck and tests are all successful
+3. **Single Responsibility**
+   - Each hook serves one specific purpose
+   - Each service method does one thing
+   - Files should not exceed ~500 lines
 
-## Testing
-- Each package has its own Vitest configuration
-- Skipping tests is not an acceptable way to make tests pass
-- A problem must fail the test; logging errors is only for debugging
-- **ALWAYS use createMock* utilities from @belongnetwork/platform/src/test-utils for generating test data**
-- Use faker to generate data for tests and to document expected values
-- Unit tests are located in the **tests** directory of the feature
-- Integration tests are located in the tests/integration directory
+## Development Workflow
 
-## Database Guidelines
-- Never update the database.ts file directly
-- Always make schema changes via database migrations
-- To update the database.ts file, run `pnpm run gen:db-types` from the types directory
-- Use the supabase MCP to interact with the database
+### 1. Starting a New Feature
+```bash
+# 1. Write failing unit test
+# 2. Implement minimal code to pass
+# 3. Refactor while keeping tests green
+# 4. Run pnpm tdd before committing
+```
 
-## Code Style
-- Follow established code patterns and conventions within each package
-- Maintain consistent naming conventions across the monorepo
-- Maximum file size is around 500 lines
-- If you create the same code more than twice, extract it into a shared function
-- Keep versions of all packages aligned
-- Do not deprecate; remove unused code
+### 2. Debugging Approach
+- Write a unit test that reproduces the bug
+- Only mock external dependencies (Supabase), never platform code
+- If integration tests fail but unit tests pass, investigate environmental differences
+- Fix root causes, not symptoms
 
-## Memory Rules
-- When asked to look at the database definition, look at database.ts
-- When you commit after bumping a version, tag with that version
-- When you believe you have fixed a problem, run the test to confirm before continuing
-- Run integration tests with `pnpm test:integration` from the project directory
+### 3. Code Review Checklist
+- [ ] TDD followed (test written first)
+- [ ] No `any` types
+- [ ] Follows existing patterns
+- [ ] Tests use createMock* utilities
+- [ ] All commands pass: `pnpm tdd`
+
+## Important Rules from CLAUDE.md
+- **DO NOT edit more code than necessary**
+- **DO NOT create files unless absolutely necessary**
+- **ALWAYS prefer editing existing files**
+- **NEVER proactively create documentation files**
+- **A task is only complete when all tests pass**
+
+## Testing Philosophy
+- Unit tests mock only external dependencies
+- Integration tests use real database connections
+- Never skip tests to make them pass
+- Problems must fail tests, not just log errors
+- Clear test names that describe expected behavior
+
+## Database Development
+- Never update database.ts directly
+- Always use migrations via Supabase MCP
+- Run `pnpm gen:db-types` after schema changes
+- Keep all packages version-aligned
+
+## Common Anti-Patterns to Avoid
+- Mocking platform code in tests
+- Adding workarounds instead of fixing root causes
+- Skipping the failing test step
+- Writing tests that expect buggy behavior
+- Using console.log for debugging tests

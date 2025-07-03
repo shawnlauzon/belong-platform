@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { EventInfo, EventFilter } from '../types';
+import { toRecords } from '../../../shared/utils';
 
 /**
  * Hook for fetching a list of events.
@@ -20,8 +21,8 @@ export function useEvents(filters?: EventFilter) {
   const eventService = createEventService(supabase);
 
   const query = useQuery<EventInfo[], Error>({
-    queryKey: filters 
-      ? queryKeys.events.filtered(filters)
+    queryKey: filters
+      ? queryKeys.events.filtered(toRecords(filters))
       : queryKeys.events.all,
     queryFn: () => eventService.fetchEvents(filters),
     staleTime: STANDARD_CACHE_TIME,

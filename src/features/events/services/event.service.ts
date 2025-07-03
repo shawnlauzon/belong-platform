@@ -18,13 +18,16 @@ import {
 } from '../transformers/eventAttendanceTransformer';
 import { createUserService } from '../../users/services/user.service';
 import { createCommunityService } from '../../communities/services/community.service';
-import { requireAuthentication } from '../../../api/shared/auth-helpers';
-import { ERROR_CODES } from '../../../api/constants';
+import { requireAuthentication } from '../../../shared/utils/auth-helpers';
+import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
 import { User } from '../../users';
-import { applyDeletedFilter, createSoftDeleteUpdate } from '../../../shared/utils/soft-deletion';
+import {
+  applyDeletedFilter,
+  createSoftDeleteUpdate,
+} from '../../../shared/utils/soft-deletion';
 
 export const createEventService = (supabase: SupabaseClient<Database>) => ({
   async fetchEvents(filters?: EventFilter): Promise<EventInfo[]> {
@@ -105,14 +108,14 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchEventById(id: string, options?: { includeDeleted?: boolean }): Promise<Event | null> {
+  async fetchEventById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Event | null> {
     logger.debug('🎉 Event Service: Fetching event by ID', { id, options });
 
     try {
-      let query = supabase
-        .from('events')
-        .select('*')
-        .eq('id', id);
+      let query = supabase.from('events').select('*').eq('id', id);
 
       // Apply deleted filter
       query = applyDeletedFilter(query, options?.includeDeleted);

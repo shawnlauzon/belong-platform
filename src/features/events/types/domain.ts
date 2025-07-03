@@ -18,7 +18,6 @@ export interface EventData {
   isAllDay: boolean;
   location: string;
   coordinates: Coordinates;
-  parkingInfo?: string;
   maxAttendees?: number;
   registrationRequired?: boolean;
   tags?: string[];

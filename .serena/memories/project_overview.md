@@ -1,20 +1,22 @@
-# Belong Network Platform - Project Overview
+# Belong Platform Overview
 
-## Purpose
-A TypeScript monorepo for a hyper-local community platform built with React Query and Supabase. Provides data layer hooks for authentication, communities, resources, events, and user management.
+## Project Purpose
+Belong Platform is a TypeScript-first platform for building hyper-local community applications with resource sharing, event management, and social features. It focuses on helping communities share resources, organize events, send direct messages, express gratitude, and maintain geographic communities.
 
-## Tech Stack
-- **Frontend**: React 18, TypeScript, TanStack Query for data fetching
-- **UI**: Tailwind CSS, Radix UI primitives  
-- **Database**: Supabase (PostgreSQL + PostGIS for spatial data)
-- **Build**: Vite with pnpm workspaces
-- **Testing**: Vitest with jsdom and Testing Library
+## Core Features
+- **Resource Sharing** - Offer or request tools, skills, food, and supplies within local communities
+- **Event Management** - Create and attend community gatherings and activities
+- **Direct Messaging** - Private messages between community members
+- **Gratitude System** - Send shoutouts to community members who have helped
+- **Geographic Communities** - Hierarchical communities (neighborhood → city → state)
+- **Real-time Updates** - Stay connected with real-time subscription support
 
-## Package Structure
-- `@belongnetwork/platform` - Data layer with React Query hooks for auth, communities, resources, and users
-- `@belongnetwork/components` - Reusable UI components built with Radix UI and Tailwind CSS  
-- `@belongnetwork/core` - Shared configuration, utilities, and logger
-- `@belongnetwork/types` - TypeScript type definitions and database schema types
+## Platform Type
+This is a TypeScript monorepo using pnpm workspaces for package management. The main package is `@belongnetwork/platform` which provides React Query hooks for data fetching and mutations.
 
-## Architecture
-Provider-based architecture where you inject your own Supabase configuration. Follows established patterns for React Query hooks and component composition.
+## Architecture Pattern
+- **Single-Purpose Hook Architecture** - Each hook serves one specific purpose
+- **Feature-based organization** - Code organized by features (auth, communities, resources, etc.)
+- **Provider-based configuration** - BelongProvider wraps the app with configuration
+- **Type-safe throughout** - Comprehensive TypeScript coverage
+- **React Query for data management** - Built on TanStack Query

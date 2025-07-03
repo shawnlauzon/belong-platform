@@ -13,6 +13,7 @@ vi.mock('../../../../shared', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+  toRecords: vi.fn((obj) => obj),
   queryKeys: {
     communities: {
       all: ['communities'],

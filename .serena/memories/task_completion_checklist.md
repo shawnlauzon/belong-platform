@@ -1,37 +1,66 @@
 # Task Completion Checklist
 
-## Before Any Commit
-1. Run `pnpm tdd` and fix any warnings and errors
-2. All unit tests must be green before adding new features
-3. Always run unit tests before committing
+When completing any development task in the Belong Platform, follow this checklist:
 
-## Development Workflow
-1. **Write a Failing Test First** - Always create a unit test that reproduces the exact problem before attempting any fixes
-2. **Fix the Root Cause, Not Symptoms** - Don't mask problems with workarounds
-3. **Verify the Fix Completely** - Both unit tests and integration tests should pass
-4. Run type checking: `pnpm typecheck`
-5. Run linting: `pnpm lint`  
-6. Run tests: `pnpm test`
-7. Run build: `pnpm build`
+## Before Starting a Task
+1. **Always write a failing unit test first** (TDD mandatory)
+2. Use the test file to guide the implementation
+3. Check existing patterns in similar files
 
-## Before Publishing
-1. Run `pnpm qa` and fix any warnings and errors
-2. Bump the patch version in all package.json files
-3. Commit changes
-4. Tag with the version
-5. Publish
+## During Development
+1. **Follow TDD cycle**:
+   - Red: Write failing test
+   - Green: Make minimal code to pass
+   - Refactor: Clean up while keeping tests green
+2. **Never skip the failing test step**
+3. **Only fix code after reproducing the problem in a test**
+
+## Before Committing
+Always run these commands in order:
+
+```bash
+# 1. Lint check
+pnpm lint
+
+# 2. Type check
+pnpm typecheck
+
+# 3. Run unit tests
+pnpm test
+
+# 4. Run integration tests (if applicable)
+pnpm -w test:integration
+
+# 5. Build verification
+pnpm build
+```
+
+## Task Completion Criteria
+A task is **only complete** when:
+- ✅ All linting passes (`pnpm lint`)
+- ✅ All type checks pass (`pnpm typecheck`)
+- ✅ All unit tests pass (`pnpm test`)
+- ✅ All integration tests pass (if relevant)
+- ✅ Build succeeds (`pnpm build`)
+- ✅ No regression in existing tests
+- ✅ New functionality has appropriate test coverage
+
+## Common Completion Issues to Check
+- No `any` types in production code
+- All functions have explicit type annotations
+- Using generated database types from @belongnetwork/types
+- Tests use createMock* utilities from test-utils
+- Following established patterns from existing code
+- File sizes under ~500 lines
 
 ## Database Changes
-- Never update the `database.ts` file directly
-- Always make changes via a database migration
-- After any database change, run `gen:db-types` from the types package to update `database.ts`
-- Run integration tests with `pnpm test:integration` from the project directory
+If you made database changes:
+1. Apply migration via Supabase MCP tools
+2. Run `pnpm gen:db-types` to update TypeScript types
+3. Verify generated types are correct
 
-## Version Management
-- Keep versions of all packages aligned
-- When you commit after bumping a version, tag with that version
-- Do not deprecate; remove
-
-## Quality Gates
-- A task is only complete when build, typecheck, and tests are all successful
-- When you believe you have fixed a problem, run the test to confirm before continuing
+## Final Verification
+Run the full TDD command one more time:
+```bash
+pnpm tdd  # Ensures lint, typecheck, and tests all pass
+```

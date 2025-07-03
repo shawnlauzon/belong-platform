@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger, queryKeys, toRecords } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createCommunityService } from '../services/community.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
@@ -58,7 +58,7 @@ export function useCommunities(filters?: CommunityFilter) {
 
   const query = useQuery<CommunityInfo[], Error>({
     queryKey: filters
-      ? queryKeys.communities.filtered(filters)
+      ? queryKeys.communities.filtered(toRecords(filters))
       : queryKeys.communities.all,
     queryFn: () => communityService.fetchCommunities(filters),
     staleTime: STANDARD_CACHE_TIME,

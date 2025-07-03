@@ -3,26 +3,27 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createCommunityService } from '../services/community.service';
+import { CommunityMembership } from '../types';
 
 /**
  * Hook for leaving a community.
- * 
+ *
  * Provides a mutation function for leaving communities.
  * Automatically invalidates community and membership caches on successful leave.
- * 
+ *
  * @returns Leave community mutation function
- * 
+ *
  * @example
  * ```tsx
  * function LeaveCommunityButton({ communityId }) {
  *   const leaveCommunity = useLeaveCommunity();
  *   const [isLeaving, setIsLeaving] = useState(false);
- *   
+ *
  *   const handleLeave = async () => {
  *     if (!confirm('Are you sure you want to leave this community?')) {
  *       return;
  *     }
- *     
+ *
  *     setIsLeaving(true);
  *     try {
  *       await leaveCommunity(communityId);
@@ -33,9 +34,9 @@ import { createCommunityService } from '../services/community.service';
  *       setIsLeaving(false);
  *     }
  *   };
- *   
+ *
  *   return (
- *     <button 
+ *     <button
  *       onClick={handleLeave}
  *       disabled={isLeaving}
  *     >
@@ -50,7 +51,7 @@ export function useLeaveCommunity() {
   const supabase = useSupabase();
   const communityService = createCommunityService(supabase);
 
-  const mutation = useMutation({
+  const mutation = useMutation<CommunityMembership, Error, string>({
     mutationFn: (communityId: string) =>
       communityService.leaveCommunity(communityId),
     onSuccess: (result, communityId) => {

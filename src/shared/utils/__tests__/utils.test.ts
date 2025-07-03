@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsePostGisPoint, toPostGisPoint } from '../../../api/utils';
+import { parsePostGisPoint, toPostGisPoint } from '../postgis';
 
 describe('parsePostGisPoint', () => {
   describe('when given null or undefined', () => {

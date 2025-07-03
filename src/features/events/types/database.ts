@@ -1,6 +1,10 @@
 import type { Database } from '../../../shared/types/database';
 
 export type EventRow = Database['public']['Tables']['events']['Row'];
+export type EventInsertDbData =
+  Database['public']['Tables']['events']['Insert'];
+export type EventUpdateDbData =
+  Database['public']['Tables']['events']['Update'];
 
 // Database types for event_attendances table (will be available once migrations are applied)
 export type EventAttendanceRow =

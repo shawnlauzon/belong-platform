@@ -1,6 +1,6 @@
-import { logger } from '../../shared';
+import { logger } from '../logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../../shared/types/database';
+import type { Database } from '../types/database';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../constants';
 
 /**

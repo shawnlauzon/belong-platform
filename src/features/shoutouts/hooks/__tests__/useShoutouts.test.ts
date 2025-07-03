@@ -14,6 +14,7 @@ vi.mock('../../../../shared', () => ({
     warn: vi.fn(),
     debug: vi.fn(),
   },
+  toRecords: vi.fn((obj) => obj),
   queryKeys: {
     shoutouts: {
       all: ['shoutouts'],

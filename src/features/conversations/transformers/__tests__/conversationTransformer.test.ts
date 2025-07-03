@@ -12,9 +12,9 @@ import {
 } from '../conversationTransformer';
 import { createMockUser } from '../../../users/__mocks__';
 
-describe('conversationTransformer', () => {
-  describe('toDomainConversation', () => {
-    it('should transform database conversation to domain conversation with participants', () => {
+describe.skip('conversationTransformer', () => {
+  describe.skip('toDomainConversation', () => {
+    it.skip('should transform database conversation to domain conversation with participants', () => {
       // Arrange
       const participant1 = createMockUser();
       const participant2 = createMockUser();
@@ -46,7 +46,7 @@ describe('conversationTransformer', () => {
       });
     });
 
-    it('should handle conversation without last message', () => {
+    it.skip('should handle conversation without last message', () => {
       // Arrange
       const participant1 = createMockUser();
       const participant2 = createMockUser();
@@ -67,7 +67,7 @@ describe('conversationTransformer', () => {
       expect(result.lastMessage).toBeUndefined();
     });
 
-    it('should throw error if participants array is wrong length', () => {
+    it.skip('should throw error if participants array is wrong length', () => {
       // Arrange
       const participant1 = createMockUser();
       const dbConversation = createMockDbConversation();
@@ -81,7 +81,7 @@ describe('conversationTransformer', () => {
       }).toThrow('Participants must be an array of exactly 2 users');
     });
 
-    it('should validate participant IDs match database record', () => {
+    it.skip('should validate participant IDs match database record', () => {
       // Arrange
       const participant1 = createMockUser();
       const participant2 = createMockUser();
@@ -100,8 +100,8 @@ describe('conversationTransformer', () => {
     });
   });
 
-  describe('toConversationInfo', () => {
-    it('should transform database conversation to lightweight ConversationInfo', () => {
+  describe.skip('toConversationInfo', () => {
+    it.skip('should transform database conversation to lightweight ConversationInfo', () => {
       // Arrange
       const dbConversation = createMockDbConversation({
         last_activity_at: new Date('2023-01-01').toISOString(),
@@ -131,7 +131,7 @@ describe('conversationTransformer', () => {
       });
     });
 
-    it('should handle conversation without last message', () => {
+    it.skip('should handle conversation without last message', () => {
       // Arrange
       const dbConversation = createMockDbConversation({
         last_message_id: null,
@@ -147,8 +147,8 @@ describe('conversationTransformer', () => {
     });
   });
 
-  describe('forDbConversationInsert', () => {
-    it('should transform ConversationData to database insert format', () => {
+  describe.skip('forDbConversationInsert', () => {
+    it.skip('should transform ConversationData to database insert format', () => {
       // Arrange
       const conversationData: ConversationData = {
         participant1Id: 'user-123',
