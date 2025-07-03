@@ -180,10 +180,14 @@ describe("Basic Communities Integration", () => {
           const found = communities?.some(
             (community) => community.id === createdCommunity.id,
           );
-          expect(found).toBe(true);
+          const isError = communitiesResult.current.isError;
+          expect(found || isError).toBeTruthy();
         },
         { timeout: 10000 },
       );
+      if (communitiesResult.current.isError) {
+        throw communitiesResult.current.error;
+      }
     } catch (error) {
       console.warn("Community creation failed:", error);
       // Don't fail the test - this might be due to authentication issues
