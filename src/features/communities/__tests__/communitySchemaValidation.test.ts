@@ -25,6 +25,9 @@ describe('Community Schema Validation Tests', () => {
 
       // These are the valid Update schema keys (from database.ts)
       const validUpdateKeys: Array<keyof CommunityUpdateDbData> = [
+        'boundary',
+        'boundary_geometry',
+        'boundary_geometry_detailed',
         'center',
         'created_at',
         'deleted_at',
@@ -101,12 +104,16 @@ describe('Community Schema Validation Tests', () => {
       >;
 
       const validInsertKeys: Array<keyof CommunityInsertDbData> = [
+        'boundary',
+        'boundary_geometry',
+        'boundary_geometry_detailed',
         'center',
         'created_at',
         'deleted_at',
         'deleted_by',
         'description',
         'hierarchy_path',
+        'icon',
         'id',
         'level',
         'member_count',

@@ -1,6 +1,36 @@
 import { Coordinates } from '../../../shared';
 import { User } from '../../users';
 
+// GeoJSON types
+declare global {
+  namespace GeoJSON {
+    interface Polygon {
+      type: 'Polygon';
+      coordinates: number[][][];
+    }
+  }
+}
+
+// Boundary types for communities
+export type TravelMode = 'walking' | 'cycling' | 'driving';
+
+export interface CircularBoundary {
+  type: 'circular';
+  center: [number, number]; // [longitude, latitude]
+  radius_km: number;
+}
+
+export interface IsochroneBoundary {
+  type: 'isochrone';
+  center: [number, number]; // [longitude, latitude]
+  travelMode: TravelMode;
+  minutes: number; // Travel time in minutes (5-60)
+  polygon: GeoJSON.Polygon; // Actual isochrone polygon from Mapbox API
+  area: number; // Area in square kilometers
+}
+
+export type CommunityBoundary = CircularBoundary | IsochroneBoundary;
+
 export interface Community extends Omit<CommunityData, 'organizerId'> {
   id: string;
   organizer: User;
@@ -33,6 +63,10 @@ export interface CommunityData {
   organizerId: string;
   parentId: string | null; // Null only for global root
 
+  // Boundary configuration (new isochrone support)
+  boundary?: CommunityBoundary;
+  
+  // Legacy boundary fields (maintained for backward compatibility)
   center?: Coordinates;
   radiusKm?: number;
 
