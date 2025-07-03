@@ -1,8 +1,7 @@
-import { Community } from '../../communities';
-import { User } from '../../users';
-import { ResourceCategory } from './database';
+import { Community } from "../../communities";
+import { User } from "../../users";
 
-export interface Resource extends Omit<ResourceData, 'communityId'> {
+export interface Resource extends Omit<ResourceData, "communityId"> {
   id: string;
   owner: User;
   community?: Community;
@@ -12,16 +11,25 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
   updatedAt: Date;
 }
 
+// Enum needed for database operations
+export enum ResourceCategory {
+  TOOLS = "tools",
+  SKILLS = "skills",
+  FOOD = "food",
+  SUPPLIES = "supplies",
+  OTHER = "other",
+}
+
 export enum MeetupFlexibility {
-  HOME_ONLY = 'home_only',
-  PUBLIC_MEETUP_OK = 'public_meetup_ok',
-  DELIVERY_POSSIBLE = 'delivery_possible',
+  HOME_ONLY = "home_only",
+  PUBLIC_MEETUP_OK = "public_meetup_ok",
+  DELIVERY_POSSIBLE = "delivery_possible",
 }
 
 // ResourceCategory is re-exported from database types
 
 export interface ResourceData {
-  type: 'offer' | 'request';
+  type: "offer" | "request";
   category: ResourceCategory;
   title: string;
   description: string;
@@ -35,7 +43,7 @@ export interface ResourceData {
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface ResourceInfo extends Omit<Resource, 'owner' | 'community'> {
+export interface ResourceInfo extends Omit<Resource, "owner" | "community"> {
   ownerId: string; // Replaces owner: User
   communityId: string; // Replaces community?: Community
 }
@@ -48,8 +56,8 @@ export interface MeetupSpot {
 }
 
 export interface ResourceFilter {
-  category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
-  type?: 'offer' | 'request' | 'all';
+  category?: "tools" | "skills" | "food" | "supplies" | "other" | "all";
+  type?: "offer" | "request" | "all";
   communityId?: string;
   ownerId?: string;
   includeDeleted?: boolean;
