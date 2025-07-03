@@ -124,6 +124,7 @@ Development Principles
 - After making any database change, run gen:db-types from the types package to update database.ts
 - Run integration tests with `pnpm test:integration` from the project directory
 - Use supabase mcp for supabase commands except for gen:db-types to generate types into database.ts
+- NEVER NEVER MANUALLY UPDATE DATABASE.TS
 
 ## Debugging Guidelines
 
