@@ -35,7 +35,7 @@ pnpm format
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 # Run integration tests
-pnpm -w test:integration
+pnpm test:integration
 ```
 
 Architecture Overview
