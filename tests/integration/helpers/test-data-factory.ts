@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { ResourceCategory, ResourceData } from "../../../src";
+import type { CommunityBoundary, CircularBoundary, IsochroneBoundary } from "../../../src";
 
 export interface TestUser {
   email: string;
@@ -16,6 +17,7 @@ export interface TestCommunity {
   timeZone: string;
   hierarchyPath: Array<{ level: string; name: string }>;
   memberCount: number;
+  boundary?: CommunityBoundary;
 }
 
 export interface TestResource {
@@ -256,6 +258,59 @@ export class TestDataFactory {
 
   static isTestShoutout(item: any): boolean {
     return item?.message?.includes("INTEGRATION_TEST_") || false;
+  }
+
+  /**
+   * Boundary-specific test data generators
+   */
+  static createCircularBoundary(overrides: Partial<CircularBoundary> = {}): CircularBoundary {
+    return {
+      type: 'circular',
+      center: [-74.0060, 40.7128], // New York City coordinates
+      radius_km: faker.number.float({ min: 0.5, max: 10 }),
+      ...overrides,
+    };
+  }
+
+  static createIsochroneBoundary(overrides: Partial<IsochroneBoundary> = {}): IsochroneBoundary {
+    const center: [number, number] = [-74.0060, 40.7128]; // New York City coordinates
+    
+    // Create a simple rectangular polygon around the center for testing
+    const offset = 0.01; // roughly 1km
+    const polygon: GeoJSON.Polygon = {
+      type: 'Polygon',
+      coordinates: [[
+        [center[0] - offset, center[1] - offset],
+        [center[0] + offset, center[1] - offset],
+        [center[0] + offset, center[1] + offset],
+        [center[0] - offset, center[1] + offset],
+        [center[0] - offset, center[1] - offset], // Close the polygon
+      ]],
+    };
+
+    return {
+      type: 'isochrone',
+      center,
+      travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
+      minutes: faker.number.int({ min: 5, max: 60 }),
+      polygon,
+      area: faker.number.float({ min: 1, max: 50 }),
+      ...overrides,
+    };
+  }
+
+  static createCommunityWithBoundary(
+    boundaryType: 'circular' | 'isochrone',
+    overrides: Partial<TestCommunity> = {}
+  ): TestCommunity {
+    const boundary = boundaryType === 'circular' 
+      ? this.createCircularBoundary()
+      : this.createIsochroneBoundary();
+
+    return this.createCommunity({
+      ...overrides,
+      boundary,
+    });
   }
 }
 
