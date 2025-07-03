@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "The platform for building a network of independent, organizer-led communities where trust is built through acts of kindness and shared experiences.",
   "type": "module",
