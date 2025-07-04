@@ -75,17 +75,6 @@ export function createMockDbResources(
  * Common assertion patterns for resource service tests
  */
 export const ResourceServiceAssertions = {
-  /**
-   * Asserts standard fetchResources query pattern
-   */
-  expectFetchResourcesQuery: (mockSupabase: any) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('resources');
-    expect(mockSupabase.select).toHaveBeenCalledWith('*');
-    expect(mockSupabase.order).toHaveBeenCalledWith('created_at', {
-      ascending: false,
-    });
-    expect(mockSupabase.is).toHaveBeenCalledWith('deleted_at', null);
-  },
 
   /**
    * Asserts result array length

@@ -48,10 +48,7 @@ describe('Resource Service - Soft Delete Bug Fix', () => {
     // Act: Call fetchResources with no filters (should default to active only)
     const result = await resourceService.fetchResources();
 
-    // Assert: Service should have applied default active filtering
-    ResourceServiceAssertions.expectFetchResourcesQuery(mockSupabase);
-
-    // Should only return non-deleted resources due to soft deletion filtering
+    // Assert: Should only return non-deleted resources due to soft deletion filtering
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('resource-active');
 

@@ -8,20 +8,20 @@ import { vi } from 'vitest';
 /**
  * Available query methods for building Supabase query mocks
  */
-export type QueryMethod = 
-  | 'select' 
-  | 'eq' 
+export type QueryMethod =
+  | 'select'
+  | 'eq'
   | 'is'
-  | 'order' 
-  | 'single' 
-  | 'update' 
+  | 'order'
+  | 'single'
+  | 'update'
   | 'insert'
   | 'delete';
 
 /**
  * Creates a mock query builder with specified methods
  * All methods return `this` except the final resolving method
- * 
+ *
  * @param methods - Array of query methods to include in the mock
  * @param finalMethod - The method that should resolve with data/error
  * @param resolveValue - The value to resolve with (defaults to { data: null, error: null })
@@ -32,23 +32,23 @@ export function createMockQuery(
   resolveValue: { data: any; error: any } = { data: null, error: null }
 ) {
   const mockQuery: Record<string, any> = {};
-  
+
   // Create chainable methods (return this)
-  methods.forEach(method => {
+  methods.forEach((method) => {
     if (method !== finalMethod) {
       mockQuery[method] = vi.fn().mockReturnThis();
     }
   });
-  
+
   // Create the final resolving method
   mockQuery[finalMethod] = vi.fn().mockResolvedValue(resolveValue);
-  
+
   return mockQuery;
 }
 
 /**
  * Sets up a complete mock query chain for Supabase
- * 
+ *
  * @param mockSupabase - The mocked Supabase client
  * @param methods - Query methods to include
  * @param finalMethod - Method that resolves
@@ -68,7 +68,7 @@ export function setupMockQuery(
 
 /**
  * Generates mock database community data with sensible defaults
- * 
+ *
  * @param overrides - Properties to override in the mock community
  * @param baseUser - Base user object for organizer data
  * @returns Mock database community object
@@ -96,7 +96,7 @@ export function createMockDbCommunity(
 
 /**
  * Generates an array of mock database communities
- * 
+ *
  * @param count - Number of communities to generate
  * @param baseUser - Base user for organizer data
  * @param overrides - Overrides applied to all communities
@@ -125,32 +125,6 @@ export function createMockDbCommunities(
  */
 export const CommunityServiceAssertions = {
   /**
-   * Asserts standard fetchCommunities query pattern with soft deletion
-   */
-  expectFetchCommunitiesQuery: (mockSupabase: any, mockQuery: any) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
-    expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
-  },
-
-  /**
-   * Asserts level filter was applied
-   */
-  expectLevelFilter: (mockQuery: any, level: string) => {
-    expect(mockQuery.eq).toHaveBeenCalledWith('level', level);
-  },
-
-  /**
-   * Asserts single community query pattern
-   */
-  expectFetchCommunityByIdQuery: (mockSupabase: any, mockQuery: any, communityId: string) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.select).toHaveBeenCalledWith('*, organizer:profiles!organizer_id(*), parent:communities!parent_id(*)');
-    expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
-  },
-
-  /**
    * Asserts result array length
    */
   expectResultLength: (result: any[], expectedLength: number) => {
@@ -163,24 +137,6 @@ export const CommunityServiceAssertions = {
   expectAuthenticationCheck: (mockSupabase: any) => {
     expect(mockSupabase.auth.getUser).toHaveBeenCalled();
   },
-
-  /**
-   * Asserts create community operation
-   */
-  expectCreateCommunityQuery: (mockSupabase: any, mockQuery: any) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.insert).toHaveBeenCalled();
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
-  },
-
-  /**
-   * Asserts update community operation
-   */
-  expectUpdateCommunityQuery: (mockSupabase: any, mockQuery: any, communityId: string) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('communities');
-    expect(mockQuery.update).toHaveBeenCalled();
-    expect(mockQuery.eq).toHaveBeenCalledWith('id', communityId);
-  },
 };
 
 /**
@@ -191,56 +147,51 @@ export const QuerySetups = {
    * Standard fetchCommunities query (select, order, is) - is resolves last for soft deletion
    */
   fetchCommunities: (mockSupabase: any, data: any[] = [], error: any = null) =>
-    setupMockQuery(
-      mockSupabase,
-      ['select', 'order', 'is'],
-      'is',
-      { data, error }
-    ),
+    setupMockQuery(mockSupabase, ['select', 'order', 'is'], 'is', {
+      data,
+      error,
+    }),
 
   /**
    * FetchCommunities with different ordering (select, eq, order) - order resolves last
    */
-  fetchCommunitiesOrderLast: (mockSupabase: any, data: any[] = [], error: any = null) =>
-    setupMockQuery(
-      mockSupabase,
-      ['select', 'eq', 'order'],
-      'order',
-      { data, error }
-    ),
+  fetchCommunitiesOrderLast: (
+    mockSupabase: any,
+    data: any[] = [],
+    error: any = null
+  ) =>
+    setupMockQuery(mockSupabase, ['select', 'eq', 'order'], 'order', {
+      data,
+      error,
+    }),
 
   /**
    * FetchCommunityById query (select, eq, single)
    */
-  fetchCommunityById: (mockSupabase: any, data: any = null, error: any = null) =>
-    setupMockQuery(
-      mockSupabase,
-      ['select', 'eq', 'single'],
-      'single',
-      { data, error }
-    ),
+  fetchCommunityById: (
+    mockSupabase: any,
+    data: any = null,
+    error: any = null
+  ) =>
+    setupMockQuery(mockSupabase, ['select', 'eq', 'single'], 'single', {
+      data,
+      error,
+    }),
 
   /**
    * Create community query (insert, select, single)
    */
   createCommunity: (mockSupabase: any, data: any = null, error: any = null) =>
-    setupMockQuery(
-      mockSupabase,
-      ['insert', 'select', 'single'],
-      'single',
-      { data, error }
-    ),
+    setupMockQuery(mockSupabase, ['insert', 'select', 'single'], 'single', {
+      data,
+      error,
+    }),
 
   /**
-   * Update community query (update, eq)
+   * Update community query (update, eq, select, single)
    */
-  updateCommunity: (mockSupabase: any, error: any = null) =>
-    setupMockQuery(
-      mockSupabase,
-      ['update', 'eq'],
-      'eq',
-      { data: null, error }
-    ),
+  updateCommunity: (mockSupabase: any, data: any = null, error: any = null) =>
+    setupMockQuery(mockSupabase, ['update', 'eq', 'select', 'single'], 'single', { data, error }),
 };
 
 /**
