@@ -27,8 +27,8 @@ export interface BoundaryDbTransform {
 /**
  * Validates coordinates are within valid longitude/latitude bounds
  */
-function validateCoordinates(coordinates: [number, number]): void {
-  const [lng, lat] = coordinates;
+function validateCoordinates(coordinates: { lng: number; lat: number }): void {
+  const { lng, lat } = coordinates;
 
   if (lng < -180 || lng > 180) {
     throw new Error(
@@ -47,7 +47,7 @@ function validateCoordinates(coordinates: [number, number]): void {
 export function validateCircularBoundary(boundary: CircularBoundary): void {
   validateCoordinates(boundary.center);
 
-  if (boundary.radius_km <= 0) {
+  if (boundary.radiusKm <= 0) {
     throw new Error('Radius must be positive');
   }
 }
@@ -65,11 +65,11 @@ export function validateIsochroneBoundary(boundary: IsochroneBoundary): void {
     );
   }
 
-  if (boundary.minutes < 1 || boundary.minutes > 60) {
+  if (boundary.travelTimeMin < 1 || boundary.travelTimeMin > 60) {
     throw new Error('Minutes must be between 1 and 60');
   }
 
-  if (boundary.area <= 0) {
+  if (boundary.areaSqKm <= 0) {
     throw new Error('Area must be positive');
   }
 
@@ -223,7 +223,7 @@ export function isCircularBoundary(
 export function getBoundaryCenter(
   boundary: CommunityBoundary
 ): [number, number] {
-  return boundary.center;
+  return [boundary.center.lng, boundary.center.lat];
 }
 
 /**
@@ -232,9 +232,9 @@ export function getBoundaryCenter(
 export function getBoundaryArea(boundary: CommunityBoundary): number {
   switch (boundary.type) {
     case 'circular':
-      return Math.PI * Math.pow(boundary.radius_km, 2);
+      return Math.PI * Math.pow(boundary.radiusKm, 2);
     case 'isochrone':
-      return boundary.area;
+      return boundary.areaSqKm;
     default:
       throw new Error(
         `Unknown boundary type: ${(boundary as { type: string }).type}`

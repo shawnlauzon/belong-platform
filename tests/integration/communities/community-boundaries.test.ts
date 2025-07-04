@@ -94,7 +94,7 @@ describe('Community Boundaries Integration', () => {
         expect(createdCommunity.boundary).toMatchObject({
           type: 'circular',
           center: circularBoundary.center,
-          radius_km: circularBoundary.radius_km,
+          radiusKm: circularBoundary.radiusKm,
         });
       } else {
         console.warn('Boundary data not returned - schema may not be deployed');
@@ -150,8 +150,8 @@ describe('Community Boundaries Integration', () => {
       type: 'isochrone',
       center: isochroneBoundary.center,
       travelMode: isochroneBoundary.travelMode,
-      minutes: isochroneBoundary.minutes,
-      area: isochroneBoundary.area,
+      travelTimeMin: isochroneBoundary.travelTimeMin,
+      areaSqKm: isochroneBoundary.areaSqKm,
     });
 
     // Verify polygon structure
@@ -218,17 +218,17 @@ describe('Community Boundaries Integration', () => {
     expect(circularBoundary.type).toBe('circular');
     expect(Array.isArray(circularBoundary.center)).toBe(true);
     expect(circularBoundary.center).toHaveLength(2);
-    expect(typeof circularBoundary.radius_km).toBe('number');
-    expect(circularBoundary.radius_km).toBeGreaterThan(0);
+    expect(typeof circularBoundary.radiusKm).toBe('number');
+    expect(circularBoundary.radiusKm).toBeGreaterThan(0);
 
     const isochroneBoundary = TestDataFactory.createIsochroneBoundary();
     expect(isochroneBoundary.type).toBe('isochrone');
     expect(Array.isArray(isochroneBoundary.center)).toBe(true);
     expect(isochroneBoundary.center).toHaveLength(2);
     expect(['walking', 'cycling', 'driving']).toContain(isochroneBoundary.travelMode);
-    expect(isochroneBoundary.minutes).toBeGreaterThan(0);
-    expect(isochroneBoundary.minutes).toBeLessThanOrEqual(60);
-    expect(isochroneBoundary.area).toBeGreaterThan(0);
+    expect(isochroneBoundary.travelTimeMin).toBeGreaterThan(0);
+    expect(isochroneBoundary.travelTimeMin).toBeLessThanOrEqual(60);
+    expect(isochroneBoundary.areaSqKm).toBeGreaterThan(0);
     expect(isochroneBoundary.polygon.type).toBe('Polygon');
     expect(Array.isArray(isochroneBoundary.polygon.coordinates)).toBe(true);
   });

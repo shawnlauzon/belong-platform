@@ -17,8 +17,8 @@ describe('Boundary Validation', () => {
     it('should validate a correct circular boundary', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: 5.5,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: 5.5,
       };
 
       expect(() => validateCircularBoundary(boundary)).not.toThrow();
@@ -27,8 +27,8 @@ describe('Boundary Validation', () => {
     it('should throw error for invalid coordinates', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [200, 100], // Invalid longitude/latitude
-        radius_km: 5.5,
+        center: { lng: 200, lat: 100 }, // Invalid longitude/latitude
+        radiusKm: 5.5,
       };
 
       expect(() => validateCircularBoundary(boundary)).toThrow(
@@ -39,8 +39,8 @@ describe('Boundary Validation', () => {
     it('should throw error for negative radius', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: -1,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: -1,
       };
 
       expect(() => validateCircularBoundary(boundary)).toThrow(
@@ -51,8 +51,8 @@ describe('Boundary Validation', () => {
     it('should throw error for zero radius', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: 0,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: 0,
       };
 
       expect(() => validateCircularBoundary(boundary)).toThrow(
@@ -78,11 +78,11 @@ describe('Boundary Validation', () => {
     it('should validate a correct isochrone boundary', () => {
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 15,
+        travelTimeMin: 15,
         polygon: validPolygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       expect(() => validateIsochroneBoundary(boundary)).not.toThrow();
@@ -91,11 +91,11 @@ describe('Boundary Validation', () => {
     it('should throw error for invalid travel mode', () => {
       const boundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'flying', // Invalid travel mode
-        minutes: 15,
+        travelTimeMin: 15,
         polygon: validPolygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       } as IsochroneBoundary;
 
       expect(() => validateIsochroneBoundary(boundary)).toThrow(
@@ -106,11 +106,11 @@ describe('Boundary Validation', () => {
     it('should throw error for invalid minutes (too low)', () => {
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 0,
+        travelTimeMin: 0,
         polygon: validPolygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       expect(() => validateIsochroneBoundary(boundary)).toThrow(
@@ -121,11 +121,11 @@ describe('Boundary Validation', () => {
     it('should throw error for invalid minutes (too high)', () => {
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 65,
+        travelTimeMin: 65,
         polygon: validPolygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       expect(() => validateIsochroneBoundary(boundary)).toThrow(
@@ -136,11 +136,11 @@ describe('Boundary Validation', () => {
     it('should throw error for negative area', () => {
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 15,
+        travelTimeMin: 15,
         polygon: validPolygon,
-        area: -1,
+        areaSqKm: -1,
       };
 
       expect(() => validateIsochroneBoundary(boundary)).toThrow(
@@ -156,11 +156,11 @@ describe('Boundary Validation', () => {
 
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 15,
+        travelTimeMin: 15,
         polygon: invalidPolygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       expect(() => validateIsochroneBoundary(boundary)).toThrow(
@@ -173,8 +173,8 @@ describe('Boundary Validation', () => {
     it('should validate circular boundary', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: 5.5,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: 5.5,
       };
 
       expect(() => validateBoundaryData(boundary)).not.toThrow();
@@ -183,9 +183,9 @@ describe('Boundary Validation', () => {
     it('should validate isochrone boundary', () => {
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'cycling',
-        minutes: 20,
+        travelTimeMin: 20,
         polygon: {
           type: 'Polygon',
           coordinates: [
@@ -198,7 +198,7 @@ describe('Boundary Validation', () => {
             ],
           ],
         },
-        area: 25.0,
+        areaSqKm: 25.0,
       };
 
       expect(() => validateBoundaryData(boundary)).not.toThrow();
@@ -220,8 +220,8 @@ describe('Boundary Validation', () => {
     it('should transform circular boundary to database format', () => {
       const boundary: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: 5.5,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: 5.5,
       };
 
       const result = transformBoundaryToDb(boundary);
@@ -247,11 +247,11 @@ describe('Boundary Validation', () => {
 
       const boundary: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 15,
+        travelTimeMin: 15,
         polygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       const result = transformBoundaryToDb(boundary);
@@ -266,8 +266,8 @@ describe('Boundary Validation', () => {
     it('should transform circular boundary from database format', () => {
       const boundaryJson: CircularBoundary = {
         type: 'circular',
-        center: [-97.7431, 30.2672],
-        radius_km: 5.5,
+        center: { lng: -97.7431, lat: 30.2672 },
+        radiusKm: 5.5,
       };
 
       const result = transformBoundaryFromDb({
@@ -295,11 +295,11 @@ describe('Boundary Validation', () => {
 
       const boundaryJson: IsochroneBoundary = {
         type: 'isochrone',
-        center: [-97.7431, 30.2672],
+        center: { lng: -97.7431, lat: 30.2672 },
         travelMode: 'walking',
-        minutes: 15,
+        travelTimeMin: 15,
         polygon,
-        area: 12.5,
+        areaSqKm: 12.5,
       };
 
       // Mock PostGIS geometry data

@@ -266,25 +266,25 @@ export class TestDataFactory {
   static createCircularBoundary(overrides: Partial<CircularBoundary> = {}): CircularBoundary {
     return {
       type: 'circular',
-      center: [-74.0060, 40.7128], // New York City coordinates
-      radius_km: faker.number.float({ min: 0.5, max: 10 }),
+      center: { lng: -74.0060, lat: 40.7128 }, // New York City coordinates
+      radiusKm: faker.number.float({ min: 0.5, max: 10 }),
       ...overrides,
     };
   }
 
   static createIsochroneBoundary(overrides: Partial<IsochroneBoundary> = {}): IsochroneBoundary {
-    const center: [number, number] = [-74.0060, 40.7128]; // New York City coordinates
+    const center = { lng: -74.0060, lat: 40.7128 }; // New York City coordinates
     
     // Create a simple rectangular polygon around the center for testing
     const offset = 0.01; // roughly 1km
     const polygon: GeoJSON.Polygon = {
       type: 'Polygon',
       coordinates: [[
-        [center[0] - offset, center[1] - offset],
-        [center[0] + offset, center[1] - offset],
-        [center[0] + offset, center[1] + offset],
-        [center[0] - offset, center[1] + offset],
-        [center[0] - offset, center[1] - offset], // Close the polygon
+        [center.lng - offset, center.lat - offset],
+        [center.lng + offset, center.lat - offset],
+        [center.lng + offset, center.lat + offset],
+        [center.lng - offset, center.lat + offset],
+        [center.lng - offset, center.lat - offset], // Close the polygon
       ]],
     };
 
@@ -292,9 +292,9 @@ export class TestDataFactory {
       type: 'isochrone',
       center,
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
-      minutes: faker.number.int({ min: 5, max: 60 }),
+      travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon,
-      area: faker.number.float({ min: 1, max: 50 }),
+      areaSqKm: faker.number.float({ min: 1, max: 50 }),
       ...overrides,
     };
   }

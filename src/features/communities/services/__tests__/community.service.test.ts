@@ -302,14 +302,14 @@ describe('createCommunityService', () => {
       // Arrange - Community data with isochrone boundary
       const isochroneBoundary = {
         type: 'isochrone' as const,
-        center: [-74.006, 40.7128] as [number, number],
+        center: { lng: -74.006, lat: 40.7128 },
         travelMode: 'walking' as const,
-        minutes: 38,
+        travelTimeMin: 38,
         polygon: {
           type: 'Polygon' as const,
           coordinates: [[[-74.01, 40.71], [-74.00, 40.71], [-74.00, 40.72], [-74.01, 40.72], [-74.01, 40.71]]]
         },
-        area: 23.214793718159235
+        areaSqKm: 23.214793718159235
       };
 
       const communityData = {
@@ -361,8 +361,8 @@ describe('createCommunityService', () => {
         type: 'isochrone',
         center: isochroneBoundary.center,
         travelMode: isochroneBoundary.travelMode,
-        minutes: isochroneBoundary.minutes,
-        area: isochroneBoundary.area,
+        travelTimeMin: isochroneBoundary.travelTimeMin,
+        areaSqKm: isochroneBoundary.areaSqKm,
       });
       expect(result.boundary?.polygon).toHaveProperty('type', 'Polygon');
       expect(result.boundary?.polygon).toHaveProperty('coordinates');
