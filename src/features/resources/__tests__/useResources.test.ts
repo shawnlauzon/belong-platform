@@ -131,19 +131,18 @@ vi.mock('../../../shared', () => ({
   } as const,
 }));
 
-// Mock the resource service
-vi.mock('../services/resource.service', () => ({
-  createResourceService: vi.fn(),
+// Mock the resource API
+vi.mock('../api', () => ({
+  fetchResources: vi.fn(),
+  fetchResourceById: vi.fn(),
 }));
 
 import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
+import { fetchResources } from '../api';
 import { ResourceCategory, ResourceInfo } from '../types';
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockCreateResourceService = vi.mocked(createResourceService);
-const mockFetchResources = vi.fn();
-const mockFetchResourceById = vi.fn();
+const mockFetchResources = vi.mocked(fetchResources);
 
 describe('useResources', () => {
   let queryClient: QueryClient;
@@ -188,12 +187,6 @@ describe('useResources', () => {
         { client: queryClient },
         createElement(BelongProvider, { config: testConfig }, children)
       );
-
-    // Setup service mocks
-    mockCreateResourceService.mockReturnValue({
-      fetchResources: mockFetchResources,
-      fetchResourceById: mockFetchResourceById,
-    });
   });
 
   it('should return ResourceInfo[] instead of Resource[]', async () => {
@@ -223,7 +216,7 @@ describe('useResources', () => {
     });
 
     // Assert
-    expect(mockFetchResources).toHaveBeenCalledWith(undefined);
+    expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
 
     // Verify the returned data has ID references, not full objects
     const resource = result.current[0];
@@ -247,7 +240,7 @@ describe('useResources', () => {
     });
 
     // Assert
-    expect(mockFetchResources).toHaveBeenCalledWith(filters);
+    expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, filters);
   });
 
   it('should fetch data automatically and have correct initial status', async () => {

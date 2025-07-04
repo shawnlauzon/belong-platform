@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { updateResource } from '@/features/resources/api';
 
-import type { ResourceData } from '../types';
+import type { ResourceData } from '@/features/resources/types';
 
 /**
  * Hook for updating an existing resource.
@@ -62,12 +62,13 @@ import type { ResourceData } from '../types';
 export function useUpdateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
 
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ResourceData> }) =>
-      resourceService.updateResource(id, data),
+      updateResource(supabase, id, data),
     onSuccess: (updatedResource) => {
+      if (!updatedResource) return;
+      
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 

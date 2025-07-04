@@ -101,13 +101,6 @@ describe('createCommunityService', () => {
 
   describe('fetchCommunities', () => {
     it('should fetch all communities (hard delete means no filtering needed)', async () => {
-      // Arrange
-      const mockDbCommunities = createMockDbCommunities(2, mockUser);
-      const mockQuery = QuerySetups.fetchCommunities(
-        mockSupabase,
-        mockDbCommunities,
-      );
-
       // Act
       const result = await communityService.fetchCommunities();
 

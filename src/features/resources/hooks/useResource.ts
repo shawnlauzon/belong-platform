@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { STANDARD_CACHE_TIME } from '@/config';
+import { fetchResourceById } from '@/features/resources/api';
+import { useUser } from '@/features/users';
+import { useCommunity } from '@/features/communities';
 
-import type { Resource } from '../types';
+import type { Resource, ResourceInfo } from '@/features/resources/types';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -42,21 +44,38 @@ import type { Resource } from '../types';
  */
 export function useResource(id: string) {
   const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
 
-  const query = useQuery<Resource | null, Error>({
+  // Fetch the ResourceInfo (with only IDs)
+  const resourceQuery = useQuery<ResourceInfo | null, Error>({
     queryKey: queryKeys.resources.byId(id),
-    queryFn: () => resourceService.fetchResourceById(id),
+    queryFn: () => fetchResourceById(supabase, id),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!id,
   });
 
-  if (query.error) {
+  // Fetch the owner User data
+  const ownerQuery = useUser(resourceQuery.data?.ownerId || '');
+  
+  // Fetch the community data if available
+  const communityQuery = useCommunity(resourceQuery.data?.communityId || '');
+
+  if (resourceQuery.error) {
     logger.error('📚 API: Error fetching resource', {
-      error: query.error,
+      error: resourceQuery.error,
       resourceId: id,
     });
   }
 
-  return query.data ?? null;
+  // Compose the full Resource object
+  if (!resourceQuery.data || !ownerQuery) {
+    return null;
+  }
+
+  const resource: Resource = {
+    ...resourceQuery.data,
+    owner: ownerQuery,
+    community: communityQuery || undefined,
+  };
+
+  return resource;
 }

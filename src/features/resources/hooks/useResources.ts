@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys, toRecords } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys, toRecords } from '@/shared';
+import { useSupabase } from '@/shared';
+import { STANDARD_CACHE_TIME } from '@/config';
+import { fetchResources } from '@/features/resources/api';
 
-import type { ResourceInfo, ResourceFilter } from '../types';
+import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
 
 /**
  * Hook for fetching resources list.
@@ -60,13 +60,12 @@ import type { ResourceInfo, ResourceFilter } from '../types';
  */
 export function useResources(filters?: ResourceFilter) {
   const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
 
   const query = useQuery<ResourceInfo[], Error>({
     queryKey: filters
       ? queryKeys.resources.filtered(toRecords(filters))
       : queryKeys.resources.all,
-    queryFn: () => resourceService.fetchResources(filters),
+    queryFn: () => fetchResources(supabase, filters),
     staleTime: STANDARD_CACHE_TIME,
   });
 

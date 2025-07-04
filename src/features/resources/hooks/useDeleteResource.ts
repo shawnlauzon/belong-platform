@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
+import { logger } from '@/shared';
+import { useSupabase } from '@/shared';
+import { deleteResource } from '@/features/resources/api';
 
 /**
  * Hook for deleting a resource.
@@ -48,10 +48,9 @@ import { createResourceService } from '../services/resource.service';
 export function useDeleteResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
 
   const mutation = useMutation({
-    mutationFn: (id: string) => resourceService.deleteResource(id),
+    mutationFn: (id: string) => deleteResource(supabase, id),
     onSuccess: async (_, resourceId) => {
       // Remove ALL resources-related cache data synchronously first
       queryClient.removeQueries({

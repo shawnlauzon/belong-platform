@@ -14,33 +14,18 @@ vi.mock('../../../shared', () => ({
 }));
 
 // Mock dependent services
-vi.mock('../../resources/services/resource.service', () => ({
-  createResourceService: vi.fn(),
-}));
-
 vi.mock('../../users/services/user.service', () => ({
   createUserService: vi.fn(),
 }));
 
-import { createResourceService } from '../../resources/services/resource.service';
-
-const mockCreateResourceService = vi.mocked(createResourceService);
-
 describe('Shoutouts Service - Resource Filtering Integration', () => {
   let mockSupabase: any;
   let shoutoutService: ReturnType<typeof createShoutoutsService>;
-  let mockResourceService: any;
 
   beforeEach(() => {
     // Simplified mock setup
     mockSupabase = {} as any;
 
-    // Create mock resource service
-    mockResourceService = {
-      fetchResourceById: vi.fn(),
-    };
-
-    mockCreateResourceService.mockReturnValue(mockResourceService as any);
     shoutoutService = createShoutoutsService(
       mockSupabase as SupabaseClient<Database>
     );

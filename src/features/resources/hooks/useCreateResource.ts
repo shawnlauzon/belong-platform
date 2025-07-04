@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createResourceService } from '../services/resource.service';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { createResource } from '@/features/resources/api';
+import { useCurrentUser } from '@/features/auth';
 
-import type { ResourceData } from '../types';
+import type { ResourceData } from '@/features/resources/types';
 
 /**
  * Hook for creating a new resource.
@@ -66,11 +67,18 @@ import type { ResourceData } from '../types';
 export function useCreateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const resourceService = createResourceService(supabase);
+  const currentUser = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: (data: ResourceData) => resourceService.createResource(data),
+    mutationFn: async (data: ResourceData) => {
+      if (!currentUser?.id) {
+        throw new Error('User must be authenticated to create resources');
+      }
+      return createResource(supabase, data, currentUser.id);
+    },
     onSuccess: (newResource) => {
+      if (!newResource) return;
+      
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
