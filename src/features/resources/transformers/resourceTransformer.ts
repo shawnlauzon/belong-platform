@@ -41,7 +41,6 @@ export function toDomainResource(
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
@@ -79,7 +78,6 @@ export function forDbUpdate(
     description: resource.description,
     category: resource.category,
     type: resource.type,
-    availability: resource.availability,
     image_urls: resource.imageUrls,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
@@ -100,7 +98,6 @@ export function toResourceInfo(dbResource: ResourceRow): ResourceInfo {
     location: dbResource.location
       ? parsePostGisPoint(dbResource.location)
       : undefined,
-    availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),

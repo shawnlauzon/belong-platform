@@ -1,7 +1,8 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceInfo, ResourceFilter } from '@/features/resources';
 import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
+import { ResourceRow } from '../types/database';
 
 export async function fetchResources(
   supabase: SupabaseClient<Database>,
@@ -33,11 +34,16 @@ export async function fetchResources(
     }
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = (await query.order('created_at', {
+    ascending: false,
+  })) as {
+    data: ResourceRow[];
+    error: QueryError | null;
+  };
 
   if (error || !data) {
     return [];
   }
 
-  return data.map((row) => toResourceInfo(row, row.owner_id, row.community_id));
+  return data.map((row) => toResourceInfo(row));
 }
