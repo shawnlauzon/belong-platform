@@ -16,8 +16,6 @@ export type Database = {
           boundary_geometry_detailed: unknown | null
           center: unknown | null
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string | null
           hierarchy_path: Json
           icon: string | null
@@ -37,8 +35,6 @@ export type Database = {
           boundary_geometry_detailed?: unknown | null
           center?: unknown | null
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string | null
           hierarchy_path: Json
           icon?: string | null
@@ -58,8 +54,6 @@ export type Database = {
           boundary_geometry_detailed?: unknown | null
           center?: unknown | null
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string | null
           hierarchy_path?: Json
           icon?: string | null
@@ -378,7 +372,6 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          deleted_at: string | null
           email: string
           id: string
           updated_at: string
@@ -386,7 +379,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deleted_at?: string | null
           email: string
           id: string
           updated_at?: string
@@ -394,7 +386,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deleted_at?: string | null
           email?: string
           id?: string
           updated_at?: string
@@ -408,8 +399,6 @@ export type Database = {
           category: string
           community_id: string
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string
           id: string
           image_urls: string[]
@@ -427,8 +416,6 @@ export type Database = {
           category: string
           community_id: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description: string
           id?: string
           image_urls?: string[]
@@ -446,8 +433,6 @@ export type Database = {
           category?: string
           community_id?: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string
           id?: string
           image_urls?: string[]

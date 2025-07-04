@@ -12,7 +12,7 @@ import {
   forDbUpdate,
 } from '../transformers/shoutoutsTransformer';
 import { createUserService } from '../../users/services/user.service';
-import { createResourceService } from '../../resources/services/resource.service';
+import { fetchResourceById } from '../../resources/api/fetchResourceById';
 import { requireAuthentication } from '../../../shared/utils';
 import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -114,13 +114,8 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         })
         .filter((shoutout): shoutout is ShoutoutInfo => shoutout !== null);
 
-      // Defensive application-level filtering as safety net
-      const filteredShoutouts = shoutout.filter((shoutout) => {
-        if (!filters?.includeDeleted && shoutout.deletedAt) {
-          return false;
-        }
-        return true;
-      });
+      // No filtering needed for soft deletes since they've been removed
+      const filteredShoutouts = shoutout;
 
       logger.debug('📢 Shoutouts Service: Successfully fetched shoutout', {
         count: filteredShoutouts.length,
@@ -140,12 +135,10 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async fetchShoutoutById(
-    id: string,
-    options?: { includeDeleted?: boolean }
+    id: string
   ): Promise<Shoutout | null> {
     logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', {
       id,
-      options,
     });
 
     try {
@@ -169,31 +162,39 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       // Fetch fromUser, toUser, and resource using services
       const userService = createUserService(supabase);
-      const resourceService = createResourceService(supabase);
 
-      const [fromUser, toUser, resource] = await Promise.all([
+      const [fromUser, toUser, resourceInfo] = await Promise.all([
         userService.fetchUserById(data.from_user_id),
         userService.fetchUserById(data.to_user_id),
-        resourceService.fetchResourceById(data.resource_id),
+        fetchResourceById(supabase, data.resource_id),
       ]);
 
-      if (!fromUser || !toUser || !resource) {
+      if (!fromUser || !toUser || !resourceInfo) {
         throw new Error('Required related entities not found');
       }
 
+      // Fetch resource owner to assemble full Resource object
+      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      if (!resourceOwner) {
+        throw new Error('Resource owner not found');
+      }
+
+      // Assemble full Resource object from ResourceInfo
+      const resource = {
+        ...resourceInfo,
+        owner: resourceOwner,
+        community: undefined, // We can add community lookup if needed
+      };
+
       const shoutout = toDomainShoutout(data, { fromUser, toUser, resource });
 
-      // Defensive application-level check
-      if (!options?.includeDeleted && shoutout.deletedAt) {
-        return null;
-      }
+      // No soft delete check needed since columns were removed
 
       logger.debug('📢 Shoutouts Service: Successfully fetched shoutout', {
         id,
         fromUserId: shoutout.fromUser.id,
         toUserId: shoutout.toUser.id,
         resourceId: shoutout.resource.id,
-        deletedAt: shoutout.deletedAt,
       });
 
       return shoutout;
@@ -236,17 +237,29 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       // Fetch fromUser, toUser, and resource from cache
       const userService = createUserService(supabase);
-      const resourceService = createResourceService(supabase);
 
-      const [fromUser, toUser, resource] = await Promise.all([
+      const [fromUser, toUser, resourceInfo] = await Promise.all([
         userService.fetchUserById(createdShoutout.from_user_id),
         userService.fetchUserById(createdShoutout.to_user_id),
-        resourceService.fetchResourceById(createdShoutout.resource_id),
+        fetchResourceById(supabase, createdShoutout.resource_id),
       ]);
 
-      if (!fromUser || !toUser || !resource) {
+      if (!fromUser || !toUser || !resourceInfo) {
         throw new Error('Required related entities not found');
       }
+
+      // Fetch resource owner to assemble full Resource object
+      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      if (!resourceOwner) {
+        throw new Error('Resource owner not found');
+      }
+
+      // Assemble full Resource object from ResourceInfo
+      const resource = {
+        ...resourceInfo,
+        owner: resourceOwner,
+        community: undefined, // We can add community lookup if needed
+      };
 
       const shoutout = toDomainShoutout(createdShoutout, {
         fromUser,
@@ -329,17 +342,29 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
       // Fetch fromUser, toUser, and resource from cache
       const userService = createUserService(supabase);
-      const resourceService = createResourceService(supabase);
 
-      const [fromUser, toUser, resource] = await Promise.all([
+      const [fromUser, toUser, resourceInfo] = await Promise.all([
         userService.fetchUserById(updatedShoutout.from_user_id),
         userService.fetchUserById(updatedShoutout.to_user_id),
-        resourceService.fetchResourceById(updatedShoutout.resource_id),
+        fetchResourceById(supabase, updatedShoutout.resource_id),
       ]);
 
-      if (!fromUser || !toUser || !resource) {
+      if (!fromUser || !toUser || !resourceInfo) {
         throw new Error('Required related entities not found');
       }
+
+      // Fetch resource owner to assemble full Resource object
+      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      if (!resourceOwner) {
+        throw new Error('Resource owner not found');
+      }
+
+      // Assemble full Resource object from ResourceInfo
+      const resource = {
+        ...resourceInfo,
+        owner: resourceOwner,
+        community: undefined, // We can add community lookup if needed
+      };
 
       const shoutout = toDomainShoutout(updatedShoutout, {
         fromUser,

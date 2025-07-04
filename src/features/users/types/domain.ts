@@ -8,7 +8,6 @@ export interface User {
   email: string;
   avatarUrl?: string;
   location?: Coordinates;
-  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,7 +18,6 @@ export interface UserData
 
 export interface UserFilter {
   searchTerm?: string;
-  includeDeleted?: boolean;
   page?: number;
   pageSize?: number;
 }

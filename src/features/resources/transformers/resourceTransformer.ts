@@ -18,7 +18,7 @@ import { Community } from '../../communities';
  */
 export function toDomainResource(
   dbResource: ResourceRow,
-  refs: { owner: User; community?: Community }
+  refs: { owner: User; community?: Community },
 ): Resource {
   if (dbResource.owner_id !== refs.owner.id) {
     throw new Error('Owner ID does not match');
@@ -43,10 +43,6 @@ export function toDomainResource(
       : undefined,
     availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
-    deletedAt: dbResource.deleted_at
-      ? new Date(dbResource.deleted_at)
-      : undefined,
-    deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     owner: refs.owner,
@@ -59,7 +55,7 @@ export function toDomainResource(
  */
 export function forDbInsert(
   resource: ResourceData,
-  ownerId: string
+  ownerId: string,
 ): ResourceInsertDbData {
   const { communityId, imageUrls, ...rest } = resource;
 
@@ -76,7 +72,7 @@ export function forDbInsert(
  * Transform a domain resource object to a database resource record
  */
 export function forDbUpdate(
-  resource: Partial<ResourceData>
+  resource: Partial<ResourceData>,
 ): ResourceUpdateDbData {
   return {
     title: resource.title,
@@ -94,11 +90,7 @@ export function forDbUpdate(
 /**
  * Transform a database resource record to a ResourceInfo object (lightweight for lists)
  */
-export function toResourceInfo(
-  dbResource: ResourceRow,
-  ownerId: string,
-  communityId: string
-): ResourceInfo {
+export function toResourceInfo(dbResource: ResourceRow): ResourceInfo {
   return {
     id: dbResource.id,
     type: dbResource.type as 'offer' | 'request',
@@ -110,13 +102,9 @@ export function toResourceInfo(
       : undefined,
     availability: dbResource.availability ?? 'available',
     imageUrls: dbResource.image_urls || [],
-    deletedAt: dbResource.deleted_at
-      ? new Date(dbResource.deleted_at)
-      : undefined,
-    deletedBy: dbResource.deleted_by ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
-    ownerId: ownerId,
-    communityId: communityId,
+    ownerId: dbResource.owner_id,
+    communityId: dbResource.community_id,
   };
 }

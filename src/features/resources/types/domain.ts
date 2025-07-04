@@ -6,8 +6,6 @@ export interface Resource extends Omit<ResourceData, 'communityId'> {
   id: string;
   owner: User;
   community?: Community;
-  deletedAt?: Date;
-  deletedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,7 +41,6 @@ export interface ResourceFilter {
   type?: 'offer' | 'request' | 'all';
   communityId?: string;
   ownerId?: string;
-  includeDeleted?: boolean;
   maxDriveMinutes?: number;
   searchTerm?: string;
   minTrustScore?: number;

@@ -94,13 +94,8 @@ export const createConversationsService = (
       // Transform conversations with user data
       const conversations = data.map((conv) => toConversationInfo(conv));
 
-      // Defensive application-level filtering as safety net
-      const filteredConversations = conversations.filter((conversation) => {
-        if (!filters?.includeDeleted && conversation.deletedAt) {
-          return false;
-        }
-        return true;
-      });
+      // No filtering needed for soft deletes since they've been removed
+      const filteredConversations = conversations;
 
       logger.info('💬 API: Successfully fetched conversations', {
         count: filteredConversations.length,
@@ -179,13 +174,8 @@ export const createConversationsService = (
       // Transform messages with user data
       const messages = data.map((msg) => toMessageInfo(msg));
 
-      // Defensive application-level filtering as safety net
-      const filteredMessages = messages.filter((message) => {
-        if (!filters?.includeDeleted && message.deletedAt) {
-          return false;
-        }
-        return true;
-      });
+      // No filtering needed for soft deletes since they've been removed
+      const filteredMessages = messages;
 
       logger.info('💬 API: Successfully fetched messages', {
         count: filteredMessages.length,

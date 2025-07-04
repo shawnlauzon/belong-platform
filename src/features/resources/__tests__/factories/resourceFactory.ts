@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import type { ResourceRow } from '@/features/resources/types/database';
 import type { ResourceInfo } from '@/features/resources';
+import { toResourceInfo } from '../../transformers/resourceTransformer';
 
 export function createMockResourceRow(
   overrides?: Partial<ResourceRow>,
@@ -37,24 +38,5 @@ export function createMockResourceInfo(
   overrides?: Partial<ResourceInfo>,
 ): ResourceInfo {
   const row = createMockResourceRow();
-  return {
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    type: row.type,
-    category: row.category,
-    ownerId: row.owner_id,
-    communityId: row.community_id,
-    imageUrls: row.image_urls ?? undefined,
-    location: row.location
-      ? {
-          lat: row.location.coordinates[1],
-          lng: row.location.coordinates[0],
-        }
-      : undefined,
-    availability: row.availability ?? undefined,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-    ...overrides,
-  };
+  return toResourceInfo({ ...row, ...overrides });
 }

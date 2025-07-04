@@ -76,13 +76,8 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id)
       );
 
-      // Defensive application-level filtering as safety net
-      const filteredEvents = events.filter((event) => {
-        if (!filters?.includeDeleted && event.deletedAt) {
-          return false;
-        }
-        return true;
-      });
+      // No filtering needed for soft deletes since they've been removed
+      const filteredEvents = events;
 
       logger.debug('🎉 Event Service: Successfully fetched events', {
         totalCount: events.length,
@@ -103,10 +98,9 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async fetchEventById(
-    id: string,
-    options?: { includeDeleted?: boolean }
+    id: string
   ): Promise<Event | null> {
-    logger.debug('🎉 Event Service: Fetching event by ID', { id, options });
+    logger.debug('🎉 Event Service: Fetching event by ID', { id });
 
     try {
       let query = supabase.from('events').select('*').eq('id', id);
@@ -145,16 +139,12 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
       const event = toDomainEvent(data, { organizer, community });
 
-      // Defensive application-level check
-      if (!options?.includeDeleted && event.deletedAt) {
-        return null;
-      }
+      // No soft delete check needed since columns were removed
 
       logger.debug('🎉 Event Service: Successfully fetched event', {
         id,
         organizerId: event.organizer.id,
         communityId: event.community?.id,
-        deletedAt: event.deletedAt,
       });
 
       return event;

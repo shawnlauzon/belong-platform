@@ -13,7 +13,6 @@ export interface Message {
   conversationId: string;
   content: string;
   readAt?: Date;
-  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   // Assembled references
@@ -35,7 +34,6 @@ export interface Conversation extends ConversationData {
   id: string;
   lastActivityAt: Date;
   lastMessageId?: string;
-  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   // Assembled references
@@ -55,7 +53,6 @@ export interface ConversationFilter {
   page?: number;
   pageSize?: number;
   hasUnread?: boolean;
-  includeDeleted?: boolean;
 }
 
 export interface MessageFilter {
@@ -63,7 +60,6 @@ export interface MessageFilter {
   page?: number;
   pageSize?: number;
   since?: Date;
-  includeDeleted?: boolean;
 }
 
 // Notification Types
