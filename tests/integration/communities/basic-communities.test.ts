@@ -124,7 +124,7 @@ describe('Basic Communities Integration', () => {
     expect(typeof communityData.memberCount).toBe('number');
   });
 
-  test('should attempt to create community with authenticated user using new hook pattern', async () => {
+  test('should create community with authenticated user', async () => {
     const authSetup = await authHelper.createAndAuthenticateUser();
     const authUser = authSetup.user;
 
@@ -148,6 +148,7 @@ describe('Basic Communities Integration', () => {
         createResult.current({
           ...communityData,
           parentId: null,
+          organizerId: authUser.userId,
         }),
       'create community with new hook pattern',
     );
