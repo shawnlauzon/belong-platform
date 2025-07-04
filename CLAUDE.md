@@ -88,6 +88,23 @@ Testing
 - Unit tests are located in the **tests** directory of the feature
 - Integration tests are located in the tests/integration directory
 
+Unit Test Requirements
+
+- **Test behavior, not implementation**: Unit tests must verify WHAT the code accomplishes, not HOW it does it
+- **Avoid brittle assertions**: Never test internal implementation details like specific database query method calls
+- **Focus on service contracts**: Test inputs, outputs, error conditions, and business logic
+- **Examples of what NOT to test**:
+  - `expect(mockQuery.select).toHaveBeenCalledWith('*')`
+  - `expect(mockSupabase.from).toHaveBeenCalledWith('table_name')`
+  - `expect(mockQuery.update).toHaveBeenCalled()`
+  - Internal query chain order or specific method calls
+- **Examples of what TO test**:
+  - `expect(result.id).toBe(expectedValue)` - Service contracts
+  - `expect(mockSupabase.auth.getUser).toHaveBeenCalled()` - Authentication requirements
+  - `expect(result).toHaveLength(expectedCount)` - Output verification
+  - `expect(error).toThrow(expectedError)` - Error handling
+- **Benefits**: Tests remain stable during implementation refactoring, focus on user-visible behavior
+
 QA
 
 - Before any commit, run `pnpm tdd` and fix any warnings and errors
