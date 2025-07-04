@@ -7,11 +7,8 @@ import {
   afterEach,
   afterAll,
 } from 'vitest';
-import { waitFor } from '@testing-library/react';
-import {
-  useCommunities,
-  useCreateCommunity,
-} from '../../../src';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useCommunities, useCreateCommunity } from '../../../src';
 import {
   TestDataFactory,
   authHelper,
@@ -30,6 +27,7 @@ import {
  */
 
 describe('Basic Communities Integration', () => {
+  const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
     testWrapperManager.reset();
@@ -52,32 +50,15 @@ describe('Basic Communities Integration', () => {
       useCommunities(),
     );
 
-    await testUtils.waitForHookToInitialize(
-      result,
-      (query) => query.isLoading !== undefined,
-    );
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+    });
 
-    // Wait for query to complete
-    await waitFor(
-      () => {
-        expect(result.current.isLoading).toBe(false);
-      },
-      { timeout: 10000 },
-    );
-
-    // Check for errors first, then verify data structure
-    if (result.current.error) {
-      throw new Error(
-        `Communities query failed: ${result.current.error.message || result.current.error}`,
-      );
-    }
-
-    // useCommunities returns data directly (auto-fetching)
-    expect(Array.isArray(result.current.data)).toBe(true);
+    expect(Array.isArray(result.current)).toBe(true);
 
     // If there are communities, verify structure
-    if (result.current.data && result.current.data.length > 0) {
-      const firstCommunity = result.current.data[0];
+    if (result.current.length > 0) {
+      const firstCommunity = result.current[0];
       expect(firstCommunity).toHaveProperty('id');
       expect(firstCommunity).toHaveProperty('name');
       expect(firstCommunity).toHaveProperty('level');
@@ -91,16 +72,9 @@ describe('Basic Communities Integration', () => {
       createCommunity: useCreateCommunity(),
     }));
 
-    await testUtils.waitForHookToInitialize(
-      { current: result.current.communities },
-      (query) => query.isLoading !== undefined,
-    );
-
-    // useCommunities returns React Query state
-    expect(result.current.communities).toHaveProperty('data');
-    expect(result.current.communities).toHaveProperty('isLoading');
-    expect(result.current.communities).toHaveProperty('error');
-    expect(typeof result.current.communities.isLoading).toBe('boolean');
+    await waitFor(() => {
+      expect(result.current.communities).toBeDefined();
+    });
 
     // useCreateCommunity returns a function
     expect(typeof result.current.createCommunity).toBe('function');
@@ -124,24 +98,23 @@ describe('Basic Communities Integration', () => {
     const authSetup = await authHelper.createAndAuthenticateUser();
     const authUser = authSetup.user;
 
-    // Set up hooks
-    const { result: communitiesResult } = await testUtils.renderHookWithWrapper(
-      () => useCommunities(),
-    );
-    const { result: createResult } = await testUtils.renderHookWithWrapper(() =>
-      useCreateCommunity(),
-    );
-
-    await testUtils.waitForHookToInitialize(
-      communitiesResult,
-      (query) => query.isLoading !== undefined,
+    const { result } = renderHook(
+      () => ({
+        communities: useCommunities(),
+        createCommunity: useCreateCommunity(),
+      }),
+      { wrapper },
     );
 
+    waitFor(() => {
+      expect(result.current.communities).toBeDefined();
+    });
+
+    // Create a community
     const communityData = TestDataFactory.createCommunity();
-
     const createdCommunity = await testUtils.performAsyncAction(
       () =>
-        createResult.current({
+        result.current.createCommunity({
           ...communityData,
           parentId: null,
           organizerId: authUser.userId,
@@ -155,23 +128,15 @@ describe('Basic Communities Integration', () => {
       description: communityData.description,
       level: communityData.level,
     });
-
     commonExpectations.toBeValidId(createdCommunity.id);
 
     // Wait for the list to update (React Query should auto-refetch)
     await waitFor(
       () => {
-        const communities = communitiesResult.current.data;
-        const found = communities?.some(
-          (community) => community.id === createdCommunity.id,
-        );
-        const isError = communitiesResult.current.isError;
-        expect(found || isError).toBeTruthy();
+        const communityIds = result.current.communities.map((c) => c.id);
+        expect(communityIds).toContain(createdCommunity.id);
       },
       { timeout: 10000 },
     );
-    if (communitiesResult.current.isError) {
-      throw communitiesResult.current.error;
-    }
   });
 });

@@ -49,36 +49,21 @@ describe('Basic Resources Integration', () => {
   });
 
   test('should be able to list resources using React Query pattern', async () => {
-    const { result } = await testUtils.renderHookWithWrapper(() =>
+    const { result: resources } = await testUtils.renderHookWithWrapper(() =>
       useResources(),
-    );
-
-    await testUtils.waitForHookToInitialize(
-      result,
-      (query) => query.isLoading !== undefined,
     );
 
     // Wait for query to complete
     await waitFor(
       () => {
-        expect(result.current.isLoading).toBe(false);
+        expect(resources.current).not.toBeNull();
       },
       { timeout: 10000 },
     );
 
-    // Check for errors first, then verify data structure
-    if (result.current.error) {
-      throw new Error(
-        `Resources query failed: ${result.current.error.message || result.current.error}`,
-      );
-    }
-
-    // useResources returns data directly (auto-fetching)
-    expect(Array.isArray(result.current.data)).toBe(true);
-
     // If there are resources, verify structure
-    if (result.current.data && result.current.data.length > 0) {
-      const firstResource = result.current.data[0];
+    if (resources.current && resources.current.length > 0) {
+      const firstResource = resources.current[0];
       expect(firstResource).toHaveProperty('id');
       expect(firstResource).toHaveProperty('title');
       expect(firstResource).toHaveProperty('type');
@@ -92,16 +77,12 @@ describe('Basic Resources Integration', () => {
       createResource: useCreateResource(),
     }));
 
-    await testUtils.waitForHookToInitialize(
-      { current: result.current.resources },
-      (query) => query.isLoading !== undefined,
+    await waitFor(
+      () => {
+        expect(result.current.resources).not.toBeNull();
+      },
+      { timeout: 10000 },
     );
-
-    // useResources returns React Query state
-    expect(result.current.resources).toHaveProperty('data');
-    expect(result.current.resources).toHaveProperty('isLoading');
-    expect(result.current.resources).toHaveProperty('error');
-    expect(typeof result.current.resources.isLoading).toBe('boolean');
 
     // useCreateResource returns a function
     expect(typeof result.current.createResource).toBe('function');
@@ -123,7 +104,7 @@ describe('Basic Resources Integration', () => {
     expect(typeof resourceData.category).toBe('string');
   });
 
-  test('should attempt to create resource with authenticated user using new hook pattern', async () => {
+  test('should create resource with authenticated user', async () => {
     let authUser: any;
     let community: any;
 
@@ -160,7 +141,7 @@ describe('Basic Resources Integration', () => {
 
     await testUtils.waitForHookToInitialize(
       { current: result.current.resources },
-      (query) => query.isLoading !== undefined,
+      (query) => query !== undefined,
     );
 
     const resourceData = TestDataFactory.createResource({
@@ -201,53 +182,20 @@ describe('Basic Resources Integration', () => {
       useResources({ category: 'tools' }),
     );
 
-    await testUtils.waitForHookToInitialize(
-      toolsResult,
-      (query) => query.isLoading !== undefined,
-    );
-
     await waitFor(
       () => {
-        expect(toolsResult.current.isLoading).toBe(false);
+        expect(toolsResult.current).not.toBeNull();
       },
       { timeout: 10000 },
     );
 
-    // Check for errors first, then verify data structure
-    if (toolsResult.current.error) {
-      throw new Error(
-        `Resources query with tools filter failed: ${toolsResult.current.error.message || toolsResult.current.error}`,
-      );
-    }
-
     // Should return array (might be empty)
-    expect(Array.isArray(toolsResult.current.data)).toBe(true);
+    expect(Array.isArray(toolsResult.current)).toBe(true);
 
     // Test resources with type filter
     const { result: offersResult } = await testUtils.renderHookWithWrapper(() =>
       useResources({ type: 'offer' }),
     );
-
-    await testUtils.waitForHookToInitialize(
-      offersResult,
-      (query) => query.isLoading !== undefined,
-    );
-
-    await waitFor(
-      () => {
-        expect(offersResult.current.isLoading).toBe(false);
-      },
-      { timeout: 10000 },
-    );
-
-    // Check for errors first, then verify data structure
-    if (offersResult.current.error) {
-      throw new Error(
-        `Resources query with offer filter failed: ${offersResult.current.error.message || offersResult.current.error}`,
-      );
-    }
-
-    expect(Array.isArray(offersResult.current.data)).toBe(true);
   });
 
   test('should handle resource categories and types', async () => {

@@ -71,5 +71,5 @@ export function useCommunities(filters?: CommunityFilter) {
     });
   }
 
-  return query;
+  return query.data ?? [];
 }

@@ -23,7 +23,6 @@ import {
 } from '../helpers';
 
 describe('Community Membership Integration', () => {
-
   beforeAll(() => {
     testWrapperManager.reset();
   });
@@ -51,7 +50,7 @@ describe('Community Membership Integration', () => {
       () => ({
         createCommunity: useCreateCommunity(),
         communityMembers: useCommunityMembers(null), // Will update with actual ID later
-      })
+      }),
     );
 
     const community = await testUtils.performAsyncAction(
@@ -61,7 +60,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizer.user.userId,
           parentId: null,
         }),
-      'create community'
+      'create community',
     );
 
     // Switch to member user
@@ -74,13 +73,13 @@ describe('Community Membership Integration', () => {
         joinCommunity: useJoinCommunity(),
         leaveCommunity: useLeaveCommunity(),
         communityMembers: useCommunityMembers(community.id),
-      })
+      }),
     );
 
     // Member joins community
     const membership = await testUtils.performAsyncAction(
       () => memberHooks.current.joinCommunity(community.id, 'member'),
-      'member joins community'
+      'member joins community',
     );
 
     expect(membership).toMatchObject({
@@ -94,16 +93,16 @@ describe('Community Membership Integration', () => {
       () => {
         const memberships = memberHooks.current.communityMembers.data || [];
         return memberships.some(
-          (m) => m.userId === member.user.userId && m.role === 'member'
+          (m) => m.userId === member.user.userId && m.role === 'member',
         );
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // Member leaves community
     await testUtils.performAsyncAction(
       () => memberHooks.current.leaveCommunity(community.id),
-      'member leaves community'
+      'member leaves community',
     );
 
     // Verify membership is removed
@@ -112,7 +111,7 @@ describe('Community Membership Integration', () => {
         const memberships = memberHooks.current.communityMembers.data || [];
         return !memberships.some((m) => m.userId === member.user.userId);
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
   });
 
@@ -130,7 +129,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'organizer creates community'
+      'organizer creates community',
     );
 
     // Step 2: Create member user
@@ -142,12 +141,12 @@ describe('Community Membership Integration', () => {
       await testUtils.renderHookWithWrapper(() => useJoinCommunity());
     await testUtils.performAsyncAction(
       () => joinCommunityResult.current(community.id, 'member'),
-      'member joins community first time'
+      'member joins community first time',
     );
 
     // Step 4: Attempt to join again - should fail
     await expect(
-      joinCommunityResult.current(community.id, 'member')
+      joinCommunityResult.current(community.id, 'member'),
     ).rejects.toThrow('User is already a member of this community');
   });
 
@@ -165,7 +164,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'organizer creates community'
+      'organizer creates community',
     );
 
     // Step 2: Create non-member user
@@ -176,7 +175,7 @@ describe('Community Membership Integration', () => {
     const { result: leaveCommunityResult } =
       await testUtils.renderHookWithWrapper(() => useLeaveCommunity());
     await expect(leaveCommunityResult.current(community.id)).rejects.toThrow(
-      'User is not a member of this community'
+      'User is not a member of this community',
     );
   });
 
@@ -196,14 +195,14 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'organizer creates community'
+      'organizer creates community',
     );
 
     // Step 2: Organizer attempts to leave their own community - should fail
     const { result: leaveCommunityResult } =
       await testUtils.renderHookWithWrapper(() => useLeaveCommunity());
     await expect(leaveCommunityResult.current(community.id)).rejects.toThrow(
-      'Organizer cannot leave their own community'
+      'Organizer cannot leave their own community',
     );
   });
 
@@ -221,7 +220,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'organizer creates community'
+      'organizer creates community',
     );
 
     // Step 2: Create users and test different roles
@@ -233,7 +232,7 @@ describe('Community Membership Integration', () => {
       await testUtils.renderHookWithWrapper(() => useJoinCommunity());
     const memberMembership = await testUtils.performAsyncAction(
       () => joinCommunityResult.current(community.id, 'member'),
-      'user joins as member'
+      'user joins as member',
     );
     expect(memberMembership.role).toBe('member');
 
@@ -242,12 +241,12 @@ describe('Community Membership Integration', () => {
       await testUtils.renderHookWithWrapper(() => useLeaveCommunity());
     await testUtils.performAsyncAction(
       () => leaveCommunityResult.current(community.id),
-      'member leaves'
+      'member leaves',
     );
 
     const adminMembership = await testUtils.performAsyncAction(
       () => joinCommunityResult.current(community.id, 'admin'),
-      'user joins as admin'
+      'user joins as admin',
     );
     expect(adminMembership.role).toBe('admin');
   });
@@ -266,7 +265,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'create first community'
+      'create first community',
     );
 
     const community2Data = TestDataFactory.createCommunity();
@@ -277,7 +276,7 @@ describe('Community Membership Integration', () => {
           organizerId: organizerSetup.user.userId,
           parentId: null,
         }),
-      'create second community'
+      'create second community',
     );
 
     // Step 2: Create member user
@@ -289,23 +288,23 @@ describe('Community Membership Integration', () => {
       await testUtils.renderHookWithWrapper(() => useJoinCommunity());
     await testUtils.performAsyncAction(
       () => joinCommunityResult.current(community1.id, 'member'),
-      'join first community'
+      'join first community',
     );
 
     await testUtils.performAsyncAction(
       () => joinCommunityResult.current(community2.id, 'admin'),
-      'join second community as admin'
+      'join second community as admin',
     );
 
     // Step 4: Verify user memberships
     const { result: userCommunitiesResult } =
       await testUtils.renderHookWithWrapper(() =>
-        useUserCommunities(memberSetup.user.userId)
+        useUserCommunities(memberSetup.user.userId),
       );
 
     await testUtils.waitForHookToInitialize(
       userCommunitiesResult,
-      (query) => query.isLoading !== undefined
+      (query) => query.isLoading !== undefined,
     );
 
     // Wait for the memberships to be loaded
@@ -315,11 +314,14 @@ describe('Community Membership Integration', () => {
         console.log(
           '🔍 Current user memberships:',
           memberships.length,
-          memberships.map((m) => ({ communityId: m.communityId, role: m.role }))
+          memberships.map((m) => ({
+            communityId: m.communityId,
+            role: m.role,
+          })),
         );
         return memberships.length === 2;
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     const userMemberships = userCommunitiesResult.current.data || [];
@@ -335,7 +337,7 @@ describe('Community Membership Integration', () => {
           communityId: community2.id,
           role: 'admin',
         }),
-      ])
+      ]),
     );
 
     // Step 5: Leave one community
@@ -343,7 +345,7 @@ describe('Community Membership Integration', () => {
       await testUtils.renderHookWithWrapper(() => useLeaveCommunity());
     await testUtils.performAsyncAction(
       () => leaveCommunityResult.current(community1.id),
-      'leave first community'
+      'leave first community',
     );
 
     // Step 6: Verify only one membership remains
@@ -354,11 +356,14 @@ describe('Community Membership Integration', () => {
         console.log(
           '🔍 Memberships after leaving one community:',
           memberships.length,
-          memberships.map((m) => ({ communityId: m.communityId, role: m.role }))
+          memberships.map((m) => ({
+            communityId: m.communityId,
+            role: m.role,
+          })),
         );
         return memberships.length === 1;
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     const remainingMemberships = userCommunitiesResult.current.data || [];

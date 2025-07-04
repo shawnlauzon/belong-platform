@@ -58,7 +58,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-
       // Apply additional filters if provided
       if (filter) {
         query = applyCommunityFilters(query, filter);
@@ -72,7 +71,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       }
 
       const communities: CommunityInfo[] = (data || []).map((dbCommunity) =>
-        toCommunityInfo(dbCommunity)
+        toCommunityInfo(dbCommunity),
       );
 
       // Defensive application-level filtering as safety net
@@ -113,18 +112,14 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchCommunityById(
-    id: string,
-    options?: {}
-  ): Promise<Community | null> {
-    logger.debug('🏘️ API: Fetching community by ID', { id, options });
+  async fetchCommunityById(id: string): Promise<Community | null> {
+    logger.debug('🏘️ API: Fetching community by ID', { id });
 
     try {
-      let query = supabase
+      const query = supabase
         .from('communities')
         .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
         .eq('id', id);
-
 
       const { data, error } = await query.single();
 
@@ -154,16 +149,19 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     try {
       const currentUserId = await requireAuthentication(
         supabase,
-        'create community'
+        'create community',
       );
       if (data.organizerId !== currentUserId) {
         throw new Error('You must be the organizer of the community.');
       }
 
+      const dbData = forDbInsert(data);
+      console.log('dbData', dbData);
+
       const { data: newCommunity, error } = await supabase
         .from('communities')
-        .insert(forDbInsert(data))
-        .select('id')
+        .insert(dbData)
+        .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
         .single();
 
       if (error) {
@@ -171,35 +169,9 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         throw error;
       }
 
-      // For now, return a simplified community object
-      // In the future, we can fetch the full community with organizer data
-      const organizer: User = {
-        id: data.organizerId,
-        email: '',
-        firstName: '',
-        lastName: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const community: Community = {
-        id: newCommunity.id,
-        name: data.name,
-        description: data.description,
-        level: data.level,
-        timeZone: data.timeZone,
-        organizer,
-        parentId: data.parentId || null,
-        hierarchyPath: data.hierarchyPath,
-        memberCount: 1,
-        boundary: data.boundary,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
       logger.info('🏘️ API: Successfully created community', {
-        id: community.id,
-        name: community.name,
+        id: newCommunity.id,
+        name: newCommunity.name,
       });
 
       // Automatically add organizer as a member with 'organizer' role
@@ -209,7 +181,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           .insert({
             user_id: data.organizerId,
             community_id: newCommunity.id,
-            role: 'organizer',
+            role: 'admin',
           });
 
         if (membershipError) {
@@ -235,7 +207,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         // Don't throw here - community was created successfully
       }
 
-      return community;
+      return toDomainCommunity(newCommunity);
     } catch (error) {
       logger.error('🏘️ API: Error creating community', { error });
       throw error;
@@ -243,13 +215,11 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async updateCommunity(
-    updateData: Partial<CommunityData> & { id: string }
+    updateData: Partial<CommunityData> & { id: string },
   ): Promise<Community> {
     logger.debug('🏘️ API: Updating community', { id: updateData.id });
 
     try {
-      const userId = await requireAuthentication(supabase, 'update community');
-
       const { data, error } = await supabase
         .from('communities')
         .update({
@@ -262,7 +232,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
             : undefined,
         })
         .eq('id', updateData.id)
-        .select('*')
+        .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
         .single();
 
       if (error) {
@@ -307,7 +277,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
   async joinCommunity(
     communityId: string,
-    role: 'member' | 'admin' | 'organizer' = 'member'
+    role: 'member' | 'admin' | 'organizer' = 'member',
   ): Promise<CommunityMembership> {
     logger.debug('🏘️ API: Joining community', { communityId, role });
 
@@ -461,7 +431,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
   },
 
   async fetchCommunityMemberships(
-    communityId: string
+    communityId: string,
   ): Promise<CommunityMembership[]> {
     logger.debug('🏘️ API: Fetching community memberships', { communityId });
 
@@ -486,7 +456,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           communityId: dbMembership.community_id,
           role: dbMembership.role as 'member' | 'admin' | 'organizer',
           joinedAt: new Date(dbMembership.joined_at),
-        })
+        }),
       );
 
       logger.debug('🏘️ API: Successfully fetched community memberships', {
@@ -514,7 +484,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
       if (!targetUserId) {
         targetUserId = await requireAuthentication(
           supabase,
-          'fetch user communities'
+          'fetch user communities',
         );
       }
 
@@ -536,7 +506,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
           communityId: dbMembership.community_id,
           role: dbMembership.role as 'member' | 'admin' | 'organizer',
           joinedAt: new Date(dbMembership.joined_at),
-        })
+        }),
       );
 
       logger.debug('🏘️ API: Successfully fetched user memberships', {

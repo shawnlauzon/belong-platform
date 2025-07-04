@@ -14,7 +14,7 @@ export class TestUtilities {
   renderHookWithWrapper<TProps, TResult>(
     hook: (props: TProps) => TResult,
     wrapper?: React.ComponentType<any>,
-    options?: { initialProps?: TProps }
+    options?: { initialProps?: TProps },
   ): RenderHookResult<TResult, TProps> {
     return renderHook(hook, {
       wrapper: wrapper || this.wrapper,
@@ -24,29 +24,22 @@ export class TestUtilities {
 
   async waitForHookToInitialize<T>(
     hookResult: { current: T },
-    validator?: (current: T) => boolean,
-    options: TestHookOptions = {}
+    options: TestHookOptions = {},
   ): Promise<void> {
     const { timeout = 10000, interval = 100 } = options;
-
-    // Default validator: just check that the hook result exists and is not null
-    const defaultValidator = (current: T) =>
-      current !== undefined && current !== null;
-    const validatorFn = validator || defaultValidator;
 
     await waitFor(
       () => {
         expect(hookResult.current).toBeDefined();
         expect(hookResult.current).not.toBeNull();
-        expect(validatorFn(hookResult.current)).toBe(true);
       },
-      { timeout, interval }
+      { timeout, interval },
     );
   }
 
   async performAsyncAction<T>(
     action: () => Promise<T>,
-    description?: string
+    description?: string,
   ): Promise<T> {
     let result: T;
 
@@ -56,7 +49,7 @@ export class TestUtilities {
       } catch (error) {
         console.error(
           `Action failed${description ? ` (${description})` : ''}:`,
-          error
+          error,
         );
         throw error;
       }
@@ -67,7 +60,7 @@ export class TestUtilities {
 
   async waitForCondition(
     condition: () => boolean,
-    options: TestHookOptions = {}
+    options: TestHookOptions = {},
   ): Promise<void> {
     const { timeout = 5000, interval = 100 } = options;
 
@@ -75,14 +68,14 @@ export class TestUtilities {
       () => {
         expect(condition()).toBe(true);
       },
-      { timeout, interval }
+      { timeout, interval },
     );
   }
 
   async retryOperation<T>(
     operation: () => Promise<T>,
     maxRetries: number = 3,
-    delay: number = 1000
+    delay: number = 1000,
   ): Promise<T> {
     let lastError: Error;
 
@@ -113,9 +106,16 @@ export class TestUtilities {
   }
 
   async waitForQueryResult<T>(
-    queryResult: { current: { data?: T | null; isError: boolean; error?: Error | null; isLoading?: boolean } },
+    queryResult: {
+      current: {
+        data?: T | null;
+        isError: boolean;
+        error?: Error | null;
+        isLoading?: boolean;
+      };
+    },
     options: TestHookOptions = {},
-    context?: string
+    context?: string,
   ): Promise<T> {
     const { timeout = 5000, interval = 100 } = options;
     const contextMsg = context ? ` (${context})` : '';
@@ -123,25 +123,22 @@ export class TestUtilities {
     await waitFor(
       () => {
         const result = queryResult.current;
-        expect(
-          result.data !== undefined || result.isError,
-          `Query result should have data or error${contextMsg}`
-        ).toBe(true);
+        expect(result.data !== undefined || result.isError).toBe(true);
       },
-      { timeout, interval }
+      { timeout, interval },
     );
 
     if (queryResult.current.isError) {
       const error = queryResult.current.error;
       throw new Error(
-        `Query failed${contextMsg}: ${error?.message || 'Unknown error'}`
+        `Query failed${contextMsg}: ${error?.message || 'Unknown error'}`,
       );
     }
 
     const data = queryResult.current.data;
     if (data === undefined || data === null) {
       throw new Error(
-        `Expected query to have data but got ${data}${contextMsg}`
+        `Expected query to have data but got ${data}${contextMsg}`,
       );
     }
 
@@ -149,7 +146,7 @@ export class TestUtilities {
   }
 
   async measureExecutionTime<T>(
-    operation: () => Promise<T>
+    operation: () => Promise<T>,
   ): Promise<{ result: T; duration: number }> {
     const startTime = performance.now();
     const result = await operation();
@@ -163,7 +160,7 @@ export class TestUtilities {
 
   assertResponseShape<T extends Record<string, any>>(
     response: T,
-    expectedShape: Partial<Record<keyof T, any>>
+    expectedShape: Partial<Record<keyof T, any>>,
   ): void {
     expect(response).toMatchObject(expectedShape);
 
@@ -176,7 +173,7 @@ export class TestUtilities {
   async ensureDataConsistency<T>(
     fetchFunction: () => Promise<T>,
     expectedData: Partial<T>,
-    options: TestHookOptions = {}
+    options: TestHookOptions = {},
   ): Promise<T> {
     const { timeout = 5000 } = options;
 
@@ -187,7 +184,7 @@ export class TestUtilities {
         lastResult = await fetchFunction();
         expect(lastResult).toMatchObject(expectedData);
       },
-      { timeout }
+      { timeout },
     );
 
     return lastResult!;
@@ -243,12 +240,12 @@ export async function testCRUDOperation<
   },
   createData: TCreate,
   updateData: TUpdate,
-  validateEntity: (entity: TEntity) => void
+  validateEntity: (entity: TEntity) => void,
 ): Promise<void> {
   // Create
   const created = await testUtils.performAsyncAction(
     () => service.create(createData),
-    'create operation'
+    'create operation',
   );
 
   validateEntity(created);
@@ -257,13 +254,13 @@ export async function testCRUDOperation<
   // Read (verify in list)
   const listAfterCreate = await service.list();
   expect(listAfterCreate).toEqual(
-    expect.arrayContaining([expect.objectContaining({ id: created.id })])
+    expect.arrayContaining([expect.objectContaining({ id: created.id })]),
   );
 
   // Update
   const updated = await testUtils.performAsyncAction(
     () => service.update(created.id, updateData),
-    'update operation'
+    'update operation',
   );
 
   expect(updated.id).toBe(created.id);
@@ -272,12 +269,12 @@ export async function testCRUDOperation<
   // Delete
   await testUtils.performAsyncAction(
     () => service.delete(created.id),
-    'delete operation'
+    'delete operation',
   );
 
   // Verify deletion
   const listAfterDelete = await service.list();
   expect(listAfterDelete).not.toEqual(
-    expect.arrayContaining([expect.objectContaining({ id: created.id })])
+    expect.arrayContaining([expect.objectContaining({ id: created.id })]),
   );
 }

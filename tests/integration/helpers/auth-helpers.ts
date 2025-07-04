@@ -1,7 +1,7 @@
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { useCurrentUser, useSignIn, useSignOut, useSignUp } from "../../../src";
-import { TestDataFactory, type TestUser } from "./test-data-factory";
-import { testWrapperManager } from "./react-query-wrapper";
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { useCurrentUser, useSignIn, useSignOut, useSignUp } from '../../../src';
+import { TestDataFactory, type TestUser } from './test-data-factory';
+import { testWrapperManager } from './react-query-wrapper';
 
 export interface AuthenticatedUser {
   userId: string;
@@ -96,13 +96,13 @@ export class AuthTestHelper {
     // Wait for current user hook to initialize
     await waitFor(
       () => {
-        expect(result.current.currentUser.isLoading).toBeDefined();
+        expect(result.current.currentUser).toBeDefined();
       },
       { timeout: 5000 },
     );
 
     // Only sign out if user is authenticated (has user data)
-    if (result.current.currentUser.data) {
+    if (result.current.currentUser) {
       await act(async () => {
         await result.current.signOut();
       });
@@ -114,7 +114,7 @@ export class AuthTestHelper {
       await this.signOutUser();
     } catch (error) {
       // Ignore errors during cleanup
-      console.warn("Sign out cleanup failed:", error);
+      console.warn('Sign out cleanup failed:', error);
     }
 
     // Clear cache regardless
@@ -144,7 +144,7 @@ export class AuthTestHelper {
   }
 
   async waitForAuthState(
-    expectedState: "authenticated" | "unauthenticated",
+    expectedState: 'authenticated' | 'unauthenticated',
   ): Promise<void> {
     const { result } = renderHook(() => useCurrentUser(), {
       wrapper: this.wrapper,
@@ -152,13 +152,11 @@ export class AuthTestHelper {
 
     await waitFor(
       () => {
-        if (expectedState === "authenticated") {
-          expect(result.current.data).toBeDefined();
-          expect(result.current.data).not.toBeNull();
-          expect(result.current.isLoading).toBe(false);
+        if (expectedState === 'authenticated') {
+          expect(result.current).toBeDefined();
+          expect(result.current).not.toBeNull();
         } else {
-          expect(result.current.data).toBeNull();
-          expect(result.current.isLoading).toBe(false);
+          expect(result.current).toBeNull();
         }
       },
       { timeout: 10000 },
@@ -207,7 +205,7 @@ export class AuthTestHelper {
     if (authResult.current.isError) {
       const error = authResult.current.error;
       throw new Error(
-        `Authentication failed: ${error?.message || "Unknown auth error"}`,
+        `Authentication failed: ${error?.message || 'Unknown auth error'}`,
       );
     }
 

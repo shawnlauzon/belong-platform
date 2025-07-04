@@ -56,7 +56,7 @@ describe('Basic Auth', () => {
       () => ({
         signUp: useSignUp(),
       }),
-      { wrapper }
+      { wrapper },
     );
 
     // useSignUp returns a function
@@ -64,7 +64,7 @@ describe('Basic Auth', () => {
 
     const user = await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      'sign up new user'
+      'sign up new user',
     );
 
     expect(user).toMatchObject({
@@ -85,41 +85,36 @@ describe('Basic Auth', () => {
         signIn: useSignIn(),
         signOut: useSignOut(), // Include signOut from the start for cleanup if needed
       }),
-      { wrapper }
+      { wrapper },
     );
 
-    // Wait for hooks to initialize
-    await waitFor(() => {
-      expect(result.current.currentUser.isLoading).toBe(false);
-    });
-
     // If there's existing auth state from previous tests, clear it first
-    if (result.current.currentUser.data) {
+    if (result.current.currentUser) {
       console.log(
-        '⚠️ Found existing auth state from previous test, clearing it'
+        '⚠️ Found existing auth state from previous test, clearing it',
       );
 
       await testUtils.performAsyncAction(
         () => result.current.signOut(),
-        'clear existing auth state'
+        'clear existing auth state',
       );
 
       // Wait for state to clear
       await waitFor(
         () => {
-          expect(result.current.currentUser.data ?? null).toBeNull();
+          expect(result.current.currentUser).toBeNull();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
     }
 
     // Initial state: not authenticated
-    expect(result.current.currentUser.data ?? null).toBeNull();
+    expect(result.current.currentUser).toBeNull();
 
     // Sign up user
     await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      'sign up for sign in test'
+      'sign up for sign in test',
     );
 
     // Sign in user
@@ -129,7 +124,7 @@ describe('Basic Auth', () => {
           email: testUser.email,
           password: testUser.password,
         }),
-      'sign in user'
+      'sign in user',
     );
 
     expect(signedInUser).toMatchObject({
@@ -140,21 +135,14 @@ describe('Basic Auth', () => {
     // Wait for useCurrentUser to update
     await waitFor(
       () => {
-        expect(
-          result.current.currentUser.data || result.current.currentUser.isError
-        ).toBeTruthy();
+        expect(result.current.currentUser).not.toBeNull();
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
-    if (result.current.currentUser.isError) {
-      throw result.current.currentUser.error;
-    }
 
-    expect(result.current.currentUser.data?.email).toBe(
-      testUser.email.toLowerCase()
+    expect(result.current.currentUser?.email).toBe(
+      testUser.email.toLowerCase(),
     );
-    expect(result.current.currentUser.isLoading).toBe(false);
-    expect(result.current.currentUser.error).toBeFalsy();
   });
 
   test('should sign out user and clear useCurrentUser state', async () => {
@@ -168,34 +156,13 @@ describe('Basic Auth', () => {
         signIn: useSignIn(),
         signOut: useSignOut(),
       }),
-      { wrapper }
+      { wrapper },
     );
-
-    // Wait for hooks to initialize
-    await waitFor(() => {
-      expect(result.current.currentUser.isLoading).toBe(false);
-    });
-
-    // Check and log initial state to debug test isolation issues
-    console.log('🔍 Initial auth state before sign out test:', {
-      hasData: !!result.current.currentUser.data,
-      userData: result.current.currentUser.data
-        ? {
-            id: result.current.currentUser.data.id,
-            email: result.current.currentUser.data.email,
-          }
-        : null,
-      isLoading: result.current.currentUser.isLoading,
-      isError: result.current.currentUser.isError,
-    });
-
-    // Ensure clean initial state
-    expect(result.current.currentUser.data ?? null).toBeNull();
 
     // Sign up and sign in user
     await testUtils.performAsyncAction(
       () => result.current.signUp(testUser),
-      'sign up for sign out test'
+      'sign up for sign out test',
     );
 
     await testUtils.performAsyncAction(
@@ -204,40 +171,22 @@ describe('Basic Auth', () => {
           email: testUser.email,
           password: testUser.password,
         }),
-      'sign in for sign out test'
+      'sign in for sign out test',
     );
-
-    // Wait for auth state
-    await waitFor(
-      () => {
-        expect(
-          result.current.currentUser.data || result.current.currentUser.isError
-        ).toBeTruthy();
-      },
-      { timeout: 10000 }
-    );
-
-    if (result.current.currentUser.isError) {
-      throw result.current.currentUser.error;
-    }
 
     // Sign out
     await testUtils.performAsyncAction(
       () => result.current.signOut(),
-      'sign out user'
+      'sign out user',
     );
 
     // Wait for auth state to clear
     await waitFor(
       () => {
-        expect(result.current.currentUser.data ?? null).toBeNull();
+        expect(result.current.currentUser).toBeFalsy();
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
-
-    expect(result.current.currentUser.data ?? null).toBeNull();
-    expect(result.current.currentUser.isLoading).toBe(false);
-    expect(result.current.currentUser.error).toBeFalsy();
   });
 
   test('should validate hook signatures match API', async () => {
@@ -249,19 +198,8 @@ describe('Basic Auth', () => {
         signOut: useSignOut(),
         signUp: useSignUp(),
       }),
-      { wrapper }
+      { wrapper },
     );
-
-    // Wait for hooks to initialize
-    await waitFor(() => {
-      expect(result.current.currentUser.isLoading).toBe(false);
-    });
-
-    // useCurrentUser returns React Query state
-    expect(result.current.currentUser).toHaveProperty('data');
-    expect(result.current.currentUser).toHaveProperty('isLoading');
-    expect(result.current.currentUser).toHaveProperty('error');
-    expect(typeof result.current.currentUser.isLoading).toBe('boolean');
 
     // Mutation hooks return functions
     expect(typeof result.current.signIn).toBe('function');

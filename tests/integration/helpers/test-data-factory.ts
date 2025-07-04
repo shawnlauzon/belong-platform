@@ -1,6 +1,11 @@
-import { faker } from "@faker-js/faker";
-import { ResourceCategory, ResourceData } from "../../../src";
-import type { CommunityBoundary, CircularBoundary, IsochroneBoundary } from "../../../src";
+import { faker } from '@faker-js/faker';
+import { ResourceCategory, ResourceData } from '../../../src';
+import type {
+  CommunityBoundary,
+  CircularBoundary,
+  IsochroneBoundary,
+} from '../../../src';
+import { Polygon } from '../../../src/features/communities/types/geojson';
 
 export interface TestUser {
   email: string;
@@ -13,7 +18,7 @@ export interface TestUser {
 export interface TestCommunity {
   name: string;
   description: string;
-  level: "neighborhood" | "city" | "region" | "state" | "country";
+  level: 'neighborhood' | 'city' | 'region' | 'state' | 'country';
   timeZone: string;
   hierarchyPath: Array<{ level: string; name: string }>;
   memberCount: number;
@@ -23,7 +28,7 @@ export interface TestCommunity {
 export interface TestResource {
   title: string;
   description: string;
-  type: "offer" | "request";
+  type: 'offer' | 'request';
   category: string;
   imageUrls?: string[];
 }
@@ -67,7 +72,7 @@ export class TestDataFactory {
 
     return {
       email: `test-user-${timestamp}-${random}@example.com`,
-      password: "TestPassword123!",
+      password: 'TestPassword123!',
       firstName,
       lastName,
       displayName: `${firstName} ${lastName}`,
@@ -79,14 +84,14 @@ export class TestDataFactory {
     overrides: Partial<TestCommunity> = {},
   ): TestCommunity {
     return {
-      name: this.generateTestName("COMMUNITY"),
+      name: this.generateTestName('COMMUNITY'),
       description: faker.lorem.paragraph(),
-      level: "neighborhood",
-      timeZone: "America/New_York",
+      level: 'neighborhood',
+      timeZone: 'America/New_York',
       hierarchyPath: [
-        { level: "state", name: "New York" },
-        { level: "city", name: "New York City" },
-        { level: "neighborhood", name: "Manhattan" },
+        { level: 'state', name: 'New York' },
+        { level: 'city', name: 'New York City' },
+        { level: 'neighborhood', name: 'Manhattan' },
       ],
       memberCount: 1,
       ...overrides,
@@ -94,11 +99,11 @@ export class TestDataFactory {
   }
 
   static createResource(overrides: Partial<ResourceData> = {}): ResourceData {
-    const types = ["offer", "request"] as const;
+    const types = ['offer', 'request'] as const;
 
     return {
-      title: this.generateTestName("RESOURCE"),
-      communityId: "",
+      title: this.generateTestName('RESOURCE'),
+      communityId: '',
       description: faker.lorem.paragraphs(2),
       type: faker.helpers.arrayElement(types),
       category: faker.helpers.enumValue(ResourceCategory),
@@ -112,7 +117,7 @@ export class TestDataFactory {
     const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
     return {
-      title: this.generateTestName("EVENT"),
+      title: this.generateTestName('EVENT'),
       description: faker.lorem.paragraph(),
       startTime,
       endTime,
@@ -125,11 +130,11 @@ export class TestDataFactory {
 
   static createShoutout(overrides: Partial<TestShoutout> = {}): TestShoutout {
     const messages = [
-      "Thank you so much for your help!",
-      "Really appreciate you sharing this resource.",
-      "This was exactly what I was looking for!",
+      'Thank you so much for your help!',
+      'Really appreciate you sharing this resource.',
+      'This was exactly what I was looking for!',
       "You're amazing, thanks for organizing this.",
-      "Super helpful, thank you!",
+      'Super helpful, thank you!',
     ];
 
     return {
@@ -151,7 +156,7 @@ export class TestDataFactory {
   static createCredentials(): { email: string; password: string } {
     return {
       email: this.createUser().email,
-      password: "TestPassword123!",
+      password: 'TestPassword123!',
     };
   }
 
@@ -204,7 +209,7 @@ export class TestDataFactory {
       toUserId,
       resourceId,
       message:
-        this.generateTestName("SHOUTOUT") + " - " + faker.lorem.sentence(),
+        this.generateTestName('SHOUTOUT') + ' - ' + faker.lorem.sentence(),
     };
   }
 
@@ -241,51 +246,57 @@ export class TestDataFactory {
    * Specialized cleanup utilities
    */
   static isTestResource(item: any): boolean {
-    return item?.title?.includes("INTEGRATION_TEST_") || false;
+    return item?.title?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestUser(item: any): boolean {
-    return item?.email?.includes("test-user-") || false;
+    return item?.email?.includes('test-user-') || false;
   }
 
   static isTestCommunity(item: any): boolean {
-    return item?.name?.includes("INTEGRATION_TEST_") || false;
+    return item?.name?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestEvent(item: any): boolean {
-    return item?.title?.includes("INTEGRATION_TEST_") || false;
+    return item?.title?.includes('INTEGRATION_TEST_') || false;
   }
 
   static isTestShoutout(item: any): boolean {
-    return item?.message?.includes("INTEGRATION_TEST_") || false;
+    return item?.message?.includes('INTEGRATION_TEST_') || false;
   }
 
   /**
    * Boundary-specific test data generators
    */
-  static createCircularBoundary(overrides: Partial<CircularBoundary> = {}): CircularBoundary {
+  static createCircularBoundary(
+    overrides: Partial<CircularBoundary> = {},
+  ): CircularBoundary {
     return {
       type: 'circular',
-      center: { lng: -74.0060, lat: 40.7128 }, // New York City coordinates
+      center: { lng: -74.006, lat: 40.7128 }, // New York City coordinates
       radiusKm: faker.number.float({ min: 0.5, max: 10 }),
       ...overrides,
     };
   }
 
-  static createIsochroneBoundary(overrides: Partial<IsochroneBoundary> = {}): IsochroneBoundary {
-    const center = { lng: -74.0060, lat: 40.7128 }; // New York City coordinates
-    
+  static createIsochroneBoundary(
+    overrides: Partial<IsochroneBoundary> = {},
+  ): IsochroneBoundary {
+    const center = { lng: -74.006, lat: 40.7128 }; // New York City coordinates
+
     // Create a simple rectangular polygon around the center for testing
     const offset = 0.01; // roughly 1km
-    const polygon: GeoJSON.Polygon = {
+    const polygon: Polygon = {
       type: 'Polygon',
-      coordinates: [[
-        [center.lng - offset, center.lat - offset],
-        [center.lng + offset, center.lat - offset],
-        [center.lng + offset, center.lat + offset],
-        [center.lng - offset, center.lat + offset],
-        [center.lng - offset, center.lat - offset], // Close the polygon
-      ]],
+      coordinates: [
+        [
+          [center.lng - offset, center.lat - offset],
+          [center.lng + offset, center.lat - offset],
+          [center.lng + offset, center.lat + offset],
+          [center.lng - offset, center.lat + offset],
+          [center.lng - offset, center.lat - offset], // Close the polygon
+        ],
+      ],
     };
 
     return {
@@ -301,11 +312,12 @@ export class TestDataFactory {
 
   static createCommunityWithBoundary(
     boundaryType: 'circular' | 'isochrone',
-    overrides: Partial<TestCommunity> = {}
+    overrides: Partial<TestCommunity> = {},
   ): TestCommunity {
-    const boundary = boundaryType === 'circular' 
-      ? this.createCircularBoundary()
-      : this.createIsochroneBoundary();
+    const boundary =
+      boundaryType === 'circular'
+        ? this.createCircularBoundary()
+        : this.createIsochroneBoundary();
 
     return this.createCommunity({
       ...overrides,

@@ -2,3 +2,4 @@
 
 export * from './config';
 export * from './features';
+export * from './shared/types/domain';

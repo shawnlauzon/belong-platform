@@ -4,6 +4,7 @@ import { createMockCommunity } from '../../__mocks__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../../../shared/constants';
 import { createMockUser } from '../../../users/__mocks__';
+import type { IsochroneBoundary } from '../../types/domain';
 import {
   createMockDbCommunities,
   QuerySetups,
@@ -104,7 +105,7 @@ describe('createCommunityService', () => {
       const mockDbCommunities = createMockDbCommunities(2, mockUser);
       const mockQuery = QuerySetups.fetchCommunities(
         mockSupabase,
-        mockDbCommunities
+        mockDbCommunities,
       );
 
       // Act
@@ -113,7 +114,6 @@ describe('createCommunityService', () => {
       // Assert
       CommunityServiceAssertions.expectResultLength(result, 2);
     });
-
 
     it('should throw error when database query fails', async () => {
       // Arrange
@@ -170,13 +170,13 @@ describe('createCommunityService', () => {
 
       // Act
       const result = await communityService.fetchCommunityById(
-        mockCommunity.id
+        mockCommunity.id,
       );
 
       // Assert
       expect(mockSupabase.from).toHaveBeenCalledWith('communities');
       expect(mockQuery.select).toHaveBeenCalledWith(
-        '*, organizer:profiles!communities_organizer_id_fkey(*)'
+        '*, organizer:profiles!communities_organizer_id_fkey(*)',
       );
       expect(mockQuery.eq).toHaveBeenCalledWith('id', mockCommunity.id);
       expect(result).toBeDefined();
@@ -219,7 +219,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.fetchCommunityById('test-id')
+        communityService.fetchCommunityById('test-id'),
       ).rejects.toEqual(error);
     });
   });
@@ -294,7 +294,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.createCommunity(communityData)
+        communityService.createCommunity(communityData),
       ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
     });
 
@@ -307,9 +307,17 @@ describe('createCommunityService', () => {
         travelTimeMin: 38,
         polygon: {
           type: 'Polygon' as const,
-          coordinates: [[[-74.01, 40.71], [-74.00, 40.71], [-74.00, 40.72], [-74.01, 40.72], [-74.01, 40.71]]]
+          coordinates: [
+            [
+              [-74.01, 40.71],
+              [-74.0, 40.71],
+              [-74.0, 40.72],
+              [-74.01, 40.72],
+              [-74.01, 40.71],
+            ],
+          ],
         },
-        areaSqKm: 23.214793718159235
+        areaSqKm: 23.214793718159235,
       };
 
       const communityData = {
@@ -396,7 +404,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.createCommunity(communityData)
+        communityService.createCommunity(communityData),
       ).rejects.toThrow('Database insert failed');
     });
   });
@@ -464,7 +472,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.updateCommunity(updateData)
+        communityService.updateCommunity(updateData),
       ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
     });
   });
@@ -502,7 +510,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.deleteCommunity(mockCommunity.id)
+        communityService.deleteCommunity(mockCommunity.id),
       ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
     });
   });
@@ -581,7 +589,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(communityService.joinCommunity(communityId)).rejects.toThrow(
-        'User is already a member of this community'
+        'User is already a member of this community',
       );
     });
 
@@ -594,7 +602,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.joinCommunity(mockCommunity.id)
+        communityService.joinCommunity(mockCommunity.id),
       ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
     });
   });
@@ -689,7 +697,7 @@ describe('createCommunityService', () => {
 
       // Act & Assert
       await expect(
-        communityService.leaveCommunity(communityId)
+        communityService.leaveCommunity(communityId),
       ).rejects.toThrow('User is not a member of this community');
     });
 
@@ -714,12 +722,12 @@ describe('createCommunityService', () => {
       });
 
       vi.mocked(mockSupabase.from).mockReturnValueOnce(
-        mockSelectCommunityQuery as any
+        mockSelectCommunityQuery as any,
       );
 
       // Act & Assert
       await expect(
-        communityService.leaveCommunity(communityId)
+        communityService.leaveCommunity(communityId),
       ).rejects.toThrow('Organizer cannot leave their own community');
     });
   });
