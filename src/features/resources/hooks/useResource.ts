@@ -72,6 +72,7 @@ export function useResource(id: string): Resource | null {
   }
 
   // Compose the full Resource object - exclude ID fields and add full objects
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ownerId, communityId, ...resourceWithoutIds } = resourceQuery.data;
   const resource: Resource = {
     ...resourceWithoutIds,

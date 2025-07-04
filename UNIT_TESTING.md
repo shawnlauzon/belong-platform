@@ -34,6 +34,8 @@ expect(mockFetchResourceById).toHaveBeenCalledWith(mockSupabase, resourceId);
 
 ```
 src/features/{feature}/
+├── __mocks__/
+│   └── index.ts              # Mock factories and utilities
 ├── __tests__/
 │   ├── hooks/
 │   │   ├── useFeature.test.ts
@@ -42,8 +44,6 @@ src/features/{feature}/
 │   ├── api/
 │   │   ├── fetchFeature.test.ts
 │   │   └── createFeature.test.ts
-│   ├── factories/
-│   │   └── featureFactory.ts
 │   └── transformers/
 │       └── featureTransformer.test.ts
 ```
@@ -104,10 +104,13 @@ describe('useFeature', () => {
 
 ### Factory Functions
 
-**Always use factory functions** for generating test data to ensure consistency and avoid hardcoded values:
+**Always use factory functions** from the feature's `__mocks__` directory for generating test data to ensure consistency and avoid hardcoded values:
 
 ```typescript
-// ✅ GOOD: Use factories, only override what's needed
+// ✅ GOOD: Use factories from __mocks__, only override what's needed
+import { createMockUser } from '@/features/users/__mocks__';
+import { createMockResourceInfo } from '@/features/resources/__mocks__';
+
 const mockUser = createMockUser();
 
 const mockResource = createMockResourceInfo({
@@ -124,7 +127,10 @@ const mockUser = {
 
 ### Factory Implementation Pattern
 
+Mock factories should be placed in the feature's `__mocks__/index.ts` file and cover all data variants:
+
 ```typescript
+// src/features/resources/__mocks__/index.ts
 export function createMockResource(overrides?: Partial<Resource>): Resource {
   return {
     id: faker.string.uuid(),
@@ -137,6 +143,36 @@ export function createMockResource(overrides?: Partial<Resource>): Resource {
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
     ...overrides, // Apply overrides last
+  };
+}
+
+// Provide factories for all data variants
+export function createMockResourceRow(
+  overrides?: Partial<ResourceRow>,
+): ResourceRow {
+  return {
+    id: faker.string.uuid(),
+    title: faker.commerce.productName(),
+    // ... database-specific fields
+    ...overrides,
+  };
+}
+
+export function createMockResourceInfo(
+  overrides?: Partial<ResourceInfo>,
+): ResourceInfo {
+  const row = createMockResourceRow();
+  const baseResourceInfo = toResourceInfo(row);
+  return { ...baseResourceInfo, ...overrides };
+}
+
+export function createMockResourceData(
+  overrides?: Partial<ResourceData>,
+): ResourceData {
+  return {
+    title: faker.commerce.productName(),
+    // ... form data fields
+    ...overrides,
   };
 }
 ```
@@ -172,7 +208,7 @@ describe('useResource', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup mock data using factories
+    // Setup mock data using factories from __mocks__
     mockResourceInfo = createMockResourceInfo({
       ownerId: mockOwner.id,
       communityId: mockCommunity.id,
@@ -248,7 +284,11 @@ Return Info objects (with ID references only):
 ```typescript
 // useCreateResource returns function that creates ResourceInfo
 const createResource = useCreateResource();
-const resourceInfo: ResourceInfo | null = await createResource(data);
+const resourceData = createMockResourceData({
+  ownerId: mockUser.id,
+  communityId: mockCommunity.id,
+});
+const resourceInfo: ResourceInfo | null = await createResource(resourceData);
 
 // Test expects Info object with ID references
 expect(resourceInfo).toEqual(
@@ -270,6 +310,7 @@ Test the established consumer pattern for mutations:
 ```typescript
 it('should follow create → useResource pattern', async () => {
   // 1. Create resource (returns ResourceInfo)
+  const resourceData = createMockResourceData();
   const resourceInfo = await createResource(resourceData);
   expect(resourceInfo).toMatchObject({
     id: expect.any(String),
@@ -328,7 +369,9 @@ mockFetchResourceById.mockResolvedValue(mockResourceInfo);
 ```typescript
 // 1. RED: Write failing test first
 it('should return ResourceInfo after creation', async () => {
-  const resourceData = createMockResourceData();
+  const resourceData = createMockResourceData({
+    ownerId: mockCurrentUser.id,
+  });
   const createResource = useCreateResource();
 
   // This should fail initially
@@ -338,7 +381,7 @@ it('should return ResourceInfo after creation', async () => {
     expect.objectContaining({
       id: expect.any(String),
       title: resourceData.title,
-      ownerId: mockCurrentUser.id,
+      ownerId: resourceData.ownerId,
     }),
   );
 });
@@ -393,41 +436,9 @@ Focus on inputs, outputs, and error conditions:
 
 ```typescript
 describe('fetchResourceById', () => {
-  it('should return ResourceInfo when resource exists', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: mockResourceRow,
-          error: null,
-        }),
-      }),
-    });
+  it('should return ResourceInfo when resource exists', async () ...
 
-    const result = await fetchResourceById(mockSupabase, 'resource-123');
-
-    expect(result).toEqual(
-      expect.objectContaining({
-        id: mockResourceRow.id,
-        title: mockResourceRow.title,
-        ownerId: mockResourceRow.owner_id,
-      }),
-    );
-  });
-
-  it('should throw error when resource not found', async () => {
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'Not found' },
-        }),
-      }),
-    });
-
-    await expect(
-      fetchResourceById(mockSupabase, 'nonexistent'),
-    ).rejects.toThrow();
-  });
+  it('should throw error when resource not found', async () ...
 });
 ```
 
@@ -535,8 +546,14 @@ See the following files for complete examples:
 - `src/features/resources/__tests__/hooks/useResource.test.ts`
 - `src/features/resources/__tests__/hooks/useCreateResource.test.ts`
 - `src/features/resources/__tests__/api/fetchResourceById.test.ts`
+- `src/features/resources/__mocks__/index.ts` - Mock factories and utilities
 
-These demonstrate all the patterns and practices outlined in this guide.
+These demonstrate all the patterns and practices outlined in this guide, including:
+
+- Mock factories in `__mocks__/index.ts`
+- API signature updates (e.g., `createResource` without separate `ownerId` parameter)
+- Proper import patterns for mock utilities
+- Coverage of all data variants (Row, Info, Data, Domain objects)
 
 ---
 

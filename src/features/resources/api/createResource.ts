@@ -8,9 +8,8 @@ import { ResourceRow } from '../types/database';
 export async function createResource(
   supabase: SupabaseClient<Database>,
   resourceData: ResourceData,
-  ownerId: string,
 ): Promise<ResourceInfo | null> {
-  const dbData = forDbInsert(resourceData, ownerId);
+  const dbData = forDbInsert(resourceData);
 
   const { data, error } = (await supabase
     .from('resources')

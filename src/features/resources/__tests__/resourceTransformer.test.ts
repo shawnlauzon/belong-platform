@@ -1,13 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { faker } from '@faker-js/faker';
 import {
   toDomainResource,
   forDbInsert,
 } from '../transformers/resourceTransformer';
-import { createMockDbResource } from '../__mocks__';
-import { createMockResourceData } from '../__mocks__';
 import { createMockUser } from '../../users/__mocks__';
 import { createMockCommunity } from '../../communities/__mocks__';
+import { createMockDbResource, createMockResourceData } from '../__mocks__';
 
 describe('Resource Transformer', () => {
   describe('toDomainResource', () => {
@@ -76,16 +74,16 @@ describe('Resource Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform a domain resource to a database resource', () => {
       const resourceData = createMockResourceData();
-      const ownerId = faker.string.uuid();
 
-      const dbResource = forDbInsert(resourceData, ownerId);
+      const dbResource = forDbInsert(resourceData);
 
       expect(dbResource).toMatchObject({
         type: resourceData.type,
         category: resourceData.category,
         title: resourceData.title,
         description: resourceData.description,
-        owner_id: ownerId,
+        owner_id: resourceData.ownerId,
+        community_id: resourceData.communityId,
         location: resourceData.location
           ? expect.stringContaining('POINT')
           : undefined,
@@ -94,13 +92,11 @@ describe('Resource Transformer', () => {
 
     it('should handle partial updates', () => {
       const resourceData = createMockResourceData();
-      const ownerId = faker.string.uuid();
 
-      const dbResource = forDbInsert(resourceData, ownerId);
+      const dbResource = forDbInsert(resourceData);
 
       expect(dbResource).toMatchObject({
         title: resourceData.title,
-        owner_id: ownerId,
       });
     });
   });

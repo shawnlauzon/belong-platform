@@ -5,7 +5,7 @@ import { createMockSupabase } from '../../../../test-utils';
 import {
   createMockResourceData,
   createMockResourceInfo,
-} from '../factories/resourceFactory';
+} from '../../__mocks__';
 import { createMockUser } from '../../../users/__mocks__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
@@ -90,10 +90,6 @@ describe('useCreateResource', () => {
     expect(createdResourceInfo).not.toHaveProperty('community');
 
     // Verify API was called with correct parameters
-    expect(mockCreateResource).toHaveBeenCalledWith(
-      mockSupabase,
-      resourceData,
-      mockCurrentUser.id,
-    );
+    expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 });

@@ -7,7 +7,7 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createMockDbShoutout, createMockShoutoutData } from './test-utils';
 import { createMockUser } from '../../users/__mocks__';
-import { createMockResource } from '../../resources/__mocks__';
+import { createMockResource } from '../../resources/__mocks__/resources';
 
 describe('Shoutout Transformer', () => {
   describe('toDomainShoutout', () => {
@@ -116,7 +116,7 @@ describe('Shoutout Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
+        }),
       ).toThrow('From user ID does not match');
     });
 
@@ -135,7 +135,7 @@ describe('Shoutout Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
+        }),
       ).toThrow('To user ID does not match');
     });
 
@@ -154,7 +154,7 @@ describe('Shoutout Transformer', () => {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
-        })
+        }),
       ).toThrow('Resource ID does not match');
     });
 

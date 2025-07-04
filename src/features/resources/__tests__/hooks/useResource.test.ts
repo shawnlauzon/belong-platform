@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useResource } from '../../hooks/useResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResourceInfo } from '../factories/resourceFactory';
+import { createMockResourceInfo } from '../../__mocks__/';
 import { createMockUser } from '../../../users/__mocks__';
 import { createMockCommunity } from '../../../communities/__mocks__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';

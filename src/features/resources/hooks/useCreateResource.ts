@@ -33,10 +33,10 @@ import type { ResourceInfo, ResourceData } from '@/features/resources/types';
  *       // Returns ResourceInfo with ownerId and communityId (not full objects)
  *       const resourceInfo = await createResource(formData);
  *       console.log('Created resource:', resourceInfo.title);
- *       
+ *
  *       // To get full composed Resource with owner and community objects:
  *       // const fullResource = useResource(resourceInfo.id);
- *       
+ *
  *       // Redirect to resource page
  *       router.push(`/resources/${resourceInfo.id}`);
  *     } catch (error) {
@@ -69,7 +69,9 @@ import type { ResourceInfo, ResourceData } from '@/features/resources/types';
  * }
  * ```
  */
-export function useCreateResource(): (data: ResourceData) => Promise<ResourceInfo | null> {
+export function useCreateResource(): (
+  data: ResourceData,
+) => Promise<ResourceInfo | null> {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
@@ -79,9 +81,9 @@ export function useCreateResource(): (data: ResourceData) => Promise<ResourceInf
       if (!currentUser?.id) {
         throw new Error('User must be authenticated to create resources');
       }
-      
+
       // Create the resource (returns ResourceInfo)
-      return createResource(supabase, data, currentUser.id);
+      return createResource(supabase, data);
     },
     onSuccess: (newResourceInfo) => {
       if (!newResourceInfo) return;
@@ -108,7 +110,7 @@ export function useCreateResource(): (data: ResourceData) => Promise<ResourceInf
   // Return function that creates and returns ResourceInfo
   return async (data: ResourceData): Promise<ResourceInfo | null> => {
     if (!currentUser) return null;
-    
+
     return mutation.mutateAsync(data);
   };
 }

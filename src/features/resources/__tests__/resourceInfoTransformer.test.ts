@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toResourceInfo } from '../transformers/resourceTransformer';
-import { createMockDbResource } from '../__mocks__';
+import { createMockDbResource } from '../__mocks__/';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -73,8 +73,6 @@ describe('ResourceInfo Transformer', () => {
     expect(result.location).toBeUndefined();
 
     // Verify no snake_case leakage
-    assertNoSnakeCaseProperties(result, [
-      'image_urls',
-    ]);
+    assertNoSnakeCaseProperties(result, ['image_urls']);
   });
 });

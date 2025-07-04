@@ -52,15 +52,12 @@ export function toDomainResource(
 /**
  * Transform a domain resource object to a database resource record
  */
-export function forDbInsert(
-  resource: ResourceData,
-  ownerId: string,
-): ResourceInsertDbData {
+export function forDbInsert(resource: ResourceData): ResourceInsertDbData {
   const { communityId, imageUrls, ...rest } = resource;
 
   return {
     ...rest,
-    owner_id: ownerId,
+    owner_id: resource.ownerId,
     community_id: communityId,
     image_urls: imageUrls,
     location: resource.location ? toPostGisPoint(resource.location) : undefined,
