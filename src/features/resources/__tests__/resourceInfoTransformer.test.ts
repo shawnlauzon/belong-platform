@@ -10,12 +10,15 @@ import {
 describe('ResourceInfo Transformer', () => {
   it('should transform database resource to ResourceInfo without snake_case properties', () => {
     // Arrange
-    const dbResource = createMockDbResource();
     const ownerId = faker.string.uuid();
     const communityId = faker.string.uuid();
+    const dbResource = createMockDbResource({
+      owner_id: ownerId,
+      community_id: communityId,
+    });
 
     // Act
-    const result = toResourceInfo(dbResource, ownerId, communityId);
+    const result = toResourceInfo(dbResource);
 
     // Assert - Should have camelCase properties
     expect(result).toHaveProperty('id', dbResource.id);
@@ -64,7 +67,7 @@ describe('ResourceInfo Transformer', () => {
     });
 
     // Act
-    const result = toResourceInfo(dbResource, ownerId, communityId);
+    const result = toResourceInfo(dbResource);
 
     // Assert
     expect(result.imageUrls).toEqual([]);
