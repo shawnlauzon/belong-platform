@@ -17,10 +17,6 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { User } from '../../users';
-import {
-  applyDeletedFilter,
-  createSoftDeleteUpdate,
-} from '../../../shared/utils/soft-deletion';
 import type { CommunityMembershipRow } from '../types/database';
 
 /**
@@ -62,8 +58,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, filter?.includeDeleted);
 
       // Apply additional filters if provided
       if (filter) {
@@ -83,9 +77,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
       // Defensive application-level filtering as safety net
       const filteredCommunities = communities.filter((community) => {
-        if (!filter?.includeDeleted && community.deletedAt) {
-          return false;
-        }
         if (
           filter?.name &&
           !community.name.toLowerCase().includes(filter.name.toLowerCase())
@@ -124,7 +115,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
   async fetchCommunityById(
     id: string,
-    options?: { includeDeleted?: boolean }
+    options?: {}
   ): Promise<Community | null> {
     logger.debug('🏘️ API: Fetching community by ID', { id, options });
 
@@ -134,8 +125,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .select('*, organizer:profiles!communities_organizer_id_fkey(*)')
         .eq('id', id);
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, options?.includeDeleted);
 
       const { data, error } = await query.single();
 
@@ -148,15 +137,9 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
 
       const community = toDomainCommunity(data);
 
-      // Defensive application-level check
-      if (!options?.includeDeleted && community.deletedAt) {
-        return null;
-      }
-
       logger.debug('🏘️ API: Successfully fetched community', {
         id,
         name: community.name,
-        deletedAt: community.deletedAt,
       });
       return community;
     } catch (error) {
@@ -210,7 +193,6 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         hierarchyPath: data.hierarchyPath,
         memberCount: 1,
         boundary: data.boundary,
-        deletedAt: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -303,11 +285,11 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     logger.debug('🏘️ API: Deleting community', { id });
 
     try {
-      const userId = await requireAuthentication(supabase, 'delete community');
+      await requireAuthentication(supabase, 'delete community');
 
       const { error } = await supabase
         .from('communities')
-        .update(createSoftDeleteUpdate(userId))
+        .delete()
         .eq('id', id);
 
       if (error) {

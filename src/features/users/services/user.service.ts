@@ -9,7 +9,6 @@ import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
 import { ProfileUpdateDbData } from '../types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { applyDeletedFilter } from '../../../shared/utils/soft-deletion';
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({
   async fetchUsers(options?: UserFilter): Promise<User[]> {
@@ -20,8 +19,6 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-
-      query = applyDeletedFilter(query);
 
       // Apply search filter if provided
       if (options?.searchTerm) {
@@ -47,19 +44,10 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
 
       const users = (data || []).map(toDomainUser);
 
-      // Defensive application-level filtering as safety net
-      const filteredUsers = users.filter((user) => {
-        if (!options?.includeDeleted && user.deletedAt) {
-          return false;
-        }
-        return true;
-      });
-
       logger.debug('👤 API: Successfully fetched users', {
-        count: filteredUsers.length,
-        totalFromDb: users.length,
+        count: users.length,
       });
-      return filteredUsers;
+      return users;
     } catch (error) {
       logger.error('👤 API: Error fetching users', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -76,11 +64,7 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
     logger.debug('👤 API: Fetching user by ID', { id, options });
 
     try {
-      let query = supabase.from('profiles').select('*').eq('id', id);
-      if (!options?.includeDeleted) {
-        query = query.is('deleted_at', null);
-      }
-
+      const query = supabase.from('profiles').select('*').eq('id', id);
       const { data, error } = await query.single();
 
       if (error) {
@@ -95,15 +79,9 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
 
       const user = toDomainUser(data);
 
-      // Defensive application-level check
-      if (!options?.includeDeleted && user.deletedAt) {
-        return null;
-      }
-
       logger.debug('👤 API: Successfully fetched user', {
         id,
         email: user.email,
-        deletedAt: user.deletedAt,
       });
       return user;
     } catch (error) {
@@ -215,12 +193,10 @@ export const createUserService = (supabase: SupabaseClient<Database>) => ({
         throw fetchError;
       }
 
-      // Perform the soft delete (set deleted_at)
+      // Perform the hard delete
       const { error: deleteError } = await supabase
         .from('profiles')
-        .update({
-          deleted_at: new Date().toISOString(),
-        } satisfies Partial<ProfileUpdateDbData>)
+        .delete()
         .eq('id', id);
 
       if (deleteError) {

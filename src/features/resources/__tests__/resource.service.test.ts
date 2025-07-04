@@ -37,59 +37,21 @@ describe('Resource Service - Soft Delete Bug Fix', () => {
     vi.clearAllMocks();
   });
 
-  it('should only return active resources by default (service-level bug test)', async () => {
-    // Arrange: Mock database returns mix of active and inactive resources
-    const mockDbResources = TestData.mixedResources();
+  it('should return all resources (hard delete means no deleted records exist)', async () => {
+    // Arrange: Mock database returns only existing resources (deleted ones are gone)
+    const mockDbResources = createMockDbResources(2);
     setupChainableResourceQuery(mockSupabase, {
       data: mockDbResources,
       error: null,
     });
 
-    // Act: Call fetchResources with no filters (should default to active only)
+    // Act: Call fetchResources 
     const result = await resourceService.fetchResources();
 
-    // Assert: Should only return non-deleted resources due to soft deletion filtering
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('resource-active');
-
-    // Verify inactive resource was filtered out
-    const inactiveResource = result.find((r) => r.id === 'resource-inactive');
-    expect(inactiveResource).toBeUndefined();
+    // Assert: Should return all existing resources (deleted ones are physically removed)
+    expect(result).toHaveLength(2);
   });
 
-  it('should allow explicit inactive filtering when requested', async () => {
-    // Arrange: Mock returns inactive resources when explicitly requested
-    const mockInactiveResources = [
-      {
-        id: 'resource-inactive',
-        type: 'offer',
-        category: 'tools',
-        title: 'Inactive Resource',
-        description: 'This should appear when requested',
-        owner_id: 'user-1',
-        community_id: 'community-1',
-        is_active: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-
-    mockSupabase.from.mockReturnValue(mockSupabase);
-    mockSupabase.select.mockReturnValue(mockSupabase);
-    mockSupabase.eq.mockReturnValue(mockSupabase);
-    mockSupabase.is.mockReturnValue(mockSupabase);
-    mockSupabase.order.mockReturnValue({
-      data: mockInactiveResources,
-      error: null,
-    });
-
-    // Act: Explicitly request including deleted resources
-    const result = await resourceService.fetchResources({ includeDeleted: true });
-
-    // Assert: Should include deleted resources when explicitly requested
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('resource-inactive');
-  });
 });
 
 describe('fetchResourceById', () => {
@@ -121,8 +83,6 @@ describe('fetchResourceById', () => {
       description: 'Test description',
       owner_id: 'user-1',
       community_id: 'community-1',
-      deleted_at: null,
-      deleted_by: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

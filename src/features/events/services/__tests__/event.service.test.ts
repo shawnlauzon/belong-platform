@@ -456,7 +456,7 @@ describe('createEventService', () => {
   });
 
   describe('deleteEvent', () => {
-    it('should soft delete event when user is authenticated', async () => {
+    it('should hard delete event when user is authenticated', async () => {
       // Arrange
       vi.mocked(mockSupabase.auth!.getUser).mockResolvedValue({
         data: { user: { id: mockUser.id } },
@@ -474,16 +474,16 @@ describe('createEventService', () => {
         error: null,
       });
 
-      // Mock update query for soft delete
-      const mockUpdateQuery = {
-        update: vi.fn().mockReturnThis(),
+      // Mock delete query for hard delete
+      const mockDeleteQuery = {
+        delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
       };
-      mockUpdateQuery.eq.mockResolvedValue({ error: null });
+      mockDeleteQuery.eq.mockResolvedValue({ error: null });
 
       vi.mocked(mockSupabase.from)
         .mockReturnValueOnce(mockSelectQuery as any)
-        .mockReturnValueOnce(mockUpdateQuery as any);
+        .mockReturnValueOnce(mockDeleteQuery as any);
 
       // Act
       await eventService.deleteEvent(mockEvent.id);
@@ -503,135 +503,6 @@ describe('createEventService', () => {
       await expect(eventService.deleteEvent(mockEvent.id)).rejects.toThrow(
         MESSAGE_AUTHENTICATION_REQUIRED
       );
-    });
-  });
-
-  describe('fetchEvents soft delete behavior', () => {
-    it('should exclude soft-deleted events by default (without explicit isActive filter)', async () => {
-      // Arrange: Mock both active and inactive events
-      const activeEvent = {
-        id: 'active-event-1',
-        title: 'Active Event',
-        description: 'This event is active',
-        organizer_id: mockUser.id,
-        community_id: mockCommunity.id,
-        start_date_time: new Date().toISOString(),
-        location: 'Test Location',
-        deleted_at: null,
-        deleted_by: null,
-        tags: [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const inactiveEvent = {
-        id: 'inactive-event-1',
-        title: 'Soft Deleted Event',
-        description: 'This event was soft deleted',
-        organizer_id: mockUser.id,
-        community_id: mockCommunity.id,
-        start_date_time: new Date().toISOString(),
-        location: 'Test Location',
-        deleted_at: '2024-01-01T00:00:00Z', // Soft deleted
-        deleted_by: 'admin-123',
-        tags: [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      // Create a mock query object to track method calls
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        is: vi.fn().mockResolvedValue({
-          data: [activeEvent], // After soft deletion filter, should return only non-deleted events
-          error: null,
-        }),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-
-      // Act: Call fetchEvents without any filters (should default to active only)
-      const result = await eventService.fetchEvents();
-
-      // Assert: Verify the output behavior
-      expect(result).toHaveLength(1);
-      expect(
-        result.find((event) => event.id === 'inactive-event-1')
-      ).toBeUndefined();
-    });
-
-    it('should verify the soft deletion filter logic with undefined filters', async () => {
-      // This test specifically checks the soft deletion logic: applyDeletedFilter(query, filters?.includeDeleted)
-
-      // Mock query object
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        is: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-
-      // Act: Call fetchEvents with undefined filters (like integration test)
-      await eventService.fetchEvents(undefined);
-
-      // Test passes if no error is thrown
-    });
-
-    it('should verify the soft deletion filter logic with empty filters object', async () => {
-      // This test specifically checks the logic with empty object: {}
-
-      // Mock query object
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        is: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-        eq: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-
-      // Act: Call fetchEvents with empty filters object
-      await eventService.fetchEvents({});
-
-      // Test passes if no error is thrown
-    });
-
-    it('should demonstrate the actual logic flaw', () => {
-      // Test the actual logic separately to understand the issue
-
-      // Test case 1: undefined filters
-      const filters1 = undefined;
-      const isActiveFilter1 =
-        filters1?.isActive !== undefined ? filters1.isActive : true;
-      expect(isActiveFilter1).toBe(true); // Should be true
-
-      // Test case 2: empty object filters
-      const filters2 = {};
-      const isActiveFilter2 =
-        filters2?.isActive !== undefined ? filters2.isActive : true;
-      expect(isActiveFilter2).toBe(true); // Should be true
-
-      // Test case 3: filters with isActive explicitly false
-      const filters3 = { isActive: false };
-      const isActiveFilter3 =
-        filters3?.isActive !== undefined ? filters3.isActive : true;
-      expect(isActiveFilter3).toBe(false); // Should be false
-
-      // Test case 4: filters with isActive explicitly true
-      const filters4 = { isActive: true };
-      const isActiveFilter4 =
-        filters4?.isActive !== undefined ? filters4.isActive : true;
-      expect(isActiveFilter4).toBe(true); // Should be true
     });
   });
 });

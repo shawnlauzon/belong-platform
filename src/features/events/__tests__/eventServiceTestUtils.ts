@@ -196,45 +196,45 @@ export const EventServiceAssertions = {
  */
 export const QuerySetups = {
   /**
-   * Standard fetchEvents query (select, order, is) - is resolves last for soft deletion
+   * Standard fetchEvents query (select, order) - order resolves last (no soft deletion)
    */
   fetchEvents: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'order', 'is'],
-      'is',
+      ['select', 'order'],
+      'order',
       { data, error }
     ),
 
   /**
-   * FetchEvents with community/organizer filter (select, order, is, eq) - eq resolves last for filtering
+   * FetchEvents with community/organizer filter (select, order, eq) - eq resolves last for filtering
    */
   fetchEventsWithFilter: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'order', 'is', 'eq'],
+      ['select', 'order', 'eq'],
       'eq',
       { data, error }
     ),
 
   /**
-   * FetchEvents with date range (select, order, is, gte, lte) - lte resolves last
+   * FetchEvents with date range (select, order, gte, lte) - lte resolves last
    */
   fetchEventsWithDateRange: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'order', 'is', 'gte', 'lte'],
+      ['select', 'order', 'gte', 'lte'],
       'lte',
       { data, error }
     ),
 
   /**
-   * FetchEvents with search (select, order, is, or) - or resolves last
+   * FetchEvents with search (select, order, or) - or resolves last
    */
   fetchEventsWithSearch: (mockSupabase: any, data: any[] = [], error: any = null) =>
     setupMockQuery(
       mockSupabase,
-      ['select', 'order', 'is', 'or'],
+      ['select', 'order', 'or'],
       'or',
       { data, error }
     ),

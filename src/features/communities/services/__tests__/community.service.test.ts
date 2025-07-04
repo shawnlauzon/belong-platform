@@ -99,11 +99,9 @@ describe('createCommunityService', () => {
   });
 
   describe('fetchCommunities', () => {
-    it('should fetch active communities by default', async () => {
+    it('should fetch all communities (hard delete means no filtering needed)', async () => {
       // Arrange
-      const mockDbCommunities = createMockDbCommunities(2, mockUser, {
-        is_active: true,
-      });
+      const mockDbCommunities = createMockDbCommunities(2, mockUser);
       const mockQuery = QuerySetups.fetchCommunities(
         mockSupabase,
         mockDbCommunities
@@ -116,35 +114,6 @@ describe('createCommunityService', () => {
       CommunityServiceAssertions.expectResultLength(result, 2);
     });
 
-    it('should include deleted communities when requested', async () => {
-      // Arrange
-      const mockDbCommunities = [
-        { id: '1', name: 'Community 1', deleted_at: null },
-        { id: '2', name: 'Community 2', deleted_at: '2024-01-01T00:00:00Z' },
-      ];
-
-      const mockQuery = {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        ilike: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-      };
-
-      vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.order.mockResolvedValue({
-        data: mockDbCommunities,
-        error: null,
-      });
-
-      // Act
-      const result = await communityService.fetchCommunities({
-        includeDeleted: true,
-      });
-
-      // Assert
-      expect(result).toHaveLength(2); // Both communities should be included when includeDeleted is true
-    });
 
     it('should throw error when database query fails', async () => {
       // Arrange
@@ -154,11 +123,10 @@ describe('createCommunityService', () => {
         order: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
       };
 
       vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as any);
-      mockQuery.is.mockResolvedValue({ data: null, error });
+      mockQuery.order.mockResolvedValue({ data: null, error });
 
       // Act & Assert
       await expect(communityService.fetchCommunities()).rejects.toThrow();
@@ -211,7 +179,6 @@ describe('createCommunityService', () => {
         '*, organizer:profiles!communities_organizer_id_fkey(*)'
       );
       expect(mockQuery.eq).toHaveBeenCalledWith('id', mockCommunity.id);
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
       expect(result).toBeDefined();
       expect(result?.id).toBe(mockCommunity.id);
     });
@@ -503,7 +470,7 @@ describe('createCommunityService', () => {
   });
 
   describe('deleteCommunity', () => {
-    it('should soft delete community when user is authenticated', async () => {
+    it('should hard delete community when user is authenticated', async () => {
       // Arrange
       vi.mocked(mockSupabase.auth!.getUser).mockResolvedValue({
         data: { user: { id: mockUser.id } },
@@ -511,7 +478,7 @@ describe('createCommunityService', () => {
       });
 
       const mockQuery = {
-        update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
       };
 

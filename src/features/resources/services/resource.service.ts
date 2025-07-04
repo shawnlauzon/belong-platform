@@ -18,10 +18,6 @@ import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import type { Database } from '../../../shared/types/database';
-import {
-  applyDeletedFilter,
-  createSoftDeleteUpdate,
-} from '../../../shared/utils/soft-deletion';
 import { ResourceRow } from '../types/database';
 
 // Helper function to apply common filters to a query
@@ -55,7 +51,7 @@ const buildResourceQuery = (
     .select('*')
     .order('created_at', { ascending: false });
 
-  return applyDeletedFilter(query, includeDeleted);
+  return query;
 };
 
 export const createResourceService = (supabase: SupabaseClient<Database>) => ({
@@ -87,21 +83,12 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         toResourceInfo(dbResource, dbResource.owner_id, dbResource.community_id)
       );
 
-      // Defensive application-level filtering as safety net
-      const filteredResources = resources.filter((resource: ResourceInfo) => {
-        if (!filters?.includeDeleted && resource.deletedAt) {
-          return false;
-        }
-        return true;
-      });
-
       logger.debug('📚 API: Successfully fetched resources', {
-        count: filteredResources.length,
-        totalFromDb: resources.length,
+        count: resources.length,
         filters,
       });
 
-      return filteredResources;
+      return resources;
     } catch (error) {
       logger.error('📚 API: Error fetching resources', {
         filters,
@@ -121,8 +108,6 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
     try {
       let query = supabase.from('resources').select('*').eq('id', id);
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, options?.includeDeleted);
 
       const { data, error } = await query.single();
 
@@ -166,16 +151,10 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         community: community || undefined,
       });
 
-      // Defensive application-level check
-      if (!options?.includeDeleted && resource.deletedAt) {
-        return null;
-      }
-
       logger.debug('📚 API: Successfully fetched resource', {
         id,
         ownerId: resource.owner.id,
         communityId: resource.community?.id,
-        deletedAt: resource.deletedAt,
       });
 
       return resource;
@@ -372,13 +351,13 @@ export const createResourceService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('You are not authorized to delete this resource');
       }
 
-      // Perform the soft delete
-      logger.debug('📚 Resource Service: Performing soft delete update', {
+      // Perform the hard delete
+      logger.debug('📚 Resource Service: Performing hard delete', {
         id,
       });
       const { error: deleteError } = await supabase
         .from('resources')
-        .update(createSoftDeleteUpdate(userId))
+        .delete()
         .eq('id', id);
 
       logger.debug('📚 Resource Service: Update result', {
