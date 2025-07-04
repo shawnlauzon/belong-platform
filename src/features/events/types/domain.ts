@@ -19,8 +19,6 @@ export interface EventData {
   location: string;
   coordinates: Coordinates;
   maxAttendees?: number;
-  registrationRequired?: boolean;
-  tags?: string[];
   imageUrls?: string[];
 }
 
@@ -29,8 +27,6 @@ export interface Event extends Omit<EventData, 'communityId' | 'organizerId'> {
   community: Community;
   organizer: User;
   attendeeCount: number;
-  registrationRequired: boolean;
-  tags: string[];
   imageUrls: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -48,7 +44,6 @@ export interface EventFilter {
   organizerId?: string;
   startDate?: Date;
   endDate?: Date;
-  tags?: string[];
   maxDriveMinutes?: number;
   searchTerm?: string;
   page?: number;

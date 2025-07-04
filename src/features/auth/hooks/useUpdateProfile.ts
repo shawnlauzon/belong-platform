@@ -18,7 +18,7 @@ import { useCurrentUser } from './useCurrentUser';
  * ```tsx
  * function ProfileForm() {
  *   const updateProfile = useUpdateProfile();
- *   const { data: currentUser } = useCurrentUser();
+ *   const currentUser = useCurrentUser();
  *   const [firstName, setFirstName] = useState(currentUser?.firstName || '');
  *   const [lastName, setLastName] = useState(currentUser?.lastName || '');
  *   
@@ -52,7 +52,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const userService = createUserService(supabase);
-  const { data: currentUser } = useCurrentUser();
+  const currentUser = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (updates: Partial<User>) => {

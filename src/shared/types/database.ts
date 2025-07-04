@@ -14,18 +14,13 @@ export type Database = {
           boundary: Json | null
           boundary_geometry: unknown | null
           boundary_geometry_detailed: unknown | null
-          center: unknown | null
           created_at: string
           description: string | null
-          hierarchy_path: Json
           icon: string | null
           id: string
-          level: string | null
           member_count: number
           name: string
           organizer_id: string
-          parent_id: string | null
-          radius_km: number | null
           time_zone: string
           updated_at: string
         }
@@ -33,18 +28,13 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
-          center?: unknown | null
           created_at?: string
           description?: string | null
-          hierarchy_path: Json
           icon?: string | null
           id?: string
-          level?: string | null
           member_count?: number
           name: string
           organizer_id: string
-          parent_id?: string | null
-          radius_km?: number | null
           time_zone: string
           updated_at?: string
         }
@@ -52,18 +42,13 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
-          center?: unknown | null
           created_at?: string
           description?: string | null
-          hierarchy_path?: Json
           icon?: string | null
           id?: string
-          level?: string | null
           member_count?: number
           name?: string
           organizer_id?: string
-          parent_id?: string | null
-          radius_km?: number | null
           time_zone?: string
           updated_at?: string
         }
@@ -277,9 +262,7 @@ export type Database = {
           max_attendees: number | null
           organizer_id: string
           parking_info: string | null
-          registration_required: boolean
           start_date_time: string
-          tags: string[]
           title: string
           updated_at: string
         }
@@ -297,9 +280,7 @@ export type Database = {
           max_attendees?: number | null
           organizer_id: string
           parking_info?: string | null
-          registration_required?: boolean
           start_date_time: string
-          tags?: string[]
           title: string
           updated_at?: string
         }
@@ -317,9 +298,7 @@ export type Database = {
           max_attendees?: number | null
           organizer_id?: string
           parking_info?: string | null
-          registration_required?: boolean
           start_date_time?: string
-          tags?: string[]
           title?: string
           updated_at?: string
         }
@@ -395,7 +374,6 @@ export type Database = {
       }
       resources: {
         Row: {
-          availability: string | null
           category: string
           community_id: string
           created_at: string
@@ -403,16 +381,12 @@ export type Database = {
           id: string
           image_urls: string[]
           location: unknown | null
-          meetup_flexibility: string | null
           owner_id: string
-          parking_info: string | null
-          pickup_instructions: string | null
           title: string
           type: string
           updated_at: string
         }
         Insert: {
-          availability?: string | null
           category: string
           community_id: string
           created_at?: string
@@ -420,16 +394,12 @@ export type Database = {
           id?: string
           image_urls?: string[]
           location?: unknown | null
-          meetup_flexibility?: string | null
           owner_id: string
-          parking_info?: string | null
-          pickup_instructions?: string | null
           title: string
           type: string
           updated_at?: string
         }
         Update: {
-          availability?: string | null
           category?: string
           community_id?: string
           created_at?: string
@@ -437,10 +407,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           location?: unknown | null
-          meetup_flexibility?: string | null
           owner_id?: string
-          parking_info?: string | null
-          pickup_instructions?: string | null
           title?: string
           type?: string
           updated_at?: string

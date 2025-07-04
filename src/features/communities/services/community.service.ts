@@ -16,7 +16,6 @@ import {
 } from '../transformers/communityTransformer';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
-import { User } from '../../users';
 import type { CommunityMembershipRow } from '../types/database';
 
 /**
@@ -32,18 +31,8 @@ const applyCommunityFilters = (query: any, filters: CommunityFilter) => {
   if (filters.name) {
     filteredQuery = filteredQuery.ilike('name', `%${filters.name}%`);
   }
-  if (filters.level) {
-    filteredQuery = filteredQuery.eq('level', filters.level);
-  }
   if (filters.organizerId) {
     filteredQuery = filteredQuery.eq('organizer_id', filters.organizerId);
-  }
-  if (filters.parentId !== undefined) {
-    if (filters.parentId === null) {
-      filteredQuery = filteredQuery.is('parent_id', null);
-    } else {
-      filteredQuery = filteredQuery.eq('parent_id', filters.parentId);
-    }
   }
   return filteredQuery;
 };
@@ -82,18 +71,9 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         ) {
           return false;
         }
-        if (filter?.level && community.level !== filter.level) {
-          return false;
-        }
         if (
           filter?.organizerId &&
           community.organizerId !== filter.organizerId
-        ) {
-          return false;
-        }
-        if (
-          filter?.parentId !== undefined &&
-          community.parentId !== filter.parentId
         ) {
           return false;
         }
@@ -225,11 +205,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         .update({
           name: updateData.name,
           description: updateData.description,
-          level: updateData.level,
           time_zone: updateData.timeZone,
-          hierarchy_path: updateData.hierarchyPath
-            ? JSON.stringify(updateData.hierarchyPath)
-            : undefined,
         })
         .eq('id', updateData.id)
         .select('*, organizer:profiles!communities_organizer_id_fkey(*)')

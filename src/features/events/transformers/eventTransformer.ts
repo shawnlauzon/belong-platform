@@ -23,7 +23,6 @@ export function toDomainEvent(
     coordinates,
     parking_info,
     max_attendees,
-    registration_required,
     is_all_day,
     image_urls,
     attendee_count,
@@ -50,9 +49,7 @@ export function toDomainEvent(
     location: rest.location,
     coordinates: parsePostGisPoint(coordinates),
     maxAttendees: max_attendees || undefined,
-    registrationRequired: registration_required === true, // Default to false if not set
     isAllDay: is_all_day === true, // Default to false if not set
-    tags: rest.tags || [],
     imageUrls: image_urls || [],
     attendeeCount: attendee_count || 0,
     createdAt: new Date(created_at),
@@ -75,9 +72,7 @@ export function forDbInsert(
     endDateTime,
     coordinates,
     maxAttendees,
-    registrationRequired,
     isAllDay,
-    tags,
     imageUrls,
     ...rest
   } = eventData;
@@ -90,9 +85,7 @@ export function forDbInsert(
     end_date_time: endDateTime?.toISOString() || null,
     coordinates: coordinates ? toPostGisPoint(coordinates) : null,
     max_attendees: maxAttendees || null,
-    registration_required: registrationRequired || false,
     is_all_day: isAllDay || false,
-    tags: tags || [],
     image_urls: imageUrls || [],
   };
 }
@@ -110,9 +103,7 @@ export function forDbUpdate(
     endDateTime,
     coordinates,
     maxAttendees,
-    registrationRequired,
     isAllDay,
-    tags,
     imageUrls,
     ...rest
   } = eventData;
@@ -125,9 +116,7 @@ export function forDbUpdate(
     end_date_time: endDateTime?.toISOString() || null,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
     max_attendees: maxAttendees,
-    registration_required: registrationRequired,
     is_all_day: isAllDay,
-    tags: tags,
     image_urls: imageUrls,
   };
 }
@@ -151,9 +140,7 @@ export function toEventInfo(
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     maxAttendees: dbEvent.max_attendees || undefined,
-    registrationRequired: dbEvent.registration_required === true, // Default to false if not set
     isAllDay: dbEvent.is_all_day === true, // Default to false if not set
-    tags: dbEvent.tags || [],
     imageUrls: dbEvent.image_urls || [],
     attendeeCount: dbEvent.attendee_count || 0,
     createdAt: new Date(dbEvent.created_at),

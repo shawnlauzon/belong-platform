@@ -27,7 +27,6 @@ export interface ResourceData {
   communityId: string;
   imageUrls?: string[];
   location?: Coordinates;
-  availability?: string;
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references

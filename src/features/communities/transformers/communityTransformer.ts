@@ -5,7 +5,6 @@ import type {
   CommunityMembership,
   CommunityMembershipData,
 } from '../types/domain';
-import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { toDomainUser } from '../../users/transformers/userTransformer';
 import {
   CommunityInsertDbData,
@@ -18,23 +17,14 @@ import { ProfileRow } from '../../users/types/database';
 import { User } from '~/features/users';
 import type {
   CommunityBoundary,
-  CircularBoundary,
   IsochroneBoundary,
 } from '../types/domain';
-import { isCircularBoundary } from '../types';
 
 /**
  * Transform a domain boundary object to database format with snake_case field names
  */
 function boundaryForDatabase(boundary: CommunityBoundary): any {
-  if (boundary.type === 'circular') {
-    const circularBoundary = boundary as CircularBoundary;
-    return {
-      type: circularBoundary.type,
-      center: circularBoundary.center,
-      radiusKm: circularBoundary.radiusKm,
-    };
-  } else if (boundary.type === 'isochrone') {
+  if (boundary.type === 'isochrone') {
     const isochroneBoundary = boundary as IsochroneBoundary;
     return {
       type: isochroneBoundary.type,
@@ -58,13 +48,7 @@ function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
     return undefined;
   }
 
-  if (dbBoundary.type === 'circular') {
-    return {
-      type: 'circular',
-      center: dbBoundary.center,
-      radiusKm: dbBoundary.radiusKm,
-    } as CircularBoundary;
-  } else if (dbBoundary.type === 'isochrone') {
+  if (dbBoundary.type === 'isochrone') {
     return {
       type: 'isochrone',
       center: dbBoundary.center,
@@ -94,30 +78,15 @@ export function toDomainCommunity(
       ? dbCommunity.organizer
       : toDomainUser(dbCommunity.organizer);
 
-  // Parse PostGIS point to coordinates
-  const coords = dbCommunity.center
-    ? parsePostGisPoint(dbCommunity.center)
-    : undefined;
-
   return {
     id: dbCommunity.id,
     organizer,
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
-    level: dbCommunity.level ?? undefined,
     memberCount: dbCommunity.member_count,
-    radiusKm: dbCommunity.radius_km ?? undefined,
-    center: coords,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
-    parent: undefined,
-    parentId: dbCommunity.parent_id,
-    hierarchyPath: dbCommunity.hierarchy_path
-      ? typeof dbCommunity.hierarchy_path === 'string'
-        ? JSON.parse(dbCommunity.hierarchy_path)
-        : dbCommunity.hierarchy_path
-      : [],
     timeZone: dbCommunity.time_zone,
     boundary: dbCommunity.boundary
       ? JSON.parse(JSON.stringify(dbCommunity.boundary))
@@ -131,32 +100,20 @@ export function toDomainCommunity(
 export function forDbInsert(community: CommunityData): CommunityInsertDbData {
   const {
     organizerId,
-    center,
-    hierarchyPath,
-    parentId,
     timeZone,
-    radiusKm,
     memberCount,
     boundary,
     ...rest
   } = community;
 
   const boundaryGeometry = boundary
-    ? !isCircularBoundary(boundary)
-      ? boundary.polygon
-      : undefined
+    ? boundary.polygon
     : undefined;
 
   return {
     ...rest,
-    center: center ? toPostGisPoint(center) : undefined,
     organizer_id: organizerId,
-    hierarchy_path: hierarchyPath
-      ? JSON.stringify(hierarchyPath)
-      : JSON.stringify([]),
-    parent_id: parentId,
     time_zone: timeZone,
-    radius_km: radiusKm,
     member_count: memberCount,
     boundary: boundary ? boundaryForDatabase(boundary) : undefined,
     boundary_geometry: boundaryGeometry,
@@ -172,15 +129,8 @@ export function forDbUpdate(
     name: community.name,
     description: community.description,
     icon: community.icon,
-    level: community.level,
-    center: community.center ? toPostGisPoint(community.center) : undefined,
     organizer_id: community.organizerId,
-    hierarchy_path: community.hierarchyPath
-      ? JSON.stringify(community.hierarchyPath)
-      : undefined,
-    parent_id: community.parentId,
     time_zone: community.timeZone,
-    radius_km: community.radiusKm,
     boundary: community.boundary
       ? JSON.stringify(boundaryForDatabase(community.boundary))
       : undefined,
@@ -210,12 +160,6 @@ export function toDomainMembership(
     community: dbMembership.community
       ? toDomainCommunity(dbMembership.community)
       : undefined,
-    boundaryGeometry: dbMembership.community?.boundary
-      ? boundaryFromDatabase(dbMembership.community.boundary)
-      : undefined,
-    boundaryGeometryDetailed: dbMembership.community?.boundary
-      ? boundaryFromDatabase(dbMembership.community.boundary)
-      : undefined,
   };
 }
 
@@ -236,11 +180,6 @@ export function forDbMembershipInsert(
  * Transform a database community record to a CommunityInfo object (lightweight for lists)
  */
 export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
-  // Parse PostGIS point to coordinates
-  const coords = dbCommunity.center
-    ? parsePostGisPoint(dbCommunity.center)
-    : undefined;
-
   // Parse boundary JSON
   const boundary = dbCommunity.boundary
     ? boundaryFromDatabase(
@@ -256,18 +195,9 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     memberCount: dbCommunity.member_count,
-    radiusKm: dbCommunity.radius_km ?? undefined,
-    center: coords,
-    level: dbCommunity.level ?? undefined,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
     organizerId: dbCommunity.organizer_id,
-    parentId: dbCommunity.parent_id,
-    hierarchyPath: dbCommunity.hierarchy_path
-      ? typeof dbCommunity.hierarchy_path === 'string'
-        ? JSON.parse(dbCommunity.hierarchy_path)
-        : dbCommunity.hierarchy_path
-      : [],
     timeZone: dbCommunity.time_zone,
     boundary,
   };

@@ -63,7 +63,6 @@ describe('ResourceInfo Transformer', () => {
       community_id: communityId,
       image_urls: [],
       location: null,
-      availability: null,
     });
 
     // Act
@@ -72,7 +71,6 @@ describe('ResourceInfo Transformer', () => {
     // Assert
     expect(result.imageUrls).toEqual([]);
     expect(result.location).toBeUndefined();
-    expect(result.availability).toBe('available'); // Default value
 
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [

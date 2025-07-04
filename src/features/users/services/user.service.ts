@@ -7,7 +7,6 @@ import {
 import { ERROR_CODES } from '../../../shared/constants';
 import type { Database } from '../../../shared/types/database';
 import { User, UserData, UserFilter } from '../types';
-import { ProfileUpdateDbData } from '../types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export const createUserService = (supabase: SupabaseClient<Database>) => ({

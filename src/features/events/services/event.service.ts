@@ -50,9 +50,6 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         if (filters.endDate) {
           query = query.lte('start_date_time', filters.endDate.toISOString());
         }
-        if (filters.tags && filters.tags.length > 0) {
-          query = query.overlaps('tags', filters.tags);
-        }
         if (filters.searchTerm) {
           query = query.or(
             `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`

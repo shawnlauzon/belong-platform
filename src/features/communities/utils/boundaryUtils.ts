@@ -1,6 +1,5 @@
 import type {
   CommunityBoundary,
-  CircularBoundary,
   IsochroneBoundary,
   TravelMode,
 } from '../types/domain';
@@ -41,16 +40,6 @@ function validateCoordinates(coordinates: { lng: number; lat: number }): void {
   }
 }
 
-/**
- * Validates a circular boundary
- */
-export function validateCircularBoundary(boundary: CircularBoundary): void {
-  validateCoordinates(boundary.center);
-
-  if (boundary.radiusKm <= 0) {
-    throw new Error('Radius must be positive');
-  }
-}
 
 /**
  * Validates an isochrone boundary
@@ -95,9 +84,6 @@ export function validateBoundaryData(boundary: CommunityBoundary): void {
   }
 
   switch (boundary.type) {
-    case 'circular':
-      validateCircularBoundary(boundary);
-      break;
     case 'isochrone':
       validateIsochroneBoundary(boundary);
       break;
@@ -156,13 +142,6 @@ export function transformBoundaryToDb(
   validateBoundaryData(boundary);
 
   switch (boundary.type) {
-    case 'circular':
-      return {
-        boundaryJson: boundary,
-        boundaryGeometry: null,
-        boundaryGeometryDetailed: null,
-      };
-
     case 'isochrone': {
       const detailedWKT = polygonToWKT(boundary.polygon);
       const simplifiedWKT = simplifyPolygon(boundary.polygon);
@@ -208,14 +187,6 @@ export function isIsochroneBoundary(
   return boundary.type === 'isochrone';
 }
 
-/**
- * Utility to check if a boundary is a circular type
- */
-export function isCircularBoundary(
-  boundary: CommunityBoundary
-): boundary is CircularBoundary {
-  return boundary.type === 'circular';
-}
 
 /**
  * Get the center coordinates from any boundary type
@@ -231,8 +202,6 @@ export function getBoundaryCenter(
  */
 export function getBoundaryArea(boundary: CommunityBoundary): number {
   switch (boundary.type) {
-    case 'circular':
-      return Math.PI * Math.pow(boundary.radiusKm, 2);
     case 'isochrone':
       return boundary.areaSqKm;
     default:

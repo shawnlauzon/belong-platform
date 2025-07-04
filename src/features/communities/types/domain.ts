@@ -5,11 +5,6 @@ import { Polygon } from './geojson';
 // Boundary types for communities
 export type TravelMode = 'walking' | 'cycling' | 'driving';
 
-export interface CircularBoundary {
-  type: 'circular';
-  center: Coordinates; // [longitude, latitude]
-  radiusKm: number;
-}
 
 export interface IsochroneBoundary {
   type: 'isochrone';
@@ -20,12 +15,11 @@ export interface IsochroneBoundary {
   areaSqKm: number; // Area in square kilometers
 }
 
-export type CommunityBoundary = CircularBoundary | IsochroneBoundary;
+export type CommunityBoundary = IsochroneBoundary;
 
 export interface Community extends Omit<CommunityData, 'organizerId'> {
   id: string;
   organizer: User;
-  parent?: Community;
 
   memberCount: number;
   createdAt: Date;
@@ -48,21 +42,9 @@ export interface CommunityData {
   icon?: string; // Visual icon for the community
 
   organizerId: string;
-  parentId?: string | null; // Null only for global root
 
   // Boundary configuration (new isochrone support)
   boundary?: CommunityBoundary;
-
-  // Legacy boundary fields (maintained for backward compatibility)
-  center?: Coordinates;
-  radiusKm?: number;
-
-  // Geographic Hierarchy (flexible for any administrative structure)
-  hierarchyPath?: Array<{
-    level: string; // "country", "state", "borough", "parish", "district", etc.
-    name: string; // "United States", "Manhattan", "Orleans Parish", etc.
-  }>;
-  level?: string; // Flexible - can be any administrative level
 
   // Status & Metadata
   memberCount?: number;
@@ -70,17 +52,14 @@ export interface CommunityData {
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface CommunityInfo extends Omit<Community, 'organizer' | 'parent'> {
+export interface CommunityInfo extends Omit<Community, 'organizer'> {
   organizerId: string; // Replaces organizer: User
-  parentId: string | null; // Replaces parent?: Community
 }
 
 // For filtering communities
 export interface CommunityFilter {
   name?: string;
-  level?: string;
   organizerId?: string;
-  parentId?: string;
 }
 
 // Community membership types

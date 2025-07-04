@@ -34,8 +34,6 @@ export function createMockResource(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    availability: faker.lorem.word(),
-    isActive: true,
     createdAt: now,
     updatedAt: now,
     owner,
@@ -77,13 +75,6 @@ export function createMockResourceData(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    availability: faker.helpers.arrayElement([
-      'weekdays',
-      'weekends',
-      'anytime',
-      'mornings',
-    ]),
-    isActive: faker.datatype.boolean(),
     ...overrides,
   };
 }
@@ -109,13 +100,6 @@ export function createMockDbResource(
     owner_id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
-    is_active: faker.datatype.boolean(),
-    availability: faker.helpers.arrayElement([
-      'weekdays',
-      'weekends',
-      'anytime',
-      'mornings',
-    ]),
     ...overrides,
   };
 }
