@@ -103,20 +103,18 @@ describe('useShoutout', () => {
     // Act
     const { result } = renderHook(() => useShoutout('shoutout-1'), { wrapper });
 
-    // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for data to be returned
+    await waitFor(() => expect(result.current).toEqual(mockShoutout));
 
     // Assert
-    expect(result.current.data).toEqual(mockShoutout);
+    expect(result.current).toEqual(mockShoutout);
     expect(mockFetchShoutoutById).toHaveBeenCalledWith('shoutout-1');
-    expect(result.current.isPending).toBe(false);
-    expect(result.current.isError).toBe(false);
 
     // Verify the returned data has full objects, not just IDs
-    expect(typeof result.current.data!.fromUser).toBe('object');
-    expect(typeof result.current.data!.toUser).toBe('object');
-    expect(typeof result.current.data!.resource).toBe('object');
-    expect(result.current.data!.fromUser.firstName).toBe('John');
+    expect(typeof result.current!.fromUser).toBe('object');
+    expect(typeof result.current!.toUser).toBe('object');
+    expect(typeof result.current!.resource).toBe('object');
+    expect(result.current!.fromUser.firstName).toBe('John');
   });
 
   it('should return null when shoutout does not exist', async () => {
@@ -126,11 +124,11 @@ describe('useShoutout', () => {
     // Act
     const { result } = renderHook(() => useShoutout('non-existent-id'), { wrapper });
 
-    // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for data to be returned
+    await waitFor(() => expect(result.current).toBeNull());
 
     // Assert
-    expect(result.current.data).toBeNull();
+    expect(result.current).toBeNull();
     expect(mockFetchShoutoutById).toHaveBeenCalledWith('non-existent-id');
   });
 
@@ -142,29 +140,27 @@ describe('useShoutout', () => {
     // Act
     const { result } = renderHook(() => useShoutout('shoutout-1'), { wrapper });
 
-    // Wait for error
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    // Wait for error to result in null return
+    await waitFor(() => expect(result.current).toBeNull());
 
     // Assert
-    expect(result.current.error).toEqual(error);
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.isPending).toBe(false);
+    expect(result.current).toBeNull();
   });
 
-  it('should enable query by default when shoutoutId is provided', () => {
+  it('should return null initially when shoutoutId is provided', () => {
     // Act
     const { result } = renderHook(() => useShoutout('shoutout-1'), { wrapper });
 
-    // Assert - Query should be enabled and pending initially
-    expect(result.current.isPending).toBe(true);
+    // Assert - Hook should return null initially before data loads
+    expect(result.current).toBeNull();
   });
 
   it('should not fetch when shoutoutId is empty', () => {
     // Act
     const { result } = renderHook(() => useShoutout(''), { wrapper });
 
-    // Assert - Query should be disabled when shoutoutId is empty
-    expect(result.current.fetchStatus).toBe('idle');
+    // Assert - Hook should return null and not fetch when shoutoutId is empty
+    expect(result.current).toBeNull();
     expect(mockFetchShoutoutById).not.toHaveBeenCalled();
   });
 });

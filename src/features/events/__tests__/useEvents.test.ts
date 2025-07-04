@@ -70,10 +70,9 @@ describe('useEvents', () => {
     const { result } = renderHook(() => useEvents(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockEvents);
     });
 
-    expect(result.current.data).toEqual(mockEvents);
     expect(mockFetchEvents).toHaveBeenCalledWith(undefined);
   });
 
@@ -85,7 +84,7 @@ describe('useEvents', () => {
     const { result } = renderHook(() => useEvents(filters), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockEvents);
     });
 
     expect(mockFetchEvents).toHaveBeenCalledWith(filters);
@@ -98,9 +97,7 @@ describe('useEvents', () => {
     const { result } = renderHook(() => useEvents(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isError).toBe(true);
+      expect(result.current).toEqual([]);
     });
-
-    expect(result.current.error).toEqual(error);
   });
 });

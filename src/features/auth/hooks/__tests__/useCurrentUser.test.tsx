@@ -60,10 +60,9 @@ describe('useCurrentUser', () => {
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockUser);
     });
 
-    expect(result.current.data).toEqual(mockUser);
     expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
   });
 
@@ -73,10 +72,8 @@ describe('useCurrentUser', () => {
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toBeNull();
     });
-
-    expect(result.current.data).toBeNull();
   });
 
   it('should handle errors gracefully', async () => {
@@ -87,10 +84,9 @@ describe('useCurrentUser', () => {
 
     // Wait for the query to finish and enter error state (no retries for auth errors)
     await waitFor(() => {
-      expect(result.current.isError).toBe(true);
+      expect(result.current).toBeNull();
     });
 
-    expect(result.current.error).toEqual(error);
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
   });
 
@@ -101,7 +97,7 @@ describe('useCurrentUser', () => {
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isError).toBe(true);
+      expect(result.current).toBeNull();
     });
 
     // Should only be called once, no retries
