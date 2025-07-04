@@ -7,13 +7,10 @@ import {
   afterEach,
   afterAll,
 } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import {
   useCommunities,
   useCreateCommunity,
-  useCurrentUser,
-  useSignIn,
-  useSignUp,
 } from '../../../src';
 import {
   TestDataFactory,
@@ -33,7 +30,6 @@ import {
  */
 
 describe('Basic Communities Integration', () => {
-  const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
     testWrapperManager.reset();

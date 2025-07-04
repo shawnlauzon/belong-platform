@@ -7,13 +7,10 @@ import {
   afterEach,
   afterAll,
 } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import {
   useCommunities,
   useCreateCommunity,
-  useCurrentUser,
-  useSignIn,
-  useSignUp,
 } from '../../../src';
 import {
   TestDataFactory,
@@ -35,7 +32,6 @@ import {
  */
 
 describe('Community Boundaries Integration', () => {
-  const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
     testWrapperManager.reset();
@@ -91,18 +87,21 @@ describe('Community Boundaries Integration', () => {
 
       // Verify boundary data if available
       if (createdCommunity.boundary) {
-        expect(createdCommunity.boundary).toMatchObject({
+        const boundary = createdCommunity.boundary;
+        expect(boundary).toMatchObject({
           type: 'circular',
           center: circularBoundary.center,
-          radius_km: circularBoundary.radius_km,
         });
+        if (boundary?.type === 'circular') {
+          expect(boundary.radius_km).toBe(circularBoundary.radius_km);
+        }
       } else {
         console.warn('Boundary data not returned - schema may not be deployed');
       }
 
       commonExpectations.toBeValidId(createdCommunity.id);
     } catch (error) {
-      if (error.message?.includes('boundary') && error.message?.includes('schema cache')) {
+      if ((error as Error).message?.includes('boundary') && (error as Error).message?.includes('schema cache')) {
         console.warn('Boundary column not found in schema cache - test skipped');
         return;
       }
@@ -146,18 +145,22 @@ describe('Community Boundaries Integration', () => {
     });
 
     // Verify boundary data
-    expect(createdCommunity.boundary).toMatchObject({
+    const boundary = createdCommunity.boundary;
+    expect(boundary).toMatchObject({
       type: 'isochrone',
       center: isochroneBoundary.center,
-      travelMode: isochroneBoundary.travelMode,
-      minutes: isochroneBoundary.minutes,
-      area: isochroneBoundary.area,
     });
-
-    // Verify polygon structure
-    expect(createdCommunity.boundary.polygon).toHaveProperty('type', 'Polygon');
-    expect(createdCommunity.boundary.polygon).toHaveProperty('coordinates');
-    expect(Array.isArray(createdCommunity.boundary.polygon.coordinates)).toBe(true);
+    
+    if (boundary?.type === 'isochrone') {
+      expect(boundary.travelMode).toBe(isochroneBoundary.travelMode);
+      expect(boundary.minutes).toBe(isochroneBoundary.minutes);
+      expect(boundary.area).toBe(isochroneBoundary.area);
+      
+      // Verify polygon structure
+      expect(boundary.polygon).toHaveProperty('type', 'Polygon');
+      expect(boundary.polygon).toHaveProperty('coordinates');
+      expect(Array.isArray(boundary.polygon.coordinates)).toBe(true);
+    }
 
     commonExpectations.toBeValidId(createdCommunity.id);
   });

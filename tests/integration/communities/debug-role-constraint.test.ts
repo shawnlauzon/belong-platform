@@ -71,7 +71,7 @@ describe('Debug Role Constraint Investigation', () => {
     } catch (error) {
       console.log('❌ Community creation failed with error:', error);
 
-      if (error.message?.includes('role_check')) {
+      if ((error as Error).message?.includes('role_check')) {
         console.log('🔍 Role constraint violation detected');
         console.log('🔍 Error details:', JSON.stringify(error, null, 2));
       }
