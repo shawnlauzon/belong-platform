@@ -103,8 +103,7 @@ describe('User Search Functionality (Database Schema Fix)', () => {
     ];
 
     // Mock the query result (no search term, so no .or() call)
-    mockSupabase.order.mockReturnValue(mockSupabase);
-    mockSupabase.is.mockResolvedValue({
+    mockSupabase.order.mockResolvedValue({
       data: mockUsers,
       error: null,
     });

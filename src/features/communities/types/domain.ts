@@ -31,10 +31,6 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   createdAt: Date;
   updatedAt: Date;
 
-  // Soft delete fields
-  deletedAt?: Date;
-  deletedBy?: string;
-
   // Optional membership status for current user
   currentUserMembership?: CommunityMembership;
 }
@@ -52,7 +48,7 @@ export interface CommunityData {
   icon?: string; // Visual icon for the community
 
   organizerId: string;
-  parentId: string | null; // Null only for global root
+  parentId?: string | null; // Null only for global root
 
   // Boundary configuration (new isochrone support)
   boundary?: CommunityBoundary;
@@ -69,7 +65,7 @@ export interface CommunityData {
   level?: string; // Flexible - can be any administrative level
 
   // Status & Metadata
-  memberCount: number;
+  memberCount?: number;
   timeZone: string;
 }
 
@@ -85,7 +81,6 @@ export interface CommunityFilter {
   level?: string;
   organizerId?: string;
   parentId?: string;
-  includeDeleted?: boolean;
 }
 
 // Community membership types

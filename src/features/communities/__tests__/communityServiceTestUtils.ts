@@ -87,7 +87,6 @@ export function createMockDbCommunity(
     hierarchy_path: JSON.stringify([]),
     time_zone: 'UTC',
     member_count: 10,
-    is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -144,10 +143,10 @@ export const CommunityServiceAssertions = {
  */
 export const QuerySetups = {
   /**
-   * Standard fetchCommunities query (select, order, is) - is resolves last for soft deletion
+   * Standard fetchCommunities query (select, order) - order resolves last (no soft deletion)
    */
   fetchCommunities: (mockSupabase: any, data: any[] = [], error: any = null) =>
-    setupMockQuery(mockSupabase, ['select', 'order', 'is'], 'is', {
+    setupMockQuery(mockSupabase, ['select', 'order'], 'order', {
       data,
       error,
     }),
@@ -231,8 +230,7 @@ export const TestData = {
       {
         id: 'active-community',
         name: 'Active Community',
-        is_active: true,
-      },
+          },
       baseUser
     ),
 

@@ -12,10 +12,6 @@ import { toConversationInfo } from '../transformers/conversationTransformer';
 import { forDbInsert as forDbMessageInsert } from '../transformers/messageTransformer';
 import { toMessageInfo } from '../transformers/messageTransformer';
 import { createUserService } from '../../users/services/user.service';
-import {
-  applyDeletedFilter,
-  createSoftDeleteUpdate,
-} from '../../../shared/utils/soft-deletion';
 
 /**
  * Conversations Service Factory
@@ -42,7 +38,6 @@ export const createConversationsService = (
         .order('last_message_at', { ascending: false });
 
       // Apply deleted filter
-      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply filters if provided
       if (filters?.hasUnread !== undefined) {
@@ -137,7 +132,6 @@ export const createConversationsService = (
         .order('created_at', { ascending: false });
 
       // Apply deleted filter
-      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply pagination
       const page = filters?.page || 1;
@@ -413,10 +407,10 @@ export const createConversationsService = (
         throw new Error('You are not authorized to delete this conversation');
       }
 
-      // Perform the soft delete
+      // Perform the hard delete
       const { error: deleteError } = await supabase
         .from('conversations')
-        .update(createSoftDeleteUpdate(userId))
+        .delete()
         .eq('id', conversationId);
 
       if (deleteError) {
@@ -484,10 +478,10 @@ export const createConversationsService = (
         throw new Error('You are not authorized to delete this message');
       }
 
-      // Perform the soft delete
+      // Perform the hard delete
       const { error: deleteError } = await supabase
         .from('direct_messages')
-        .update(createSoftDeleteUpdate(userId))
+        .delete()
         .eq('id', messageId);
 
       if (deleteError) {

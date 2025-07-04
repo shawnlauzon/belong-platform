@@ -11,18 +11,17 @@ import { vi } from 'vitest';
  * 
  * @param mockSupabase - The mock Supabase client object
  * @param finalMethodResult - Result to return from the final method
- * @param finalMethod - The method that resolves (defaults to 'is')
+ * @param finalMethod - The method that resolves (defaults to 'order')
  */
 export function setupChainableResourceQuery(
   mockSupabase: any,
   finalMethodResult: { data: any; error: any },
-  finalMethod: string = 'is'
+  finalMethod: string = 'order'
 ) {
   mockSupabase.from.mockReturnValue(mockSupabase);
   mockSupabase.select.mockReturnValue(mockSupabase);
-  mockSupabase.order.mockReturnValue(mockSupabase);
+  mockSupabase.order.mockReturnValue(finalMethodResult);
   mockSupabase.eq.mockReturnValue(mockSupabase);
-  mockSupabase.is.mockReturnValue(finalMethodResult);
   
   return mockSupabase;
 }
@@ -42,8 +41,6 @@ export function createMockDbResource(overrides: Partial<any> = {}) {
     description: 'Test Description',
     owner_id: 'user-1',
     community_id: 'community-1',
-    deleted_at: null,
-    deleted_by: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -98,32 +95,11 @@ export const ResourceServiceAssertions = {
  */
 export const TestData = {
   /**
-   * Non-deleted resource for testing fetch operations
+   * Active resource for testing fetch operations
    */
   activeResource: () =>
     createMockDbResource({
       id: 'resource-active',
       title: 'Active Resource',
-      deleted_at: null,
-      deleted_by: null,
     }),
-
-  /**
-   * Deleted resource for testing soft delete behavior
-   */
-  deletedResource: () =>
-    createMockDbResource({
-      id: 'resource-deleted', 
-      title: 'Deleted Resource',
-      deleted_at: new Date().toISOString(),
-      deleted_by: 'user-admin',
-    }),
-
-  /**
-   * Mixed active and deleted resources for testing filtering
-   */
-  mixedResources: () => [
-    TestData.activeResource(),
-    TestData.deletedResource(),
-  ],
 };

@@ -24,10 +24,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
 import { User } from '../../users';
-import {
-  applyDeletedFilter,
-  createSoftDeleteUpdate,
-} from '../../../shared/utils/soft-deletion';
 
 export const createEventService = (supabase: SupabaseClient<Database>) => ({
   async fetchEvents(filters?: EventFilter): Promise<EventInfo[]> {
@@ -39,8 +35,6 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         .select('*')
         .order('start_date_time', { ascending: true });
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, filters?.includeDeleted);
 
       // Apply other filters if provided
       if (filters) {
@@ -117,8 +111,6 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     try {
       let query = supabase.from('events').select('*').eq('id', id);
 
-      // Apply deleted filter
-      query = applyDeletedFilter(query, options?.includeDeleted);
 
       const { data, error } = await query.single();
 
@@ -342,10 +334,10 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         throw new Error('You are not authorized to delete this event');
       }
 
-      // Perform the soft delete
+      // Perform the hard delete
       const { error: deleteError } = await supabase
         .from('events')
-        .update(createSoftDeleteUpdate(userId))
+        .delete()
         .eq('id', id);
 
       if (deleteError) {

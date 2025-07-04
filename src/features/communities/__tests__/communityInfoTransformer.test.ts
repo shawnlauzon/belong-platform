@@ -43,8 +43,6 @@ describe('CommunityInfo Transformer', () => {
     expect(result).toHaveProperty('hierarchyPath');
     expect(result).toHaveProperty('timeZone', 'America/New_York');
     expect(result).toHaveProperty('memberCount', 150);
-    expect(result).toHaveProperty('deletedAt', undefined);
-    expect(result).toHaveProperty('deletedBy', undefined);
     expect(result).toHaveProperty('createdAt');
     expect(result).toHaveProperty('updatedAt');
 
@@ -96,8 +94,6 @@ describe('CommunityInfo Transformer', () => {
     expect(result.hierarchyPath).toEqual([]);
     expect(result.timeZone).toBe('UTC');
     expect(result.memberCount).toBe(1);
-    expect(result.deletedAt).toEqual(new Date('2024-01-15T00:00:00Z'));
-    expect(result.deletedBy).toBe('admin-123');
 
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [

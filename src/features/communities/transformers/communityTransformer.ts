@@ -50,10 +50,6 @@ export function toDomainCommunity(
     center: coords,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
-    deletedAt: dbCommunity.deleted_at
-      ? new Date(dbCommunity.deleted_at)
-      : undefined,
-    deletedBy: dbCommunity.deleted_by ?? undefined,
     parent: undefined,
     parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path
@@ -174,10 +170,6 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     level: dbCommunity.level ?? undefined,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
-    deletedAt: dbCommunity.deleted_at
-      ? new Date(dbCommunity.deleted_at)
-      : undefined,
-    deletedBy: dbCommunity.deleted_by ?? undefined,
     organizerId: dbCommunity.organizer_id,
     parentId: dbCommunity.parent_id,
     hierarchyPath: dbCommunity.hierarchy_path
