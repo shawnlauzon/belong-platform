@@ -7,17 +7,17 @@ export type TravelMode = 'walking' | 'cycling' | 'driving';
 
 export interface CircularBoundary {
   type: 'circular';
-  center: [number, number]; // [longitude, latitude]
-  radius_km: number;
+  center: Coordinates; // [longitude, latitude]
+  radiusKm: number;
 }
 
 export interface IsochroneBoundary {
   type: 'isochrone';
-  center: [number, number]; // [longitude, latitude]
+  center: Coordinates; // [longitude, latitude]
   travelMode: TravelMode;
-  minutes: number; // Travel time in minutes (5-60)
+  travelTimeMin: number; // Travel time in minutes (5-60)
   polygon: Polygon; // Actual isochrone polygon from Mapbox API
-  area: number; // Area in square kilometers
+  areaSqKm: number; // Area in square kilometers
 }
 
 export type CommunityBoundary = CircularBoundary | IsochroneBoundary;

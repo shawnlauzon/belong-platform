@@ -8,10 +8,7 @@ import {
   afterAll,
 } from 'vitest';
 import { waitFor } from '@testing-library/react';
-import {
-  useCommunities,
-  useCreateCommunity,
-} from '../../../src';
+import { useCommunities, useCreateCommunity } from '../../../src';
 import {
   TestDataFactory,
   authHelper,
@@ -32,7 +29,6 @@ import {
  */
 
 describe('Community Boundaries Integration', () => {
-
   beforeAll(() => {
     testWrapperManager.reset();
   });
@@ -61,10 +57,11 @@ describe('Community Boundaries Integration', () => {
     }
 
     const { result: createResult } = await testUtils.renderHookWithWrapper(() =>
-      useCreateCommunity()
+      useCreateCommunity(),
     );
 
-    const communityData = TestDataFactory.createCommunityWithBoundary('circular');
+    const communityData =
+      TestDataFactory.createCommunityWithBoundary('circular');
     const circularBoundary = communityData.boundary!;
 
     try {
@@ -75,7 +72,7 @@ describe('Community Boundaries Integration', () => {
             organizerId: authUser.userId,
             parentId: null,
           }),
-        'create community with circular boundary'
+        'create community with circular boundary',
       );
 
       expect(createdCommunity).toMatchObject({
@@ -91,6 +88,7 @@ describe('Community Boundaries Integration', () => {
         expect(boundary).toMatchObject({
           type: 'circular',
           center: circularBoundary.center,
+          radiusKm: circularBoundary.radiusKm,
         });
         if (boundary?.type === 'circular') {
           expect(boundary.radius_km).toBe(circularBoundary.radius_km);
@@ -101,8 +99,13 @@ describe('Community Boundaries Integration', () => {
 
       commonExpectations.toBeValidId(createdCommunity.id);
     } catch (error) {
-      if ((error as Error).message?.includes('boundary') && (error as Error).message?.includes('schema cache')) {
-        console.warn('Boundary column not found in schema cache - test skipped');
+      if (
+        (error as Error).message?.includes('boundary') &&
+        (error as Error).message?.includes('schema cache')
+      ) {
+        console.warn(
+          'Boundary column not found in schema cache - test skipped',
+        );
         return;
       }
       throw error;
@@ -121,10 +124,11 @@ describe('Community Boundaries Integration', () => {
     }
 
     const { result: createResult } = await testUtils.renderHookWithWrapper(() =>
-      useCreateCommunity()
+      useCreateCommunity(),
     );
 
-    const communityData = TestDataFactory.createCommunityWithBoundary('isochrone');
+    const communityData =
+      TestDataFactory.createCommunityWithBoundary('isochrone');
     const isochroneBoundary = communityData.boundary!;
 
     const createdCommunity = await testUtils.performAsyncAction(
@@ -134,7 +138,7 @@ describe('Community Boundaries Integration', () => {
           organizerId: authUser.userId,
           parentId: null,
         }),
-      'create community with isochrone boundary'
+      'create community with isochrone boundary',
     );
 
     expect(createdCommunity).toMatchObject({
@@ -149,13 +153,16 @@ describe('Community Boundaries Integration', () => {
     expect(boundary).toMatchObject({
       type: 'isochrone',
       center: isochroneBoundary.center,
+      travelMode: isochroneBoundary.travelMode,
+      travelTimeMin: isochroneBoundary.travelTimeMin,
+      areaSqKm: isochroneBoundary.areaSqKm,
     });
-    
+
     if (boundary?.type === 'isochrone') {
       expect(boundary.travelMode).toBe(isochroneBoundary.travelMode);
       expect(boundary.minutes).toBe(isochroneBoundary.minutes);
       expect(boundary.area).toBe(isochroneBoundary.area);
-      
+
       // Verify polygon structure
       expect(boundary.polygon).toHaveProperty('type', 'Polygon');
       expect(boundary.polygon).toHaveProperty('coordinates');
@@ -177,19 +184,20 @@ describe('Community Boundaries Integration', () => {
     }
 
     const { result: createResult } = await testUtils.renderHookWithWrapper(() =>
-      useCreateCommunity()
+      useCreateCommunity(),
     );
     const { result: communitiesResult } = await testUtils.renderHookWithWrapper(
-      () => useCommunities()
+      () => useCommunities(),
     );
 
     await testUtils.waitForHookToInitialize(
       communitiesResult,
-      (query) => query.isLoading !== undefined
+      (query) => query.isLoading !== undefined,
     );
 
     // Create a community with boundary
-    const communityData = TestDataFactory.createCommunityWithBoundary('circular');
+    const communityData =
+      TestDataFactory.createCommunityWithBoundary('circular');
     const createdCommunity = await testUtils.performAsyncAction(
       () =>
         createResult.current({
@@ -197,7 +205,7 @@ describe('Community Boundaries Integration', () => {
           organizerId: authUser.userId,
           parentId: null,
         }),
-      'create community with boundary for retrieval test'
+      'create community with boundary for retrieval test',
     );
 
     // Wait for the list to update
@@ -205,13 +213,13 @@ describe('Community Boundaries Integration', () => {
       () => {
         const communities = communitiesResult.current.data;
         const found = communities?.find(
-          (community) => community.id === createdCommunity.id
+          (community) => community.id === createdCommunity.id,
         );
         expect(found).toBeDefined();
         expect(found?.boundary).toBeDefined();
         expect(found?.boundary?.type).toBe('circular');
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
   });
 
@@ -221,17 +229,19 @@ describe('Community Boundaries Integration', () => {
     expect(circularBoundary.type).toBe('circular');
     expect(Array.isArray(circularBoundary.center)).toBe(true);
     expect(circularBoundary.center).toHaveLength(2);
-    expect(typeof circularBoundary.radius_km).toBe('number');
-    expect(circularBoundary.radius_km).toBeGreaterThan(0);
+    expect(typeof circularBoundary.radiusKm).toBe('number');
+    expect(circularBoundary.radiusKm).toBeGreaterThan(0);
 
     const isochroneBoundary = TestDataFactory.createIsochroneBoundary();
     expect(isochroneBoundary.type).toBe('isochrone');
     expect(Array.isArray(isochroneBoundary.center)).toBe(true);
     expect(isochroneBoundary.center).toHaveLength(2);
-    expect(['walking', 'cycling', 'driving']).toContain(isochroneBoundary.travelMode);
-    expect(isochroneBoundary.minutes).toBeGreaterThan(0);
-    expect(isochroneBoundary.minutes).toBeLessThanOrEqual(60);
-    expect(isochroneBoundary.area).toBeGreaterThan(0);
+    expect(['walking', 'cycling', 'driving']).toContain(
+      isochroneBoundary.travelMode,
+    );
+    expect(isochroneBoundary.travelTimeMin).toBeGreaterThan(0);
+    expect(isochroneBoundary.travelTimeMin).toBeLessThanOrEqual(60);
+    expect(isochroneBoundary.areaSqKm).toBeGreaterThan(0);
     expect(isochroneBoundary.polygon.type).toBe('Polygon');
     expect(Array.isArray(isochroneBoundary.polygon.coordinates)).toBe(true);
   });

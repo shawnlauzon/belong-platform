@@ -58,9 +58,9 @@ describe('useCreateCommunity Hook', () => {
     // Arrange
     const mockBoundary: IsochroneBoundary = {
       type: 'isochrone',
-      center: [-74.006, 40.7128], // NYC coordinates
+      center: { lng: -74.006, lat: 40.7128 }, // NYC coordinates
       travelMode: 'walking',
-      minutes: 15,
+      travelTimeMin: 15,
       polygon: {
         type: 'Polygon',
         coordinates: [[
@@ -71,7 +71,7 @@ describe('useCreateCommunity Hook', () => {
           [-74.006, 40.7128],
         ]],
       },
-      area: 2.5,
+      areaSqKm: 2.5,
     };
 
     const communityData = createMockCommunityData({
@@ -110,8 +110,8 @@ describe('useCreateCommunity Hook', () => {
       name: 'Circular Boundary Community',
       boundary: {
         type: 'circular',
-        center: [-74.006, 40.7128],
-        radius_km: 5,
+        center: { lng: -74.006, lat: 40.7128 },
+        radiusKm: 5,
       },
     });
 
