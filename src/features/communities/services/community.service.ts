@@ -169,7 +169,13 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     logger.debug('🏘️ API: Creating community', { name: data.name });
 
     try {
-      await requireAuthentication(supabase, 'create community');
+      const currentUserId = await requireAuthentication(
+        supabase,
+        'create community'
+      );
+      if (data.organizerId !== currentUserId) {
+        throw new Error('You must be the organizer of the community.');
+      }
 
       const { data: newCommunity, error } = await supabase
         .from('communities')
@@ -202,7 +208,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
         organizer,
         parentId: data.parentId || null,
         hierarchyPath: data.hierarchyPath,
-        memberCount: data.memberCount,
+        memberCount: 1,
         boundary: data.boundary,
         deletedAt: undefined,
         createdAt: new Date(),
@@ -230,7 +236,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
             communityId: newCommunity.id,
             organizerId: data.organizerId,
           });
-          // Don't throw here - community was created successfully
+          // Don't throw here - community was created successfullyG
           // This is a non-critical error that can be fixed later
         } else {
           logger.info('🏘️ API: Successfully added organizer as member', {
@@ -262,7 +268,7 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
     try {
       const userId = await requireAuthentication(supabase, 'update community');
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('communities')
         .update({
           name: updateData.name,
@@ -273,43 +279,20 @@ export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
             ? JSON.stringify(updateData.hierarchyPath)
             : undefined,
         })
-        .eq('id', updateData.id);
+        .eq('id', updateData.id)
+        .select('*')
+        .single();
 
       if (error) {
         logger.error('🏘️ API: Failed to update community', { error });
         throw error;
       }
 
-      // Return a simplified community object
-      const organizer: User = {
-        id: userId,
-        email: '',
-        firstName: '',
-        lastName: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const community: Community = {
-        id: updateData.id,
-        name: updateData.name || '',
-        description: updateData.description,
-        level: updateData.level || 'neighborhood',
-        timeZone: updateData.timeZone || 'America/New_York',
-        organizer,
-        parentId: updateData.parentId || null,
-        hierarchyPath: updateData.hierarchyPath || [],
-        memberCount: updateData.memberCount || 0,
-        deletedAt: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
       logger.info('🏘️ API: Successfully updated community', {
-        id: community.id,
-        name: community.name,
+        id: data.id,
+        name: data.name,
       });
-      return community;
+      return toDomainCommunity(data);
     } catch (error) {
       logger.error('🏘️ API: Error updating community', { error });
       throw error;

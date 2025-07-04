@@ -1,15 +1,6 @@
 import { Coordinates } from '../../../shared';
 import { User } from '../../users';
-
-// GeoJSON types
-declare global {
-  namespace GeoJSON {
-    interface Polygon {
-      type: 'Polygon';
-      coordinates: number[][][];
-    }
-  }
-}
+import { Polygon } from './geojson';
 
 // Boundary types for communities
 export type TravelMode = 'walking' | 'cycling' | 'driving';
@@ -25,7 +16,7 @@ export interface IsochroneBoundary {
   center: [number, number]; // [longitude, latitude]
   travelMode: TravelMode;
   minutes: number; // Travel time in minutes (5-60)
-  polygon: GeoJSON.Polygon; // Actual isochrone polygon from Mapbox API
+  polygon: Polygon; // Actual isochrone polygon from Mapbox API
   area: number; // Area in square kilometers
 }
 
@@ -65,20 +56,19 @@ export interface CommunityData {
 
   // Boundary configuration (new isochrone support)
   boundary?: CommunityBoundary;
-  
+
   // Legacy boundary fields (maintained for backward compatibility)
   center?: Coordinates;
   radiusKm?: number;
 
   // Geographic Hierarchy (flexible for any administrative structure)
-  hierarchyPath: Array<{
+  hierarchyPath?: Array<{
     level: string; // "country", "state", "borough", "parish", "district", etc.
     name: string; // "United States", "Manhattan", "Orleans Parish", etc.
   }>;
-  level: string; // Flexible - can be any administrative level
+  level?: string; // Flexible - can be any administrative level
 
   // Status & Metadata
-  memberCount: number;
   timeZone: string;
 }
 

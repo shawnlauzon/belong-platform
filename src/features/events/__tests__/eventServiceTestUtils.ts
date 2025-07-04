@@ -175,54 +175,6 @@ export function createMockDbEvents(
  * Common assertion patterns for event service tests
  */
 export const EventServiceAssertions = {
-  /**
-   * Asserts standard fetchEvents query pattern with soft deletion
-   */
-  expectFetchEventsQuery: (mockSupabase: any, mockQuery: any) => {
-    expect(mockSupabase.from).toHaveBeenCalledWith('events');
-    expect(mockQuery.select).toHaveBeenCalledWith('*');
-    expect(mockQuery.order).toHaveBeenCalledWith('start_date_time', {
-      ascending: true,
-    });
-    expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
-  },
-
-  /**
-   * Asserts community filter was applied
-   */
-  expectCommunityFilter: (mockQuery: any, communityId: string) => {
-    expect(mockQuery.eq).toHaveBeenCalledWith('community_id', communityId);
-  },
-
-  /**
-   * Asserts organizer filter was applied  
-   */
-  expectOrganizerFilter: (mockQuery: any, organizerId: string) => {
-    expect(mockQuery.eq).toHaveBeenCalledWith('organizer_id', organizerId);
-  },
-
-  /**
-   * Asserts date range filters were applied
-   */
-  expectDateRangeFilter: (mockQuery: any, startDate: Date, endDate: Date) => {
-    expect(mockQuery.gte).toHaveBeenCalledWith(
-      'start_date_time',
-      startDate.toISOString()
-    );
-    expect(mockQuery.lte).toHaveBeenCalledWith(
-      'start_date_time',
-      endDate.toISOString()
-    );
-  },
-
-  /**
-   * Asserts search filter was applied
-   */
-  expectSearchFilter: (mockQuery: any, searchTerm: string) => {
-    expect(mockQuery.or).toHaveBeenCalledWith(
-      `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
-    );
-  },
 
   /**
    * Asserts result array length
