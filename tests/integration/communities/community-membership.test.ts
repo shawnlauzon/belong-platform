@@ -8,16 +8,11 @@ import {
   afterAll,
 } from 'vitest';
 import {
-  useCommunities,
   useCreateCommunity,
   useJoinCommunity,
   useLeaveCommunity,
   useCommunityMembers,
   useUserCommunities,
-  useCurrentUser,
-  useSignIn,
-  useSignOut,
-  useSignUp,
 } from '../../../src';
 import {
   TestDataFactory,
@@ -25,11 +20,9 @@ import {
   cleanupHelper,
   testWrapperManager,
   testUtils,
-  commonExpectations,
 } from '../helpers';
 
 describe('Community Membership Integration', () => {
-  const wrapper = testWrapperManager.getWrapper();
 
   beforeAll(() => {
     testWrapperManager.reset();

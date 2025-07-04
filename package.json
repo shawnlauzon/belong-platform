@@ -21,6 +21,7 @@
     "test:integration:cleanup": "node tests/integration/scripts/cleanup-database.js",
     "test:complete": "pnpm test && pnpm test:integration",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.tests.json",
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write .",
     "docs": "typedoc",
