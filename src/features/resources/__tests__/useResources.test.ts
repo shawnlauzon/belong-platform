@@ -185,7 +185,10 @@ describe('useResources', () => {
       createElement(
         QueryClientProvider,
         { client: queryClient },
-        createElement(BelongProvider, { config: testConfig }, children)
+        createElement(BelongProvider, {
+          config: testConfig,
+          children: children,
+        }),
       );
   });
 
@@ -200,7 +203,6 @@ describe('useResources', () => {
         description: 'Power drill for DIY projects',
         ownerId: 'user-1', // ID instead of User object
         communityId: 'community-1', // ID instead of Community object
-        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

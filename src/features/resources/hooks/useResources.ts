@@ -58,7 +58,7 @@ import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
  * }
  * ```
  */
-export function useResources(filters?: ResourceFilter) {
+export function useResources(filters?: ResourceFilter): ResourceInfo[] {
   const supabase = useSupabase();
 
   const query = useQuery<ResourceInfo[], Error>({

@@ -42,7 +42,7 @@ import type { Resource, ResourceInfo } from '@/features/resources/types';
  * }
  * ```
  */
-export function useResource(id: string) {
+export function useResource(id: string): Resource | null {
   const supabase = useSupabase();
 
   // Fetch the ResourceInfo (with only IDs)
@@ -53,11 +53,11 @@ export function useResource(id: string) {
     enabled: !!id,
   });
 
-  // Fetch the owner User data
-  const ownerQuery = useUser(resourceQuery.data?.ownerId || '');
-  
-  // Fetch the community data if available
-  const communityQuery = useCommunity(resourceQuery.data?.communityId || '');
+  // Fetch the owner User data (only when we have the ownerId)
+  const owner = useUser(resourceQuery.data?.ownerId || '');
+
+  // Fetch the community data if available (only when we have the communityId)
+  const community = useCommunity(resourceQuery.data?.communityId || '');
 
   if (resourceQuery.error) {
     logger.error('📚 API: Error fetching resource', {
@@ -66,15 +66,17 @@ export function useResource(id: string) {
     });
   }
 
-  // Compose the full Resource object
-  if (!resourceQuery.data || !ownerQuery) {
+  // Don't compose until we have all required data
+  if (!resourceQuery.data || !owner) {
     return null;
   }
 
+  // Compose the full Resource object - exclude ID fields and add full objects
+  const { ownerId, communityId, ...resourceWithoutIds } = resourceQuery.data;
   const resource: Resource = {
-    ...resourceQuery.data,
-    owner: ownerQuery,
-    community: communityQuery || undefined,
+    ...resourceWithoutIds,
+    owner,
+    community: community || undefined,
   };
 
   return resource;

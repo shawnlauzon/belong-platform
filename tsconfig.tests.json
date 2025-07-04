@@ -2,6 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
+    "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "types": [
       "vitest/globals"
@@ -10,11 +11,11 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "tests/integration/**/*.ts",
-    "tests/integration/**/*.tsx"
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
-    "dist",
+    "dist"
   ]
 }

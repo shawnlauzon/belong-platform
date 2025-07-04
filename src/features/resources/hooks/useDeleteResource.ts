@@ -6,23 +6,23 @@ import { deleteResource } from '@/features/resources/api';
 
 /**
  * Hook for deleting a resource.
- * 
+ *
  * Provides a mutation function for deleting resources.
  * Automatically removes resource from cache on successful deletion.
- * 
+ *
  * @returns Delete resource mutation function
- * 
+ *
  * @example
  * ```tsx
  * function DeleteResourceButton({ resourceId }) {
  *   const deleteResource = useDeleteResource();
  *   const [isDeleting, setIsDeleting] = useState(false);
- *   
+ *
  *   const handleDelete = async () => {
  *     if (!confirm('Are you sure you want to delete this resource?')) {
  *       return;
  *     }
- *     
+ *
  *     setIsDeleting(true);
  *     try {
  *       await deleteResource(resourceId);
@@ -33,9 +33,9 @@ import { deleteResource } from '@/features/resources/api';
  *       setIsDeleting(false);
  *     }
  *   };
- *   
+ *
  *   return (
- *     <button 
+ *     <button
  *       onClick={handleDelete}
  *       disabled={isDeleting}
  *     >
@@ -45,7 +45,7 @@ import { deleteResource } from '@/features/resources/api';
  * }
  * ```
  */
-export function useDeleteResource() {
+export function useDeleteResource(): (id: string) => Promise<void> {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
@@ -82,6 +82,6 @@ export function useDeleteResource() {
     (id: string) => {
       return mutation.mutateAsync(id);
     },
-    [mutation.mutateAsync]
+    [mutation.mutateAsync],
   );
 }

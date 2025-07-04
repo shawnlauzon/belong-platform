@@ -2,7 +2,8 @@ import { Coordinates } from '@/shared';
 import { Community } from '../../communities';
 import { User } from '../../users';
 
-export interface Resource extends Omit<ResourceData, 'communityId'> {
+export interface Resource
+  extends Omit<ResourceData, 'ownerId' | 'communityId'> {
   id: string;
   owner: User;
   community?: Community;
@@ -25,6 +26,7 @@ export interface ResourceData {
   title: string;
   description: string;
   communityId: string;
+  ownerId: string;
   imageUrls?: string[];
   location?: Coordinates;
 }
