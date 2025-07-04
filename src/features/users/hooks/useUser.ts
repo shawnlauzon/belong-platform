@@ -30,8 +30,8 @@ import type { User } from '../types';
  *       <p>Email: {user.email}</p>
  *       {user.bio && <p>Bio: {user.bio}</p>}
  *       {user.profilePictureUrl && (
- *         <img 
- *           src={user.profilePictureUrl} 
+ *         <img
+ *           src={user.profilePictureUrl}
  *           alt={`${user.firstName}'s profile`}
  *         />
  *       )}
@@ -46,7 +46,7 @@ import type { User } from '../types';
  * // Using in a user settings form
  * function UserSettingsForm({ userId }: { userId: string }) {
  *   const { data: user, isPending } = useUser(userId);
- *   
+ *
  *   if (isPending) return <div>Loading...</div>;
  *   if (!user) return <div>User not found</div>;
  *
@@ -66,7 +66,7 @@ export function useUser(userId: string) {
   const supabase = useSupabase();
   const userService = createUserService(supabase);
 
-  return useQuery<User | null, Error>({
+  const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => {
       logger.debug('👤 useUser: Fetching user by ID', { userId });
@@ -75,4 +75,12 @@ export function useUser(userId: string) {
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(userId?.trim()),
   });
+
+  if (query.error) {
+    logger.error('🔐 API: Error fetching user', {
+      error: query.error,
+    });
+  }
+
+  return query.data ?? null;
 }

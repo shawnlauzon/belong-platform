@@ -35,5 +35,5 @@ export function useEvents(filters?: EventFilter) {
     });
   }
 
-  return query;
+  return query.data ?? [];
 }

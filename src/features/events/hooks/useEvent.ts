@@ -33,5 +33,5 @@ export function useEvent(eventId: string) {
     });
   }
 
-  return query;
+  return query.data ?? null;
 }

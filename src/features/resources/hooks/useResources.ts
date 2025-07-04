@@ -77,5 +77,5 @@ export function useResources(filters?: ResourceFilter) {
     });
   }
 
-  return query;
+  return query.data ?? [];
 }

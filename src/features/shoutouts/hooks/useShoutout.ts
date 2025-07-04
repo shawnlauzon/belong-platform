@@ -47,7 +47,7 @@ export function useShoutout(shoutoutId: string) {
   const supabase = useSupabase();
   const shoutoutsService = createShoutoutsService(supabase);
 
-  return useQuery<Shoutout | null, Error>({
+  const query = useQuery<Shoutout | null, Error>({
     queryKey: queryKeys.shoutouts.byId(shoutoutId),
     queryFn: () => {
       logger.debug('📢 useShoutout: Fetching shoutout by ID', { shoutoutId });
@@ -56,4 +56,12 @@ export function useShoutout(shoutoutId: string) {
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(shoutoutId?.trim()),
   });
+
+  if (query.error) {
+    logger.error('📢 API: Error fetching shoutout', {
+      error: query.error,
+    });
+  }
+
+  return query.data ?? null;
 }

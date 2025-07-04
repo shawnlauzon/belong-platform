@@ -51,5 +51,5 @@ export function useCommunity(id: string) {
     });
   }
 
-  return query;
+  return query.data ?? null;
 }

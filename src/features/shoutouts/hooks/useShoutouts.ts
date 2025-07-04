@@ -50,7 +50,7 @@ export function useShoutouts(filters?: ShoutoutFilter) {
   const supabase = useSupabase();
   const shoutoutsService = createShoutoutsService(supabase);
 
-  return useQuery<ShoutoutInfo[], Error>({
+  const query = useQuery<ShoutoutInfo[], Error>({
     queryKey: filters
       ? queryKeys.shoutouts.filtered(toRecords(filters))
       : queryKeys.shoutouts.all,
@@ -60,4 +60,12 @@ export function useShoutouts(filters?: ShoutoutFilter) {
     },
     staleTime: STANDARD_CACHE_TIME,
   });
+
+  if (query.error) {
+    logger.error('📢 API: Error fetching shoutouts', {
+      error: query.error,
+    });
+  }
+
+  return query.data ?? [];
 }

@@ -51,7 +51,7 @@ export function useUsers(filters?: UserFilter) {
   const supabase = useSupabase();
   const userService = createUserService(supabase);
 
-  return useQuery<User[], Error>({
+  const query = useQuery<User[], Error>({
     queryKey: filters
       ? queryKeys.users.filtered(toRecords(filters))
       : queryKeys.users.all,
@@ -61,4 +61,12 @@ export function useUsers(filters?: UserFilter) {
     },
     staleTime: STANDARD_CACHE_TIME,
   });
+
+  if (query.error) {
+    logger.error('👥 API: Error fetching users', {
+      error: query.error,
+    });
+  }
+
+  return query.data ?? [];
 }

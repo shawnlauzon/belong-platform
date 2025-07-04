@@ -52,5 +52,5 @@ export function useCurrentUser() {
     });
   }
 
-  return query;
+  return query.data ?? null;
 }
