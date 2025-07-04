@@ -75,19 +75,16 @@ describe('useUser', () => {
     const { result } = renderHook(() => useUser('user-1'), { wrapper });
 
     // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current).toEqual(mockUser));
 
     // Assert
-    expect(result.current.data).toEqual(mockUser);
     expect(mockFetchUserById).toHaveBeenCalledWith('user-1');
-    expect(result.current.isPending).toBe(false);
-    expect(result.current.isError).toBe(false);
 
     // Verify the returned data has full user object
-    expect(result.current.data!.firstName).toBe('Jane');
-    expect(result.current.data!.lastName).toBe('Doe');
-    expect(result.current.data!.email).toBe('jane@example.com');
-    expect(result.current.data!.bio).toBe('Product manager with 5 years of experience');
+    expect(result.current!.firstName).toBe('Jane');
+    expect(result.current!.lastName).toBe('Doe');
+    expect(result.current!.email).toBe('jane@example.com');
+    expect(result.current!.bio).toBe('Product manager with 5 years of experience');
   });
 
   it('should return null when user does not exist', async () => {
@@ -98,10 +95,9 @@ describe('useUser', () => {
     const { result } = renderHook(() => useUser('non-existent-id'), { wrapper });
 
     // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current).toBeNull());
 
     // Assert
-    expect(result.current.data).toBeNull();
     expect(mockFetchUserById).toHaveBeenCalledWith('non-existent-id');
   });
 
@@ -113,21 +109,16 @@ describe('useUser', () => {
     // Act
     const { result } = renderHook(() => useUser('user-1'), { wrapper });
 
-    // Wait for error
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
-    // Assert
-    expect(result.current.error).toEqual(error);
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.isPending).toBe(false);
+    // Wait for error (should return null on error)
+    await waitFor(() => expect(result.current).toBeNull());
   });
 
   it('should enable query by default when userId is provided', () => {
     // Act
     const { result } = renderHook(() => useUser('user-1'), { wrapper });
 
-    // Assert - Query should be enabled and pending initially
-    expect(result.current.isPending).toBe(true);
+    // Assert - Query should be enabled and return null initially
+    expect(result.current).toBeNull();
   });
 
   it('should not fetch when userId is empty', () => {
@@ -135,7 +126,7 @@ describe('useUser', () => {
     const { result } = renderHook(() => useUser(''), { wrapper });
 
     // Assert - Query should be disabled when userId is empty
-    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current).toBeNull();
     expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 
@@ -144,7 +135,7 @@ describe('useUser', () => {
     const { result } = renderHook(() => useUser(undefined as any), { wrapper });
 
     // Assert - Query should be disabled
-    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current).toBeNull();
     expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 });

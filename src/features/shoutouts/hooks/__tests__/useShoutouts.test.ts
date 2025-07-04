@@ -79,14 +79,12 @@ describe('useShoutouts (query-only)', () => {
     // Act
     const { result } = renderHook(() => useShoutouts(), { wrapper });
 
-    // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for data to be returned
+    await waitFor(() => expect(result.current).toEqual(mockShoutoutInfo));
 
     // Assert
-    expect(result.current.data).toEqual(mockShoutoutInfo);
+    expect(result.current).toEqual(mockShoutoutInfo);
     expect(mockFetchShoutouts).toHaveBeenCalledWith(undefined);
-    expect(result.current.isPending).toBe(false);
-    expect(result.current.isError).toBe(false);
   });
 
   it('should pass filters to fetchShoutouts and return filtered ShoutoutInfo[]', async () => {
@@ -109,11 +107,11 @@ describe('useShoutouts (query-only)', () => {
     // Act
     const { result } = renderHook(() => useShoutouts(filters), { wrapper });
 
-    // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Wait for data to be returned
+    await waitFor(() => expect(result.current).toEqual(mockShoutoutInfo));
 
     // Assert
-    expect(result.current.data).toEqual(mockShoutoutInfo);
+    expect(result.current).toEqual(mockShoutoutInfo);
     expect(mockFetchShoutouts).toHaveBeenCalledWith(filters);
   });
 
@@ -125,21 +123,19 @@ describe('useShoutouts (query-only)', () => {
     // Act
     const { result } = renderHook(() => useShoutouts(), { wrapper });
 
-    // Wait for error
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    // Wait for error to result in empty array return
+    await waitFor(() => expect(result.current).toEqual([]));
 
     // Assert
-    expect(result.current.error).toEqual(error);
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.isPending).toBe(false);
+    expect(result.current).toEqual([]);
   });
 
-  it('should enable query by default', () => {
+  it('should return empty array initially', () => {
     // Act
     const { result } = renderHook(() => useShoutouts(), { wrapper });
 
-    // Assert - Query should be enabled by default (unlike the old consolidated hook)
-    expect(result.current.isPending).toBe(true);
+    // Assert - Hook should return empty array initially before data loads
+    expect(result.current).toEqual([]);
   });
 
   it('should use correct query key based on filters', async () => {

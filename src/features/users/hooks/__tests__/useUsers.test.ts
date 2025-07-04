@@ -79,13 +79,10 @@ describe('useUsers (query-only)', () => {
     const { result } = renderHook(() => useUsers(), { wrapper });
 
     // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current).toEqual(mockUsers));
 
     // Assert
-    expect(result.current.data).toEqual(mockUsers);
     expect(mockFetchUsers).toHaveBeenCalledWith(undefined);
-    expect(result.current.isPending).toBe(false);
-    expect(result.current.isError).toBe(false);
   });
 
   it('should pass filters to fetchUsers and return filtered User[]', async () => {
@@ -107,10 +104,9 @@ describe('useUsers (query-only)', () => {
     const { result } = renderHook(() => useUsers(filters), { wrapper });
 
     // Wait for query to complete
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current).toEqual(mockUsers));
 
     // Assert
-    expect(result.current.data).toEqual(mockUsers);
     expect(mockFetchUsers).toHaveBeenCalledWith(filters);
   });
 
@@ -122,21 +118,16 @@ describe('useUsers (query-only)', () => {
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
 
-    // Wait for error
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
-    // Assert
-    expect(result.current.error).toEqual(error);
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.isPending).toBe(false);
+    // Wait for error (should return empty array on error)
+    await waitFor(() => expect(result.current).toEqual([]));
   });
 
   it('should enable query by default', () => {
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
 
-    // Assert - Query should be enabled by default
-    expect(result.current.isPending).toBe(true);
+    // Assert - Query should be enabled by default and return empty array initially
+    expect(result.current).toEqual([]);
   });
 
   it('should use correct query key based on filters', async () => {

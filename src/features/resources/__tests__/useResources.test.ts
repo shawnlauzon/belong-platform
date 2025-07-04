@@ -219,15 +219,14 @@ describe('useResources', () => {
     const { result } = renderHook(() => useResources(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockResourceInfo);
     });
 
     // Assert
-    expect(result.current.data).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(undefined);
 
     // Verify the returned data has ID references, not full objects
-    const resource = result.current.data![0];
+    const resource = result.current[0];
     expect(typeof resource.ownerId).toBe('string');
     expect(typeof resource.communityId).toBe('string');
     expect(resource).not.toHaveProperty('owner');
@@ -244,11 +243,10 @@ describe('useResources', () => {
     const { result } = renderHook(() => useResources(filters), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockResourceInfo);
     });
 
     // Assert
-    expect(result.current.data).toEqual(mockResourceInfo);
     expect(mockFetchResources).toHaveBeenCalledWith(filters);
   });
 
@@ -262,11 +260,10 @@ describe('useResources', () => {
 
     // Assert - Data should be fetched automatically
     await waitFor(() => {
-      expect(mockFetchResources).toHaveBeenCalled();
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current).toEqual(mockResourceInfo);
     });
 
-    expect(result.current.data).toEqual(mockResourceInfo);
+    expect(mockFetchResources).toHaveBeenCalled();
   });
 
   it('should handle errors gracefully', async () => {
@@ -277,11 +274,9 @@ describe('useResources', () => {
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    // Assert
+    // Assert - Should return empty array on error
     await waitFor(() => {
-      expect(result.current.isError).toBe(true);
+      expect(result.current).toEqual([]);
     });
-
-    expect(result.current.error).toEqual(error);
   });
 });
