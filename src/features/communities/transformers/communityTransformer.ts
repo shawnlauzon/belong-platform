@@ -77,6 +77,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     timeZone,
     radiusKm,
     boundary,
+    memberCount,
     ...rest
   } = community;
 
@@ -89,6 +90,7 @@ export function forDbInsert(community: CommunityData): CommunityInsertDbData {
     time_zone: timeZone,
     radius_km: radiusKm,
     boundary: boundary ? JSON.stringify(boundary) : undefined,
+    member_count: memberCount,
   };
 }
 

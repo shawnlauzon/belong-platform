@@ -69,6 +69,7 @@ export interface CommunityData {
   level?: string; // Flexible - can be any administrative level
 
   // Status & Metadata
+  memberCount: number;
   timeZone: string;
 }
 
