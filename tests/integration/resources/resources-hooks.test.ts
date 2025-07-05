@@ -77,14 +77,14 @@ describe('Resources Integration Tests', () => {
   test('should list resources from database', async () => {
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeDefined();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
+    if (result.current.isError) {
+      throw result.current.error;
+    }
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
   });
 
   test('should handle empty resources list', async () => {
@@ -93,14 +93,14 @@ describe('Resources Integration Tests', () => {
 
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeDefined();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
+    if (result.current.isError) {
+      throw result.current.error;
+    }
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
     // May have other resources, so just verify it's an array
   });
 
@@ -144,16 +144,14 @@ describe('Resources Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeDefined();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
-
-    if (result.current) {
-      expect(result.current.id).toBe(testResourceId);
+    if (result.current.isError) {
+      throw result.current.error;
     }
+
+    expect(result.current.data.id).toBe(testResourceId);
   });
 
   test('should handle non-existent resource ID', async () => {
@@ -162,14 +160,13 @@ describe('Resources Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeNull();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
-
-    expect(result.current).toBeNull();
+    if (result.current.isError) {
+      throw result.current.error;
+    }
+    expect(result.current.data).toBeNull();
   });
 
   test('should update existing resource', async () => {
@@ -227,14 +224,14 @@ describe('Resources Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeDefined();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
+    if (result.current.isError) {
+      throw result.current.error;
+    }
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
 
     // If there are results, verify they match the filter
     if (result.current && result.current.length > 0) {
@@ -249,14 +246,14 @@ describe('Resources Integration Tests', () => {
       wrapper,
     });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBeDefined();
-      },
-      { timeout: 10000 },
+    await waitFor(() =>
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy(),
     );
+    if (result.current.isError) {
+      throw result.current.error;
+    }
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
 
     // If there are results, verify they match the filter
     if (result.current && result.current.length > 0) {

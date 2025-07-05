@@ -48,7 +48,7 @@ describe('Basic Smoke Tests', () => {
       expect(result.current).toBeDefined();
     });
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
   });
 
   test('should be able to list communities without authentication', async () => {
@@ -60,7 +60,7 @@ describe('Basic Smoke Tests', () => {
       expect(result.current).toBeDefined();
     });
 
-    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.data).toBeInstanceOf(Array);
   });
 
   test('should handle environment variables correctly', async () => {

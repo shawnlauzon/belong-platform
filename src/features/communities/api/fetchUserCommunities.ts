@@ -19,7 +19,7 @@ export async function fetchUserCommunities(
         *,
         community:communities(
           *,
-          organizer:users(*)
+          organizer:profiles(*)
         )
       `,
       )

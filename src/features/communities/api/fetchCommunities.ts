@@ -25,6 +25,7 @@ export async function fetchCommunities(
     }
 
     const { data, error } = await query;
+    console.log('*** data', data);
 
     if (error) {
       logger.error('🏘️ API: Failed to fetch communities', { error });
@@ -39,6 +40,7 @@ export async function fetchCommunities(
       count: communities.length,
       filter,
     });
+    console.log('*** communities', communities);
     return communities;
   } catch (error) {
     logger.error('🏘️ API: Error fetching communities', { error });

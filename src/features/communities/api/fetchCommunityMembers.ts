@@ -17,7 +17,7 @@ export async function fetchCommunityMembers(
       .select(
         `
         *,
-        user:users(*)
+        user:profiles(*)
       `,
       )
       .eq('community_id', communityId)
