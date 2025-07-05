@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createUserService } from '../services/user.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { fetchUserById } from '../api';
+import { STANDARD_CACHE_TIME } from '@/config';
 import type { User } from '../types';
 
 /**
@@ -62,15 +62,14 @@ import type { User } from '../types';
  *
  * @category React Hooks
  */
-export function useUser(userId: string) {
+export function useUser(userId: string): User | null {
   const supabase = useSupabase();
-  const userService = createUserService(supabase);
 
   const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => {
       logger.debug('👤 useUser: Fetching user by ID', { userId });
-      return userService.fetchUserById(userId);
+      return fetchUserById(supabase, userId);
     },
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(userId?.trim()),

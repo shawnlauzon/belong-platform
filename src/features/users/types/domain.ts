@@ -13,8 +13,7 @@ export interface User {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UserData
-  extends Omit<User, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface UserData extends Omit<User, 'createdAt' | 'updatedAt'> {}
 
 export interface UserFilter {
   searchTerm?: string;

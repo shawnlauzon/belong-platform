@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createUserService } from '../services/user.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { fetchUsers } from '../api';
+import { STANDARD_CACHE_TIME } from '@/config';
 import type { User, UserFilter } from '../types';
-import { toRecords } from '../../../shared';
+import { toRecords } from '@/shared';
 
 /**
  * Hook for fetching a list of users with optional filtering.
@@ -47,9 +47,8 @@ import { toRecords } from '../../../shared';
  *
  * @category React Hooks
  */
-export function useUsers(filters?: UserFilter) {
+export function useUsers(filters?: UserFilter): User[] {
   const supabase = useSupabase();
-  const userService = createUserService(supabase);
 
   const query = useQuery<User[], Error>({
     queryKey: filters
@@ -57,7 +56,7 @@ export function useUsers(filters?: UserFilter) {
       : queryKeys.users.all,
     queryFn: () => {
       logger.debug('👤 useUsers: Fetching users', { filters });
-      return userService.fetchUsers(filters);
+      return fetchUsers(supabase, filters);
     },
     staleTime: STANDARD_CACHE_TIME,
   });

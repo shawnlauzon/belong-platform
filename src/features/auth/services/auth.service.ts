@@ -1,9 +1,9 @@
-import { logger } from '../../../shared';
-import { createUserService } from '../../users/services/user.service';
+import { logger } from '@/shared';
+import { fetchUserById } from '@/features/users/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../../../shared/types/database';
+import type { Database } from '@/shared/types/database';
 import { Account } from '../types';
-import { User } from '../../users';
+import { User } from '@/features/users';
 /**
  * Service layer for authentication operations
  * This handles pure auth operations without caching concerns
@@ -180,9 +180,8 @@ export const createAuthService = (supabase: SupabaseClient<Database>) => {
         return null;
       }
 
-      // Use user service to get profile data
-      const userService = createUserService(supabase);
-      return userService.fetchUserById(authUser.id);
+      // Use fetch function to get profile data
+      return fetchUserById(supabase, authUser.id);
     },
   };
 };

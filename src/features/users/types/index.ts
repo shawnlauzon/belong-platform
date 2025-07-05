@@ -1,3 +1,2 @@
 export * from './domain';
-
-// Don't export db types
+export * from './database';

@@ -11,7 +11,7 @@ import type {
 import { toConversationInfo } from '../transformers/conversationTransformer';
 import { forDbInsert as forDbMessageInsert } from '../transformers/messageTransformer';
 import { toMessageInfo } from '../transformers/messageTransformer';
-import { createUserService } from '../../users/services/user.service';
+import { fetchUserById } from '@/features/users/api';
 
 /**
  * Conversations Service Factory
@@ -77,7 +77,7 @@ export const createConversationsService = (
       });
 
       // Batch fetch all users
-      const userService = createUserService(supabase);
+      // Use fetchUserById directly
       const users = new Map();
       for (const id of userIds) {
         try {
@@ -157,7 +157,7 @@ export const createConversationsService = (
       });
 
       // Batch fetch all users
-      const userService = createUserService(supabase);
+      // Use fetchUserById directly
       const users = new Map();
       for (const id of userIds) {
         try {

@@ -11,7 +11,7 @@ import {
   forDbInsert,
   forDbUpdate,
 } from '../transformers/shoutoutsTransformer';
-import { createUserService } from '../../users/services/user.service';
+import { fetchUserById } from '@/features/users/api';
 import { fetchResourceById } from '../../resources/api/fetchResourceById';
 import { requireAuthentication } from '../../../shared/utils';
 import { ERROR_CODES } from '../../../shared/constants';

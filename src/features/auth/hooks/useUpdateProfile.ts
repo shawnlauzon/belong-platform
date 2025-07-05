@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { User } from '../../users/types';
-import { createUserService } from '../../users/services/user.service';
-import { useSupabase } from '../../../shared';
-import { logger } from '../../../shared';
+import { User } from '@/features/users';
+import { updateUser } from '@/features/users/api';
+import { useSupabase } from '@/shared';
+import { logger } from '@/shared';
 import { useCurrentUser } from './useCurrentUser';
 
 /**
@@ -51,20 +51,19 @@ import { useCurrentUser } from './useCurrentUser';
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const userService = createUserService(supabase);
   const currentUser = useCurrentUser();
 
-  const mutation = useMutation({
+  const mutation = useMutation<User, Error, Partial<User>>({
     mutationFn: (updates: Partial<User>) => {
       if (!currentUser?.id) {
         throw new Error('No authenticated user to update');
       }
-      return userService.updateUser({
+      return updateUser(supabase, {
         id: currentUser.id,
         ...updates,
       });
     },
-    onSuccess: (updatedUser) => {
+    onSuccess: (updatedUser: User) => {
       logger.info('🔐 API: Profile updated successfully', {
         userId: updatedUser.id,
       });

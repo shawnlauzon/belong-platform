@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createUserService } from '../services/user.service';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { deleteUser } from '../api';
 
 /**
  * Hook for deleting user profiles.
@@ -109,12 +109,11 @@ import { createUserService } from '../services/user.service';
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const userService = createUserService(supabase);
 
   const mutation = useMutation({
     mutationFn: (userId: string) => {
       logger.debug('👤 useDeleteUser: Deleting user', { userId });
-      return userService.deleteUser(userId);
+      return deleteUser(supabase, userId);
     },
     onSuccess: (_, userId) => {
       // Invalidate all user queries to refetch lists

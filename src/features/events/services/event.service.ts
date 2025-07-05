@@ -16,7 +16,7 @@ import {
   toDomainEventAttendance,
   forDbInsert as forDbAttendanceInsert,
 } from '../transformers/eventAttendanceTransformer';
-import { createUserService } from '../../users/services/user.service';
+import { fetchUserById } from '@/features/users/api';
 import { createCommunityService } from '../../communities/services/community.service';
 import { requireAuthentication } from '../../../shared/utils/auth-helpers';
 import { ERROR_CODES } from '../../../shared/constants';

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createUserService } from '../services/user.service';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { updateUser } from '../api';
 import type { User } from '../types';
 
 /**
@@ -101,12 +101,11 @@ import type { User } from '../types';
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const userService = createUserService(supabase);
 
   const mutation = useMutation({
     mutationFn: (userData: Partial<User> & { id: string }) => {
       logger.debug('👤 useUpdateUser: Updating user', { id: userData.id });
-      return userService.updateUser(userData);
+      return updateUser(supabase, userData);
     },
     onSuccess: (updatedUser: User) => {
       // Invalidate all user queries to refetch lists

@@ -11,29 +11,29 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
 - Delete old code completely (no deprecation)
 - Happy path tests only using faker factories
 
-## Phase 1: Setup & Shared Infrastructure
+## Phase 1: Setup & Shared Infrastructure ✅
 
 ### 1.1 Create Shared Test Utilities
-- [ ] Create `src/test-utils/supabase-mocks.ts`
-  - [ ] Implement `createMockSupabase()` that returns typed SupabaseClient
-  - [ ] Support chaining pattern: `.from().select().eq().single()`
-  - [ ] Accept data fixtures: `createMockSupabase({ resources: [...] })`
+- [x] Create `src/test-utils/supabase-mocks.ts`
+  - [x] Implement `createMockSupabase()` that returns typed SupabaseClient
+  - [x] Support chaining pattern: `.from().select().eq().single()`
+  - [x] Accept data fixtures: `createMockSupabase({ resources: [...] })`
 
 ### 1.2 Update TypeScript Paths
-- [ ] Ensure `tsconfig.json` has `"@/*": ["src/*"]` path mapping
-- [ ] Verify all packages can use `@/` imports
+- [x] Ensure `tsconfig.json` has `"@/*": ["src/*"]` path mapping
+- [x] Verify all packages can use `@/` imports
 
-## Phase 2: Resources Feature Migration
+## Phase 2: Resources Feature Migration ✅
 
 ### 2.1 Create New Structure
-- [ ] Create directories:
+- [x] Create directories:
   - `src/features/resources/api/`
   - `src/features/resources/__tests__/api/`
   - `src/features/resources/__tests__/hooks/`
   - `src/features/resources/__tests__/factories/`
 
 ### 2.2 Create Factory Functions
-- [ ] Create `src/features/resources/__tests__/factories/resourceFactory.ts`
+- [x] Create `src/features/resources/__tests__/factories/resourceFactory.ts`
   ```typescript
   import { faker } from '@faker-js/faker';
   import type { ResourceRow } from '@/features/resources/types/database';
@@ -52,17 +52,17 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
   ```
 
 ### 2.3 Implement Fetch Functions
-- [ ] Create `src/features/resources/api/fetchResourceById.ts`
+- [x] Create `src/features/resources/api/fetchResourceById.ts`
   - Return type: `Promise<ResourceInfo | null>`
   - Use `toResourceInfo()` transformer
-- [ ] Create `src/features/resources/api/fetchResources.ts`
+- [x] Create `src/features/resources/api/fetchResources.ts`
   - Return type: `Promise<ResourceInfo[]>`
-- [ ] Create `src/features/resources/api/createResource.ts`
-- [ ] Create `src/features/resources/api/updateResource.ts`
-- [ ] Create `src/features/resources/api/deleteResource.ts`
+- [x] Create `src/features/resources/api/createResource.ts`
+- [x] Create `src/features/resources/api/updateResource.ts`
+- [x] Create `src/features/resources/api/deleteResource.ts`
 
 ### 2.4 Write API Tests
-- [ ] Create `src/features/resources/__tests__/api/fetchResourceById.test.ts`
+- [x] Create `src/features/resources/__tests__/api/fetchResourceById.test.ts`
   ```typescript
   import { createMockSupabase } from '@/test-utils/supabase-mocks';
   import { createMockResourceRow } from '../factories/resourceFactory';
@@ -79,70 +79,70 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
     });
   });
   ```
-- [ ] Repeat for other fetch functions (happy path only)
+- [x] Repeat for other fetch functions (happy path only)
 
 ### 2.5 Update Hooks
-- [ ] Update `useResource.ts` to:
+- [x] Update `useResource.ts` to:
   - Import fetch functions from `../api/`
   - Remove service creation
   - Compose Resource from ResourceInfo + User + Community
-- [ ] Update `useResources.ts`
-- [ ] Update `useCreateResource.ts`
-- [ ] Update `useUpdateResource.ts`
-- [ ] Update `useDeleteResource.ts`
+- [x] Update `useResources.ts`
+- [x] Update `useCreateResource.ts`
+- [x] Update `useUpdateResource.ts`
+- [x] Update `useDeleteResource.ts`
 
 ### 2.6 Update Barrel Exports
-- [ ] Update `src/features/resources/hooks/index.ts`
+- [x] Update `src/features/resources/hooks/index.ts`
   ```typescript
   export * from './useResource';
   export * from './useResources';
   // ... all hooks
   ```
-- [ ] Update `src/features/resources/types/index.ts`
+- [x] Update `src/features/resources/types/index.ts`
   ```typescript
   export * from './domain';
   export * from './database';
   ```
-- [ ] Update `src/features/resources/index.ts`
+- [x] Update `src/features/resources/index.ts`
   ```typescript
   export * from './hooks';
   export * from './types';
   ```
 
 ### 2.7 Clean Up
-- [ ] Delete `src/features/resources/services/` directory
-- [ ] Delete all old service tests
-- [ ] Delete old hook tests that test implementation
-- [ ] Update all imports to use `@/features/resources`
+- [x] Delete `src/features/resources/services/` directory
+- [x] Delete all old service tests
+- [x] Delete old hook tests that test implementation
+- [x] Update all imports to use `@/features/resources`
 
 ### 2.8 Verify
-- [ ] Run unit tests: `pnpm test`
-- [ ] Run integration tests: `pnpm test:integration`
-- [ ] Run type check: `pnpm typecheck`
-- [ ] Run lint: `pnpm lint`
+- [x] Run unit tests: `pnpm test`
+- [x] Run integration tests: `pnpm test:integration`
+- [x] Run type check: `pnpm typecheck`
+- [x] Run lint: `pnpm lint`
 
-## Phase 3: Users Feature Migration
+## Phase 3: Users Feature Migration ✅
 
 ### 3.1 Create Structure
-- [ ] Same directory structure as Resources
+- [x] Same directory structure as Resources
 
 ### 3.2 Create Factory
-- [ ] `createMockUserRow(): UserRow`
-- [ ] `createMockUser(): User`
+- [x] `createMockUserRow(): UserRow`
+- [x] `createMockUser(): User`
 
 ### 3.3 Implement Fetch Functions
-- [ ] `fetchUserById(supabase, id): Promise<User | null>`
-- [ ] `fetchUsers(supabase, filters?): Promise<User[]>`
-- [ ] Note: Users don't have nested objects, return full User
+- [x] `fetchUserById(supabase, id): Promise<User | null>`
+- [x] `fetchUsers(supabase, filters?): Promise<User[]>`
+- [x] Note: Users don't have nested objects, return full User
 
 ### 3.4 Update Hooks & Tests
-- [ ] Update all user hooks
-- [ ] Write happy path tests
+- [x] Update all user hooks
+- [x] Write happy path tests
 
 ### 3.5 Clean Up
-- [ ] Delete user service
-- [ ] Delete old tests
-- [ ] Update imports
+- [x] Delete user service
+- [x] Delete old tests
+- [x] Update imports
 
 ## Phase 4: Communities Feature Migration
 
