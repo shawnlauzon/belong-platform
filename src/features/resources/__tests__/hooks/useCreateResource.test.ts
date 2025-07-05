@@ -45,7 +45,9 @@ describe('useCreateResource', () => {
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
-    mockUseCurrentUser.mockReturnValue(mockCurrentUser);
+    mockUseCurrentUser.mockReturnValue({
+      data: mockCurrentUser,
+    } as ReturnType<typeof useCurrentUser>);
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());

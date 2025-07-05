@@ -69,12 +69,13 @@ Type Safety
 
 TDD
 
-- Always write a test before writing the code
+- Do not write a new test case if you are fixing a unit test failure
+- If you are not fixing a unit test failure, write a test before writing the code
 - Use the test file to guide the implementation
 
 Testing
 
-- The package has unit tests in __tests__ directories within each feature
+- The package has unit tests in **tests** directories within each feature
 - Integration tests are located in the tests/integration directory
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging

@@ -27,7 +27,7 @@ vi.mock('../../../communities/api/fetchCommunityById', () => ({
   fetchCommunityById: vi.fn(),
 }));
 
-import { useSupabase, queryKeys } from '../../../../shared';
+import { useSupabase } from '../../../../shared';
 import { fetchResourceInfoById } from '../../api/fetchResourceInfoById';
 import { fetchUserById } from '../../../users/api/fetchUserById';
 import { fetchCommunityById } from '../../../communities/api/fetchCommunityById';
@@ -39,7 +39,6 @@ const mockFetchCommunityById = vi.mocked(fetchCommunityById);
 
 describe('useResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
-  let queryClient: any;
   let mockSupabase: SupabaseClient<Database>;
   let mockResourceInfo: ReturnType<typeof createMockResourceInfo>;
   let mockOwner: User;
@@ -72,7 +71,6 @@ describe('useResource', () => {
     // Use shared test wrapper and get queryClient for cache testing
     const testWrapper = createDefaultTestWrapper();
     wrapper = testWrapper.wrapper;
-    queryClient = testWrapper.queryClient;
   });
 
   it('should return a full Resource object composed from ResourceInfo + User + Community', async () => {
