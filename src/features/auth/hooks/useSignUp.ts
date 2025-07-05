@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createAuthService } from '../services/auth.service';
-import { useSupabase } from '../../../shared';
-import { logger } from '../../../shared';
+import { signUp } from '../api';
+import { useSupabase } from '@/shared';
+import { logger } from '@/shared';
 
 /**
  * Hook for signing up a new user.
@@ -61,7 +61,6 @@ import { logger } from '../../../shared';
 export function useSignUp() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const authService = createAuthService(supabase);
 
   const mutation = useMutation({
     mutationFn: ({
@@ -74,7 +73,7 @@ export function useSignUp() {
       password: string;
       firstName: string;
       lastName?: string;
-    }) => authService.signUp(email, password, firstName, lastName),
+    }) => signUp(supabase, email, password, firstName, lastName),
     onSuccess: (account) => {
       logger.info('🔐 API: User signed up successfully', {
         userId: account.id,
@@ -89,16 +88,20 @@ export function useSignUp() {
     },
   });
 
-  // Return stable function reference
-  return useCallback(
-    (params: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName?: string;
-    }) => {
-      return mutation.mutateAsync(params);
-    },
-    [mutation.mutateAsync]
-  );
+  // Return mutation with stable function references
+  return {
+    ...mutation,
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation.mutate]
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation.mutateAsync]
+    ),
+  };
 }

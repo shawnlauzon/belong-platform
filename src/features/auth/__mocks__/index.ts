@@ -22,3 +22,35 @@ export function createMockAccount(overrides: Partial<Account> = {}): Account {
     ...overrides,
   };
 }
+
+export function createMockSignInData(
+  overrides: Partial<{ email: string; password: string }> = {},
+): { email: string; password: string } {
+  return {
+    email: faker.internet.email(),
+    password: faker.internet.password(),
+    ...overrides,
+  };
+}
+
+export function createMockSignUpData(
+  overrides: Partial<{
+    email: string;
+    password: string;
+    firstName: string;
+    lastName?: string;
+  }> = {},
+): {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName?: string;
+} {
+  return {
+    email: faker.internet.email(),
+    password: faker.internet.password(),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    ...overrides,
+  };
+}

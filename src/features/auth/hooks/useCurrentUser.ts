@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { STANDARD_CACHE_TIME } from '../../../config';
-import { createAuthService } from '../services/auth.service';
-import { useSupabase } from '../../../shared';
-import { logger } from '../../../shared';
+import { STANDARD_CACHE_TIME } from '@/config';
+import { getCurrentUser } from '../api';
+import { useSupabase } from '@/shared';
+import { logger } from '@/shared';
 
 /**
  * Hook for fetching the current authenticated user.
@@ -27,11 +27,10 @@ import { logger } from '../../../shared';
  */
 export function useCurrentUser() {
   const supabase = useSupabase();
-  const authService = createAuthService(supabase);
 
   const query = useQuery({
     queryKey: ['auth'],
-    queryFn: authService.getCurrentUser,
+    queryFn: () => getCurrentUser(supabase),
     staleTime: STANDARD_CACHE_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {

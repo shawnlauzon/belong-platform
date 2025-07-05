@@ -1,4 +1,4 @@
-import { Coordinates } from '../../../shared';
+import { Coordinates } from '@/shared';
 
 export interface Account {
   id: string;
