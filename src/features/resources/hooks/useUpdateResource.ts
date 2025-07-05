@@ -12,12 +12,12 @@ import type { ResourceData, ResourceInfo } from '@/features/resources/types';
  * Provides a mutation function for updating resource information.
  * Automatically invalidates resource caches on successful update.
  *
- * @returns Update resource mutation function
+ * @returns React Query mutation result with update function and state
  *
  * @example
  * ```tsx
  * function EditResourceForm({ resourceId }) {
- *   const updateResource = useUpdateResource();
+ *   const { mutate: updateResource, isLoading, error } = useUpdateResource();
  *   const { data: resource } = useResource(resourceId);
  *   const [formData, setFormData] = useState({
  *     title: resource?.title || '',
@@ -25,14 +25,16 @@ import type { ResourceData, ResourceInfo } from '@/features/resources/types';
  *     isActive: resource?.isActive ?? true
  *   });
  *
- *   const handleSubmit = async (e) => {
+ *   const handleSubmit = (e) => {
  *     e.preventDefault();
- *     try {
- *       await updateResource(resourceId, formData);
- *       // Resource updated successfully
- *     } catch (error) {
- *       console.error('Failed to update resource:', error);
- *     }
+ *     updateResource({ id: resourceId, data: formData }, {
+ *       onSuccess: () => {
+ *         // Resource updated successfully
+ *       },
+ *       onError: (error) => {
+ *         console.error('Failed to update resource:', error);
+ *       }
+ *     });
  *   };
  *
  *   return (
@@ -53,25 +55,34 @@ import type { ResourceData, ResourceInfo } from '@/features/resources/types';
  *         />
  *         Active
  *       </label>
- *       <button type="submit">Update Resource</button>
+ *       <button type="submit" disabled={isLoading}>
+ *         {isLoading ? 'Updating...' : 'Update Resource'}
+ *       </button>
+ *       {error && <div className="error">{error.message}</div>}
  *     </form>
  *   );
  * }
  * ```
  */
-export function useUpdateResource(): (
-  id: string,
-  data: Partial<ResourceData>,
-) => Promise<ResourceInfo | null> {
+export function useUpdateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ResourceData> }) =>
-      updateResource(supabase, id, data),
-    onSuccess: (updatedResource) => {
-      if (!updatedResource) return;
-
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<ResourceData>;
+    }): Promise<ResourceInfo> => {
+      const result = await updateResource(supabase, id, data);
+      if (!result) {
+        throw new Error('Failed to update resource');
+      }
+      return result;
+    },
+    onSuccess: (updatedResource: ResourceInfo) => {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
@@ -91,11 +102,20 @@ export function useUpdateResource(): (
     },
   });
 
-  // Return stable function reference
-  return useCallback(
-    (id: string, data: Partial<ResourceData>) => {
-      return mutation.mutateAsync({ id, data });
-    },
-    [mutation.mutateAsync],
-  );
+  // Return mutation with stable function references
+  return {
+    ...mutation,
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
+  };
 }

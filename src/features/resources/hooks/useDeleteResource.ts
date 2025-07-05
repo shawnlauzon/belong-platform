@@ -10,42 +10,40 @@ import { deleteResource } from '@/features/resources/api';
  * Provides a mutation function for deleting resources.
  * Automatically removes resource from cache on successful deletion.
  *
- * @returns Delete resource mutation function
+ * @returns React Query mutation result with delete function and state
  *
  * @example
  * ```tsx
  * function DeleteResourceButton({ resourceId }) {
- *   const deleteResource = useDeleteResource();
- *   const [isDeleting, setIsDeleting] = useState(false);
+ *   const { mutate: deleteResource, isLoading, error } = useDeleteResource();
  *
- *   const handleDelete = async () => {
+ *   const handleDelete = () => {
  *     if (!confirm('Are you sure you want to delete this resource?')) {
  *       return;
  *     }
  *
- *     setIsDeleting(true);
- *     try {
- *       await deleteResource(resourceId);
- *       // Redirect to resources list
- *     } catch (error) {
- *       console.error('Failed to delete resource:', error);
- *     } finally {
- *       setIsDeleting(false);
- *     }
+ *     deleteResource(resourceId, {
+ *       onSuccess: () => {
+ *         // Redirect to resources list
+ *       },
+ *       onError: (error) => {
+ *         console.error('Failed to delete resource:', error);
+ *       }
+ *     });
  *   };
  *
  *   return (
  *     <button
  *       onClick={handleDelete}
- *       disabled={isDeleting}
+ *       disabled={isLoading}
  *     >
- *       {isDeleting ? 'Deleting...' : 'Delete Resource'}
+ *       {isLoading ? 'Deleting...' : 'Delete Resource'}
  *     </button>
  *   );
  * }
  * ```
  */
-export function useDeleteResource(): (id: string) => Promise<void> {
+export function useDeleteResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
@@ -77,11 +75,20 @@ export function useDeleteResource(): (id: string) => Promise<void> {
     },
   });
 
-  // Return stable function reference
-  return useCallback(
-    (id: string) => {
-      return mutation.mutateAsync(id);
-    },
-    [mutation.mutateAsync],
-  );
+  // Return mutation with stable function references
+  return {
+    ...mutation,
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
+  };
 }

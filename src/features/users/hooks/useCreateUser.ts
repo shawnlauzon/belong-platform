@@ -40,10 +40,20 @@ export function useCreateUser() {
     },
   });
 
-  // Return mutation with stable function reference
+  // Return mutation with stable function references
   return {
     ...mutation,
-    mutate: useCallback(mutation.mutate, [mutation.mutate]),
-    mutateAsync: useCallback(mutation.mutateAsync, [mutation.mutateAsync]),
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
   };
 }

@@ -41,8 +41,10 @@ describe('useUpdateResource', () => {
 
     // Act
     const { result } = renderHook(() => useUpdateResource(), { wrapper });
-    const updateMutation = result.current;
-    const updatedResourceInfo = await updateMutation(mockUpdatedResourceInfo.id, updateData);
+    const updatedResourceInfo = await result.current.mutateAsync({ 
+      id: mockUpdatedResourceInfo.id, 
+      data: updateData 
+    });
 
     // Assert: Should return ResourceInfo with ID references
     expect(updatedResourceInfo).toBeDefined();

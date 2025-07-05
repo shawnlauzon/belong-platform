@@ -43,7 +43,7 @@ describe('useDeleteResource', () => {
     const { result } = renderHook(() => useDeleteResource(), { wrapper });
 
     await waitFor(async () => {
-      await result.current(resourceId);
+      await result.current.mutateAsync(resourceId);
     });
 
     // Assert
@@ -60,7 +60,7 @@ describe('useDeleteResource', () => {
     const { result } = renderHook(() => useDeleteResource(), { wrapper });
 
     // Assert
-    await expect(result.current(resourceId)).rejects.toThrow(
+    await expect(result.current.mutateAsync(resourceId)).rejects.toThrow(
       'Failed to delete resource',
     );
 

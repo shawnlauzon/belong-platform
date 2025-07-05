@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createResource } from '@/features/resources/api';
@@ -13,12 +14,12 @@ import type { ResourceInfo, ResourceData } from '@/features/resources/types';
  * Returns ResourceInfo (with ID references) rather than full composed Resource object.
  * Automatically invalidates resource caches on successful creation.
  *
- * @returns Create resource mutation function that returns Promise<ResourceInfo | null>
+ * @returns React Query mutation result with create function and state
  *
  * @example
  * ```tsx
  * function CreateResourceForm({ communityId }) {
- *   const createResource = useCreateResource();
+ *   const { mutate, isLoading, error } = useCreateResource();
  *   const [formData, setFormData] = useState({
  *     type: 'offer',
  *     category: 'household',
@@ -27,21 +28,19 @@ import type { ResourceInfo, ResourceData } from '@/features/resources/types';
  *     communityId,
  *   });
  *
- *   const handleSubmit = async (e) => {
+ *   const handleSubmit = (e) => {
  *     e.preventDefault();
- *     try {
- *       // Returns ResourceInfo with ownerId and communityId (not full objects)
- *       const resourceInfo = await createResource(formData);
- *       console.log('Created resource:', resourceInfo.title);
- *
- *       // To get full composed Resource with owner and community objects:
- *       // const fullResource = useResource(resourceInfo.id);
- *
- *       // Redirect to resource page
- *       router.push(`/resources/${resourceInfo.id}`);
- *     } catch (error) {
- *       console.error('Failed to create resource:', error);
- *     }
+ *     mutate(formData, {
+ *       onSuccess: (resourceInfo) => {
+ *         console.log('Created resource:', resourceInfo.title);
+ *         // To get full composed Resource with owner and community objects:
+ *         // const fullResource = useResource(resourceInfo.id);
+ *         router.push(`/resources/${resourceInfo.id}`);
+ *       },
+ *       onError: (error) => {
+ *         console.error('Failed to create resource:', error);
+ *       }
+ *     });
  *   };
  *
  *   return (
@@ -63,31 +62,34 @@ import type { ResourceInfo, ResourceData } from '@/features/resources/types';
  *         onChange={(e) => setFormData({...formData, description: e.target.value})}
  *         placeholder="Description"
  *       />
- *       <button type="submit">Create Resource</button>
+ *       <button type="submit" disabled={isLoading}>
+ *         {isLoading ? 'Creating...' : 'Create Resource'}
+ *       </button>
+ *       {error && <div className="error">{error.message}</div>}
  *     </form>
  *   );
  * }
  * ```
  */
-export function useCreateResource(): (
-  data: ResourceData,
-) => Promise<ResourceInfo | null> {
+export function useCreateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: async (data: ResourceData) => {
+    mutationFn: async (data: ResourceData): Promise<ResourceInfo> => {
       if (!currentUser?.id) {
         throw new Error('User must be authenticated to create resources');
       }
 
       // Create the resource (returns ResourceInfo)
-      return createResource(supabase, data);
+      const result = await createResource(supabase, data);
+      if (!result) {
+        throw new Error('Failed to create resource');
+      }
+      return result;
     },
-    onSuccess: (newResourceInfo) => {
-      if (!newResourceInfo) return;
-
+    onSuccess: (newResourceInfo: ResourceInfo) => {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
@@ -107,10 +109,20 @@ export function useCreateResource(): (
     },
   });
 
-  // Return function that creates and returns ResourceInfo
-  return async (data: ResourceData): Promise<ResourceInfo | null> => {
-    if (!currentUser) return null;
-
-    return mutation.mutateAsync(data);
+  // Return mutation with stable function references
+  return {
+    ...mutation,
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
   };
 }

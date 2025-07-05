@@ -17,12 +17,12 @@ import { deleteUser } from '../api';
  * ```tsx
  * function UserManagement({ user }: { user: User }) {
  *   const deleteUser = useDeleteUser();
- *   
+ *
  *   const handleDelete = useCallback(async () => {
  *     if (!confirm(`Are you sure you want to delete ${user.firstName}'s account?`)) {
  *       return;
  *     }
- *     
+ *
  *     try {
  *       await deleteUser.mutateAsync(user.id);
  *       console.log('Deleted user:', user.id);
@@ -36,7 +36,7 @@ import { deleteUser } from '../api';
  *   return (
  *     <div>
  *       <h3>{user.firstName} {user.lastName}</h3>
- *       <button 
+ *       <button
  *         onClick={handleDelete}
  *         disabled={deleteUser.isPending}
  *         className="danger-button"
@@ -53,7 +53,7 @@ import { deleteUser } from '../api';
  * // With confirmation dialog and error handling
  * function DeleteUserButton({ userId }: { userId: string }) {
  *   const deleteUser = useDeleteUser();
- *   
+ *
  *   const handleDelete = async () => {
  *     try {
  *       await deleteUser.mutateAsync(userId);
@@ -82,7 +82,7 @@ import { deleteUser } from '../api';
  * // Bulk user deletion
  * function BulkUserActions({ selectedUserIds }: { selectedUserIds: string[] }) {
  *   const deleteUser = useDeleteUser();
- *   
+ *
  *   const handleBulkDelete = async () => {
  *     for (const userId of selectedUserIds) {
  *       try {
@@ -94,7 +94,7 @@ import { deleteUser } from '../api';
  *   };
  *
  *   return (
- *     <button 
+ *     <button
  *       onClick={handleBulkDelete}
  *       disabled={deleteUser.isPending || selectedUserIds.length === 0}
  *     >
@@ -135,10 +135,20 @@ export function useDeleteUser() {
     },
   });
 
-  // Return mutation with stable function reference
+  // Return mutation with stable function references
   return {
     ...mutation,
-    mutate: useCallback(mutation.mutate, [mutation.mutate]),
-    mutateAsync: useCallback(mutation.mutateAsync, [mutation.mutateAsync]),
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
   };
 }

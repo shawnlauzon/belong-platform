@@ -67,8 +67,7 @@ describe('useCreateResource', () => {
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    const createMutation = result.current;
-    const createdResourceInfo = await createMutation(resourceData);
+    const createdResourceInfo = await result.current.mutateAsync(resourceData);
 
     // Assert: Should return ResourceInfo with ID references
     expect(createdResourceInfo).toBeDefined();

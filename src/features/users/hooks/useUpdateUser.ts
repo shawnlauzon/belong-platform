@@ -18,7 +18,7 @@ import type { User } from '../types';
  * ```tsx
  * function EditProfileForm({ user }: { user: User }) {
  *   const updateUser = useUpdateUser();
- *   
+ *
  *   const handleSubmit = useCallback(async (updates: Partial<User>) => {
  *     try {
  *       const updatedUser = await updateUser.mutateAsync({
@@ -43,22 +43,22 @@ import type { User } from '../types';
  *         bio: formData.get('bio') as string,
  *       });
  *     }}>
- *       <input 
- *         name="firstName" 
+ *       <input
+ *         name="firstName"
  *         defaultValue={user.firstName}
- *         placeholder="First Name" 
- *         required 
+ *         placeholder="First Name"
+ *         required
  *       />
- *       <input 
- *         name="lastName" 
+ *       <input
+ *         name="lastName"
  *         defaultValue={user.lastName}
- *         placeholder="Last Name" 
- *         required 
+ *         placeholder="Last Name"
+ *         required
  *       />
- *       <textarea 
- *         name="bio" 
+ *       <textarea
+ *         name="bio"
  *         defaultValue={user.bio || ''}
- *         placeholder="Tell us about yourself..." 
+ *         placeholder="Tell us about yourself..."
  *       />
  *       <button type="submit" disabled={updateUser.isPending}>
  *         {updateUser.isPending ? 'Updating...' : 'Update Profile'}
@@ -73,7 +73,7 @@ import type { User } from '../types';
  * // Quick profile picture update
  * function ProfilePictureUpload({ userId }: { userId: string }) {
  *   const updateUser = useUpdateUser();
- *   
+ *
  *   const handleFileUpload = async (file: File) => {
  *     const uploadedUrl = await uploadToStorage(file);
  *     await updateUser.mutateAsync({
@@ -83,8 +83,8 @@ import type { User } from '../types';
  *   };
  *
  *   return (
- *     <input 
- *       type="file" 
+ *     <input
+ *       type="file"
  *       accept="image/*"
  *       onChange={(e) => {
  *         const file = e.target.files?.[0];
@@ -114,7 +114,7 @@ export function useUpdateUser() {
       // Update the specific user in cache
       queryClient.setQueryData(
         queryKeys.users.byId(updatedUser.id),
-        updatedUser
+        updatedUser,
       );
 
       logger.info('👤 useUpdateUser: Successfully updated user', {
@@ -134,7 +134,17 @@ export function useUpdateUser() {
   // Return mutation with stable function reference
   return {
     ...mutation,
-    mutate: useCallback(mutation.mutate, [mutation.mutate]),
-    mutateAsync: useCallback(mutation.mutateAsync, [mutation.mutateAsync]),
+    mutate: useCallback(
+      (...args: Parameters<typeof mutation.mutate>) => {
+        return mutation.mutate(...args);
+      },
+      [mutation],
+    ),
+    mutateAsync: useCallback(
+      (...args: Parameters<typeof mutation.mutateAsync>) => {
+        return mutation.mutateAsync(...args);
+      },
+      [mutation],
+    ),
   };
 }
