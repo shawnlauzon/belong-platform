@@ -1,5 +1,13 @@
 import { faker } from '@faker-js/faker';
-import { Community, CommunityData, CommunityInfo, CommunityRow } from '../types';
+import { 
+  Community, 
+  CommunityData, 
+  CommunityInfo, 
+  CommunityRow, 
+  CommunityMembership,
+  CommunityMembershipInfo,
+  CommunityMembershipData 
+} from '../types';
 import { ProfileRow } from '../../users';
 import { createMockDbProfile, createMockUser } from '../../users/__mocks__';
 
@@ -189,5 +197,51 @@ export function createMockCommunityHierarchy() {
     city,
     neighborhood,
     all: [country, state, city, neighborhood],
+  };
+}
+
+/**
+ * Creates a mock CommunityMembershipData
+ */
+export function createMockCommunityMembershipData(
+  overrides: Partial<CommunityMembershipData> = {}
+): CommunityMembershipData {
+  return {
+    userId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
+    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock CommunityMembershipInfo
+ */
+export function createMockCommunityMembershipInfo(
+  overrides: Partial<CommunityMembershipInfo> = {}
+): CommunityMembershipInfo {
+  return {
+    userId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
+    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
+    joinedAt: faker.date.past(),
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a mock CommunityMembership with optional composed objects
+ */
+export function createMockCommunityMembership(
+  overrides: Partial<CommunityMembership> = {}
+): CommunityMembership {
+  return {
+    userId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
+    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
+    joinedAt: faker.date.past(),
+    user: createMockUser(),
+    community: createMockCommunity(),
+    ...overrides,
   };
 }

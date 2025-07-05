@@ -65,9 +65,10 @@ export function useCommunity(id: string): Community | null {
     return null;
   }
 
-  // Compose full Community object
+  // Compose full Community object (omit organizerId, add organizer)
+  const { organizerId, ...communityWithoutOrganizerId } = communityInfo;
   const community: Community = {
-    ...communityInfo,
+    ...communityWithoutOrganizerId,
     organizer,
   };
 

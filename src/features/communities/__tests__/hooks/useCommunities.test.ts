@@ -49,7 +49,10 @@ describe('useCommunities', () => {
       expect(result.current).toHaveLength(1);
     });
 
-    expect(mockFetchCommunities).toHaveBeenCalledWith(undefined, filters);
+    expect(mockFetchCommunities).toHaveBeenCalledWith(
+      expect.any(Object),
+      filters,
+    );
   });
 
   it('should return empty array when no communities found', async () => {

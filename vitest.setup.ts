@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { createMockSupabase } from './src/test-utils/supabase-mocks';
 
 // Suppress console output during tests unless VITEST_VERBOSE is set
 if (process.env.VITEST_VERBOSE !== 'true') {
@@ -21,7 +22,7 @@ vi.mock('./src/shared', async (importOriginal) => {
   return {
     ...actual, // Keep all real exports including toRecords
     // Override only specific functions that need mocking
-    useSupabase: vi.fn(),
+    useSupabase: vi.fn().mockReturnValue(createMockSupabase()),
     logger: {
       debug: vi.fn(),
       info: vi.fn(),
