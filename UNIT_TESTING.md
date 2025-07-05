@@ -11,6 +11,7 @@ This document provides comprehensive guidelines for writing unit tests in the Be
 **✅ DO**: Test only one thing at a time; i.e. if you are testing CRUD, don't test cache invalidation in the same test
 **❌ DON'T**: Test every possible error condition
 **❌ DON'T**: Test edge cases that aren't business requirements
+**❌ DON'T**: Test functions that only talk to database (i.e. API calls); they will be too brittle
 
 ### Test Behavior, Not Implementation
 
