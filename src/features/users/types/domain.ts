@@ -16,6 +16,7 @@ export interface User {
 export interface UserData extends Omit<User, 'createdAt' | 'updatedAt'> {}
 
 export interface UserFilter {
+  email?: string;
   searchTerm?: string;
   page?: number;
   pageSize?: number;

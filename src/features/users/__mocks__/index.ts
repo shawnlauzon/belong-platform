@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { ProfileRow, User, UserData } from '../types';
+import { User, UserData } from '../types';
+import { ProfileRow } from '../types/database';
 
 /**
  * Creates a mock domain User object
@@ -22,9 +23,10 @@ export function createMockUser(overrides: Partial<User> = {}): User {
 }
 
 export function createMockUserData(
-  overrides: Partial<UserData> = {}
+  overrides: Partial<UserData> = {},
 ): UserData {
   return {
+    id: faker.string.uuid(),
     email: faker.internet.email(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
@@ -39,7 +41,7 @@ export function createMockUserData(
 }
 
 export function createMockDbProfile(
-  overrides: Partial<ProfileRow> = {}
+  overrides: Partial<ProfileRow> = {},
 ): ProfileRow {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();

@@ -37,6 +37,8 @@ vi.mock('./src/shared', async (importOriginal) => {
         all: ['users'] as const,
         byId: (id: string) => ['user', id] as const,
         search: (term: string) => ['users', 'search', term] as const,
+        filtered: (filter: Record<string, any>) =>
+          ['users', 'filtered', filter] as const,
       },
 
       // Communities

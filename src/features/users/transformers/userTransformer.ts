@@ -1,4 +1,4 @@
-import type { User, UserData } from '../../users';
+import type { User, UserData } from '..';
 import type {
   ProfileRow,
   ProfileInsertDbData,
@@ -40,10 +40,8 @@ export function toDomainUser(profile: ProfileRow): User {
 /**
  * Prepares user data for database insertion into profiles table
  */
-export function forDbInsert(
-  userData: UserData & { id: string }
-): ProfileInsertDbData {
-  const { email, firstName, lastName, fullName, avatarUrl, location } =
+export function forDbInsert(userData: UserData): ProfileInsertDbData {
+  const { id, email, firstName, lastName, fullName, avatarUrl, location } =
     userData;
 
   const user_metadata: UserMetadata = {
@@ -55,7 +53,7 @@ export function forDbInsert(
   };
 
   return {
-    id: userData.id,
+    id,
     email,
     user_metadata,
   };
@@ -65,7 +63,7 @@ export function forDbInsert(
  * Prepares user data for updating the profiles table
  */
 export function forDbUpdate(
-  userData: Partial<UserData> & { id: string }
+  userData: Partial<UserData> & { id: string },
 ): ProfileUpdateDbData {
   return {
     user_metadata: createUserMetadata(userData),
