@@ -17,7 +17,7 @@ if (process.env.VITEST_VERBOSE !== 'true') {
 
 // Mock shared module - used in 33+ test files
 vi.mock('./src/shared', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports including toRecords
     // Override only specific functions that need mocking
@@ -28,6 +28,8 @@ vi.mock('./src/shared', async (importOriginal) => {
       warn: vi.fn(),
       error: vi.fn(),
     },
+    // FIXME I'm pretty sure the tests should not be using the queryKeys from the shared mocking module
+    // TODO Extract shared queryKeys to each feature and then we can mock as the features below
     queryKeys: {
       // Authentication state (not profile data)
       auth: ['auth'] as const,
@@ -49,6 +51,8 @@ vi.mock('./src/shared', async (importOriginal) => {
           ['community', communityId, 'memberships'] as const,
         userMemberships: (userId: string) =>
           ['user', userId, 'memberships'] as const,
+        filtered: (filter: Record<string, any>) =>
+          ['communities', 'filtered', filter] as const,
       },
 
       // Resources
@@ -70,7 +74,8 @@ vi.mock('./src/shared', async (importOriginal) => {
           ['events', 'community', communityId] as const,
         byOrganizer: (organizerId: string) =>
           ['events', 'organizer', organizerId] as const,
-        attendees: (eventId: string) => ['event', eventId, 'attendees'] as const,
+        attendees: (eventId: string) =>
+          ['event', eventId, 'attendees'] as const,
         userAttendances: (userId: string) =>
           ['user', userId, 'attendances'] as const,
         filtered: (filter: Record<string, any>) =>
@@ -97,7 +102,8 @@ vi.mock('./src/shared', async (importOriginal) => {
         byId: (id: string) => ['conversation', id] as const,
         messages: (conversationId: string) =>
           ['conversations', 'messages', conversationId] as const,
-        userList: (userId: string) => ['user', userId, 'conversations'] as const,
+        userList: (userId: string) =>
+          ['user', userId, 'conversations'] as const,
       },
     } as const,
     STANDARD_CACHE_TIME: 5000,
@@ -142,7 +148,7 @@ vi.mock('./src/config/client', () => ({
 
 // Mock users feature hooks
 vi.mock('./src/features/users', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -156,7 +162,7 @@ vi.mock('./src/features/users', async (importOriginal) => {
 
 // Mock communities feature hooks
 vi.mock('./src/features/communities', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -174,7 +180,7 @@ vi.mock('./src/features/communities', async (importOriginal) => {
 
 // Mock auth feature hooks
 vi.mock('./src/features/auth', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -188,7 +194,7 @@ vi.mock('./src/features/auth', async (importOriginal) => {
 
 // Mock events feature hooks
 vi.mock('./src/features/events', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -204,7 +210,7 @@ vi.mock('./src/features/events', async (importOriginal) => {
 
 // Mock resources feature hooks
 vi.mock('./src/features/resources', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -218,7 +224,7 @@ vi.mock('./src/features/resources', async (importOriginal) => {
 
 // Mock shoutouts feature hooks
 vi.mock('./src/features/shoutouts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
@@ -232,7 +238,7 @@ vi.mock('./src/features/shoutouts', async (importOriginal) => {
 
 // Mock conversations feature hooks
 vi.mock('./src/features/conversations', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks

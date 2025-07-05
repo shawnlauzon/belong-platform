@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { requireAuthentication } from '../auth-helpers';
+import { getAuthIdOrThrow } from '../auth-helpers';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
 
 // Mock the core module
@@ -35,7 +35,7 @@ describe('requireAuthentication', () => {
     });
 
     // Act
-    const result = await requireAuthentication(mockSupabase);
+    const result = await getAuthIdOrThrow(mockSupabase);
 
     // Assert
     expect(result).toBe(expectedUserId);
@@ -52,7 +52,7 @@ describe('requireAuthentication', () => {
 
     // Act & Assert
     await expect(
-      requireAuthentication(mockSupabase, 'test operation')
+      getAuthIdOrThrow(mockSupabase, 'test operation'),
     ).rejects.toThrow(MESSAGE_AUTHENTICATION_REQUIRED);
   });
 
@@ -64,8 +64,8 @@ describe('requireAuthentication', () => {
     });
 
     // Act & Assert
-    await expect(requireAuthentication(mockSupabase)).rejects.toThrow(
-      MESSAGE_AUTHENTICATION_REQUIRED
+    await expect(getAuthIdOrThrow(mockSupabase)).rejects.toThrow(
+      MESSAGE_AUTHENTICATION_REQUIRED,
     );
   });
 
@@ -79,8 +79,8 @@ describe('requireAuthentication', () => {
     });
 
     // Act & Assert
-    await expect(requireAuthentication(mockSupabase)).rejects.toThrow(
-      MESSAGE_AUTHENTICATION_REQUIRED
+    await expect(getAuthIdOrThrow(mockSupabase)).rejects.toThrow(
+      MESSAGE_AUTHENTICATION_REQUIRED,
     );
   });
 
@@ -96,8 +96,8 @@ describe('requireAuthentication', () => {
     });
 
     // Act & Assert
-    await expect(requireAuthentication(mockSupabase)).rejects.toThrow(
-      MESSAGE_AUTHENTICATION_REQUIRED
+    await expect(getAuthIdOrThrow(mockSupabase)).rejects.toThrow(
+      MESSAGE_AUTHENTICATION_REQUIRED,
     );
   });
 });

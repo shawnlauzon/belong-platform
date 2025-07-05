@@ -13,7 +13,7 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { fetchUserById } from '@/features/users/api';
 import { fetchResourceById } from '../../resources/api/fetchResourceById';
-import { requireAuthentication } from '../../../shared/utils';
+import { getAuthIdOrThrow } from '../../../shared/utils';
 import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
@@ -24,7 +24,7 @@ import { ShoutoutRow } from '../types/database';
  */
 function validateShoutoutCreation(
   data: ShoutoutData,
-  _currentUserId: string
+  _currentUserId: string,
 ): void {
   // Rule: User cannot thank themselves
   if (data.fromUserId === data.toUserId) {
@@ -38,7 +38,7 @@ function validateShoutoutCreation(
 function validateShoutoutUpdate(
   existingShoutout: ShoutoutRow,
   updateData: Partial<ShoutoutData>,
-  _currentUserId: string
+  _currentUserId: string,
 ): void {
   // Rule: Cannot change the sender of shoutout
   if (
@@ -66,7 +66,6 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
         .from('shoutouts')
         .select('*')
         .order('created_at', { ascending: false });
-
 
       // Apply filters if provided
       if (filters) {
@@ -102,7 +101,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
               dbShoutout,
               dbShoutout.from_user_id,
               dbShoutout.to_user_id,
-              dbShoutout.resource_id
+              dbShoutout.resource_id,
             );
           } catch (error) {
             logger.error('📢 Shoutouts Service: Error transforming shoutout', {
@@ -134,16 +133,13 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchShoutoutById(
-    id: string
-  ): Promise<Shoutout | null> {
+  async fetchShoutoutById(id: string): Promise<Shoutout | null> {
     logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', {
       id,
     });
 
     try {
       let query = supabase.from('shoutouts').select('*').eq('id', id);
-
 
       const { data, error } = await query.single();
 
@@ -174,7 +170,9 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Fetch resource owner to assemble full Resource object
-      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      const resourceOwner = await userService.fetchUserById(
+        resourceInfo.ownerId,
+      );
       if (!resourceOwner) {
         throw new Error('Resource owner not found');
       }
@@ -213,7 +211,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'create shoutout');
+      const userId = await getAuthIdOrThrow(supabase, 'create shoutout');
 
       // Validate business rules before database operation
       validateShoutoutCreation(data, userId);
@@ -249,7 +247,9 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Fetch resource owner to assemble full Resource object
-      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      const resourceOwner = await userService.fetchUserById(
+        resourceInfo.ownerId,
+      );
       if (!resourceOwner) {
         throw new Error('Resource owner not found');
       }
@@ -286,13 +286,13 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
   async updateShoutout(
     id: string,
-    data: Partial<ShoutoutData>
+    data: Partial<ShoutoutData>,
   ): Promise<Shoutout> {
     logger.debug('📢 Shoutouts Service: Updating shoutout', { id, data });
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'update shoutout');
+      const userId = await getAuthIdOrThrow(supabase, 'update shoutout');
 
       // Fetch existing shoutout to validate business rules
       const { data: existingShoutout, error: fetchError } = await supabase
@@ -313,7 +313,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
           {
             id,
             error: fetchError,
-          }
+          },
         );
         throw fetchError;
       }
@@ -354,7 +354,9 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
       }
 
       // Fetch resource owner to assemble full Resource object
-      const resourceOwner = await userService.fetchUserById(resourceInfo.ownerId);
+      const resourceOwner = await userService.fetchUserById(
+        resourceInfo.ownerId,
+      );
       if (!resourceOwner) {
         throw new Error('Resource owner not found');
       }
@@ -393,7 +395,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'delete shoutout');
+      const userId = await getAuthIdOrThrow(supabase, 'delete shoutout');
 
       // First, fetch the existing shoutout to verify ownership
       const { data: existingShoutout, error: fetchError } = await supabase
@@ -409,7 +411,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
             '📢 Shoutouts Service: Shoutout not found for deletion',
             {
               id,
-            }
+            },
           );
           return;
         }
@@ -420,7 +422,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
             id,
             error: fetchError.message,
             code: fetchError.code,
-          }
+          },
         );
         throw fetchError;
       }
@@ -433,7 +435,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
             userId,
             fromUserId: existingShoutout.from_user_id,
             shoutoutId: id,
-          }
+          },
         );
         throw new Error('You are not authorized to delete this shoutout');
       }

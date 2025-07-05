@@ -5,7 +5,6 @@ import { Polygon } from './geojson';
 // Boundary types for communities
 export type TravelMode = 'walking' | 'cycling' | 'driving';
 
-
 export interface IsochroneBoundary {
   type: 'isochrone';
   center: Coordinates; // [longitude, latitude]
@@ -67,6 +66,10 @@ export interface CommunityMembershipData {
   userId: string;
   communityId: string;
   role?: 'member' | 'admin' | 'organizer';
+}
+
+export interface CommunityMembershipInfo extends CommunityMembershipData {
+  joinedAt: Date;
 }
 
 export interface CommunityMembership extends CommunityMembershipData {

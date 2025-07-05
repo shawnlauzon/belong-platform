@@ -11,9 +11,9 @@ import { MESSAGE_AUTHENTICATION_REQUIRED } from '../constants';
  * @returns The authenticated user's ID
  * @throws Error with MESSAGE_AUTHENTICATION_REQUIRED if authentication fails
  */
-export async function requireAuthentication(
+export async function getAuthIdOrThrow(
   supabase: SupabaseClient<Database>,
-  operation?: string
+  operation?: string,
 ): Promise<string> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
 

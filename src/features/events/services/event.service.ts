@@ -18,7 +18,7 @@ import {
 } from '../transformers/eventAttendanceTransformer';
 import { fetchUserById } from '@/features/users/api';
 import { createCommunityService } from '../../communities/services/community.service';
-import { requireAuthentication } from '../../../shared/utils/auth-helpers';
+import { getAuthIdOrThrow } from '../../../shared/utils/auth-helpers';
 import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
@@ -34,7 +34,6 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         .from('events')
         .select('*')
         .order('start_date_time', { ascending: true });
-
 
       // Apply other filters if provided
       if (filters) {
@@ -52,7 +51,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         }
         if (filters.searchTerm) {
           query = query.or(
-            `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`
+            `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
           );
         }
       }
@@ -70,7 +69,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
       // Convert to EventInfo objects
       const events = data.map((dbEvent) =>
-        toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id)
+        toEventInfo(dbEvent, dbEvent.organizer_id, dbEvent.community_id),
       );
 
       // No filtering needed for soft deletes since they've been removed
@@ -94,14 +93,11 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchEventById(
-    id: string
-  ): Promise<Event | null> {
+  async fetchEventById(id: string): Promise<Event | null> {
     logger.debug('🎉 Event Service: Fetching event by ID', { id });
 
     try {
       let query = supabase.from('events').select('*').eq('id', id);
-
 
       const { data, error } = await query.single();
 
@@ -162,7 +158,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'create event');
+      const userId = await getAuthIdOrThrow(supabase, 'create event');
 
       // Transform to database format
       const dbEvent = forDbInsert(data, userId);
@@ -222,7 +218,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      await requireAuthentication(supabase, 'update event');
+      await getAuthIdOrThrow(supabase, 'update event');
 
       // Transform to database format
       const dbUpdate = forDbUpdate(data);
@@ -282,7 +278,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'delete event');
+      const userId = await getAuthIdOrThrow(supabase, 'delete event');
 
       // First, fetch the existing event to verify ownership
       const { data: existingEvent, error: fetchError } = await supabase
@@ -316,7 +312,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
             userId,
             organizerId: existingEvent.organizer_id,
             eventId: id,
-          }
+          },
         );
         throw new Error('You are not authorized to delete this event');
       }
@@ -350,13 +346,13 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
   async joinEvent(
     eventId: string,
-    status: EventAttendanceStatus = EventAttendanceStatus.ATTENDING
+    status: EventAttendanceStatus = EventAttendanceStatus.ATTENDING,
   ): Promise<EventAttendance> {
     logger.debug('🎉 Event Service: Joining event', { eventId, status });
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'join event');
+      const userId = await getAuthIdOrThrow(supabase, 'join event');
 
       // Check if event exists and get its details
       const event = await this.fetchEventById(eventId);
@@ -436,7 +432,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
           userId,
           status,
         },
-        userId
+        userId,
       );
 
       const { data: newAttendance, error: insertError } = await supabase
@@ -489,7 +485,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
 
     try {
       // Get current user
-      const userId = await requireAuthentication(supabase, 'leave event');
+      const userId = await getAuthIdOrThrow(supabase, 'leave event');
 
       // Delete the attendance record
       const { error: deleteError } = await supabase
@@ -565,8 +561,8 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
       // Get unique user IDs (filter out null/undefined values)
       const userIds = Array.from(
         new Set(
-          data.map((a) => a.user_id).filter((id): id is string => Boolean(id))
-        )
+          data.map((a) => a.user_id).filter((id): id is string => Boolean(id)),
+        ),
       );
 
       // Fetch all users using the user service
@@ -621,7 +617,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
           return toDomainEventAttendance(attendance, { user, event });
         })
         .filter(
-          (attendance): attendance is EventAttendance => attendance !== null
+          (attendance): attendance is EventAttendance => attendance !== null,
         );
 
       logger.debug('🎉 Event Service: Successfully fetched event attendees', {
@@ -658,7 +654,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
           {
             userId,
             error,
-          }
+          },
         );
         throw error;
       }
@@ -703,7 +699,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
           return toDomainEventAttendance(attendance, { user, event });
         })
         .filter(
-          (attendance): attendance is EventAttendance => attendance !== null
+          (attendance): attendance is EventAttendance => attendance !== null,
         );
 
       logger.debug(
@@ -711,7 +707,7 @@ export const createEventService = (supabase: SupabaseClient<Database>) => ({
         {
           userId,
           count: eventAttendances.length,
-        }
+        },
       );
 
       return eventAttendances;

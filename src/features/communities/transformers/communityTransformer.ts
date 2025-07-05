@@ -4,7 +4,10 @@ import type {
   CommunityInfo,
   CommunityMembership,
   CommunityMembershipData,
-} from '../types/domain';
+  CommunityBoundary,
+  IsochroneBoundary,
+  CommunityMembershipInfo,
+} from '../types';
 import { toDomainUser } from '../../users/transformers/userTransformer';
 import {
   CommunityInsertDbData,
@@ -13,16 +16,12 @@ import {
   CommunityRow,
   CommunityUpdateDbData,
 } from '../types/database';
-import { ProfileRow } from '../../users/types/database';
-import { User } from '~/features/users';
-import type {
-  CommunityBoundary,
-  IsochroneBoundary,
-} from '../types/domain';
+import { User } from '../../users';
 
 /**
  * Transform a domain boundary object to database format with snake_case field names
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function boundaryForDatabase(boundary: CommunityBoundary): any {
   if (boundary.type === 'isochrone') {
     const isochroneBoundary = boundary as IsochroneBoundary;
@@ -42,6 +41,7 @@ function boundaryForDatabase(boundary: CommunityBoundary): any {
 /**
  * Transform database boundary format to domain format with camelCase field names
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
   console.log('boundaryFromDatabase', dbBoundary);
   if (!dbBoundary || typeof dbBoundary !== 'object') {
@@ -67,7 +67,7 @@ function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
  */
 export function toDomainCommunity(
   dbCommunity: CommunityRow & {
-    organizer: ProfileRow | User;
+    organizer: User;
   },
 ): Community {
   // Explicitly extract only the fields we need to avoid leaking database properties
@@ -98,17 +98,9 @@ export function toDomainCommunity(
  * Transform a domain community object to a database community record
  */
 export function forDbInsert(community: CommunityData): CommunityInsertDbData {
-  const {
-    organizerId,
-    timeZone,
-    memberCount,
-    boundary,
-    ...rest
-  } = community;
+  const { organizerId, timeZone, memberCount, boundary, ...rest } = community;
 
-  const boundaryGeometry = boundary
-    ? boundary.polygon
-    : undefined;
+  const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
   return {
     ...rest,
@@ -142,8 +134,8 @@ export function forDbUpdate(
  */
 export function toDomainMembership(
   dbMembership: CommunityMembershipRow & {
-    user?: ProfileRow;
-    community?: CommunityRow & { organizer: ProfileRow };
+    user: User;
+    community: Community;
   },
 ): CommunityMembership {
   const { joined_at, user_id, community_id, ...rest } = dbMembership;
@@ -156,10 +148,23 @@ export function toDomainMembership(
     communityId: community_id,
     role: dbMembership.role as 'member' | 'admin' | 'organizer' | undefined,
     joinedAt: new Date(joined_at),
-    user: dbMembership.user ? toDomainUser(dbMembership.user) : undefined,
-    community: dbMembership.community
-      ? toDomainCommunity(dbMembership.community)
-      : undefined,
+  };
+}
+
+/**
+ * Transform a database community membership record to a domain membership object
+ */
+export function toDomainMembershipInfo(
+  dbMembership: CommunityMembershipRow,
+): CommunityMembershipInfo {
+  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+
+  return {
+    ...rest,
+    userId: user_id,
+    communityId: community_id,
+    role: dbMembership.role as 'member' | 'admin' | 'organizer' | undefined,
+    joinedAt: new Date(joined_at),
   };
 }
 

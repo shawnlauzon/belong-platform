@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createCommunityService } from '../services/community.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { fetchUserCommunities } from '@/features/communities/api';
+import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityMembership } from '../types/domain';
+import type { CommunityMembership } from '@/features/communities/types';
 
 /**
  * Hook for fetching communities a user is a member of.
@@ -56,11 +56,10 @@ import type { CommunityMembership } from '../types/domain';
  */
 export function useUserCommunities(userId?: string) {
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
   const query = useQuery<CommunityMembership[], Error>({
     queryKey: queryKeys.communities.userMemberships(userId!),
-    queryFn: () => communityService.fetchUserMemberships(userId!),
+    queryFn: () => fetchUserCommunities(supabase, userId!),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!userId,
   });

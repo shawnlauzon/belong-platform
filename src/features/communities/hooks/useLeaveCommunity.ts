@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createCommunityService } from '../services/community.service';
-import { CommunityMembership } from '../types';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { leaveCommunity } from '@/features/communities/api';
 
 /**
  * Hook for leaving a community.
@@ -49,12 +48,10 @@ import { CommunityMembership } from '../types';
 export function useLeaveCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
-  const mutation = useMutation<CommunityMembership, Error, string>({
-    mutationFn: (communityId: string) =>
-      communityService.leaveCommunity(communityId),
-    onSuccess: (result, communityId) => {
+  const mutation = useMutation<void, Error, string>({
+    mutationFn: (communityId: string) => leaveCommunity(supabase, communityId),
+    onSuccess: (_, communityId) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });
       queryClient.invalidateQueries({
@@ -63,13 +60,13 @@ export function useLeaveCommunity() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.communities.memberships(communityId),
       });
+      // Invalidate all user memberships since we don't have the userId here
       queryClient.invalidateQueries({
-        queryKey: queryKeys.communities.userMemberships(result.userId),
+        queryKey: ['communities', 'userMemberships'],
       });
 
       logger.info('🏘️ API: Successfully left community', {
         communityId,
-        userId: result.userId,
       });
     },
     onError: (error) => {
@@ -79,9 +76,9 @@ export function useLeaveCommunity() {
 
   // Return stable function reference
   return useCallback(
-    (communityId: string) => {
+    (communityId: string): Promise<void> => {
       return mutation.mutateAsync(communityId);
     },
-    [mutation.mutateAsync]
+    [mutation],
   );
 }

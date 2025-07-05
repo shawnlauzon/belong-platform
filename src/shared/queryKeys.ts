@@ -9,7 +9,7 @@ export const queryKeys = {
   // User profile data - single source of truth for all user queries
   users: {
     all: ['users'] as const,
-    byId: (id: string) => ['user', id] as const,
+    byId: (id: string | null) => ['user', id] as const,
     search: (term: string) => ['users', 'search', term] as const,
     filtered: (filter: Record<string, unknown>) =>
       ['users', 'filtered', filter] as const,

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys, toRecords } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createCommunityService } from '../services/community.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys, toRecords } from '@/shared';
+import { useSupabase } from '@/shared';
+import { fetchCommunities } from '@/features/communities/api';
+import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityInfo, CommunityFilter } from '../types';
+import type { CommunityInfo, CommunityFilter } from '@/features/communities/types';
 
 /**
  * Hook for fetching communities list.
@@ -54,13 +54,12 @@ import type { CommunityInfo, CommunityFilter } from '../types';
  */
 export function useCommunities(filters?: CommunityFilter) {
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
   const query = useQuery<CommunityInfo[], Error>({
     queryKey: filters
       ? queryKeys.communities.filtered(toRecords(filters))
       : queryKeys.communities.all,
-    queryFn: () => communityService.fetchCommunities(filters),
+    queryFn: () => fetchCommunities(supabase, filters),
     staleTime: STANDARD_CACHE_TIME,
   });
 

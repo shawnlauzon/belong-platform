@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
-import { useSupabase } from '../../../shared';
-import { createCommunityService } from '../services/community.service';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { logger, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
+import { useUser } from '@/features/users';
+import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { Community } from '../types/domain';
+import type { Community } from '@/features/communities/types';
+import { fetchCommunityById } from '../api';
 
 /**
  * Hook for fetching a single community by ID.
@@ -33,23 +34,42 @@ import type { Community } from '../types/domain';
  * }
  * ```
  */
-export function useCommunity(id: string) {
+export function useCommunity(id: string): Community | null {
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
-  const query = useQuery<Community | null, Error>({
+  // Fetch community info
+  const {
+    data: communityInfo,
+    error: communityError,
+    isLoading: isCommunityLoading,
+  } = useQuery({
     queryKey: queryKeys.communities.byId(id),
-    queryFn: () => communityService.fetchCommunityById(id),
+    queryFn: () => fetchCommunityById(supabase, id),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!id,
   });
 
-  if (query.error) {
+  // Fetch organizer details; will be null if no community found
+  const organizer = useUser(communityInfo?.organizerId ?? null);
+
+  // Handle errors
+  if (communityError) {
     logger.error('🏘️ API: Error fetching community', {
-      error: query.error,
+      error: communityError,
       communityId: id,
     });
   }
 
-  return query.data ?? null;
+  // Return null if community doesn't exist or required data is missing
+  if (!communityInfo || !organizer || isCommunityLoading) {
+    return null;
+  }
+
+  // Compose full Community object
+  const community: Community = {
+    ...communityInfo,
+    organizer,
+  };
+
+  return community;
 }

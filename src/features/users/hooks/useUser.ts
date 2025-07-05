@@ -62,14 +62,14 @@ import type { User } from '../types';
  *
  * @category React Hooks
  */
-export function useUser(userId: string): User | null {
+export function useUser(userId: string | null): User | null {
   const supabase = useSupabase();
 
   const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => {
       logger.debug('👤 useUser: Fetching user by ID', { userId });
-      return fetchUserById(supabase, userId);
+      return userId ? fetchUserById(supabase, userId) : null;
     },
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(userId?.trim()),
