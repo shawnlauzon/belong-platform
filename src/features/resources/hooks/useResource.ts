@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import type { Resource } from '@/features/resources/types';
-import { fetchAndConsolidateResource } from '../api/fetchAndConsolidateResource';
+import { fetchAndCacheResource } from '../api/fetchAndCacheResource';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -44,7 +44,7 @@ export function useResource(id: string) {
 
   return useQuery<Resource | null, Error>({
     queryKey: queryKeys.resources.byId(id),
-    queryFn: () => fetchAndConsolidateResource(supabase, queryClient, id),
+    queryFn: () => fetchAndCacheResource(supabase, queryClient, id),
     enabled: !!id,
   });
 }

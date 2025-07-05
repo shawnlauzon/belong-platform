@@ -68,8 +68,6 @@ export function useUser(
 ): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
 
-  console.log('useUser', userId);
-
   const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => {

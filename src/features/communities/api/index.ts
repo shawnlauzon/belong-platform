@@ -1,6 +1,6 @@
 export * from './fetchCommunities';
 export * from './fetchCommunityById';
-export * from './fetchAndConsolidateCommunity';
+export * from './fetchAndCacheCommunity';
 export * from './createCommunity';
 export * from './updateCommunity';
 export * from './deleteCommunity';
