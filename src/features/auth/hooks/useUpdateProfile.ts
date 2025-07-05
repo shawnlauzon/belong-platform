@@ -8,12 +8,12 @@ import { useCurrentUser } from './useCurrentUser';
 
 /**
  * Hook for updating the current user's profile.
- * 
+ *
  * Provides a mutation function for updating user profile information.
  * Automatically updates the user cache on successful update.
- * 
+ *
  * @returns Update profile mutation function
- * 
+ *
  * @example
  * ```tsx
  * function ProfileForm() {
@@ -21,7 +21,7 @@ import { useCurrentUser } from './useCurrentUser';
  *   const currentUser = useCurrentUser();
  *   const [firstName, setFirstName] = useState(currentUser?.firstName || '');
  *   const [lastName, setLastName] = useState(currentUser?.lastName || '');
- *   
+ *
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
@@ -31,16 +31,16 @@ import { useCurrentUser } from './useCurrentUser';
  *       console.error('Update failed:', error);
  *     }
  *   };
- *   
+ *
  *   return (
  *     <form onSubmit={handleSubmit}>
- *       <input 
- *         value={firstName} 
- *         onChange={(e) => setFirstName(e.target.value)} 
+ *       <input
+ *         value={firstName}
+ *         onChange={(e) => setFirstName(e.target.value)}
  *       />
- *       <input 
- *         value={lastName} 
- *         onChange={(e) => setLastName(e.target.value)} 
+ *       <input
+ *         value={lastName}
+ *         onChange={(e) => setLastName(e.target.value)}
  *       />
  *       <button type="submit">Update Profile</button>
  *     </form>
@@ -55,11 +55,11 @@ export function useUpdateProfile() {
 
   const mutation = useMutation<User, Error, Partial<User>>({
     mutationFn: (updates: Partial<User>) => {
-      if (!currentUser?.id) {
+      if (!currentUser?.data?.id) {
         throw new Error('No authenticated user to update');
       }
       return updateUser(supabase, {
-        id: currentUser.id,
+        id: currentUser.data.id,
         ...updates,
       });
     },
@@ -82,6 +82,6 @@ export function useUpdateProfile() {
     (updates: Partial<User>) => {
       return mutation.mutateAsync(updates);
     },
-    [mutation.mutateAsync]
+    [mutation.mutateAsync],
   );
 }
