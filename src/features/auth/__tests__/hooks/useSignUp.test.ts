@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useSignUp } from '../../hooks/useSignUp';
 import { createMockSupabase } from '@/test-utils';
-import { createMockAccount } from '../../__mocks__';
+import { createFakeAccount } from '../../__fakes__';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -22,13 +22,13 @@ const mockSignUp = vi.mocked(signUp);
 describe('useSignUp', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let mockAccount: Account;
+  let fakeAccount: Account;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockAccount = createMockAccount();
+    fakeAccount = createFakeAccount();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
@@ -40,13 +40,13 @@ describe('useSignUp', () => {
   it('should return Account after sign up', async () => {
     // Arrange
     const signUpData = {
-      email: mockAccount.email,
+      email: fakeAccount.email,
       password: 'password123',
-      firstName: mockAccount.firstName,
-      lastName: mockAccount.lastName,
+      firstName: fakeAccount.firstName,
+      lastName: fakeAccount.lastName,
     };
 
-    mockSignUp.mockResolvedValue(mockAccount);
+    mockSignUp.mockResolvedValue(fakeAccount);
 
     // Act
     const { result } = renderHook(() => useSignUp(), { wrapper });
@@ -56,10 +56,10 @@ describe('useSignUp', () => {
     expect(account).toBeDefined();
     expect(account).toEqual(
       expect.objectContaining({
-        id: mockAccount.id,
-        email: mockAccount.email,
-        firstName: mockAccount.firstName,
-        lastName: mockAccount.lastName,
+        id: fakeAccount.id,
+        email: fakeAccount.email,
+        firstName: fakeAccount.firstName,
+        lastName: fakeAccount.lastName,
       }),
     );
 

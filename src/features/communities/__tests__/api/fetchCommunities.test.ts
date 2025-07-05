@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
-import { createMockDbCommunity } from '../../__mocks__';
+import { createFakeDbCommunity } from '../../__fakes__';
 import { fetchCommunities } from '../../api/fetchCommunities';
 
 const mockSupabase = createMockSupabase();
@@ -11,33 +11,33 @@ describe('fetchCommunities', () => {
   });
 
   it('should return array of CommunityInfo when communities exist', async () => {
-    const mockRows = [
-      createMockDbCommunity(),
-      createMockDbCommunity(),
+    const fakeRows = [
+      createFakeDbCommunity(),
+      createFakeDbCommunity(),
     ];
 
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: mockRows, error: null }),
+        order: vi.fn().mockResolvedValue({ data: fakeRows, error: null }),
       }),
     });
 
     const result = await fetchCommunities(mockSupabase);
 
     expect(result).toHaveLength(2);
-    expect(result[0]?.id).toBe(mockRows[0].id);
-    expect(result[0]?.organizerId).toBe(mockRows[0].organizer_id);
-    expect(result[1]?.id).toBe(mockRows[1].id);
-    expect(result[1]?.organizerId).toBe(mockRows[1].organizer_id);
+    expect(result[0]?.id).toBe(fakeRows[0].id);
+    expect(result[0]?.organizerId).toBe(fakeRows[0].organizer_id);
+    expect(result[1]?.id).toBe(fakeRows[1].id);
+    expect(result[1]?.organizerId).toBe(fakeRows[1].organizer_id);
   });
 
   it('should apply name filter', async () => {
-    const mockRows = [createMockDbCommunity({ name: 'Test Community' })];
+    const fakeRows = [createFakeDbCommunity({ name: 'Test Community' })];
 
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockResolvedValue({ data: mockRows, error: null }),
+          ilike: vi.fn().mockResolvedValue({ data: fakeRows, error: null }),
         }),
       }),
     });
@@ -50,12 +50,12 @@ describe('fetchCommunities', () => {
 
   it('should apply organizer filter', async () => {
     const organizerId = 'organizer-123';
-    const mockRows = [createMockDbCommunity({ organizer_id: organizerId })];
+    const fakeRows = [createFakeDbCommunity({ organizer_id: organizerId })];
 
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: mockRows, error: null }),
+          eq: vi.fn().mockResolvedValue({ data: fakeRows, error: null }),
         }),
       }),
     });

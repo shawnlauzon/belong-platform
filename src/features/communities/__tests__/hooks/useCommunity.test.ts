@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import { useCommunity } from '../../hooks/useCommunity';
-import { createMockCommunityInfo } from '../../__mocks__';
-import { createMockUser } from '@/features/users/__mocks__';
+import { createFakeCommunityInfo } from '../../__fakes__';
+import { createFakeUser } from '@/features/users/__fakes__';
 
 // Mock only external dependencies
 vi.mock('../../api/fetchCommunityById', () => ({
@@ -22,26 +22,26 @@ describe('useCommunity', () => {
   const mockFetchCommunityById = vi.mocked(fetchCommunityById);
   const mockFetchUserById = vi.mocked(fetchUserById);
 
-  let mockCommunityInfo: ReturnType<typeof createMockCommunityInfo>;
-  let mockOrganizer: ReturnType<typeof createMockUser>;
+  let fakeCommunityInfo: ReturnType<typeof createFakeCommunityInfo>;
+  let fakeOrganizer: ReturnType<typeof createFakeUser>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     ({ wrapper } = createDefaultTestWrapper());
 
     // Setup mock data
-    mockOrganizer = createMockUser();
-    mockCommunityInfo = createMockCommunityInfo({
-      organizerId: mockOrganizer.id,
+    fakeOrganizer = createFakeUser();
+    fakeCommunityInfo = createFakeCommunityInfo({
+      organizerId: fakeOrganizer.id,
     });
 
     // Setup mocks
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
-    mockFetchUserById.mockResolvedValue(mockOrganizer);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
+    mockFetchUserById.mockResolvedValue(fakeOrganizer);
   });
 
   it('should compose full Community from CommunityInfo + User', async () => {
-    const { result } = renderHook(() => useCommunity(mockCommunityInfo.id), {
+    const { result } = renderHook(() => useCommunity(fakeCommunityInfo.id), {
       wrapper,
     });
 
@@ -55,10 +55,10 @@ describe('useCommunity', () => {
     // Should return full Community object with composed data
     expect(result.current.data).toEqual(
       expect.objectContaining({
-        id: mockCommunityInfo.id,
-        name: mockCommunityInfo.name,
-        description: mockCommunityInfo.description,
-        organizer: mockOrganizer, // Full User object, not just ID
+        id: fakeCommunityInfo.id,
+        name: fakeCommunityInfo.name,
+        description: fakeCommunityInfo.description,
+        organizer: fakeOrganizer, // Full User object, not just ID
       }),
     );
 
@@ -68,11 +68,11 @@ describe('useCommunity', () => {
     // Verify external calls were made correctly
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       expect.any(Object),
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledWith(
       expect.any(Object),
-      mockCommunityInfo.organizerId,
+      fakeCommunityInfo.organizerId,
     );
   });
 
@@ -92,10 +92,10 @@ describe('useCommunity', () => {
   });
 
   it('should return null when organizer not found', async () => {
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
     mockFetchUserById.mockResolvedValue(null); // Organizer not found
 
-    const { result } = renderHook(() => useCommunity(mockCommunityInfo.id), {
+    const { result } = renderHook(() => useCommunity(fakeCommunityInfo.id), {
       wrapper,
     });
 

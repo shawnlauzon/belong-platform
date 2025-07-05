@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
-import { createMockCommunityData, createMockDbCommunity } from '../../__mocks__';
+import { createFakeCommunityData, createFakeDbCommunity } from '../../__fakes__';
 import { createCommunity } from '../../api/createCommunity';
 
 const mockSupabase = createMockSupabase();
@@ -15,10 +15,10 @@ describe('createCommunity', () => {
   });
 
   it('should return CommunityInfo after creation', async () => {
-    const communityData = createMockCommunityData({
+    const communityData = createFakeCommunityData({
       organizerId: 'current-user-id',
     });
-    const mockCreatedRow = createMockDbCommunity({
+    const fakeCreatedRow = createFakeDbCommunity({
       organizer_id: communityData.organizerId,
       name: communityData.name,
     });
@@ -27,7 +27,7 @@ describe('createCommunity', () => {
     mockSupabase.from.mockReturnValueOnce({
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockCreatedRow, error: null }),
+          single: vi.fn().mockResolvedValue({ data: fakeCreatedRow, error: null }),
         }),
       }),
     });
@@ -41,7 +41,7 @@ describe('createCommunity', () => {
 
     expect(result).toEqual(
       expect.objectContaining({
-        id: mockCreatedRow.id,
+        id: fakeCreatedRow.id,
         name: communityData.name,
         organizerId: communityData.organizerId,
       }),
@@ -49,7 +49,7 @@ describe('createCommunity', () => {
   });
 
   it('should throw error on database failure', async () => {
-    const communityData = createMockCommunityData();
+    const communityData = createFakeCommunityData();
     const dbError = new Error('Database constraint violation');
     
     mockSupabase.from.mockReturnValue({

@@ -3,10 +3,10 @@ import { renderHook } from '@testing-library/react';
 import { useCreateResource } from '../../hooks/useCreateResource';
 import { createMockSupabase } from '../../../../test-utils';
 import {
-  createMockResourceData,
-  createMockResourceInfo,
-} from '../../__mocks__';
-import { createMockUser } from '../../../users/__mocks__';
+  createFakeResourceData,
+  createFakeResourceInfo,
+} from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
 // Global mocks for shared and config modules are now handled in vitest.setup.ts
@@ -24,7 +24,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { User } from '../../../users/types';
 import { Community } from '@/features/communities';
-import { createMockCommunity } from '@/features/communities/__mocks__';
+import { createFakeCommunity } from '@/features/communities/__fakes__';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResource = vi.mocked(createResource);
@@ -34,14 +34,14 @@ describe('useCreateResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
   let mockCurrentUser: User;
-  let mockCommunity: Community;
+  let fakeCommunity: Community;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockCurrentUser = createMockUser();
-    mockCommunity = createMockCommunity();
+    mockCurrentUser = createFakeUser();
+    fakeCommunity = createFakeCommunity();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
@@ -55,17 +55,17 @@ describe('useCreateResource', () => {
 
   it('should return ResourceInfo after creation', async () => {
     // Arrange: Create test data using factories
-    const mockResourceInfo = createMockResourceInfo({
+    const fakeResourceInfo = createFakeResourceInfo({
       ownerId: mockCurrentUser.id,
-      communityId: mockCommunity.id,
+      communityId: fakeCommunity.id,
     });
 
-    const resourceData = createMockResourceData({
+    const resourceData = createFakeResourceData({
       ownerId: mockCurrentUser.id,
-      communityId: mockCommunity.id,
+      communityId: fakeCommunity.id,
     });
 
-    mockCreateResource.mockResolvedValue(mockResourceInfo);
+    mockCreateResource.mockResolvedValue(fakeResourceInfo);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
@@ -75,8 +75,8 @@ describe('useCreateResource', () => {
     expect(createdResourceInfo).toBeDefined();
     expect(createdResourceInfo).toEqual(
       expect.objectContaining({
-        id: mockResourceInfo.id,
-        title: mockResourceInfo.title,
+        id: fakeResourceInfo.id,
+        title: fakeResourceInfo.title,
         ownerId: mockCurrentUser.id,
         communityId: resourceData.communityId,
       }),

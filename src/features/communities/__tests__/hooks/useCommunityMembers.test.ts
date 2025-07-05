@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import { useCommunityMembers } from '../../hooks/useCommunityMembers';
-import { createMockCommunityMembership } from '../../__mocks__';
+import { createFakeCommunityMembership } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
@@ -24,9 +24,9 @@ describe('useCommunityMembers', () => {
   it('should return array of CommunityMembership when members exist', async () => {
     const communityId = faker.string.uuid();
     const mockMembers = [
-      createMockCommunityMembership({ communityId, role: 'organizer' }),
-      createMockCommunityMembership({ communityId, role: 'admin' }),
-      createMockCommunityMembership({ communityId, role: 'member' }),
+      createFakeCommunityMembership({ communityId, role: 'organizer' }),
+      createFakeCommunityMembership({ communityId, role: 'admin' }),
+      createFakeCommunityMembership({ communityId, role: 'member' }),
     ];
     mockFetchCommunityMembers.mockResolvedValue(mockMembers);
 

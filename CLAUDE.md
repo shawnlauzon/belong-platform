@@ -79,7 +79,7 @@ Testing
 - Integration tests are located in the tests/integration directory
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
-- **ALWAYS use createMock\* utilities from src/test-utils for generating test data**
+- **ALWAYS use createFake\* utilities from src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
 
 Unit Test Requirements

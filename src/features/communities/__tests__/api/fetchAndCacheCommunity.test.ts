@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { fetchAndCacheCommunity } from '../../api/fetchAndCacheCommunity';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockCommunity, createMockCommunityInfo } from '../../__mocks__';
-import { createMockUser } from '../../../users/__mocks__';
+import { createFakeCommunity, createFakeCommunityInfo } from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { User } from '../../../users/types';
@@ -27,9 +27,9 @@ const mockFetchUserById = vi.mocked(fetchUserById);
 describe('fetchAndCacheCommunity', () => {
   let queryClient: QueryClient;
   let mockSupabase: SupabaseClient<Database>;
-  let mockCommunityInfo: CommunityInfo;
-  let mockCommunity: Community;
-  let mockOrganizer: User;
+  let fakeCommunityInfo: CommunityInfo;
+  let fakeCommunity: Community;
+  let fakeOrganizer: User;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,16 +42,16 @@ describe('fetchAndCacheCommunity', () => {
     });
 
     // Create mock data using factories
-    mockOrganizer = createMockUser();
-    mockCommunity = createMockCommunity({
-      organizer: mockOrganizer,
+    fakeOrganizer = createFakeUser();
+    fakeCommunity = createFakeCommunity({
+      organizer: fakeOrganizer,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizer, ...rest } = mockCommunity;
-    mockCommunityInfo = {
+    const { organizer, ...rest } = fakeCommunity;
+    fakeCommunityInfo = {
       ...rest,
-      organizerId: mockOrganizer.id,
+      organizerId: fakeOrganizer.id,
     };
 
     mockSupabase = createMockSupabase();
@@ -59,22 +59,22 @@ describe('fetchAndCacheCommunity', () => {
 
   it('should return consolidated Community when all data is available', async () => {
     // Arrange: Mock all API calls
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
-    mockFetchUserById.mockResolvedValue(mockOrganizer);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
+    mockFetchUserById.mockResolvedValue(fakeOrganizer);
 
     // Act
     const result = await fetchAndCacheCommunity(
       mockSupabase,
       queryClient,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
 
     // Assert
     expect(result).toBeDefined();
-    expect(result?.organizer).toEqual(mockOrganizer);
-    expect(result?.id).toBe(mockCommunityInfo.id);
-    expect(result?.name).toBe(mockCommunityInfo.name);
-    expect(result?.description).toBe(mockCommunityInfo.description);
+    expect(result?.organizer).toEqual(fakeOrganizer);
+    expect(result?.id).toBe(fakeCommunityInfo.id);
+    expect(result?.name).toBe(fakeCommunityInfo.name);
+    expect(result?.description).toBe(fakeCommunityInfo.description);
 
     // Should not have ID reference
     expect(result).not.toHaveProperty('organizerId');
@@ -82,11 +82,11 @@ describe('fetchAndCacheCommunity', () => {
     // Verify all API calls were made
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       mockSupabase,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledWith(
       mockSupabase,
-      mockOrganizer.id,
+      fakeOrganizer.id,
     );
   });
 
@@ -112,48 +112,48 @@ describe('fetchAndCacheCommunity', () => {
 
   it('should return null when organizer is not found', async () => {
     // Arrange
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
     mockFetchUserById.mockResolvedValue(null); // Organizer not found
 
     // Act
     const result = await fetchAndCacheCommunity(
       mockSupabase,
       queryClient,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
 
     // Assert
     expect(result).toBeNull();
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       mockSupabase,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledWith(
       mockSupabase,
-      mockOrganizer.id,
+      fakeOrganizer.id,
     );
   });
 
   it('should retrieve cached organizer (user) when available', async () => {
     // Arrange: Pre-populate user cache but not community cache
-    queryClient.setQueryData(['user', mockOrganizer.id], mockOrganizer);
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+    queryClient.setQueryData(['user', fakeOrganizer.id], fakeOrganizer);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act
     const result = await fetchAndCacheCommunity(
       mockSupabase,
       queryClient,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
 
     // Assert
     expect(result).toBeDefined();
-    expect(result?.organizer).toEqual(mockOrganizer);
+    expect(result?.organizer).toEqual(fakeOrganizer);
 
     // Community should be fetched but user should come from cache
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       mockSupabase,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
     expect(mockFetchUserById).not.toHaveBeenCalled(); // Should not be called due to cache
   });

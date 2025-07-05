@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toDomainUser, forDbInsert } from '../../transformers/userTransformer';
-import { createMockDbProfile, createMockUserData } from '../../__mocks__';
+import { createFakeDbProfile, createFakeUserData } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -21,7 +21,7 @@ describe('User Transformer', () => {
       lng: faker.location.longitude(),
     };
 
-    const dbProfile = createMockDbProfile({
+    const dbProfile = createFakeDbProfile({
       id: userId,
       email: email,
       user_metadata: {
@@ -60,7 +60,7 @@ describe('User Transformer', () => {
 
   it('should handle optional fields correctly in User', () => {
     // Arrange
-    const dbProfile = createMockDbProfile({
+    const dbProfile = createFakeDbProfile({
       user_metadata: {
         first_name: faker.person.firstName(),
         last_name: null,
@@ -91,7 +91,7 @@ describe('User Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform domain user to database format', () => {
       // Arrange
-      const userData = createMockUserData();
+      const userData = createFakeUserData();
 
       // Act
       const dbData = forDbInsert(userData);
@@ -112,7 +112,7 @@ describe('User Transformer', () => {
 
     it('should handle minimal user data for database insert', () => {
       // Arrange
-      const userData = createMockUserData({
+      const userData = createFakeUserData({
         lastName: undefined,
         fullName: undefined,
         avatarUrl: undefined,

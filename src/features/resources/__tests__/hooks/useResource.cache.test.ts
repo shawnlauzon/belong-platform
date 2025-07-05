@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import { useResource } from '../../hooks/useResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResourceInfo } from '../../__mocks__/';
-import { createMockUser } from '../../../users/__mocks__';
-import { createMockCommunity } from '../../../communities/__mocks__';
+import { createFakeResourceInfo } from '../../__fakes__/';
+import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCommunity } from '../../../communities/__fakes__';
 import { BelongProvider } from '../../../../config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
@@ -73,29 +73,29 @@ describe('useResource - Cache Behavior', () => {
   let wrapper: ReturnType<typeof createCacheTestWrapper>['wrapper'];
   let queryClient: any;
   let mockSupabase: SupabaseClient<Database>;
-  let mockResourceInfo: ReturnType<typeof createMockResourceInfo>;
-  let mockOwner: User;
-  let mockOrganizer: User;
-  let mockCommunity: Community;
-  let mockCommunityInfo: CommunityInfo;
+  let fakeResourceInfo: ReturnType<typeof createFakeResourceInfo>;
+  let fakeOwner: User;
+  let fakeOrganizer: User;
+  let fakeCommunity: Community;
+  let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockOwner = createMockUser();
-    mockOrganizer = createMockUser(); // Separate organizer
-    mockCommunity = createMockCommunity();
+    fakeOwner = createFakeUser();
+    fakeOrganizer = createFakeUser(); // Separate organizer
+    fakeCommunity = createFakeCommunity();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizer, ...rest } = mockCommunity;
-    mockCommunityInfo = {
+    const { organizer, ...rest } = fakeCommunity;
+    fakeCommunityInfo = {
       ...rest,
-      organizerId: mockOrganizer.id,
+      organizerId: fakeOrganizer.id,
     };
 
-    mockResourceInfo = createMockResourceInfo({
-      ownerId: mockOwner.id,
-      communityId: mockCommunity.id,
+    fakeResourceInfo = createFakeResourceInfo({
+      ownerId: fakeOwner.id,
+      communityId: fakeCommunity.id,
     });
 
     mockSupabase = createMockSupabase();
@@ -109,15 +109,15 @@ describe('useResource - Cache Behavior', () => {
 
   it('should cache consolidated Resource objects and not refetch on subsequent calls', async () => {
     // Arrange: Mock the API functions
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById
-      .mockResolvedValueOnce(mockOwner) // First call for resource owner
-      .mockResolvedValueOnce(mockOrganizer); // Second call for community organizer
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+      .mockResolvedValueOnce(fakeOwner) // First call for resource owner
+      .mockResolvedValueOnce(fakeOrganizer); // Second call for community organizer
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act: First component calls useResource (simulates first component using the hook)
     const { result: firstResult } = renderHook(
-      () => useResource(mockResourceInfo.id),
+      () => useResource(fakeResourceInfo.id),
       {
         wrapper,
       },
@@ -136,13 +136,13 @@ describe('useResource - Cache Behavior', () => {
     // Verify first call results in consolidated Resource
     const firstResource = firstResult.current.data;
     expect(firstResource).toBeDefined();
-    expect(firstResource!.owner).toEqual(mockOwner);
+    expect(firstResource!.owner).toEqual(fakeOwner);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizerId, ...expectedCommunityInfo } = mockCommunityInfo;
+    const { organizerId, ...expectedCommunityInfo } = fakeCommunityInfo;
     expect(firstResource!.community).toEqual({
       ...expectedCommunityInfo,
-      organizer: mockOrganizer,
+      organizer: fakeOrganizer,
     });
 
     // Count API calls after first hook usage
@@ -152,7 +152,7 @@ describe('useResource - Cache Behavior', () => {
 
     // Act: Second component calls useResource with the same ID (simulates different component)
     const { result: secondResult } = renderHook(
-      () => useResource(mockResourceInfo.id),
+      () => useResource(fakeResourceInfo.id),
       {
         wrapper, // Using same wrapper means same QueryClient instance
       },
@@ -188,20 +188,20 @@ describe('useResource - Cache Behavior', () => {
 
   it('should use cached community data when building consolidated resource', async () => {
     // Arrange: Mock the API functions
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById
-      .mockResolvedValueOnce(mockOwner) // First call for resource owner
-      .mockResolvedValueOnce(mockOrganizer); // Second call for community organizer
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+      .mockResolvedValueOnce(fakeOwner) // First call for resource owner
+      .mockResolvedValueOnce(fakeOrganizer); // Second call for community organizer
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Pre-populate the community cache (simulating previous useCommunity call)
     queryClient.setQueryData(
-      queryKeys.communities.byId(mockResourceInfo.communityId),
-      mockCommunity,
+      queryKeys.communities.byId(fakeResourceInfo.communityId),
+      fakeCommunity,
     );
 
     // Act: Call useResource which should use the cached community
-    const { result } = renderHook(() => useResource(mockResourceInfo.id), {
+    const { result } = renderHook(() => useResource(fakeResourceInfo.id), {
       wrapper,
     });
 
@@ -216,16 +216,16 @@ describe('useResource - Cache Behavior', () => {
     // Assert: Resource should be consolidated with cached community
     const resource = result.current.data;
     expect(resource).toBeDefined();
-    expect(resource!.community).toBe(mockCommunity);
+    expect(resource!.community).toBe(fakeCommunity);
 
     // Assert: Resource and User APIs should be called, but NOT Community API (cached)
     expect(mockFetchResourceInfoById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.ownerId,
+      fakeResourceInfo.ownerId,
     );
     expect(mockFetchCommunityById).not.toHaveBeenCalled(); // Should use cache
   });

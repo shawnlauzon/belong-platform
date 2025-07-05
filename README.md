@@ -55,6 +55,7 @@ The platform follows React best practices with single-purpose hooks:
 #### Hook Categories
 
 **Query Hooks (Data Fetching)**
+
 - `useCurrentUser()` - Get current authenticated user
 - `useCommunities()` - Fetch communities list
 - `useCommunity(id)` - Fetch single community
@@ -62,8 +63,9 @@ The platform follows React best practices with single-purpose hooks:
 - `useResource(id)` - Fetch single resource
 
 **Mutation Hooks (Data Modification)**
+
 - `useSignIn()` - Sign in user
-- `useSignOut()` - Sign out user  
+- `useSignOut()` - Sign out user
 - `useSignUp()` - Register new user
 - `useCreateCommunity()` - Create community
 - `useCreateResource()` - Create resource
@@ -90,15 +92,15 @@ pnpm add @belongnetwork/platform
 ### Basic Setup
 
 ```tsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BelongProvider } from "@belongnetwork/platform";
-import App from "./App";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BelongProvider } from '@belongnetwork/platform';
+import App from './App';
 
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BelongProvider
@@ -135,12 +137,14 @@ import {
   useCreateResource,
   useSignIn,
   useSignOut,
-} from "@belongnetwork/platform";
+} from '@belongnetwork/platform';
 
 function CommunityDashboard() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const { data: communities, isLoading: communitiesLoading } = useCommunities();
-  const { data: resources, isLoading: resourcesLoading } = useResources({ type: "offer" });
+  const { data: resources, isLoading: resourcesLoading } = useResources({
+    type: 'offer',
+  });
   const createResource = useCreateResource();
   const signIn = useSignIn();
   const signOut = useSignOut();
@@ -148,20 +152,20 @@ function CommunityDashboard() {
   const handleCreateResource = async (resourceData) => {
     try {
       await createResource(resourceData);
-      alert("Resource created successfully!");
+      alert('Resource created successfully!');
     } catch (error) {
-      alert("Failed to create resource");
+      alert('Failed to create resource');
     }
   };
 
   const handleSignIn = async () => {
     try {
       await signIn({
-        email: "user@example.com",
-        password: "password"
+        email: 'user@example.com',
+        password: 'password',
       });
     } catch (error) {
-      alert("Failed to sign in");
+      alert('Failed to sign in');
     }
   };
 
@@ -194,19 +198,25 @@ function CommunityDashboard() {
           resources?.map((resource) => (
             <div key={resource.id}>
               <h3>{resource.title}</h3>
-              <p>{resource.type} - {resource.category}</p>
+              <p>
+                {resource.type} - {resource.category}
+              </p>
             </div>
           ))
         )}
       </section>
 
       <div>
-        <button onClick={() => handleCreateResource({
-          title: "Garden Tools",
-          type: "offer",
-          category: "tools",
-          communityId: communities?.[0]?.id
-        })}>
+        <button
+          onClick={() =>
+            handleCreateResource({
+              title: 'Garden Tools',
+              type: 'offer',
+              category: 'tools',
+              communityId: communities?.[0]?.id,
+            })
+          }
+        >
           Share a Resource
         </button>
         <button onClick={() => signOut()}>Sign Out</button>
@@ -219,7 +229,7 @@ function CommunityDashboard() {
 ### Key Setup Requirements
 
 1. **BelongProvider Configuration**: Pass configuration as `config` prop to `BelongProvider`
-2. **QueryClientProvider**: Required for React Query functionality  
+2. **QueryClientProvider**: Required for React Query functionality
 3. **Provider nesting order**: QueryClient → Belong → App components
 4. **Hook usage**: All hooks must be called inside `BelongProvider`
 
@@ -229,7 +239,7 @@ function CommunityDashboard() {
 // Get current user data anywhere in your app (must be inside BelongProvider)
 function UserNameDisplay() {
   const { data: currentUser, isLoading } = useCurrentUser();
-  return <div>User: {currentUser?.firstName || "Not signed in"}</div>;
+  return <div>User: {currentUser?.firstName || 'Not signed in'}</div>;
 }
 
 // Handle loading and error states
@@ -253,10 +263,10 @@ The package also supports subpath imports for better organization:
 
 ```tsx
 // Import types separately
-import type { Resource, Community, User } from "@belongnetwork/platform/types";
+import type { Resource, Community, User } from '@belongnetwork/platform/types';
 
 // Import hooks separately
-import { useResources, useCommunities } from "@belongnetwork/platform/hooks";
+import { useResources, useCommunities } from '@belongnetwork/platform/hooks';
 ```
 
 ## 📚 Package Documentation
@@ -268,7 +278,7 @@ The `@belongnetwork/platform` package provides two main categories of exports:
 #### Providers
 
 ```tsx
-import { BelongProvider } from "@belongnetwork/platform";
+import { BelongProvider } from '@belongnetwork/platform';
 
 // Wrap your app with the BelongProvider and pass configuration
 function App() {
@@ -304,17 +314,17 @@ import type {
   CommunityData,
   MessageData,
   ConversationData,
-} from "@belongnetwork/platform/types";
+} from '@belongnetwork/platform/types';
 // or
-import type { User, Community } from "@belongnetwork/platform";
+import type { User, Community } from '@belongnetwork/platform';
 
 // Type-safe resource creation
 const resourceData: ResourceData = {
-  title: "Garden Tools",
-  category: "tools",
-  type: "offer",
-  communityId: "community-123",
-  meetupType: "pickup",
+  title: 'Garden Tools',
+  category: 'tools',
+  type: 'offer',
+  communityId: 'community-123',
+  meetupType: 'pickup',
 };
 ```
 
@@ -493,19 +503,19 @@ function EventManager() {
 #### Shoutouts and Gratitude
 
 ```tsx
-import { useShoutouts, useCreateShoutout } from "@belongnetwork/platform";
+import { useShoutouts, useCreateShoutout } from '@belongnetwork/platform';
 
 function GratitudeManager() {
   const { data: shoutoutMessages } = useShoutouts({
-    resourceId: "resource-123",
+    resourceId: 'resource-123',
   });
   const createShoutout = useCreateShoutout();
 
   const handleSendShoutout = () => {
     createShoutout.mutate({
-      toUserId: "user-456",
-      resourceId: "resource-123",
-      message: "Thank you for sharing this!",
+      toUserId: 'user-456',
+      resourceId: 'resource-123',
+      message: 'Thank you for sharing this!',
     });
   };
 
@@ -532,11 +542,11 @@ import {
   useMessages,
   useSendMessage,
   useMarkAsRead,
-} from "@belongnetwork/platform";
+} from '@belongnetwork/platform';
 
 function MessagingInterface() {
   const { data: conversations } = useConversations();
-  const { data: messages } = useMessages("conversation-123");
+  const { data: messages } = useMessages('conversation-123');
   const sendMessage = useSendMessage();
   const markAsRead = useMarkAsRead();
 
@@ -573,13 +583,13 @@ function MessagingInterface() {
             <p>{message.content}</p>
             <small>
               From: {message.fromUser?.firstName}
-              {message.readAt ? " (Read)" : " (Unread)"}
+              {message.readAt ? ' (Read)' : ' (Unread)'}
             </small>
           </div>
         ))}
       </section>
 
-      <button onClick={() => handleSendMessage("conversation-123", "Hello!")}>
+      <button onClick={() => handleSendMessage('conversation-123', 'Hello!')}>
         Send Message
       </button>
     </div>
@@ -758,13 +768,13 @@ export const TestWrapper = IntegrationTestWrapper;
 Configure the platform by passing config to `BelongProvider`:
 
 ```tsx
-import { BelongProvider } from "@belongnetwork/platform";
+import { BelongProvider } from '@belongnetwork/platform';
 
 <BelongProvider
   config={{
-    supabaseUrl: "https://your-project.supabase.co",
-    supabaseAnonKey: "your-anon-key",
-    mapboxPublicToken: "your-mapbox-token",
+    supabaseUrl: 'https://your-project.supabase.co',
+    supabaseAnonKey: 'your-anon-key',
+    mapboxPublicToken: 'your-mapbox-token',
   }}
 >
   <YourApp />
@@ -789,7 +799,7 @@ VITE_DEFAULT_LOCATION_LNG=-97.7431
 ### React Query Configuration
 
 ```tsx
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
   defaultOptions: {

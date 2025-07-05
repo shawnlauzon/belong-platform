@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toCommunityInfo } from '../../transformers/communityTransformer';
-import { createMockDbCommunity } from '../../__mocks__';
+import { createFakeDbCommunity } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -9,7 +9,7 @@ import {
 describe('CommunityInfo Transformer', () => {
   it('should transform database community to CommunityInfo without snake_case properties', () => {
     // Arrange
-    const dbCommunity = createMockDbCommunity();
+    const dbCommunity = createFakeDbCommunity();
 
     // Act
     const result = toCommunityInfo(dbCommunity);
@@ -40,7 +40,7 @@ describe('CommunityInfo Transformer', () => {
 
   it('should handle optional fields correctly in CommunityInfo', () => {
     // Arrange
-    const dbCommunity = createMockDbCommunity({
+    const dbCommunity = createFakeDbCommunity({
       boundary: null,
     });
 

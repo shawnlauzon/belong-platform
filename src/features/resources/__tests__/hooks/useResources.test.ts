@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useResources } from '../../hooks/useResources';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResourceInfo } from '../../__mocks__';
+import { createFakeResourceInfo } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
 // Mock the API
@@ -31,19 +31,19 @@ describe('useResources', () => {
 
   it('should return ResourceInfo[] from fetchResources', async () => {
     // Arrange: Mock return value should be ResourceInfo[]
-    const mockResourceInfos = [
-      createMockResourceInfo(),
-      createMockResourceInfo(),
+    const fakeResourceInfos = [
+      createFakeResourceInfo(),
+      createFakeResourceInfo(),
     ];
 
-    mockFetchResources.mockResolvedValue(mockResourceInfos);
+    mockFetchResources.mockResolvedValue(fakeResourceInfos);
 
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
     // Assert
     await waitFor(() => {
-      expect(result.current.data).toEqual(mockResourceInfos);
+      expect(result.current.data).toEqual(fakeResourceInfos);
     });
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
@@ -62,15 +62,15 @@ describe('useResources', () => {
       communityId: 'test-community-id',
       type: 'offer',
     };
-    const mockResourceInfos = [createMockResourceInfo()];
-    mockFetchResources.mockResolvedValue(mockResourceInfos);
+    const fakeResourceInfos = [createFakeResourceInfo()];
+    mockFetchResources.mockResolvedValue(fakeResourceInfos);
 
     // Act
     const { result } = renderHook(() => useResources(filters), { wrapper });
 
     // Assert
     await waitFor(() => {
-      expect(result.current.data).toEqual(mockResourceInfos);
+      expect(result.current.data).toEqual(fakeResourceInfos);
     });
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, filters);

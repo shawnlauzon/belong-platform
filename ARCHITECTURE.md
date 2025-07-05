@@ -165,7 +165,7 @@ Most features use API functions that accept their dependencies directly:
 // Modern API function pattern (most features)
 export async function createCommunity(
   supabase: SupabaseClient,
-  data: CommunityData
+  data: CommunityData,
 ): Promise<Community> {
   // Implementation using injected supabase client
 }
@@ -193,15 +193,15 @@ Most features use direct API functions for business logic and Supabase interacti
 
 ```typescript
 export async function fetchCommunities(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
 ): Promise<CommunityInfo[]> {
   const { data, error } = await supabase
-    .from("communities")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .from('communities')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    logger.error("Failed to fetch communities", { error });
+    logger.error('Failed to fetch communities', { error });
     throw error;
   }
 
@@ -233,7 +233,7 @@ export function useCommunities(filters?: CommunityFilter) {
   const supabase = useSupabase();
 
   const query = useQuery<CommunityInfo[], Error>({
-    queryKey: filters 
+    queryKey: filters
       ? queryKeys.communities.filtered(filters)
       : queryKeys.communities.all,
     queryFn: () => fetchCommunities(supabase, filters),
@@ -280,11 +280,11 @@ export function useCreateCommunity() {
 
       // Invalidate community lists to include new community
       queryClient.invalidateQueries({ queryKey: ['communities'] });
-      
+
       // Set the new community in cache
       queryClient.setQueryData(
-        queryKeys.communities.byId(newCommunity.id), 
-        newCommunity
+        queryKeys.communities.byId(newCommunity.id),
+        newCommunity,
       );
     },
     onError: (error) => {
@@ -297,7 +297,7 @@ export function useCreateCommunity() {
     (data: CommunityData) => {
       return mutation.mutateAsync(data);
     },
-    [mutation.mutateAsync]
+    [mutation.mutateAsync],
   );
 }
 ```
@@ -347,7 +347,7 @@ export function useSignIn() {
     (params: { email: string; password: string }) => {
       return mutation.mutateAsync(params);
     },
-    [mutation.mutateAsync]
+    [mutation.mutateAsync],
   );
 }
 ```
@@ -401,6 +401,7 @@ feature/
 ```
 
 **Architecture Migration Notes**:
+
 - **In Progress**: Migration from `services/` pattern to `api/` function pattern
 - **Completed**: Migration from monolithic hooks to single-purpose hook pattern
 - **Current Structure**: Most business logic in API functions, some legacy services remain
@@ -433,7 +434,7 @@ async fetchResourceWithRelations(id: string) {
   const resource = await this.fetchResource(id);
 
   // Assemble related data from cache or fetch if needed
-  const owner = 
+  const owner =
     queryClient.getQueryData(['user', resource.ownerId]) ||
     (await this.userService.fetchUserById(resource.ownerId));
 
@@ -454,7 +455,7 @@ async fetchCommunityWithRelations(id: string) {
       organizer:users!organizer_id(*)
     `)
     .single();
-    
+
   return toCommunityWithRelations(data);
 }
 ```
@@ -465,20 +466,25 @@ Centralized query key management in `shared/queryKeys.ts`:
 
 ```typescript
 export const queryKeys = {
-  auth: ["auth"],
+  auth: ['auth'],
   users: {
-    all: ["users"],
-    byId: (id: string) => ["user", id],
+    all: ['users'],
+    byId: (id: string) => ['user', id],
   },
   communities: {
-    all: ["communities"],
-    byId: (id: string) => ["community", id],
-    memberships: (communityId: string) => ["community", communityId, "memberships"],
+    all: ['communities'],
+    byId: (id: string) => ['community', id],
+    memberships: (communityId: string) => [
+      'community',
+      communityId,
+      'memberships',
+    ],
   },
 };
 ```
 
 This centralized approach ensures:
+
 - Consistent cache invalidation patterns
 - Easier maintenance and updates
 - Better query dependency management
@@ -542,7 +548,7 @@ vi.mock('./config/client', () => ({
 
 // Level 3: Hook Level (Good for component tests)
 vi.mock('@belongnetwork/platform', () => ({
-  useCommunities: () => ({ communities: mockData, create: vi.fn() }),
+  useCommunities: () => ({ communities: fakeData, create: vi.fn() }),
 }));
 ```
 
@@ -567,14 +573,17 @@ describe('Feature Tests', () => {
     });
 
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
 
     wrapper = ({ children }) =>
       createElement(
         QueryClientProvider,
         { client: queryClient },
-        createElement(BelongProvider, { config: testConfig }, children)
+        createElement(BelongProvider, { config: testConfig }, children),
       );
   });
 });
@@ -591,7 +600,7 @@ vi.mock('useSupabase', () => /* depends on BelongProvider context */);
 
 // ❌ Don't over-mock - creates complexity and hides real issues
 vi.mock('useSupabase');
-vi.mock('createBelongClient');  
+vi.mock('createBelongClient');
 vi.mock('shared');
 vi.mock('BelongProvider'); // Way too much!
 
@@ -611,8 +620,10 @@ const signUp = useSignUp();
 await signUp.mutateAsync({ email, password, firstName });
 
 // ❌ This test doesn't exercise any real code
-const mockSignUp = vi.fn();
-vi.mock('useSignUp', () => ({ useSignUp: () => ({ mutateAsync: mockSignUp }) }));
+const fakeSignUp = vi.fn();
+vi.mock('useSignUp', () => ({
+  useSignUp: () => ({ mutateAsync: fakeSignUp }),
+}));
 ```
 
 ### Testing Architecture Best Practices
@@ -622,7 +633,7 @@ vi.mock('useSignUp', () => ({ useSignUp: () => ({ mutateAsync: mockSignUp }) }))
 1. **Mock External Dependencies**: Supabase, external APIs, browser APIs
 2. **Use Real Platform Code**: Services, transformers, hooks, components
 3. **Dependency Injection**: Mock at the client creation level for full integration
-4. **Test Data**: Use `createMock*` utilities for consistent test data
+4. **Test Data**: Use `createFake*` utilities for consistent test data
 
 ```typescript
 // ✅ Proper unit test structure
@@ -636,12 +647,12 @@ describe('useSignUp', () => {
 
   it('should call Supabase with correct parameters', async () => {
     const signUp = useSignUp(); // Real hook
-    await signUp.mutateAsync(mockSignUpData); // Real execution path
-    
+    await signUp.mutateAsync(fakeSignUpData); // Real execution path
+
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
-      email: mockSignUpData.email,
-      password: mockSignUpData.password,
-      options: { data: { first_name: mockSignUpData.firstName } },
+      email: fakeSignUpData.email,
+      password: fakeSignUpData.password,
+      options: { data: { first_name: fakeSignUpData.firstName } },
     });
   });
 });
@@ -657,7 +668,7 @@ describe('useSignUp', () => {
 // ✅ Component test with mocked hooks
 vi.mock('@belongnetwork/platform', () => ({
   useSignUp: () => ({
-    mutateAsync: mockSignUp,
+    mutateAsync: fakeSignUp,
     isPending: false,
     error: null,
   }),
@@ -665,11 +676,11 @@ vi.mock('@belongnetwork/platform', () => ({
 
 test('SignUpForm submits with correct data', async () => {
   render(<SignUpForm />);
-  
+
   await userEvent.type(screen.getByLabelText(/email/i), 'test@example.com');
   await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
-  
-  expect(mockSignUp).toHaveBeenCalledWith({
+
+  expect(fakeSignUp).toHaveBeenCalledWith({
     email: 'test@example.com',
     // ... other expected data
   });
@@ -681,16 +692,19 @@ test('SignUpForm submits with correct data', async () => {
 The `useSignUp` test failures revealed key insights about mocking in this architecture:
 
 #### Problem: Over-Complex Mocking
+
 - **Issue**: Mocking at multiple levels (`useSupabase`, `createBelongClient`, `shared`) created conflicts
 - **Root Cause**: Circular dependencies between mocks and real provider code
 - **Result**: Mocks weren't applied correctly, tests failed with 0 function calls
 
 #### Solution: Simplified Strategic Mocking
+
 - **Strategy**: Mock only `createBelongClient` at the configuration level
 - **Benefit**: Real application code path executes while controlling external dependencies
 - **Result**: All tests pass, real code coverage, proper behavior validation
 
 #### Architecture Implications
+
 1. **Provider Pattern Works**: When mocked correctly, dependency injection enables clean testing
 2. **Mock Hierarchy Matters**: Lower-level mocks (config) are more stable than higher-level mocks (hooks)
 3. **Real Code Testing**: Testing real platform code provides better confidence than mock-heavy tests
@@ -703,14 +717,15 @@ Keep integration tests separate with real Supabase connections:
 // vitest.integration.config.ts
 export default defineConfig({
   test: {
-    include: ["tests/integration/**/*.test.{ts,tsx}"],
-    setupFiles: ["./tests/integration/setup.ts"],
+    include: ['tests/integration/**/*.test.{ts,tsx}'],
+    setupFiles: ['./tests/integration/setup.ts'],
     // Use real environment, no mocks
   },
 });
 ```
 
 Integration tests should:
+
 - Use real Supabase instances (test databases)
 - Test actual network requests and responses
 - Validate end-to-end user workflows
@@ -723,26 +738,30 @@ Integration tests should:
 When adding new features to the platform:
 
 1. **Create API Functions** (preferred) or **Service Layer** (legacy)
+
    - **API Functions**: Direct functions accepting Supabase client as first parameter
    - **Service Layer**: Factory function accepting Supabase client (legacy pattern)
    - Use transformers for validation and transformation
    - Add proper error handling and logging
 
 2. **Create Transformer Layer**
+
    - `toDomainX()` functions for full objects
    - `toXInfo()` functions for lightweight lists
    - `forDbInsert()` and `forDbUpdate()` functions
 
 3. **Create Single-Purpose Hooks**
+
    - Individual hooks for each operation (useFeatures, useFeature, useCreateFeature, etc.)
    - Use API functions or services as needed
    - Implement React Query patterns with proper cache management
 
 4. **Add Tests (Critical Requirements)**
+
    - **Unit Tests**: Follow dependency injection mocking patterns (mock at config level)
    - **Test Real Code**: Use real API functions/services, transformers, and hooks with mocked external dependencies
    - **Avoid Over-Mocking**: Don't mock platform code when testing platform functionality
-   - **Use Mock Factories**: Leverage `createMock*` utilities for consistent test data
+   - **Use Fake Factories**: Leverage `createFake*` utilities for consistent test data
    - **Test Coverage**: Ensure both success and error paths are covered
    - **Integration Tests**: Add for critical user workflows with real Supabase connections
 
@@ -755,24 +774,24 @@ When adding new features to the platform:
 
 **When to use each mocking level:**
 
-| Test Type | Mock Level | Use Case | Example |
-|-----------|------------|----------|---------|
-| Unit Tests (Platform Code) | Config Level | Testing hooks, services, transformers | `vi.mock('config/client')` |
-| Unit Tests (External) | External Dependencies | Testing with isolated externals | `vi.mock('@supabase/supabase-js')` |
-| Component Tests | Hook Level | Testing UI components | `vi.mock('@belongnetwork/platform')` |
-| Integration Tests | None | End-to-end workflows | Real Supabase, no mocks |
+| Test Type                  | Mock Level            | Use Case                              | Example                              |
+| -------------------------- | --------------------- | ------------------------------------- | ------------------------------------ |
+| Unit Tests (Platform Code) | Config Level          | Testing hooks, services, transformers | `vi.mock('config/client')`           |
+| Unit Tests (External)      | External Dependencies | Testing with isolated externals       | `vi.mock('@supabase/supabase-js')`   |
+| Component Tests            | Hook Level            | Testing UI components                 | `vi.mock('@belongnetwork/platform')` |
+| Integration Tests          | None                  | End-to-end workflows                  | Real Supabase, no mocks              |
 
 **Essential Test Patterns:**
 
 ```typescript
 // ✅ Platform unit test pattern
 vi.mock('config/client', () => ({
-  createBelongClient: vi.fn(() => mockClientWithControlledDependencies)
+  createBelongClient: vi.fn(() => mockClientWithControlledDependencies),
 }));
 
-// ✅ Component test pattern  
+// ✅ Component test pattern
 vi.mock('@belongnetwork/platform', () => ({
-  useFeature: () => ({ data: mockData, action: vi.fn() })
+  useFeature: () => ({ data: fakeData, action: vi.fn() }),
 }));
 
 // ✅ Real code testing
@@ -786,20 +805,20 @@ expect(mockExternalDependency).toHaveBeenCalledWith(expectedParams);
 ```typescript
 // 1. Create API functions (api/entity.ts) - Preferred approach
 export async function fetchEntities(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
 ): Promise<EntityInfo[]> {
-  const { data, error } = await supabase.from("entities").select("*");
+  const { data, error } = await supabase.from('entities').select('*');
   if (error) throw error;
   return (data || []).map(toEntityInfo);
 }
 
 export async function createEntity(
   supabase: SupabaseClient<Database>,
-  data: EntityData
+  data: EntityData,
 ): Promise<Entity> {
   const insertData = forDbInsert(data);
   const { data: result, error } = await supabase
-    .from("entities")
+    .from('entities')
     .insert(insertData)
     .single();
   if (error) throw error;
@@ -819,7 +838,7 @@ export function useEntities(filters?: EntityFilter) {
   const supabase = useSupabase();
 
   return useQuery({
-    queryKey: filters 
+    queryKey: filters
       ? queryKeys.entities.filtered(filters)
       : queryKeys.entities.all,
     queryFn: () => fetchEntities(supabase, filters),
@@ -834,13 +853,13 @@ export function useCreateEntity() {
   const mutation = useMutation({
     mutationFn: (data: EntityData) => createEntity(supabase, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["entities"] });
+      queryClient.invalidateQueries({ queryKey: ['entities'] });
     },
   });
 
   return useCallback(
     (data: EntityData) => mutation.mutateAsync(data),
-    [mutation.mutateAsync]
+    [mutation.mutateAsync],
   );
 }
 ```
@@ -878,6 +897,7 @@ export const CommunityFromDbSchema = z
 ```
 
 **Benefits of Future Zod Architecture**:
+
 - Single source of truth for all type definitions
 - Runtime validation with compile-time type safety
 - Automatic transformations between DB and domain formats

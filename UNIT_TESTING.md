@@ -27,7 +27,7 @@ expect(mockQuery.eq).toHaveBeenCalledWith('id', resourceId);
 // ✅ GOOD: Testing behavior and outputs
 expect(result.id).toBe(expectedResourceId);
 expect(result.title).toBe('Test Resource');
-expect(mockFetchResourceById).toHaveBeenCalledWith(mockSupabase, resourceId);
+expect(fakeFetchResourceById).toHaveBeenCalledWith(mockSupabase, resourceId);
 ```
 
 ### Benefits of Behavior-Focused Testing
@@ -43,7 +43,7 @@ expect(mockFetchResourceById).toHaveBeenCalledWith(mockSupabase, resourceId);
 
 ```
 src/features/{feature}/
-├── __mocks__/
+├── __fakes__/
 │   └── index.ts              # Mock factories and utilities
 ├── __tests__/
 │   ├── hooks/
@@ -113,21 +113,21 @@ describe('useFeature', () => {
 
 ### Factory Functions
 
-**Always use factory functions** from the feature's `__mocks__` directory for generating test data to ensure consistency and avoid hardcoded values:
+**Always use factory functions** from the feature's `__fakes__` directory for generating test data to ensure consistency and avoid hardcoded values:
 
 ```typescript
-// ✅ GOOD: Use factories from __mocks__, only override what's needed
-import { createMockUser } from '@/features/users/__mocks__';
-import { createMockResourceInfo } from '@/features/resources/__mocks__';
+// ✅ GOOD: Use factories from __fakes__, only override what's needed
+import { createFakeUser } from '@/features/users/__fakes__';
+import { createFakeResourceInfo } from '@/features/resources/__fakes__';
 
-const mockUser = createMockUser();
+const fakeUser = createFakeUser();
 
-const mockResource = createMockResourceInfo({
-  ownerId: mockUser.id,
+const fakeResource = createFakeResourceInfo({
+  ownerId: fakeUser.id,
 });
 
 // ❌ BAD: Hardcoded test data
-const mockUser = {
+const fakeUser = {
   id: 'user-123',
   firstName: 'John',
   // ... manually typed out
@@ -136,19 +136,19 @@ const mockUser = {
 
 ### Factory Implementation Pattern
 
-Mock factories should be placed in the feature's `__mocks__/index.ts` file and cover all data variants:
+Fake factories should be placed in the feature's `__fakes__/index.ts` file and cover all data variants:
 
 ```typescript
-// src/features/resources/__mocks__/index.ts
-export function createMockResource(overrides?: Partial<Resource>): Resource {
+// src/features/resources/__fakes__/index.ts
+export function createFakeResource(overrides?: Partial<Resource>): Resource {
   return {
     id: faker.string.uuid(),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category: faker.helpers.enumValue(ResourceCategory),
-    owner: createMockUser(),
-    community: createMockCommunity(),
+    owner: createFakeUser(),
+    community: createFakeCommunity(),
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
     ...overrides, // Apply overrides last
@@ -156,7 +156,7 @@ export function createMockResource(overrides?: Partial<Resource>): Resource {
 }
 
 // Provide factories for all data variants
-export function createMockResourceRow(
+export function createFakeResourceRow(
   overrides?: Partial<ResourceRow>,
 ): ResourceRow {
   return {
@@ -167,15 +167,15 @@ export function createMockResourceRow(
   };
 }
 
-export function createMockResourceInfo(
+export function createFakeResourceInfo(
   overrides?: Partial<ResourceInfo>,
 ): ResourceInfo {
-  const row = createMockResourceRow();
+  const row = createFakeResourceRow();
   const baseResourceInfo = toResourceInfo(row);
   return { ...baseResourceInfo, ...overrides };
 }
 
-export function createMockResourceData(
+export function createFakeResourceData(
   overrides?: Partial<ResourceData>,
 ): ResourceData {
   return {
@@ -202,7 +202,7 @@ vi.mock('../../api', () => ({
 // ✅ GOOD: Mock Supabase calls in API tests
 mockSupabase.from.mockReturnValue({
   select: vi.fn().mockReturnValue({
-    eq: vi.fn().mockResolvedValue({ data: mockRow }),
+    eq: vi.fn().mockResolvedValue({ data: fakeRow }),
   }),
 });
 
@@ -217,21 +217,21 @@ describe('useResource', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup mock data using factories from __mocks__
-    mockResourceInfo = createMockResourceInfo({
-      ownerId: mockOwner.id,
-      communityId: mockCommunity.id,
+    // Setup fake data using factories from __fakes__
+    fakeResourceInfo = createFakeResourceInfo({
+      ownerId: fakeOwner.id,
+      communityId: fakeCommunity.id,
     });
 
     // Mock external dependencies
-    mockFetchResourceById.mockResolvedValue(mockResourceInfo);
-    mockUseUser.mockReturnValue(mockOwner);
-    mockUseCommunity.mockReturnValue(mockCommunity);
+    fakeFetchResourceById.mockResolvedValue(fakeResourceInfo);
+    mockUseUser.mockReturnValue(fakeOwner);
+    mockUseCommunity.mockReturnValue(fakeCommunity);
   });
 
   it('should compose full Resource from ResourceInfo + User + Community', async () => {
     // Act
-    const { result } = renderHook(() => useResource(mockResourceInfo.id), {
+    const { result } = renderHook(() => useResource(fakeResourceInfo.id), {
       wrapper,
     });
 
@@ -243,10 +243,10 @@ describe('useResource', () => {
     // Assert: Test service contracts and outputs
     expect(result.current).toEqual(
       expect.objectContaining({
-        id: mockResourceInfo.id,
-        title: mockResourceInfo.title,
-        owner: mockOwner, // Full User object, not just ID
-        community: mockCommunity, // Full Community object, not just ID
+        id: fakeResourceInfo.id,
+        title: fakeResourceInfo.title,
+        owner: fakeOwner, // Full User object, not just ID
+        community: fakeCommunity, // Full Community object, not just ID
       }),
     );
 
@@ -255,9 +255,9 @@ describe('useResource', () => {
     expect(result.current).not.toHaveProperty('communityId');
 
     // Verify external calls were made correctly
-    expect(mockFetchResourceById).toHaveBeenCalledWith(
+    expect(fakeFetchResourceById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
   });
 });
@@ -280,7 +280,7 @@ const resource: Resource | null = useResource(id);
 // Test expects composed object
 expect(resource).toEqual(
   expect.objectContaining({
-    owner: mockUser, // Full User object
+    owner: fakeUser, // Full User object
     community: mockCommunity, // Full Community object
   }),
 );
@@ -293,17 +293,17 @@ Return Info objects (with ID references only):
 ```typescript
 // useCreateResource returns function that creates ResourceInfo
 const createResource = useCreateResource();
-const resourceData = createMockResourceData({
-  ownerId: mockUser.id,
-  communityId: mockCommunity.id,
+const resourceData = createFakeResourceData({
+  ownerId: fakeUser.id,
+  communityId: fakeCommunity.id,
 });
 const resourceInfo: ResourceInfo | null = await createResource(resourceData);
 
 // Test expects Info object with ID references
 expect(resourceInfo).toEqual(
   expect.objectContaining({
-    ownerId: mockUser.id, // ID reference, not full object
-    communityId: mockCommunity.id, // ID reference, not full object
+    ownerId: fakeUser.id, // ID reference, not full object
+    communityId: fakeCommunity.id, // ID reference, not full object
   }),
 );
 
@@ -319,7 +319,7 @@ Test the established consumer pattern for mutations:
 ```typescript
 it('should follow create → useResource pattern', async () => {
   // 1. Create resource (returns ResourceInfo)
-  const resourceData = createMockResourceData();
+  const resourceData = createFakeResourceData();
   const resourceInfo = await createResource(resourceData);
   expect(resourceInfo).toMatchObject({
     id: expect.any(String),
@@ -342,11 +342,11 @@ it('should follow create → useResource pattern', async () => {
 ```typescript
 // ✅ GOOD: Proper typing
 const mockSupabase: SupabaseClient<Database> = createMockSupabase();
-const mockUser: User = createMockUser();
+const fakeUser: User = createFakeUser();
 
 // ❌ BAD: Any types
 const mockSupabase: any = createMockSupabase();
-const mockUser: any = createMockUser();
+const fakeUser: any = createFakeUser();
 ```
 
 ### Type-Safe Mock Utilities
@@ -354,11 +354,11 @@ const mockUser: any = createMockUser();
 ```typescript
 // Use vi.mocked for type-safe mocking
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockFetchResourceById = vi.mocked(fetchResourceById);
+const fakeFetchResourceById = vi.mocked(fetchResourceById);
 
 // Ensure return types match expectations
 mockUseSupabase.mockReturnValue(mockSupabase);
-mockFetchResourceById.mockResolvedValue(mockResourceInfo);
+fakeFetchResourceById.mockResolvedValue(fakeResourceInfo);
 ```
 
 ## Test-Driven Development (TDD)
@@ -378,8 +378,8 @@ mockFetchResourceById.mockResolvedValue(mockResourceInfo);
 ```typescript
 // 1. RED: Write failing test first
 it('should return ResourceInfo after creation', async () => {
-  const resourceData = createMockResourceData({
-    ownerId: mockCurrentUser.id,
+  const resourceData = createFakeResourceData({
+    ownerId: fakeCurrentUser.id,
   });
   const createResource = useCreateResource();
 
@@ -412,7 +412,7 @@ it('should return ResourceInfo after creation', async () => {
 
 ```typescript
 it('should handle resource not found', async () => {
-  mockFetchResourceById.mockResolvedValue(null);
+  fakeFetchResourceById.mockResolvedValue(null);
 
   const { result } = renderHook(() => useResource('nonexistent-id'), {
     wrapper,
@@ -424,10 +424,10 @@ it('should handle resource not found', async () => {
 });
 
 it('should handle missing required data', async () => {
-  mockFetchResourceById.mockResolvedValue(mockResourceInfo);
+  fakeFetchResourceById.mockResolvedValue(fakeResourceInfo);
   mockUseUser.mockReturnValue(null); // Owner not found
 
-  const { result } = renderHook(() => useResource(mockResourceInfo.id), {
+  const { result } = renderHook(() => useResource(fakeResourceInfo.id), {
     wrapper,
   });
 
@@ -487,7 +487,7 @@ const updateData = {
 };
 
 // ✅ GOOD: Use factories to generate realistic test data
-const mockResourceInfo = createMockResourceInfo();
+const fakeResourceInfo = createFakeResourceInfo();
 const updateData: Partial<ResourceData> = {
   title: faker.commerce.productName(),
   description: faker.lorem.paragraph(),
@@ -564,7 +564,7 @@ it('should return ResourceInfo after update', async () => {
 // ❌ BAD: Each test file using different patterns
 // File 1: Simple, clean test focused on behavior
 it('should return ResourceInfo after creation', async () => {
-  const mockResourceInfo = createMockResourceInfo();
+  const fakeResourceInfo = createFakeResourceInfo();
   // Simple, focused test
 });
 
@@ -646,7 +646,7 @@ describe('User Transformer', () => {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     
-    const dbProfile = createMockDbProfile({
+    const dbProfile = createFakeDbProfile({
       id: userId,
       email: email,
       user_metadata: {
@@ -686,7 +686,7 @@ describe('User Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform domain user to database format', () => {
       // Arrange
-      const userData = createMockUserData();
+      const userData = createFakeUserData();
 
       // Act
       const dbData = forDbInsert(userData);
@@ -787,13 +787,13 @@ See the following files for complete examples:
 - `src/features/resources/__tests__/hooks/useResource.test.ts`
 - `src/features/resources/__tests__/hooks/useCreateResource.test.ts`
 - `src/features/resources/__tests__/api/fetchResourceById.test.ts`
-- `src/features/resources/__mocks__/index.ts` - Mock factories and utilities
+- `src/features/resources/__fakes__/index.ts` - Mock factories and utilities
 - `src/features/users/__tests__/transformers/userTransformer.test.ts` - Proper transformer testing
 - `src/features/users/__tests__/hooks/useUsers.test.ts` - Clean hook testing patterns
 
 These demonstrate all the patterns and practices outlined in this guide, including:
 
-- Mock factories in `__mocks__/index.ts`
+- Mock factories in `__fakes__/index.ts`
 - API signature updates (e.g., `createResource` without separate `ownerId` parameter)
 - Proper import patterns for mock utilities
 - Coverage of all data variants (Row, Info, Data, Domain objects)
@@ -808,7 +808,7 @@ Transformer tests should cover both directions and use standard utilities:
 describe('Feature Transformer', () => {
   it('should transform database data to domain without snake_case properties', () => {
     // Arrange
-    const dbData = createMockDbFeature({
+    const dbData = createFakeDbFeature({
       field_name: faker.lorem.word(),
       other_field: faker.lorem.word(),
     });
@@ -833,7 +833,7 @@ describe('Feature Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform domain data to database format', () => {
       // Arrange
-      const domainData = createMockFeatureData();
+      const domainData = createFakeFeatureData();
 
       // Act
       const dbData = forDbInsert(domainData);

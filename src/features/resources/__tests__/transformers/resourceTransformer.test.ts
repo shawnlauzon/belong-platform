@@ -3,23 +3,23 @@ import {
   toDomainResource,
   forDbInsert,
 } from '../../transformers/resourceTransformer';
-import { createMockUser } from '../../../users/__mocks__';
-import { createMockCommunity } from '../../../communities/__mocks__';
-import { createMockDbResource, createMockResourceData } from '../../__mocks__';
+import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCommunity } from '../../../communities/__fakes__';
+import { createFakeDbResource, createFakeResourceData } from '../../__fakes__';
 
 describe('Resource Transformer', () => {
   describe('toDomainResource', () => {
     it('should transform a database resource to a domain resource', () => {
-      const mockOwner = createMockUser();
-      const mockCommunity = createMockCommunity();
-      const dbResource = createMockDbResource({
-        owner_id: mockOwner.id,
-        community_id: mockCommunity.id,
+      const fakeOwner = createFakeUser();
+      const fakeCommunity = createFakeCommunity();
+      const dbResource = createFakeDbResource({
+        owner_id: fakeOwner.id,
+        community_id: fakeCommunity.id,
       });
 
       const resource = toDomainResource(dbResource, {
-        owner: mockOwner,
-        community: mockCommunity,
+        owner: fakeOwner,
+        community: fakeCommunity,
       });
 
       expect(resource).toMatchObject({
@@ -27,41 +27,41 @@ describe('Resource Transformer', () => {
         title: dbResource.title,
         description: dbResource.description,
         category: dbResource.category,
-        owner: mockOwner,
-        community: mockCommunity,
+        owner: fakeOwner,
+        community: fakeCommunity,
       });
     });
 
     it('should include owner and community if provided', () => {
-      const mockOwner = createMockUser();
-      const mockCommunity = createMockCommunity();
-      const dbResource = createMockDbResource({
-        owner_id: mockOwner.id,
-        community_id: mockCommunity.id,
+      const fakeOwner = createFakeUser();
+      const fakeCommunity = createFakeCommunity();
+      const dbResource = createFakeDbResource({
+        owner_id: fakeOwner.id,
+        community_id: fakeCommunity.id,
       });
 
       const resource = toDomainResource(dbResource, {
-        owner: mockOwner,
-        community: mockCommunity,
+        owner: fakeOwner,
+        community: fakeCommunity,
       });
 
-      expect(resource.owner).toEqual(mockOwner);
-      expect(resource.community).toEqual(mockCommunity);
+      expect(resource.owner).toEqual(fakeOwner);
+      expect(resource.community).toEqual(fakeCommunity);
     });
 
     it('should not return any field names with underscores', () => {
       // Arrange
-      const mockOwner = createMockUser();
-      const mockCommunity = createMockCommunity();
-      const dbResource = createMockDbResource({
-        owner_id: mockOwner.id,
-        community_id: mockCommunity.id,
+      const fakeOwner = createFakeUser();
+      const fakeCommunity = createFakeCommunity();
+      const dbResource = createFakeDbResource({
+        owner_id: fakeOwner.id,
+        community_id: fakeCommunity.id,
       });
 
       // Act
       const result = toDomainResource(dbResource, {
-        owner: mockOwner,
-        community: mockCommunity,
+        owner: fakeOwner,
+        community: fakeCommunity,
       });
 
       // Assert
@@ -73,7 +73,7 @@ describe('Resource Transformer', () => {
 
   describe('forDbInsert', () => {
     it('should transform a domain resource to a database resource', () => {
-      const resourceData = createMockResourceData();
+      const resourceData = createFakeResourceData();
 
       const dbResource = forDbInsert(resourceData);
 
@@ -91,7 +91,7 @@ describe('Resource Transformer', () => {
     });
 
     it('should handle partial updates', () => {
-      const resourceData = createMockResourceData();
+      const resourceData = createFakeResourceData();
 
       const dbResource = forDbInsert(resourceData);
 

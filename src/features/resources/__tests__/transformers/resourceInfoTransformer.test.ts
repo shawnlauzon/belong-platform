@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { toResourceInfo } from '../../transformers/resourceTransformer';
-import { createMockDbResource } from '../../__mocks__';
+import { createFakeDbResource } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -12,7 +12,7 @@ describe('ResourceInfo Transformer', () => {
     // Arrange
     const ownerId = faker.string.uuid();
     const communityId = faker.string.uuid();
-    const dbResource = createMockDbResource({
+    const dbResource = createFakeDbResource({
       owner_id: ownerId,
       community_id: communityId,
     });
@@ -53,7 +53,7 @@ describe('ResourceInfo Transformer', () => {
     const ownerId = faker.string.uuid();
     const communityId = faker.string.uuid();
 
-    const dbResource = createMockDbResource({
+    const dbResource = createFakeDbResource({
       id: resourceId,
       title: title,
       description: description,

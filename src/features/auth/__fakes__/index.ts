@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Account } from '../types';
 
-export function createMockAccount(overrides: Partial<Account> = {}): Account {
+export function createFakeAccount(overrides: Partial<Account> = {}): Account {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
@@ -23,7 +23,7 @@ export function createMockAccount(overrides: Partial<Account> = {}): Account {
   };
 }
 
-export function createMockSignInData(
+export function createFakeSignInData(
   overrides: Partial<{ email: string; password: string }> = {},
 ): { email: string; password: string } {
   return {
@@ -33,7 +33,7 @@ export function createMockSignInData(
   };
 }
 
-export function createMockSignUpData(
+export function createFakeSignUpData(
   overrides: Partial<{
     email: string;
     password: string;

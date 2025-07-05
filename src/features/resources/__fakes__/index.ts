@@ -7,21 +7,21 @@ import {
 } from '../types';
 import { ResourceRow } from '../types/database';
 import { User } from '../../users';
-import { createMockUser } from '../../users/__mocks__';
-import { createMockCommunity } from '../../communities/__mocks__';
+import { createFakeUser } from '../../users/__fakes__';
+import { createFakeCommunity } from '../../communities/__fakes__';
 import { toResourceInfo } from '../transformers/resourceTransformer';
 import { ProfileRow } from '@/features/users/types/database';
 
 /**
- * Creates a mock domain Resource object with an owner
+ * Creates a fake domain Resource object with an owner
  */
-export function createMockResource(
+export function createFakeResource(
   overrides: Partial<Resource> = {},
 ): Resource {
   const now = new Date();
 
-  const owner = createMockUser();
-  const community = createMockCommunity();
+  const owner = createFakeUser();
+  const community = createFakeCommunity();
 
   return {
     id: faker.string.uuid(),
@@ -46,20 +46,20 @@ export function createMockResource(
 }
 
 /**
- * Creates a mock domain Resource with a custom owner
+ * Creates a fake domain Resource with a custom owner
  */
-export function createMockResourceWithOwner(
+export function createFakeResourceWithOwner(
   owner: User,
   overrides: Partial<Resource> = {},
 ): Resource {
-  const resource = createMockResource(overrides);
+  const resource = createFakeResource(overrides);
   return {
     ...resource,
     owner,
   };
 }
 
-export function createMockResourceRow(
+export function createFakeResourceRow(
   overrides?: Partial<ResourceRow>,
 ): ResourceRow {
   return {
@@ -81,15 +81,15 @@ export function createMockResourceRow(
   };
 }
 
-export function createMockResourceInfo(
+export function createFakeResourceInfo(
   overrides?: Partial<ResourceInfo>,
 ): ResourceInfo {
-  const row = createMockResourceRow();
+  const row = createFakeResourceRow();
   const baseResourceInfo = toResourceInfo(row);
   return { ...baseResourceInfo, ...overrides };
 }
 
-export function createMockResourceData(
+export function createFakeResourceData(
   overrides?: Partial<ResourceData>,
 ): ResourceData {
   return {
@@ -108,7 +108,7 @@ export function createMockResourceData(
   };
 }
 
-export function createMockDbResource(
+export function createFakeDbResource(
   overrides: Partial<ResourceRow> = {},
 ): ResourceRow {
   const now = new Date().toISOString();
@@ -134,13 +134,13 @@ export function createMockDbResource(
 }
 
 /**
- * Creates a mock database Resource with a custom owner
+ * Creates a fake database Resource with a custom owner
  */
-export function createMockDbResourceWithOwner(
+export function createFakeDbResourceWithOwner(
   owner: ProfileRow,
   overrides: Partial<ResourceRow> = {},
 ): ResourceRow & { owner: ProfileRow } {
-  const resource = createMockDbResource({
+  const resource = createFakeDbResource({
     owner_id: owner.id,
     ...overrides,
   });

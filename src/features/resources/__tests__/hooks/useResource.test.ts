@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useResource } from '../../hooks/useResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResourceInfo } from '../../__mocks__/';
-import { createMockUser } from '../../../users/__mocks__';
-import { createMockCommunity } from '../../../communities/__mocks__';
+import { createFakeResourceInfo } from '../../__fakes__/';
+import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCommunity } from '../../../communities/__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
@@ -40,29 +40,29 @@ const mockFetchCommunityById = vi.mocked(fetchCommunityById);
 describe('useResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let mockResourceInfo: ReturnType<typeof createMockResourceInfo>;
-  let mockOwner: User;
-  let mockOrganizer: User;
-  let mockCommunity: Community;
-  let mockCommunityInfo: CommunityInfo;
+  let fakeResourceInfo: ReturnType<typeof createFakeResourceInfo>;
+  let fakeOwner: User;
+  let fakeOrganizer: User;
+  let fakeCommunity: Community;
+  let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockOwner = createMockUser();
-    mockOrganizer = createMockUser(); // Separate organizer
-    mockCommunity = createMockCommunity();
+    fakeOwner = createFakeUser();
+    fakeOrganizer = createFakeUser(); // Separate organizer
+    fakeCommunity = createFakeCommunity();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizer, ...rest } = mockCommunity;
-    mockCommunityInfo = {
+    const { organizer, ...rest } = fakeCommunity;
+    fakeCommunityInfo = {
       ...rest,
-      organizerId: mockOrganizer.id,
+      organizerId: fakeOrganizer.id,
     };
 
-    mockResourceInfo = createMockResourceInfo({
-      ownerId: mockOwner.id,
-      communityId: mockCommunity.id,
+    fakeResourceInfo = createFakeResourceInfo({
+      ownerId: fakeOwner.id,
+      communityId: fakeCommunity.id,
     });
 
     mockSupabase = createMockSupabase();
@@ -75,14 +75,14 @@ describe('useResource', () => {
 
   it('should return a full Resource object composed from ResourceInfo + User + Community', async () => {
     // Arrange: Mock the API functions - let's start simple
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById
-      .mockResolvedValueOnce(mockOwner) // First call for resource owner
-      .mockResolvedValueOnce(mockOrganizer); // Second call for community organizer
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+      .mockResolvedValueOnce(fakeOwner) // First call for resource owner
+      .mockResolvedValueOnce(fakeOrganizer); // Second call for community organizer
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act
-    const { result } = renderHook(() => useResource(mockResourceInfo.id), {
+    const { result } = renderHook(() => useResource(fakeResourceInfo.id), {
       wrapper,
     });
 
@@ -99,19 +99,19 @@ describe('useResource', () => {
 
     // Expected community with the organizer
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizerId, ...communityInfoWithoutId } = mockCommunityInfo;
+    const { organizerId, ...communityInfoWithoutId } = fakeCommunityInfo;
     const expectedCommunity = {
       ...communityInfoWithoutId,
-      organizer: mockOrganizer,
+      organizer: fakeOrganizer,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { ownerId, communityId, ...resourceInfoWithoutIds } =
-      mockResourceInfo;
+      fakeResourceInfo;
     expect(resource).toEqual(
       expect.objectContaining({
         ...resourceInfoWithoutIds,
-        owner: mockOwner, // Full User object, not just ID
+        owner: fakeOwner, // Full User object, not just ID
         community: expectedCommunity, // Full Community object with organizer
       }),
     );
@@ -123,15 +123,15 @@ describe('useResource', () => {
     // Verify API functions were called correctly
     expect(mockFetchResourceInfoById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.ownerId,
+      fakeResourceInfo.ownerId,
     );
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.communityId,
+      fakeResourceInfo.communityId,
     );
   });
 
@@ -161,12 +161,12 @@ describe('useResource', () => {
 
   it('should return null when owner is not found', async () => {
     // Arrange
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById.mockResolvedValue(null); // Owner not found
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act
-    const { result } = renderHook(() => useResource(mockResourceInfo.id), {
+    const { result } = renderHook(() => useResource(fakeResourceInfo.id), {
       wrapper,
     });
 

@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import { useCreateCommunity } from '../../hooks/useCreateCommunity';
 import {
-  createMockCommunityData,
-  createMockCommunityInfo,
-} from '../../__mocks__';
+  createFakeCommunityData,
+  createFakeCommunityInfo,
+} from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
@@ -25,8 +25,8 @@ describe('useCreateCommunity', () => {
   });
 
   it('should return CommunityInfo after creation', async () => {
-    const communityData = createMockCommunityData();
-    const mockCreatedInfo = createMockCommunityInfo({
+    const communityData = createFakeCommunityData();
+    const mockCreatedInfo = createFakeCommunityInfo({
       id: faker.string.uuid(),
       name: communityData.name,
       organizerId: communityData.organizerId,

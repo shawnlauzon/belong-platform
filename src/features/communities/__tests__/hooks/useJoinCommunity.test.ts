@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import { useJoinCommunity } from '../../hooks/useJoinCommunity';
-import { createMockCommunityMembershipInfo } from '../../__mocks__';
+import { createFakeCommunityMembershipInfo } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
@@ -23,7 +23,7 @@ describe('useJoinCommunity', () => {
 
   it('should return CommunityMembershipInfo after joining', async () => {
     const communityId = faker.string.uuid();
-    const mockMembershipInfo = createMockCommunityMembershipInfo({
+    const mockMembershipInfo = createFakeCommunityMembershipInfo({
       communityId,
       role: 'member',
     });
@@ -44,7 +44,7 @@ describe('useJoinCommunity', () => {
 
   it('should support joining with admin role', async () => {
     const communityId = faker.string.uuid();
-    const mockMembershipInfo = createMockCommunityMembershipInfo({
+    const mockMembershipInfo = createFakeCommunityMembershipInfo({
       communityId,
       role: 'admin',
     });

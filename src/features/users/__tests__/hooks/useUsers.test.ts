@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useUsers } from '../../hooks/useUsers';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockUser } from '../../__mocks__';
+import { createFakeUser } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
 // Mock the API
@@ -31,19 +31,19 @@ describe('useUsers', () => {
 
   it('should return User[] from fetchUsers', async () => {
     // Arrange: Mock return value should be User[]
-    const mockUsers = [
-      createMockUser(),
-      createMockUser(),
+    const fakeUsers = [
+      createFakeUser(),
+      createFakeUser(),
     ];
 
-    mockFetchUsers.mockResolvedValue(mockUsers);
+    mockFetchUsers.mockResolvedValue(fakeUsers);
 
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
 
     // Assert
     await waitFor(() => {
-      expect(result.current.data).toEqual(mockUsers);
+      expect(result.current.data).toEqual(fakeUsers);
     });
 
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, undefined);
@@ -54,15 +54,15 @@ describe('useUsers', () => {
     const filters: UserFilter = {
       email: 'test@example.com',
     };
-    const mockUsers = [createMockUser()];
-    mockFetchUsers.mockResolvedValue(mockUsers);
+    const fakeUsers = [createFakeUser()];
+    mockFetchUsers.mockResolvedValue(fakeUsers);
 
     // Act
     const { result } = renderHook(() => useUsers(filters), { wrapper });
 
     // Assert
     await waitFor(() => {
-      expect(result.current.data).toEqual(mockUsers);
+      expect(result.current.data).toEqual(fakeUsers);
     });
 
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, filters);

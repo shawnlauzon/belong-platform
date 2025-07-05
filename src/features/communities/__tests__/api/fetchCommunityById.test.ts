@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
-import { createMockDbCommunity, createMockCommunityInfo } from '../../__mocks__';
+import { createFakeDbCommunity, createFakeCommunityInfo } from '../../__fakes__';
 import { fetchCommunityById } from '../../api/fetchCommunityById';
 
 const mockSupabase = createMockSupabase();
@@ -11,25 +11,25 @@ describe('fetchCommunityById', () => {
   });
 
   it('should return CommunityInfo when community exists', async () => {
-    const mockRow = createMockDbCommunity();
-    const expectedInfo = createMockCommunityInfo({
-      id: mockRow.id,
-      organizerId: mockRow.organizer_id,
+    const fakeRow = createFakeDbCommunity();
+    const expectedInfo = createFakeCommunityInfo({
+      id: fakeRow.id,
+      organizerId: fakeRow.organizer_id,
     });
 
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockRow, error: null }),
+          single: vi.fn().mockResolvedValue({ data: fakeRow, error: null }),
         }),
       }),
     });
 
-    const result = await fetchCommunityById(mockSupabase, mockRow.id);
+    const result = await fetchCommunityById(mockSupabase, fakeRow.id);
 
-    expect(result?.id).toBe(mockRow.id);
-    expect(result?.organizerId).toBe(mockRow.organizer_id);
-    expect(result?.name).toBe(mockRow.name);
+    expect(result?.id).toBe(fakeRow.id);
+    expect(result?.organizerId).toBe(fakeRow.organizer_id);
+    expect(result?.name).toBe(fakeRow.name);
   });
 
   it('should return null when community not found', async () => {

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useSignIn } from '../../hooks/useSignIn';
 import { createMockSupabase } from '@/test-utils';
-import { createMockAccount } from '../../__mocks__';
+import { createFakeAccount } from '../../__fakes__';
 import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -22,13 +22,13 @@ const mockSignIn = vi.mocked(signIn);
 describe('useSignIn', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let mockAccount: Account;
+  let fakeAccount: Account;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockAccount = createMockAccount();
+    fakeAccount = createFakeAccount();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
@@ -40,11 +40,11 @@ describe('useSignIn', () => {
   it('should return Account after sign in', async () => {
     // Arrange
     const signInData = {
-      email: mockAccount.email,
+      email: fakeAccount.email,
       password: 'password123',
     };
 
-    mockSignIn.mockResolvedValue(mockAccount);
+    mockSignIn.mockResolvedValue(fakeAccount);
 
     // Act
     const { result } = renderHook(() => useSignIn(), { wrapper });
@@ -54,9 +54,9 @@ describe('useSignIn', () => {
     expect(account).toBeDefined();
     expect(account).toEqual(
       expect.objectContaining({
-        id: mockAccount.id,
-        email: mockAccount.email,
-        firstName: mockAccount.firstName,
+        id: fakeAccount.id,
+        email: fakeAccount.email,
+        firstName: fakeAccount.firstName,
       }),
     );
 

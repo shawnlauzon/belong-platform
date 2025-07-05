@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useUpdateResource } from '../../hooks/useUpdateResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResourceInfo } from '../../__mocks__';
+import { createFakeResourceInfo } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
 // Mock the API
@@ -31,7 +31,7 @@ describe('useUpdateResource', () => {
 
   it('should return ResourceInfo after update', async () => {
     // Arrange: Create test data using factories
-    const mockUpdatedResourceInfo = createMockResourceInfo();
+    const mockUpdatedResourceInfo = createFakeResourceInfo();
     const updateData: Partial<ResourceData> = {
       title: 'Updated Title',
       description: 'Updated Description',

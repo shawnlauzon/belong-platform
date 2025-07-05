@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { fetchAndCacheResource } from '../../api/fetchAndCacheResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createMockResource, createMockResourceInfo } from '../../__mocks__';
-import { createMockUser } from '../../../users/__mocks__';
-import { createMockCommunity } from '../../../communities/__mocks__';
+import { createFakeResource, createFakeResourceInfo } from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCommunity } from '../../../communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { User } from '../../../users/types';
@@ -35,12 +35,12 @@ const mockFetchCommunityById = vi.mocked(fetchCommunityById);
 describe('fetchAndCacheResource', () => {
   let queryClient: QueryClient;
   let mockSupabase: SupabaseClient<Database>;
-  let mockResourceInfo: ResourceInfo;
-  let mockResource: Resource;
-  let mockOwner: User;
-  let mockOrganizer: User;
-  let mockCommunity: Community;
-  let mockCommunityInfo: CommunityInfo;
+  let fakeResourceInfo: ResourceInfo;
+  let fakeResource: Resource;
+  let fakeOwner: User;
+  let fakeOrganizer: User;
+  let fakeCommunity: Community;
+  let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,26 +53,26 @@ describe('fetchAndCacheResource', () => {
     });
 
     // Create mock data using factories
-    mockOwner = createMockUser();
-    mockOrganizer = createMockUser();
-    mockCommunity = createMockCommunity({
-      organizer: mockOrganizer,
+    fakeOwner = createFakeUser();
+    fakeOrganizer = createFakeUser();
+    fakeCommunity = createFakeCommunity({
+      organizer: fakeOrganizer,
     });
-    mockResource = createMockResource({
-      owner: mockOwner,
-      community: mockCommunity,
+    fakeResource = createFakeResource({
+      owner: fakeOwner,
+      community: fakeCommunity,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizer, ...rest } = mockCommunity;
-    mockCommunityInfo = {
+    const { organizer, ...rest } = fakeCommunity;
+    fakeCommunityInfo = {
       ...rest,
-      organizerId: mockOrganizer.id,
+      organizerId: fakeOrganizer.id,
     };
 
-    mockResourceInfo = createMockResourceInfo({
-      ownerId: mockOwner.id,
-      communityId: mockCommunity.id,
+    fakeResourceInfo = createFakeResourceInfo({
+      ownerId: fakeOwner.id,
+      communityId: fakeCommunity.id,
     });
 
     mockSupabase = createMockSupabase();
@@ -80,27 +80,27 @@ describe('fetchAndCacheResource', () => {
 
   it('should return consolidated Resource when all data is available', async () => {
     // Arrange: Mock all API calls
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById
-      .mockResolvedValueOnce(mockOwner) // First call for resource owner
-      .mockResolvedValueOnce(mockOrganizer); // Second call for community organizer
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+      .mockResolvedValueOnce(fakeOwner) // First call for resource owner
+      .mockResolvedValueOnce(fakeOrganizer); // Second call for community organizer
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act
     const result = await fetchAndCacheResource(
       mockSupabase,
       queryClient,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
 
     // Assert
     expect(result).toBeDefined();
-    expect(result?.owner).toEqual(mockOwner);
+    expect(result?.owner).toEqual(fakeOwner);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizerId, ...expectedCommunityInfo } = mockCommunityInfo;
+    const { organizerId, ...expectedCommunityInfo } = fakeCommunityInfo;
     expect(result?.community).toEqual({
       ...expectedCommunityInfo,
-      organizer: mockOrganizer,
+      organizer: fakeOrganizer,
     });
 
     // Should not have ID references
@@ -111,12 +111,12 @@ describe('fetchAndCacheResource', () => {
     // Verify all API calls were made
     expect(mockFetchResourceInfoById).toHaveBeenCalledWith(
       mockSupabase,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
     expect(mockFetchUserById).toHaveBeenCalledTimes(2);
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       mockSupabase,
-      mockCommunityInfo.id,
+      fakeCommunityInfo.id,
     );
   });
 
@@ -143,15 +143,15 @@ describe('fetchAndCacheResource', () => {
 
   it('should return null when owner is not found', async () => {
     // Arrange
-    mockFetchResourceInfoById.mockResolvedValue(mockResourceInfo);
+    mockFetchResourceInfoById.mockResolvedValue(fakeResourceInfo);
     mockFetchUserById.mockResolvedValue(null); // Owner not found
-    mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
 
     // Act
     const result = await fetchAndCacheResource(
       mockSupabase,
       queryClient,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
 
     // Assert
@@ -160,17 +160,17 @@ describe('fetchAndCacheResource', () => {
 
   it('should use cached data when available', async () => {
     // Arrange: Pre-populate cache
-    queryClient.setQueryData(['resource', mockResourceInfo.id], mockResource);
+    queryClient.setQueryData(['resource', fakeResourceInfo.id], fakeResource);
 
     // Act
     const result = await fetchAndCacheResource(
       mockSupabase,
       queryClient,
-      mockResourceInfo.id,
+      fakeResourceInfo.id,
     );
 
     // Assert
-    expect(result).toEqual(mockResource);
+    expect(result).toEqual(fakeResource);
 
     // No API calls should be made when using cache
     expect(mockFetchResourceInfoById).not.toHaveBeenCalled();

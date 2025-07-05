@@ -9,9 +9,9 @@ import {
   CommunityMembershipData 
 } from '../types';
 import { ProfileRow } from '../../users';
-import { createMockDbProfile, createMockUser } from '../../users/__mocks__';
+import { createFakeDbProfile, createFakeUser } from '../../users/__fakes__';
 
-export function createMockCommunity(
+export function createFakeCommunity(
   overrides: Partial<Community> = {}
 ): Community {
   return {
@@ -23,7 +23,7 @@ export function createMockCommunity(
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
-    organizer: createMockUser(),
+    organizer: createFakeUser(),
     boundary: {
       type: 'isochrone',
       center: {
@@ -42,7 +42,7 @@ export function createMockCommunity(
   };
 }
 
-export function createMockCommunityData(
+export function createFakeCommunityData(
   overrides: Partial<CommunityData> = {}
 ): CommunityData {
   return {
@@ -70,7 +70,7 @@ export function createMockCommunityData(
   };
 }
 
-export function createMockCommunityInfo(
+export function createFakeCommunityInfo(
   overrides: Partial<CommunityInfo> = {}
 ): CommunityInfo {
   return {
@@ -102,9 +102,9 @@ export function createMockCommunityInfo(
 }
 
 /**
- * Creates a mock database Community row
+ * Creates a fake database Community row
  */
-export function createMockDbCommunity(
+export function createFakeDbCommunity(
   overrides: Partial<CommunityRow> = {}
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
@@ -140,13 +140,13 @@ export function createMockDbCommunity(
 }
 
 /**
- * Creates a mock database Community with organizer attached
+ * Creates a fake database Community with organizer attached
  */
-export function createMockDbCommunityWithOrganizer(
+export function createFakeDbCommunityWithOrganizer(
   overrides: Partial<CommunityRow> = {}
 ): CommunityRow & { organizer: ProfileRow } {
-  const organizer = createMockDbProfile();
-  const community = createMockDbCommunity({
+  const organizer = createFakeDbProfile();
+  const community = createFakeDbCommunity({
     organizer_id: organizer.id,
     ...overrides,
   });
@@ -158,33 +158,33 @@ export function createMockDbCommunityWithOrganizer(
 }
 
 /**
- * Creates a mock hierarchy of communities (country -> state -> city -> neighborhood)
+ * Creates a fake hierarchy of communities (country -> state -> city -> neighborhood)
  */
-export function createMockCommunityHierarchy() {
+export function createFakeCommunityHierarchy() {
   const now = new Date().toISOString();
 
-  const country = createMockDbCommunity({
+  const country = createFakeDbCommunity({
     name: faker.location.country(),
     description: `Community for ${faker.location.country()} residents`,
     parent_id: null,
     created_at: now,
   });
 
-  const state = createMockDbCommunity({
+  const state = createFakeDbCommunity({
     name: faker.location.state(),
     description: `Community for ${faker.location.state()} residents`,
     parent_id: country.id,
     created_at: now,
   });
 
-  const city = createMockDbCommunity({
+  const city = createFakeDbCommunity({
     name: faker.location.city(),
     description: `Community for ${faker.location.city()} residents`,
     parent_id: state.id,
     created_at: now,
   });
 
-  const neighborhood = createMockDbCommunity({
+  const neighborhood = createFakeDbCommunity({
     name: faker.location.street(),
     description: `Community for ${faker.location.street()} neighborhood`,
     parent_id: city.id,
@@ -201,9 +201,9 @@ export function createMockCommunityHierarchy() {
 }
 
 /**
- * Creates a mock CommunityMembershipData
+ * Creates a fake CommunityMembershipData
  */
-export function createMockCommunityMembershipData(
+export function createFakeCommunityMembershipData(
   overrides: Partial<CommunityMembershipData> = {}
 ): CommunityMembershipData {
   return {
@@ -215,9 +215,9 @@ export function createMockCommunityMembershipData(
 }
 
 /**
- * Creates a mock CommunityMembershipInfo
+ * Creates a fake CommunityMembershipInfo
  */
-export function createMockCommunityMembershipInfo(
+export function createFakeCommunityMembershipInfo(
   overrides: Partial<CommunityMembershipInfo> = {}
 ): CommunityMembershipInfo {
   return {
@@ -230,9 +230,9 @@ export function createMockCommunityMembershipInfo(
 }
 
 /**
- * Creates a mock CommunityMembership with optional composed objects
+ * Creates a fake CommunityMembership with optional composed objects
  */
-export function createMockCommunityMembership(
+export function createFakeCommunityMembership(
   overrides: Partial<CommunityMembership> = {}
 ): CommunityMembership {
   return {
@@ -240,8 +240,8 @@ export function createMockCommunityMembership(
     communityId: faker.string.uuid(),
     role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
     joinedAt: faker.date.past(),
-    user: createMockUser(),
-    community: createMockCommunity(),
+    user: createFakeUser(),
+    community: createFakeCommunity(),
     ...overrides,
   };
 }

@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react';
 import { useCreateUser } from '../../hooks/useCreateUser';
 import { createMockSupabase } from '../../../../test-utils';
 import {
-  createMockUserData,
-  createMockUser,
-} from '../../__mocks__';
+  createFakeUserData,
+  createFakeUser,
+} from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
 
 // Mock the API functions
@@ -38,10 +38,10 @@ describe('useCreateUser', () => {
 
   it('should return User after creation', async () => {
     // Arrange: Create test data using factories
-    const mockUser = createMockUser();
-    const userData = createMockUserData();
+    const fakeUser = createFakeUser();
+    const userData = createFakeUserData();
 
-    mockCreateUser.mockResolvedValue(mockUser);
+    mockCreateUser.mockResolvedValue(fakeUser);
 
     // Act
     const { result } = renderHook(() => useCreateUser(), { wrapper });
@@ -51,10 +51,10 @@ describe('useCreateUser', () => {
     expect(createdUser).toBeDefined();
     expect(createdUser).toEqual(
       expect.objectContaining({
-        id: mockUser.id,
-        firstName: mockUser.firstName,
-        lastName: mockUser.lastName,
-        email: mockUser.email,
+        id: fakeUser.id,
+        firstName: fakeUser.firstName,
+        lastName: fakeUser.lastName,
+        email: fakeUser.email,
       }),
     );
 

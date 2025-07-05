@@ -14,10 +14,10 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
 ## Phase 1: Setup & Shared Infrastructure ✅
 
 ### 1.1 Create Shared Test Utilities
-- [x] Create `src/test-utils/supabase-mocks.ts`
-  - [x] Implement `createMockSupabase()` that returns typed SupabaseClient
+- [x] Create `src/test-utils/supabase-fakes.ts`
+  - [x] Implement `createFakeSupabase()` that returns typed SupabaseClient
   - [x] Support chaining pattern: `.from().select().eq().single()`
-  - [x] Accept data fixtures: `createMockSupabase({ resources: [...] })`
+  - [x] Accept data fixtures: `createFakeSupabase({ resources: [...] })`
 
 ### 1.2 Update TypeScript Paths
 - [x] Ensure `tsconfig.json` has `"@/*": ["src/*"]` path mapping
@@ -38,7 +38,7 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
   import { faker } from '@faker-js/faker';
   import type { ResourceRow } from '@/features/resources/types/database';
   
-  export function createMockResourceRow(): ResourceRow {
+  export function createFakeResourceRow(): ResourceRow {
     return {
       id: faker.string.uuid(),
       title: faker.commerce.productName(),
@@ -46,7 +46,7 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
     };
   }
   
-  export function createMockResourceInfo(overrides?: Partial<ResourceInfo>): ResourceInfo {
+  export function createFakeResourceInfo(overrides?: Partial<ResourceInfo>): ResourceInfo {
     // Transform Row to Info
   }
   ```
@@ -64,13 +64,13 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
 ### 2.4 Write API Tests
 - [x] Create `src/features/resources/__tests__/api/fetchResourceById.test.ts`
   ```typescript
-  import { createMockSupabase } from '@/test-utils/supabase-mocks';
-  import { createMockResourceRow } from '../factories/resourceFactory';
+  import { createFakeSupabase } from '@/test-utils/supabase-fakes';
+  import { createFakeResourceRow } from '../factories/resourceFactory';
   
   describe('fetchResourceById', () => {
     it('returns ResourceInfo when resource exists', async () => {
-      const mockRow = createMockResourceRow();
-      const supabase = createMockSupabase({ resources: [mockRow] });
+      const mockRow = createFakeResourceRow();
+      const supabase = createFakeSupabase({ resources: [mockRow] });
       
       const result = await fetchResourceById(supabase, mockRow.id);
       
@@ -127,8 +127,8 @@ Migrate from service-creates-service pattern to clean Component → Hook → Fet
 - [x] Same directory structure as Resources
 
 ### 3.2 Create Factory
-- [x] `createMockUserRow(): UserRow`
-- [x] `createMockUser(): User`
+- [x] `createFakeUserRow(): UserRow`
+- [x] `createFakeUser(): User`
 
 ### 3.3 Implement Fetch Functions
 - [x] `fetchUserById(supabase, id): Promise<User | null>`

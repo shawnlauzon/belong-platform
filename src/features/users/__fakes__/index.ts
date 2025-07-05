@@ -3,9 +3,9 @@ import { User, UserData } from '../types';
 import { ProfileRow } from '../types/database';
 
 /**
- * Creates a mock domain User object
+ * Creates a fake domain User object
  */
-export function createMockUser(overrides: Partial<User> = {}): User {
+export function createFakeUser(overrides: Partial<User> = {}): User {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
@@ -22,7 +22,7 @@ export function createMockUser(overrides: Partial<User> = {}): User {
   };
 }
 
-export function createMockUserData(
+export function createFakeUserData(
   overrides: Partial<UserData> = {},
 ): UserData {
   return {
@@ -40,7 +40,7 @@ export function createMockUserData(
   };
 }
 
-export function createMockDbProfile(
+export function createFakeDbProfile(
   overrides: Partial<ProfileRow> = {},
 ): ProfileRow {
   const firstName = faker.person.firstName();
