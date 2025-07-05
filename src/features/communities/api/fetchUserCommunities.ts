@@ -19,7 +19,7 @@ export async function fetchUserCommunities(
         *,
         community:communities(
           *,
-          organizer:profiles(*)
+          organizer:profiles!communities_organizer_id_fkey(*)
         )
       `,
       )
