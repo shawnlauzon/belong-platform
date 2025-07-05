@@ -78,7 +78,7 @@ export function useCreateResource() {
 
   const mutation = useMutation({
     mutationFn: async (data: ResourceData): Promise<ResourceInfo> => {
-      if (!currentUser?.id) {
+      if (!currentUser?.data?.id) {
         throw new Error('User must be authenticated to create resources');
       }
 
