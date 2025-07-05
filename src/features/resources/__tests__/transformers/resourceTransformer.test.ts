@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   toDomainResource,
   forDbInsert,
-} from '../transformers/resourceTransformer';
-import { createMockUser } from '../../users/__mocks__';
-import { createMockCommunity } from '../../communities/__mocks__';
-import { createMockDbResource, createMockResourceData } from '../__mocks__';
+} from '../../transformers/resourceTransformer';
+import { createMockUser } from '../../../users/__mocks__';
+import { createMockCommunity } from '../../../communities/__mocks__';
+import { createMockDbResource, createMockResourceData } from '../../__mocks__';
 
 describe('Resource Transformer', () => {
   describe('toDomainResource', () => {

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { toResourceInfo } from '../transformers/resourceTransformer';
-import { createMockDbResource } from '../__mocks__/';
+import { toResourceInfo } from '../../transformers/resourceTransformer';
+import { createMockDbResource } from '../../__mocks__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
-} from '../../../shared/__tests__/transformerTestUtils';
+} from '../../../../shared/__tests__/transformerTestUtils';
 
 describe('ResourceInfo Transformer', () => {
   it('should transform database resource to ResourceInfo without snake_case properties', () => {

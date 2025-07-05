@@ -4,6 +4,14 @@ This document provides comprehensive guidelines for writing unit tests in the Be
 
 ## Core Testing Philosophy
 
+### Avoid over-testing
+
+**✅ DO**: Test only the primary business behavior
+**✅ DO**: Test most non-trivial functions
+**✅ DO**: Test only one thing at a time; i.e. if you are testing CRUD, don't test cache invalidation in the same test
+**❌ DON'T**: Test every possible error condition
+**❌ DON'T**: Test edge cases that aren't business requirements
+
 ### Test Behavior, Not Implementation
 
 **✅ DO**: Test what the code accomplishes (business logic, outputs, error conditions)
@@ -467,12 +475,128 @@ expect(mockQuery.select).toHaveBeenCalledWith('*');
 queryClient.clear(); // Don't hide problems with workarounds
 ```
 
+### ❌ Don't Use Hard-Coded Values in Tests
+
+```typescript
+// ❌ BAD: Hard-coded test values that break when data changes
+const resourceId = 'resource-123';
+const updateData = {
+  title: 'Updated Title',
+  description: 'Updated Description',
+};
+
+// ✅ GOOD: Use factories to generate realistic test data
+const mockResourceInfo = createMockResourceInfo();
+const updateData: Partial<ResourceData> = {
+  title: faker.commerce.productName(),
+  description: faker.lorem.paragraph(),
+};
+```
+
+### ❌ Don't Test Beyond the Happy Path Unless Required
+
+```typescript
+// ❌ BAD: Testing edge cases that aren't business requirements
+it('should handle null response from updateResource', async () => {
+  mockUpdateResource.mockResolvedValue(null);
+  // Testing implementation detail, not business requirement
+});
+
+it('should return a stable function reference', () => {
+  // Testing React implementation detail, not behavior
+});
+
+// ✅ GOOD: Focus on the primary business behavior
+it('should return ResourceInfo after update', async () => {
+  // Test the main success path that users care about
+});
+```
+
+### ❌ Don't Over-Test Error Scenarios
+
+```typescript
+// ❌ BAD: Testing every possible error condition
+it('should handle update errors', async () => {
+  // Only test errors that have specific business handling
+});
+
+it('should handle network failures', async () => {
+  // Don't test generic infrastructure failures
+});
+
+// ✅ GOOD: Test meaningful business error conditions
+it('should validate required fields before update', async () => {
+  // Test business logic errors that matter to users
+});
+```
+
+### ❌ Don't Test Complex Interactions in Unit Tests
+
+```typescript
+// ❌ BAD: Testing multiple systems working together
+it('should work with complex update data including location and images', async () => {
+  const complexUpdateData = {
+    title: 'Updated Resource',
+    imageUrls: ['https://example.com/image1.jpg'],
+    location: { lat: 40.7128, lng: -74.006 },
+    category: 'tools',
+  };
+  // This tests too many concerns at once
+});
+
+// ✅ GOOD: Keep unit tests focused on single behaviors
+it('should return ResourceInfo after update', async () => {
+  // Test one clear behavior with minimal data
+});
+```
+
 ### ❌ Don't Skip the Failing Test Step
 
 ```typescript
 // ❌ BAD: Implementing without first writing a failing test
 // Always prove you can reproduce the problem before fixing it
 ```
+
+### ❌ Don't Deviate from Established Patterns
+
+```typescript
+// ❌ BAD: Each test file using different patterns
+// File 1: Simple, clean test focused on behavior
+it('should return ResourceInfo after creation', async () => {
+  const mockResourceInfo = createMockResourceInfo();
+  // Simple, focused test
+});
+
+// File 2: Complex test with many edge cases
+it('should update resource and return ResourceInfo on success', async () => {
+  // 50 lines of complex setup and assertions
+});
+
+it('should handle update errors', async () => {
+  // Testing every possible error condition
+});
+
+it('should return a stable function reference', () => {
+  // Testing React internals
+});
+
+// ✅ GOOD: Consistent patterns across all test files
+// All hook tests follow the same simple structure:
+describe('useFeatureHook', () => {
+  // Standard setup using shared utilities
+  beforeEach(() => {
+    // Same mock setup pattern
+  });
+
+  it('should return [Domain]Info after [action]', async () => {
+    // Focus on the primary business behavior
+    // Use factories for test data
+    // Assert on business outcomes
+  });
+});
+```
+
+**Key Principle**: When you see a well-working test pattern, copy it exactly. Don't innovate or add complexity - consistency is more valuable than creativity in test code.
 
 ## Integration vs Unit Test Differences
 

@@ -7,7 +7,7 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createMockDbShoutout, createMockShoutoutData } from './test-utils';
 import { createMockUser } from '../../users/__mocks__';
-import { createMockResource } from '../../resources/__mocks__/resources';
+import { createMockResource } from '../../resources/__mocks__';
 
 describe('Shoutout Transformer', () => {
   describe('toDomainShoutout', () => {
