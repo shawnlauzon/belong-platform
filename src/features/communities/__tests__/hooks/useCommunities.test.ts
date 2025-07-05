@@ -30,10 +30,10 @@ describe('useCommunities', () => {
     const { result } = renderHook(() => useCommunities(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current).toHaveLength(2);
+      expect(result.current.data).toHaveLength(2);
     });
 
-    expect(result.current).toEqual(mockCommunities);
+    expect(result.current.data).toEqual(mockCommunities);
   });
 
   it('should apply filters when provided', async () => {
@@ -46,7 +46,7 @@ describe('useCommunities', () => {
     const { result } = renderHook(() => useCommunities(filters), { wrapper });
 
     await waitFor(() => {
-      expect(result.current).toHaveLength(1);
+      expect(result.current.data).toHaveLength(1);
     });
 
     expect(mockFetchCommunities).toHaveBeenCalledWith(
@@ -61,7 +61,7 @@ describe('useCommunities', () => {
     const { result } = renderHook(() => useCommunities(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.data).toEqual([]);
     });
   });
 });

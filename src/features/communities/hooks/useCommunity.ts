@@ -1,16 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { useUser } from '@/features/users';
-import { STANDARD_CACHE_TIME } from '@/config';
-
 import type { Community } from '@/features/communities/types';
-import { fetchCommunityById } from '../api';
+import { fetchAndConsolidateCommunity } from '../api/fetchAndConsolidateCommunity';
 
 /**
  * Hook for fetching a single community by ID.
  *
- * Provides detailed community information including membership data.
+ * Provides detailed community information including organizer data.
  *
  * @param id - The community ID to fetch
  * @returns Query state for the community
@@ -18,9 +15,9 @@ import { fetchCommunityById } from '../api';
  * @example
  * ```tsx
  * function CommunityDetail({ communityId }) {
- *   const { data: community, isLoading, error } = useCommunity(communityId);
+ *   const { data: community, isPending, error } = useCommunity(communityId);
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   if (isPending) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *   if (!community) return <div>Community not found</div>;
  *
@@ -28,49 +25,22 @@ import { fetchCommunityById } from '../api';
  *     <div>
  *       <h1>{community.name}</h1>
  *       <p>{community.description}</p>
- *       <p>Members: {community.memberCount}</p>
+ *       <div>
+ *         <span>Organizer: {community.organizer.firstName} {community.organizer.lastName}</span>
+ *         <span>Members: {community.memberCount}</span>
+ *       </div>
  *     </div>
  *   );
  * }
  * ```
  */
-export function useCommunity(id: string): Community | null {
+export function useCommunity(id: string) {
   const supabase = useSupabase();
+  const queryClient = useQueryClient();
 
-  // Fetch community info
-  const {
-    data: communityInfo,
-    error: communityError,
-    isLoading: isCommunityLoading,
-  } = useQuery({
+  return useQuery<Community | null, Error>({
     queryKey: queryKeys.communities.byId(id),
-    queryFn: () => fetchCommunityById(supabase, id),
-    staleTime: STANDARD_CACHE_TIME,
+    queryFn: () => fetchAndConsolidateCommunity(supabase, queryClient, id),
     enabled: !!id,
   });
-
-  // Fetch organizer details; will be null if no community found
-  const organizer = useUser(communityInfo?.organizerId ?? null);
-
-  // Handle errors
-  if (communityError) {
-    logger.error('🏘️ API: Error fetching community', {
-      error: communityError,
-      communityId: id,
-    });
-  }
-
-  // Return null if community doesn't exist or required data is missing
-  if (!communityInfo || !organizer || isCommunityLoading) {
-    return null;
-  }
-
-  // Compose full Community object (omit organizerId, add organizer)
-  const { organizerId, ...communityWithoutOrganizerId } = communityInfo;
-  const community: Community = {
-    ...communityWithoutOrganizerId,
-    organizer,
-  };
-
-  return community;
 }

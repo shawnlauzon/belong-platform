@@ -43,7 +43,7 @@ describe('useUsers', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual(mockUsers);
+      expect(result.current.data).toEqual(mockUsers);
     });
 
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, undefined);
@@ -62,7 +62,7 @@ describe('useUsers', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual(mockUsers);
+      expect(result.current.data).toEqual(mockUsers);
     });
 
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, filters);
@@ -77,13 +77,13 @@ describe('useUsers', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.data).toEqual([]);
     });
 
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, undefined);
   });
 
-  it('should handle errors gracefully and return empty array', async () => {
+  it('should handle errors gracefully and return error state', async () => {
     // Arrange
     const error = new Error('Failed to fetch users');
     mockFetchUsers.mockRejectedValue(error);
@@ -91,11 +91,12 @@ describe('useUsers', () => {
     // Act
     const { result } = renderHook(() => useUsers(), { wrapper });
 
-    // Assert - Should return empty array on error
+    // Assert - Should return error state
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.isError).toBe(true);
     });
 
+    expect(result.current.error).toEqual(error);
     expect(mockFetchUsers).toHaveBeenCalledWith(mockSupabase, undefined);
   });
 });

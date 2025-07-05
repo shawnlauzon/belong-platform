@@ -1,12 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { STANDARD_CACHE_TIME } from '@/config';
-import { fetchResourceById } from '@/features/resources/api';
-import { useUser } from '@/features/users';
-import { useCommunity } from '@/features/communities';
-
-import type { Resource, ResourceInfo } from '@/features/resources/types';
+import type { Resource } from '@/features/resources/types';
+import { fetchAndConsolidateResource } from '../api/fetchAndConsolidateResource';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -19,9 +15,9 @@ import type { Resource, ResourceInfo } from '@/features/resources/types';
  * @example
  * ```tsx
  * function ResourceDetail({ resourceId }) {
- *   const { data: resource, isLoading, error } = useResource(resourceId);
+ *   const { data: resource, isPending, error } = useResource(resourceId);
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   if (isPending) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *   if (!resource) return <div>Resource not found</div>;
  *
@@ -34,51 +30,21 @@ import type { Resource, ResourceInfo } from '@/features/resources/types';
  *         <span>Category: {resource.category}</span>
  *       </div>
  *       <div>
- *         <span>Created by: {resource.creator.firstName} {resource.creator.lastName}</span>
- *         <span>Community: {resource.community.name}</span>
+ *         <span>Created by: {resource.owner.firstName} {resource.owner.lastName}</span>
+ *         <span>Community: {resource.community?.name}</span>
  *       </div>
  *     </div>
  *   );
  * }
  * ```
  */
-export function useResource(id: string): Resource | null {
+export function useResource(id: string) {
   const supabase = useSupabase();
+  const queryClient = useQueryClient();
 
-  // Fetch the ResourceInfo (with only IDs)
-  const resourceQuery = useQuery<ResourceInfo | null, Error>({
+  return useQuery<Resource | null, Error>({
     queryKey: queryKeys.resources.byId(id),
-    queryFn: () => fetchResourceById(supabase, id),
-    staleTime: STANDARD_CACHE_TIME,
+    queryFn: () => fetchAndConsolidateResource(supabase, queryClient, id),
     enabled: !!id,
   });
-
-  // Fetch the owner User data (only when we have the ownerId)
-  const owner = useUser(resourceQuery.data?.ownerId || '');
-
-  // Fetch the community data if available (only when we have the communityId)
-  const community = useCommunity(resourceQuery.data?.communityId || '');
-
-  if (resourceQuery.error) {
-    logger.error('📚 API: Error fetching resource', {
-      error: resourceQuery.error,
-      resourceId: id,
-    });
-  }
-
-  // Don't compose until we have all required data
-  if (!resourceQuery.data || !owner) {
-    return null;
-  }
-
-  // Compose the full Resource object - exclude ID fields and add full objects
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { ownerId, communityId, ...resourceWithoutIds } = resourceQuery.data;
-  const resource: Resource = {
-    ...resourceWithoutIds,
-    owner,
-    community: community || undefined,
-  };
-
-  return resource;
 }

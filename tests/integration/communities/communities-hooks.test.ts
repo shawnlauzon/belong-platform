@@ -80,10 +80,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result } = renderHook(() => useCommunities(), { wrapper });
 
     await waitFor(() => {
-      expect(Array.isArray(result.current)).toBe(true);
+      expect(result.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const communities = result.current;
+    const { data: communities } = result.current;
     expect(Array.isArray(communities)).toBe(true);
     
     // If there are communities, check structure
@@ -144,10 +144,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result: fetchResult } = renderHook(() => useCommunity(createdCommunity.id), { wrapper });
 
     await waitFor(() => {
-      expect(fetchResult.current).not.toBeNull();
+      expect(fetchResult.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const fetchedCommunity = fetchResult.current;
+    const fetchedCommunity = fetchResult.current.data;
     expect(fetchedCommunity).toBeDefined();
     expect(fetchedCommunity!.id).toBe(createdCommunity.id);
     expect(fetchedCommunity!.name).toBe(testCommunityData.name);
@@ -212,10 +212,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result: fetchResult } = renderHook(() => useCommunity(createdCommunity.id), { wrapper });
 
     await waitFor(() => {
-      expect(fetchResult.current).toBeNull();
+      expect(fetchResult.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    expect(fetchResult.current).toBeNull();
+    expect(fetchResult.current.data).toBeNull();
   });
 
   test('should join community using useJoinCommunity hook', async () => {
@@ -278,10 +278,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result: membersResult } = renderHook(() => useCommunityMembers(createdCommunity.id), { wrapper });
 
     await waitFor(() => {
-      expect(Array.isArray(membersResult.current)).toBe(true);
+      expect(membersResult.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const members = membersResult.current;
+    const members = membersResult.current.data;
     expect(Array.isArray(members)).toBe(true);
     
     if (members) {
@@ -308,10 +308,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result: membersResult } = renderHook(() => useCommunityMembers(createdCommunity.id), { wrapper });
 
     await waitFor(() => {
-      expect(Array.isArray(membersResult.current)).toBe(true);
+      expect(membersResult.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const members = membersResult.current;
+    const members = membersResult.current.data;
     expect(Array.isArray(members)).toBe(true);
     
     // If there are members, check structure
@@ -372,11 +372,18 @@ describe('Communities Hooks Integration Tests', () => {
       communityMembers: useCommunityMembers('test-id'),
     }), { wrapper });
 
-    // Query hooks return data directly
-    expect(Array.isArray(result.current.communities)).toBe(true);
-    expect(Array.isArray(result.current.communityMembers)).toBe(true);
-    // community can be null or CommunityInfo object
-    expect(result.current.community === null || typeof result.current.community === 'object').toBe(true);
+    // Query hooks return React Query objects
+    expect(result.current.communities).toHaveProperty('data');
+    expect(result.current.communities).toHaveProperty('isPending');
+    expect(result.current.communities).toHaveProperty('error');
+    
+    expect(result.current.community).toHaveProperty('data');
+    expect(result.current.community).toHaveProperty('isPending');
+    expect(result.current.community).toHaveProperty('error');
+    
+    expect(result.current.communityMembers).toHaveProperty('data');
+    expect(result.current.communityMembers).toHaveProperty('isPending');
+    expect(result.current.communityMembers).toHaveProperty('error');
 
     // Mutation hooks return functions directly
     expect(typeof result.current.createCommunity).toBe('function');
@@ -390,10 +397,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result } = renderHook(() => useCommunities({ name: 'test' }), { wrapper });
 
     await waitFor(() => {
-      expect(Array.isArray(result.current)).toBe(true);
+      expect(result.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const communities = result.current;
+    const communities = result.current.data;
     expect(Array.isArray(communities)).toBe(true);
     
     // If there are results, verify they match the filter
@@ -410,10 +417,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result } = renderHook(() => useCommunity(nonExistentId), { wrapper });
 
     await waitFor(() => {
-      expect(result.current).toBeNull();
+      expect(result.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    expect(result.current).toBeNull();
+    expect(result.current.data).toBeNull();
   });
 
   test('should handle fetch members of non-existent community', async () => {
@@ -422,10 +429,10 @@ describe('Communities Hooks Integration Tests', () => {
     const { result } = renderHook(() => useCommunityMembers(nonExistentId), { wrapper });
 
     await waitFor(() => {
-      expect(Array.isArray(result.current)).toBe(true);
+      expect(result.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
-    const members = result.current;
+    const members = result.current.data;
     expect(Array.isArray(members)).toBe(true);
     expect(members).toHaveLength(0);
   });

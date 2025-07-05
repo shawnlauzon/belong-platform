@@ -23,14 +23,8 @@ The Belong Network platform is a reusable data layer that provides React hooks f
 
 ## Package Structure
 
-### @belongnetwork/types
-Shared TypeScript type definitions and database schema types.
-
-### @belongnetwork/core
-Shared utilities, configuration, and client creation.
-
 ### @belongnetwork/platform
-React Query hooks and data layer implementation.
+Complete data layer with React Query hooks, services, utilities, configuration, and TypeScript type definitions.
 
 ## Installation & Setup
 

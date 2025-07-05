@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { Event } from '../types';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
  * Hook for fetching a single event by ID.
@@ -15,7 +16,7 @@ import type { Event } from '../types';
  * @returns React Query result for the event
  * @category React Hooks
  */
-export function useEvent(eventId: string) {
+export function useEvent(eventId: string): UseQueryResult<Event | null, Error> {
   const supabase = useSupabase();
   const eventService = createEventService(supabase);
 
@@ -33,5 +34,5 @@ export function useEvent(eventId: string) {
     });
   }
 
-  return query.data ?? null;
+  return query;
 }

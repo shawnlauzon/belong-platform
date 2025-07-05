@@ -43,13 +43,13 @@ describe('useResources', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual(mockResourceInfos);
+      expect(result.current.data).toEqual(mockResourceInfos);
     });
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
 
     // Verify the returned data has ID references, not full objects
-    const resource = result.current[0];
+    const resource = result.current.data![0];
     expect(typeof resource.ownerId).toBe('string');
     expect(typeof resource.communityId).toBe('string');
     expect(resource).not.toHaveProperty('owner');
@@ -70,7 +70,7 @@ describe('useResources', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual(mockResourceInfos);
+      expect(result.current.data).toEqual(mockResourceInfos);
     });
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, filters);
@@ -85,13 +85,13 @@ describe('useResources', () => {
 
     // Assert
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.data).toEqual([]);
     });
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
   });
 
-  it('should handle errors gracefully and return empty array', async () => {
+  it('should handle errors gracefully and return error state', async () => {
     // Arrange
     const error = new Error('Failed to fetch resources');
     mockFetchResources.mockRejectedValue(error);
@@ -99,11 +99,12 @@ describe('useResources', () => {
     // Act
     const { result } = renderHook(() => useResources(), { wrapper });
 
-    // Assert - Should return empty array on error
+    // Assert - Should return error state
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.isError).toBe(true);
     });
 
+    expect(result.current.error).toEqual(error);
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
   });
 });

@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createEventService } from '../services/event.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { EventInfo, EventFilter } from '../types';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { toRecords } from '../../../shared/utils';
 
 /**
@@ -16,7 +17,7 @@ import { toRecords } from '../../../shared/utils';
  * @returns React Query result for events
  * @category React Hooks
  */
-export function useEvents(filters?: EventFilter) {
+export function useEvents(filters?: EventFilter): UseQueryResult<EventInfo[], Error> {
   const supabase = useSupabase();
   const eventService = createEventService(supabase);
 
@@ -35,5 +36,5 @@ export function useEvents(filters?: EventFilter) {
     });
   }
 
-  return query.data ?? [];
+  return query;
 }

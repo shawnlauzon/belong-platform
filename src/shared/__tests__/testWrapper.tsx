@@ -15,10 +15,12 @@ const DEFAULT_TEST_CONFIG = {
  * Creates a React Query wrapper for hook testing
  * This eliminates duplicate wrapper setup across test files
  */
-export function createTestWrapper(options: {
-  queryClientOptions?: ConstructorParameters<typeof QueryClient>[0];
-  config?: typeof DEFAULT_TEST_CONFIG;
-} = {}) {
+export function createTestWrapper(
+  options: {
+    queryClientOptions?: ConstructorParameters<typeof QueryClient>[0];
+    config?: typeof DEFAULT_TEST_CONFIG;
+  } = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },

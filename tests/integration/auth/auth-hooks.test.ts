@@ -161,7 +161,7 @@ describe('Auth Hooks Integration Tests', () => {
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isPending).toBe(false);
     }, { timeout: 10000 });
 
     expect(result.current.data).toBeNull();
@@ -276,7 +276,7 @@ describe('Auth Hooks Integration Tests', () => {
 
     // Query hook returns query state
     expect(result.current.currentUser).toHaveProperty('data');
-    expect(result.current.currentUser).toHaveProperty('isLoading');
+    expect(result.current.currentUser).toHaveProperty('isPending');
     expect(result.current.currentUser).toHaveProperty('error');
   });
 

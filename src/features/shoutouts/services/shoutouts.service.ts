@@ -12,7 +12,7 @@ import {
   forDbUpdate,
 } from '../transformers/shoutoutsTransformer';
 import { fetchUserById } from '@/features/users/api';
-import { fetchResourceById } from '../../resources/api/fetchResourceById';
+import { fetchResourceById } from '../../resources/api/fetchResourceInfoById';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { ERROR_CODES } from '../../../shared/constants';
 import type { SupabaseClient } from '@supabase/supabase-js';

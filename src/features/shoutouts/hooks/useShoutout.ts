@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createShoutoutsService } from '../services/shoutouts.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { Shoutout } from '../types';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
  * Hook for fetching a single shoutout by ID.
@@ -43,7 +44,7 @@ import type { Shoutout } from '../types';
  *
  * @category React Hooks
  */
-export function useShoutout(shoutoutId: string) {
+export function useShoutout(shoutoutId: string): UseQueryResult<Shoutout | null, Error> {
   const supabase = useSupabase();
   const shoutoutsService = createShoutoutsService(supabase);
 
@@ -63,5 +64,5 @@ export function useShoutout(shoutoutId: string) {
     });
   }
 
-  return query.data ?? null;
+  return query;
 }

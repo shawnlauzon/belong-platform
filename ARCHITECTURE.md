@@ -15,23 +15,23 @@ This document describes the internal architecture of the Belong Network platform
 
 ## Overview
 
-The Belong Network platform is a TypeScript monorepo built with React Query and Supabase. It uses a service-based architecture with manual transformers, dependency injection, and consolidated hooks.
+The Belong Network platform is a TypeScript library built with React Query and Supabase. It uses a service-based architecture with manual transformers, dependency injection, and feature-based organization.
 
 ### Tech Stack
 
 - **Runtime**: React 18, TypeScript
 - **Data Fetching**: TanStack Query (React Query) v5
 - **Database**: Supabase (PostgreSQL + PostGIS for spatial data)
-- **Build**: Vite with pnpm workspaces
+- **Build**: Vite
 - **Testing**: Vitest with jsdom and Testing Library
 
 ## Package Structure
 
-The platform consists of three core packages:
+The platform is organized as a single package with feature-based architecture:
 
-### @belongnetwork/types
+### @belongnetwork/platform
 
-**Purpose**: Shared TypeScript type definitions and database schema types
+**Purpose**: Complete data layer with React Query hooks, services, and utilities
 
 #### Current Transformer Architecture
 
@@ -75,44 +75,55 @@ Each entity follows consistent transformation patterns:
 - **`forDbInsert()`**: Convert domain data to database insert format
 - **`forDbUpdate()`**: Convert partial domain data to database update format
 
-### @belongnetwork/core
-
-**Purpose**: Shared utilities, configuration, and client creation
-
-### @belongnetwork/platform (API Package)
-
-**Purpose**: React Query hooks and data layer implementation
+### Feature-Based Organization
 
 ```
-packages/api/
-├── src/
+src/
+├── config/              # Configuration and providers
+│   ├── BelongProvider.tsx  # Main provider component
+│   ├── client.ts           # Client creation
+│   └── supabase.ts         # Supabase client setup
+├── features/            # Feature modules
 │   ├── auth/
 │   │   ├── hooks/         # Authentication hooks
-│   │   ├── services/      # Auth service layer
-│   │   └── providers/     # BelongProvider component (exported from main package)
+│   │   ├── services/      # Auth service layer (legacy pattern)
+│   │   └── types/         # Auth type definitions
 │   ├── communities/
+│   │   ├── api/           # Community API functions
 │   │   ├── hooks/         # Community data hooks
-│   │   ├── services/      # Community service layer
-│   │   └── transformers/  # Data transformation logic
+│   │   ├── transformers/  # Data transformation logic
+│   │   └── types/         # Community type definitions
 │   ├── resources/
+│   │   ├── api/           # Resource API functions
 │   │   ├── hooks/         # Resource data hooks
-│   │   ├── services/      # Resource service layer
-│   │   └── transformers/  # Data transformation logic
+│   │   ├── transformers/  # Data transformation logic
+│   │   └── types/         # Resource type definitions
 │   ├── events/
+│   │   ├── api/           # Event API functions (assumed)
 │   │   ├── hooks/         # Event data hooks
-│   │   ├── services/      # Event service layer
-│   │   └── transformers/  # Data transformation logic
+│   │   ├── transformers/  # Data transformation logic
+│   │   └── types/         # Event type definitions
+│   ├── conversations/
+│   │   ├── hooks/         # Conversation data hooks
+│   │   ├── services/      # Conversation service layer (legacy pattern)
+│   │   ├── transformers/  # Data transformation logic
+│   │   └── types/         # Conversation type definitions
 │   ├── shoutouts/
+│   │   ├── api/           # Shoutout API functions (assumed)
 │   │   ├── hooks/         # Shoutouts data hooks
-│   │   ├── services/      # Shoutouts service layer
-│   │   └── transformers/  # Data transformation logic
-│   ├── users/
-│   │   ├── hooks/         # User data hooks
-│   │   ├── services/      # User service layer
-│   │   └── transformers/  # Data transformation logic
-│   ├── shared/
-│   │   └── queryKeys.ts   # Centralized query key management
-│   └── test-utils/        # Shared testing utilities
+│   │   ├── transformers/  # Data transformation logic
+│   │   └── types/         # Shoutout type definitions
+│   └── users/
+│       ├── api/           # User API functions
+│       ├── hooks/         # User data hooks
+│       ├── transformers/  # Data transformation logic
+│       └── types/         # User type definitions
+├── shared/
+│   ├── hooks/             # Shared utility hooks
+│   ├── types/             # Shared type definitions (including database.ts)
+│   ├── utils/             # Shared utilities
+│   └── queryKeys.ts       # Centralized query key management
+└── test-utils/            # Shared testing utilities
 ```
 
 **Key Responsibilities**:
@@ -121,7 +132,7 @@ packages/api/
 - Implement caching and synchronization with React Query
 - Provide the main BelongProvider component
 - Handle data transformations and business logic
-- Centralize service layer implementations
+- Centralize API functions for data access (with some legacy services)
 - Maintain consistent transformer patterns across entities
 
 ---
@@ -146,11 +157,20 @@ export function BelongProvider({ children, config }: BelongProviderProps) {
 }
 ```
 
-### 2. Dependency Injection Pattern
+### 2. API Function Pattern
 
-All services are factories that accept their dependencies:
+Most features use API functions that accept their dependencies directly:
 
 ```typescript
+// Modern API function pattern (most features)
+export async function createCommunity(
+  supabase: SupabaseClient,
+  data: CommunityData
+): Promise<Community> {
+  // Implementation using injected supabase client
+}
+
+// Legacy service factory pattern (auth, conversations)
 export const createAuthService = (supabase: SupabaseClient) => ({
   async signIn(email: string, password: string) {
     // Implementation using injected supabase client
@@ -167,24 +187,36 @@ export const createAuthService = (supabase: SupabaseClient) => ({
 
 ## Implementation Patterns
 
-### Service Layer Pattern
+### API Function Pattern (Primary)
 
-Services encapsulate business logic and Supabase interactions:
+Most features use direct API functions for business logic and Supabase interactions:
+
+```typescript
+export async function fetchCommunities(
+  supabase: SupabaseClient<Database>
+): Promise<CommunityInfo[]> {
+  const { data, error } = await supabase
+    .from("communities")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logger.error("Failed to fetch communities", { error });
+    throw error;
+  }
+
+  return (data || []).map(toCommunityInfo);
+}
+```
+
+### Legacy Service Pattern
+
+Some features (auth, conversations) still use the service factory pattern:
 
 ```typescript
 export const createCommunityService = (supabase: SupabaseClient<Database>) => ({
   async fetchCommunities(): Promise<CommunityInfo[]> {
-    const { data, error } = await supabase
-      .from("communities")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      logger.error("Failed to fetch communities", { error });
-      throw error;
-    }
-
-    return (data || []).map(toCommunityInfo);
+    // Implementation
   },
 });
 ```
@@ -196,16 +228,15 @@ Single-purpose hook pattern following React best practices:
 #### Query Hooks (Data Fetching)
 
 ```typescript
-// Hook for fetching communities list
+// Hook for fetching communities list (modern API function pattern)
 export function useCommunities(filters?: CommunityFilter) {
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
   const query = useQuery<CommunityInfo[], Error>({
     queryKey: filters 
       ? queryKeys.communities.filtered(filters)
       : queryKeys.communities.all,
-    queryFn: () => communityService.fetchCommunities(filters),
+    queryFn: () => fetchCommunities(supabase, filters),
     staleTime: STANDARD_CACHE_TIME,
   });
 
@@ -222,11 +253,10 @@ export function useCommunities(filters?: CommunityFilter) {
 // Hook for fetching single community
 export function useCommunity(id: string) {
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
   return useQuery<Community | null, Error>({
     queryKey: queryKeys.communities.byId(id),
-    queryFn: () => communityService.fetchCommunityById(id),
+    queryFn: () => fetchCommunityById(supabase, id),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!id,
   });
@@ -236,14 +266,13 @@ export function useCommunity(id: string) {
 #### Mutation Hooks (Data Modification)
 
 ```typescript
-// Hook for creating communities
+// Hook for creating communities (modern API function pattern)
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const communityService = createCommunityService(supabase);
 
   const mutation = useMutation({
-    mutationFn: (data: CommunityData) => communityService.createCommunity(data),
+    mutationFn: (data: CommunityData) => createCommunity(supabase, data),
     onSuccess: (newCommunity) => {
       logger.info('🏘️ API: Community created successfully', {
         communityId: newCommunity.id,
@@ -355,7 +384,16 @@ feature/
 │   ├── useDeleteCommunity.ts      # Mutation hook for deleting
 │   ├── useJoinCommunity.ts        # Mutation hook for joining
 │   └── useLeaveCommunity.ts       # Mutation hook for leaving
-├── services/        # Service factories
+├── api/             # API functions (modern pattern)
+│   ├── index.ts                    # Re-export all API functions
+│   ├── fetchCommunities.ts        # Fetch communities list
+│   ├── fetchCommunityById.ts      # Fetch single community
+│   ├── createCommunity.ts         # Create community
+│   ├── updateCommunity.ts         # Update community
+│   ├── deleteCommunity.ts         # Delete community
+│   ├── joinCommunity.ts           # Join community
+│   └── leaveCommunity.ts          # Leave community
+├── services/        # Service factories (legacy pattern, auth & conversations)
 │   └── community.service.ts
 ├── transformers/    # Data transformation logic
 │   └── communityTransformer.ts
@@ -363,22 +401,23 @@ feature/
 ```
 
 **Architecture Migration Notes**:
-- **Completed**: Migration from `impl/` pattern to `services/` + `transformers/` pattern
+- **In Progress**: Migration from `services/` pattern to `api/` function pattern
 - **Completed**: Migration from monolithic hooks to single-purpose hook pattern
-- **Current Structure**: All business logic centralized in service layer
+- **Current Structure**: Most business logic in API functions, some legacy services remain
 - **Hook Pattern**: Each hook serves a single purpose following React best practices
 - **Transformation Logic**: Moved to dedicated transformer files for consistency
-- **Removed**: `impl/` directories and consolidated "god hooks" have been eliminated
+- **Legacy**: `services/` directories remain in auth and conversations features
 
 ## Data Layer Architecture
 
-### Service-Based Architecture
+### API Function Architecture
 
-The platform uses a service-based architecture where each domain entity has:
+The platform uses an API function architecture where each domain entity has:
 
-1. **Service Layer**: Centralized business logic and data access
-2. **Transformer Layer**: Consistent data transformation patterns
-3. **Hook Layer**: React Query integration and state management
+1. **API Functions**: Direct functions for business logic and data access (modern pattern)
+2. **Service Layer**: Legacy service factories for some features (auth, conversations)
+3. **Transformer Layer**: Consistent data transformation patterns
+4. **Hook Layer**: React Query integration and state management
 
 ### Data Fetching Strategies
 
@@ -683,8 +722,9 @@ Integration tests should:
 
 When adding new features to the platform:
 
-1. **Create Service Layer**
-   - Factory function accepting Supabase client
+1. **Create API Functions** (preferred) or **Service Layer** (legacy)
+   - **API Functions**: Direct functions accepting Supabase client as first parameter
+   - **Service Layer**: Factory function accepting Supabase client (legacy pattern)
    - Use transformers for validation and transformation
    - Add proper error handling and logging
 
@@ -693,23 +733,22 @@ When adding new features to the platform:
    - `toXInfo()` functions for lightweight lists
    - `forDbInsert()` and `forDbUpdate()` functions
 
-3. **Create Consolidated Hook**
-   - One hook per entity with all operations (no constructor parameters)
-   - Include `retrieve(filters?)` function for manual data fetching
-   - Disable automatic query fetching with `enabled: false`
-   - Return object with state, retrieve function, and mutations
-   - Implement simplified cache invalidation patterns
+3. **Create Single-Purpose Hooks**
+   - Individual hooks for each operation (useFeatures, useFeature, useCreateFeature, etc.)
+   - Use API functions or services as needed
+   - Implement React Query patterns with proper cache management
 
 4. **Add Tests (Critical Requirements)**
    - **Unit Tests**: Follow dependency injection mocking patterns (mock at config level)
-   - **Test Real Code**: Use real services, transformers, and hooks with mocked external dependencies
+   - **Test Real Code**: Use real API functions/services, transformers, and hooks with mocked external dependencies
    - **Avoid Over-Mocking**: Don't mock platform code when testing platform functionality
    - **Use Mock Factories**: Leverage `createMock*` utilities for consistent test data
    - **Test Coverage**: Ensure both success and error paths are covered
    - **Integration Tests**: Add for critical user workflows with real Supabase connections
 
 5. **Update Exports**
-   - Export hook from feature index.ts
+   - Export hooks from feature index.ts
+   - Export API functions from api/index.ts
    - Update package exports if needed
 
 ### Testing Quick Reference
@@ -745,14 +784,27 @@ expect(mockExternalDependency).toHaveBeenCalledWith(expectedParams);
 ### Example: Adding a New Entity
 
 ```typescript
-// 1. Create service (services/entity.service.ts)
-export const createEntityService = (supabase: SupabaseClient<Database>) => ({
-  async fetchEntities(): Promise<EntityInfo[]> {
-    const { data, error } = await supabase.from("entities").select("*");
-    if (error) throw error;
-    return (data || []).map(toEntityInfo);
-  },
-});
+// 1. Create API functions (api/entity.ts) - Preferred approach
+export async function fetchEntities(
+  supabase: SupabaseClient<Database>
+): Promise<EntityInfo[]> {
+  const { data, error } = await supabase.from("entities").select("*");
+  if (error) throw error;
+  return (data || []).map(toEntityInfo);
+}
+
+export async function createEntity(
+  supabase: SupabaseClient<Database>,
+  data: EntityData
+): Promise<Entity> {
+  const insertData = forDbInsert(data);
+  const { data: result, error } = await supabase
+    .from("entities")
+    .insert(insertData)
+    .single();
+  if (error) throw error;
+  return toDomainEntity(result);
+}
 
 // 2. Create transformer (transformers/entityTransformer.ts)
 export const toEntityInfo = (row: DbRow): EntityInfo => ({
@@ -762,48 +814,34 @@ export const toEntityInfo = (row: DbRow): EntityInfo => ({
   createdAt: new Date(row.created_at),
 });
 
-// 3. Create hook (hooks/useEntities.ts)
-export function useEntities() {
-  const queryClient = useQueryClient();
-  const service = createEntityService(useSupabase());
-  
-  // Disabled query for manual fetching
-  const entitiesQuery = useQuery({
-    queryKey: queryKeys.entities.all,
-    queryFn: () => service.fetchEntities(),
-    staleTime: 5 * 60 * 1000,
-    enabled: false,
-  });
+// 3. Create individual hooks (hooks/useEntities.ts, useCreateEntity.ts, etc.)
+export function useEntities(filters?: EntityFilter) {
+  const supabase = useSupabase();
 
-  const createMutation = useMutation({
-    mutationFn: service.createEntity,
+  return useQuery({
+    queryKey: filters 
+      ? queryKeys.entities.filtered(filters)
+      : queryKeys.entities.all,
+    queryFn: () => fetchEntities(supabase, filters),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateEntity() {
+  const queryClient = useQueryClient();
+  const supabase = useSupabase();
+
+  const mutation = useMutation({
+    mutationFn: (data: EntityData) => createEntity(supabase, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entities"] });
     },
   });
-  
-  return {
-    // State (not automatically populated)
-    entities: entitiesQuery.data,
-    isLoading: entitiesQuery.isLoading,
-    error: entitiesQuery.error,
 
-    // Manual fetch operation
-    retrieve: async (filters?: EntityFilter) => {
-      const result = await queryClient.fetchQuery({
-        queryKey: filters 
-          ? queryKeys.entities.filtered(filters)
-          : queryKeys.entities.all,
-        queryFn: () => service.fetchEntities(filters),
-        staleTime: 5 * 60 * 1000,
-      });
-      return result;
-    },
-
-    // Mutations
-    create: createMutation.mutateAsync,
-    isCreating: createMutation.isPending,
-  };
+  return useCallback(
+    (data: EntityData) => mutation.mutateAsync(data),
+    [mutation.mutateAsync]
+  );
 }
 ```
 

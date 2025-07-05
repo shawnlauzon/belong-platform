@@ -4,7 +4,7 @@ import type { ResourceInfo } from '@/features/resources';
 import type { ResourceRow } from '@/features/resources/types/database';
 import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
 
-export async function fetchResourceById(
+export async function fetchResourceInfoById(
   supabase: SupabaseClient<Database>,
   id: string,
 ): Promise<ResourceInfo | null> {

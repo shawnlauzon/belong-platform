@@ -46,13 +46,14 @@ describe('useCurrentUser', () => {
 
     // Wait for the query to complete
     await waitFor(() => {
-      expect(result.current).not.toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
-
-    const user = result.current;
+    if (result.current.isError) {
+      throw result.current.error;
+    }
+    const user = result.current.data;
 
     // Assert: Should return User object
-    expect(user).toBeDefined();
     expect(user).toEqual(
       expect.objectContaining({
         id: mockUser.id,
@@ -74,11 +75,13 @@ describe('useCurrentUser', () => {
 
     // Wait for the query to complete
     await waitFor(() => {
-      expect(result.current).toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
-
+    if (result.current.isError) {
+      throw result.current.error;
+    }
     // Assert
-    expect(result.current).toBeNull();
+    expect(result.current.data).toBeNull();
     expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
   });
 });

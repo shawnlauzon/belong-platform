@@ -15,9 +15,9 @@ import { logger } from '@/shared';
  * @example
  * ```tsx
  * function UserProfile() {
- *   const { data: currentUser, isLoading, error } = useCurrentUser();
+ *   const { data: currentUser, isPending, error } = useCurrentUser();
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   if (isPending) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *   if (!currentUser) return <div>Not authenticated</div>;
  *
@@ -51,5 +51,5 @@ export function useCurrentUser() {
     });
   }
 
-  return query.data ?? null;
+  return query;
 }

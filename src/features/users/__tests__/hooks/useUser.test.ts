@@ -48,10 +48,12 @@ describe('useUser', () => {
 
     // Wait for the query to complete
     await waitFor(() => {
-      expect(result.current).not.toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
-
-    const user = result.current;
+    if (result.current.isError) {
+      throw result.current.error;
+    }
+    const user = result.current.data;
 
     // Assert: Should return User object
     expect(user).toBeDefined();
@@ -65,10 +67,7 @@ describe('useUser', () => {
     );
 
     // Verify API was called correctly
-    expect(mockFetchUserById).toHaveBeenCalledWith(
-      mockSupabase,
-      mockUser.id,
-    );
+    expect(mockFetchUserById).toHaveBeenCalledWith(mockSupabase, mockUser.id);
   });
 
   it('should return null when user is not found', async () => {
@@ -82,11 +81,13 @@ describe('useUser', () => {
 
     // Wait for the query to complete
     await waitFor(() => {
-      expect(result.current).toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
-
+    if (result.current.isError) {
+      throw result.current.error;
+    }
     // Assert
-    expect(result.current).toBeNull();
+    expect(result.current.data).toBeNull();
     expect(mockFetchUserById).toHaveBeenCalledWith(
       mockSupabase,
       'nonexistent-id',

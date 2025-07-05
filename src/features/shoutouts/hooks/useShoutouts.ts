@@ -4,6 +4,7 @@ import { useSupabase } from '../../../shared';
 import { createShoutoutsService } from '../services/shoutouts.service';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { ShoutoutInfo, ShoutoutFilter } from '../types';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
  * Hook for fetching a list of shoutouts with optional filtering.
@@ -46,7 +47,7 @@ import type { ShoutoutInfo, ShoutoutFilter } from '../types';
  *
  * @category React Hooks
  */
-export function useShoutouts(filters?: ShoutoutFilter) {
+export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<ShoutoutInfo[], Error> {
   const supabase = useSupabase();
   const shoutoutsService = createShoutoutsService(supabase);
 
@@ -67,5 +68,5 @@ export function useShoutouts(filters?: ShoutoutFilter) {
     });
   }
 
-  return query.data ?? [];
+  return query;
 }

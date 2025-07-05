@@ -12,20 +12,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 # Install dependencies
 pnpm install
 
-# Run tests (API package only)
+# Run tests
 pnpm test
 
 # Run tests with verbose logging (shows console.log statements)
 VITEST_VERBOSE=true pnpm test
 
 # TypeScript type checking
-pnpm typecheck          # Check all packages
-pnpm typecheck:api      # Check API package only
+pnpm typecheck
 
-# Build all packages
+# Build the package
 pnpm build
 
-# Lint all packages
+# Lint the package
 pnpm lint
 
 # Format code
@@ -40,22 +39,18 @@ pnpm test:integration
 
 Architecture Overview
 
-Belong Network is a TypeScript monorepo for a hyper-local community platform built with React Query and
+Belong Network is a TypeScript platform library for a hyper-local community platform built with React Query and
 Supabase.
 
 Package Structure
 
-- @belongnetwork/platform - Data layer with React Query hooks for auth, communities, resources, and users
-- @belongnetwork/components - Reusable UI components built with Radix UI and Tailwind CSS
-- @belongnetwork/core - Shared configuration, utilities, and logger
-- @belongnetwork/types - TypeScript type definitions and database schema types
+- @belongnetwork/platform - Single package containing the complete data layer with React Query hooks, services, and utilities for auth, communities, resources, events, conversations, shoutouts, and users
 
 Tech Stack
 
 - Frontend: React 18, TypeScript, TanStack Query for data fetching
-- UI: Tailwind CSS, Radix UI primitives
 - Database: Supabase (PostgreSQL + PostGIS for spatial data)
-- Build: Vite with pnpm workspaces
+- Build: Vite
 - Testing: Vitest with jsdom and Testing Library
 
 Development Guidelines
@@ -63,13 +58,13 @@ Development Guidelines
 Code Patterns
 
 - Study existing files for established patterns before creating new ones
-- Follow component composition patterns established in @belongnetwork/components
+- Follow the feature-based architecture with hooks, services, transformers, and types
 
 Type Safety
 
 - NEVER use any types - always create proper interfaces, union types, or use type assertions
 - All functions and components must have explicit type annotations
-- Use generated database types from @belongnetwork/types
+- Use generated database types from src/shared/types/database.ts
 - Prefer type-safe patterns over casting or type assertions
 
 TDD
@@ -79,14 +74,12 @@ TDD
 
 Testing
 
-- Each package has its own Vitest configuration
+- The package has unit tests in __tests__ directories within each feature
+- Integration tests are located in the tests/integration directory
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
-- **ALWAYS use createMock\* utilities from @belongnetwork/platform/src/test-utils for generating test data**
+- **ALWAYS use createMock\* utilities from src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
-
-- Unit tests are located in the **tests** directory of the feature
-- Integration tests are located in the tests/integration directory
 
 Unit Test Requirements
 
@@ -111,7 +104,7 @@ QA
 
 Publish
 
-- Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in all package.json files, then commit, then tag, then publish
+- Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in package.json, then commit, then tag, then publish
 
 Code Safety Guidelines
 
@@ -124,21 +117,20 @@ Development Principles
 
 ## Code Style and Best Practices
 
-- Follow established code patterns and conventions within each package
-- Maintain consistent naming conventions across the monorepo
+- Follow established code patterns and conventions within the platform
+- Maintain consistent naming conventions across all features
 - A maximum file size is around 500 lines
 
 ## Memory
 
-- When asked to look at the database definition, either look at database.t
+- When asked to look at the database definition, look at src/shared/types/database.ts
 - Never update the database.ts file. Always make changes via a database migration and then pull the types
-- To update the database.ts file, run `pnpm run gen:db-types` from the types directory
+- To update the database.ts file, run `pnpm run gen:db-types` from the project root
 - If you create the same code more than twice, extract it into a shared function
-- Keep versions of all packages aligned
 - When you commit after bumping a version, tag with that version
 - Do not deprecate; remove
 - When you believe you have fixed a problem, run the test to confirm before continuing
-- After making any database change, run gen:db-types from the types package to update database.ts
+- After making any database change, run gen:db-types from the project root to update database.ts
 - Run integration tests with `pnpm test:integration` from the project directory
 - Use supabase mcp for supabase commands except for gen:db-types to generate types into database.ts
 - NEVER NEVER MANUALLY UPDATE DATABASE.TS

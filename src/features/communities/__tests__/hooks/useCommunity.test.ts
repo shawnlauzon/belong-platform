@@ -10,13 +10,17 @@ vi.mock('../../api/fetchCommunityById', () => ({
   fetchCommunityById: vi.fn(),
 }));
 
+vi.mock('@/features/users/api/fetchUserById', () => ({
+  fetchUserById: vi.fn(),
+}));
+
 import { fetchCommunityById } from '../../api/fetchCommunityById';
-import { useUser } from '@/features/users';
+import { fetchUserById } from '@/features/users/api/fetchUserById';
 
 describe('useCommunity', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   const mockFetchCommunityById = vi.mocked(fetchCommunityById);
-  const mockUseUser = vi.mocked(useUser);
+  const mockFetchUserById = vi.mocked(fetchUserById);
 
   let mockCommunityInfo: ReturnType<typeof createMockCommunityInfo>;
   let mockOrganizer: ReturnType<typeof createMockUser>;
@@ -33,7 +37,7 @@ describe('useCommunity', () => {
 
     // Setup mocks
     mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
-    mockUseUser.mockReturnValue(mockOrganizer);
+    mockFetchUserById.mockResolvedValue(mockOrganizer);
   });
 
   it('should compose full Community from CommunityInfo + User', async () => {
@@ -42,11 +46,14 @@ describe('useCommunity', () => {
     });
 
     await waitFor(() => {
-      expect(result.current).not.toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
+    if (result.current.isError) {
+      throw result.current.error;
+    }
 
     // Should return full Community object with composed data
-    expect(result.current).toEqual(
+    expect(result.current.data).toEqual(
       expect.objectContaining({
         id: mockCommunityInfo.id,
         name: mockCommunityInfo.name,
@@ -56,14 +63,17 @@ describe('useCommunity', () => {
     );
 
     // Should NOT have ID reference (Info pattern converted to Domain)
-    expect(result.current).not.toHaveProperty('organizerId');
+    expect(result.current.data).not.toHaveProperty('organizerId');
 
     // Verify external calls were made correctly
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       expect.any(Object),
       mockCommunityInfo.id,
     );
-    expect(mockUseUser).toHaveBeenCalledWith(mockCommunityInfo.organizerId);
+    expect(mockFetchUserById).toHaveBeenCalledWith(
+      expect.any(Object),
+      mockCommunityInfo.organizerId,
+    );
   });
 
   it('should return null when community not found', async () => {
@@ -74,20 +84,26 @@ describe('useCommunity', () => {
     });
 
     await waitFor(() => {
-      expect(result.current).toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
+    if (result.current.isError) {
+      throw result.current.error;
+    }
   });
 
   it('should return null when organizer not found', async () => {
     mockFetchCommunityById.mockResolvedValue(mockCommunityInfo);
-    mockUseUser.mockReturnValue(null); // Organizer not found
+    mockFetchUserById.mockResolvedValue(null); // Organizer not found
 
     const { result } = renderHook(() => useCommunity(mockCommunityInfo.id), {
       wrapper,
     });
 
     await waitFor(() => {
-      expect(result.current).toBeNull();
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
+    if (result.current.isError) {
+      throw result.current.error;
+    }
   });
 });

@@ -17,9 +17,9 @@ import type { CommunityMembership } from '@/features/communities/types';
  * @example
  * ```tsx
  * function CommunityMembersList({ communityId }) {
- *   const { data: members, isLoading, error } = useCommunityMembers(communityId);
+ *   const { data: members, isPending, error } = useCommunityMembers(communityId);
  *
- *   if (isLoading) return <div>Loading members...</div>;
+ *   if (isPending) return <div>Loading members...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *
  *   return (
@@ -54,5 +54,5 @@ export function useCommunityMembers(communityId: string) {
     });
   }
 
-  return query.data ?? [];
+  return query;
 }

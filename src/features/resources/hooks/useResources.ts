@@ -18,9 +18,9 @@ import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
  * @example
  * ```tsx
  * function ResourceList() {
- *   const { data: resources, isLoading, error } = useResources();
+ *   const { data: resources, isPending, error } = useResources();
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   if (isPending) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *
  *   return (
@@ -58,7 +58,7 @@ import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
  * }
  * ```
  */
-export function useResources(filters?: ResourceFilter): ResourceInfo[] {
+export function useResources(filters?: ResourceFilter) {
   const supabase = useSupabase();
 
   const query = useQuery<ResourceInfo[], Error>({
@@ -76,5 +76,5 @@ export function useResources(filters?: ResourceFilter): ResourceInfo[] {
     });
   }
 
-  return query.data ?? [];
+  return query;
 }

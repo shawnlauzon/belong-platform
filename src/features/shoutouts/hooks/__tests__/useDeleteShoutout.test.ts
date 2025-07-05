@@ -63,13 +63,13 @@ describe('useDeleteShoutout', () => {
 
     // Act
     const { result } = renderHook(() => useDeleteShoutout(), { wrapper });
-    
+
     const mutationResult = await result.current.mutateAsync(shoutoutId);
 
     // Assert
     expect(mutationResult).toBeUndefined();
     expect(mockDeleteShoutout).toHaveBeenCalledWith(shoutoutId);
-    
+
     // Wait for mutation state to update
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -132,12 +132,12 @@ describe('useDeleteShoutout', () => {
 
     // Act
     const { result } = renderHook(() => useDeleteShoutout(), { wrapper });
-    
+
     const mutationResult = await result.current.mutateAsync(shoutoutId);
 
     // Assert
     expect(mutationResult).toBeUndefined();
-    
+
     // Wait for mutation state to update
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -160,14 +160,20 @@ describe('useDeleteShoutout', () => {
 
     // Assert cache invalidation and removal happened
     await waitFor(() => {
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['shoutouts'] });
-      expect(removeQueriesSpy).toHaveBeenCalledWith({ queryKey: ['shoutouts', shoutoutId] });
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['shoutouts'],
+      });
+      expect(removeQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['shoutouts', shoutoutId],
+      });
     });
   });
 
   it('should provide a stable mutate function reference', () => {
     // Act
-    const { result, rerender } = renderHook(() => useDeleteShoutout(), { wrapper });
+    const { result, rerender } = renderHook(() => useDeleteShoutout(), {
+      wrapper,
+    });
     const firstMutate = result.current.mutate;
 
     // Trigger re-render
@@ -198,13 +204,15 @@ describe('useDeleteShoutout', () => {
 
     // Act
     const { result } = renderHook(() => useDeleteShoutout(), { wrapper });
-    
+
     // First deletion
     await result.current.mutateAsync(firstShoutoutId);
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
-
+    if (result.current.isError) {
+      throw result.current.error;
+    }
     // Reset mutation
     result.current.reset();
     await waitFor(() => {
@@ -215,7 +223,10 @@ describe('useDeleteShoutout', () => {
     // Second deletion
     await result.current.mutateAsync(secondShoutoutId);
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.isSuccess || result.current.isError).toBeTruthy();
     });
+    if (result.current.isError) {
+      throw result.current.error;
+    }
   });
 });

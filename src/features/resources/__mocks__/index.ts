@@ -70,13 +70,11 @@ export function createMockResourceRow(
     category: faker.helpers.enumValue(ResourceCategory),
     owner_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
-    image_urls:
-      faker.helpers.maybe(() => [faker.image.url(), faker.image.url()]) ?? [],
-    location:
-      faker.helpers.maybe(() => ({
-        type: 'Coordinates' as const,
-        coordinates: [faker.location.longitude(), faker.location.latitude()],
-      })) ?? null,
+    image_urls: [faker.image.urlLoremFlickr({ category: 'object' })],
+    location: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     created_at: faker.date.past().toISOString(),
     updated_at: faker.date.recent().toISOString(),
     ...overrides,

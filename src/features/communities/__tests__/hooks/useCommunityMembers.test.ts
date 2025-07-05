@@ -35,10 +35,10 @@ describe('useCommunityMembers', () => {
     });
 
     await waitFor(() => {
-      expect(result.current).toHaveLength(3);
+      expect(result.current.data).toHaveLength(3);
     });
 
-    expect(result.current).toEqual(mockMembers);
+    expect(result.current.data).toEqual(mockMembers);
     expect(mockFetchCommunityMembers).toHaveBeenCalledWith(
       expect.any(Object),
       communityId,
@@ -54,7 +54,7 @@ describe('useCommunityMembers', () => {
     });
 
     await waitFor(() => {
-      expect(result.current).toEqual([]);
+      expect(result.current.data).toEqual([]);
     });
   });
 });

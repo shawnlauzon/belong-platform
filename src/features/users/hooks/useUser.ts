@@ -4,6 +4,7 @@ import { useSupabase } from '@/shared';
 import { fetchUserById } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
 import type { User } from '../types';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
  * Hook for fetching a single user by ID.
@@ -62,8 +63,12 @@ import type { User } from '../types';
  *
  * @category React Hooks
  */
-export function useUser(userId: string | null): User | null {
+export function useUser(
+  userId: string | null,
+): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
+
+  console.log('useUser', userId);
 
   const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
@@ -81,5 +86,5 @@ export function useUser(userId: string | null): User | null {
     });
   }
 
-  return query.data ?? null;
+  return query;
 }

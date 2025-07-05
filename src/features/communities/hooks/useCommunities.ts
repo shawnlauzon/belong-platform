@@ -18,9 +18,9 @@ import type { CommunityInfo, CommunityFilter } from '@/features/communities/type
  * @example
  * ```tsx
  * function CommunityList() {
- *   const { data: communities, isLoading, error } = useCommunities();
+ *   const { data: communities, isPending, error } = useCommunities();
  *
- *   if (isLoading) return <div>Loading...</div>;
+ *   if (isPending) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *
  *   return (
@@ -70,5 +70,5 @@ export function useCommunities(filters?: CommunityFilter) {
     });
   }
 
-  return query.data ?? [];
+  return query;
 }

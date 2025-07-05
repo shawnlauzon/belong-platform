@@ -20,7 +20,6 @@ export interface TestCommunity {
   description: string;
   level: 'neighborhood' | 'city' | 'region' | 'state' | 'country';
   timeZone: string;
-  hierarchyPath: Array<{ level: string; name: string }>;
   memberCount: number;
   boundary?: CommunityBoundary;
 }
@@ -88,11 +87,6 @@ export class TestDataFactory {
       description: faker.lorem.paragraph(),
       level: 'neighborhood',
       timeZone: 'America/New_York',
-      hierarchyPath: [
-        { level: 'state', name: 'New York' },
-        { level: 'city', name: 'New York City' },
-        { level: 'neighborhood', name: 'Manhattan' },
-      ],
       memberCount: 1,
       ...overrides,
     };
