@@ -599,6 +599,122 @@ describe('useFeatureHook', () => {
 
 **Key Principle**: When you see a well-working test pattern, copy it exactly. Don't innovate or add complexity - consistency is more valuable than creativity in test code.
 
+### ❌ Don't Create Tons of Custom Mocks in Test Files
+
+```typescript
+// ❌ BAD: Creating tons of new mocks within test files
+describe('userTransformer', () => {
+  it('should transform a complete profile row to domain user', () => {
+    const mockProfile = {
+      id: 'user-123',
+      email: 'test@example.com',
+      user_metadata: {
+        first_name: 'John',
+        last_name: 'Doe',
+        full_name: 'John Doe',
+        avatar_url: 'https://example.com/avatar.jpg',
+        location: { lat: 37.7749, lng: -122.4194 },
+      },
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-02T00:00:00Z',
+    };
+    // More hardcoded test data...
+  });
+
+  it('should handle profile with minimal metadata', () => {
+    const mockProfile = {
+      id: 'user-456',
+      email: 'minimal@example.com',
+      user_metadata: {
+        first_name: 'Jane',
+      },
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-01T00:00:00Z',
+    };
+    // More custom mocks...
+  });
+  
+  // 15+ more tests with similar custom mock creation...
+});
+
+// ✅ GOOD: Use standard mock factory calls and faker
+describe('User Transformer', () => {
+  it('should transform database profile to User without snake_case properties', () => {
+    // Arrange
+    const userId = faker.string.uuid();
+    const email = faker.internet.email();
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    
+    const dbProfile = createMockDbProfile({
+      id: userId,
+      email: email,
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        full_name: `${firstName} ${lastName}`,
+        avatar_url: faker.internet.url(),
+        location: { lat: faker.location.latitude(), lng: faker.location.longitude() },
+      },
+    });
+
+    // Act
+    const result = toDomainUser(dbProfile);
+
+    // Assert - Should have camelCase properties
+    expect(result).toMatchObject({
+      id: userId,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      fullName: `${firstName} ${lastName}`,
+      avatarUrl: expect.any(String),
+      location: expect.any(Object),
+    });
+
+    // Assert - Should NOT have snake_case properties
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      'first_name',
+      'last_name',
+      'full_name',
+      'avatar_url',
+      'user_metadata',
+    ]);
+  });
+
+  describe('forDbInsert', () => {
+    it('should transform domain user to database format', () => {
+      // Arrange
+      const userData = createMockUserData();
+
+      // Act
+      const dbData = forDbInsert(userData);
+
+      // Assert
+      expect(dbData).toMatchObject({
+        id: userData.id,
+        email: userData.email,
+        user_metadata: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          full_name: userData.fullName,
+          avatar_url: userData.avatarUrl,
+          location: userData.location,
+        },
+      });
+    });
+  });
+});
+```
+
+**Benefits of Using Standard Mock Factories:**
+- **Consistency**: All tests use the same data generation patterns
+- **Maintainability**: Changes to data structure only require updating factory functions
+- **Realism**: `faker.*` generates realistic test data that catches edge cases
+- **Brevity**: Much less code per test
+- **Focus**: Tests focus on behavior, not data setup
+
 ## Integration vs Unit Test Differences
 
 ### Unit Tests
@@ -672,6 +788,8 @@ See the following files for complete examples:
 - `src/features/resources/__tests__/hooks/useCreateResource.test.ts`
 - `src/features/resources/__tests__/api/fetchResourceById.test.ts`
 - `src/features/resources/__mocks__/index.ts` - Mock factories and utilities
+- `src/features/users/__tests__/transformers/userTransformer.test.ts` - Proper transformer testing
+- `src/features/users/__tests__/hooks/useUsers.test.ts` - Clean hook testing patterns
 
 These demonstrate all the patterns and practices outlined in this guide, including:
 
@@ -679,6 +797,65 @@ These demonstrate all the patterns and practices outlined in this guide, includi
 - API signature updates (e.g., `createResource` without separate `ownerId` parameter)
 - Proper import patterns for mock utilities
 - Coverage of all data variants (Row, Info, Data, Domain objects)
+- Bidirectional transformer testing (database ↔ domain)
+- Focused test patterns that avoid excessive coverage
+
+### Transformer Testing Patterns
+
+Transformer tests should cover both directions and use standard utilities:
+
+```typescript
+describe('Feature Transformer', () => {
+  it('should transform database data to domain without snake_case properties', () => {
+    // Arrange
+    const dbData = createMockDbFeature({
+      field_name: faker.lorem.word(),
+      other_field: faker.lorem.word(),
+    });
+
+    // Act
+    const result = toDomainFeature(dbData);
+
+    // Assert - Should have camelCase properties
+    expect(result).toMatchObject({
+      fieldName: dbData.field_name,
+      otherField: dbData.other_field,
+    });
+
+    // Assert - Should NOT have snake_case properties
+    assertNoSnakeCaseProperties(result, [
+      ...COMMON_SNAKE_CASE_PROPERTIES.ENTITY_FIELDS,
+      'field_name',
+      'other_field',
+    ]);
+  });
+
+  describe('forDbInsert', () => {
+    it('should transform domain data to database format', () => {
+      // Arrange
+      const domainData = createMockFeatureData();
+
+      // Act
+      const dbData = forDbInsert(domainData);
+
+      // Assert
+      expect(dbData).toMatchObject({
+        field_name: domainData.fieldName,
+        other_field: domainData.otherField,
+      });
+    });
+  });
+});
+```
+
+### Feature Test Alignment
+
+When refactoring tests, align them with the most established patterns:
+
+1. **Compare test coverage**: Check what tests exist across similar features
+2. **Remove excessive tests**: Delete tests that test more paths than the reference feature
+3. **Use standard patterns**: Copy successful test structures exactly
+4. **Focus on core behavior**: Test success + error cases only, avoid edge case explosion
 
 ---
 
