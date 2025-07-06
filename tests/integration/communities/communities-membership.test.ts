@@ -155,6 +155,19 @@ describe('Communities API - Membership Operations', () => {
         communityId: membershipTestCommunity.id,
       });
     });
+
+    it('includes organizer as a member', async () => {
+      const members = await api.fetchCommunityMembers(
+        supabase,
+        membershipTestCommunity.id,
+      );
+
+      expect(members).toHaveLength(2);
+      expect(members).toContainEqual({
+        userId: testUser1.id,
+        communityId: membershipTestCommunity.id,
+      });
+    });
   });
 
   describe('fetchUserCommunities', () => {
@@ -175,14 +188,12 @@ describe('Communities API - Membership Operations', () => {
         supabase,
         testUser2.id,
       );
-      expect(memberships).toHaveLength(2);
-      expect(memberships).toContain([
-        {
-          userId: testUser2.id,
-          joinedAt: expect.any(Date),
-          communityId: membershipTestCommunity.id,
-        },
-      ]);
+      expect(memberships).toHaveLength(1);
+      expect(memberships).toContainEqual({
+        userId: testUser2.id,
+        joinedAt: expect.any(Date),
+        communityId: membershipTestCommunity.id,
+      });
     });
 
     it('returns empty array for user with no communities', async () => {
