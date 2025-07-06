@@ -10,8 +10,7 @@ import { Polygon } from '../types/geojson';
  */
 export interface BoundaryDbData {
   boundary: CommunityBoundary | null;
-  boundary_geometry: unknown | null; // PostGIS geometry (simplified)
-  boundary_geometry_detailed: unknown | null; // PostGIS geometry (detailed)
+  boundary_geometry: unknown | null; // PostGIS geometry
 }
 
 /**
@@ -20,7 +19,6 @@ export interface BoundaryDbData {
 export interface BoundaryDbTransform {
   boundaryJson: CommunityBoundary;
   boundaryGeometry: string | null; // WKT string for PostGIS
-  boundaryGeometryDetailed: string | null; // WKT string for PostGIS
 }
 
 
@@ -88,16 +86,6 @@ function polygonToWKT(polygon: Polygon): string {
   return `POLYGON((${wktCoords}))`;
 }
 
-/**
- * Simplified polygon generation for PostGIS storage
- * In a real implementation, this would use PostGIS ST_SimplifyPreserveTopology
- * For now, we'll just return the same polygon as both simplified and detailed
- */
-function simplifyPolygon(polygon: Polygon): string {
-  // TODO: In real implementation, integrate with PostGIS simplification
-  // For now, return the same polygon (tests will pass)
-  return polygonToWKT(polygon);
-}
 
 /**
  * Creates a PostGIS geometry from coordinates for spatial queries
@@ -126,12 +114,10 @@ export function transformBoundaryToDb(
   switch (boundary.type) {
     case 'isochrone': {
       const detailedWKT = polygonToWKT(boundary.polygon);
-      const simplifiedWKT = simplifyPolygon(boundary.polygon);
 
       return {
         boundaryJson: boundary,
-        boundaryGeometry: simplifiedWKT,
-        boundaryGeometryDetailed: detailedWKT,
+        boundaryGeometry: detailedWKT,
       };
     }
 

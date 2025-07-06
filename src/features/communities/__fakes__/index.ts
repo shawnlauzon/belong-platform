@@ -140,7 +140,6 @@ export function createFakeDbCommunity(
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
     boundary_geometry: null,
-    boundary_geometry_detailed: null,
     ...overrides,
   };
 }

@@ -115,7 +115,6 @@ export function forDbInsert(
     center: toPostGisPoint(center),
     boundary: boundary ? boundaryForDatabase(boundary) : undefined,
     boundary_geometry: boundaryGeometry,
-    boundary_geometry_detailed: boundaryGeometry,
   };
 }
 

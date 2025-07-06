@@ -13,7 +13,6 @@ export type Database = {
         Row: {
           boundary: Json | null
           boundary_geometry: unknown | null
-          boundary_geometry_detailed: unknown | null
           center: unknown
           created_at: string
           description: string | null
@@ -28,7 +27,6 @@ export type Database = {
         Insert: {
           boundary?: Json | null
           boundary_geometry?: unknown | null
-          boundary_geometry_detailed?: unknown | null
           center: unknown
           created_at?: string
           description?: string | null
@@ -43,7 +41,6 @@ export type Database = {
         Update: {
           boundary?: Json | null
           boundary_geometry?: unknown | null
-          boundary_geometry_detailed?: unknown | null
           center?: unknown
           created_at?: string
           description?: string | null

@@ -42,7 +42,6 @@ describe('createCommunity API', () => {
         icon: '🏘️',
         boundary: null,
         boundary_geometry: null,
-        boundary_geometry_detailed: null,
       }, 
       error: null 
     });
