@@ -29,8 +29,8 @@ describe('Communities API - CRUD Operations', () => {
     // Sign in as testUser to ensure proper context for community creation
     await signIn(supabase, testUser.email, 'TestPass123!');
 
-    readOnlyCommunity1 = await createTestCommunity(supabase, testUser.id);
-    readOnlyCommunity2 = await createTestCommunity(supabase, testUser.id);
+    readOnlyCommunity1 = await createTestCommunity(supabase);
+    readOnlyCommunity2 = await createTestCommunity(supabase);
   });
 
   afterAll(async () => {
@@ -40,7 +40,6 @@ describe('Communities API - CRUD Operations', () => {
   describe('createCommunity', () => {
     it('creates community with valid data', async () => {
       const data = createFakeCommunityData({
-        organizerId: testUser.id,
         name: `${TEST_PREFIX}Create_Test_${Date.now()}`,
       });
 
@@ -59,7 +58,6 @@ describe('Communities API - CRUD Operations', () => {
 
     it('auto-creates organizer membership', async () => {
       const data = createFakeCommunityData({
-        organizerId: testUser.id,
         name: `${TEST_PREFIX}Membership_Test_${Date.now()}`,
       });
 
@@ -78,15 +76,6 @@ describe('Communities API - CRUD Operations', () => {
       } finally {
         await cleanupCommunity(community);
       }
-    });
-
-    it('fails without valid organizer', async () => {
-      const data = createFakeCommunityData({
-        organizerId: 'invalid-user-id',
-        name: `${TEST_PREFIX}Invalid_Test_${Date.now()}`,
-      });
-
-      await expect(api.createCommunity(supabase, data)).rejects.toThrow();
     });
   });
 
@@ -112,7 +101,6 @@ describe('Communities API - CRUD Operations', () => {
           supabase,
           createFakeCommunityData({
             name: uniqueName,
-            organizerId: testUser.id,
           }),
         );
 
@@ -163,7 +151,7 @@ describe('Communities API - CRUD Operations', () => {
       // Create own community to modify
       let community;
       try {
-        community = await createTestCommunity(supabase, testUser.id);
+        community = await createTestCommunity(supabase);
 
         const newName = `${TEST_PREFIX}Updated_${Date.now()}`;
         const newDescription = 'Updated description for test';
@@ -185,7 +173,7 @@ describe('Communities API - CRUD Operations', () => {
     it('preserves unchanged fields', async () => {
       let community;
       try {
-        community = await createTestCommunity(supabase, testUser.id);
+        community = await createTestCommunity(supabase);
         const newName = `${TEST_PREFIX}PartialUpdate_${Date.now()}`;
         const originalDescription = community.description;
 
@@ -206,7 +194,7 @@ describe('Communities API - CRUD Operations', () => {
   describe('deleteCommunity', () => {
     it('deletes community and cascades to memberships', async () => {
       // Create a community specifically for deletion
-      const community = await createTestCommunity(supabase, testUser.id);
+      const community = await createTestCommunity(supabase);
       const communityId = community.id;
 
       // Join another user to test cascade

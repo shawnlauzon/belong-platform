@@ -29,12 +29,8 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
   return account;
 }
 
-export async function createTestCommunity(
-  supabase: SupabaseClient<Database>,
-  organizerId: string,
-) {
+export async function createTestCommunity(supabase: SupabaseClient<Database>) {
   const data = createFakeCommunityData({
-    organizerId,
     name: `${TEST_PREFIX}Community_${Date.now()}`,
     description: `${TEST_PREFIX} test community`,
   });

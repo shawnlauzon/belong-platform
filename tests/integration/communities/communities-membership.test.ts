@@ -34,7 +34,7 @@ describe('Communities API - Membership Operations', () => {
     await signIn(supabase, testUser1Email, 'TestPass123!');
 
     // Create community with testUser1 as organizer
-    membershipTestCommunity = await createTestCommunity(supabase, testUser1.id);
+    membershipTestCommunity = await createTestCommunity(supabase);
   });
 
   afterAll(async () => {
