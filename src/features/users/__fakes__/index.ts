@@ -51,6 +51,7 @@ export function createFakeDbProfile(
     id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
+    deleted_at: null,
     email: faker.internet.email(),
     user_metadata: {
       first_name: firstName,

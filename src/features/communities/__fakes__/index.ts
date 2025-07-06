@@ -135,6 +135,13 @@ export function createFakeDbCommunity(
     },
     boundary_geometry: null,
     boundary_geometry_detailed: null,
+    center: null,
+    deleted_at: null,
+    deleted_by: null,
+    hierarchy_path: null,
+    level: null,
+    parent_id: null,
+    radius_km: null,
     ...overrides,
   };
 }
