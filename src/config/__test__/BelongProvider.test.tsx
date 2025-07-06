@@ -1,8 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { UseQueryResult } from '@tanstack/react-query';
 
 // Mock the useCurrentUser hook instead of useAuth
 vi.mock('../../features/auth/hooks/useCurrentUser', () => ({
@@ -74,7 +74,7 @@ describe('BelongProvider', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as UseQueryResult<unknown, Error>);
   });
 
   const defaultConfig = {

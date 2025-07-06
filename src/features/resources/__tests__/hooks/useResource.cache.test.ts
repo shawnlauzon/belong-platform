@@ -71,7 +71,7 @@ function createCacheTestWrapper() {
 
 describe('useResource - Cache Behavior', () => {
   let wrapper: ReturnType<typeof createCacheTestWrapper>['wrapper'];
-  let queryClient: any;
+  let queryClient: QueryClient;
   let mockSupabase: SupabaseClient<Database>;
   let fakeResourceInfo: ReturnType<typeof createFakeResourceInfo>;
   let fakeOwner: User;

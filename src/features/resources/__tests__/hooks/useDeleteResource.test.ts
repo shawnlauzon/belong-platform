@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import { useDeleteResource } from '../../hooks/useDeleteResource';
 import { createMockSupabase } from '../../../../test-utils';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
@@ -18,7 +19,7 @@ const mockDeleteResource = vi.mocked(deleteResource);
 describe('useDeleteResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: ReturnType<typeof createMockSupabase>;
-  let queryClient: any;
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
