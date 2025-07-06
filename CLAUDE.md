@@ -6,6 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - DO NOT edit more code than you have to.
 - DO NOT WASTE TOKENS, be succinct and concise.
 
+## Documentation
+
+For detailed information about the platform, refer to these documents:
+
+- **[README.md](./README.md)** - Getting started, basic usage, and API reference
+- **[USAGE.md](./USAGE.md)** - Advanced usage patterns and best practices
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Internal architecture and design decisions
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Development workflow and guidelines
+- **[UNIT_TESTING.md](./UNIT_TESTING.md)** - Comprehensive unit testing patterns
+- **[INTEGRATION_TESTING.md](./INTEGRATION_TESTING.md)** - Integration testing with real database
+
 ## Development Commands
 
 ```bash
@@ -37,52 +48,52 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm test:integration
 ```
 
-Architecture Overview
+## Architecture Overview
 
-Belong Network is a TypeScript platform library for a hyper-local community platform built with React Query and
-Supabase.
+Belong Network Platform is a TypeScript library for building hyper-local community applications with React Query and Supabase.
 
-Package Structure
+### Package Structure
 
-- @belongnetwork/platform - Single package containing the complete data layer with React Query hooks, services, and utilities for auth, communities, resources, events, conversations, shoutouts, and users
+- **@belongnetwork/platform** - Single package containing the complete data layer with React Query hooks, services, and utilities for auth, communities, resources, events, conversations, shoutouts, and users
 
-Tech Stack
+### Tech Stack
 
-- Frontend: React 18, TypeScript, TanStack Query for data fetching
-- Database: Supabase (PostgreSQL + PostGIS for spatial data)
-- Build: Vite
-- Testing: Vitest with jsdom and Testing Library
+- **Frontend**: React 18, TypeScript, TanStack Query (React Query) v5
+- **Database**: Supabase (PostgreSQL + PostGIS for spatial data)
+- **Build**: Vite
+- **Testing**: Vitest with jsdom and Testing Library
 
-Development Guidelines
+## Development Guidelines
 
-Code Patterns
+### Code Patterns
 
 - Study existing files for established patterns before creating new ones
-- Follow the feature-based architecture with hooks, services, transformers, and types
+- Follow the feature-based architecture with hooks, api, transformers, and types
 
-Type Safety
+### Type Safety
 
-- NEVER use any types - always create proper interfaces, union types, or use type assertions
+- NEVER use `any` types - always create proper interfaces, union types, or use type assertions
 - All functions and components must have explicit type annotations
-- Use generated database types from src/shared/types/database.ts
+- Use generated database types from `src/shared/types/database.ts`
 - Prefer type-safe patterns over casting or type assertions
 
-TDD
+### TDD
 
 - Do not write a new test case if you are fixing a unit test failure
 - If you are not fixing a unit test failure, write a test before writing the code
 - Use the test file to guide the implementation
+- See [UNIT_TESTING.md](./UNIT_TESTING.md) for detailed testing patterns
 
-Testing
+### Testing
 
-- The package has unit tests in **tests** directories within each feature
-- Integration tests are located in the tests/integration directory
+- The package has unit tests in `__tests__` directories within each feature
+- Integration tests are located in the `tests/integration` directory
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
 - **ALWAYS use createFake\* utilities from src/test-utils for generating test data**
 - Use faker to generate data for tests and to document expected values
 
-Unit Test Requirements
+### Unit Test Requirements
 
 - **Test behavior, not implementation**: Unit tests must verify WHAT the code accomplishes, not HOW it does it
 - **Avoid brittle assertions**: Never test internal implementation details like specific database query method calls
@@ -99,19 +110,20 @@ Unit Test Requirements
   - `expect(error).toThrow(expectedError)` - Error handling
 - **Benefits**: Tests remain stable during implementation refactoring, focus on user-visible behavior
 
-QA
+### QA
 
 - Before any commit, run `pnpm tdd` and fix any warnings and errors
 
-Publish
+### Publish
 
 - Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in package.json, then commit, then tag, then publish
 
-Code Safety Guidelines
+## Code Safety Guidelines
 
-- Prefer function definition to prevent error conditions rather than checking at runtime. Do not make checks at runtime for conditions which are impossible by the function definition.
+- Prefer function definition to prevent error conditions rather than checking at runtime
+- Do not make checks at runtime for conditions which are impossible by the function definition
 
-Development Principles
+## Development Principles
 
 - A task is only complete when build and typecheck and tests are all successful
 - Use the supabase MCP to interact with the database
@@ -124,7 +136,7 @@ Development Principles
 
 ## Memory
 
-- When asked to look at the database definition, look at src/shared/types/database.ts
+- When asked to look at the database definition, look at `src/shared/types/database.ts`
 - Never update the database.ts file. Always make changes via a database migration and then pull the types
 - To update the database.ts file, run `pnpm run gen:db-types` from the project root
 - If you create the same code more than twice, extract it into a shared function
@@ -177,13 +189,7 @@ Development Principles
    - Green: Fix the minimum code needed to make the test pass
    - Refactor: Clean up the implementation while keeping tests green
 
-7. **MANDATORY: Unit Test Before Implementation**:
-   - **ALWAYS write a failing unit test first** before implementing any bug fix or feature
-   - The test must reproduce the exact error or behavior described in the bug report
-   - Use the test to validate your understanding of the problem
-   - Only after the test fails for the right reason should you implement the fix
-   - Verify the test passes after implementation
-   - Example: For authentication bug, create unit test that calls the failing service method and expects the specific error message
+   Follow this when you are adding new features or fixing bugs. If a test case already reproduces the problem, you can skip the red step.
 
 ### Common Anti-Patterns to Avoid
 
@@ -222,3 +228,5 @@ Development Principles
    - **Problem**: Integration tests getting user data from previous test runs instead of current test
    - **Insight**: Integration tests may share QueryClient instances, database state, or browser storage between tests
    - **Investigation Strategy**: Look for differences in test setup (beforeEach vs beforeAll, fresh vs shared instances)
+
+For more detailed information, see the documentation files linked at the top of this document.
