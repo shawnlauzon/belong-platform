@@ -22,7 +22,7 @@ export async function getCurrentAuthUser(
 
     if (error) {
       logger.debug('🔐 API: Failed to get authenticated user', { error });
-      return null;
+      throw error;
     }
 
     if (!user) {
@@ -35,8 +35,16 @@ export async function getCurrentAuthUser(
       email: user.email!,
     };
   } catch (error) {
+    const err = error as Error;
+    if (err.name === 'AuthSessionMissingError') {
+      // Handle specific AuthSessionMissingError - this is expected when no session exists
+      logger.debug('🔐 API: No auth session found');
+      return null;
+    }
+
+    // For all other errors, log and re-throw
     logger.error('🔐 API: Error fetching current auth user', { error });
-    return null;
+    throw error;
   }
 }
 

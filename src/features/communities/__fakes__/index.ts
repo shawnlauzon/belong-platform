@@ -1,18 +1,18 @@
 import { faker } from '@faker-js/faker';
-import { 
-  Community, 
-  CommunityData, 
-  CommunityInfo, 
+import {
+  Community,
+  CommunityData,
+  CommunityInfo,
   CommunityMembership,
   CommunityMembershipInfo,
-  CommunityMembershipData 
+  CommunityMembershipData,
 } from '../types';
 import { CommunityRow } from '../types/database';
 import { ProfileRow } from '../../users/types/database';
 import { createFakeDbProfile, createFakeUser } from '../../users/__fakes__';
 
 export function createFakeCommunity(
-  overrides: Partial<Community> = {}
+  overrides: Partial<Community> = {},
 ): Community {
   return {
     id: faker.string.uuid(),
@@ -34,7 +34,9 @@ export function createFakeCommunity(
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
         type: 'Polygon',
-        coordinates: [[[faker.location.longitude(), faker.location.latitude()]]],
+        coordinates: [
+          [[faker.location.longitude(), faker.location.latitude()]],
+        ],
       },
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
@@ -43,13 +45,12 @@ export function createFakeCommunity(
 }
 
 export function createFakeCommunityData(
-  overrides: Partial<CommunityData> = {}
+  overrides: Partial<CommunityData> = {},
 ): CommunityData {
   return {
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
-    organizerId: faker.string.uuid(),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -62,7 +63,9 @@ export function createFakeCommunityData(
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
         type: 'Polygon',
-        coordinates: [[[faker.location.longitude(), faker.location.latitude()]]],
+        coordinates: [
+          [[faker.location.longitude(), faker.location.latitude()]],
+        ],
       },
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
@@ -71,7 +74,7 @@ export function createFakeCommunityData(
 }
 
 export function createFakeCommunityInfo(
-  overrides: Partial<CommunityInfo> = {}
+  overrides: Partial<CommunityInfo> = {},
 ): CommunityInfo {
   return {
     id: faker.string.uuid(),
@@ -93,7 +96,9 @@ export function createFakeCommunityInfo(
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
         type: 'Polygon',
-        coordinates: [[[faker.location.longitude(), faker.location.latitude()]]],
+        coordinates: [
+          [[faker.location.longitude(), faker.location.latitude()]],
+        ],
       },
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
@@ -105,7 +110,7 @@ export function createFakeCommunityInfo(
  * Creates a fake database Community row
  */
 export function createFakeDbCommunity(
-  overrides: Partial<CommunityRow> = {}
+  overrides: Partial<CommunityRow> = {},
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
   const lat = faker.location.latitude();
@@ -128,7 +133,9 @@ export function createFakeDbCommunity(
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
         type: 'Polygon',
-        coordinates: [[[faker.location.longitude(), faker.location.latitude()]]],
+        coordinates: [
+          [[faker.location.longitude(), faker.location.latitude()]],
+        ],
       },
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
@@ -142,7 +149,7 @@ export function createFakeDbCommunity(
  * Creates a fake database Community with organizer attached
  */
 export function createFakeDbCommunityWithOrganizer(
-  overrides: Partial<CommunityRow> = {}
+  overrides: Partial<CommunityRow> = {},
 ): CommunityRow & { organizer: ProfileRow } {
   const organizer = createFakeDbProfile();
   const community = createFakeDbCommunity({
@@ -199,7 +206,7 @@ export function createFakeCommunityHierarchy() {
  * Creates a fake CommunityMembershipData
  */
 export function createFakeCommunityMembershipData(
-  overrides: Partial<CommunityMembershipData> = {}
+  overrides: Partial<CommunityMembershipData> = {},
 ): CommunityMembershipData {
   return {
     userId: faker.string.uuid(),
@@ -212,7 +219,7 @@ export function createFakeCommunityMembershipData(
  * Creates a fake CommunityMembershipInfo
  */
 export function createFakeCommunityMembershipInfo(
-  overrides: Partial<CommunityMembershipInfo> = {}
+  overrides: Partial<CommunityMembershipInfo> = {},
 ): CommunityMembershipInfo {
   return {
     userId: faker.string.uuid(),
@@ -226,7 +233,7 @@ export function createFakeCommunityMembershipInfo(
  * Creates a fake CommunityMembership with optional composed objects
  */
 export function createFakeCommunityMembership(
-  overrides: Partial<CommunityMembership> = {}
+  overrides: Partial<CommunityMembership> = {},
 ): CommunityMembership {
   return {
     userId: faker.string.uuid(),

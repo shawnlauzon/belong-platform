@@ -36,8 +36,6 @@ export interface CommunityData {
   description?: string;
   icon?: string; // Visual icon for the community
 
-  organizerId: string;
-
   // Location (mandatory center point)
   center: Coordinates;
 

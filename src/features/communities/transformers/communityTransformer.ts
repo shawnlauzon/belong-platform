@@ -17,7 +17,10 @@ import {
   CommunityUpdateDbData,
 } from '../types/database';
 import { User } from '../../users';
-import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils/postgis';
+import {
+  parsePostGisPoint,
+  toPostGisPoint,
+} from '../../../shared/utils/postgis';
 
 /**
  * Transform a domain boundary object to database format with snake_case field names
@@ -97,14 +100,16 @@ export function toDomainCommunity(
 /**
  * Transform a domain community object to a database community record
  */
-export function forDbInsert(community: CommunityData): CommunityInsertDbData {
-  const { organizerId, timeZone, memberCount, center, boundary, ...rest } = community;
+export function forDbInsert(
+  community: CommunityData & { organizerId: string },
+): CommunityInsertDbData {
+  const { timeZone, memberCount, boundary, ...rest } = community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
   return {
     ...rest,
-    organizer_id: organizerId,
+    organizer_id: community.organizerId,
     time_zone: timeZone,
     member_count: memberCount,
     center: toPostGisPoint(center),
@@ -122,7 +127,6 @@ export function forDbUpdate(
     name: community.name,
     description: community.description,
     icon: community.icon,
-    organizer_id: community.organizerId,
     time_zone: community.timeZone,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     boundary: community.boundary

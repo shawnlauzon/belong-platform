@@ -21,8 +21,9 @@ describe('Communities API - CRUD Operations', () => {
   let readOnlyCommunity2: CommunityInfo;
 
   beforeAll(async () => {
+    await cleanupAllTestData();
+
     supabase = createTestClient();
-    await cleanupAllTestData(supabase);
 
     // Create shared resources for read-only tests
     testUser = await createTestUser(supabase);
@@ -35,7 +36,7 @@ describe('Communities API - CRUD Operations', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData(supabase);
+    await cleanupAllTestData();
   });
 
   describe('createCommunity', () => {
@@ -54,7 +55,7 @@ describe('Communities API - CRUD Operations', () => {
         expect(community!.name).toBe(data.name);
         expect(community!.organizerId).toBe(testUser.id);
       } finally {
-        await cleanupCommunity(supabase, community);
+        await cleanupCommunity(community);
       }
     });
 
@@ -77,7 +78,7 @@ describe('Communities API - CRUD Operations', () => {
 
         expect(membership).toBeTruthy();
       } finally {
-        await cleanupCommunity(supabase, community);
+        await cleanupCommunity(community);
       }
     });
 
@@ -123,7 +124,7 @@ describe('Communities API - CRUD Operations', () => {
 
         expect(filtered.some((c) => c.name === uniqueName)).toBe(true);
       } finally {
-        await cleanupCommunity(supabase, filteredCommunity);
+        await cleanupCommunity(filteredCommunity);
       }
     });
 
@@ -179,7 +180,7 @@ describe('Communities API - CRUD Operations', () => {
         expect(updated!.description).toBe(newDescription);
         expect(updated!.id).toBe(community.id);
       } finally {
-        await cleanupCommunity(supabase, community);
+        await cleanupCommunity(community);
       }
     });
 
@@ -199,7 +200,7 @@ describe('Communities API - CRUD Operations', () => {
         expect(updated!.description).toBe(originalDescription);
         expect(updated!.organizerId).toBe(community.organizerId);
       } finally {
-        await cleanupCommunity(supabase, community);
+        await cleanupCommunity(community);
       }
     });
   });
