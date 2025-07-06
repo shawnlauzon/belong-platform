@@ -39,7 +39,6 @@ export async function fetchCommunities(
       count: communities.length,
       filter,
     });
-    console.log('*** communities', communities);
     return communities;
   } catch (error) {
     logger.error('🏘️ API: Error fetching communities', { error });
