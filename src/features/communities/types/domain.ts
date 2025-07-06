@@ -23,9 +23,6 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   memberCount: number;
   createdAt: Date;
   updatedAt: Date;
-
-  // Optional membership status for current user
-  currentUserMembership?: CommunityMembership;
 }
 
 export interface CommunityMembership extends CommunityMembershipData {

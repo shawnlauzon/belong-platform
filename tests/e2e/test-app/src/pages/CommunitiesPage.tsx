@@ -115,7 +115,7 @@ function CommunitiesPage() {
   const handleJoin = async (communityId: string) => {
     try {
       setError('')
-      await communities.join(communityId, 'member')
+      await communities.join(communityId)
       
       // Refresh the list to update membership status
       const data = await communities.list()
@@ -244,21 +244,19 @@ function CommunitiesPage() {
                     {currentUser && (
                       <div style={{ marginTop: '10px' }}>
                         {/* Membership Actions */}
-                        {community.currentUserMembership ? (
-                          <button
-                            data-testid={`leave-${community.id}`}
-                            onClick={() => handleLeave(community.id)}
-                          >
-                            Leave Community
-                          </button>
-                        ) : (
-                          <button
-                            data-testid={`join-${community.id}`}
-                            onClick={() => handleJoin(community.id)}
-                          >
-                            Join Community
-                          </button>
-                        )}
+                        <button
+                          data-testid={`join-${community.id}`}
+                          onClick={() => handleJoin(community.id)}
+                          style={{ marginRight: '10px' }}
+                        >
+                          Join Community
+                        </button>
+                        <button
+                          data-testid={`leave-${community.id}`}
+                          onClick={() => handleLeave(community.id)}
+                        >
+                          Leave Community
+                        </button>
                         
                         {/* CRUD Actions for organizers */}
                         {community.organizerId === currentUser.id && (
