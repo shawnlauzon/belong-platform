@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { forDbInsert } from '../../transformers/communityTransformer';
+import { 
+  forDbInsert, 
+  forDbMembershipInsert, 
+  toDomainMembershipInfo 
+} from '../../transformers/communityTransformer';
 import { createFakeCommunityData } from '../../__fakes__';
 
 describe('communityTransformer', () => {
@@ -52,6 +56,40 @@ describe('communityTransformer', () => {
 
       expect(result.organizer_id).toBe(organizerId);
       expect(result).not.toHaveProperty('organizerId');
+    });
+  });
+
+  describe('forDbMembershipInsert', () => {
+    it('should transform domain membership data to database format', () => {
+      const membershipData = {
+        userId: faker.string.uuid(),
+        communityId: faker.string.uuid(),
+      };
+
+      const result = forDbMembershipInsert(membershipData);
+
+      expect(result).toEqual({
+        user_id: membershipData.userId,
+        community_id: membershipData.communityId,
+      });
+    });
+  });
+
+  describe('toDomainMembershipInfo', () => {
+    it('should transform database membership data to domain format', () => {
+      const dbMembership = {
+        user_id: faker.string.uuid(),
+        community_id: faker.string.uuid(),
+        joined_at: '2023-01-01T00:00:00Z',
+      };
+
+      const result = toDomainMembershipInfo(dbMembership);
+
+      expect(result).toEqual({
+        userId: dbMembership.user_id,
+        communityId: dbMembership.community_id,
+        joinedAt: new Date('2023-01-01T00:00:00Z'),
+      });
     });
   });
 });
