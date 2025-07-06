@@ -5,10 +5,7 @@ import {
   createTestCommunity,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import {
-  cleanupAllTestData,
-  cleanupCommunity,
-} from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupCommunity } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import { createFakeCommunityData } from '@/features/communities/__fakes__';
@@ -29,6 +26,10 @@ describe('Communities API - CRUD Operations', () => {
 
     // Create shared resources for read-only tests
     testUser = await createTestUser(supabase);
+
+    // Sign in as testUser to ensure proper context for community creation
+    await signIn(supabase, testUser.email, 'TestPass123!');
+
     readOnlyCommunity1 = await createTestCommunity(supabase, testUser.id);
     readOnlyCommunity2 = await createTestCommunity(supabase, testUser.id);
   });
