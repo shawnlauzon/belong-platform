@@ -10,7 +10,7 @@ vi.mock('../../api', () => ({
   fetchResources: vi.fn(),
 }));
 
-import { useSupabase, toRecords } from '../../../../shared';
+import { useSupabase } from '../../../../shared';
 import { fetchResources } from '../../api';
 import { ResourceFilter } from '../../types';
 

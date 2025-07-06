@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAuthIdOrThrow } from '../auth-helpers';
 import { MESSAGE_AUTHENTICATION_REQUIRED } from '../../constants';
+import { createMockSupabase } from '../../../test-utils';
 
 // Mock the core module
 vi.mock('../../../shared', () => ({
@@ -10,16 +11,12 @@ vi.mock('../../../shared', () => ({
 }));
 
 describe('requireAuthentication', () => {
-  let mockSupabase: any;
+  let mockSupabase: ReturnType<typeof createMockSupabase>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockSupabase = {
-      auth: {
-        getUser: vi.fn(),
-      },
-    };
+    mockSupabase = createMockSupabase({});
   });
 
   it('should return user ID when authentication succeeds', async () => {

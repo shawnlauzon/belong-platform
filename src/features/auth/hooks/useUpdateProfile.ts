@@ -82,6 +82,6 @@ export function useUpdateProfile() {
     (updates: Partial<User>) => {
       return mutation.mutateAsync(updates);
     },
-    [mutation.mutateAsync],
+    [mutation],
   );
 }

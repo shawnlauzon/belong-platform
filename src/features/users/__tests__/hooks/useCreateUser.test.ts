@@ -14,7 +14,6 @@ import { useSupabase } from '../../../../shared';
 import { createUser } from '../../api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../types';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateUser = vi.mocked(createUser);

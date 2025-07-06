@@ -58,13 +58,13 @@ export function useSignOut() {
       (...args: Parameters<typeof mutation.mutate>) => {
         return mutation.mutate(...args);
       },
-      [mutation.mutate]
+      [mutation]
     ),
     mutateAsync: useCallback(
       (...args: Parameters<typeof mutation.mutateAsync>) => {
         return mutation.mutateAsync(...args);
       },
-      [mutation.mutateAsync]
+      [mutation]
     ),
   };
 }

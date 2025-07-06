@@ -16,7 +16,7 @@ import { expect } from 'vitest';
  * ```
  */
 export function assertNoSnakeCaseProperties(
-  result: any,
+  result: Record<string, unknown>,
   snakeCaseProperties: string[]
 ): void {
   snakeCaseProperties.forEach(property => {
@@ -91,7 +91,7 @@ export const COMMON_SNAKE_CASE_PROPERTIES = {
  * ```
  */
 export function assertCommonSnakeCaseProperties(
-  result: any,
+  result: Record<string, unknown>,
   additionalProperties: string[] = []
 ): void {
   const commonProperties = [
@@ -120,8 +120,8 @@ export function assertCommonSnakeCaseProperties(
  * }, ['organizer_id', 'community_id', 'created_at']);
  * ```
  */
-export function assertTransformerProperties<T extends Record<string, any>>(
-  result: any,
+export function assertTransformerProperties<T extends Record<string, unknown>>(
+  result: Record<string, unknown>,
   expectedProperties: Partial<T>,
   forbiddenProperties: string[]
 ): void {
