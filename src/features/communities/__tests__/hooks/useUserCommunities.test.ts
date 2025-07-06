@@ -24,9 +24,9 @@ describe('useUserCommunities', () => {
   it('should return query result with CommunityMembership data when user has communities', async () => {
     const userId = faker.string.uuid();
     const mockMemberships = [
-      createFakeCommunityMembership({ userId, role: 'organizer' }),
-      createFakeCommunityMembership({ userId, role: 'admin' }),
-      createFakeCommunityMembership({ userId, role: 'member' }),
+      createFakeCommunityMembership({ userId }),
+      createFakeCommunityMembership({ userId }),
+      createFakeCommunityMembership({ userId }),
     ];
     mockFetchUserCommunities.mockResolvedValue(mockMemberships);
 

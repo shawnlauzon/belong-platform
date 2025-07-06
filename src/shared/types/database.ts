@@ -66,19 +66,16 @@ export type Database = {
         Row: {
           community_id: string
           joined_at: string
-          role: string
           user_id: string
         }
         Insert: {
           community_id: string
           joined_at?: string
-          role?: string
           user_id: string
         }
         Update: {
           community_id?: string
           joined_at?: string
-          role?: string
           user_id?: string
         }
         Relationships: [

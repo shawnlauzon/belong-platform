@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { fetchCommunityMembers } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityMembership } from '@/features/communities/types';
+import type { CommunityMembershipInfo } from '@/features/communities/types';
 
 /**
  * Hook for fetching community members.
@@ -27,8 +27,7 @@ import type { CommunityMembership } from '@/features/communities/types';
  *       <h2>Community Members ({members?.length || 0})</h2>
  *       {members?.map(member => (
  *         <div key={member.userId}>
- *           <span>{member.user.firstName} {member.user.lastName}</span>
- *           <span>Role: {member.role}</span>
+ *           <span>User ID: {member.userId}</span>
  *           <span>Joined: {new Date(member.joinedAt).toLocaleDateString()}</span>
  *         </div>
  *       ))}
@@ -40,7 +39,7 @@ import type { CommunityMembership } from '@/features/communities/types';
 export function useCommunityMembers(communityId: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<CommunityMembership[], Error>({
+  const query = useQuery<CommunityMembershipInfo[], Error>({
     queryKey: queryKeys.communities.memberships(communityId),
     queryFn: () => fetchCommunityMembers(supabase, communityId),
     staleTime: STANDARD_CACHE_TIME,

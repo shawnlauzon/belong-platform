@@ -4,31 +4,30 @@ import { useSupabase } from '@/shared';
 import { fetchUserCommunities } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityMembership } from '@/features/communities/types';
+import type { CommunityMembershipInfo } from '@/features/communities/types';
 
 /**
  * Hook for fetching communities a user is a member of.
- * 
+ *
  * Provides a list of all communities where the specified user is a member.
- * 
+ *
  * @param userId - The user ID to fetch communities for
  * @returns Query state for user's communities
- * 
+ *
  * @example
  * ```tsx
  * function UserCommunities({ userId }) {
  *   const { data: memberships, isLoading, error } = useUserCommunities(userId);
- *   
+ *
  *   if (isLoading) return <div>Loading communities...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
- *   
+ *
  *   return (
  *     <div>
  *       <h2>My Communities ({memberships?.length || 0})</h2>
  *       {memberships?.map(membership => (
  *         <div key={membership.communityId}>
- *           <h3>{membership.community.name}</h3>
- *           <p>Role: {membership.role}</p>
+ *           <h3>Community ID: {membership.communityId}</h3>
  *           <p>Joined: {new Date(membership.joinedAt).toLocaleDateString()}</p>
  *         </div>
  *       ))}
@@ -36,18 +35,21 @@ import type { CommunityMembership } from '@/features/communities/types';
  *   );
  * }
  * ```
- * 
+ *
  * @example
  * ```tsx
  * // Use with current user
  * function MyCommunities() {
  *   const { data: currentUser } = useCurrentUser();
  *   const { data: memberships } = useUserCommunities(currentUser?.id);
- *   
+ *
  *   return (
  *     <div>
  *       {memberships?.map(membership => (
- *         <CommunityCard key={membership.communityId} membership={membership} />
+ *         <div key={membership.communityId}>
+ *           <span>Community: {membership.communityId}</span>
+ *           <span>Joined: {membership.joinedAt.toLocaleDateString()}</span>
+ *         </div>
  *       ))}
  *     </div>
  *   );
@@ -57,7 +59,7 @@ import type { CommunityMembership } from '@/features/communities/types';
 export function useUserCommunities(userId?: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<CommunityMembership[], Error>({
+  const query = useQuery<CommunityMembershipInfo[], Error>({
     queryKey: queryKeys.communities.userMemberships(userId!),
     queryFn: () => fetchUserCommunities(supabase, userId!),
     staleTime: STANDARD_CACHE_TIME,
