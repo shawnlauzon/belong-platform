@@ -26,7 +26,6 @@ export interface ResourceData {
   title: string;
   description: string;
   communityId: string;
-  ownerId: string;
   imageUrls?: string[];
   location?: Coordinates;
 }

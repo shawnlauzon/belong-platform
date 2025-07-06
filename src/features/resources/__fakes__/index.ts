@@ -97,7 +97,6 @@ export function createFakeResourceData(
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category: faker.helpers.enumValue(ResourceCategory),
-    ownerId: faker.string.uuid(),
     communityId: faker.string.uuid(),
     imageUrls: [faker.image.url(), faker.image.url()],
     location: {
