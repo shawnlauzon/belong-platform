@@ -19,7 +19,6 @@ describe('Auth API - Integration Tests', () => {
   const testPassword = 'TestPass123!';
 
   beforeAll(async () => {
-    await cleanupAllTestData();
     supabase = createTestClient();
     serviceClient = createServiceClient();
 

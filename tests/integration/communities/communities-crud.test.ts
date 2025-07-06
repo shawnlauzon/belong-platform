@@ -21,8 +21,6 @@ describe('Communities API - CRUD Operations', () => {
   let readOnlyCommunity2: CommunityInfo;
 
   beforeAll(async () => {
-    await cleanupAllTestData();
-
     supabase = createTestClient();
 
     // Create shared resources for read-only tests

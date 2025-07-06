@@ -22,8 +22,6 @@ describe('Communities API - Membership Operations', () => {
   let membershipTestCommunity: CommunityInfo;
 
   beforeAll(async () => {
-    await cleanupAllTestData();
-
     supabase = createTestClient();
 
     // Create shared users first

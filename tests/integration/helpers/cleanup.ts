@@ -36,7 +36,25 @@ export async function cleanupAllTestData() {
   // Delete from auth first
   if (testProfiles?.length) {
     for (const profile of testProfiles) {
-      await serviceClient.auth.admin.deleteUser(profile.id);
+      const { error } = await serviceClient.auth.admin.deleteUser(profile.id);
+      if (error) {
+        console.warn(`Failed to delete auth user ${profile.id}:`, error.message);
+      }
+    }
+  }
+
+  // Also delete any remaining auth users by listing them directly
+  const { data: authUsers, error: listError } = await serviceClient.auth.admin.listUsers();
+  if (!listError && authUsers?.users) {
+    const testAuthUsers = authUsers.users.filter(user => 
+      user.email?.startsWith(TEST_PREFIX)
+    );
+    
+    for (const user of testAuthUsers) {
+      const { error } = await serviceClient.auth.admin.deleteUser(user.id);
+      if (error) {
+        console.warn(`Failed to delete auth user ${user.id} (${user.email}):`, error.message);
+      }
     }
   }
 
