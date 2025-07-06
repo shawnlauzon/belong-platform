@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useUser } from '../../hooks/useUser';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeUser } from '../../__fakes__/';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { User } from '../../types';

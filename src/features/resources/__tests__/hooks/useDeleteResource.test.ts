@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useDeleteResource } from '../../hooks/useDeleteResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
 vi.mock('../../api', () => ({

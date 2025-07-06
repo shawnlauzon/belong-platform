@@ -4,7 +4,7 @@ import { createFakeDbCommunity } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
-} from '@/shared/__tests__/transformerTestUtils';
+} from '@/test-utils/transformerTestUtils';
 
 describe('CommunityInfo Transformer', () => {
   it('should transform database community to CommunityInfo without snake_case properties', () => {

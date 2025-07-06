@@ -2,11 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCreateUser } from '../../hooks/useCreateUser';
 import { createMockSupabase } from '../../../../test-utils';
-import {
-  createFakeUserData,
-  createFakeUser,
-} from '../../__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createFakeUserData, createFakeUser } from '../../__fakes__';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API functions
 vi.mock('../../api', () => ({

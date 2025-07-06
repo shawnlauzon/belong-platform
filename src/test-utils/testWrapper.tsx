@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
-import { BelongProvider } from '../../config';
+import { BelongProvider } from '../config';
 
 /**
  * Standard test configuration for BelongProvider

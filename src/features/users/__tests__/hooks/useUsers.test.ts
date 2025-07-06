@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useUsers } from '../../hooks/useUsers';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeUser } from '../../__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
 vi.mock('../../api', () => ({
@@ -31,10 +31,7 @@ describe('useUsers', () => {
 
   it('should return User[] from fetchUsers', async () => {
     // Arrange: Mock return value should be User[]
-    const fakeUsers = [
-      createFakeUser(),
-      createFakeUser(),
-    ];
+    const fakeUsers = [createFakeUser(), createFakeUser()];
 
     mockFetchUsers.mockResolvedValue(fakeUsers);
 

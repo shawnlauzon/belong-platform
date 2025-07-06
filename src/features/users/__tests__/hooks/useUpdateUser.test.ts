@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeUser } from '../../__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
 vi.mock('../../api', () => ({
@@ -41,9 +41,9 @@ describe('useUpdateUser', () => {
 
     // Act
     const { result } = renderHook(() => useUpdateUser(), { wrapper });
-    const updatedUser = await result.current.mutateAsync({ 
-      id: mockUpdatedUser.id, 
-      ...updateData 
+    const updatedUser = await result.current.mutateAsync({
+      id: mockUpdatedUser.id,
+      ...updateData,
     });
 
     // Assert: Should return User
@@ -51,9 +51,9 @@ describe('useUpdateUser', () => {
     expect(updatedUser).toEqual(mockUpdatedUser);
 
     // Verify API was called with correct parameters
-    expect(mockUpdateUser).toHaveBeenCalledWith(mockSupabase, { 
-      id: mockUpdatedUser.id, 
-      ...updateData 
+    expect(mockUpdateUser).toHaveBeenCalledWith(mockSupabase, {
+      id: mockUpdatedUser.id,
+      ...updateData,
     });
   });
 });

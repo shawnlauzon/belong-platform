@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useResources } from '../../hooks/useResources';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResourceInfo } from '../../__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
 vi.mock('../../api', () => ({

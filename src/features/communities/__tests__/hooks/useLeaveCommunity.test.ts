@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useLeaveCommunity } from '../../hooks/useLeaveCommunity';
 import { faker } from '@faker-js/faker';
 

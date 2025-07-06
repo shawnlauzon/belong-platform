@@ -5,7 +5,7 @@ import { createFakeDbProfile, createFakeUserData } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
-} from '../../../../shared/__tests__/transformerTestUtils';
+} from '../../../../test-utils/transformerTestUtils';
 
 describe('User Transformer', () => {
   it('should transform database profile to User without snake_case properties', () => {

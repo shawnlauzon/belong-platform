@@ -5,6 +5,8 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "useDefineForClassFields": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "types": [
       "vite/client"
     ]

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { createDefaultTestWrapper } from '@/shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useJoinCommunity } from '../../hooks/useJoinCommunity';
 import { createFakeCommunityMembershipInfo } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
@@ -39,5 +39,4 @@ describe('useJoinCommunity', () => {
       communityId,
     );
   });
-
 });

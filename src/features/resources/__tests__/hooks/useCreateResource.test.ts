@@ -7,7 +7,7 @@ import {
   createFakeResourceInfo,
 } from '../../__fakes__';
 import { createFakeUser } from '../../../users/__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Global mocks for shared and config modules are now handled in vitest.setup.ts
 // This eliminates redundant mock definitions across test files

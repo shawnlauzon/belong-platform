@@ -1,11 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
-import {
-  SHARED_MODULE_MOCK,
-  CONFIG_MODULE_MOCK,
-} from '../../shared/__tests__/mockSetup';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock the useCurrentUser hook instead of useAuth
 vi.mock('../../features/auth/hooks/useCurrentUser', () => ({
@@ -94,7 +91,7 @@ describe('BelongProvider', () => {
         <BelongProvider config={defaultConfig}>
           <TestComponent />
         </BelongProvider>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Test Content')).toBeDefined();
@@ -111,7 +108,7 @@ describe('BelongProvider', () => {
         <BelongProvider config={defaultConfig}>
           <TestComponent />
         </BelongProvider>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Provider Working')).toBeDefined();

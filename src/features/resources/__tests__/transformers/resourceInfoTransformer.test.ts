@@ -5,7 +5,7 @@ import { createFakeDbResource } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
-} from '../../../../shared/__tests__/transformerTestUtils';
+} from '../../../../test-utils/transformerTestUtils';
 
 describe('ResourceInfo Transformer', () => {
   it('should transform database resource to ResourceInfo without snake_case properties', () => {

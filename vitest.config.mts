@@ -1,6 +1,22 @@
 import { defineConfig } from "vitest/config";
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  plugins: [
+    react({
+      // This enables the new JSX transform
+      jsxImportSource: 'react',
+      babel: {
+        plugins: [
+          // Ensure JSX runtime is used
+          ['@babel/plugin-transform-react-jsx', {
+            runtime: 'automatic',
+            importSource: 'react'
+          }]
+        ]
+      }
+    })
+  ],
   test: {
     environment: "jsdom",
     globals: true,

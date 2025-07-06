@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { useUpdateResource } from '../../hooks/useUpdateResource';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResourceInfo } from '../../__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
 vi.mock('../../api', () => ({
@@ -41,9 +41,9 @@ describe('useUpdateResource', () => {
 
     // Act
     const { result } = renderHook(() => useUpdateResource(), { wrapper });
-    const updatedResourceInfo = await result.current.mutateAsync({ 
-      id: mockUpdatedResourceInfo.id, 
-      data: updateData 
+    const updatedResourceInfo = await result.current.mutateAsync({
+      id: mockUpdatedResourceInfo.id,
+      data: updateData,
     });
 
     // Assert: Should return ResourceInfo with ID references
@@ -59,6 +59,10 @@ describe('useUpdateResource', () => {
     expect(updatedResourceInfo).not.toHaveProperty('community');
 
     // Verify API was called with correct parameters
-    expect(mockUpdateResource).toHaveBeenCalledWith(mockSupabase, mockUpdatedResourceInfo.id, updateData);
+    expect(mockUpdateResource).toHaveBeenCalledWith(
+      mockSupabase,
+      mockUpdatedResourceInfo.id,
+      updateData,
+    );
   });
 });

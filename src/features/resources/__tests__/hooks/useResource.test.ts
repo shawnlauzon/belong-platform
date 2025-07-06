@@ -5,7 +5,7 @@ import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResourceInfo } from '../../__fakes__/';
 import { createFakeUser } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
-import { createDefaultTestWrapper } from '../../../../shared/__tests__/testWrapper';
+import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { User } from '../../../users/types';
