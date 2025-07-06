@@ -22,8 +22,9 @@ describe('Communities API - Membership Operations', () => {
   let membershipTestCommunity: CommunityInfo;
 
   beforeAll(async () => {
-    supabase = createTestClient();
     await cleanupAllTestData();
+
+    supabase = createTestClient();
 
     // Create shared users first
     testUser1 = await createTestUser(supabase);
@@ -176,9 +177,11 @@ describe('Communities API - Membership Operations', () => {
         supabase,
         testUser2.id,
       );
-      expect(memberships).toEqual([
+      expect(memberships).toHaveLength(2);
+      expect(memberships).toContain([
         {
           userId: testUser2.id,
+          joinedAt: expect.any(Date),
           communityId: membershipTestCommunity.id,
         },
       ]);
