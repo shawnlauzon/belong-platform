@@ -17,7 +17,10 @@ export async function createCommunity(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
-    const dbData = forDbInsert(communityData);
+    const dbData = forDbInsert({
+      ...communityData,
+      organizerId: currentUserId,
+    });
 
     const { data, error } = await supabase
       .from('communities')

@@ -97,14 +97,16 @@ export function toDomainCommunity(
 /**
  * Transform a domain community object to a database community record
  */
-export function forDbInsert(community: CommunityData): CommunityInsertDbData {
-  const { organizerId, timeZone, memberCount, boundary, ...rest } = community;
+export function forDbInsert(
+  community: CommunityData & { organizerId: string },
+): CommunityInsertDbData {
+  const { timeZone, memberCount, boundary, ...rest } = community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
   return {
     ...rest,
-    organizer_id: organizerId,
+    organizer_id: community.organizerId,
     time_zone: timeZone,
     member_count: memberCount,
     boundary: boundary ? boundaryForDatabase(boundary) : undefined,
@@ -121,7 +123,6 @@ export function forDbUpdate(
     name: community.name,
     description: community.description,
     icon: community.icon,
-    organizer_id: community.organizerId,
     time_zone: community.timeZone,
     boundary: community.boundary
       ? JSON.stringify(boundaryForDatabase(community.boundary))
