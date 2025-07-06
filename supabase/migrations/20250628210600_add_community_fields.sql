@@ -7,7 +7,7 @@
   1. icon (text, nullable) - Visual icon for community
   2. organizer_id (uuid, references auth.users) - Rename from creator_id
   3. hierarchy_path (jsonb) - Store community hierarchy path
-  4. time_zone (text) - Community timezone
+  4. time_zone (varchar(100)) - Community timezone
   5. is_active (boolean) - Soft delete flag
   6. deleted_at (timestamptz) - Soft delete timestamp
   7. deleted_by (uuid) - User who deleted the community
@@ -17,7 +17,7 @@
 ALTER TABLE communities 
   ADD COLUMN IF NOT EXISTS icon text,
   ADD COLUMN IF NOT EXISTS hierarchy_path jsonb DEFAULT '[]'::jsonb NOT NULL,
-  ADD COLUMN IF NOT EXISTS time_zone text DEFAULT 'UTC' NOT NULL,
+  ADD COLUMN IF NOT EXISTS time_zone varchar(100) DEFAULT 'UTC' NOT NULL,
   ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true NOT NULL,
   ADD COLUMN IF NOT EXISTS deleted_at timestamptz,
   ADD COLUMN IF NOT EXISTS deleted_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
