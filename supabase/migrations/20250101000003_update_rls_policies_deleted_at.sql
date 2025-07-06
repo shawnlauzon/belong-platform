@@ -9,26 +9,23 @@ CREATE POLICY "Communities are viewable by members" ON communities
   FOR SELECT
   USING (
     deleted_at IS NULL AND
-    (
-      visibility = 'public' OR
-      auth.uid() IN (
-        SELECT user_id FROM community_members 
-        WHERE community_id = communities.id
-      )
+    auth.uid() IN (
+      SELECT user_id FROM community_memberships 
+      WHERE community_id = communities.id
     )
   );
 
 DROP POLICY IF EXISTS "Community creators can create communities" ON communities;
 CREATE POLICY "Community creators can create communities" ON communities
   FOR INSERT
-  WITH CHECK (auth.uid() = created_by);
+  WITH CHECK (auth.uid() = organizer_id);
 
 DROP POLICY IF EXISTS "Community owners can update their communities" ON communities;
 CREATE POLICY "Community owners can update their communities" ON communities
   FOR UPDATE
   USING (
     deleted_at IS NULL AND
-    auth.uid() = created_by
+    auth.uid() = organizer_id
   );
 
 -- Events: Update policies from is_active = true to deleted_at IS NULL
@@ -38,7 +35,7 @@ CREATE POLICY "Events are viewable by community members" ON events
   USING (
     deleted_at IS NULL AND
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = events.community_id
     )
   );
@@ -48,7 +45,7 @@ CREATE POLICY "Event creators can create events" ON events
   FOR INSERT
   WITH CHECK (
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = events.community_id
     )
   );
@@ -58,7 +55,7 @@ CREATE POLICY "Event creators can update their events" ON events
   FOR UPDATE
   USING (
     deleted_at IS NULL AND
-    auth.uid() = created_by
+    auth.uid() = organizer_id
   );
 
 -- Resources: Update policies from is_active = true to deleted_at IS NULL
@@ -68,7 +65,7 @@ CREATE POLICY "Resources are viewable by community members" ON resources
   USING (
     deleted_at IS NULL AND
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = resources.community_id
     )
   );
@@ -78,7 +75,7 @@ CREATE POLICY "Resource creators can create resources" ON resources
   FOR INSERT
   WITH CHECK (
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = resources.community_id
     )
   );
@@ -88,7 +85,7 @@ CREATE POLICY "Resource creators can update their resources" ON resources
   FOR UPDATE
   USING (
     deleted_at IS NULL AND
-    auth.uid() = created_by
+    auth.uid() = owner_id
   );
 
 -- Shoutouts: Add deleted_at IS NULL to all SELECT policies
@@ -98,7 +95,7 @@ CREATE POLICY "Shoutouts are viewable by community members" ON shoutouts
   USING (
     deleted_at IS NULL AND
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = shoutouts.community_id
     )
   );
@@ -108,7 +105,7 @@ CREATE POLICY "Shoutout creators can create shoutouts" ON shoutouts
   FOR INSERT
   WITH CHECK (
     auth.uid() IN (
-      SELECT user_id FROM community_members 
+      SELECT user_id FROM community_memberships 
       WHERE community_id = shoutouts.community_id
     )
   );
@@ -118,7 +115,7 @@ CREATE POLICY "Shoutout creators can update their shoutouts" ON shoutouts
   FOR UPDATE
   USING (
     deleted_at IS NULL AND
-    auth.uid() = created_by
+    auth.uid() = from_user_id
   );
 
 -- Conversations: Add deleted_at IS NULL to all SELECT policies

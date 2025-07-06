@@ -14,13 +14,20 @@ export type Database = {
           boundary: Json | null
           boundary_geometry: unknown | null
           boundary_geometry_detailed: unknown | null
+          center: unknown | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
+          hierarchy_path: Json | null
           icon: string | null
           id: string
+          level: string | null
           member_count: number
           name: string
           organizer_id: string
+          parent_id: string | null
+          radius_km: number | null
           time_zone: string
           updated_at: string
         }
@@ -28,13 +35,20 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
+          center?: unknown | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
+          hierarchy_path?: Json | null
           icon?: string | null
           id?: string
+          level?: string | null
           member_count?: number
           name: string
           organizer_id: string
+          parent_id?: string | null
+          radius_km?: number | null
           time_zone: string
           updated_at?: string
         }
@@ -42,13 +56,20 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
+          center?: unknown | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
+          hierarchy_path?: Json | null
           icon?: string | null
           id?: string
+          level?: string | null
           member_count?: number
           name?: string
           organizer_id?: string
+          parent_id?: string | null
+          radius_km?: number | null
           time_zone?: string
           updated_at?: string
         }
@@ -108,6 +129,8 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           last_activity_at: string
           last_message_id: string | null
@@ -117,6 +140,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -126,6 +151,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           last_activity_at?: string
           last_message_id?: string | null
@@ -162,6 +189,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           from_user_id: string
           id: string
           read_at: string | null
@@ -172,6 +201,8 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id: string
           id?: string
           read_at?: string | null
@@ -182,6 +213,8 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id?: string
           id?: string
           read_at?: string | null
@@ -253,6 +286,8 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           end_date_time: string | null
           id: string
@@ -262,7 +297,9 @@ export type Database = {
           max_attendees: number | null
           organizer_id: string
           parking_info: string | null
+          registration_required: boolean
           start_date_time: string
+          tags: string[]
           title: string
           updated_at: string
         }
@@ -271,6 +308,8 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           end_date_time?: string | null
           id?: string
@@ -280,7 +319,9 @@ export type Database = {
           max_attendees?: number | null
           organizer_id: string
           parking_info?: string | null
+          registration_required?: boolean
           start_date_time: string
+          tags?: string[]
           title: string
           updated_at?: string
         }
@@ -289,6 +330,8 @@ export type Database = {
           community_id?: string
           coordinates?: unknown
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           end_date_time?: string | null
           id?: string
@@ -298,7 +341,9 @@ export type Database = {
           max_attendees?: number | null
           organizer_id?: string
           parking_info?: string | null
+          registration_required?: boolean
           start_date_time?: string
+          tags?: string[]
           title?: string
           updated_at?: string
         }
@@ -351,6 +396,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
           email: string
           id: string
           updated_at: string
@@ -358,6 +404,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           email: string
           id: string
           updated_at?: string
@@ -365,6 +412,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           email?: string
           id?: string
           updated_at?: string
@@ -374,40 +422,58 @@ export type Database = {
       }
       resources: {
         Row: {
+          availability: string | null
           category: string
           community_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           id: string
           image_urls: string[]
           location: unknown | null
+          meetup_flexibility: string | null
           owner_id: string
+          parking_info: string | null
+          pickup_instructions: string | null
           title: string
           type: string
           updated_at: string
         }
         Insert: {
+          availability?: string | null
           category: string
           community_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           id?: string
           image_urls?: string[]
           location?: unknown | null
+          meetup_flexibility?: string | null
           owner_id: string
+          parking_info?: string | null
+          pickup_instructions?: string | null
           title: string
           type: string
           updated_at?: string
         }
         Update: {
+          availability?: string | null
           category?: string
           community_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           id?: string
           image_urls?: string[]
           location?: unknown | null
+          meetup_flexibility?: string | null
           owner_id?: string
+          parking_info?: string | null
+          pickup_instructions?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -432,6 +498,8 @@ export type Database = {
       shoutouts: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           from_user_id: string
           id: string
           image_urls: string[]
@@ -443,6 +511,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id: string
           id?: string
           image_urls?: string[]
@@ -454,6 +524,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_user_id?: string
           id?: string
           image_urls?: string[]

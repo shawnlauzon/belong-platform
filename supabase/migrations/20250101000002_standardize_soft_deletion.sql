@@ -3,8 +3,10 @@
 
 BEGIN;
 
--- Communities table: remove is_active column, keep deleted_at and deleted_by
+-- Communities table: remove is_active column, add deleted_at and deleted_by
 ALTER TABLE communities DROP COLUMN IF EXISTS is_active;
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS deleted_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- Events table: remove is_active, add deleted_at and deleted_by
 ALTER TABLE events DROP COLUMN IF EXISTS is_active;
