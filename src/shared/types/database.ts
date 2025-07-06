@@ -247,8 +247,6 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string
           end_date_time: string | null
           id: string
@@ -269,8 +267,6 @@ export type Database = {
           community_id: string
           coordinates: unknown
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description: string
           end_date_time?: string | null
           id?: string
@@ -291,8 +287,6 @@ export type Database = {
           community_id?: string
           coordinates?: unknown
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string
           end_date_time?: string | null
           id?: string

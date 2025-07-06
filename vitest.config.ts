@@ -15,7 +15,6 @@ export default defineConfig({
       '.cache',
       'packages',
       '**/conversations/**/*',
-      '**/events/**/*',
       '**/shoutouts/**/*',
     ],
     // Suppress console output by default
