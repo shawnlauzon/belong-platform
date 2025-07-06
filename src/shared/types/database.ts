@@ -14,20 +14,13 @@ export type Database = {
           boundary: Json | null
           boundary_geometry: unknown | null
           boundary_geometry_detailed: unknown | null
-          center: unknown | null
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string | null
-          hierarchy_path: Json | null
           icon: string | null
           id: string
-          level: string | null
           member_count: number
           name: string
           organizer_id: string
-          parent_id: string | null
-          radius_km: number | null
           time_zone: string
           updated_at: string
         }
@@ -35,20 +28,13 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
-          center?: unknown | null
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string | null
-          hierarchy_path?: Json | null
           icon?: string | null
           id?: string
-          level?: string | null
           member_count?: number
           name: string
           organizer_id: string
-          parent_id?: string | null
-          radius_km?: number | null
           time_zone: string
           updated_at?: string
         }
@@ -56,20 +42,13 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
-          center?: unknown | null
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string | null
-          hierarchy_path?: Json | null
           icon?: string | null
           id?: string
-          level?: string | null
           member_count?: number
           name?: string
           organizer_id?: string
-          parent_id?: string | null
-          radius_km?: number | null
           time_zone?: string
           updated_at?: string
         }
@@ -79,13 +58,6 @@ export type Database = {
             columns: ["organizer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "communities_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -396,7 +368,6 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          deleted_at: string | null
           email: string
           id: string
           updated_at: string
@@ -404,7 +375,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deleted_at?: string | null
           email: string
           id: string
           updated_at?: string
@@ -412,7 +382,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deleted_at?: string | null
           email?: string
           id?: string
           updated_at?: string
@@ -422,58 +391,40 @@ export type Database = {
       }
       resources: {
         Row: {
-          availability: string | null
           category: string
           community_id: string
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           description: string
           id: string
           image_urls: string[]
           location: unknown | null
-          meetup_flexibility: string | null
           owner_id: string
-          parking_info: string | null
-          pickup_instructions: string | null
           title: string
           type: string
           updated_at: string
         }
         Insert: {
-          availability?: string | null
           category: string
           community_id: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description: string
           id?: string
           image_urls?: string[]
           location?: unknown | null
-          meetup_flexibility?: string | null
           owner_id: string
-          parking_info?: string | null
-          pickup_instructions?: string | null
           title: string
           type: string
           updated_at?: string
         }
         Update: {
-          availability?: string | null
           category?: string
           community_id?: string
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           description?: string
           id?: string
           image_urls?: string[]
           location?: unknown | null
-          meetup_flexibility?: string | null
           owner_id?: string
-          parking_info?: string | null
-          pickup_instructions?: string | null
           title?: string
           type?: string
           updated_at?: string
