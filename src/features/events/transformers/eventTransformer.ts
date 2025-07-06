@@ -117,7 +117,6 @@ export function toDomainEventAttendance(
   dbAttendance: EventAttendanceRow,
 ): EventAttendance {
   return {
-    id: dbAttendance.id,
     eventId: dbAttendance.event_id,
     userId: dbAttendance.user_id,
     status: dbAttendance.status as 'attending' | 'not_attending' | 'maybe',

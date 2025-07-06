@@ -41,7 +41,6 @@ export interface EventFilter {
 }
 
 export interface EventAttendance {
-  id: string;
   eventId: string;
   userId: string;
   status: 'attending' | 'not_attending' | 'maybe';

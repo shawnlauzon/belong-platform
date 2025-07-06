@@ -155,7 +155,6 @@ describe('eventTransformer', () => {
       const result = toDomainEventAttendance(fakeAttendanceRow);
 
       expect(result).toMatchObject({
-        id: fakeAttendanceRow.id,
         eventId: fakeAttendanceRow.event_id,
         userId: fakeAttendanceRow.user_id,
         status: fakeAttendanceRow.status,

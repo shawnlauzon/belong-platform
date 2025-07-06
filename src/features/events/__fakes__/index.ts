@@ -132,7 +132,6 @@ export function createFakeEventAttendance(
   overrides?: Partial<EventAttendance>,
 ): EventAttendance {
   return {
-    id: faker.string.uuid(),
     eventId: faker.string.uuid(),
     userId: faker.string.uuid(),
     status: faker.helpers.arrayElement(['attending', 'not_attending', 'maybe'] as const),
@@ -146,7 +145,6 @@ export function createFakeEventAttendanceRow(
   overrides?: Partial<EventAttendanceRow>,
 ): EventAttendanceRow {
   return {
-    id: faker.string.uuid(),
     event_id: faker.string.uuid(),
     user_id: faker.string.uuid(),
     status: faker.helpers.arrayElement(['attending', 'not_attending', 'maybe'] as const),
