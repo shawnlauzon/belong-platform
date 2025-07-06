@@ -24,10 +24,7 @@ export interface EventData {
   location: string;
   coordinates: Coordinates;
   maxAttendees?: number;
-  registrationRequired: boolean;
   imageUrls?: string[];
-  tags?: string[];
-  parkingInfo?: string;
 }
 
 export interface EventInfo extends Omit<Event, 'organizer' | 'community' | 'attendees'> {
@@ -40,9 +37,6 @@ export interface EventFilter {
   organizerId?: string;
   startAfter?: Date;
   startBefore?: Date;
-  tags?: string[];
-  isRegistrationRequired?: boolean;
-  hasAvailableSpots?: boolean;
   searchTerm?: string;
 }
 

@@ -41,10 +41,7 @@ export function toDomainEvent(
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     maxAttendees: dbEvent.max_attendees ?? undefined,
-    registrationRequired: dbEvent.registration_required,
     imageUrls: dbEvent.image_urls || [],
-    tags: dbEvent.tags || [],
-    parkingInfo: dbEvent.parking_info ?? undefined,
     attendeeCount: dbEvent.attendee_count,
     createdAt: new Date(dbEvent.created_at),
     updatedAt: new Date(dbEvent.updated_at),
@@ -69,10 +66,7 @@ export function forDbInsert(event: EventData): EventInsert {
     location: event.location,
     coordinates: toPostGisPoint(event.coordinates),
     max_attendees: event.maxAttendees ?? null,
-    registration_required: event.registrationRequired,
     image_urls: event.imageUrls || [],
-    tags: event.tags || [],
-    parking_info: event.parkingInfo ?? null,
   };
 }
 
@@ -89,10 +83,7 @@ export function forDbUpdate(event: Partial<EventData>): EventUpdate {
     location: event.location,
     coordinates: event.coordinates ? toPostGisPoint(event.coordinates) : undefined,
     max_attendees: event.maxAttendees ?? null,
-    registration_required: event.registrationRequired,
     image_urls: event.imageUrls || [],
-    tags: event.tags || [],
-    parking_info: event.parkingInfo ?? null,
   };
 }
 
@@ -110,10 +101,7 @@ export function toEventInfo(dbEvent: EventRow): EventInfo {
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     maxAttendees: dbEvent.max_attendees ?? undefined,
-    registrationRequired: dbEvent.registration_required,
     imageUrls: dbEvent.image_urls || [],
-    tags: dbEvent.tags || [],
-    parkingInfo: dbEvent.parking_info ?? undefined,
     attendeeCount: dbEvent.attendee_count,
     createdAt: new Date(dbEvent.created_at),
     updatedAt: new Date(dbEvent.updated_at),

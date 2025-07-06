@@ -255,10 +255,7 @@ export type Database = {
           location: string
           max_attendees: number | null
           organizer_id: string
-          parking_info: string | null
-          registration_required: boolean
           start_date_time: string
-          tags: string[]
           title: string
           updated_at: string
         }
@@ -275,10 +272,7 @@ export type Database = {
           location: string
           max_attendees?: number | null
           organizer_id: string
-          parking_info?: string | null
-          registration_required?: boolean
           start_date_time: string
-          tags?: string[]
           title: string
           updated_at?: string
         }
@@ -295,10 +289,7 @@ export type Database = {
           location?: string
           max_attendees?: number | null
           organizer_id?: string
-          parking_info?: string | null
-          registration_required?: boolean
           start_date_time?: string
-          tags?: string[]
           title?: string
           updated_at?: string
         }

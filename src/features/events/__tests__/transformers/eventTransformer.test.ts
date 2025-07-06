@@ -35,10 +35,7 @@ describe('eventTransformer', () => {
         isAllDay: fakeEventRow.is_all_day,
         location: fakeEventRow.location,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,
-        registrationRequired: fakeEventRow.registration_required,
         imageUrls: fakeEventRow.image_urls,
-        tags: fakeEventRow.tags,
-        parkingInfo: fakeEventRow.parking_info ?? undefined,
         attendeeCount: fakeEventRow.attendee_count,
         organizer: fakeUser,
         community: fakeCommunity,
@@ -95,10 +92,7 @@ describe('eventTransformer', () => {
         isAllDay: fakeEventRow.is_all_day,
         location: fakeEventRow.location,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,
-        registrationRequired: fakeEventRow.registration_required,
         imageUrls: fakeEventRow.image_urls,
-        tags: fakeEventRow.tags,
-        parkingInfo: fakeEventRow.parking_info ?? undefined,
         attendeeCount: fakeEventRow.attendee_count,
         organizerId: fakeEventRow.organizer_id,
         communityId: fakeEventRow.community_id,
@@ -124,10 +118,7 @@ describe('eventTransformer', () => {
         is_all_day: fakeEventData.isAllDay,
         location: fakeEventData.location,
         max_attendees: fakeEventData.maxAttendees ?? null,
-        registration_required: fakeEventData.registrationRequired,
         image_urls: fakeEventData.imageUrls || [],
-        tags: fakeEventData.tags || [],
-        parking_info: fakeEventData.parkingInfo ?? null,
       });
       expect(result.coordinates).toMatch(/^POINT\(/);
     });
@@ -152,10 +143,7 @@ describe('eventTransformer', () => {
         location: undefined,
         coordinates: undefined,
         max_attendees: null,
-        registration_required: undefined,
         image_urls: [],
-        tags: [],
-        parking_info: null,
       });
     });
   });

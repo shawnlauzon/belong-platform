@@ -37,16 +37,10 @@ export function createFakeEvent(
       lng: faker.location.longitude(),
     },
     maxAttendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : undefined,
-    registrationRequired: faker.datatype.boolean(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'event' }),
     ),
-    tags: Array.from(
-      { length: faker.number.int({ min: 0, max: 5 }) },
-      () => faker.lorem.word(),
-    ),
-    parkingInfo: faker.datatype.boolean() ? faker.lorem.sentence() : undefined,
     attendeeCount: faker.number.int({ min: 0, max: 50 }),
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
@@ -88,16 +82,10 @@ export function createFakeEventRow(
     location: faker.location.streetAddress(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     max_attendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : null,
-    registration_required: faker.datatype.boolean(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'event' }),
     ),
-    tags: Array.from(
-      { length: faker.number.int({ min: 0, max: 5 }) },
-      () => faker.lorem.word(),
-    ),
-    parking_info: faker.datatype.boolean() ? faker.lorem.sentence() : null,
     attendee_count: faker.number.int({ min: 0, max: 50 }),
     created_at: faker.date.past().toISOString(),
     updated_at: faker.date.recent().toISOString(),
@@ -132,16 +120,10 @@ export function createFakeEventData(
       lng: faker.location.longitude(),
     },
     maxAttendees: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 100 }) : undefined,
-    registrationRequired: faker.datatype.boolean(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.url(),
     ),
-    tags: Array.from(
-      { length: faker.number.int({ min: 0, max: 5 }) },
-      () => faker.lorem.word(),
-    ),
-    parkingInfo: faker.datatype.boolean() ? faker.lorem.sentence() : undefined,
     ...overrides,
   };
 }
