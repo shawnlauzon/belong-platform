@@ -17,6 +17,10 @@ import {
   CommunityUpdateDbData,
 } from '../types/database';
 import { User } from '../../users';
+import {
+  parsePostGisPoint,
+  toPostGisPoint,
+} from '../../../shared/utils/postgis';
 
 /**
  * Transform a domain boundary object to database format with snake_case field names
@@ -27,7 +31,6 @@ function boundaryForDatabase(boundary: CommunityBoundary): any {
     const isochroneBoundary = boundary as IsochroneBoundary;
     return {
       type: isochroneBoundary.type,
-      center: isochroneBoundary.center,
       travelMode: isochroneBoundary.travelMode,
       travelTimeMin: isochroneBoundary.travelTimeMin,
       polygon: isochroneBoundary.polygon,
@@ -51,7 +54,6 @@ function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
   if (dbBoundary.type === 'isochrone') {
     return {
       type: 'isochrone',
-      center: dbBoundary.center,
       travelMode: dbBoundary.travelMode,
       travelTimeMin: dbBoundary.minutes,
       polygon: dbBoundary.polygon,
@@ -84,6 +86,7 @@ export function toDomainCommunity(
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
+    center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
@@ -109,6 +112,7 @@ export function forDbInsert(
     organizer_id: community.organizerId,
     time_zone: timeZone,
     member_count: memberCount,
+    center: toPostGisPoint(center),
     boundary: boundary ? boundaryForDatabase(boundary) : undefined,
     boundary_geometry: boundaryGeometry,
     boundary_geometry_detailed: boundaryGeometry,
@@ -124,6 +128,7 @@ export function forDbUpdate(
     description: community.description,
     icon: community.icon,
     time_zone: community.timeZone,
+    center: community.center ? toPostGisPoint(community.center) : undefined,
     boundary: community.boundary
       ? JSON.stringify(boundaryForDatabase(community.boundary))
       : undefined,
@@ -197,6 +202,7 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
+    center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),

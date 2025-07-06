@@ -7,7 +7,6 @@ export type TravelMode = 'walking' | 'cycling' | 'driving';
 
 export interface IsochroneBoundary {
   type: 'isochrone';
-  center: Coordinates; // [longitude, latitude]
   travelMode: TravelMode;
   travelTimeMin: number; // Travel time in minutes (5-60)
   polygon: Polygon; // Actual isochrone polygon from Mapbox API
@@ -36,6 +35,9 @@ export interface CommunityData {
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
   icon?: string; // Visual icon for the community
+
+  // Location (mandatory center point)
+  center: Coordinates;
 
   // Boundary configuration (new isochrone support)
   boundary?: CommunityBoundary;

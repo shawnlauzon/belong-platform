@@ -19,6 +19,10 @@ export function createFakeCommunity(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    center: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
@@ -26,10 +30,6 @@ export function createFakeCommunity(
     organizer: createFakeUser(),
     boundary: {
       type: 'isochrone',
-      center: {
-        lat: faker.location.latitude(),
-        lng: faker.location.longitude(),
-      },
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
@@ -51,14 +51,14 @@ export function createFakeCommunityData(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    center: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     memberCount: faker.number.int({ min: 1, max: 10000 }),
     timeZone: faker.location.timeZone(),
     boundary: {
       type: 'isochrone',
-      center: {
-        lat: faker.location.latitude(),
-        lng: faker.location.longitude(),
-      },
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
@@ -81,6 +81,10 @@ export function createFakeCommunityInfo(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    center: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
@@ -88,10 +92,6 @@ export function createFakeCommunityInfo(
     organizerId: faker.string.uuid(),
     boundary: {
       type: 'isochrone',
-      center: {
-        lat: faker.location.latitude(),
-        lng: faker.location.longitude(),
-      },
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {
@@ -113,6 +113,8 @@ export function createFakeDbCommunity(
   overrides: Partial<CommunityRow> = {},
 ): CommunityRow {
   const now = faker.date.recent().toISOString();
+  const lat = faker.location.latitude();
+  const lng = faker.location.longitude();
 
   return {
     id: faker.string.uuid(),
@@ -120,16 +122,13 @@ export function createFakeDbCommunity(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
+    center: `POINT(${lng} ${lat})`, // PostGIS format
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
     updated_at: now,
     time_zone: faker.location.timeZone(),
     boundary: {
       type: 'isochrone',
-      center: {
-        lat: faker.location.latitude(),
-        lng: faker.location.longitude(),
-      },
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
       travelTimeMin: faker.number.int({ min: 5, max: 60 }),
       polygon: {

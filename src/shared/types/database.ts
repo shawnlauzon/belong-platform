@@ -14,6 +14,7 @@ export type Database = {
           boundary: Json | null
           boundary_geometry: unknown | null
           boundary_geometry_detailed: unknown | null
+          center: unknown
           created_at: string
           description: string | null
           icon: string | null
@@ -28,6 +29,7 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
+          center: unknown
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           boundary_geometry_detailed?: unknown | null
+          center?: unknown
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -52,15 +55,7 @@ export type Database = {
           time_zone?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "communities_organizer_id_fkey"
-            columns: ["organizer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       community_memberships: {
         Row: {
