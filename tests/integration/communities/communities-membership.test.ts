@@ -1,13 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
-import {
-  createTestUser,
-  createTestCommunity,
-} from '../helpers/test-data';
-import {
-  cleanupAllTestData,
-  cleanupMembership,
-} from '../helpers/cleanup';
+import { createTestUser, createTestCommunity } from '../helpers/test-data';
+import { cleanupAllTestData, cleanupMembership } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -128,6 +122,13 @@ describe('Communities API - Membership Operations', () => {
     beforeAll(async () => {
       // Sign in as testUser2 and add as member for all tests
       await signIn(supabase, testUser2Email, 'TestPass123!');
+
+      // Clean up any existing membership first, then join
+      await cleanupMembership(
+        supabase,
+        membershipTestCommunity.id,
+        testUser2.id,
+      );
       await api.joinCommunity(supabase, membershipTestCommunity.id);
     });
 
