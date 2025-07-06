@@ -8,9 +8,8 @@ import { User } from '../types';
 export async function fetchUserById(
   supabase: SupabaseClient<Database>,
   id: string,
-  options?: { includeDeleted?: boolean }
 ): Promise<User | null> {
-  logger.debug('👤 API: Fetching user by ID', { id, options });
+  logger.debug('👤 API: Fetching user by ID', { id });
 
   try {
     const query = supabase.from('profiles').select('*').eq('id', id);
