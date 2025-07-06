@@ -25,7 +25,6 @@ describe('useJoinCommunity', () => {
     const communityId = faker.string.uuid();
     const mockMembershipInfo = createFakeCommunityMembershipInfo({
       communityId,
-      role: 'member',
     });
     mockJoinCommunity.mockResolvedValue(mockMembershipInfo);
 
@@ -38,28 +37,7 @@ describe('useJoinCommunity', () => {
     expect(mockJoinCommunity).toHaveBeenCalledWith(
       expect.any(Object),
       communityId,
-      'member',
     );
   });
 
-  it('should support joining with admin role', async () => {
-    const communityId = faker.string.uuid();
-    const mockMembershipInfo = createFakeCommunityMembershipInfo({
-      communityId,
-      role: 'admin',
-    });
-    mockJoinCommunity.mockResolvedValue(mockMembershipInfo);
-
-    const { result } = renderHook(() => useJoinCommunity(), { wrapper });
-    const joinCommunityFn = result.current;
-
-    const membershipInfo = await joinCommunityFn(communityId, 'admin');
-
-    expect(membershipInfo).toEqual(mockMembershipInfo);
-    expect(mockJoinCommunity).toHaveBeenCalledWith(
-      expect.any(Object),
-      communityId,
-      'admin',
-    );
-  });
 });

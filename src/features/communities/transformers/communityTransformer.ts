@@ -138,7 +138,7 @@ export function toDomainMembership(
     community: Community;
   },
 ): CommunityMembership {
-  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+  const { joined_at, user_id, community_id, role: _role, ...rest } = dbMembership;
 
   console.log('dbMembership', dbMembership);
 
@@ -146,7 +146,6 @@ export function toDomainMembership(
     ...rest,
     userId: user_id,
     communityId: community_id,
-    role: dbMembership.role as 'member' | 'admin' | 'organizer' | undefined,
     joinedAt: new Date(joined_at),
   };
 }
@@ -157,13 +156,12 @@ export function toDomainMembership(
 export function toDomainMembershipInfo(
   dbMembership: CommunityMembershipRow,
 ): CommunityMembershipInfo {
-  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+  const { joined_at, user_id, community_id, role: _role, ...rest } = dbMembership;
 
   return {
     ...rest,
     userId: user_id,
     communityId: community_id,
-    role: dbMembership.role as 'member' | 'admin' | 'organizer' | undefined,
     joinedAt: new Date(joined_at),
   };
 }
@@ -177,7 +175,6 @@ export function forDbMembershipInsert(
   return {
     user_id: membership.userId,
     community_id: membership.communityId,
-    role: membership.role || 'member',
   };
 }
 

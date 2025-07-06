@@ -11,9 +11,8 @@ import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 export async function joinCommunity(
   supabase: SupabaseClient<Database>,
   communityId: string,
-  role: 'member' | 'admin' = 'member',
 ): Promise<CommunityMembershipInfo | null> {
-  logger.debug('🏘️ API: Joining community', { communityId, role });
+  logger.debug('🏘️ API: Joining community', { communityId });
 
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
@@ -21,7 +20,6 @@ export async function joinCommunity(
     const membershipData = forDbMembershipInsert({
       userId: currentUserId,
       communityId,
-      role,
     });
 
     const { data, error } = await supabase
@@ -34,7 +32,6 @@ export async function joinCommunity(
       logger.error('🏘️ API: Failed to join community', {
         error,
         communityId,
-        role,
       });
       throw error;
     }
@@ -49,14 +46,12 @@ export async function joinCommunity(
     logger.debug('🏘️ API: Successfully joined community', {
       communityId,
       userId: currentUserId,
-      role,
     });
     return membership;
   } catch (error) {
     logger.error('🏘️ API: Error joining community', {
       error,
       communityId,
-      role,
     });
     throw error;
   }

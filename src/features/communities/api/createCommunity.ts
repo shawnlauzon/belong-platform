@@ -38,11 +38,10 @@ export async function createCommunity(
       return null;
     }
 
-    // Auto-add organizer as admin member
+    // Auto-add organizer as member
     const membershipData = {
       user_id: currentUserId,
       community_id: data.id,
-      role: 'organizer' as const,
     };
 
     const { error: membershipError } = await supabase

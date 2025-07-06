@@ -65,7 +65,6 @@ export interface CommunityFilter {
 export interface CommunityMembershipData {
   userId: string;
   communityId: string;
-  role?: 'member' | 'admin' | 'organizer';
 }
 
 export interface CommunityMembershipInfo extends CommunityMembershipData {

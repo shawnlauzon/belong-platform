@@ -3,12 +3,12 @@ import {
   Community, 
   CommunityData, 
   CommunityInfo, 
-  CommunityRow, 
   CommunityMembership,
   CommunityMembershipInfo,
   CommunityMembershipData 
 } from '../types';
-import { ProfileRow } from '../../users';
+import { CommunityRow } from '../types/database';
+import { ProfileRow } from '../../users/types/database';
 import { createFakeDbProfile, createFakeUser } from '../../users/__fakes__';
 
 export function createFakeCommunity(
@@ -166,28 +166,24 @@ export function createFakeCommunityHierarchy() {
   const country = createFakeDbCommunity({
     name: faker.location.country(),
     description: `Community for ${faker.location.country()} residents`,
-    parent_id: null,
     created_at: now,
   });
 
   const state = createFakeDbCommunity({
     name: faker.location.state(),
     description: `Community for ${faker.location.state()} residents`,
-    parent_id: country.id,
     created_at: now,
   });
 
   const city = createFakeDbCommunity({
     name: faker.location.city(),
     description: `Community for ${faker.location.city()} residents`,
-    parent_id: state.id,
     created_at: now,
   });
 
   const neighborhood = createFakeDbCommunity({
     name: faker.location.street(),
     description: `Community for ${faker.location.street()} neighborhood`,
-    parent_id: city.id,
     created_at: now,
   });
 
@@ -209,7 +205,6 @@ export function createFakeCommunityMembershipData(
   return {
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
-    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
     ...overrides,
   };
 }
@@ -223,7 +218,6 @@ export function createFakeCommunityMembershipInfo(
   return {
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
-    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
     joinedAt: faker.date.past(),
     ...overrides,
   };
@@ -238,7 +232,6 @@ export function createFakeCommunityMembership(
   return {
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
-    role: faker.helpers.arrayElement(['member', 'admin', 'organizer'] as const),
     joinedAt: faker.date.past(),
     user: createFakeUser(),
     community: createFakeCommunity(),

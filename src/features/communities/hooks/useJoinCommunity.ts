@@ -43,37 +43,14 @@ import type { CommunityMembershipInfo } from '@/features/communities/types';
  * }
  * ```
  *
- * @example
- * ```tsx
- * // Join with specific role
- * function JoinAsAdmin({ communityId }) {
- *   const joinCommunity = useJoinCommunity();
- *
- *   const handleJoinAsAdmin = async () => {
- *     try {
- *       await joinCommunity(communityId, 'admin');
- *       // Joined as admin
- *     } catch (error) {
- *       console.error('Failed to join as admin:', error);
- *     }
- *   };
- *
- *   return <button onClick={handleJoinAsAdmin}>Join as Admin</button>;
- * }
- * ```
  */
 export function useJoinCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: ({
-      communityId,
-      role = 'member',
-    }: {
-      communityId: string;
-      role?: 'member' | 'admin';
-    }) => joinCommunity(supabase, communityId, role),
+    mutationFn: ({ communityId }: { communityId: string }) =>
+      joinCommunity(supabase, communityId),
     onSuccess: (newMembership) => {
       if (newMembership) {
         // Invalidate all communities queries
@@ -93,7 +70,6 @@ export function useJoinCommunity() {
         logger.info('🏘️ API: Successfully joined community', {
           communityId: newMembership.communityId,
           userId: newMembership.userId,
-          role: newMembership.role,
         });
       }
     },
@@ -104,11 +80,8 @@ export function useJoinCommunity() {
 
   // Return stable function reference
   return useCallback(
-    (
-      communityId: string,
-      role?: 'member' | 'admin',
-    ): Promise<CommunityMembershipInfo | null> => {
-      return mutation.mutateAsync({ communityId, role });
+    (communityId: string): Promise<CommunityMembershipInfo | null> => {
+      return mutation.mutateAsync({ communityId });
     },
     [mutation],
   );
