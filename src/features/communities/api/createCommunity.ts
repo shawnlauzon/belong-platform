@@ -38,24 +38,7 @@ export async function createCommunity(
       return null;
     }
 
-    // Auto-add organizer as member
-    const membershipData = {
-      user_id: currentUserId,
-      community_id: data.id,
-    };
-
-    const { error: membershipError } = await supabase
-      .from('community_memberships')
-      .insert(membershipData);
-
-    if (membershipError) {
-      logger.error('🏘️ API: Failed to create organizer membership', {
-        error: membershipError,
-        communityId: data.id,
-        userId: currentUserId,
-      });
-      // Don't throw - community was created successfully
-    }
+    // Organizer membership is auto-created by database trigger
 
     const communityInfo = toCommunityInfo(data);
 
