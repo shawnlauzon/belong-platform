@@ -1,13 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
-import {
-  createTestUser,
-  createTestCommunity,
-} from '../helpers/test-data';
-import {
-  cleanupAllTestData,
-  cleanupMembership,
-} from '../helpers/cleanup';
+import { createTestUser, createTestCommunity } from '../helpers/test-data';
+import { cleanupAllTestData, cleanupMembership } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -59,6 +53,14 @@ describe('Communities API - Membership Operations', () => {
 
         expect(membership!.userId).toBe(testUser2.id);
         expect(membership!.communityId).toBe(membershipTestCommunity.id);
+
+        const { data } = await supabase
+          .from('community_memberships')
+          .select()
+          .eq('community_id', membershipTestCommunity.id)
+          .eq('user_id', testUser2.id)
+          .single();
+        expect(data).toBeTruthy();
       } finally {
         await cleanupMembership(
           supabase,

@@ -28,7 +28,6 @@ import type { CommunityMembership } from '@/features/communities/types';
  *       {members?.map(member => (
  *         <div key={member.userId}>
  *           <span>{member.user.firstName} {member.user.lastName}</span>
- *           <span>Role: {member.role}</span>
  *           <span>Joined: {new Date(member.joinedAt).toLocaleDateString()}</span>
  *         </div>
  *       ))}

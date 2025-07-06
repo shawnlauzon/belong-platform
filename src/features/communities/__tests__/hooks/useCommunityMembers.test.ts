@@ -24,9 +24,9 @@ describe('useCommunityMembers', () => {
   it('should return array of CommunityMembership when members exist', async () => {
     const communityId = faker.string.uuid();
     const mockMembers = [
-      createFakeCommunityMembership({ communityId, role: 'organizer' }),
-      createFakeCommunityMembership({ communityId, role: 'admin' }),
-      createFakeCommunityMembership({ communityId, role: 'member' }),
+      createFakeCommunityMembership({ communityId }),
+      createFakeCommunityMembership({ communityId }),
+      createFakeCommunityMembership({ communityId }),
     ];
     mockFetchCommunityMembers.mockResolvedValue(mockMembers);
 

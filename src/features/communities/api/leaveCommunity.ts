@@ -14,22 +14,21 @@ export async function leaveCommunity(
     const currentUserId = await getAuthIdOrThrow(supabase);
 
     // Check if user is organizer - organizers cannot leave their own community
-    const { data: membership, error: membershipError } = await supabase
-      .from('community_memberships')
-      .select('role')
-      .eq('community_id', communityId)
-      .eq('user_id', currentUserId)
+    const { data: community, error: communityError } = await supabase
+      .from('communities')
+      .select('organizer_id')
+      .eq('id', communityId)
       .single();
 
-    if (membershipError && membershipError.code !== 'PGRST116') {
-      logger.error('🏘️ API: Failed to check membership role', {
-        error: membershipError,
+    if (communityError) {
+      logger.error('🏘️ API: Failed to check community organizer', {
+        error: communityError,
         communityId,
       });
-      throw membershipError;
+      throw communityError;
     }
 
-    if (membership?.role === 'organizer') {
+    if (community?.organizer_id === currentUserId) {
       logger.error('🏘️ API: Organizer cannot leave their own community', {
         communityId,
         userId: currentUserId,
