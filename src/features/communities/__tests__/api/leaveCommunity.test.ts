@@ -4,14 +4,6 @@ import { createMockSupabase } from '@/test-utils';
 import { leaveCommunity } from '../../api/leaveCommunity';
 import { MESSAGE_ORGANIZER_CANNOT_LEAVE } from '@/shared/constants';
 
-// Mock the logger to avoid console noise
-vi.mock('@/shared', () => ({
-  logger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 describe('leaveCommunity', () => {
   let mockSupabase: ReturnType<typeof createMockSupabase>;
   let communityId: string;
@@ -20,7 +12,7 @@ describe('leaveCommunity', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     communityId = faker.string.uuid();
     regularUserId = faker.string.uuid();
     organizerUserId = faker.string.uuid();
@@ -61,20 +53,24 @@ describe('leaveCommunity', () => {
   describe('successful leave scenarios', () => {
     it('should allow regular member to leave community', async () => {
       // Mock auth to return regular user
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: { id: regularUserId } },
         error: null,
       });
 
       // Mock successful deletion
       const mockDelete = vi.fn().mockResolvedValue({ error: null });
-      mockSupabase.from('community_memberships').delete.mockReturnValue({
+      vi.mocked(
+        mockSupabase.from('community_memberships').delete,
+      ).mockReturnValue({
         eq: vi.fn().mockReturnValue({
           eq: mockDelete,
         }),
       });
 
-      await expect(leaveCommunity(mockSupabase, communityId)).resolves.not.toThrow();
+      await expect(
+        leaveCommunity(mockSupabase, communityId),
+      ).resolves.not.toThrow();
 
       // Verify the delete was called with correct parameters
       expect(mockDelete).toHaveBeenCalled();
@@ -84,47 +80,45 @@ describe('leaveCommunity', () => {
   describe('error scenarios', () => {
     it('should prevent organizer from leaving their own community', async () => {
       // Mock auth to return organizer user
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: { id: organizerUserId } },
         error: null,
       });
 
       // This test should fail with current implementation because it will throw
       // the error for ANY member, not just organizers
-      await expect(leaveCommunity(mockSupabase, communityId))
-        .rejects
-        .toThrow(MESSAGE_ORGANIZER_CANNOT_LEAVE);
+      await expect(leaveCommunity(mockSupabase, communityId)).rejects.toThrow(
+        MESSAGE_ORGANIZER_CANNOT_LEAVE,
+      );
     });
 
     it('should throw error when user is not a member', async () => {
       const nonMemberUserId = faker.string.uuid();
-      
+
       // Mock auth to return non-member user
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: { id: nonMemberUserId } },
         error: null,
       });
 
-      await expect(leaveCommunity(mockSupabase, communityId))
-        .rejects
-        .toThrow('User is not a member of community');
+      await expect(leaveCommunity(mockSupabase, communityId)).rejects.toThrow(
+        'User is not a member of community',
+      );
     });
 
     it('should throw error when not authenticated', async () => {
       // Mock auth failure
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: null },
         error: { message: 'Not authenticated' },
       });
 
-      await expect(leaveCommunity(mockSupabase, communityId))
-        .rejects
-        .toThrow();
+      await expect(leaveCommunity(mockSupabase, communityId)).rejects.toThrow();
     });
 
     it('should throw error when database deletion fails', async () => {
       // Mock auth to return regular user
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: { id: regularUserId } },
         error: null,
       });
@@ -132,15 +126,17 @@ describe('leaveCommunity', () => {
       // Mock deletion failure
       const deleteError = new Error('Database error');
       const mockDelete = vi.fn().mockResolvedValue({ error: deleteError });
-      mockSupabase.from('community_memberships').delete.mockReturnValue({
+      vi.mocked(
+        mockSupabase.from('community_memberships').delete,
+      ).mockReturnValue({
         eq: vi.fn().mockReturnValue({
           eq: mockDelete,
         }),
       });
 
-      await expect(leaveCommunity(mockSupabase, communityId))
-        .rejects
-        .toThrow(deleteError);
+      await expect(leaveCommunity(mockSupabase, communityId)).rejects.toThrow(
+        deleteError,
+      );
     });
   });
 
@@ -149,18 +145,18 @@ describe('leaveCommunity', () => {
       // This test exposes the bug: current implementation checks if user is a member
       // (which they always are if they pass the membership check), but should check
       // if they're the organizer by comparing against community.organizer_id
-      
+
       // Mock auth to return regular user (not organizer)
-      mockSupabase.auth.getUser.mockResolvedValue({
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
         data: { user: { id: regularUserId } },
         error: null,
       });
 
       // The bug is that current implementation will throw organizer error for ANY member
       // This test will FAIL with current implementation, proving the bug exists
-      await expect(leaveCommunity(mockSupabase, communityId))
-        .resolves
-        .not.toThrow();
+      await expect(
+        leaveCommunity(mockSupabase, communityId),
+      ).resolves.not.toThrow();
     });
   });
 });
