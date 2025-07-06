@@ -103,7 +103,7 @@ export function toDomainCommunity(
 export function forDbInsert(
   community: CommunityData & { organizerId: string },
 ): CommunityInsertDbData {
-  const { timeZone, memberCount, boundary, ...rest } = community;
+  const { timeZone, memberCount, boundary, center, ...rest } = community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
