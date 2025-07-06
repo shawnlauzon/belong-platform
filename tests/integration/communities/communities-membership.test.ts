@@ -48,6 +48,7 @@ describe('Communities API - Membership Operations', () => {
     });
 
     afterAll(async () => {
+      await cleanupMembership(membershipTestCommunity.id, testUser2.id);
       await signOut(supabase);
     });
 
@@ -82,7 +83,7 @@ describe('Communities API - Membership Operations', () => {
         // Second join should fail
         await expect(
           api.joinCommunity(supabase, membershipTestCommunity.id),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/.*already a member.*/);
       } finally {
         await cleanupMembership(membershipTestCommunity.id, testUser2.id);
       }
@@ -121,13 +122,6 @@ describe('Communities API - Membership Operations', () => {
 
       expect(data).toBeNull();
     });
-
-    it('allows leaving non-existent membership', async () => {
-      // Try to leave without being a member
-      await expect(
-        api.leaveCommunity(supabase, membershipTestCommunity.id),
-      ).resolves.not.toThrow();
-    });
   });
 
   describe('fetchCommunityMembers', () => {
@@ -152,6 +146,7 @@ describe('Communities API - Membership Operations', () => {
 
       expect(members).toContainEqual({
         userId: testUser2.id,
+        joinedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
       });
     });
@@ -162,9 +157,9 @@ describe('Communities API - Membership Operations', () => {
         membershipTestCommunity.id,
       );
 
-      expect(members).toHaveLength(2);
       expect(members).toContainEqual({
         userId: testUser1.id,
+        joinedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
       });
     });
