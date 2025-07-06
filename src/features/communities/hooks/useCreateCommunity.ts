@@ -8,6 +8,7 @@ import type {
   CommunityData,
   CommunityInfo,
 } from '@/features/communities/types';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 
 /**
  * Hook for creating a new community.
@@ -59,10 +60,11 @@ import type {
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const currentUser = useCurrentUser().data!;
 
   const mutation = useMutation({
     mutationFn: (data: CommunityData) => createCommunity(supabase, data),
-    onSuccess: (newCommunityInfo, data) => {
+    onSuccess: (newCommunityInfo) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });
 
@@ -72,7 +74,7 @@ export function useCreateCommunity() {
           queryKey: queryKeys.communities.memberships(newCommunityInfo.id),
         });
         queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.userMemberships(data.organizerId),
+          queryKey: queryKeys.communities.userMemberships(currentUser.id),
         });
 
         logger.info('🏘️ API: Successfully created community', {
