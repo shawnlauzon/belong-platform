@@ -14,15 +14,7 @@ export async function fetchUserCommunities(
   try {
     const { data, error } = (await supabase
       .from('community_memberships')
-      .select(
-        `
-        *,
-        community:communities(
-          *,
-          organizer:profiles!communities_organizer_id_fkey(*)
-        )
-      `,
-      )
+      .select('*')
       .eq('user_id', userId)
       .order('joined_at', { ascending: false })) as {
       data: CommunityMembershipRow[];
