@@ -16,7 +16,7 @@
     "test": "vitest run src ",
     "test:coverage": "vitest run src/ --coverage",
     "test:watch": "vitest src/ --watch",
-    "test:integration": "vitest run --config tests/integration/vitest.config.ts --run",
+    "test:integration": "vitest run --config tests/integration/vitest.config.ts",
     "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
     "test:integration:cleanup": "node tests/integration/scripts/cleanup-database.js",
     "test:complete": "pnpm test && pnpm test:integration",
