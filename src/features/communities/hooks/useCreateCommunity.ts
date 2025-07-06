@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthIdOrThrow, logger, queryKeys } from '@/shared';
+import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createCommunity } from '@/features/communities/api';
 
@@ -8,7 +8,6 @@ import type {
   CommunityData,
   CommunityInfo,
 } from '@/features/communities/types';
-import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 
 /**
  * Hook for creating a new community.
