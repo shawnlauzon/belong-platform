@@ -1,13 +1,15 @@
 # Task Completion Checklist
 
-When completing any development task in the Belong Platform, follow this checklist:
+When completing any development task in the Belong Network Platform, follow this checklist:
 
 ## Before Starting a Task
+
 1. **Always write a failing unit test first** (TDD mandatory)
 2. Use the test file to guide the implementation
 3. Check existing patterns in similar files
 
 ## During Development
+
 1. **Follow TDD cycle**:
    - Red: Write failing test
    - Green: Make minimal code to pass
@@ -16,6 +18,7 @@ When completing any development task in the Belong Platform, follow this checkli
 3. **Only fix code after reproducing the problem in a test**
 
 ## Before Committing
+
 Always run these commands in order:
 
 ```bash
@@ -36,7 +39,9 @@ pnpm build
 ```
 
 ## Task Completion Criteria
+
 A task is **only complete** when:
+
 - ✅ All linting passes (`pnpm lint`)
 - ✅ All type checks pass (`pnpm typecheck`)
 - ✅ All unit tests pass (`pnpm test`)
@@ -46,21 +51,26 @@ A task is **only complete** when:
 - ✅ New functionality has appropriate test coverage
 
 ## Common Completion Issues to Check
+
 - No `any` types in production code
 - All functions have explicit type annotations
 - Using generated database types from @belongnetwork/types
-- Tests use createMock* utilities from test-utils
+- Tests use createMock\* utilities from test-utils
 - Following established patterns from existing code
 - File sizes under ~500 lines
 
 ## Database Changes
+
 If you made database changes:
+
 1. Apply migration via Supabase MCP tools
 2. Run `pnpm gen:db-types` to update TypeScript types
 3. Verify generated types are correct
 
 ## Final Verification
+
 Run the full TDD command one more time:
+
 ```bash
 pnpm tdd  # Ensures lint, typecheck, and tests all pass
 ```

@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../shared/types/database';
 
 /**
- * Configuration options for the Belong Platform client
+ * Configuration options for the Belong Network Platform client
  */
 export interface BelongClientConfig {
   /** Supabase project URL */
@@ -17,7 +17,7 @@ export interface BelongClientConfig {
 }
 
 /**
- * Configured Belong Platform client instances
+ * Configured Belong Network Platform client instances
  */
 export interface BelongClient {
   /** Configured Supabase client */
@@ -27,7 +27,7 @@ export interface BelongClient {
 }
 
 /**
- * Creates a configured Belong Platform client
+ * Creates a configured Belong Network Platform client
  *
  * @param config - Client configuration options
  * @returns Configured client instances
@@ -63,7 +63,7 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   const supabase = createSupabaseClient(
     supabaseUrl,
     supabaseAnonKey,
-    defaultLogger
+    defaultLogger,
   );
   const mapbox = createMapboxClient(mapboxPublicToken, defaultLogger);
 

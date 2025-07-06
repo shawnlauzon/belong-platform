@@ -1,6 +1,44 @@
 # Contributing to Belong Network Platform
 
-Thank you for contributing to the Belong Network platform! This guide documents the established patterns and best practices for adding new features and maintaining consistency across the codebase.
+Thank you for contributing to the Belong Network Platform! This guide documents the established patterns and best practices for adding new features and maintaining consistency across the codebase.
+
+## Development Setup
+
+### Environment Variables
+
+Create a `.env` file with:
+
+```env
+# Required for development
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAPBOX_PUBLIC_TOKEN=your-mapbox-token
+
+# For testing
+SUPABASE_SERVICE_KEY=your-service-key
+```
+
+### Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm test
+
+# Type checking
+pnpm typecheck
+
+# Build package
+pnpm build
+
+# Lint code
+pnpm lint
+
+# Before committing
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+```
 
 ## Feature Structure
 
@@ -8,48 +46,17 @@ Each feature follows a consistent directory structure:
 
 ```
 src/features/{feature-name}/
-├── __tests__/          # Unit tests for the feature
+├── __tests__/          # Unit tests
+├── api/                # API functions
 ├── hooks/              # React Query hooks
-│   ├── index.ts        # Barrel export
-│   ├── use{Entity}.ts
-│   ├── use{Entities}.ts
-│   └── use{Action}.ts
-├── services/           # Business logic services
-│   └── {feature}.service.ts
-├── transformers/       # Data transformation utilities
-│   └── {entity}Transformer.ts
+├── transformers/       # Data transformation
 ├── types/              # Type definitions
-│   ├── index.ts        # Domain types only
 │   ├── domain.ts       # Domain interfaces
 │   └── database.ts     # Database types (internal)
 └── index.ts            # Feature barrel export
 ```
 
-## Transformer Naming Conventions
-
-Transformers follow standardized naming patterns:
-
-### Domain Transformations
-
-- `toDomain{Entity}(dbRow)` - Database row → Domain object
-- `to{Entity}Info(dbRow)` - Database row → Info object (lightweight)
-
-### Database Transformations
-
-- `forDbInsert(domainData)` - Domain data → Database insert
-- `forDbUpdate(domainData)` - Domain data → Database update
-
-### Example
-
-```typescript
-// userTransformer.ts
-export function toDomainUser(profileRow: ProfileRow): User { ... }
-export function toUserInfo(profileRow: ProfileRow): UserInfo { ... }
-export function forDbInsert(userData: UserData): ProfileInsertDbData { ... }
-export function forDbUpdate(userData: Partial<UserData>): ProfileUpdateDbData { ... }
-```
-
-## Hook Patterns
+## Code Patterns
 
 ### Single-Purpose Hooks
 
@@ -60,241 +67,150 @@ Each hook has a single, clear responsibility:
 export function useUser(id: string) { ... }
 export function useUsers(filter?: UserFilter) { ... }
 export function useCreateUser() { ... }
-export function useUpdateUser() { ... }
 
 // ❌ Bad - Multiple purposes
 export function useUserOperations() { ... }
 ```
 
-### Query vs Mutation Separation
+### API Functions
 
-- **Queries**: Use `useQuery` for data fetching
-- **Mutations**: Use `useMutation` for data modification
+Use direct API functions that accept dependencies:
 
 ```typescript
-// Query hook
-export function useUsers(filter?: UserFilter) {
-  return useQuery({
-    queryKey: ['users', filter],
-    queryFn: () => fetchUsers(filter),
-    staleTime: 5 * 60 * 1000,
-  });
-}
+export async function fetchUsers(
+  supabase: SupabaseClient<Database>,
+  filter?: UserFilter,
+): Promise<User[]> {
+  const { data, error } = await supabase.from('profiles').select('*');
 
-// Mutation hook
-export function useCreateUser() {
-  return useMutation({
-    mutationFn: createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-  });
+  if (error) throw error;
+  return (data || []).map(toDomainUser);
 }
 ```
 
-## Service Factory Pattern
+### Transformer Patterns
 
-Services use dependency injection for better testability:
+Follow consistent naming conventions:
 
-```typescript
-export const createUserService = (supabase: SupabaseClient<Database>) => ({
-  async fetchUsers(filter?: UserFilter): Promise<User[]> {
-    // Implementation
-  },
+- `toDomain{Entity}()` - Database → Domain object
+- `to{Entity}Info()` - Database → Lightweight info
+- `forDbInsert()` - Domain → Database insert
+- `forDbUpdate()` - Domain → Database update
 
-  async createUser(userData: UserData): Promise<User> {
-    // Implementation
-  },
-});
-```
+## Testing Guidelines
 
-## Query Key Conventions
+### Test Philosophy
 
-Use hierarchical query keys for efficient cache management:
+- **Test behavior, not implementation**
+- **Mock only external dependencies**
+- **Use real platform code in tests**
+- **Write failing tests first (TDD)**
 
-```typescript
-// ✅ Good - Hierarchical structure
-['users'][('users', filter)][('user', id)][('user', id, 'communities')][ // All users // Filtered users // Single user // User's communities
-  // ❌ Bad - Flat structure
-  'usersList'
-]['userWithId123']['userCommunitiesFor456'];
-```
+### Unit Testing
 
-## Testing Patterns
-
-### Config-Level Mocking
-
-Mock external dependencies at the configuration level:
+Mock at the configuration level:
 
 ```typescript
-// ✅ Good - Mock Supabase calls
-beforeEach(() => {
-  mockSupabase.from.mockReturnValue(mockQueryBuilder);
-  mockQueryBuilder.select.mockReturnValue(mockQueryBuilder);
-  mockQueryBuilder.eq.mockReturnValue(mockQueryBuilder);
-});
-
-// ❌ Bad - Mock platform code
-vi.mock('../services/user.service');
-```
-
-### Hook-Level Mocking for Components
-
-When testing components, mock at the hook level:
-
-```typescript
-// ✅ Good - Mock hooks for component tests
-vi.mock('@belongnetwork/platform', () => ({
-  useUser: vi.fn(),
-  useCreateUser: vi.fn(),
+vi.mock('./config/client', () => ({
+  createBelongClient: vi.fn(() => mockClient),
 }));
-
-// ❌ Bad - Mock internal implementation
-vi.mock('../impl/fetchUser');
 ```
 
-## Barrel Export Patterns
+### Integration Testing
 
-### Feature Barrels
+Integration tests validate real database operations:
 
-Features export hooks first, then types:
+```bash
+# Run integration tests
+pnpm test:integration
 
-```typescript
-// src/features/users/index.ts
-export * from './hooks';
-export * from './types';
+# With verbose logging
+VITEST_VERBOSE=true pnpm test:integration
 ```
 
-### Type Barrels
+## Debugging Guide
 
-Type barrels only export domain types (database types are internal):
+### Problem-Solving Methodology
 
-```typescript
-// src/features/users/types/index.ts
-export * from './domain';
-// Database types are internal-only and should be imported directly when needed by internal services
-```
+1. **Write a failing test first** - Reproduce the bug in isolation
+2. **Understand the real problem** - Don't just fix symptoms
+3. **Test your hypothesis** - Verify against actual failures
+4. **Fix the root cause** - Not workarounds
+5. **Verify completely** - Both unit and integration tests pass
 
-## Type Safety Requirements
+### Common Anti-Patterns
 
-### No `any` in Production Code
+- **Don't mock platform code** - Test real behavior
+- **Don't hide problems** - Fix the automation, not symptoms
+- **Don't skip failing tests** - Understand before fixing
 
-- **Never** use `any` types in production code (enforced by ESLint)
-- Always create proper interfaces, union types, or use type assertions
-- Use `unknown` for truly unknown data that will be validated at runtime
+## Type Safety
 
-```typescript
-// ✅ Good
-function processApiResponse(data: unknown): User {
-  return UserSchema.parse(data);
-}
+### Requirements
 
-// ❌ Bad
-function processApiResponse(data: any): User {
-  return data as User;
-}
-```
+- **No `any` types** - Use `unknown` with validation
+- **Explicit return types** - All functions must declare returns
+- **Generated database types** - Use `pnpm gen:db-types`
 
-### Database Type Patterns
-
-#### File Naming
-
-- Use `database.ts` for all database-related type files
-- Import database types from `database.ts` for internal use
-
-#### Import Patterns
+### Database Types
 
 ```typescript
-// ✅ Good - Internal service
+// Internal use only
 import type { Database } from '../../../shared/types/database';
-import { ProfileRow, ProfileInsertDbData } from '../types/database';
+import { ProfileRow } from '../types/database';
 
-// ❌ Bad - External consumption
-import type { Database } from '../../../shared'; // Don't expose database schema
+// Never expose database schema externally
 ```
 
-## Code Safety Guidelines
+## Query Key Convention
 
-### Function Definition vs Runtime Checks
-
-Prefer function definitions that prevent error conditions rather than runtime checks:
+Use hierarchical keys for cache management:
 
 ```typescript
-// ✅ Good - Impossible by definition
-function processUser(user: User) {
-  // user.id is guaranteed to exist
-  return user.id;
-}
-
-// ❌ Bad - Runtime check for impossible condition
-function processUser(user: User) {
-  if (!user.id) throw new Error('User ID required');
-  return user.id;
-}
+export const queryKeys = {
+  users: {
+    all: ['users'],
+    byId: (id: string) => ['user', id],
+    filtered: (filter: UserFilter) => ['users', filter],
+  },
+};
 ```
 
 ## Development Workflow
 
-### Test-Driven Development (TDD)
+### Adding New Features
 
-1. **Red**: Write a failing test that demonstrates the requirement
-2. **Green**: Write minimal code to make the test pass
-3. **Refactor**: Clean up the implementation while keeping tests green
+1. **Create API functions** - Accept Supabase client
+2. **Create transformers** - Follow naming patterns
+3. **Create hooks** - Single-purpose, typed
+4. **Write tests** - Behavior-focused
+5. **Update exports** - Feature and package level
 
 ### Before Committing
 
-Always run the full quality assurance suite:
-
 ```bash
+# Run full QA suite
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-## Memory and Performance
+### Version Management
 
-### Keep Versions Aligned
+1. Run `pnpm qa` to verify quality
+2. Bump version in `package.json`
+3. Commit with descriptive message
+4. Tag with version number
+5. Publish to npm
 
-- Maintain consistent package versions across the monorepo
-- If you create the same code pattern more than twice, extract it into a shared function
+## Performance Guidelines
 
-### File Size Guidelines
+- **File size limit** - ~500 lines maximum
+- **Extract patterns** - Reuse code after 2+ occurrences
+- **Tree-shaking** - Export only what's needed
 
-- Maximum file size is around 500 lines
-- Break larger files into focused, single-purpose modules
+## Getting Help
 
-## Database Guidelines
+- Study existing feature implementations
+- Check test files for usage examples
+- Ask the team for clarification
 
-### Schema Changes
-
-- Never update `database.ts` directly
-- Always make changes via database migrations
-- After migration, run `pnpm run gen:db-types` from the types directory
-
-### Supabase Commands
-
-- Use Supabase MCP for most Supabase operations
-- Exception: Use `gen:db-types` to generate types into `database.ts`
-
-## Version Management
-
-### Releasing Changes
-
-1. Run `pnpm qa` and fix any warnings/errors
-2. Bump patch version in all `package.json` files
-3. Commit changes
-4. Tag with the version
-5. Publish
-
-### Deprecation Policy
-
-- Do not deprecate - remove instead
-- Ensure all tests pass before removal
-
-## Getting Started
-
-1. Study existing features to understand established patterns
-2. Follow the feature structure outlined above
-3. Use TDD approach for all new code
-4. Ensure type safety throughout
-5. Run quality checks before committing
-
-For questions or clarifications, refer to existing feature implementations or ask the team for guidance.
+For architecture details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
