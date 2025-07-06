@@ -86,8 +86,9 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ### Testing
 
-- The package has unit tests in `__tests__` directories within each feature
-- Integration tests are located in the `tests/integration` directory
+- **Unit tests**: Located in `__tests__` directories within each feature - test isolated logic with mocked dependencies
+- **Integration tests**: Located in `tests/integration` directory - test real end-to-end behavior with live database
+- **Critical**: Integration tests validate what unit tests cannot - real database constraints, triggers, and cross-component interactions
 - Skipping tests is not an acceptable way to make tests pass
 - A problem must fail the test; logging errors is only for debugging
 - **ALWAYS use createFake\* utilities from src/test-utils for generating test data**
@@ -114,10 +115,6 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 - Before any commit, run `pnpm tdd` and fix any warnings and errors
 
-### Publish
-
-- Before publishing, run `pnpm qa` and fix any warnings and errors, then bump the patch version in package.json, then commit, then tag, then publish
-
 ## Code Safety Guidelines
 
 - Prefer function definition to prevent error conditions rather than checking at runtime
@@ -125,7 +122,7 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ## Development Principles
 
-- A task is only complete when build and typecheck and tests are all successful
+- A task is only complete when build, typecheck, unit tests, and integration tests are all successful
 - Use the supabase MCP to interact with the database
 
 ## Code Style and Best Practices
@@ -160,9 +157,9 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 2. **Understand the Real Problem Space**:
 
-   - Distinguish between unit test failures and integration test failures - they may have different root causes
-   - Unit tests with mocks may pass while integration tests fail, indicating the mock doesn't reflect real behavior
-   - Integration test failures may reveal environmental issues (shared state, timing, real external dependencies) that unit tests can't detect
+   - **Unit vs Integration failures**: Different failure types indicate different root causes
+   - **Mock vs Reality gaps**: Unit tests with mocks may pass while integration tests fail, indicating the mock doesn't reflect real behavior
+   - **Integration-specific issues**: Real database constraints, shared state, timing issues, and external dependencies that unit tests can't detect
 
 3. **Test Your Hypothesis with Real Evidence**:
 
@@ -178,10 +175,10 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 5. **Verify the Fix Completely**:
 
-   - The unit test should pass after the fix
-   - Integration tests should also pass without additional workarounds
-   - Both test types should demonstrate the same correct behavior
-   - If integration tests still fail after unit tests pass, there may be additional root causes
+   - **Unit tests**: Should pass after the fix
+   - **Integration tests**: Should also pass without additional workarounds - this is the ultimate validation
+   - **Both test types**: Should demonstrate the same correct behavior
+   - **If integration tests still fail**: There may be additional root causes
 
 6. **Test-Driven Development (TDD) Process**:
 
@@ -205,28 +202,6 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 ### Integration vs Unit Test Differences
 
 - **Unit tests**: Mock external dependencies, test platform logic in isolation, create fresh test environment per test
-- **Integration tests**: No mocking, test real end-to-end behavior, may share some state between tests
+- **Integration tests**: No mocking, test real end-to-end behavior with live database, validate real constraints and triggers
 - **When integration tests fail but unit tests pass**: Look for environmental differences (shared state, different setup, real vs mocked dependencies)
-
-### Key Lessons from Real Debugging Sessions
-
-1. **Cache Pollution Investigation Example**:
-
-   - **Initial Hypothesis**: Cache not being invalidated when using useSignOut hook
-   - **Reality**: Integration test was calling `supabase.auth.signOut()` directly, bypassing our hooks entirely
-   - **First Fix Attempt**: Added auth state listener to automatically clear cache on SIGNED_OUT events
-   - **Result**: Unit tests still fail because mocks don't trigger real auth state changes; integration tests still fail indicating additional root causes
-   - **Lesson**: Multiple layers of the problem needed investigation - direct Supabase calls AND potentially other cache pollution sources
-
-2. **Mock vs Reality Gap**:
-
-   - **Problem**: Unit test with perfect mocks can pass while integration test with real Supabase fails
-   - **Insight**: Mocks capture our understanding of how external dependencies work, but may miss edge cases, timing issues, or state persistence that real dependencies exhibit
-   - **Solution**: When unit and integration tests diverge, investigate what real behavior the mocks are missing
-
-3. **Shared State in Integration Tests**:
-   - **Problem**: Integration tests getting user data from previous test runs instead of current test
-   - **Insight**: Integration tests may share QueryClient instances, database state, or browser storage between tests
-   - **Investigation Strategy**: Look for differences in test setup (beforeEach vs beforeAll, fresh vs shared instances)
-
-For more detailed information, see the documentation files linked at the top of this document.
+  For detailed debugging examples, test patterns, and troubleshooting guidance, see the documentation files linked at the top of this document.
