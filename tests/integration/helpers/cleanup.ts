@@ -1,11 +1,9 @@
 import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
-export async function cleanupAllTestData(supabase?: SupabaseClient<Database>) {
+export async function cleanupAllTestData() {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
@@ -29,7 +27,20 @@ export async function cleanupAllTestData(supabase?: SupabaseClient<Database>) {
     .delete()
     .like('name', `${TEST_PREFIX}%`);
 
-  // Delete test users from profiles
+  // Delete test users from profiles and auth
+  const { data: testProfiles } = await serviceClient
+    .from('profiles')
+    .select('id')
+    .like('email', `${TEST_PREFIX}%`);
+
+  // Delete from auth first
+  if (testProfiles?.length) {
+    for (const profile of testProfiles) {
+      await serviceClient.auth.admin.deleteUser(profile.id);
+    }
+  }
+
+  // Then delete from profiles (may be cascade deleted already)
   await serviceClient
     .from('profiles')
     .delete()
@@ -38,7 +49,6 @@ export async function cleanupAllTestData(supabase?: SupabaseClient<Database>) {
 
 // Cleanup specific community and its memberships (no-op if community is null/undefined)
 export async function cleanupCommunity(
-  supabase: SupabaseClient<Database>,
   community: CommunityInfo | null | undefined,
 ) {
   if (!community) return;
@@ -55,11 +65,7 @@ export async function cleanupCommunity(
 }
 
 // Cleanup specific membership
-export async function cleanupMembership(
-  supabase: SupabaseClient<Database>,
-  communityId: string,
-  userId: string,
-) {
+export async function cleanupMembership(communityId: string, userId: string) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
@@ -68,4 +74,17 @@ export async function cleanupMembership(
     .delete()
     .eq('community_id', communityId)
     .eq('user_id', userId);
+}
+
+// Cleanup specific user
+export async function cleanupUser(userId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  // Delete user from auth using Admin API
+  const { error } = await serviceClient.auth.admin.deleteUser(userId);
+
+  if (error) {
+    console.warn(`Failed to delete user ${userId}:`, error.message);
+  }
 }

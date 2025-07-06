@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
-import { cleanupAllTestData, cleanupMembership } from '../helpers/cleanup';
+import {
+  cleanupAllTestData,
+  cleanupMembership,
+  cleanupUser,
+} from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
+import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
@@ -19,7 +23,7 @@ describe('Communities API - Membership Operations', () => {
 
   beforeAll(async () => {
     supabase = createTestClient();
-    await cleanupAllTestData(supabase);
+    await cleanupAllTestData();
 
     // Create shared users first
     testUser1 = await createTestUser(supabase);
@@ -35,13 +39,17 @@ describe('Communities API - Membership Operations', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData(supabase);
+    await cleanupAllTestData();
   });
 
   describe('joinCommunity', () => {
     beforeAll(async () => {
       // Sign in as testUser2 for all joinCommunity tests
       await signIn(supabase, testUser2Email, 'TestPass123!');
+    });
+
+    afterAll(async () => {
+      await signOut(supabase);
     });
 
     it('adds user as member', async () => {
@@ -53,12 +61,17 @@ describe('Communities API - Membership Operations', () => {
 
         expect(membership!.userId).toBe(testUser2.id);
         expect(membership!.communityId).toBe(membershipTestCommunity.id);
+
+        const { data } = await supabase
+          .from('community_memberships')
+          .select()
+          .eq('community_id', membershipTestCommunity.id)
+          .eq('user_id', testUser2.id)
+          .maybeSingle();
+
+        expect(data).toBeTruthy();
       } finally {
-        await cleanupMembership(
-          supabase,
-          membershipTestCommunity.id,
-          testUser2.id,
-        );
+        await cleanupMembership(membershipTestCommunity.id, testUser2.id);
       }
     });
 
@@ -72,11 +85,7 @@ describe('Communities API - Membership Operations', () => {
           api.joinCommunity(supabase, membershipTestCommunity.id),
         ).rejects.toThrow();
       } finally {
-        await cleanupMembership(
-          supabase,
-          membershipTestCommunity.id,
-          testUser2.id,
-        );
+        await cleanupMembership(membershipTestCommunity.id, testUser2.id);
       }
     });
 
@@ -93,6 +102,10 @@ describe('Communities API - Membership Operations', () => {
       await signIn(supabase, testUser2Email, 'TestPass123!');
     });
 
+    afterAll(async () => {
+      await signOut(supabase);
+    });
+
     it('removes membership', async () => {
       // First join
       await api.joinCommunity(supabase, membershipTestCommunity.id);
@@ -105,7 +118,7 @@ describe('Communities API - Membership Operations', () => {
         .select()
         .eq('community_id', membershipTestCommunity.id)
         .eq('user_id', testUser2.id)
-        .single();
+        .maybeSingle();
 
       expect(data).toBeNull();
     });
@@ -123,13 +136,13 @@ describe('Communities API - Membership Operations', () => {
       // Sign in as testUser2 and add as member for all tests
       await signIn(supabase, testUser2Email, 'TestPass123!');
 
-      // Clean up any existing membership first, then join
-      await cleanupMembership(
-        supabase,
-        membershipTestCommunity.id,
-        testUser2.id,
-      );
       await api.joinCommunity(supabase, membershipTestCommunity.id);
+    });
+
+    afterAll(async () => {
+      await cleanupMembership(membershipTestCommunity.id, testUser2.id);
+
+      await signOut(supabase);
     });
 
     it('returns members with user data', async () => {
@@ -138,24 +151,37 @@ describe('Communities API - Membership Operations', () => {
         membershipTestCommunity.id,
       );
 
-      expect(members.length).toBeGreaterThanOrEqual(2);
-      expect(members.some((m) => m.userId === testUser1.id)).toBe(true);
-      expect(members.some((m) => m.userId === testUser2.id)).toBe(true);
+      expect(members).toContainEqual({
+        userId: testUser2.id,
+        communityId: membershipTestCommunity.id,
+      });
     });
   });
 
   describe('fetchUserCommunities', () => {
+    beforeAll(async () => {
+      // Sign in as testUser2 and add as member for all tests
+      await signIn(supabase, testUser2Email, 'TestPass123!');
+
+      await api.joinCommunity(supabase, membershipTestCommunity.id);
+    });
+
+    afterAll(async () => {
+      await cleanupMembership(membershipTestCommunity.id, testUser2.id);
+      await signOut(supabase);
+    });
+
     it('returns communities for user', async () => {
       const memberships = await api.fetchUserCommunities(
         supabase,
-        testUser1.id,
+        testUser2.id,
       );
-
-      expect(memberships.length).toBeGreaterThan(0);
-      expect(memberships.every((m) => m.userId === testUser1.id)).toBe(true);
-      expect(
-        memberships.some((m) => m.communityId === membershipTestCommunity.id),
-      ).toBe(true);
+      expect(memberships).toEqual([
+        {
+          userId: testUser2.id,
+          communityId: membershipTestCommunity.id,
+        },
+      ]);
     });
 
     it('returns empty array for user with no communities', async () => {
@@ -170,7 +196,7 @@ describe('Communities API - Membership Operations', () => {
 
         expect(communities).toHaveLength(0);
       } finally {
-        // lonelyUser will be cleaned up in afterAll
+        await cleanupUser(lonelyUser.id);
       }
     });
   });
