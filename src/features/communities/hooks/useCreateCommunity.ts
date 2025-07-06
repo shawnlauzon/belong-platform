@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { getAuthIdOrThrow, logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createCommunity } from '@/features/communities/api';
 
@@ -60,7 +60,6 @@ import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const currentUser = useCurrentUser().data!;
 
   const mutation = useMutation({
     mutationFn: (data: CommunityData) => createCommunity(supabase, data),
@@ -74,7 +73,9 @@ export function useCreateCommunity() {
           queryKey: queryKeys.communities.memberships(newCommunityInfo.id),
         });
         queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.userMemberships(currentUser.id),
+          queryKey: queryKeys.communities.userMemberships(
+            newCommunityInfo.organizerId,
+          ),
         });
 
         logger.info('🏘️ API: Successfully created community', {

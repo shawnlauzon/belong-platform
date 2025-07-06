@@ -29,7 +29,6 @@ describe('useCreateCommunity', () => {
     const mockCreatedInfo = createFakeCommunityInfo({
       id: faker.string.uuid(),
       name: communityData.name,
-      organizerId: communityData.organizerId,
     });
     mockCreateCommunity.mockResolvedValue(mockCreatedInfo);
 
