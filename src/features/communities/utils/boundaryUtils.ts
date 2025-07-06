@@ -23,30 +23,12 @@ export interface BoundaryDbTransform {
   boundaryGeometryDetailed: string | null; // WKT string for PostGIS
 }
 
-/**
- * Validates coordinates are within valid longitude/latitude bounds
- */
-function validateCoordinates(coordinates: { lng: number; lat: number }): void {
-  const { lng, lat } = coordinates;
-
-  if (lng < -180 || lng > 180) {
-    throw new Error(
-      'Invalid coordinates: longitude must be between -180 and 180'
-    );
-  }
-
-  if (lat < -90 || lat > 90) {
-    throw new Error('Invalid coordinates: latitude must be between -90 and 90');
-  }
-}
 
 
 /**
  * Validates an isochrone boundary
  */
 export function validateIsochroneBoundary(boundary: IsochroneBoundary): void {
-  validateCoordinates(boundary.center);
-
   const validTravelModes: TravelMode[] = ['walking', 'cycling', 'driving'];
   if (!validTravelModes.includes(boundary.travelMode)) {
     throw new Error(
@@ -188,14 +170,6 @@ export function isIsochroneBoundary(
 }
 
 
-/**
- * Get the center coordinates from any boundary type
- */
-export function getBoundaryCenter(
-  boundary: CommunityBoundary
-): [number, number] {
-  return [boundary.center.lng, boundary.center.lat];
-}
 
 /**
  * Get the approximate area from any boundary type (in km²)
