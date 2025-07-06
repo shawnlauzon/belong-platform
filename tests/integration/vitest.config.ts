@@ -18,6 +18,14 @@ export default defineConfig({
     hookTimeout: 30000,
     // Suppress console output by default
     silent: process.env.VITEST_VERBOSE !== 'true',
+    // Run tests completely serially to avoid test interference
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+    fileParallelism: false,
   },
   resolve: {
     alias: {
