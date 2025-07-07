@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
-import { useImageUpload } from '../useImageUpload';
+import { useImageUpload } from '../../hooks/useImageUpload';
 import { createFakeUser } from '@/features/users/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';

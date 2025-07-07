@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ImageCleanupService } from '../imageCleanup';
+import { ImageCleanupService } from '../../api/imageCleanup';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
