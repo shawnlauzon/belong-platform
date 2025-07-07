@@ -49,6 +49,12 @@ src/features/
 └── users/
 ```
 
+#### Access Patterns
+
+- **External users**: Must use hooks and types for all access to platform functionality
+- **Internal users** (within the same feature): May use hooks or directly access the api directory
+- **All other directories** (transformers, etc.): Internal to the feature and should not be accessed from outside the feature
+
 ### 3. Single-Purpose Hook Pattern
 
 Each hook serves one specific purpose:

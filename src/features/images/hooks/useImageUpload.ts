@@ -1,8 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
-import { StorageManager } from '../utils/storage';
-import { useCurrentUser } from '@/features/auth';
+import { uploadImage } from '../api/imageUpload';
 import type { ImageUploadResult } from '../types';
 
 /**
@@ -48,47 +46,10 @@ import type { ImageUploadResult } from '../types';
  */
 export function useImageUpload() {
   const supabase = useSupabase();
-  const currentUser = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: async (file: File): Promise<ImageUploadResult> => {
-      if (!currentUser?.data?.id) {
-        throw new Error('User must be authenticated to upload images');
-      }
-
-      // Validate file is an image
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Only image files are allowed');
-      }
-
-      // Validate file size (5MB limit)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      if (file.size > maxSize) {
-        throw new Error('File size must be less than 5MB');
-      }
-
-      logger.debug('🖼️ Image Upload: Starting upload', {
-        fileName: file.name,
-        fileSize: file.size,
-        userId: currentUser.data.id,
-      });
-
-      // Use temp-upload folder parameter for uploads - images will be migrated later
-      const result = await StorageManager.uploadFile(file, supabase, 'temp-upload');
-
-      logger.info('✅ Image Upload: Successfully uploaded to temp storage', {
-        fileName: file.name,
-        tempPath: result.path,
-        url: result.url,
-      });
-
-      return {
-        url: result.url,
-        tempPath: result.path,
-      };
-    },
-    onError: (error) => {
-      logger.error('❌ Image Upload: Failed to upload image', { error });
+      return uploadImage(file, supabase, 'temp-upload');
     },
   });
 

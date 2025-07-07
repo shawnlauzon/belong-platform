@@ -58,6 +58,23 @@ describe('User Transformer', () => {
     ]);
   });
 
+  it('should transform bio field from user_metadata', () => {
+    // Arrange
+    const bio = faker.lorem.paragraph();
+    const dbProfile = createFakeDbProfile({
+      user_metadata: {
+        first_name: faker.person.firstName(),
+        bio: bio,
+      },
+    });
+
+    // Act
+    const result = toDomainUser(dbProfile);
+
+    // Assert
+    expect(result.bio).toBe(bio);
+  });
+
   it('should handle optional fields correctly in User', () => {
     // Arrange
     const dbProfile = createFakeDbProfile({
@@ -106,6 +123,7 @@ describe('User Transformer', () => {
           full_name: userData.fullName,
           avatar_url: userData.avatarUrl,
           location: userData.location,
+          bio: userData.bio,
         },
       });
     });
@@ -117,6 +135,7 @@ describe('User Transformer', () => {
         fullName: undefined,
         avatarUrl: undefined,
         location: undefined,
+        bio: undefined,
       });
 
       // Act
@@ -132,6 +151,7 @@ describe('User Transformer', () => {
           full_name: undefined,
           avatar_url: undefined,
           location: undefined,
+          bio: undefined,
         },
       });
     });
@@ -167,6 +187,36 @@ describe('User Transformer', () => {
         full_name: 'John Doe',
         avatar_url: 'https://example.com/avatar.jpg',
         location: { lat: 40.7128, lng: -74.0060 },
+      });
+      expect(dbData.updated_at).toBeDefined();
+    });
+
+    it('should handle bio field updates', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const newBio = faker.lorem.paragraph();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          bio: 'Original bio',
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+        bio: newBio,
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert - Should update bio, preserve other fields
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'John',
+        last_name: 'Doe',
+        bio: newBio,
       });
       expect(dbData.updated_at).toBeDefined();
     });
