@@ -4,7 +4,7 @@ import { createTestUser, TEST_PREFIX } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { signIn } from '@/features/auth/api';
 import { useImageCommit } from '@/features/images/hooks/useImageCommit';
-import { StorageManager } from '@/features/images/utils/storage';
+import { uploadImage } from '@/features/images/api';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -59,11 +59,11 @@ describe('Images Hooks - Integration Tests', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}hook-commit-${Date.now()}.jpg`,
       });
-      const uploadResult = await StorageManager.uploadFile(
-        testFile,
+      const uploadResult = await uploadImage({
         supabase,
-        'temp-upload',
-      );
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Verify temp file exists
@@ -150,7 +150,11 @@ describe('Images Hooks - Integration Tests', () => {
       ];
 
       const uploadPromises = testFiles.map((file) =>
-        StorageManager.uploadFile(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
       const uploadResults = await Promise.all(uploadPromises);
       const tempUrls = uploadResults.map((result) => result.url);
@@ -205,11 +209,11 @@ describe('Images Hooks - Integration Tests', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}hook-mixed-${Date.now()}.jpg`,
       });
-      const uploadResult = await StorageManager.uploadFile(
-        testFile,
+      const uploadResult = await uploadImage({
         supabase,
-        'temp-upload',
-      );
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Create a fake permanent URL
@@ -279,11 +283,11 @@ describe('Images Hooks - Integration Tests', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}hook-async-${Date.now()}.jpg`,
       });
-      const uploadResult = await StorageManager.uploadFile(
-        testFile,
+      const uploadResult = await uploadImage({
         supabase,
-        'temp-upload',
-      );
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Use the hook
@@ -327,7 +331,11 @@ describe('Images Hooks - Integration Tests', () => {
       ];
 
       const uploadPromises = testFiles.map((file) =>
-        StorageManager.uploadFile(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
       const uploadResults = await Promise.all(uploadPromises);
       const tempUrls = uploadResults.map((result) => result.url);

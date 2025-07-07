@@ -46,7 +46,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-cleanup-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Verify it exists
@@ -68,7 +72,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-preserve-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Verify it exists
@@ -108,7 +116,11 @@ describe('Images API - Cleanup Operations', () => {
       ];
 
       const uploadPromises = testFiles.map((file) =>
-        uploadImage(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
       const uploadResults = await Promise.all(uploadPromises);
       const tempUrls = uploadResults.map((result) => result.url);
@@ -136,18 +148,22 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-to-permanent-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Commit to permanent storage
       const entityType = 'resource';
       const entityId = `${TEST_PREFIX}permanent-test-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        [tempUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
       const permanentUrl = committedUrls[0];
 
       // Clean up temp images
@@ -178,7 +194,11 @@ describe('Images API - Cleanup Operations', () => {
       ];
 
       const uploadPromises = testFiles.map((file) =>
-        uploadImage(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
       const uploadResults = await Promise.all(uploadPromises);
       const tempUrls = uploadResults.map((result) => result.url);
@@ -187,12 +207,12 @@ describe('Images API - Cleanup Operations', () => {
       const entityId = `${TEST_PREFIX}cleanup-entity-${Date.now()}`;
 
       // Commit to permanent storage
-      const committedUrls = await commitImageUrls(
-        tempUrls,
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: tempUrls,
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       // Verify permanent files exist
       for (const permanentUrl of committedUrls) {
@@ -235,26 +255,34 @@ describe('Images API - Cleanup Operations', () => {
         name: `${TEST_PREFIX}entity-specific-2-${Date.now()}.jpg`,
       });
 
-      const uploadResult1 = await uploadImage(testFile1, supabase, 'temp');
-      const uploadResult2 = await uploadImage(testFile2, supabase, 'temp');
+      const uploadResult1 = await uploadImage({
+        supabase,
+        file: testFile1,
+        folder: 'temp',
+      });
+      const uploadResult2 = await uploadImage({
+        supabase,
+        file: testFile2,
+        folder: 'temp',
+      });
 
       const entityType = 'event';
       const entityId1 = `${TEST_PREFIX}specific-1-${Date.now()}`;
       const entityId2 = `${TEST_PREFIX}specific-2-${Date.now()}`;
 
       // Commit both to permanent storage
-      const committedUrls1 = await commitImageUrls(
-        [uploadResult1.url],
-        entityType,
-        entityId1,
+      const committedUrls1 = await commitImageUrls({
         supabase,
-      );
-      const committedUrls2 = await commitImageUrls(
-        [uploadResult2.url],
+        imageUrls: [uploadResult1.url],
         entityType,
-        entityId2,
+        entityId: entityId1,
+      });
+      const committedUrls2 = await commitImageUrls({
         supabase,
-      );
+        imageUrls: [uploadResult2.url],
+        entityType,
+        entityId: entityId2,
+      });
 
       const permanentUrl1 = committedUrls1[0];
       const permanentUrl2 = committedUrls2[0];
@@ -291,19 +319,23 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}orphaned-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       const entityType = 'resource';
       const entityId = 'non-existent-resource-orphaned-999';
 
       // Commit to permanent storage
-      const committedUrls = await commitImageUrls(
-        [tempUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
       const permanentUrl = committedUrls[0];
 
       // Verify permanent file exists
@@ -334,19 +366,23 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}orphaned-delete-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       const entityType = 'community';
       const entityId = 'non-existent-community-orphaned-999';
 
       // Commit to permanent storage
-      const committedUrls = await commitImageUrls(
-        [tempUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
       const permanentUrl = committedUrls[0];
 
       // Verify permanent file exists
@@ -372,7 +408,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-not-orphaned-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Verify temp file exists

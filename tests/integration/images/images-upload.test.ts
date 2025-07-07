@@ -44,7 +44,11 @@ describe('Images API - Upload Operations', () => {
         name: `${TEST_PREFIX}single-upload-${Date.now()}.jpg`,
       });
 
-      const result = await uploadImage(testFile, supabase, 'temp-upload');
+      const result = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
 
       expect(result).toBeTruthy();
       expect(result.url).toBeTruthy();
@@ -71,7 +75,11 @@ describe('Images API - Upload Operations', () => {
     it('uploads multiple image files successfully', async () => {
       const testFiles = createMultipleTestImageFiles(3);
       const uploadPromises = testFiles.map((file) =>
-        uploadImage(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
 
       const results = await Promise.all(uploadPromises);
@@ -93,8 +101,16 @@ describe('Images API - Upload Operations', () => {
       const testFile1 = createTestImageFile({ name: 'same-name.jpg' });
       const testFile2 = createTestImageFile({ name: 'same-name.jpg' });
 
-      const result1 = await uploadImage(testFile1, supabase, 'temp-upload');
-      const result2 = await uploadImage(testFile2, supabase, 'temp-upload');
+      const result1 = await uploadImage({
+        supabase,
+        file: testFile1,
+        folder: 'temp-upload',
+      });
+      const result2 = await uploadImage({
+        supabase,
+        file: testFile2,
+        folder: 'temp-upload',
+      });
 
       // Should have different paths despite same filename
       expect(result1.tempPath).not.toBe(result2.tempPath);
@@ -110,7 +126,11 @@ describe('Images API - Upload Operations', () => {
     it('creates proper folder structure', async () => {
       const testFile = createTestImageFile();
 
-      const result = await uploadImage(testFile, supabase, 'temp-upload');
+      const result = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const path = extractStoragePathFromUrl(result.url);
 
       expect(path).toBeTruthy();
@@ -132,7 +152,11 @@ describe('Images API - Upload Operations', () => {
       for (const { name, type } of imageTypes) {
         const testFile = createTestImageFile({ name, type });
 
-        const result = await uploadImage(testFile, supabase, 'temp-upload');
+        const result = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
 
         expect(result.url).toBeTruthy();
         expect(result.tempPath).toBeTruthy();
@@ -148,7 +172,11 @@ describe('Images API - Upload Operations', () => {
 
       // Should throw validation error
       await expect(
-        uploadImage(nonImageFile, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file: nonImageFile,
+          folder: 'temp-upload',
+        }),
       ).rejects.toThrow();
     });
 
@@ -157,7 +185,11 @@ describe('Images API - Upload Operations', () => {
 
       // Should throw validation error
       await expect(
-        uploadImage(oversizedFile, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file: oversizedFile,
+          folder: 'temp-upload',
+        }),
       ).rejects.toThrow();
     });
 
@@ -168,7 +200,11 @@ describe('Images API - Upload Operations', () => {
       const testFile = createTestImageFile();
 
       // Should work with authentication
-      const result = await uploadImage(testFile, supabase, 'temp-upload');
+      const result = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       expect(result).toBeTruthy();
 
       // Verify file exists
@@ -190,7 +226,11 @@ describe('Images API - Upload Operations', () => {
           size,
         });
 
-        const result = await uploadImage(testFile, supabase, 'temp-upload');
+        const result = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
 
         expect(result.url).toBeTruthy();
         expect(result.tempPath).toBeTruthy();

@@ -40,7 +40,11 @@ describe('Images API - Commit Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}commit-single-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Verify it's in temp storage
@@ -51,12 +55,12 @@ describe('Images API - Commit Operations', () => {
       // Commit to permanent storage
       const entityType = 'resource';
       const entityId = `${TEST_PREFIX}commit-test-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        [tempUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       expect(committedUrls).toHaveLength(1);
       expect(committedUrls[0]).toBeTruthy();
@@ -89,7 +93,11 @@ describe('Images API - Commit Operations', () => {
       ];
 
       const uploadPromises = testFiles.map((file) =>
-        uploadImage(file, supabase, 'temp-upload'),
+        uploadImage({
+          supabase,
+          file,
+          folder: 'temp-upload',
+        }),
       );
       const uploadResults = await Promise.all(uploadPromises);
       const tempUrls = uploadResults.map((result) => result.url);
@@ -104,12 +112,12 @@ describe('Images API - Commit Operations', () => {
       // Commit all to permanent storage
       const entityType = 'event';
       const entityId = `${TEST_PREFIX}multi-commit-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        tempUrls,
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: tempUrls,
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       expect(committedUrls).toHaveLength(3);
 
@@ -143,17 +151,21 @@ describe('Images API - Commit Operations', () => {
         const testFile = createTestImageFile({
           name: `${TEST_PREFIX}${entityType}-test-${Date.now()}.jpg`,
         });
-        const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+        const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
         const tempUrl = uploadResult.url;
 
         // Commit with the specific entity type
         const entityId = `${TEST_PREFIX}${entityType}-entity-${Date.now()}`;
-        const committedUrls = await commitImageUrls(
-          [tempUrl],
+        const committedUrls = await commitImageUrls({
+          supabase,
+          imageUrls: [tempUrl],
           entityType,
           entityId,
-          supabase,
-        );
+        });
 
         expect(committedUrls).toHaveLength(1);
         expect(committedUrls[0]).toContain(`${entityType}-${entityId}`);
@@ -173,7 +185,11 @@ describe('Images API - Commit Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}mixed-temp-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Create a fake permanent URL (simulate already committed image)
@@ -183,12 +199,12 @@ describe('Images API - Commit Operations', () => {
       // Commit with mixed URLs
       const entityType = 'resource';
       const entityId = `${TEST_PREFIX}mixed-test-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        [tempUrl, permanentUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl, permanentUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       expect(committedUrls).toHaveLength(2);
 
@@ -209,18 +225,22 @@ describe('Images API - Commit Operations', () => {
     it('preserves original filenames in permanent paths', async () => {
       const originalFilename = `${TEST_PREFIX}preserve-name-test.jpg`;
       const testFile = createTestImageFile({ name: originalFilename });
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Commit to permanent storage
       const entityType = 'community';
       const entityId = `${TEST_PREFIX}preserve-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        [tempUrl],
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: [tempUrl],
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       expect(committedUrls).toHaveLength(1);
 
@@ -233,12 +253,12 @@ describe('Images API - Commit Operations', () => {
     });
 
     it('handles empty image URLs array', async () => {
-      const committedUrls = await commitImageUrls(
-        [],
-        'resource',
-        `${TEST_PREFIX}empty-array-${Date.now()}`,
+      const committedUrls = await commitImageUrls({
         supabase,
-      );
+        imageUrls: [],
+        entityType: 'resource',
+        entityId: `${TEST_PREFIX}empty-array-${Date.now()}`,
+      });
 
       expect(committedUrls).toHaveLength(0);
     });
@@ -246,7 +266,11 @@ describe('Images API - Commit Operations', () => {
     it('handles null and undefined URLs gracefully', async () => {
       // Upload a valid temporary image
       const testFile = createTestImageFile();
-      const uploadResult = await uploadImage(testFile, supabase, 'temp-upload');
+      const uploadResult = await uploadImage({
+        supabase,
+        file: testFile,
+        folder: 'temp-upload',
+      });
       const tempUrl = uploadResult.url;
 
       // Mix valid URL with null/undefined values
@@ -254,12 +278,12 @@ describe('Images API - Commit Operations', () => {
 
       const entityType = 'user';
       const entityId = `${TEST_PREFIX}null-handling-${Date.now()}`;
-      const committedUrls = await commitImageUrls(
-        urlsWithNulls,
+      const committedUrls = await commitImageUrls({
+        supabase,
+        imageUrls: urlsWithNulls,
         entityType,
         entityId,
-        supabase,
-      );
+      });
 
       // Should only commit the valid URL
       expect(committedUrls.length).toBeGreaterThan(0);
@@ -275,12 +299,12 @@ describe('Images API - Commit Operations', () => {
       const permanentUrl =
         'https://test.supabase.co/storage/v1/object/public/images/user-existing/resource-already-permanent-123-image.jpg';
 
-      const committedUrls = await commitImageUrls(
-        [permanentUrl],
-        'event',
-        `${TEST_PREFIX}already-permanent-${Date.now()}`,
+      const committedUrls = await commitImageUrls({
         supabase,
-      );
+        imageUrls: [permanentUrl],
+        entityType: 'event',
+        entityId: `${TEST_PREFIX}already-permanent-${Date.now()}`,
+      });
 
       expect(committedUrls).toHaveLength(1);
       expect(committedUrls[0]).toBe(permanentUrl); // Should be unchanged
@@ -293,27 +317,35 @@ describe('Images API - Commit Operations', () => {
       const testFile1 = createTestImageFile({ name: filename });
       const testFile2 = createTestImageFile({ name: filename });
 
-      const uploadResult1 = await uploadImage(testFile1, supabase, 'temp-upload');
-      const uploadResult2 = await uploadImage(testFile2, supabase, 'temp-upload');
+      const uploadResult1 = await uploadImage({
+        supabase,
+        file: testFile1,
+        folder: 'temp-upload',
+      });
+      const uploadResult2 = await uploadImage({
+        supabase,
+        file: testFile2,
+        folder: 'temp-upload',
+      });
 
       // Commit both to same entity type but different IDs
       const entityType = 'shoutout';
       const entityId1 = `${TEST_PREFIX}unique-1-${Date.now()}`;
       const entityId2 = `${TEST_PREFIX}unique-2-${Date.now()}`;
 
-      const committedUrls1 = await commitImageUrls(
-        [uploadResult1.url],
-        entityType,
-        entityId1,
+      const committedUrls1 = await commitImageUrls({
         supabase,
-      );
+        imageUrls: [uploadResult1.url],
+        entityType,
+        entityId: entityId1,
+      });
 
-      const committedUrls2 = await commitImageUrls(
-        [uploadResult2.url],
-        entityType,
-        entityId2,
+      const committedUrls2 = await commitImageUrls({
         supabase,
-      );
+        imageUrls: [uploadResult2.url],
+        entityType,
+        entityId: entityId2,
+      });
 
       // Should have different permanent paths despite same original filename
       expect(committedUrls1[0]).not.toBe(committedUrls2[0]);
@@ -335,12 +367,12 @@ describe('Images API - Commit Operations', () => {
         'data:image/jpeg;base64,invalid',
       ];
 
-      const committedUrls = await commitImageUrls(
-        invalidUrls,
-        'resource',
-        `${TEST_PREFIX}invalid-urls-${Date.now()}`,
+      const committedUrls = await commitImageUrls({
         supabase,
-      );
+        imageUrls: invalidUrls,
+        entityType: 'resource',
+        entityId: `${TEST_PREFIX}invalid-urls-${Date.now()}`,
+      });
 
       // Should handle invalid URLs gracefully - behavior depends on implementation
       // Either return empty array or skip invalid URLs
