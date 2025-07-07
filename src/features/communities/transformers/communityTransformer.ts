@@ -86,6 +86,7 @@ export function toDomainCommunity(
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
+    bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
@@ -103,7 +104,7 @@ export function toDomainCommunity(
 export function forDbInsert(
   community: CommunityData & { organizerId: string },
 ): CommunityInsertDbData {
-  const { timeZone, memberCount, boundary, center, organizerId, ...rest } =
+  const { timeZone, memberCount, boundary, center, organizerId, bannerImageUrl, ...rest } =
     community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
@@ -111,6 +112,7 @@ export function forDbInsert(
   return {
     ...rest,
     organizer_id: organizerId,
+    banner_image_url: bannerImageUrl,
     time_zone: timeZone,
     member_count: memberCount,
     center: toPostGisPoint(center),
@@ -127,6 +129,7 @@ export function forDbUpdate(
     name: community.name,
     description: community.description,
     icon: community.icon,
+    banner_image_url: community.bannerImageUrl,
     time_zone: community.timeZone,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     boundary: community.boundary
@@ -144,7 +147,7 @@ export function toDomainMembership(
     community: Community;
   },
 ): CommunityMembership {
-  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+  const { joined_at, ...rest } = dbMembership;
 
   console.log('dbMembership', dbMembership);
 
@@ -202,6 +205,7 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
+    bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),

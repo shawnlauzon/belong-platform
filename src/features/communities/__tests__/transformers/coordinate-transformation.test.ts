@@ -13,7 +13,7 @@ import type { Coordinates } from '@/shared/types';
 describe('Coordinate Transformation Pipeline', () => {
   describe('Domain → Database (toPostGisPoint)', () => {
     it('should transform domain coordinates to PostGIS string format', () => {
-      const domainCoords: Coordinates = { lat: 40.7128, lng: -74.006 };
+      const domainCoords: Coordinates = { lat: 40.7128, lng: -74.0060 };
 
       const postgisString = toPostGisPoint(domainCoords);
 
@@ -43,14 +43,14 @@ describe('Coordinate Transformation Pipeline', () => {
       const geoJsonPoint = {
         type: 'Point',
         crs: { type: 'name', properties: { name: 'EPSG:4326' } },
-        coordinates: [-74.006, 40.7128],
+        coordinates: [-74.0060, 40.7128],
       };
 
       const domainCoords = parsePostGisPoint(geoJsonPoint);
 
       expect(domainCoords).toEqual({
         lat: 40.7128,
-        lng: -74.006,
+        lng: -74.0060,
       });
     });
 
@@ -61,7 +61,7 @@ describe('Coordinate Transformation Pipeline', () => {
 
       expect(domainCoords).toEqual({
         lat: 40.7128,
-        lng: -74.006,
+        lng: -74.0060,
       });
     });
 
@@ -76,7 +76,7 @@ describe('Coordinate Transformation Pipeline', () => {
 
   describe('Round-trip Transformation', () => {
     it('should preserve coordinates through round-trip transformation', () => {
-      const originalCoords: Coordinates = { lat: 40.7128, lng: -74.006 };
+      const originalCoords: Coordinates = { lat: 40.7128, lng: -74.0060 };
 
       // Domain → PostGIS string
       const postgisString = toPostGisPoint(originalCoords);
@@ -99,7 +99,7 @@ describe('Coordinate Transformation Pipeline', () => {
   describe('Community Transformer Integration', () => {
     it('should correctly transform center coordinates in forDbInsert', () => {
       const communityData = createFakeCommunityData({
-        center: { lat: 40.7128, lng: -74.006 },
+        center: { lat: 40.7128, lng: -74.0060 },
       });
 
       const dbData = forDbInsert({
@@ -116,7 +116,7 @@ describe('Coordinate Transformation Pipeline', () => {
         center: {
           type: 'Point',
           crs: { type: 'name', properties: { name: 'EPSG:4326' } },
-          coordinates: [-74.006, 40.7128],
+          coordinates: [-74.0060, 40.7128],
         },
       });
 
@@ -125,7 +125,7 @@ describe('Coordinate Transformation Pipeline', () => {
       // Should convert GeoJSON back to domain coordinates
       expect(communityInfo.center).toEqual({
         lat: 40.7128,
-        lng: -74.006,
+        lng: -74.0060,
       });
     });
 
@@ -154,6 +154,44 @@ describe('Coordinate Transformation Pipeline', () => {
 
       // Should match original coordinates exactly
       expect(finalCommunityInfo.center).toEqual(originalCenter);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle coordinates at boundaries', () => {
+      const boundaryCoords = [
+        { lat: 90, lng: 180 }, // North Pole, International Date Line
+        { lat: -90, lng: -180 }, // South Pole, opposite side
+        { lat: 0, lng: 0 }, // Equator/Prime Meridian intersection
+      ];
+
+      boundaryCoords.forEach((coords) => {
+        // PostGIS GeoJSON → Domain
+        const geoJson = {
+          type: 'Point' as const,
+          coordinates: [coords.lng, coords.lat],
+        };
+        const parsed = parsePostGisPoint(geoJson);
+
+        expect(parsed).toEqual(coords);
+      });
+    });
+
+    it('should handle high precision coordinates', () => {
+      const preciseCoords: Coordinates = {
+        lat: 40.12345678901234,
+        lng: -74.98765432109876,
+      };
+
+      // Transform through the pipeline via GeoJSON
+      const geoJson = {
+        type: 'Point' as const,
+        coordinates: [preciseCoords.lng, preciseCoords.lat],
+      };
+      const parsed = parsePostGisPoint(geoJson);
+
+      // Should preserve precision for GeoJSON format
+      expect(parsed).toEqual(preciseCoords);
     });
   });
 });

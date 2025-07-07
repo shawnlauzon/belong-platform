@@ -20,14 +20,13 @@ describe('useDeleteCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should delete community successfully', async () => {
+  it('should delete community successfully using mutateAsync', async () => {
     const communityId = faker.string.uuid();
     mockDeleteCommunity.mockResolvedValue();
 
     const { result } = renderHook(() => useDeleteCommunity(), { wrapper });
-    const deleteCommunityFn = result.current;
 
-    await deleteCommunityFn(communityId);
+    await result.current.mutateAsync(communityId);
 
     expect(mockDeleteCommunity).toHaveBeenCalledWith(
       expect.any(Object),

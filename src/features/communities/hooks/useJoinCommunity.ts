@@ -1,43 +1,37 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { joinCommunity } from '@/features/communities/api';
 
-import type { CommunityMembershipInfo } from '@/features/communities/types';
 
 /**
  * Hook for joining a community.
  *
- * Provides a mutation function for joining communities as a member.
+ * Provides a mutation object for joining communities as a member.
  * Automatically invalidates community and membership caches on successful join.
  *
- * @returns Join community mutation function
+ * @returns Join community mutation object with mutate, mutateAsync, isLoading, isError, etc.
  *
  * @example
  * ```tsx
  * function JoinCommunityButton({ communityId }) {
- *   const joinCommunity = useJoinCommunity();
- *   const [isJoining, setIsJoining] = useState(false);
+ *   const joinCommunityMutation = useJoinCommunity();
  *
  *   const handleJoin = async () => {
- *     setIsJoining(true);
  *     try {
- *       await joinCommunity(communityId);
+ *       await joinCommunityMutation.mutateAsync(communityId);
  *       // Successfully joined community
  *     } catch (error) {
  *       console.error('Failed to join community:', error);
- *     } finally {
- *       setIsJoining(false);
  *     }
  *   };
  *
  *   return (
  *     <button
  *       onClick={handleJoin}
- *       disabled={isJoining}
+ *       disabled={joinCommunityMutation.isPending}
  *     >
- *       {isJoining ? 'Joining...' : 'Join Community'}
+ *       {joinCommunityMutation.isPending ? 'Joining...' : 'Join Community'}
  *     </button>
  *   );
  * }
@@ -48,8 +42,8 @@ export function useJoinCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
-  const mutation = useMutation({
-    mutationFn: ({ communityId }: { communityId: string }) =>
+  return useMutation({
+    mutationFn: (communityId: string) =>
       joinCommunity(supabase, communityId),
     onSuccess: (newMembership) => {
       if (newMembership) {
@@ -77,12 +71,4 @@ export function useJoinCommunity() {
       logger.error('🏘️ API: Failed to join community', { error });
     },
   });
-
-  // Return stable function reference
-  return useCallback(
-    (communityId: string): Promise<CommunityMembershipInfo | null> => {
-      return mutation.mutateAsync({ communityId });
-    },
-    [mutation],
-  );
 }

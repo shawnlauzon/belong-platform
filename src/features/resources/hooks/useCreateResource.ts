@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
+import { commitImageUrls } from '@/features/images';
 import { createResource } from '@/features/resources/api';
 import { useCurrentUser } from '@/features/auth';
 
@@ -87,6 +88,46 @@ export function useCreateResource() {
       if (!result) {
         throw new Error('Failed to create resource');
       }
+
+      // Commit any temporary images to permanent storage
+      if (data.imageUrls && data.imageUrls.length > 0) {
+        logger.debug('📚 API: Committing resource images', {
+          resourceId: result.id,
+          imageCount: data.imageUrls.length,
+        });
+
+        try {
+          const permanentUrls = await commitImageUrls(
+            data.imageUrls,
+            'resource',
+            result.id,
+            supabase
+          );
+
+          // Update the resource with permanent image URLs if they changed
+          if (JSON.stringify(permanentUrls) !== JSON.stringify(data.imageUrls)) {
+            // Import updateResource API here to avoid circular dependency
+            const { updateResource } = await import('@/features/resources/api');
+            
+            const updatedResource = await updateResource(supabase, result.id, {
+              imageUrls: permanentUrls,
+            });
+
+            if (updatedResource) {
+              // Return the updated resource with permanent URLs
+              return updatedResource;
+            }
+          }
+        } catch (error) {
+          logger.error('📚 API: Failed to commit resource images', {
+            resourceId: result.id,
+            error,
+          });
+          // Continue without throwing - resource was created successfully
+          // We'll leave the temp URLs in place and rely on cleanup service
+        }
+      }
+
       return result;
     },
     onSuccess: (newResourceInfo: ResourceInfo) => {

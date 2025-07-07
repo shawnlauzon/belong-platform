@@ -1,6 +1,66 @@
 # Belong Network Platform Usage Guide
 
-This guide covers advanced usage patterns and best practices for the Belong Network Platform. For basic setup and getting started, see the [README](./README.md).
+This guide covers usage patterns and best practices for the Belong Network Platform. For basic setup and getting started, see the [README](./README.md).
+
+## Platform Features
+
+### Authentication
+
+- **`useCurrentUser()`** - Get current authenticated user
+- **`useSignIn()`** - Sign in with email and password
+- **`useSignUp()`** - Register new user account
+- **`useSignOut()`** - Sign out current user
+
+### Communities
+
+- **`useCommunities()`** - List communities
+- **`useCommunity()`** - Get single community details
+- **`useCreateCommunity()`** - Create new community
+- **`useUpdateCommunity()`** - Update community details
+- **`useDeleteCommunity()`** - Delete community
+- **`useJoinCommunity()`** - Join a community
+- **`useLeaveCommunity()`** - Leave a community
+- **`useCommunityMembers()`** - Get community members
+- **`useUserCommunities()`** - Get user's communities
+
+### Resources
+
+- **`useResources()`** - List resources with filters
+- **`useResource()`** - Get single resource details
+- **`useCreateResource()`** - Create new resource offer/request
+- **`useUpdateResource()`** - Update resource details
+- **`useDeleteResource()`** - Delete resource
+
+### Events
+
+- **`useEvents()`** - List events with filters
+- **`useEvent()`** - Get single event details
+- **`useCreateEvent()`** - Create new event
+- **`useUpdateEvent()`** - Update event details
+- **`useDeleteEvent()`** - Delete event
+
+### Users
+
+- **`useUsers()`** - List users with filters
+- **`useUser()`** - Get single user details
+- **`useCreateUser()`** - Create new user profile
+- **`useUpdateUser()`** - Update user profile
+- **`useDeleteUser()`** - Delete user account
+
+### Images
+
+- **`useImageUpload()`** - Upload images to temporary storage
+- **`commitImageUrls()`** - Convert temporary images to permanent storage
+
+### Types
+
+- **Authentication**: `Account`, `User`
+- **Communities**: `Community`, `CommunityData`, `CommunityFilter`
+- **Resources**: `Resource`, `ResourceData`, `ResourceFilter`, `ResourceInfo`
+- **Events**: `Event`, `EventData`, `EventFilter`, `EventInfo`
+- **Users**: `User`, `UserData`, `UserFilter`
+- **Images**: `ImageUploadResult`, `EntityType`
+- **Geography**: `Coordinates`, `AddressSearchResult`
 
 ## Advanced Patterns
 
@@ -106,32 +166,6 @@ function useCommunityAdmin(communityId: string) {
 }
 ```
 
-### Testing Components
-
-Test components that use platform hooks:
-
-```tsx
-import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
-
-// Mock the platform hooks
-vi.mock('@belongnetwork/platform', () => ({
-  useResources: () => ({
-    data: [{ id: '1', title: 'Test Resource' }],
-    isLoading: false,
-    error: null,
-  }),
-  useCreateResource: () => ({
-    mutateAsync: vi.fn(),
-  }),
-}));
-
-test('displays resources', () => {
-  render(<ResourceList />);
-  expect(screen.getByText('Test Resource')).toBeInTheDocument();
-});
-```
-
 ### Performance Optimization
 
 #### Query Keys and Caching
@@ -175,28 +209,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-```
-
-## TypeScript Usage
-
-The platform is fully typed. Use the exported types for type safety:
-
-```tsx
-import type {
-  Community,
-  Resource,
-  ResourceData,
-  ResourceFilter,
-} from '@belongnetwork/platform';
-
-interface ResourceFormProps {
-  onSubmit: (data: ResourceData) => Promise<void>;
-  community: Community;
-}
-
-function ResourceForm({ onSubmit, community }: ResourceFormProps) {
-  // Fully typed component
-}
 ```
 
 ## Best Practices

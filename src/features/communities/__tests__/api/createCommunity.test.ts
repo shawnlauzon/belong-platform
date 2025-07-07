@@ -138,8 +138,8 @@ describe('createCommunity API', () => {
         
         // Center should be transformed from GeoJSON to domain coordinates
         center: {
-          lat: (mockDbResponse.center as any).coordinates[1],
-          lng: (mockDbResponse.center as any).coordinates[0],
+          lat: (mockDbResponse.center as { coordinates: [number, number] }).coordinates[1],
+          lng: (mockDbResponse.center as { coordinates: [number, number] }).coordinates[0],
         },
         
         // Boundary should be properly parsed with domain field names

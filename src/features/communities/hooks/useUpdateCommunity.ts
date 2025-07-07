@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
@@ -6,21 +5,20 @@ import { updateCommunity } from '@/features/communities/api';
 
 import type {
   CommunityData,
-  CommunityInfo,
 } from '@/features/communities/types';
 
 /**
  * Hook for updating an existing community.
  *
- * Provides a mutation function for updating community information.
+ * Provides a mutation object for updating community information.
  * Automatically invalidates community caches on successful update.
  *
- * @returns Update community mutation function
+ * @returns Update community mutation object with mutate, mutateAsync, isLoading, isError, etc.
  *
  * @example
  * ```tsx
  * function EditCommunityForm({ communityId }) {
- *   const updateCommunity = useUpdateCommunity();
+ *   const updateCommunityMutation = useUpdateCommunity();
  *   const { data: community } = useCommunity(communityId);
  *   const [formData, setFormData] = useState({
  *     name: community?.name || '',
@@ -30,7 +28,7 @@ import type {
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
- *       await updateCommunity(communityId, formData);
+ *       await updateCommunityMutation.mutateAsync({ communityId, updateData: formData });
  *       // Community updated successfully
  *     } catch (error) {
  *       console.error('Failed to update community:', error);
@@ -47,7 +45,9 @@ import type {
  *         value={formData.description}
  *         onChange={(e) => setFormData({...formData, description: e.target.value})}
  *       />
- *       <button type="submit">Update Community</button>
+ *       <button type="submit" disabled={updateCommunityMutation.isPending}>
+ *         {updateCommunityMutation.isPending ? 'Updating...' : 'Update Community'}
+ *       </button>
  *     </form>
  *   );
  * }
@@ -57,9 +57,9 @@ export function useUpdateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
-  const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CommunityData> }) =>
-      updateCommunity(supabase, { id, ...data }),
+  return useMutation({
+    mutationFn: ({ communityId, updateData }: { communityId: string; updateData: Partial<CommunityData> }) =>
+      updateCommunity(supabase, { id: communityId, ...updateData }),
     onSuccess: (updatedCommunityInfo) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });
@@ -78,15 +78,4 @@ export function useUpdateCommunity() {
       logger.error('🏘️ API: Failed to update community', { error });
     },
   });
-
-  // Return stable function reference
-  return useCallback(
-    (
-      id: string,
-      data: Partial<CommunityData>,
-    ): Promise<CommunityInfo | null> => {
-      return mutation.mutateAsync({ id, data });
-    },
-    [mutation],
-  );
 }
