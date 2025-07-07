@@ -64,9 +64,32 @@ export function forDbInsert(userData: UserData): ProfileInsertDbData {
  */
 export function forDbUpdate(
   userData: Partial<UserData> & { id: string },
+  currentProfile: ProfileRow
 ): ProfileUpdateDbData {
+  const currentMetadata = (currentProfile.user_metadata || {}) as UserMetadata;
+  
+  // Only include fields that are explicitly provided in userData
+  const updatedMetadata: UserMetadata = { ...currentMetadata };
+  
+  // Update only the fields that are explicitly provided (not undefined)
+  if (userData.firstName !== undefined) {
+    updatedMetadata.first_name = userData.firstName;
+  }
+  if (userData.lastName !== undefined) {
+    updatedMetadata.last_name = userData.lastName;
+  }
+  if (userData.fullName !== undefined) {
+    updatedMetadata.full_name = userData.fullName;
+  }
+  if (userData.avatarUrl !== undefined) {
+    updatedMetadata.avatar_url = userData.avatarUrl;
+  }
+  if (userData.location !== undefined) {
+    updatedMetadata.location = userData.location;
+  }
+
   return {
-    user_metadata: createUserMetadata(userData),
+    user_metadata: updatedMetadata,
     updated_at: new Date().toISOString(),
   };
 }
@@ -78,18 +101,3 @@ export type {
   ProfileUpdateDbData as UserUpdateDbData,
 };
 
-// Helper function to create a user metadata object from user data
-/**
- * @internal
- */
-export function createUserMetadata(userData: Partial<UserData>): UserMetadata {
-  const { firstName, lastName, fullName, avatarUrl, location } = userData;
-
-  return {
-    first_name: firstName,
-    last_name: lastName,
-    full_name: fullName,
-    avatar_url: avatarUrl,
-    location,
-  };
-}

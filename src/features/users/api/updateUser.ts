@@ -11,7 +11,22 @@ export async function updateUser(
   logger.debug('👤 API: Updating user', { id: userData.id });
 
   try {
-    const updateData = forDbUpdate(userData);
+    // First, fetch the current profile to merge with partial updates
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select()
+      .eq('id', userData.id)
+      .single();
+
+    if (fetchError) {
+      logger.error('👤 API: Failed to fetch current profile', {
+        id: userData.id,
+        error: fetchError,
+      });
+      throw fetchError;
+    }
+
+    const updateData = forDbUpdate(userData, currentProfile);
 
     const { data, error } = await supabase
       .from('profiles')
