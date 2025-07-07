@@ -24,12 +24,6 @@ export interface Community extends Omit<CommunityData, 'organizerId'> {
   updatedAt: Date;
 }
 
-export interface CommunityMembership extends CommunityMembershipData {
-  joinedAt: Date;
-  user?: User;
-  community?: Community;
-}
-
 export interface CommunityData {
   // Core Identity
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
@@ -59,6 +53,13 @@ export interface CommunityFilter {
 }
 
 // Community membership types
+export interface CommunityMembership
+  extends Omit<CommunityMembershipData, 'userId' | 'communityId'> {
+  joinedAt: Date;
+  user: User;
+  community: Community;
+}
+
 export interface CommunityMembershipData {
   userId: string;
   communityId: string;
@@ -66,10 +67,4 @@ export interface CommunityMembershipData {
 
 export interface CommunityMembershipInfo extends CommunityMembershipData {
   joinedAt: Date;
-}
-
-export interface CommunityMembership extends CommunityMembershipData {
-  joinedAt: Date;
-  user?: User;
-  community?: Community;
 }

@@ -55,9 +55,9 @@ function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
     return {
       type: 'isochrone',
       travelMode: dbBoundary.travelMode,
-      travelTimeMin: dbBoundary.minutes,
+      travelTimeMin: dbBoundary.travelTimeMin,
       polygon: dbBoundary.polygon,
-      areaSqKm: dbBoundary.area,
+      areaSqKm: dbBoundary.areaSqKm,
     } as IsochroneBoundary;
   }
 
@@ -103,7 +103,8 @@ export function toDomainCommunity(
 export function forDbInsert(
   community: CommunityData & { organizerId: string },
 ): CommunityInsertDbData {
-  const { timeZone, memberCount, boundary, center, organizerId, ...rest } = community;
+  const { timeZone, memberCount, boundary, center, organizerId, ...rest } =
+    community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
@@ -149,9 +150,9 @@ export function toDomainMembership(
 
   return {
     ...rest,
-    userId: user_id,
-    communityId: community_id,
     joinedAt: new Date(joined_at),
+    user: dbMembership.user,
+    community: dbMembership.community,
   };
 }
 
