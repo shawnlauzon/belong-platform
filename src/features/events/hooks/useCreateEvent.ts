@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { commitImageUrls } from '@/features/images';
+import { useImageCommit } from '@/features/images';
 import { createEvent } from '@/features/events/api';
 import { useCurrentUser } from '@/features/auth';
 
@@ -77,6 +77,7 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
+  const commitImages = useImageCommit();
 
   const mutation = useMutation({
     mutationFn: async (data: EventData): Promise<EventInfo> => {
@@ -98,12 +99,11 @@ export function useCreateEvent() {
         });
 
         try {
-          const permanentUrls = await commitImageUrls(
-            data.imageUrls,
-            'event',
-            result.id,
-            supabase
-          );
+          const { permanentUrls } = await commitImages.mutateAsync({
+            imageUrls: data.imageUrls,
+            entityType: 'event',
+            entityId: result.id,
+          });
 
           // Update the event with permanent image URLs if they changed
           if (JSON.stringify(permanentUrls) !== JSON.stringify(data.imageUrls)) {

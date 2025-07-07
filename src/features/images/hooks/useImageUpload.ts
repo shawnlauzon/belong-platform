@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
-import { StorageManager } from '@/shared/utils/storage';
+import { StorageManager } from '../utils/storage';
 import { useCurrentUser } from '@/features/auth';
 import type { ImageUploadResult } from '../types';
 

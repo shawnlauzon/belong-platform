@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { StorageManager } from '@/shared/utils/storage';
+import { StorageManager } from '../utils/storage';
 import { logger } from '@/shared/logger';
 
 /**

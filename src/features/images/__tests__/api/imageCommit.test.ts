@@ -5,13 +5,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
 // Mock the StorageManager
-vi.mock('@/shared/utils/storage', () => ({
+vi.mock('../../utils/storage', () => ({
   StorageManager: {
     extractPathFromUrl: vi.fn(),
   },
 }));
 
-import { StorageManager } from '@/shared/utils/storage';
+import { StorageManager } from '../../utils/storage';
 const mockStorageManager = StorageManager as any;
 
 describe('commitImageUrls', () => {

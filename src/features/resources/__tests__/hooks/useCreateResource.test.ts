@@ -20,12 +20,12 @@ vi.mock('../../api', () => ({
 
 // Mock the image commit utility
 vi.mock('@/features/images', () => ({
-  commitImageUrls: vi.fn(),
+  useImageCommit: vi.fn(),
 }));
 
 import { useSupabase } from '../../../../shared';
 import { createResource, updateResource } from '../../api';
-import { commitImageUrls } from '@/features/images';
+import { useImageCommit } from '@/features/images';
 import { useCurrentUser } from '../../../auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
@@ -36,7 +36,7 @@ import { createFakeCommunity } from '@/features/communities/__fakes__';
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResource = vi.mocked(createResource);
 const mockUpdateResource = vi.mocked(updateResource);
-const mockCommitImageUrls = vi.mocked(commitImageUrls);
+const mockUseImageCommit = vi.mocked(useImageCommit);
 const mockUseCurrentUser = vi.mocked(useCurrentUser);
 
 describe('useCreateResource', () => {
@@ -57,6 +57,14 @@ describe('useCreateResource', () => {
     mockUseCurrentUser.mockReturnValue({
       data: mockCurrentUser,
     } as ReturnType<typeof useCurrentUser>);
+
+    // Mock useImageCommit to return a proper mutation object
+    mockUseImageCommit.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null,
+    } as any);
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());
@@ -133,7 +141,19 @@ describe('useCreateResource', () => {
 
     // Mock the API calls
     mockCreateResource.mockResolvedValue(fakeResourceInfo);
-    mockCommitImageUrls.mockResolvedValue(permanentImageUrls);
+    
+    // Mock the useImageCommit hook to return permanent URLs
+    const mockImageCommitMutation = {
+      mutateAsync: vi.fn().mockResolvedValue({
+        permanentUrls: permanentImageUrls,
+        committedCount: 2,
+      }),
+      isPending: false,
+      isError: false,
+      error: null,
+    };
+    mockUseImageCommit.mockReturnValue(mockImageCommitMutation as any);
+    
     mockUpdateResource.mockResolvedValue(updatedResourceInfo);
 
     // Act
@@ -143,13 +163,12 @@ describe('useCreateResource', () => {
     // Assert: Should return resource with migrated image URLs
     expect(createdResourceInfo.imageUrls).toEqual(permanentImageUrls);
 
-    // Verify migration was called
-    expect(mockCommitImageUrls).toHaveBeenCalledWith(
-      tempImageUrls,
-      'resource',
-      fakeResourceInfo.id,
-      mockSupabase
-    );
+    // Verify migration was called through the hook
+    expect(mockImageCommitMutation.mutateAsync).toHaveBeenCalledWith({
+      imageUrls: tempImageUrls,
+      entityType: 'resource',
+      entityId: fakeResourceInfo.id,
+    });
 
     // Verify resource was updated with permanent URLs
     expect(mockUpdateResource).toHaveBeenCalledWith(mockSupabase, fakeResourceInfo.id, {
@@ -178,7 +197,7 @@ describe('useCreateResource', () => {
 
     // Assert: Should complete successfully without calling migration
     expect(createdResourceInfo).toEqual(fakeResourceInfo);
-    expect(mockCommitImageUrls).not.toHaveBeenCalled();
+    expect(mockUseImageCommit().mutateAsync).not.toHaveBeenCalled();
     expect(mockUpdateResource).not.toHaveBeenCalled();
   });
 
@@ -201,7 +220,15 @@ describe('useCreateResource', () => {
 
     // Mock creation to succeed but migration to fail
     mockCreateResource.mockResolvedValue(fakeResourceInfo);
-    mockCommitImageUrls.mockRejectedValue(new Error('Migration failed'));
+    
+    // Mock the useImageCommit hook to fail
+    const mockImageCommitMutation = {
+      mutateAsync: vi.fn().mockRejectedValue(new Error('Migration failed')),
+      isPending: false,
+      isError: false,
+      error: null,
+    };
+    mockUseImageCommit.mockReturnValue(mockImageCommitMutation as any);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
@@ -209,7 +236,7 @@ describe('useCreateResource', () => {
 
     // Assert: Should return original resource even though migration failed
     expect(createdResourceInfo).toEqual(fakeResourceInfo);
-    expect(mockCommitImageUrls).toHaveBeenCalled();
+    expect(mockImageCommitMutation.mutateAsync).toHaveBeenCalled();
     expect(mockUpdateResource).not.toHaveBeenCalled();
   });
 });

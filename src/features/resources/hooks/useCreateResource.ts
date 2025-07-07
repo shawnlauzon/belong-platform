@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { commitImageUrls } from '@/features/images';
+import { useImageCommit } from '@/features/images';
 import { createResource } from '@/features/resources/api';
 import { useCurrentUser } from '@/features/auth';
 
@@ -76,6 +76,7 @@ export function useCreateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
+  const commitImages = useImageCommit();
 
   const mutation = useMutation({
     mutationFn: async (data: ResourceData): Promise<ResourceInfo> => {
@@ -97,12 +98,11 @@ export function useCreateResource() {
         });
 
         try {
-          const permanentUrls = await commitImageUrls(
-            data.imageUrls,
-            'resource',
-            result.id,
-            supabase
-          );
+          const { permanentUrls } = await commitImages.mutateAsync({
+            imageUrls: data.imageUrls,
+            entityType: 'resource',
+            entityId: result.id,
+          });
 
           // Update the resource with permanent image URLs if they changed
           if (JSON.stringify(permanentUrls) !== JSON.stringify(data.imageUrls)) {

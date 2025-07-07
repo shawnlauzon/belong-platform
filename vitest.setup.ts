@@ -250,3 +250,14 @@ vi.mock('./src/features/conversations', async (importOriginal) => {
     useMessaging: vi.fn(),
   };
 });
+
+// Mock images feature hooks
+vi.mock('./src/features/images', async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  return {
+    ...actual, // Keep all real exports (types, etc.)
+    // Override only the hooks
+    useImageUpload: vi.fn(),
+    useImageCommit: vi.fn(),
+  };
+});

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { commitImageUrls } from '@/features/images';
+import { useImageCommit } from '@/features/images';
 import { updateUser } from '../api';
 import type { User } from '../types';
 
@@ -101,6 +101,7 @@ import type { User } from '../types';
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const commitImages = useImageCommit();
 
   return useMutation({
     mutationFn: async (userData: Partial<User> & { id: string }) => {
@@ -114,12 +115,11 @@ export function useUpdateUser() {
         });
 
         try {
-          const permanentUrls = await commitImageUrls(
-            [userData.avatarUrl],
-            'user',
-            userData.id,
-            supabase
-          );
+          const { permanentUrls } = await commitImages.mutateAsync({
+            imageUrls: [userData.avatarUrl],
+            entityType: 'user',
+            entityId: userData.id,
+          });
 
           // Update userData with permanent avatar URL if it changed
           if (permanentUrls.length > 0 && permanentUrls[0] !== userData.avatarUrl) {

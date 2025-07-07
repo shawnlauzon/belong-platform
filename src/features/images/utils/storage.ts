@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database';
-import { logger, logApiCall, logApiResponse } from '../logger';
+import type { Database } from '@/shared/types/database';
+import { logger, logApiCall, logApiResponse } from '@/shared/logger';
 
 /**
  * Result of a successful file upload operation.
