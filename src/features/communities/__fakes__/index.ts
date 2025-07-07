@@ -19,6 +19,7 @@ export function createFakeCommunity(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    bannerImageUrl: faker.image.url(),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -51,6 +52,7 @@ export function createFakeCommunityData(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    bannerImageUrl: faker.image.url(),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -81,6 +83,7 @@ export function createFakeCommunityInfo(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    bannerImageUrl: faker.image.url(),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -122,6 +125,7 @@ export function createFakeDbCommunity(
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
+    banner_image_url: faker.helpers.arrayElement([faker.image.url(), null]),
     center: {
       type: 'Point',
       crs: { type: 'name', properties: { name: 'EPSG:4326' } },

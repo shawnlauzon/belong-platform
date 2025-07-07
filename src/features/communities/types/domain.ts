@@ -29,6 +29,7 @@ export interface CommunityData {
   name: string; // e.g., "Rhode Island", "Cambridge", "Downtown Austin"
   description?: string;
   icon?: string; // Visual icon for the community
+  bannerImageUrl?: string; // Banner image for the community
 
   // Location (mandatory center point)
   center: Coordinates;

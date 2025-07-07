@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { 
   forDbInsert, 
+  forDbUpdate,
   forDbMembershipInsert, 
-  toDomainMembershipInfo 
+  toDomainMembershipInfo,
+  toDomainCommunity,
+  toCommunityInfo
 } from '../../transformers/communityTransformer';
-import { createFakeCommunityData } from '../../__fakes__';
+import { createFakeCommunityData, createFakeDbCommunityWithOrganizer, createFakeDbCommunity } from '../../__fakes__';
 
 describe('communityTransformer', () => {
   describe('forDbInsert', () => {
@@ -56,6 +59,92 @@ describe('communityTransformer', () => {
 
       expect(result.organizer_id).toBe(organizerId);
       expect(result).not.toHaveProperty('organizerId');
+    });
+
+    it('should transform bannerImageUrl to banner_image_url', () => {
+      const bannerImageUrl = faker.image.url();
+      const communityData = createFakeCommunityData({ bannerImageUrl });
+      const organizerId = faker.string.uuid();
+
+      const result = forDbInsert({ ...communityData, organizerId });
+
+      expect(result.banner_image_url).toBe(bannerImageUrl);
+    });
+
+    it('should handle undefined bannerImageUrl', () => {
+      const communityData = createFakeCommunityData({ bannerImageUrl: undefined });
+      const organizerId = faker.string.uuid();
+
+      const result = forDbInsert({ ...communityData, organizerId });
+
+      expect(result.banner_image_url).toBeUndefined();
+    });
+  });
+
+  describe('forDbUpdate', () => {
+    it('should transform bannerImageUrl to banner_image_url', () => {
+      const bannerImageUrl = faker.image.url();
+      const communityId = faker.string.uuid();
+      const updateData = { id: communityId, bannerImageUrl };
+
+      const result = forDbUpdate(updateData);
+
+      expect(result.banner_image_url).toBe(bannerImageUrl);
+    });
+
+    it('should handle undefined bannerImageUrl', () => {
+      const communityId = faker.string.uuid();
+      const updateData = { id: communityId, bannerImageUrl: undefined };
+
+      const result = forDbUpdate(updateData);
+
+      expect(result.banner_image_url).toBeUndefined();
+    });
+  });
+
+  describe('toDomainCommunity', () => {
+    it('should transform banner_image_url to bannerImageUrl', () => {
+      const bannerImageUrl = faker.image.url();
+      const dbCommunityWithOrganizer = createFakeDbCommunityWithOrganizer({
+        banner_image_url: bannerImageUrl,
+      });
+
+      const result = toDomainCommunity(dbCommunityWithOrganizer);
+
+      expect(result.bannerImageUrl).toBe(bannerImageUrl);
+    });
+
+    it('should handle null banner_image_url', () => {
+      const dbCommunityWithOrganizer = createFakeDbCommunityWithOrganizer({
+        banner_image_url: null,
+      });
+
+      const result = toDomainCommunity(dbCommunityWithOrganizer);
+
+      expect(result.bannerImageUrl).toBeUndefined();
+    });
+  });
+
+  describe('toCommunityInfo', () => {
+    it('should transform banner_image_url to bannerImageUrl', () => {
+      const bannerImageUrl = faker.image.url();
+      const dbCommunity = createFakeDbCommunity({
+        banner_image_url: bannerImageUrl,
+      });
+
+      const result = toCommunityInfo(dbCommunity);
+
+      expect(result.bannerImageUrl).toBe(bannerImageUrl);
+    });
+
+    it('should handle null banner_image_url', () => {
+      const dbCommunity = createFakeDbCommunity({
+        banner_image_url: null,
+      });
+
+      const result = toCommunityInfo(dbCommunity);
+
+      expect(result.bannerImageUrl).toBeUndefined();
     });
   });
 
