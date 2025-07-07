@@ -46,7 +46,6 @@ function boundaryForDatabase(boundary: CommunityBoundary): any {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
-  console.log('boundaryFromDatabase', dbBoundary);
   if (!dbBoundary || typeof dbBoundary !== 'object') {
     return undefined;
   }
@@ -104,8 +103,15 @@ export function toDomainCommunity(
 export function forDbInsert(
   community: CommunityData & { organizerId: string },
 ): CommunityInsertDbData {
-  const { timeZone, memberCount, boundary, center, organizerId, bannerImageUrl, ...rest } =
-    community;
+  const {
+    timeZone,
+    memberCount,
+    boundary,
+    center,
+    organizerId,
+    bannerImageUrl,
+    ...rest
+  } = community;
 
   const boundaryGeometry = boundary ? boundary.polygon : undefined;
 
