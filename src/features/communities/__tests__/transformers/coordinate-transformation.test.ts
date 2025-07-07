@@ -166,9 +166,6 @@ describe('Coordinate Transformation Pipeline', () => {
       ];
 
       boundaryCoords.forEach((coords) => {
-        // Domain → PostGIS
-        const postgisString = toPostGisPoint(coords);
-
         // PostGIS GeoJSON → Domain
         const geoJson = {
           type: 'Point' as const,
@@ -186,8 +183,7 @@ describe('Coordinate Transformation Pipeline', () => {
         lng: -74.98765432109876,
       };
 
-      // Transform through the pipeline
-      const postgisString = toPostGisPoint(preciseCoords);
+      // Transform through the pipeline via GeoJSON
       const geoJson = {
         type: 'Point' as const,
         coordinates: [preciseCoords.lng, preciseCoords.lat],

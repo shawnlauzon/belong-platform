@@ -144,7 +144,7 @@ export function toDomainMembership(
     community: Community;
   },
 ): CommunityMembership {
-  const { joined_at, user_id, community_id, ...rest } = dbMembership;
+  const { joined_at, ...rest } = dbMembership;
 
   console.log('dbMembership', dbMembership);
 
