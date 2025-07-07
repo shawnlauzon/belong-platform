@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { commitImageUrls } from '../imageCommit';
+import { commitImageUrls } from '../../api/imageCommit';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -24,23 +24,23 @@ describe('commitImageUrls', () => {
 
   it('should commit temp URLs to permanent paths', async () => {
     const tempUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/1234567890-photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/1234567891-photo2.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567891-def456.jpg',
     ];
 
     const tempPaths = [
-      'temp/user-123/1234567890-photo1.jpg',
-      'temp/user-123/1234567891-photo2.jpg',
+      'user-123/temp-upload-1234567890-abc123.jpg',
+      'user-123/temp-upload-1234567891-def456.jpg',
     ];
 
     const permanentPaths = [
-      'resource-res456-1234567890-photo1.jpg',
-      'resource-res456-1234567891-photo2.jpg',
+      'user-123/resource-res456-1234567890-abc123.jpg',
+      'user-123/resource-res456-1234567891-def456.jpg',
     ];
 
     const permanentUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-1234567890-photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-1234567891-photo2.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/resource-res456-1234567890-abc123.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/resource-res456-1234567891-def456.jpg',
     ];
 
     // Mock path extraction
@@ -76,13 +76,13 @@ describe('commitImageUrls', () => {
 
   it('should handle permanent URLs by returning them unchanged', async () => {
     const permanentUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/user-user123-avatar.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-456/resource-res456-photo1.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/user-user123-avatar.jpg',
     ];
 
     const permanentPaths = [
-      'resource-res456-photo1.jpg',
-      'user-user123-avatar.jpg',
+      'user-456/resource-res456-photo1.jpg',
+      'user-123/user-user123-avatar.jpg',
     ];
 
     // Mock path extraction
@@ -106,18 +106,18 @@ describe('commitImageUrls', () => {
 
   it('should handle mixed temp and permanent URLs', async () => {
     const mixedUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-photo2.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-456/resource-res456-photo2.jpg',
     ];
 
     const paths = [
-      'temp/user-123/photo1.jpg',
-      'resource-res456-photo2.jpg',
+      'user-123/temp-upload-1234567890-abc123.jpg',
+      'user-456/resource-res456-photo2.jpg',
     ];
 
     const expectedResult = [
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res456-photo2.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/resource-res456-1234567890-abc123.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-456/resource-res456-photo2.jpg',
     ];
 
     // Mock path extraction
@@ -146,17 +146,17 @@ describe('commitImageUrls', () => {
     // Should only move the temp file
     expect(mockStorageFrom().move).toHaveBeenCalledTimes(1);
     expect(mockStorageFrom().move).toHaveBeenCalledWith(
-      'temp/user-123/photo1.jpg',
-      'resource-res456-photo1.jpg'
+      'user-123/temp-upload-1234567890-abc123.jpg',
+      'user-123/resource-res456-1234567890-abc123.jpg'
     );
   });
 
   it('should handle storage move errors gracefully', async () => {
     const tempUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo1.jpg',
+      'https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg',
     ];
 
-    mockStorageManager.extractPathFromUrl.mockReturnValue('temp/user-123/photo1.jpg');
+    mockStorageManager.extractPathFromUrl.mockReturnValue('user-123/temp-upload-1234567890-abc123.jpg');
 
     // Mock storage move failure
     const mockStorageFrom = vi.fn().mockReturnValue({
@@ -169,7 +169,7 @@ describe('commitImageUrls', () => {
 
     await expect(
       commitImageUrls(tempUrls, 'resource', 'res456', mockSupabase)
-    ).rejects.toThrow('Failed to commit image temp/user-123/photo1.jpg: File not found');
+    ).rejects.toThrow('Failed to commit image user-123/temp-upload-1234567890-abc123.jpg: File not found');
   });
 
   it('should handle invalid URLs gracefully', async () => {
@@ -189,8 +189,8 @@ describe('commitImageUrls', () => {
   });
 
   it('should generate correct permanent paths for different entity types', async () => {
-    const tempUrl = 'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo.jpg';
-    const tempPath = 'temp/user-123/photo.jpg';
+    const tempUrl = 'https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg';
+    const tempPath = 'user-123/temp-upload-1234567890-abc123.jpg';
 
     mockStorageManager.extractPathFromUrl.mockReturnValue(tempPath);
 
@@ -205,15 +205,15 @@ describe('commitImageUrls', () => {
 
     // Test different entity types
     await commitImageUrls([tempUrl], 'resource', 'res123', mockSupabase);
-    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'resource-res123-photo.jpg');
+    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/resource-res123-1234567890-abc123.jpg');
 
     await commitImageUrls([tempUrl], 'event', 'evt456', mockSupabase);
-    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'event-evt456-photo.jpg');
+    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/event-evt456-1234567890-abc123.jpg');
 
     await commitImageUrls([tempUrl], 'community', 'com789', mockSupabase);
-    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'community-com789-photo.jpg');
+    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/community-com789-1234567890-abc123.jpg');
 
     await commitImageUrls([tempUrl], 'user', 'usr000', mockSupabase);
-    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-usr000-photo.jpg');
+    expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/user-usr000-1234567890-abc123.jpg');
   });
 });

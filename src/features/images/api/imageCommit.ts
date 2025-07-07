@@ -12,7 +12,7 @@ export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout
  * Commits temporary image URLs to permanent storage locations.
  * 
  * This function:
- * 1. Identifies which URLs are temporary (contain "temp/" path)
+ * 1. Identifies which URLs are temporary (contain "temp-upload-" in filename)
  * 2. Moves temporary files to permanent paths using entity type and ID
  * 3. Returns updated URLs with permanent paths
  * 4. Leaves already-permanent URLs unchanged
@@ -27,7 +27,7 @@ export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout
  * ```typescript
  * // Commit temp images when creating a resource
  * const tempUrls = [
- *   'https://proj.supabase.co/storage/v1/object/public/images/temp/user-123/photo.jpg'
+ *   'https://proj.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg'
  * ];
  * 
  * const permanentUrls = await commitImageUrls(
@@ -37,7 +37,7 @@ export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout
  *   supabase
  * );
  * 
- * // Result: ['https://proj.supabase.co/storage/v1/object/public/images/resource-resource-456-photo.jpg']
+ * // Result: ['https://proj.supabase.co/storage/v1/object/public/images/user-123/resource-resource-456-1234567890-abc123.jpg']
  * ```
  */
 export async function commitImageUrls(
@@ -71,20 +71,31 @@ export async function commitImageUrls(
       continue;
     }
 
-    // Check if this is a temporary file (starts with "temp/")
-    if (!currentPath.startsWith('temp/')) {
+    // Check if this is a temporary file (contains "temp-upload-" in filename)
+    const pathParts = currentPath.split('/');
+    const filename = pathParts[pathParts.length - 1]; // Get last part (filename)
+    
+    if (!filename.includes('temp-upload-')) {
       // Already permanent, keep as-is
       committedUrls.push(url);
       logger.debug('🖼️ Image Commit: URL already permanent', { url });
       continue;
     }
 
-    // Extract the filename from the temp path
-    const pathParts = currentPath.split('/');
-    const filename = pathParts[pathParts.length - 1]; // Get last part (filename)
-
-    // Generate new permanent path: {entityType}-{entityId}-{filename}
-    const permanentPath = `${entityType}-${entityId}-${filename}`;
+    // Extract the original filename after the temp prefix
+    // Format: temp-upload-{timestamp}-{random}.{ext}
+    const tempParts = filename.split('-');
+    if (tempParts.length < 3) {
+      logger.warn('🖼️ Image Commit: Invalid temp filename format', { filename });
+      continue;
+    }
+    
+    // Keep the timestamp and random parts for uniqueness
+    const timestampAndRandom = tempParts.slice(2).join('-');
+    const userId = pathParts[0]; // First part is user ID
+    
+    // Generate new permanent path: {userId}/{entityType}-{entityId}-{timestampAndRandom}
+    const permanentPath = `${userId}/${entityType}-${entityId}-${timestampAndRandom}`;
 
     logger.debug('🖼️ Image Commit: Moving file', {
       from: currentPath,

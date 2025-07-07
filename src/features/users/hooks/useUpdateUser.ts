@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { commitImageUrls } from '@/features/images';
@@ -103,7 +102,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn: async (userData: Partial<User> & { id: string }) => {
       logger.debug('👤 useUpdateUser: Updating user', { id: userData.id });
       
@@ -169,21 +168,4 @@ export function useUpdateUser() {
       });
     },
   });
-
-  // Return mutation with stable function reference
-  return {
-    ...mutation,
-    mutate: useCallback(
-      (...args: Parameters<typeof mutation.mutate>) => {
-        return mutation.mutate(...args);
-      },
-      [mutation],
-    ),
-    mutateAsync: useCallback(
-      (...args: Parameters<typeof mutation.mutateAsync>) => {
-        return mutation.mutateAsync(...args);
-      },
-      [mutation],
-    ),
-  };
 }

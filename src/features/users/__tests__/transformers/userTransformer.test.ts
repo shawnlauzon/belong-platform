@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { toDomainUser, forDbInsert } from '../../transformers/userTransformer';
+import { toDomainUser, forDbInsert, forDbUpdate } from '../../transformers/userTransformer';
 import { createFakeDbProfile, createFakeUserData } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
@@ -133,6 +133,197 @@ describe('User Transformer', () => {
           avatar_url: undefined,
           location: undefined,
         },
+      });
+    });
+  });
+
+  describe('forDbUpdate', () => {
+    it('should prepare partial update data for database', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          full_name: 'John Doe',
+          avatar_url: 'https://example.com/avatar.jpg',
+          location: { lat: 40.7128, lng: -74.0060 },
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+        firstName: 'Jane',
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert - Should only update firstName, preserve other fields
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        full_name: 'John Doe',
+        avatar_url: 'https://example.com/avatar.jpg',
+        location: { lat: 40.7128, lng: -74.0060 },
+      });
+      expect(dbData.updated_at).toBeDefined();
+    });
+
+    it('should handle multiple field updates', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          full_name: 'John Doe',
+          avatar_url: 'https://example.com/avatar.jpg',
+          location: { lat: 40.7128, lng: -74.0060 },
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+        firstName: 'Jane',
+        lastName: 'Smith',
+        fullName: 'Jane Smith',
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'Jane',
+        last_name: 'Smith',
+        full_name: 'Jane Smith',
+        avatar_url: 'https://example.com/avatar.jpg',
+        location: { lat: 40.7128, lng: -74.0060 },
+      });
+    });
+
+    it('should handle null values to clear fields', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          full_name: 'John Doe',
+          avatar_url: 'https://example.com/avatar.jpg',
+          location: { lat: 40.7128, lng: -74.0060 },
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+        avatarUrl: null,
+        location: null,
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert - null values should clear fields
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'John',
+        last_name: 'Doe',
+        full_name: 'John Doe',
+        avatar_url: null,
+        location: null,
+      });
+    });
+
+    it('should handle undefined values by preserving existing data', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          full_name: 'John Doe',
+          avatar_url: 'https://example.com/avatar.jpg',
+          location: { lat: 40.7128, lng: -74.0060 },
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+        firstName: 'Jane',
+        lastName: undefined, // Should be ignored
+        avatarUrl: undefined, // Should be ignored
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert - undefined values should be ignored
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        full_name: 'John Doe',
+        avatar_url: 'https://example.com/avatar.jpg',
+        location: { lat: 40.7128, lng: -74.0060 },
+      });
+    });
+
+    it('should handle empty partial update', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {
+          first_name: 'John',
+          last_name: 'Doe',
+          full_name: 'John Doe',
+          avatar_url: 'https://example.com/avatar.jpg',
+          location: { lat: 40.7128, lng: -74.0060 },
+        },
+      });
+
+      const partialUpdate = {
+        id: userId,
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert - Should preserve all existing data
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'John',
+        last_name: 'Doe',
+        full_name: 'John Doe',
+        avatar_url: 'https://example.com/avatar.jpg',
+        location: { lat: 40.7128, lng: -74.0060 },
+      });
+    });
+
+    it('should work when current profile has empty user_metadata', () => {
+      // Arrange
+      const userId = faker.string.uuid();
+      const currentProfile = createFakeDbProfile({
+        id: userId,
+        user_metadata: {},
+      });
+
+      const partialUpdate = {
+        id: userId,
+        firstName: 'Jane',
+        lastName: 'Smith',
+      };
+
+      // Act
+      const dbData = forDbUpdate(partialUpdate, currentProfile);
+
+      // Assert
+      expect(dbData.user_metadata).toEqual({
+        first_name: 'Jane',
+        last_name: 'Smith',
       });
     });
   });

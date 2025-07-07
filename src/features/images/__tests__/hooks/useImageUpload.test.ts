@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
-import { useImageUpload } from '../useImageUpload';
+import { useImageUpload } from '../../hooks/useImageUpload';
 import { createFakeUser } from '@/features/users/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -47,7 +47,7 @@ describe('useImageUpload', () => {
 
   it('should upload image with temp naming convention', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const expectedPath = `temp/${mockCurrentUser.id}/test.jpg`;
+    const expectedPath = `${mockCurrentUser.id}/temp-upload-1234567890-abc123.jpg`;
     const expectedUrl = `https://example.supabase.co/storage/v1/object/public/images/${expectedPath}`;
 
     mockStorageManager.uploadFile.mockResolvedValue({
@@ -63,11 +63,11 @@ describe('useImageUpload', () => {
     expect(uploadResult.url).toBe(expectedUrl);
     expect(uploadResult.tempPath).toBe(expectedPath);
 
-    // Verify StorageManager was called with temp folder
+    // Verify StorageManager was called with temp-upload folder parameter
     expect(mockStorageManager.uploadFile).toHaveBeenCalledWith(
       mockFile,
       expect.any(Object), // Supabase client
-      'temp'
+      'temp-upload'
     );
   });
 
@@ -126,12 +126,12 @@ describe('useImageUpload', () => {
     
     mockStorageManager.uploadFile
       .mockResolvedValueOnce({
-        url: `https://example.supabase.co/storage/v1/object/public/images/temp/${mockCurrentUser.id}/test1.jpg`,
-        path: `temp/${mockCurrentUser.id}/test1.jpg`,
+        url: `https://example.supabase.co/storage/v1/object/public/images/${mockCurrentUser.id}/temp-upload-1234567890-abc123.jpg`,
+        path: `${mockCurrentUser.id}/temp-upload-1234567890-abc123.jpg`,
       })
       .mockResolvedValueOnce({
-        url: `https://example.supabase.co/storage/v1/object/public/images/temp/${mockCurrentUser.id}/test2.jpg`,
-        path: `temp/${mockCurrentUser.id}/test2.jpg`,
+        url: `https://example.supabase.co/storage/v1/object/public/images/${mockCurrentUser.id}/temp-upload-1234567891-def456.jpg`,
+        path: `${mockCurrentUser.id}/temp-upload-1234567891-def456.jpg`,
       });
 
     const { result } = renderHook(() => useImageUpload(), { wrapper });
@@ -139,20 +139,20 @@ describe('useImageUpload', () => {
     const result1 = await result.current.mutateAsync(mockFile1);
     const result2 = await result.current.mutateAsync(mockFile2);
 
-    expect(result1.tempPath).toBe(`temp/${mockCurrentUser.id}/test1.jpg`);
-    expect(result2.tempPath).toBe(`temp/${mockCurrentUser.id}/test2.jpg`);
+    expect(result1.tempPath).toBe(`${mockCurrentUser.id}/temp-upload-1234567890-abc123.jpg`);
+    expect(result2.tempPath).toBe(`${mockCurrentUser.id}/temp-upload-1234567891-def456.jpg`);
     
     // Verify both uploads called StorageManager correctly
     expect(mockStorageManager.uploadFile).toHaveBeenCalledTimes(2);
     expect(mockStorageManager.uploadFile).toHaveBeenCalledWith(
       mockFile1, 
       expect.any(Object), // Supabase client
-      'temp'
+      'temp-upload'
     );
     expect(mockStorageManager.uploadFile).toHaveBeenCalledWith(
       mockFile2, 
       expect.any(Object), // Supabase client
-      'temp'
+      'temp-upload'
     );
   });
 });
