@@ -11,6 +11,7 @@ export function parsePostGisPoint(point: unknown): {
 } {
   if (!point) return { lat: 0, lng: 0 };
 
+  // Handle PostGIS string format: "POINT(lng lat)"
   if (typeof point === "string") {
     const match = point.match(/POINT\(([^ ]+) ([^)]+)\)/);
     if (match) {
@@ -23,6 +24,17 @@ export function parsePostGisPoint(point: unknown): {
 
   if (typeof point === "object" && point !== null) {
     const coords = point as Record<string, unknown>;
+    
+    // Handle GeoJSON Point format: {type: "Point", coordinates: [lng, lat]}
+    if (coords.type === "Point" && Array.isArray(coords.coordinates)) {
+      const [lng, lat] = coords.coordinates as [number, number];
+      return {
+        lng: lng || 0,
+        lat: lat || 0,
+      };
+    }
+    
+    // Handle legacy object formats
     if ("x" in coords && "y" in coords) {
       return {
         lng: Number(coords.x) || 0,
