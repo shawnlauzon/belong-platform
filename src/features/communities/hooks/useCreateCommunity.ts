@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { useImageCommit } from '@/features/images';
 import { createCommunity } from '@/features/communities/api';
 
 import type {
@@ -60,53 +59,13 @@ import type {
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const commitImages = useImageCommit();
 
   return useMutation({
     mutationFn: async (data: CommunityData) => {
-      // Create the community first
+      // Create the community (auto-commits images internally)
       const result = await createCommunity(supabase, data);
       if (!result) {
         throw new Error('Failed to create community');
-      }
-
-      // Commit banner image if present and is temporary
-      if (data.bannerImageUrl) {
-        logger.debug('🏘️ API: Committing community banner image', {
-          communityId: result.id,
-          bannerImageUrl: data.bannerImageUrl,
-        });
-
-        try {
-          const { permanentUrls } = await commitImages.mutateAsync({
-            imageUrls: [data.bannerImageUrl],
-            entityType: 'community',
-            entityId: result.id,
-          });
-
-          // Update the community with permanent banner URL if it changed
-          if (permanentUrls.length > 0 && permanentUrls[0] !== data.bannerImageUrl) {
-            // Import updateCommunity API here to avoid circular dependency
-            const { updateCommunity } = await import('@/features/communities/api');
-            
-            const updatedCommunity = await updateCommunity(supabase, {
-              id: result.id,
-              bannerImageUrl: permanentUrls[0],
-            });
-
-            if (updatedCommunity) {
-              // Return the updated community with permanent URL
-              return updatedCommunity;
-            }
-          }
-        } catch (error) {
-          logger.error('🏘️ API: Failed to commit community banner image', {
-            communityId: result.id,
-            error,
-          });
-          // Continue without throwing - community was created successfully
-          // We'll leave the temp URL in place and rely on cleanup service
-        }
       }
 
       return result;

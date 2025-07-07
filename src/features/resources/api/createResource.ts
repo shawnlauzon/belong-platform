@@ -5,6 +5,7 @@ import { forDbInsert } from '@/features/resources/transformers/resourceTransform
 import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
 import { ResourceRow } from '../types/database';
 import { getAuthIdOrThrow } from '@/shared';
+import { commitImageUrls } from '@/features/images/api/imageCommit';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
@@ -25,6 +26,32 @@ export async function createResource(
 
   if (error || !data) {
     throw new Error(error?.message || 'Failed to create resource');
+  }
+
+  // Auto-commit any temporary image URLs after resource creation
+  if (resourceData.imageUrls && resourceData.imageUrls.length > 0) {
+    try {
+      const permanentUrls = await commitImageUrls({
+        supabase,
+        imageUrls: resourceData.imageUrls,
+        entityType: 'resource',
+        entityId: data.id,
+      });
+      
+      // Update resource with permanent URLs if they changed
+      if (JSON.stringify(permanentUrls) !== JSON.stringify(resourceData.imageUrls)) {
+        const { updateResource } = await import('./updateResource');
+        const updatedResource = await updateResource(supabase, data.id, {
+          imageUrls: permanentUrls,
+        });
+        if (updatedResource) {
+          return updatedResource;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to commit resource images:', error);
+      // Continue without throwing - resource was created successfully
+    }
   }
 
   return toResourceInfo(data);

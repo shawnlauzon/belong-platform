@@ -9,6 +9,20 @@ import { logger } from '@/shared/logger';
 export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout';
 
 /**
+ * Input parameters for committing image URLs
+ */
+export interface CommitImageUrlsParams {
+  /** Supabase client for storage operations */
+  supabase: SupabaseClient<Database>;
+  /** Array of image URLs to commit */
+  imageUrls: string[];
+  /** Type of entity the images belong to */
+  entityType: EntityType;
+  /** ID of the entity the images belong to */
+  entityId: string;
+}
+
+/**
  * Commits temporary image URLs to permanent storage locations.
  * 
  * This function:
@@ -17,10 +31,7 @@ export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout
  * 3. Returns updated URLs with permanent paths
  * 4. Leaves already-permanent URLs unchanged
  * 
- * @param imageUrls - Array of image URLs to commit
- * @param entityType - Type of entity the images belong to
- * @param entityId - ID of the entity the images belong to
- * @param supabase - Supabase client for storage operations
+ * @param params - Object containing supabase client, imageUrls, entityType, and entityId
  * @returns Promise<string[]> - Array of permanent image URLs
  * 
  * @example
@@ -30,22 +41,22 @@ export type EntityType = 'resource' | 'event' | 'community' | 'user' | 'shoutout
  *   'https://proj.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg'
  * ];
  * 
- * const permanentUrls = await commitImageUrls(
- *   tempUrls,
- *   'resource',
- *   'resource-456',
- *   supabase
- * );
+ * const permanentUrls = await commitImageUrls({
+ *   supabase,
+ *   imageUrls: tempUrls,
+ *   entityType: 'resource',
+ *   entityId: 'resource-456'
+ * });
  * 
  * // Result: ['https://proj.supabase.co/storage/v1/object/public/images/user-123/resource-resource-456-1234567890-abc123.jpg']
  * ```
  */
-export async function commitImageUrls(
-  imageUrls: string[],
-  entityType: EntityType,
-  entityId: string,
-  supabase: SupabaseClient<Database>
-): Promise<string[]> {
+export async function commitImageUrls({
+  supabase,
+  imageUrls,
+  entityType,
+  entityId,
+}: CommitImageUrlsParams): Promise<string[]> {
   if (!imageUrls || imageUrls.length === 0) {
     return [];
   }

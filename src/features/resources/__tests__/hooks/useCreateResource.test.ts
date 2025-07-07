@@ -15,17 +15,12 @@ import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 // Mock the API functions
 vi.mock('../../api', () => ({
   createResource: vi.fn(),
-  updateResource: vi.fn(),
 }));
 
-// Mock the image commit utility
-vi.mock('@/features/images', () => ({
-  useImageCommit: vi.fn(),
-}));
+// Note: Image commit functionality is now internal to the API layer
 
 import { useSupabase } from '../../../../shared';
-import { createResource, updateResource } from '../../api';
-import { useImageCommit } from '@/features/images';
+import { createResource } from '../../api';
 import { useCurrentUser } from '../../../auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
@@ -35,8 +30,6 @@ import { createFakeCommunity } from '@/features/communities/__fakes__';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResource = vi.mocked(createResource);
-const mockUpdateResource = vi.mocked(updateResource);
-const mockUseImageCommit = vi.mocked(useImageCommit);
 const mockUseCurrentUser = vi.mocked(useCurrentUser);
 
 describe('useCreateResource', () => {
@@ -58,13 +51,7 @@ describe('useCreateResource', () => {
       data: mockCurrentUser,
     } as ReturnType<typeof useCurrentUser>);
 
-    // Mock useImageCommit to return a proper mutation object
-    mockUseImageCommit.mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-      isError: false,
-      error: null,
-    });
+    // Note: Image commit functionality is now internal to the API layer
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());
@@ -111,21 +98,17 @@ describe('useCreateResource', () => {
     expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 
-  it('should migrate temp images to permanent storage after creation', async () => {
-    // Arrange: Create test data with temp image URLs
+  it('should create resource with images (auto-commit handled internally)', async () => {
+    // Arrange: Create test data with image URLs
     const tempImageUrls = [
       'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo1.jpg',
       'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo2.jpg',
     ];
 
-    const permanentImageUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res123-photo1.jpg',
-      'https://example.supabase.co/storage/v1/object/public/images/resource-res123-photo2.jpg',
-    ];
-
     const fakeResourceInfo = createFakeResourceInfo({
       ownerId: mockCurrentUser.id,
       communityId: fakeCommunity.id,
+      imageUrls: tempImageUrls,
     });
 
     const resourceData = createFakeResourceData({
@@ -134,46 +117,16 @@ describe('useCreateResource', () => {
       imageUrls: tempImageUrls,
     });
 
-    const updatedResourceInfo = {
-      ...fakeResourceInfo,
-      imageUrls: permanentImageUrls,
-    };
-
-    // Mock the API calls
+    // Mock the API to return the resource with committed images
     mockCreateResource.mockResolvedValue(fakeResourceInfo);
-    
-    // Mock the useImageCommit hook to return permanent URLs
-    const mockImageCommitMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({
-        permanentUrls: permanentImageUrls,
-        committedCount: 2,
-      }),
-      isPending: false,
-      isError: false,
-      error: null,
-    };
-    mockUseImageCommit.mockReturnValue(mockImageCommitMutation);
-    
-    mockUpdateResource.mockResolvedValue(updatedResourceInfo);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
     const createdResourceInfo = await result.current.mutateAsync(resourceData);
 
-    // Assert: Should return resource with migrated image URLs
-    expect(createdResourceInfo.imageUrls).toEqual(permanentImageUrls);
-
-    // Verify migration was called through the hook
-    expect(mockImageCommitMutation.mutateAsync).toHaveBeenCalledWith({
-      imageUrls: tempImageUrls,
-      entityType: 'resource',
-      entityId: fakeResourceInfo.id,
-    });
-
-    // Verify resource was updated with permanent URLs
-    expect(mockUpdateResource).toHaveBeenCalledWith(mockSupabase, fakeResourceInfo.id, {
-      imageUrls: permanentImageUrls,
-    });
+    // Assert: Should return resource info (image commit happens internally in API)
+    expect(createdResourceInfo).toEqual(fakeResourceInfo);
+    expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 
   it('should handle resources without images', async () => {
@@ -195,48 +148,25 @@ describe('useCreateResource', () => {
     const { result } = renderHook(() => useCreateResource(), { wrapper });
     const createdResourceInfo = await result.current.mutateAsync(resourceData);
 
-    // Assert: Should complete successfully without calling migration
+    // Assert: Should complete successfully
     expect(createdResourceInfo).toEqual(fakeResourceInfo);
-    expect(mockUseImageCommit().mutateAsync).not.toHaveBeenCalled();
-    expect(mockUpdateResource).not.toHaveBeenCalled();
+    expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 
-  it('should continue if image migration fails', async () => {
-    // Arrange: Create test data with temp image URLs
-    const tempImageUrls = [
-      'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo1.jpg',
-    ];
-
-    const fakeResourceInfo = createFakeResourceInfo({
-      ownerId: mockCurrentUser.id,
-      communityId: fakeCommunity.id,
-    });
-
+  it('should handle API errors gracefully', async () => {
+    // Arrange: Create test data
     const resourceData = createFakeResourceData({
       ownerId: mockCurrentUser.id,
       communityId: fakeCommunity.id,
-      imageUrls: tempImageUrls,
     });
 
-    // Mock creation to succeed but migration to fail
-    mockCreateResource.mockResolvedValue(fakeResourceInfo);
-    
-    // Mock the useImageCommit hook to fail
-    const mockImageCommitMutation = {
-      mutateAsync: vi.fn().mockRejectedValue(new Error('Migration failed')),
-      isPending: false,
-      isError: false,
-      error: null,
-    };
-    mockUseImageCommit.mockReturnValue(mockImageCommitMutation);
+    // Mock API to fail
+    mockCreateResource.mockRejectedValue(new Error('API failed'));
 
-    // Act
+    // Act & Assert: Should propagate API errors
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    const createdResourceInfo = await result.current.mutateAsync(resourceData);
-
-    // Assert: Should return original resource even though migration failed
-    expect(createdResourceInfo).toEqual(fakeResourceInfo);
-    expect(mockImageCommitMutation.mutateAsync).toHaveBeenCalled();
-    expect(mockUpdateResource).not.toHaveBeenCalled();
+    
+    await expect(result.current.mutateAsync(resourceData)).rejects.toThrow('API failed');
+    expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 });

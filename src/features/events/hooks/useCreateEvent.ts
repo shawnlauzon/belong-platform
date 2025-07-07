@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { useImageCommit } from '@/features/images';
 import { createEvent } from '@/features/events/api';
 import { useCurrentUser } from '@/features/auth';
 
@@ -76,7 +75,6 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
-  const commitImages = useImageCommit();
 
   const mutation = useMutation({
     mutationFn: async (data: EventData): Promise<EventInfo> => {
@@ -84,48 +82,10 @@ export function useCreateEvent() {
         throw new Error('User must be authenticated to create events');
       }
 
-      // Create the event (returns EventInfo)
+      // Create the event (auto-commits images internally)
       const result = await createEvent(supabase, data);
       if (!result) {
         throw new Error('Failed to create event');
-      }
-
-      // Commit any temporary images to permanent storage
-      if (data.imageUrls && data.imageUrls.length > 0) {
-        logger.debug('📅 API: Committing event images', {
-          eventId: result.id,
-          imageCount: data.imageUrls.length,
-        });
-
-        try {
-          const { permanentUrls } = await commitImages.mutateAsync({
-            imageUrls: data.imageUrls,
-            entityType: 'event',
-            entityId: result.id,
-          });
-
-          // Update the event with permanent image URLs if they changed
-          if (JSON.stringify(permanentUrls) !== JSON.stringify(data.imageUrls)) {
-            // Import updateEvent API here to avoid circular dependency
-            const { updateEvent } = await import('@/features/events/api');
-            
-            const updatedEvent = await updateEvent(supabase, result.id, {
-              imageUrls: permanentUrls,
-            });
-
-            if (updatedEvent) {
-              // Return the updated event with permanent URLs
-              return updatedEvent;
-            }
-          }
-        } catch (error) {
-          logger.error('📅 API: Failed to commit event images', {
-            eventId: result.id,
-            error,
-          });
-          // Continue without throwing - event was created successfully
-          // We'll leave the temp URLs in place and rely on cleanup service
-        }
       }
 
       return result;

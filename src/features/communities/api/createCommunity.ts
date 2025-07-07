@@ -7,6 +7,7 @@ import {
 } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
+import { commitImageUrls } from '@/features/images/api/imageCommit';
 
 export async function createCommunity(
   supabase: SupabaseClient<Database>,
@@ -42,6 +43,41 @@ export async function createCommunity(
     }
 
     // Organizer membership is auto-created by database trigger
+
+    // Auto-commit banner image if present and is temporary
+    if (communityData.bannerImageUrl) {
+      try {
+        const permanentUrls = await commitImageUrls({
+          supabase,
+          imageUrls: [communityData.bannerImageUrl],
+          entityType: 'community',
+          entityId: data.id,
+        });
+
+        // Update the community with permanent banner URL if it changed
+        if (permanentUrls.length > 0 && permanentUrls[0] !== communityData.bannerImageUrl) {
+          const { updateCommunity } = await import('./updateCommunity');
+          const updatedCommunity = await updateCommunity(supabase, {
+            id: data.id,
+            bannerImageUrl: permanentUrls[0],
+          });
+
+          if (updatedCommunity) {
+            logger.debug('🏘️ API: Successfully created community with committed banner', {
+              id: updatedCommunity.id,
+              name: updatedCommunity.name,
+            });
+            return updatedCommunity;
+          }
+        }
+      } catch (error) {
+        logger.error('🏘️ API: Failed to commit community banner image', {
+          communityId: data.id,
+          error,
+        });
+        // Continue without throwing - community was created successfully
+      }
+    }
 
     const communityInfo = toCommunityInfo(data);
 

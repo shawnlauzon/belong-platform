@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { useImageCommit } from '@/features/images';
 import { updateUser } from '../api';
 import type { User } from '../types';
 
@@ -101,48 +100,12 @@ import type { User } from '../types';
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const commitImages = useImageCommit();
 
   return useMutation({
     mutationFn: async (userData: Partial<User> & { id: string }) => {
       logger.debug('👤 useUpdateUser: Updating user', { id: userData.id });
       
-      // Check if avatar image needs to be committed
-      if (userData.avatarUrl) {
-        logger.debug('👤 useUpdateUser: Committing user avatar image', {
-          userId: userData.id,
-          avatarUrl: userData.avatarUrl,
-        });
-
-        try {
-          const { permanentUrls } = await commitImages.mutateAsync({
-            imageUrls: [userData.avatarUrl],
-            entityType: 'user',
-            entityId: userData.id,
-          });
-
-          // Update userData with permanent avatar URL if it changed
-          if (permanentUrls.length > 0 && permanentUrls[0] !== userData.avatarUrl) {
-            userData = {
-              ...userData,
-              avatarUrl: permanentUrls[0],
-            };
-
-            logger.info('👤 useUpdateUser: Successfully committed avatar image', {
-              userId: userData.id,
-              oldUrl: userData.avatarUrl,
-              newUrl: permanentUrls[0],
-            });
-          }
-        } catch (error) {
-          logger.error('👤 useUpdateUser: Failed to commit avatar image', {
-            userId: userData.id,
-            error,
-          });
-          // Continue with original avatar URL - commit failure shouldn't prevent user update
-        }
-      }
-
+      // Update user (auto-commits images internally)
       return updateUser(supabase, userData);
     },
     onSuccess: (updatedUser: User) => {

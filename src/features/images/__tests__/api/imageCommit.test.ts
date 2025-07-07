@@ -58,12 +58,12 @@ describe('commitImageUrls', () => {
 
     mockSupabase.storage = { from: mockStorageFrom };
 
-    const result = await commitImageUrls(
-      tempUrls,
-      'resource',
-      'res456',
-      mockSupabase
-    );
+    const result = await commitImageUrls({
+      supabase: mockSupabase,
+      imageUrls: tempUrls,
+      entityType: 'resource',
+      entityId: 'res456',
+    });
 
     expect(result).toEqual(permanentUrls);
 
@@ -90,12 +90,12 @@ describe('commitImageUrls', () => {
       .mockReturnValueOnce(permanentPaths[0])
       .mockReturnValueOnce(permanentPaths[1]);
 
-    const result = await commitImageUrls(
-      permanentUrls,
-      'resource',
-      'res456',
-      mockSupabase
-    );
+    const result = await commitImageUrls({
+      supabase: mockSupabase,
+      imageUrls: permanentUrls,
+      entityType: 'resource',
+      entityId: 'res456',
+    });
 
     // Should return unchanged since they're already permanent
     expect(result).toEqual(permanentUrls);
@@ -134,12 +134,12 @@ describe('commitImageUrls', () => {
 
     mockSupabase.storage = { from: mockStorageFrom };
 
-    const result = await commitImageUrls(
-      mixedUrls,
-      'resource',
-      'res456',
-      mockSupabase
-    );
+    const result = await commitImageUrls({
+      supabase: mockSupabase,
+      imageUrls: mixedUrls,
+      entityType: 'resource',
+      entityId: 'res456',
+    });
 
     expect(result).toEqual(expectedResult);
 
@@ -168,7 +168,12 @@ describe('commitImageUrls', () => {
     mockSupabase.storage = { from: mockStorageFrom };
 
     await expect(
-      commitImageUrls(tempUrls, 'resource', 'res456', mockSupabase)
+      commitImageUrls({
+        supabase: mockSupabase,
+        imageUrls: tempUrls,
+        entityType: 'resource',
+        entityId: 'res456',
+      })
     ).rejects.toThrow('Failed to commit image user-123/temp-upload-1234567890-abc123.jpg: File not found');
   });
 
@@ -177,12 +182,12 @@ describe('commitImageUrls', () => {
 
     mockStorageManager.extractPathFromUrl.mockReturnValue(null);
 
-    const result = await commitImageUrls(
-      invalidUrls,
-      'resource',
-      'res456',
-      mockSupabase
-    );
+    const result = await commitImageUrls({
+      supabase: mockSupabase,
+      imageUrls: invalidUrls,
+      entityType: 'resource',
+      entityId: 'res456',
+    });
 
     // Should filter out invalid URLs
     expect(result).toEqual([]);
@@ -204,16 +209,16 @@ describe('commitImageUrls', () => {
     mockSupabase.storage = { from: mockStorageFrom };
 
     // Test different entity types
-    await commitImageUrls([tempUrl], 'resource', 'res123', mockSupabase);
+    await commitImageUrls({ supabase: mockSupabase, imageUrls: [tempUrl], entityType: 'resource', entityId: 'res123' });
     expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/resource-res123-1234567890-abc123.jpg');
 
-    await commitImageUrls([tempUrl], 'event', 'evt456', mockSupabase);
+    await commitImageUrls({ supabase: mockSupabase, imageUrls: [tempUrl], entityType: 'event', entityId: 'evt456' });
     expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/event-evt456-1234567890-abc123.jpg');
 
-    await commitImageUrls([tempUrl], 'community', 'com789', mockSupabase);
+    await commitImageUrls({ supabase: mockSupabase, imageUrls: [tempUrl], entityType: 'community', entityId: 'com789' });
     expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/community-com789-1234567890-abc123.jpg');
 
-    await commitImageUrls([tempUrl], 'user', 'usr000', mockSupabase);
+    await commitImageUrls({ supabase: mockSupabase, imageUrls: [tempUrl], entityType: 'user', entityId: 'usr000' });
     expect(mockStorageFrom().move).toHaveBeenCalledWith(tempPath, 'user-123/user-usr000-1234567890-abc123.jpg');
   });
 });

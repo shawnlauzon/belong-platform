@@ -49,7 +49,11 @@ export function useImageUpload() {
 
   const mutation = useMutation({
     mutationFn: async (file: File): Promise<ImageUploadResult> => {
-      return uploadImage(file, supabase, 'temp-upload');
+      return uploadImage({
+        supabase,
+        file,
+        folder: 'temp-upload',
+      });
     },
   });
 

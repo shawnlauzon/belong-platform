@@ -5,6 +5,18 @@ import { logger } from '@/shared/logger';
 import type { ImageUploadResult } from '../types';
 
 /**
+ * Input parameters for uploading image files
+ */
+export interface UploadImageParams {
+  /** Supabase client for storage operations */
+  supabase: SupabaseClient<Database>;
+  /** Image file to upload */
+  file: File;
+  /** Optional folder prefix (defaults to 'temp-upload') */
+  folder?: string;
+}
+
+/**
  * Uploads an image file to temporary storage.
  * 
  * This function:
@@ -13,9 +25,7 @@ import type { ImageUploadResult } from '../types';
  * 3. Uploads to temporary storage with naming convention: {userId}/temp-upload-{timestamp}-{random}.{ext}
  * 4. Returns the public URL and temporary path for later commitment
  * 
- * @param file - Image file to upload
- * @param supabase - Supabase client for storage operations
- * @param folder - Optional folder prefix (defaults to 'temp-upload')
+ * @param params - Object containing supabase client, file, and optional folder
  * @returns Promise<ImageUploadResult> - Upload result with URL and temp path
  * 
  * @example
@@ -23,18 +33,22 @@ import type { ImageUploadResult } from '../types';
  * // Upload image during form creation
  * const file = new File(['...'], 'image.jpg', { type: 'image/jpeg' });
  * 
- * const result = await uploadImage(file, supabase);
+ * const result = await uploadImage({
+ *   supabase,
+ *   file,
+ *   folder: 'temp-upload' // optional
+ * });
  * 
  * // Use result.url in form, result.tempPath for cleanup
  * console.log('Temp URL:', result.url);
  * // Result: { url: 'https://proj.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg', tempPath: 'user-123/temp-upload-1234567890-abc123.jpg' }
  * ```
  */
-export async function uploadImage(
-  file: File,
-  supabase: SupabaseClient<Database>,
-  folder: string = 'temp-upload'
-): Promise<ImageUploadResult> {
+export async function uploadImage({
+  supabase,
+  file,
+  folder = 'temp-upload',
+}: UploadImageParams): Promise<ImageUploadResult> {
   // Get current user for authentication check
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   

@@ -53,11 +53,11 @@ describe('useImageUpload', () => {
     expect(uploadResult.tempPath).toBe(expectedPath);
 
     // Verify uploadImage was called with correct parameters
-    expect(mockUploadImage).toHaveBeenCalledWith(
-      mockFile,
-      mockSupabase,
-      'temp-upload'
-    );
+    expect(mockUploadImage).toHaveBeenCalledWith({
+      supabase: mockSupabase,
+      file: mockFile,
+      folder: 'temp-upload',
+    });
   });
 
   it('should throw error when user is not authenticated', async () => {
@@ -143,15 +143,15 @@ describe('useImageUpload', () => {
     
     // Verify both uploads called uploadImage correctly
     expect(mockUploadImage).toHaveBeenCalledTimes(2);
-    expect(mockUploadImage).toHaveBeenCalledWith(
-      mockFile1, 
-      mockSupabase,
-      'temp-upload'
-    );
-    expect(mockUploadImage).toHaveBeenCalledWith(
-      mockFile2, 
-      mockSupabase,
-      'temp-upload'
-    );
+    expect(mockUploadImage).toHaveBeenCalledWith({
+      supabase: mockSupabase,
+      file: mockFile1,
+      folder: 'temp-upload',
+    });
+    expect(mockUploadImage).toHaveBeenCalledWith({
+      supabase: mockSupabase,
+      file: mockFile2,
+      folder: 'temp-upload',
+    });
   });
 });

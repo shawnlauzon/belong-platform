@@ -3,6 +3,7 @@ import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser, forDbUpdate } from '../transformers/userTransformer';
 import { User } from '../types';
+import { commitImageUrls } from '@/features/images/api/imageCommit';
 
 export async function updateUser(
   supabase: SupabaseClient<Database>,
@@ -26,7 +27,30 @@ export async function updateUser(
       throw fetchError;
     }
 
-    const updateData = forDbUpdate(userData, currentProfile);
+    // Auto-commit avatar image if present and is temporary
+    let finalAvatarUrl = userData.avatarUrl;
+    if (userData.avatarUrl) {
+      try {
+        const permanentUrls = await commitImageUrls({
+          supabase,
+          imageUrls: [userData.avatarUrl],
+          entityType: 'user',
+          entityId: userData.id,
+        });
+
+        if (permanentUrls.length > 0 && permanentUrls[0] !== userData.avatarUrl) {
+          finalAvatarUrl = permanentUrls[0];
+        }
+      } catch (error) {
+        logger.error('👤 API: Failed to commit user avatar image', {
+          userId: userData.id,
+          error,
+        });
+        // Continue with original URL as fallback
+      }
+    }
+
+    const updateData = forDbUpdate({ ...userData, avatarUrl: finalAvatarUrl }, currentProfile);
 
     const { data, error } = await supabase
       .from('profiles')
