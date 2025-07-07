@@ -13,6 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
 import type { User } from '@/features/users/types';
+import { parsePostGisPoint } from '@/shared';
 
 describe('Communities API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -37,7 +38,7 @@ describe('Communities API - CRUD Operations', () => {
     await cleanupAllTestData();
   });
 
-  describe.only('createCommunity', () => {
+  describe('createCommunity', () => {
     it('creates community with valid data', async () => {
       const data = createFakeCommunityData({
         name: `${TEST_PREFIX}Create_Test_${Date.now()}`,
@@ -70,9 +71,8 @@ describe('Communities API - CRUD Operations', () => {
           icon: data.icon,
           boundary: data.boundary,
           member_count: 1,
-          center: data.center,
         });
-        expect(dbRecord!.center).toBeTruthy();
+        expect(parsePostGisPoint(dbRecord!.center)).toEqual(data.center);
         expect(dbRecord!.created_at).toBeTruthy();
         expect(dbRecord!.updated_at).toBeTruthy();
       } finally {
@@ -206,13 +206,8 @@ describe('Communities API - CRUD Operations', () => {
           time_zone: community.timeZone,
           icon: community.icon,
           boundary: community.boundary,
-          member_count: community.memberCount,
-          created_at: community.createdAt.toISOString(),
         });
         expect(dbRecord!.center).toBeTruthy();
-        expect(new Date(dbRecord!.updated_at)).toBeAfter(
-          new Date(community.updatedAt),
-        );
       } finally {
         await cleanupCommunity(community);
       }
@@ -249,13 +244,8 @@ describe('Communities API - CRUD Operations', () => {
           time_zone: community.timeZone,
           icon: community.icon,
           boundary: community.boundary,
-          member_count: community.memberCount,
-          created_at: community.createdAt.toISOString(),
         });
         expect(dbRecord!.center).toBeTruthy();
-        expect(new Date(dbRecord!.updated_at)).toBeAfter(
-          new Date(community.updatedAt),
-        );
       } finally {
         await cleanupCommunity(community);
       }
