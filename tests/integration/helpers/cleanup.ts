@@ -1,6 +1,7 @@
 import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
 import type { CommunityInfo } from '@/features/communities/types';
+import type { ResourceInfo } from '@/features/resources/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
 export async function cleanupAllTestData() {
@@ -20,6 +21,12 @@ export async function cleanupAllTestData() {
       .delete()
       .in('community_id', communityIds);
   }
+
+  // Delete test resources
+  await serviceClient
+    .from('resources')
+    .delete()
+    .like('title', `${TEST_PREFIX}%`);
 
   // Delete test communities
   await serviceClient
@@ -92,6 +99,18 @@ export async function cleanupMembership(communityId: string, userId: string) {
     .delete()
     .eq('community_id', communityId)
     .eq('user_id', userId);
+}
+
+// Cleanup specific resource
+export async function cleanupResource(
+  resource: ResourceInfo | null | undefined,
+) {
+  if (!resource) return;
+
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient.from('resources').delete().eq('id', resource.id);
 }
 
 // Cleanup specific user
