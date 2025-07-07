@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
@@ -68,20 +67,5 @@ export function useLeaveEvent() {
     },
   });
 
-  // Return mutation with stable function references
-  return {
-    ...mutation,
-    mutate: useCallback(
-      (...args: Parameters<typeof mutation.mutate>) => {
-        return mutation.mutate(...args);
-      },
-      [mutation],
-    ),
-    mutateAsync: useCallback(
-      (...args: Parameters<typeof mutation.mutateAsync>) => {
-        return mutation.mutateAsync(...args);
-      },
-      [mutation],
-    ),
-  };
+  return mutation;
 }

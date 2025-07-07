@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signOut } from '../api';
 import { useSupabase } from '@/shared';
@@ -51,20 +50,5 @@ export function useSignOut() {
     },
   });
 
-  // Return mutation with stable function references
-  return {
-    ...mutation,
-    mutate: useCallback(
-      (...args: Parameters<typeof mutation.mutate>) => {
-        return mutation.mutate(...args);
-      },
-      [mutation]
-    ),
-    mutateAsync: useCallback(
-      (...args: Parameters<typeof mutation.mutateAsync>) => {
-        return mutation.mutateAsync(...args);
-      },
-      [mutation]
-    ),
-  };
+  return mutation;
 }
