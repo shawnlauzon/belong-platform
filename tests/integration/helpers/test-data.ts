@@ -2,6 +2,8 @@ import { createCommunity } from '@/features/communities/api';
 import { signUp } from '@/features/auth/api';
 import { createFakeCommunityData } from '@/features/communities/__fakes__';
 import { createFakeUserData } from '@/features/users/__fakes__';
+import { createResource } from '@/features/resources/api';
+import { createFakeResourceData } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
@@ -39,4 +41,22 @@ export async function createTestCommunity(supabase: SupabaseClient<Database>) {
   if (!community) throw new Error('Failed to create community');
 
   return community;
+}
+
+export async function createTestResource(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  communityId: string,
+) {
+  const data = createFakeResourceData({
+    title: `${TEST_PREFIX}Resource_${Date.now()}`,
+    description: `${TEST_PREFIX} test resource`,
+    ownerId,
+    communityId,
+  });
+
+  const resource = await createResource(supabase, data);
+  if (!resource) throw new Error('Failed to create resource');
+
+  return resource;
 }
