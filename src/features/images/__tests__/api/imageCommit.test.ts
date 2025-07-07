@@ -12,7 +12,7 @@ vi.mock('../../utils/storage', () => ({
 }));
 
 import { StorageManager } from '../../utils/storage';
-const mockStorageManager = StorageManager as any;
+const mockStorageManager = StorageManager;
 
 describe('commitImageUrls', () => {
   let mockSupabase: SupabaseClient<Database>;
@@ -56,7 +56,7 @@ describe('commitImageUrls', () => {
         .mockReturnValueOnce({ data: { publicUrl: permanentUrls[1] } }),
     });
 
-    mockSupabase.storage = { from: mockStorageFrom } as any;
+    mockSupabase.storage = { from: mockStorageFrom };
 
     const result = await commitImageUrls(
       tempUrls,
@@ -132,7 +132,7 @@ describe('commitImageUrls', () => {
         .mockReturnValueOnce({ data: { publicUrl: expectedResult[0] } }),
     });
 
-    mockSupabase.storage = { from: mockStorageFrom } as any;
+    mockSupabase.storage = { from: mockStorageFrom };
 
     const result = await commitImageUrls(
       mixedUrls,
@@ -165,7 +165,7 @@ describe('commitImageUrls', () => {
       }),
     });
 
-    mockSupabase.storage = { from: mockStorageFrom } as any;
+    mockSupabase.storage = { from: mockStorageFrom };
 
     await expect(
       commitImageUrls(tempUrls, 'resource', 'res456', mockSupabase)
@@ -201,7 +201,7 @@ describe('commitImageUrls', () => {
       }),
     });
 
-    mockSupabase.storage = { from: mockStorageFrom } as any;
+    mockSupabase.storage = { from: mockStorageFrom };
 
     // Test different entity types
     await commitImageUrls([tempUrl], 'resource', 'res123', mockSupabase);

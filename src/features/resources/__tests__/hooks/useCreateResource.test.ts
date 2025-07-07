@@ -64,7 +64,7 @@ describe('useCreateResource', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());
@@ -152,7 +152,7 @@ describe('useCreateResource', () => {
       isError: false,
       error: null,
     };
-    mockUseImageCommit.mockReturnValue(mockImageCommitMutation as any);
+    mockUseImageCommit.mockReturnValue(mockImageCommitMutation);
     
     mockUpdateResource.mockResolvedValue(updatedResourceInfo);
 
@@ -228,7 +228,7 @@ describe('useCreateResource', () => {
       isError: false,
       error: null,
     };
-    mockUseImageCommit.mockReturnValue(mockImageCommitMutation as any);
+    mockUseImageCommit.mockReturnValue(mockImageCommitMutation);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });

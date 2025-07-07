@@ -43,7 +43,7 @@ describe('useUpdateProfile', () => {
     // Mock current user
     mockUseCurrentUser.mockReturnValue({
       data: fakeUser,
-    } as any);
+    });
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());

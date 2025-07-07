@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ImageCleanupService } from '../../api/imageCleanup';
+import { cleanupTempImages, cleanupEntityImages, findOrphanedImages } from '../../api/imageCleanup';
 import { createMockSupabase } from '@/test-utils/supabase-mocks';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
-describe('ImageCleanupService', () => {
+describe('Image Cleanup Functions', () => {
   let mockSupabase: SupabaseClient<Database>;
 
   beforeEach(() => {
@@ -53,9 +53,9 @@ describe('ImageCleanupService', () => {
           list: mockStorageList,
           remove: mockStorageRemove,
         })
-      } as any;
+      };
 
-      const cleanedCount = await ImageCleanupService.cleanupTempImages(mockSupabase, 24);
+      const cleanedCount = await cleanupTempImages(mockSupabase, 24);
 
       expect(cleanedCount).toBe(1);
       expect(mockStorageRemove).toHaveBeenCalledWith(['user-123/temp-upload-1234567890-abc123.jpg']);
@@ -71,9 +71,9 @@ describe('ImageCleanupService', () => {
         from: vi.fn().mockReturnValue({
           list: mockStorageList,
         })
-      } as any;
+      };
 
-      const cleanedCount = await ImageCleanupService.cleanupTempImages(mockSupabase);
+      const cleanedCount = await cleanupTempImages(mockSupabase);
 
       expect(cleanedCount).toBe(0);
     });
@@ -88,9 +88,9 @@ describe('ImageCleanupService', () => {
         from: vi.fn().mockReturnValue({
           list: mockStorageList,
         })
-      } as any;
+      };
 
-      await expect(ImageCleanupService.cleanupTempImages(mockSupabase))
+      await expect(cleanupTempImages(mockSupabase))
         .rejects.toThrow('Failed to list images: Access denied');
     });
   });
@@ -133,9 +133,9 @@ describe('ImageCleanupService', () => {
           list: mockStorageList,
           remove: mockStorageRemove,
         })
-      } as any;
+      };
 
-      const cleanedCount = await ImageCleanupService.cleanupEntityImages(
+      const cleanedCount = await cleanupEntityImages(
         mockSupabase, 
         'resource', 
         'res123'
@@ -168,9 +168,9 @@ describe('ImageCleanupService', () => {
         from: vi.fn().mockReturnValue({
           list: mockStorageList,
         })
-      } as any;
+      };
 
-      const cleanedCount = await ImageCleanupService.cleanupEntityImages(
+      const cleanedCount = await cleanupEntityImages(
         mockSupabase, 
         'resource', 
         'res123'
@@ -204,7 +204,7 @@ describe('ImageCleanupService', () => {
         from: vi.fn().mockReturnValue({
           list: mockStorageList,
         })
-      } as any;
+      };
 
       // Mock that res123 exists but res456 doesn't
       const mockSelect = vi.fn()
@@ -223,7 +223,7 @@ describe('ImageCleanupService', () => {
         select: mockSelect
       });
 
-      const orphanedFiles = await ImageCleanupService.findOrphanedImages(mockSupabase, true);
+      const orphanedFiles = await findOrphanedImages(mockSupabase, true);
 
       expect(orphanedFiles).toEqual(['user-123/resource-res456-photo1.jpg']);
     });
@@ -254,7 +254,7 @@ describe('ImageCleanupService', () => {
           list: mockStorageList,
           remove: mockStorageRemove,
         })
-      } as any;
+      };
 
       // Mock that res456 doesn't exist
       mockSupabase.from = vi.fn().mockReturnValue({
@@ -265,7 +265,7 @@ describe('ImageCleanupService', () => {
         })
       });
 
-      const orphanedFiles = await ImageCleanupService.findOrphanedImages(mockSupabase, false);
+      const orphanedFiles = await findOrphanedImages(mockSupabase, false);
 
       expect(orphanedFiles).toEqual(['user-123/resource-res456-photo1.jpg']);
       expect(mockStorageRemove).toHaveBeenCalledWith(['user-123/resource-res456-photo1.jpg']);
