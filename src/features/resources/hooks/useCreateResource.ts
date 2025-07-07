@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { useImageCommit } from '@/features/images';
@@ -150,20 +149,5 @@ export function useCreateResource() {
     },
   });
 
-  // Return mutation with stable function references
-  return {
-    ...mutation,
-    mutate: useCallback(
-      (...args: Parameters<typeof mutation.mutate>) => {
-        return mutation.mutate(...args);
-      },
-      [mutation],
-    ),
-    mutateAsync: useCallback(
-      (...args: Parameters<typeof mutation.mutateAsync>) => {
-        return mutation.mutateAsync(...args);
-      },
-      [mutation],
-    ),
-  };
+  return mutation;
 }
