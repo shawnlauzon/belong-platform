@@ -9,7 +9,7 @@ import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 
 // Mock the StorageManager
-vi.mock('@/shared/utils/storage', () => ({
+vi.mock('../../utils/storage', () => ({
   StorageManager: {
     uploadFile: vi.fn(),
   },
@@ -18,7 +18,7 @@ vi.mock('@/shared/utils/storage', () => ({
 // Global mocks for shared and auth modules are handled in vitest.setup.ts
 import { useSupabase } from '@/shared';
 import { useCurrentUser } from '@/features/auth';
-import { StorageManager } from '@/shared/utils/storage';
+import { StorageManager } from '../../utils/storage';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockUseCurrentUser = vi.mocked(useCurrentUser);

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { commitImageUrls } from '@/features/images';
+import { useImageCommit } from '@/features/images';
 import { createCommunity } from '@/features/communities/api';
 
 import type {
@@ -60,6 +60,7 @@ import type {
 export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const commitImages = useImageCommit();
 
   return useMutation({
     mutationFn: async (data: CommunityData) => {
@@ -77,12 +78,11 @@ export function useCreateCommunity() {
         });
 
         try {
-          const permanentUrls = await commitImageUrls(
-            [data.bannerImageUrl],
-            'community',
-            result.id,
-            supabase
-          );
+          const { permanentUrls } = await commitImages.mutateAsync({
+            imageUrls: [data.bannerImageUrl],
+            entityType: 'community',
+            entityId: result.id,
+          });
 
           // Update the community with permanent banner URL if it changed
           if (permanentUrls.length > 0 && permanentUrls[0] !== data.bannerImageUrl) {
