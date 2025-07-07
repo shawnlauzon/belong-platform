@@ -112,10 +112,10 @@ export class StorageManager {
         throw new Error('User must be authenticated to upload files');
       }
 
-      // Generate unique filename
+      // Generate unique filename with new naming convention: {userId}/{folder}-{timestamp}-{random}.{ext}
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${folder}/${user.id}/${fileName}`;
+      const fileName = `${folder}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
       logApiCall('POST', `/storage/upload/${filePath}`, {
         fileName: file.name,

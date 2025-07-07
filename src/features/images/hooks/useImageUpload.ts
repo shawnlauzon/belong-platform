@@ -9,7 +9,7 @@ import type { ImageUploadResult } from '../types';
 /**
  * Hook for uploading images to temporary storage.
  *
- * Images are uploaded with a temporary naming convention: temp-{userId}-{timestamp}-{filename}
+ * Images are uploaded with a temporary naming convention: {userId}/temp-upload-{timestamp}-{random}.{ext}
  * These images can later be committed to permanent storage when associated with entities.
  * Temporary images older than 24 hours are automatically cleaned up.
  *
@@ -74,8 +74,8 @@ export function useImageUpload() {
         userId: currentUser.data.id,
       });
 
-      // Use temp folder for uploads - images will be migrated later
-      const result = await StorageManager.uploadFile(file, supabase, 'temp');
+      // Use temp-upload folder parameter for uploads - images will be migrated later
+      const result = await StorageManager.uploadFile(file, supabase, 'temp-upload');
 
       logger.info('✅ Image Upload: Successfully uploaded to temp storage', {
         fileName: file.name,

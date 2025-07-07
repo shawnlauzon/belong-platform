@@ -27,7 +27,7 @@ export class ImageCleanupService {
     logger.info('🧹 Image Cleanup: Starting temp image cleanup', { maxAgeHours });
 
     try {
-      // List all files in the images bucket
+      // List all files in the images bucket recursively to get files in user folders
       const { data: files, error } = await supabase.storage
         .from(this.bucketName)
         .list('', {
@@ -39,7 +39,31 @@ export class ImageCleanupService {
         throw new Error(`Failed to list images: ${error.message}`);
       }
 
-      if (!files || files.length === 0) {
+      // Also get files from all user folders
+      const allFiles: Array<{ name: string; created_at?: string }> = [];
+      
+      if (files) {
+        // Get files from each user folder
+        for (const folder of files.filter(f => f.id === null)) { // Folders have null id
+          const { data: userFiles } = await supabase.storage
+            .from(this.bucketName)
+            .list(folder.name, {
+              limit: 1000,
+              sortBy: { column: 'created_at', order: 'asc' }
+            });
+          
+          if (userFiles) {
+            // Prefix filenames with folder path
+            const prefixedFiles = userFiles.map(file => ({
+              ...file,
+              name: `${folder.name}/${file.name}`
+            }));
+            allFiles.push(...prefixedFiles);
+          }
+        }
+      }
+
+      if (allFiles.length === 0) {
         logger.info('🧹 Image Cleanup: No images found');
         return 0;
       }
@@ -48,8 +72,8 @@ export class ImageCleanupService {
       const cutoffTime = new Date();
       cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
 
-      const tempFilesToDelete = files.filter(file => {
-        const isTemp = file.name.startsWith('temp/') || file.name.startsWith('temp-');
+      const tempFilesToDelete = allFiles.filter(file => {
+        const isTemp = file.name.includes('/temp-upload-'); // New format: {userId}/temp-upload-*
         const fileAge = new Date(file.created_at || '');
         const isOld = fileAge < cutoffTime;
         
@@ -102,8 +126,8 @@ export class ImageCleanupService {
     });
 
     try {
-      // List all files in the images bucket
-      const { data: files, error } = await supabase.storage
+      // List all files in the images bucket recursively
+      const { data: folders, error } = await supabase.storage
         .from(this.bucketName)
         .list('', {
           limit: 1000,
@@ -113,14 +137,37 @@ export class ImageCleanupService {
         throw new Error(`Failed to list images: ${error.message}`);
       }
 
-      if (!files || files.length === 0) {
+      const allFiles: Array<{ name: string }> = [];
+      
+      if (folders) {
+        // Get files from each user folder
+        for (const folder of folders.filter(f => f.id === null)) { // Folders have null id
+          const { data: userFiles } = await supabase.storage
+            .from(this.bucketName)
+            .list(folder.name, {
+              limit: 1000,
+            });
+          
+          if (userFiles) {
+            // Prefix filenames with folder path
+            const prefixedFiles = userFiles.map(file => ({
+              ...file,
+              name: `${folder.name}/${file.name}`
+            }));
+            allFiles.push(...prefixedFiles);
+          }
+        }
+      }
+
+      if (allFiles.length === 0) {
         return 0;
       }
 
       // Filter for files belonging to this entity
-      const entityPrefix = `${entityType}-${entityId}-`;
-      const entityFilesToDelete = files.filter(file => 
-        file.name.startsWith(entityPrefix)
+      // New format: {userId}/{entityType}-{entityId}-*
+      const entityPattern = `/${entityType}-${entityId}-`;
+      const entityFilesToDelete = allFiles.filter(file => 
+        file.name.includes(entityPattern)
       );
 
       if (entityFilesToDelete.length === 0) {
@@ -173,8 +220,8 @@ export class ImageCleanupService {
     logger.info('🧹 Image Cleanup: Finding orphaned images', { dryRun });
 
     try {
-      // List all permanent image files (not temp)
-      const { data: files, error } = await supabase.storage
+      // List all files recursively
+      const { data: folders, error } = await supabase.storage
         .from(this.bucketName)
         .list('', {
           limit: 1000,
@@ -184,15 +231,37 @@ export class ImageCleanupService {
         throw new Error(`Failed to list images: ${error.message}`);
       }
 
-      if (!files || files.length === 0) {
+      const allFiles: Array<{ name: string }> = [];
+      
+      if (folders) {
+        // Get files from each user folder
+        for (const folder of folders.filter(f => f.id === null)) { // Folders have null id
+          const { data: userFiles } = await supabase.storage
+            .from(this.bucketName)
+            .list(folder.name, {
+              limit: 1000,
+            });
+          
+          if (userFiles) {
+            // Prefix filenames with folder path
+            const prefixedFiles = userFiles.map(file => ({
+              ...file,
+              name: `${folder.name}/${file.name}`
+            }));
+            allFiles.push(...prefixedFiles);
+          }
+        }
+      }
+
+      if (allFiles.length === 0) {
         return [];
       }
 
       // Filter for permanent files (not temp)
-      const permanentFiles = files.filter(file => 
-        !file.name.startsWith('temp/') && 
-        !file.name.startsWith('temp-') &&
-        file.name.includes('-') // Should have entity-id pattern
+      const permanentFiles = allFiles.filter(file => 
+        !file.name.includes('/temp-upload-') && // Not temp files
+        file.name.includes('/') && // Has user folder structure
+        file.name.split('/')[1]?.includes('-') // Filename has entity-id pattern
       );
 
       const orphanedFiles: string[] = [];
@@ -250,8 +319,14 @@ export class ImageCleanupService {
   ): Promise<boolean> {
     try {
       // Parse entity type and ID from filename
-      // Expected format: {entityType}-{entityId}-{timestamp}-{filename}
-      const parts = fileName.split('-');
+      // Expected format: {userId}/{entityType}-{entityId}-{timestamp}-{filename}
+      const pathParts = fileName.split('/');
+      if (pathParts.length < 2) {
+        return false; // Can't parse, assume not orphaned
+      }
+      
+      const actualFileName = pathParts[1]; // Get filename after user folder
+      const parts = actualFileName.split('-');
       if (parts.length < 2) {
         return false; // Can't parse, assume not orphaned
       }

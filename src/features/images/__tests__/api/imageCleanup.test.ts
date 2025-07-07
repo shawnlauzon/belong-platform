@@ -14,14 +14,17 @@ describe('ImageCleanupService', () => {
 
   describe('cleanupTempImages', () => {
     it('should clean up old temp images', async () => {
-      // Mock old temp files
+      // Mock user folders
+      const userFolder = { name: 'user-123', id: null }; // Folders have null id
+      
+      // Mock old temp files in user folder
       const oldTempFile = {
-        name: 'temp/user-123/old-image.jpg',
+        name: 'temp-upload-1234567890-abc123.jpg',
         created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25 hours ago
       };
 
       const recentTempFile = {
-        name: 'temp/user-123/recent-image.jpg',
+        name: 'temp-upload-1234567891-def456.jpg',
         created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
       };
 
@@ -30,11 +33,16 @@ describe('ImageCleanupService', () => {
         created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25 hours ago
       };
 
-      // Mock storage list response
-      const mockStorageList = vi.fn().mockResolvedValue({
-        data: [oldTempFile, recentTempFile, permanentFile],
-        error: null
-      });
+      // Mock storage list responses - first call returns folders, second call returns files in user folder
+      const mockStorageList = vi.fn()
+        .mockResolvedValueOnce({
+          data: [userFolder], // First call returns folders
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: [oldTempFile, recentTempFile, permanentFile], // Second call returns files in user folder
+          error: null
+        });
 
       const mockStorageRemove = vi.fn().mockResolvedValue({
         error: null
@@ -50,12 +58,12 @@ describe('ImageCleanupService', () => {
       const cleanedCount = await ImageCleanupService.cleanupTempImages(mockSupabase, 24);
 
       expect(cleanedCount).toBe(1);
-      expect(mockStorageRemove).toHaveBeenCalledWith(['temp/user-123/old-image.jpg']);
+      expect(mockStorageRemove).toHaveBeenCalledWith(['user-123/temp-upload-1234567890-abc123.jpg']);
     });
 
     it('should handle empty storage bucket', async () => {
       const mockStorageList = vi.fn().mockResolvedValue({
-        data: [],
+        data: [], // No folders
         error: null
       });
 
@@ -89,6 +97,12 @@ describe('ImageCleanupService', () => {
 
   describe('cleanupEntityImages', () => {
     it('should clean up images for a specific entity', async () => {
+      // Mock user folders
+      const userFolders = [
+        { name: 'user-123', id: null },
+        { name: 'user-456', id: null },
+      ];
+      
       const entityFiles = [
         { name: 'resource-res123-photo1.jpg' },
         { name: 'resource-res123-photo2.jpg' },
@@ -96,10 +110,19 @@ describe('ImageCleanupService', () => {
         { name: 'event-evt123-photo1.jpg' }, // Different type
       ];
 
-      const mockStorageList = vi.fn().mockResolvedValue({
-        data: entityFiles,
-        error: null
-      });
+      const mockStorageList = vi.fn()
+        .mockResolvedValueOnce({
+          data: userFolders, // First call returns folders
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: entityFiles, // Files in user-123 folder
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: [], // Files in user-456 folder (empty)
+          error: null
+        });
 
       const mockStorageRemove = vi.fn().mockResolvedValue({
         error: null
@@ -120,19 +143,26 @@ describe('ImageCleanupService', () => {
 
       expect(cleanedCount).toBe(2);
       expect(mockStorageRemove).toHaveBeenCalledWith([
-        'resource-res123-photo1.jpg',
-        'resource-res123-photo2.jpg'
+        'user-123/resource-res123-photo1.jpg',
+        'user-123/resource-res123-photo2.jpg'
       ]);
     });
 
     it('should handle no matching entity images', async () => {
-      const mockStorageList = vi.fn().mockResolvedValue({
-        data: [
-          { name: 'resource-different-photo1.jpg' },
-          { name: 'event-evt123-photo1.jpg' },
-        ],
-        error: null
-      });
+      const userFolders = [{ name: 'user-123', id: null }];
+      
+      const mockStorageList = vi.fn()
+        .mockResolvedValueOnce({
+          data: userFolders,
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: [
+            { name: 'resource-different-photo1.jpg' },
+            { name: 'event-evt123-photo1.jpg' },
+          ],
+          error: null
+        });
 
       mockSupabase.storage = {
         from: vi.fn().mockReturnValue({
@@ -152,16 +182,23 @@ describe('ImageCleanupService', () => {
 
   describe('findOrphanedImages', () => {
     it('should find orphaned images in dry run mode', async () => {
+      const userFolders = [{ name: 'user-123', id: null }];
+      
       const files = [
         { name: 'resource-res123-photo1.jpg' },
         { name: 'resource-res456-photo1.jpg' },
-        { name: 'temp/user-123/temp.jpg' }, // Should be ignored
+        { name: 'temp-upload-1234567890-abc123.jpg' }, // Should be ignored
       ];
 
-      const mockStorageList = vi.fn().mockResolvedValue({
-        data: files,
-        error: null
-      });
+      const mockStorageList = vi.fn()
+        .mockResolvedValueOnce({
+          data: userFolders,
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: files,
+          error: null
+        });
 
       mockSupabase.storage = {
         from: vi.fn().mockReturnValue({
@@ -188,18 +225,25 @@ describe('ImageCleanupService', () => {
 
       const orphanedFiles = await ImageCleanupService.findOrphanedImages(mockSupabase, true);
 
-      expect(orphanedFiles).toEqual(['resource-res456-photo1.jpg']);
+      expect(orphanedFiles).toEqual(['user-123/resource-res456-photo1.jpg']);
     });
 
     it('should delete orphaned images when not in dry run mode', async () => {
+      const userFolders = [{ name: 'user-123', id: null }];
+      
       const files = [
         { name: 'resource-res456-photo1.jpg' },
       ];
 
-      const mockStorageList = vi.fn().mockResolvedValue({
-        data: files,
-        error: null
-      });
+      const mockStorageList = vi.fn()
+        .mockResolvedValueOnce({
+          data: userFolders,
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: files,
+          error: null
+        });
 
       const mockStorageRemove = vi.fn().mockResolvedValue({
         error: null
@@ -223,8 +267,8 @@ describe('ImageCleanupService', () => {
 
       const orphanedFiles = await ImageCleanupService.findOrphanedImages(mockSupabase, false);
 
-      expect(orphanedFiles).toEqual(['resource-res456-photo1.jpg']);
-      expect(mockStorageRemove).toHaveBeenCalledWith(['resource-res456-photo1.jpg']);
+      expect(orphanedFiles).toEqual(['user-123/resource-res456-photo1.jpg']);
+      expect(mockStorageRemove).toHaveBeenCalledWith(['user-123/resource-res456-photo1.jpg']);
     });
   });
 });
