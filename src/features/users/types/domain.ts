@@ -7,6 +7,7 @@ export interface User {
   fullName?: string;
   email: string;
   avatarUrl?: string;
+  bio?: string;
   location?: Coordinates;
   createdAt: Date;
   updatedAt: Date;

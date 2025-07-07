@@ -32,6 +32,7 @@ export function createFakeUserData(
     lastName: faker.person.lastName(),
     fullName: faker.person.fullName(),
     avatarUrl: faker.image.avatar(),
+    bio: faker.lorem.paragraph(),
     location: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -57,6 +58,7 @@ export function createFakeDbProfile(
       last_name: lastName,
       full_name: `${firstName} ${lastName}`,
       avatar_url: faker.image.avatar(),
+      bio: faker.lorem.paragraph(),
       location: {
         lat: faker.location.latitude(),
         lng: faker.location.longitude(),

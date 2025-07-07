@@ -11,6 +11,7 @@ type UserMetadata = {
   last_name?: string;
   full_name?: string;
   avatar_url?: string;
+  bio?: string;
   location?: {
     lat: number;
     lng: number;
@@ -22,7 +23,7 @@ type UserMetadata = {
  */
 export function toDomainUser(profile: ProfileRow): User {
   const metadata = (profile.user_metadata || {}) as UserMetadata;
-  const { first_name, last_name, full_name, avatar_url, location } = metadata;
+  const { first_name, last_name, full_name, avatar_url, bio, location } = metadata;
 
   return {
     id: profile.id,
@@ -31,6 +32,7 @@ export function toDomainUser(profile: ProfileRow): User {
     lastName: last_name,
     fullName: full_name,
     avatarUrl: avatar_url,
+    bio,
     location,
     createdAt: new Date(profile.created_at),
     updatedAt: new Date(profile.updated_at),
@@ -41,7 +43,7 @@ export function toDomainUser(profile: ProfileRow): User {
  * Prepares user data for database insertion into profiles table
  */
 export function forDbInsert(userData: UserData): ProfileInsertDbData {
-  const { id, email, firstName, lastName, fullName, avatarUrl, location } =
+  const { id, email, firstName, lastName, fullName, avatarUrl, bio, location } =
     userData;
 
   const user_metadata: UserMetadata = {
@@ -49,6 +51,7 @@ export function forDbInsert(userData: UserData): ProfileInsertDbData {
     last_name: lastName,
     full_name: fullName,
     avatar_url: avatarUrl,
+    bio,
     location,
   };
 
@@ -83,6 +86,9 @@ export function forDbUpdate(
   }
   if (userData.avatarUrl !== undefined) {
     updatedMetadata.avatar_url = userData.avatarUrl;
+  }
+  if (userData.bio !== undefined) {
+    updatedMetadata.bio = userData.bio;
   }
   if (userData.location !== undefined) {
     updatedMetadata.location = userData.location;
