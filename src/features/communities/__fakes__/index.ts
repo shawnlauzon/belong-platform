@@ -123,9 +123,9 @@ export function createFakeDbCommunity(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
     center: {
-      type: "Point",
-      crs: { type: "name", properties: { name: "EPSG:4326" } },
-      coordinates: [lng, lat]
+      type: 'Point',
+      crs: { type: 'name', properties: { name: 'EPSG:4326' } },
+      coordinates: [lng, lat],
     }, // GeoJSON format returned by PostGIS
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
@@ -239,8 +239,6 @@ export function createFakeCommunityMembership(
   overrides: Partial<CommunityMembership> = {},
 ): CommunityMembership {
   return {
-    userId: faker.string.uuid(),
-    communityId: faker.string.uuid(),
     joinedAt: faker.date.past(),
     user: createFakeUser(),
     community: createFakeCommunity(),
