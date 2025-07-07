@@ -20,14 +20,13 @@ describe('useLeaveCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should leave community successfully', async () => {
+  it('should leave community successfully using mutateAsync', async () => {
     const communityId = faker.string.uuid();
     mockLeaveCommunity.mockResolvedValue();
 
     const { result } = renderHook(() => useLeaveCommunity(), { wrapper });
-    const leaveCommunityFn = result.current;
 
-    await leaveCommunityFn(communityId);
+    await result.current.mutateAsync(communityId);
 
     expect(mockLeaveCommunity).toHaveBeenCalledWith(
       expect.any(Object),

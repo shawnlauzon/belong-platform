@@ -21,7 +21,7 @@ describe('useJoinCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return CommunityMembershipInfo after joining', async () => {
+  it('should return CommunityMembershipInfo after joining using mutateAsync', async () => {
     const communityId = faker.string.uuid();
     const mockMembershipInfo = createFakeCommunityMembershipInfo({
       communityId,
@@ -29,9 +29,8 @@ describe('useJoinCommunity', () => {
     mockJoinCommunity.mockResolvedValue(mockMembershipInfo);
 
     const { result } = renderHook(() => useJoinCommunity(), { wrapper });
-    const joinCommunityFn = result.current;
 
-    const membershipInfo = await joinCommunityFn(communityId);
+    const membershipInfo = await result.current.mutateAsync(communityId);
 
     expect(membershipInfo).toEqual(mockMembershipInfo);
     expect(mockJoinCommunity).toHaveBeenCalledWith(

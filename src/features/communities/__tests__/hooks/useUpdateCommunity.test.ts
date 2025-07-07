@@ -21,7 +21,7 @@ describe('useUpdateCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return CommunityInfo after update', async () => {
+  it('should return CommunityInfo after update using mutateAsync', async () => {
     const communityId = faker.string.uuid();
     const updateData = {
       name: faker.company.name(),
@@ -35,9 +35,8 @@ describe('useUpdateCommunity', () => {
     mockUpdateCommunity.mockResolvedValue(mockUpdatedInfo);
 
     const { result } = renderHook(() => useUpdateCommunity(), { wrapper });
-    const updateCommunityFn = result.current;
 
-    const updatedCommunity = await updateCommunityFn(communityId, updateData);
+    const updatedCommunity = await result.current.mutateAsync({ communityId, updateData });
 
     expect(updatedCommunity).toEqual(mockUpdatedInfo);
     expect(mockUpdateCommunity).toHaveBeenCalledWith(

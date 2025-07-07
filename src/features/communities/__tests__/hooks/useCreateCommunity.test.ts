@@ -24,7 +24,7 @@ describe('useCreateCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return CommunityInfo after creation', async () => {
+  it('should return CommunityInfo after creation using mutateAsync', async () => {
     const communityData = createFakeCommunityData();
     const mockCreatedInfo = createFakeCommunityInfo({
       id: faker.string.uuid(),
@@ -33,9 +33,8 @@ describe('useCreateCommunity', () => {
     mockCreateCommunity.mockResolvedValue(mockCreatedInfo);
 
     const { result } = renderHook(() => useCreateCommunity(), { wrapper });
-    const createCommunityFn = result.current;
 
-    const createdCommunity = await createCommunityFn(communityData);
+    const createdCommunity = await result.current.mutateAsync(communityData);
 
     expect(createdCommunity).toEqual(mockCreatedInfo);
   });

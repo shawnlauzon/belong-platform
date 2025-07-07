@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@/features/users';
 import { updateUser } from '@/features/users/api';
@@ -9,15 +8,15 @@ import { useCurrentUser } from './useCurrentUser';
 /**
  * Hook for updating the current user's profile.
  *
- * Provides a mutation function for updating user profile information.
+ * Provides a mutation object for updating user profile information.
  * Automatically updates the user cache on successful update.
  *
- * @returns Update profile mutation function
+ * @returns Update profile mutation object with mutate, mutateAsync, isLoading, isError, etc.
  *
  * @example
  * ```tsx
  * function ProfileForm() {
- *   const updateProfile = useUpdateProfile();
+ *   const updateProfileMutation = useUpdateProfile();
  *   const currentUser = useCurrentUser();
  *   const [firstName, setFirstName] = useState(currentUser?.firstName || '');
  *   const [lastName, setLastName] = useState(currentUser?.lastName || '');
@@ -25,7 +24,7 @@ import { useCurrentUser } from './useCurrentUser';
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
- *       await updateProfile({ firstName, lastName });
+ *       await updateProfileMutation.mutateAsync({ firstName, lastName });
  *       // Profile updated successfully
  *     } catch (error) {
  *       console.error('Update failed:', error);
@@ -42,7 +41,9 @@ import { useCurrentUser } from './useCurrentUser';
  *         value={lastName}
  *         onChange={(e) => setLastName(e.target.value)}
  *       />
- *       <button type="submit">Update Profile</button>
+ *       <button type="submit" disabled={updateProfileMutation.isPending}>
+ *         {updateProfileMutation.isPending ? 'Updating...' : 'Update Profile'}
+ *       </button>
  *     </form>
  *   );
  * }
@@ -53,7 +54,7 @@ export function useUpdateProfile() {
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
 
-  const mutation = useMutation<User, Error, Partial<User>>({
+  return useMutation<User, Error, Partial<User>>({
     mutationFn: (updates: Partial<User>) => {
       if (!currentUser?.data?.id) {
         throw new Error('No authenticated user to update');
@@ -76,12 +77,4 @@ export function useUpdateProfile() {
       logger.error('🔐 API: Failed to update profile', { error });
     },
   });
-
-  // Return stable function reference
-  return useCallback(
-    (updates: Partial<User>) => {
-      return mutation.mutateAsync(updates);
-    },
-    [mutation],
-  );
 }

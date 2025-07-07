@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
@@ -6,21 +5,20 @@ import { createCommunity } from '@/features/communities/api';
 
 import type {
   CommunityData,
-  CommunityInfo,
 } from '@/features/communities/types';
 
 /**
  * Hook for creating a new community.
  *
- * Provides a mutation function for creating communities.
+ * Provides a mutation object for creating communities.
  * Automatically invalidates community caches on successful creation.
  *
- * @returns Create community mutation function
+ * @returns Create community mutation object with mutate, mutateAsync, isLoading, isError, etc.
  *
  * @example
  * ```tsx
  * function CreateCommunityForm() {
- *   const createCommunity = useCreateCommunity();
+ *   const createCommunityMutation = useCreateCommunity();
  *   const [formData, setFormData] = useState({
  *     name: '',
  *     description: '',
@@ -32,7 +30,7 @@ import type {
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
- *       const community = await createCommunity(formData);
+ *       const community = await createCommunityMutation.mutateAsync(formData);
  *       console.log('Created community:', community.name);
  *       // Redirect to community page
  *     } catch (error) {
@@ -50,7 +48,9 @@ import type {
  *         value={formData.description}
  *         onChange={(e) => setFormData({...formData, description: e.target.value})}
  *       />
- *       <button type="submit">Create Community</button>
+ *       <button type="submit" disabled={createCommunityMutation.isPending}>
+ *         {createCommunityMutation.isPending ? 'Creating...' : 'Create Community'}
+ *       </button>
  *     </form>
  *   );
  * }
@@ -60,7 +60,7 @@ export function useCreateCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn: (data: CommunityData) => createCommunity(supabase, data),
     onSuccess: (newCommunityInfo) => {
       // Invalidate all communities queries
@@ -87,12 +87,4 @@ export function useCreateCommunity() {
       logger.error('🏘️ API: Failed to create community', { error });
     },
   });
-
-  // Return stable function reference
-  return useCallback(
-    (data: CommunityData): Promise<CommunityInfo | null> => {
-      return mutation.mutateAsync(data);
-    },
-    [mutation],
-  );
 }
