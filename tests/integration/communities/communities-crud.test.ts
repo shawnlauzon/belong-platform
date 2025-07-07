@@ -106,7 +106,6 @@ describe('Communities API - CRUD Operations', () => {
   describe('fetchCommunities', () => {
     it('fetches all communities', async () => {
       const communities = await api.fetchCommunities(supabase);
-      console.log('*** communities', JSON.stringify(communities, null, 2));
 
       expect(Array.isArray(communities)).toBe(true);
       expect(communities.some((c) => c.id === readOnlyCommunity1.id)).toBe(
