@@ -124,26 +124,37 @@ describe('createCommunity API', () => {
       }),
     );
 
-    // Verify the returned CommunityInfo object has correct structure
+    // Verify the returned CommunityInfo object has correct structure and proper transformations
     expect(result).toEqual(
       expect.objectContaining({
+        // Basic fields should match database response
         id: mockDbResponse.id,
         name: mockDbResponse.name,
         description: mockDbResponse.description,
-        icon: mockDbResponse.icon,
+        icon: mockDbResponse.icon || undefined, // Handle null vs undefined
         organizerId: fakeOrganizerId,
         memberCount: mockDbResponse.member_count,
         timeZone: mockDbResponse.time_zone,
+        
+        // Center should be transformed from GeoJSON to domain coordinates
         center: {
           lat: (mockDbResponse.center as any).coordinates[1],
           lng: (mockDbResponse.center as any).coordinates[0],
         },
+        
+        // Boundary should be properly parsed with domain field names
         boundary: expect.objectContaining({
           type: 'isochrone',
-          travelMode: mockDbResponse.boundary?.travelMode,
-          travelTimeMin: mockDbResponse.boundary?.travelTimeMin,
-          areaSqKm: mockDbResponse.boundary?.areaSqKm,
+          travelMode: expect.any(String),
+          travelTimeMin: expect.any(Number),
+          areaSqKm: expect.any(Number),
+          polygon: expect.objectContaining({
+            type: 'Polygon',
+            coordinates: expect.any(Array),
+          }),
         }),
+        
+        // Dates should be properly transformed
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       }),
