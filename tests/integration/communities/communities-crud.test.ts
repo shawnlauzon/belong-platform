@@ -37,7 +37,7 @@ describe('Communities API - CRUD Operations', () => {
     await cleanupAllTestData();
   });
 
-  describe('createCommunity', () => {
+  describe.only('createCommunity', () => {
     it('creates community with valid data', async () => {
       const data = createFakeCommunityData({
         name: `${TEST_PREFIX}Create_Test_${Date.now()}`,
@@ -51,6 +51,30 @@ describe('Communities API - CRUD Operations', () => {
         expect(community!.id).toBeTruthy();
         expect(community!.name).toBe(data.name);
         expect(community!.organizerId).toBe(testUser.id);
+
+        // Verify database record exists with all expected fields
+        const { data: dbRecord } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', community!.id)
+          .single();
+
+        console.log('*** dbRecord', JSON.stringify(dbRecord, null, 2));
+
+        expect(dbRecord).toMatchObject({
+          id: community!.id,
+          name: data.name,
+          description: data.description,
+          organizer_id: testUser.id,
+          time_zone: data.timeZone,
+          icon: data.icon,
+          boundary: data.boundary,
+          member_count: 1,
+          center: data.center,
+        });
+        expect(dbRecord!.center).toBeTruthy();
+        expect(dbRecord!.created_at).toBeTruthy();
+        expect(dbRecord!.updated_at).toBeTruthy();
       } finally {
         await cleanupCommunity(community);
       }
@@ -82,6 +106,7 @@ describe('Communities API - CRUD Operations', () => {
   describe('fetchCommunities', () => {
     it('fetches all communities', async () => {
       const communities = await api.fetchCommunities(supabase);
+      console.log('*** communities', JSON.stringify(communities, null, 2));
 
       expect(Array.isArray(communities)).toBe(true);
       expect(communities.some((c) => c.id === readOnlyCommunity1.id)).toBe(
@@ -165,6 +190,29 @@ describe('Communities API - CRUD Operations', () => {
         expect(updated!.name).toBe(newName);
         expect(updated!.description).toBe(newDescription);
         expect(updated!.id).toBe(community.id);
+
+        // Verify database record has been updated with all expected fields
+        const { data: dbRecord } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', community.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: community.id,
+          name: newName,
+          description: newDescription,
+          organizer_id: community.organizerId,
+          time_zone: community.timeZone,
+          icon: community.icon,
+          boundary: community.boundary,
+          member_count: community.memberCount,
+          created_at: community.createdAt.toISOString(),
+        });
+        expect(dbRecord!.center).toBeTruthy();
+        expect(new Date(dbRecord!.updated_at)).toBeAfter(
+          new Date(community.updatedAt),
+        );
       } finally {
         await cleanupCommunity(community);
       }
@@ -185,6 +233,29 @@ describe('Communities API - CRUD Operations', () => {
         expect(updated!.name).toBe(newName);
         expect(updated!.description).toBe(originalDescription);
         expect(updated!.organizerId).toBe(community.organizerId);
+
+        // Verify database record preserves unchanged fields
+        const { data: dbRecord } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', community.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: community.id,
+          name: newName,
+          description: originalDescription,
+          organizer_id: community.organizerId,
+          time_zone: community.timeZone,
+          icon: community.icon,
+          boundary: community.boundary,
+          member_count: community.memberCount,
+          created_at: community.createdAt.toISOString(),
+        });
+        expect(dbRecord!.center).toBeTruthy();
+        expect(new Date(dbRecord!.updated_at)).toBeAfter(
+          new Date(community.updatedAt),
+        );
       } finally {
         await cleanupCommunity(community);
       }
