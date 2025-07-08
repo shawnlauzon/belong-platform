@@ -135,26 +135,61 @@ describe('Events API - CRUD Operations', () => {
     });
 
     it('handles image auto-commit workflow', async () => {
-      const data = createFakeEventData({
-        title: `${TEST_PREFIX}Image_Test_${Date.now()}`,
-        organizerId: testUser.id,
-        communityId: testCommunity.id,
-        startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        imageUrls: [
-          'https://temp.supabase.co/storage/v1/object/public/images/temp-upload-123.jpg',
-        ],
-      });
-
+      const { uploadImage } = await import('@/features/images/api');
+      
+      // Create a test image file
+      const testImageContent = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG header
+      const testFile = new File([testImageContent], 'test-image.png', { type: 'image/png' });
+      
+      let tempImageResult: { url: string; tempPath: string } | null = null;
       let event;
+      
       try {
+        // First upload a temporary image
+        tempImageResult = await uploadImage({ 
+          supabase, 
+          file: testFile, 
+          folder: 'temp-uploads' 
+        });
+        
+        expect(tempImageResult).toBeTruthy();
+        expect(tempImageResult.url).toContain('temp-uploads-');
+        expect(tempImageResult.tempPath).toBeTruthy();
+        
+        // Create event with the temporary image URL
+        const data = createFakeEventData({
+          title: `${TEST_PREFIX}Image_Test_${Date.now()}`,
+          organizerId: testUser.id,
+          communityId: testCommunity.id,
+          startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          imageUrls: [tempImageResult.url],
+        });
+
         event = await api.createEvent(supabase, data);
 
-        // If images are auto-committed, temp URLs should be converted
+        // If images are auto-committed, temp URLs should be converted to permanent URLs
         if (event!.imageUrls && event!.imageUrls.length > 0) {
-          expect(event!.imageUrls[0]).not.toContain('temp-upload-');
+          expect(event!.imageUrls[0]).not.toContain('temp-uploads-');
           expect(event!.imageUrls[0]).toContain(`event-${event!.id}`);
+          
+          // Verify the permanent image actually exists by checking storage
+          const permanentUrl = event!.imageUrls[0];
+          const pathMatch = permanentUrl.match(/\/images\/(.+)$/);
+          if (pathMatch) {
+            const imagePath = pathMatch[1];
+            const { data: fileData } = await supabase.storage
+              .from('images')
+              .download(imagePath);
+            expect(fileData).toBeTruthy();
+          }
         }
       } finally {
+        // Cleanup: Delete temporary file if it still exists
+        if (tempImageResult) {
+          await supabase.storage.from('images').remove([tempImageResult.tempPath]);
+        }
+        
+        // Cleanup event (which should also cleanup permanent images)
         await cleanupEvent(event);
       }
     });
