@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveEvent } from '@/features/events/api/leaveEvent';
-import { useCurrentUser } from '@/features/auth';
 
 /**
  * Hook for leaving an event.
@@ -43,15 +42,9 @@ import { useCurrentUser } from '@/features/auth';
 export function useLeaveEvent() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const currentUser = useCurrentUser();
 
-  const mutation = useMutation({
-    mutationFn: (eventId: string) => {
-      if (!currentUser?.data?.id) {
-        throw new Error('User must be authenticated to leave events');
-      }
-      return leaveEvent(supabase, eventId, currentUser.data.id);
-    },
+  return useMutation({
+    mutationFn: (eventId: string) => leaveEvent(supabase, eventId),
     onSuccess: (_, eventId) => {
       // Invalidate event queries to refresh attendee data
       queryClient.invalidateQueries({ queryKey: queryKeys.events.byId(eventId) });
@@ -66,6 +59,4 @@ export function useLeaveEvent() {
       logger.error('📅 API: Failed to leave event', { error });
     },
   });
-
-  return mutation;
 }
