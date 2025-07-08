@@ -4,31 +4,32 @@ import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { fetchEventAttendees } from '@/features/events/api/fetchEventAttendees';
 
-import type { User } from '@/features/users';
+import type { EventAttendance } from '@/features/events/types';
 
 /**
  * Hook for fetching event attendees.
  *
- * Provides a list of users who are attending an event.
+ * Provides a list of event attendances with user data and attendance status.
  *
  * @param eventId - The event ID to fetch attendees for
- * @returns Query state for event attendees
+ * @returns Query state for event attendances
  *
  * @example
  * ```tsx
  * function EventAttendees({ eventId }) {
- *   const { data: attendees, isPending, error } = useEventAttendees(eventId);
+ *   const { data: attendances, isPending, error } = useEventAttendees(eventId);
  *
  *   if (isPending) return <div>Loading attendees...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *
  *   return (
  *     <div>
- *       <h3>Attendees ({attendees?.length || 0})</h3>
- *       {attendees?.map(user => (
- *         <div key={user.id}>
- *           <span>{user.firstName} {user.lastName}</span>
- *           <span>@{user.username}</span>
+ *       <h3>Attendees ({attendances?.length || 0})</h3>
+ *       {attendances?.map(attendance => (
+ *         <div key={attendance.userId}>
+ *           <span>{attendance.user?.firstName} {attendance.user?.lastName}</span>
+ *           <span>@{attendance.user?.username}</span>
+ *           <span>Status: {attendance.status}</span>
  *         </div>
  *       ))}
  *     </div>
@@ -39,7 +40,7 @@ import type { User } from '@/features/users';
 export function useEventAttendees(eventId: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<User[], Error>({
+  const query = useQuery<EventAttendance[], Error>({
     queryKey: queryKeys.events.attendees(eventId),
     queryFn: () => fetchEventAttendees(supabase, eventId),
     staleTime: STANDARD_CACHE_TIME,

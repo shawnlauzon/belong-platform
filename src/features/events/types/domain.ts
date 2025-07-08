@@ -46,6 +46,7 @@ export interface EventAttendance {
   status: 'attending' | 'not_attending' | 'maybe';
   createdAt: Date;
   updatedAt: Date;
+  user?: User;
 }
 
 export interface EventAttendanceData {
