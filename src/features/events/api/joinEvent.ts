@@ -1,7 +1,10 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { EventAttendance, EventAttendanceData } from '@/features/events';
-import { forDbInsertAttendance, toDomainEventAttendance } from '@/features/events/transformers/eventTransformer';
+import {
+  forDbInsertAttendance,
+  toDomainEventAttendance,
+} from '@/features/events/transformers/eventTransformer';
 import { EventAttendanceRow } from '../types/database';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
@@ -109,7 +112,11 @@ export async function joinEvent(
     const currentUserId = await getAuthIdOrThrow(supabase);
 
     // Check if user is already joined with the same status
-    const existingAttendance = await getExistingAttendance(supabase, eventId, currentUserId);
+    const existingAttendance = await getExistingAttendance(
+      supabase,
+      eventId,
+      currentUserId,
+    );
 
     if (existingAttendance && existingAttendance.status === status) {
       logger.warn('📅 API: User already joined with same status', {

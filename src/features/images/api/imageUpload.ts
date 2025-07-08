@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { StorageManager } from '../utils/storage';
 import { logger } from '@/shared/logger';
-import type { ImageUploadResult } from '../types';
 
 /**
  * Input parameters for uploading image files
@@ -23,32 +22,32 @@ export interface UploadImageParams {
  * 1. Validates the user is authenticated
  * 2. Validates the file is an image and within size limits
  * 3. Uploads to temporary storage with naming convention: {userId}/temp-upload-{timestamp}-{random}.{ext}
- * 4. Returns the public URL and temporary path for later commitment
+ * 4. Returns the public URL for immediate use
  * 
  * @param params - Object containing supabase client, file, and optional folder
- * @returns Promise<ImageUploadResult> - Upload result with URL and temp path
+ * @returns Promise<string> - Public URL of the uploaded image
  * 
  * @example
  * ```typescript
  * // Upload image during form creation
  * const file = new File(['...'], 'image.jpg', { type: 'image/jpeg' });
  * 
- * const result = await uploadImage({
+ * const imageUrl = await uploadImage({
  *   supabase,
  *   file,
  *   folder: 'temp-upload' // optional
  * });
  * 
- * // Use result.url in form, result.tempPath for cleanup
- * console.log('Temp URL:', result.url);
- * // Result: { url: 'https://proj.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg', tempPath: 'user-123/temp-upload-1234567890-abc123.jpg' }
+ * // Use imageUrl in form for immediate display
+ * console.log('Temp URL:', imageUrl);
+ * // Result: 'https://proj.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg'
  * ```
  */
 export async function uploadImage({
   supabase,
   file,
   folder = 'temp-upload',
-}: UploadImageParams): Promise<ImageUploadResult> {
+}: UploadImageParams): Promise<string> {
   // Get current user for authentication check
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
@@ -85,10 +84,7 @@ export async function uploadImage({
       userId: user.id,
     });
 
-    return {
-      url: result.url,
-      tempPath: result.path,
-    };
+    return result.url;
   } catch (error) {
     logger.error('❌ Image Upload: Failed to upload image', {
       fileName: file.name,
