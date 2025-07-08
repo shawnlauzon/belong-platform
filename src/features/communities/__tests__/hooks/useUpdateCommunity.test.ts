@@ -21,9 +21,10 @@ describe('useUpdateCommunity', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return CommunityInfo after update using mutateAsync', async () => {
+  it('should return CommunityInfo after update using mutateAsync with new parameter structure', async () => {
     const communityId = faker.string.uuid();
     const updateData = {
+      id: communityId,
       name: faker.company.name(),
       description: faker.lorem.paragraph(),
     };
@@ -36,16 +37,12 @@ describe('useUpdateCommunity', () => {
 
     const { result } = renderHook(() => useUpdateCommunity(), { wrapper });
 
-    const updatedCommunity = await result.current.mutateAsync({ communityId, updateData });
+    const updatedCommunity = await result.current.mutateAsync(updateData);
 
     expect(updatedCommunity).toEqual(mockUpdatedInfo);
     expect(mockUpdateCommunity).toHaveBeenCalledWith(
       expect.any(Object),
-      expect.objectContaining({
-        id: communityId,
-        name: updateData.name,
-        description: updateData.description,
-      }),
+      updateData,
     );
   });
 });

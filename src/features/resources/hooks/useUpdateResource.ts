@@ -26,7 +26,7 @@ import type { ResourceData, ResourceInfo } from '@/features/resources/types';
  *
  *   const handleSubmit = (e) => {
  *     e.preventDefault();
- *     updateResource({ id: resourceId, data: formData }, {
+ *     updateResource({ id: resourceId, ...formData }, {
  *       onSuccess: () => {
  *         // Resource updated successfully
  *       },
@@ -68,14 +68,10 @@ export function useUpdateResource() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<ResourceData>;
-    }): Promise<ResourceInfo> => {
-      const result = await updateResource(supabase, id, data);
+    mutationFn: async (
+      updateData: Partial<ResourceData> & { id: string }
+    ): Promise<ResourceInfo> => {
+      const result = await updateResource(supabase, updateData);
       if (!result) {
         throw new Error('Failed to update resource');
       }

@@ -35,7 +35,8 @@ export async function createEvent(
       // Update event with permanent URLs if they changed
       if (JSON.stringify(permanentUrls) !== JSON.stringify(eventData.imageUrls)) {
         const { updateEvent } = await import('./updateEvent');
-        const updatedEvent = await updateEvent(supabase, data.id, {
+        const updatedEvent = await updateEvent(supabase, {
+          id: data.id,
           imageUrls: permanentUrls,
         });
         if (updatedEvent) {
