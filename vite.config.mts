@@ -15,10 +15,16 @@ export default defineConfig({
         '**/__mocks__/**',
       ],
       tsconfigPath: './tsconfig.types.json',
-      rollupTypes: true,
+      rollupTypes: false,  // Disable rollup type bundling to prevent renames
       copyDtsFiles: true,
       entryRoot: 'src',
       outDir: 'dist',
+      compilerOptions: {
+        preserveSymlinks: true,  // Preserve original module names
+        noUnusedLocals: false,  // Prevent issues with unused type imports
+        noUnusedParameters: false
+      },
+      logLevel: 'info',
     }),
   ],
   resolve: {

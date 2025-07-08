@@ -1,4 +1,4 @@
-import type { User, UserData } from '..';
+import type { UserDetail, UserData } from '..';
 import type {
   ProfileRow,
   ProfileInsertDbData,
@@ -21,9 +21,10 @@ type UserMetadata = {
 /**
  * Transforms a database profile record to a domain user object
  */
-export function toDomainUser(profile: ProfileRow): User {
+export function toDomainUser(profile: ProfileRow): UserDetail {
   const metadata = (profile.user_metadata || {}) as UserMetadata;
-  const { first_name, last_name, full_name, avatar_url, bio, location } = metadata;
+  const { first_name, last_name, full_name, avatar_url, bio, location } =
+    metadata;
 
   return {
     id: profile.id,
@@ -67,13 +68,13 @@ export function forDbInsert(userData: UserData): ProfileInsertDbData {
  */
 export function forDbUpdate(
   userData: Partial<UserData> & { id: string },
-  currentProfile: ProfileRow
+  currentProfile: ProfileRow,
 ): ProfileUpdateDbData {
   const currentMetadata = (currentProfile.user_metadata || {}) as UserMetadata;
-  
+
   // Only include fields that are explicitly provided in userData
   const updatedMetadata: UserMetadata = { ...currentMetadata };
-  
+
   // Update only the fields that are explicitly provided (not undefined)
   if (userData.firstName !== undefined) {
     updatedMetadata.first_name = userData.firstName;
@@ -106,4 +107,3 @@ export type {
   ProfileInsertDbData as UserInsertDbData,
   ProfileUpdateDbData as UserUpdateDbData,
 };
-

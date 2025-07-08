@@ -13,13 +13,13 @@ import { createFakeResourceData } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceInfo } from '@/features/resources/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import type { CommunityInfo } from '@/features/communities/types';
 
 describe('Resources API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let testCommunity: CommunityInfo;
   let testResource: ResourceInfo;
 

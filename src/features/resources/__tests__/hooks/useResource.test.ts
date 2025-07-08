@@ -8,8 +8,11 @@ import { createFakeCommunity } from '../../../communities/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../../users/types';
-import type { Community, CommunityInfo } from '../../../communities/types';
+import type { UserDetail } from '../../../users/types';
+import type {
+  CommunityDetail,
+  CommunityInfo,
+} from '../../../communities/types';
 
 // Global mocks for shared and config modules are now handled in vitest.setup.ts
 // This eliminates redundant mock definitions across test files
@@ -41,9 +44,9 @@ describe('useResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
   let fakeResourceInfo: ReturnType<typeof createFakeResourceInfo>;
-  let fakeOwner: User;
-  let fakeOrganizer: User;
-  let fakeCommunity: Community;
+  let fakeOwner: UserDetail;
+  let fakeOrganizer: UserDetail;
+  let fakeCommunity: CommunityDetail;
   let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {

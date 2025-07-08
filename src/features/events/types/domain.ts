@@ -1,13 +1,13 @@
 import { Coordinates } from '@/shared';
-import { Community } from '../../communities';
-import { User } from '../../users';
+import { CommunityDetail } from '../../communities';
+import { UserDetail } from '../../users';
 
-export interface Event
+export interface EventDetail
   extends Omit<EventData, 'organizerId' | 'communityId'> {
   id: string;
-  organizer: User;
-  community: Community;
-  attendees?: User[];
+  organizer: UserDetail;
+  community: CommunityDetail;
+  attendees?: UserDetail[];
   attendeeCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -27,7 +27,8 @@ export interface EventData {
   imageUrls?: string[];
 }
 
-export interface EventInfo extends Omit<Event, 'organizer' | 'community' | 'attendees'> {
+export interface EventInfo
+  extends Omit<EventDetail, 'organizer' | 'community' | 'attendees'> {
   organizerId: string;
   communityId: string;
 }
@@ -46,7 +47,7 @@ export interface EventAttendance {
   status: 'attending' | 'not_attending' | 'maybe';
   createdAt: Date;
   updatedAt: Date;
-  user?: User;
+  user?: UserDetail;
 }
 
 export interface EventAttendanceData {

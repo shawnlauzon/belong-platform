@@ -3,12 +3,12 @@ import { ERROR_CODES } from '@/shared/constants';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser } from '../transformers/userTransformer';
-import { User } from '../types';
+import { UserDetail } from '../types';
 
 export async function fetchUserById(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<User | null> {
+): Promise<UserDetail | null> {
   logger.debug('👤 API: Fetching user by ID', { id });
 
   try {

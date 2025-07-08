@@ -3,7 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { Database } from '@/shared/types/database';
 import { queryKeys } from '@/shared';
 import { fetchResourceInfoById } from './fetchResourceInfoById';
-import type { Resource } from '../types';
+import type { ResourceDetail } from '../types';
 import { fetchAndCacheCommunity } from '@/features/communities/api';
 import { fetchUserById } from '@/features/users/api';
 
@@ -19,11 +19,11 @@ export async function fetchAndCacheResource(
   supabase: SupabaseClient<Database>,
   queryClient: QueryClient,
   resourceId: string,
-): Promise<Resource | null> {
+): Promise<ResourceDetail | null> {
   const queryKey = queryKeys.resources.byId(resourceId);
 
   // Check if data is already in cache
-  const cachedData = queryClient.getQueryData<Resource>(queryKey);
+  const cachedData = queryClient.getQueryData<ResourceDetail>(queryKey);
   if (cachedData) {
     return cachedData;
   }
@@ -35,11 +35,7 @@ export async function fetchAndCacheResource(
   // Get owner and community using ensure functions
   const [owner, community] = await Promise.all([
     fetchUserById(supabase, resourceInfo.ownerId),
-    fetchAndCacheCommunity(
-      supabase,
-      queryClient,
-      resourceInfo.communityId,
-    ),
+    fetchAndCacheCommunity(supabase, queryClient, resourceInfo.communityId),
   ]);
 
   if (!owner || !community) return null;

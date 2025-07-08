@@ -5,6 +5,7 @@ import { forDbInsert } from '@/features/events/transformers/eventTransformer';
 import { toEventInfo } from '@/features/events/transformers/eventTransformer';
 import { EventRow } from '../types/database';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
+import { updateEvent } from './updateEvent';
 
 export async function createEvent(
   supabase: SupabaseClient<Database>,
@@ -31,10 +32,11 @@ export async function createEvent(
         entityType: 'event',
         entityId: data.id,
       });
-      
+
       // Update event with permanent URLs if they changed
-      if (JSON.stringify(permanentUrls) !== JSON.stringify(eventData.imageUrls)) {
-        const { updateEvent } = await import('./updateEvent');
+      if (
+        JSON.stringify(permanentUrls) !== JSON.stringify(eventData.imageUrls)
+      ) {
         const updatedEvent = await updateEvent(supabase, {
           id: data.id,
           imageUrls: permanentUrls,
@@ -44,7 +46,9 @@ export async function createEvent(
         }
       }
     } catch (error) {
-      throw new Error(`Failed to commit event images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to commit event images: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 

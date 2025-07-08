@@ -13,13 +13,13 @@ import { createFakeEventData } from '@/features/events/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { EventInfo } from '@/features/events/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import type { CommunityInfo } from '@/features/communities/types';
 import { parsePostGisPoint } from '@/shared';
 
 describe('Events API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let testCommunity: CommunityInfo;
   let readOnlyEvent1: EventInfo;
   let readOnlyEvent2: EventInfo;
@@ -136,26 +136,30 @@ describe('Events API - CRUD Operations', () => {
 
     it('handles image auto-commit workflow', async () => {
       const { uploadImage } = await import('@/features/images/api');
-      
+
       // Create a test image file
-      const testImageContent = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG header
-      const testFile = new File([testImageContent], 'test-image.png', { type: 'image/png' });
-      
+      const testImageContent = new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10,
+      ]); // PNG header
+      const testFile = new File([testImageContent], 'test-image.png', {
+        type: 'image/png',
+      });
+
       let tempImageResult: string | null = null;
       let event;
-      
+
       try {
         // First upload a temporary image
-        tempImageResult = await uploadImage({ 
-          supabase, 
-          file: testFile, 
-          folder: 'temp-upload' 
+        tempImageResult = await uploadImage({
+          supabase,
+          file: testFile,
+          folder: 'temp-upload',
         });
-        
+
         expect(tempImageResult).toBeTruthy();
         expect(typeof tempImageResult).toBe('string');
         expect(tempImageResult).toContain('temp-upload-');
-        
+
         // Create event with the temporary image URL
         const data = createFakeEventData({
           title: `${TEST_PREFIX}Image_Test_${Date.now()}`,
@@ -171,7 +175,7 @@ describe('Events API - CRUD Operations', () => {
         if (event!.imageUrls && event!.imageUrls.length > 0) {
           expect(event!.imageUrls[0]).not.toContain('temp-upload-');
           expect(event!.imageUrls[0]).toContain(`event-${event!.id}`);
-          
+
           // Verify the permanent image actually exists by checking storage
           const permanentUrl = event!.imageUrls[0];
           const pathMatch = permanentUrl.match(/\/images\/(.+)$/);
@@ -186,9 +190,11 @@ describe('Events API - CRUD Operations', () => {
       } finally {
         // Cleanup: Delete temporary file if it still exists
         if (tempImageResult) {
-          await supabase.storage.from('images').remove([tempImageResult.tempPath]);
+          await supabase.storage
+            .from('images')
+            .remove([tempImageResult.tempPath]);
         }
-        
+
         // Cleanup event (which should also cleanup permanent images)
         await cleanupEvent(event);
       }

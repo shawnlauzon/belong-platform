@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import {
-  Community,
+  CommunityDetail,
   CommunityData,
   CommunityInfo,
   CommunityMembership,
@@ -12,8 +12,8 @@ import { ProfileRow } from '../../users/types/database';
 import { createFakeDbProfile, createFakeUser } from '../../users/__fakes__';
 
 export function createFakeCommunity(
-  overrides: Partial<Community> = {},
-): Community {
+  overrides: Partial<CommunityDetail> = {},
+): CommunityDetail {
   return {
     id: faker.string.uuid(),
     name: faker.location.city(),

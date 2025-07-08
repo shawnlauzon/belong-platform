@@ -12,12 +12,12 @@ import { createFakeCommunityData } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import { parsePostGisPoint } from '@/shared';
 
 describe('Communities API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let readOnlyCommunity1: CommunityInfo;
   let readOnlyCommunity2: CommunityInfo;
 

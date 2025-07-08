@@ -1,11 +1,13 @@
 import { faker } from '@faker-js/faker';
-import { User, UserData } from '../types';
+import { UserDetail, UserData } from '../types';
 import { ProfileRow } from '../types/database';
 
 /**
  * Creates a fake domain User object
  */
-export function createFakeUser(overrides: Partial<User> = {}): User {
+export function createFakeUser(
+  overrides: Partial<UserDetail> = {},
+): UserDetail {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();

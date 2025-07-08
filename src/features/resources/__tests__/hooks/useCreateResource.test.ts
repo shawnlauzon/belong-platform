@@ -24,8 +24,8 @@ import { createResource } from '../../api';
 import { useCurrentUser } from '../../../auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../../users/types';
-import { Community } from '@/features/communities';
+import type { UserDetail } from '../../../users/types';
+import { CommunityDetail } from '@/features/communities';
 import { createFakeCommunity } from '@/features/communities/__fakes__';
 
 const mockUseSupabase = vi.mocked(useSupabase);
@@ -35,8 +35,8 @@ const mockUseCurrentUser = vi.mocked(useCurrentUser);
 describe('useCreateResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let mockCurrentUser: User;
-  let fakeCommunity: Community;
+  let mockCurrentUser: UserDetail;
+  let fakeCommunity: CommunityDetail;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -165,8 +165,10 @@ describe('useCreateResource', () => {
 
     // Act & Assert: Should propagate API errors
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    
-    await expect(result.current.mutateAsync(resourceData)).rejects.toThrow('API failed');
+
+    await expect(result.current.mutateAsync(resourceData)).rejects.toThrow(
+      'API failed',
+    );
     expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 });

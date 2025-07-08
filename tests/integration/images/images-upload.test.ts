@@ -7,7 +7,7 @@ import { uploadImage } from '@/features/images/api';
 import { StorageManager } from '@/features/images/utils/storage';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import {
   createTestImageFile,
   createOversizedTestImageFile,
@@ -20,7 +20,7 @@ import {
 
 describe('Images API - Upload Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -155,10 +155,10 @@ describe('Images API - Upload Operations', () => {
         const testFile = createTestImageFile({ name, type });
 
         const result = await uploadImage({
-        supabase,
-        file: testFile,
-        folder: 'temp-upload',
-      });
+          supabase,
+          file: testFile,
+          folder: 'temp-upload',
+        });
 
         expect(result).toBeTruthy();
         expect(typeof result).toBe('string');
@@ -229,10 +229,10 @@ describe('Images API - Upload Operations', () => {
         });
 
         const result = await uploadImage({
-        supabase,
-        file: testFile,
-        folder: 'temp-upload',
-      });
+          supabase,
+          file: testFile,
+          folder: 'temp-upload',
+        });
 
         expect(result).toBeTruthy();
         expect(typeof result).toBe('string');

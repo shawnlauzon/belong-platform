@@ -6,7 +6,7 @@ import { createFakeUser } from '../../__fakes__/';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../types';
+import type { UserDetail } from '../../types';
 
 // Mock the API functions
 vi.mock('../../api', () => ({
@@ -22,7 +22,7 @@ const mockFetchUserById = vi.mocked(fetchUserById);
 describe('useUser', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let fakeUser: User;
+  let fakeUser: UserDetail;
 
   beforeEach(() => {
     vi.clearAllMocks();

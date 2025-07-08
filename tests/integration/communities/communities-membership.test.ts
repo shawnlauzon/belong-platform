@@ -11,12 +11,12 @@ import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 
 describe('Communities API - Membership Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser1: User;
-  let testUser2: User;
+  let testUser1: UserDetail;
+  let testUser2: UserDetail;
   let testUser1Email: string;
   let testUser2Email: string;
   let membershipTestCommunity: CommunityInfo;

@@ -13,15 +13,19 @@ import type {
   EventAttendanceInsert,
 } from '../types/database';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
-import { User } from '../../users';
-import { Community } from '../../communities';
+import { UserDetail } from '../../users';
+import { CommunityDetail } from '../../communities';
 
 /**
  * Transform a database event record to a domain event object
  */
 export function toDomainEvent(
   dbEvent: EventRow,
-  refs: { organizer: User; community: Community; attendees?: User[] },
+  refs: {
+    organizer: UserDetail;
+    community: CommunityDetail;
+    attendees?: UserDetail[];
+  },
 ): Event {
   if (dbEvent.organizer_id !== refs.organizer.id) {
     throw new Error('Organizer ID does not match');
@@ -36,7 +40,9 @@ export function toDomainEvent(
     title: dbEvent.title,
     description: dbEvent.description,
     startDateTime: new Date(dbEvent.start_date_time),
-    endDateTime: dbEvent.end_date_time ? new Date(dbEvent.end_date_time) : undefined,
+    endDateTime: dbEvent.end_date_time
+      ? new Date(dbEvent.end_date_time)
+      : undefined,
     isAllDay: dbEvent.is_all_day,
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
@@ -81,7 +87,9 @@ export function forDbUpdate(event: Partial<EventData>): EventUpdate {
     end_date_time: event.endDateTime?.toISOString() || null,
     is_all_day: event.isAllDay,
     location: event.location,
-    coordinates: event.coordinates ? toPostGisPoint(event.coordinates) : undefined,
+    coordinates: event.coordinates
+      ? toPostGisPoint(event.coordinates)
+      : undefined,
     max_attendees: event.maxAttendees ?? null,
     image_urls: event.imageUrls || [],
   };
@@ -96,7 +104,9 @@ export function toEventInfo(dbEvent: EventRow): EventInfo {
     title: dbEvent.title,
     description: dbEvent.description,
     startDateTime: new Date(dbEvent.start_date_time),
-    endDateTime: dbEvent.end_date_time ? new Date(dbEvent.end_date_time) : undefined,
+    endDateTime: dbEvent.end_date_time
+      ? new Date(dbEvent.end_date_time)
+      : undefined,
     isAllDay: dbEvent.is_all_day,
     location: dbEvent.location,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
@@ -128,7 +138,9 @@ export function toDomainEventAttendance(
 /**
  * Transform a domain event attendance object to a database event attendance record for insert
  */
-export function forDbInsertAttendance(attendance: EventAttendanceData): EventAttendanceInsert {
+export function forDbInsertAttendance(
+  attendance: EventAttendanceData,
+): EventAttendanceInsert {
   return {
     event_id: attendance.eventId,
     user_id: attendance.userId,

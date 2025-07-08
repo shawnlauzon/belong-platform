@@ -10,8 +10,11 @@ import { createFakeCommunity } from '../../../communities/__fakes__';
 import { BelongProvider } from '../../../../config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../../users/types';
-import type { Community, CommunityInfo } from '../../../communities/types';
+import type { UserDetail } from '../../../users/types';
+import type {
+  CommunityDetail,
+  CommunityInfo,
+} from '../../../communities/types';
 
 // Mock the API functions at the lowest level
 vi.mock('../../api/fetchResourceInfoById', () => ({
@@ -74,9 +77,9 @@ describe('useResource - Cache Behavior', () => {
   let queryClient: QueryClient;
   let mockSupabase: SupabaseClient<Database>;
   let fakeResourceInfo: ReturnType<typeof createFakeResourceInfo>;
-  let fakeOwner: User;
-  let fakeOrganizer: User;
-  let fakeCommunity: Community;
+  let fakeOwner: UserDetail;
+  let fakeOrganizer: UserDetail;
+  let fakeCommunity: CommunityDetail;
   let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {

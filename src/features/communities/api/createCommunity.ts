@@ -8,6 +8,7 @@ import {
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
+import { updateCommunity } from './updateCommunity';
 
 export async function createCommunity(
   supabase: SupabaseClient<Database>,
@@ -55,18 +56,23 @@ export async function createCommunity(
         });
 
         // Update the community with permanent banner URL if it changed
-        if (permanentUrls.length > 0 && permanentUrls[0] !== communityData.bannerImageUrl) {
-          const { updateCommunity } = await import('./updateCommunity');
+        if (
+          permanentUrls.length > 0 &&
+          permanentUrls[0] !== communityData.bannerImageUrl
+        ) {
           const updatedCommunity = await updateCommunity(supabase, {
             id: data.id,
             bannerImageUrl: permanentUrls[0],
           });
 
           if (updatedCommunity) {
-            logger.debug('🏘️ API: Successfully created community with committed banner', {
-              id: updatedCommunity.id,
-              name: updatedCommunity.name,
-            });
+            logger.debug(
+              '🏘️ API: Successfully created community with committed banner',
+              {
+                id: updatedCommunity.id,
+                name: updatedCommunity.name,
+              },
+            );
             return updatedCommunity;
           }
         }
@@ -75,7 +81,9 @@ export async function createCommunity(
           communityId: data.id,
           error,
         });
-        throw new Error(`Failed to commit community banner image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to commit community banner image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 

@@ -1,6 +1,6 @@
 import type {
   CommunityData,
-  Community,
+  CommunityDetail,
   CommunityInfo,
   CommunityMembership,
   CommunityMembershipData,
@@ -16,7 +16,7 @@ import {
   CommunityRow,
   CommunityUpdateDbData,
 } from '../types/database';
-import { User } from '../../users';
+import { UserDetail } from '../../users';
 import {
   parsePostGisPoint,
   toPostGisPoint,
@@ -68,9 +68,9 @@ function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
  */
 export function toDomainCommunity(
   dbCommunity: CommunityRow & {
-    organizer: User;
+    organizer: UserDetail;
   },
-): Community {
+): CommunityDetail {
   // Explicitly extract only the fields we need to avoid leaking database properties
 
   // Check if organizer is already a User (has firstName) or needs to be transformed from ProfileRow
@@ -149,8 +149,8 @@ export function forDbUpdate(
  */
 export function toDomainMembership(
   dbMembership: CommunityMembershipRow & {
-    user: User;
-    community: Community;
+    user: UserDetail;
+    community: CommunityDetail;
   },
 ): CommunityMembership {
   const { joined_at, ...rest } = dbMembership;

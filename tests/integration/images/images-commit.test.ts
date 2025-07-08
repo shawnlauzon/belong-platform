@@ -6,7 +6,7 @@ import { signIn } from '@/features/auth/api';
 import { commitImageUrls, uploadImage } from '@/features/images/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import {
   createTestImageFile,
   verifyImageExistsInStorage,
@@ -16,7 +16,7 @@ import {
 
 describe('Images API - Commit Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -150,10 +150,10 @@ describe('Images API - Commit Operations', () => {
           name: `${TEST_PREFIX}${entityType}-test-${Date.now()}.jpg`,
         });
         const tempUrl = await uploadImage({
-        supabase,
-        file: testFile,
-        folder: 'temp-upload',
-      });
+          supabase,
+          file: testFile,
+          folder: 'temp-upload',
+        });
 
         // Commit with the specific entity type
         const entityId = `${TEST_PREFIX}${entityType}-entity-${Date.now()}`;
