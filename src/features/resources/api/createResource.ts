@@ -41,7 +41,8 @@ export async function createResource(
       // Update resource with permanent URLs if they changed
       if (JSON.stringify(permanentUrls) !== JSON.stringify(resourceData.imageUrls)) {
         const { updateResource } = await import('./updateResource');
-        const updatedResource = await updateResource(supabase, data.id, {
+        const updatedResource = await updateResource(supabase, {
+          id: data.id,
           imageUrls: permanentUrls,
         });
         if (updatedResource) {

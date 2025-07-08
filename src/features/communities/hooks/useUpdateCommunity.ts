@@ -28,7 +28,7 @@ import type {
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
- *       await updateCommunityMutation.mutateAsync({ communityId, updateData: formData });
+ *       await updateCommunityMutation.mutateAsync({ id: communityId, ...formData });
  *       // Community updated successfully
  *     } catch (error) {
  *       console.error('Failed to update community:', error);
@@ -58,8 +58,8 @@ export function useUpdateCommunity() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: ({ communityId, updateData }: { communityId: string; updateData: Partial<CommunityData> }) =>
-      updateCommunity(supabase, { id: communityId, ...updateData }),
+    mutationFn: (updateData: Partial<CommunityData> & { id: string }) =>
+      updateCommunity(supabase, updateData),
     onSuccess: (updatedCommunityInfo) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });

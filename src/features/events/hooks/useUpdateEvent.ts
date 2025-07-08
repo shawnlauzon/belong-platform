@@ -27,7 +27,7 @@ import type { EventData, EventInfo } from '@/features/events/types';
  *
  *   const handleSubmit = (e) => {
  *     e.preventDefault();
- *     updateEvent({ id: eventId, data: formData }, {
+ *     updateEvent({ id: eventId, ...formData }, {
  *       onSuccess: () => {
  *         // Event updated successfully
  *       },
@@ -66,14 +66,10 @@ export function useUpdateEvent() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<EventData>;
-    }): Promise<EventInfo> => {
-      const result = await updateEvent(supabase, id, data);
+    mutationFn: async (
+      updateData: Partial<EventData> & { id: string }
+    ): Promise<EventInfo> => {
+      const result = await updateEvent(supabase, updateData);
       if (!result) {
         throw new Error('Failed to update event');
       }

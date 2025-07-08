@@ -29,10 +29,11 @@ describe('useUpdateResource', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return ResourceInfo after update', async () => {
+  it('should return ResourceInfo after update with new parameter structure', async () => {
     // Arrange: Create test data using factories
     const mockUpdatedResourceInfo = createFakeResourceInfo();
-    const updateData: Partial<ResourceData> = {
+    const updateData: Partial<ResourceData> & { id: string } = {
+      id: mockUpdatedResourceInfo.id,
       title: 'Updated Title',
       description: 'Updated Description',
     };
@@ -41,10 +42,7 @@ describe('useUpdateResource', () => {
 
     // Act
     const { result } = renderHook(() => useUpdateResource(), { wrapper });
-    const updatedResourceInfo = await result.current.mutateAsync({
-      id: mockUpdatedResourceInfo.id,
-      data: updateData,
-    });
+    const updatedResourceInfo = await result.current.mutateAsync(updateData);
 
     // Assert: Should return ResourceInfo with ID references
     expect(updatedResourceInfo).toBeDefined();
@@ -58,11 +56,7 @@ describe('useUpdateResource', () => {
     expect(updatedResourceInfo).not.toHaveProperty('owner');
     expect(updatedResourceInfo).not.toHaveProperty('community');
 
-    // Verify API was called with correct parameters
-    expect(mockUpdateResource).toHaveBeenCalledWith(
-      mockSupabase,
-      mockUpdatedResourceInfo.id,
-      updateData,
-    );
+    // Verify API was called with correct parameters (new single parameter structure)
+    expect(mockUpdateResource).toHaveBeenCalledWith(mockSupabase, updateData);
   });
 });

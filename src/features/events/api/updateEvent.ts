@@ -1,27 +1,54 @@
-import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { EventData, EventInfo } from '@/features/events';
 import { forDbUpdate } from '@/features/events/transformers/eventTransformer';
 import { toEventInfo } from '@/features/events/transformers/eventTransformer';
-import { EventRow } from '../types/database';
+import { logger } from '@/shared';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function updateEvent(
   supabase: SupabaseClient<Database>,
-  id: string,
-  updates: Partial<EventData>,
+  updateData: Partial<EventData> & { id: string },
 ): Promise<EventInfo | null> {
-  const dbData = forDbUpdate(updates);
+  logger.debug('📅 API: Updating event', {
+    id: updateData.id,
+    title: updateData.title,
+  });
 
-  const { data, error } = (await supabase
-    .from('events')
-    .update(dbData)
-    .eq('id', id)
-    .select()
-    .single()) as { data: EventRow; error: QueryError | null };
+  try {
+    await getAuthIdOrThrow(supabase);
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Failed to update event');
+    const { id, ...updates } = updateData;
+    const dbData = forDbUpdate(updates);
+
+    const { data, error } = await supabase
+      .from('events')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('📅 API: Failed to update event', { error, updateData });
+      throw error;
+    }
+
+    if (!data) {
+      logger.debug('📅 API: Event not found for update', {
+        id: updateData.id,
+      });
+      return null;
+    }
+
+    const eventInfo = toEventInfo(data);
+
+    logger.debug('📅 API: Successfully updated event', {
+      id: eventInfo.id,
+      title: eventInfo.title,
+    });
+    return eventInfo;
+  } catch (error) {
+    logger.error('📅 API: Error updating event', { error, updateData });
+    throw error;
   }
-
-  return toEventInfo(data);
 }
