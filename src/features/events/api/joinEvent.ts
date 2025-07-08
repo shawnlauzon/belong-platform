@@ -6,6 +6,98 @@ import { EventAttendanceRow } from '../types/database';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
+// Helper function to check existing attendance
+async function getExistingAttendance(
+  supabase: SupabaseClient<Database>,
+  eventId: string,
+  userId: string,
+): Promise<{ status: 'attending' | 'maybe' | 'not_attending' } | null> {
+  const { data, error } = await supabase
+    .from('event_attendances')
+    .select('status')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error('📅 API: Failed to check existing attendance', {
+      error,
+      eventId,
+      userId,
+    });
+    throw error;
+  }
+
+  return data as { status: 'attending' | 'maybe' | 'not_attending' } | null;
+}
+
+// Helper function to check event capacity using stored attendee_count
+async function checkEventCapacity(
+  supabase: SupabaseClient<Database>,
+  eventId: string,
+): Promise<void> {
+  const { data: eventData, error: eventError } = await supabase
+    .from('events')
+    .select('max_attendees, attendee_count')
+    .eq('id', eventId)
+    .single();
+
+  if (eventError) {
+    logger.error('📅 API: Failed to fetch event details for capacity check', {
+      error: eventError,
+      eventId,
+    });
+    throw eventError;
+  }
+
+  if (!eventData) {
+    throw new Error('Event not found');
+  }
+
+  // Only check capacity if event has max attendees limit
+  if (eventData.max_attendees !== null) {
+    const currentAttendingCount = eventData.attendee_count;
+
+    if (currentAttendingCount >= eventData.max_attendees) {
+      logger.warn('📅 API: Event at max capacity', {
+        eventId,
+        currentAttendingCount,
+        maxAttendees: eventData.max_attendees,
+      });
+      throw new Error('Event has reached maximum capacity');
+    }
+  }
+}
+
+// Helper function to save attendance
+async function saveAttendance(
+  supabase: SupabaseClient<Database>,
+  attendanceData: EventAttendanceData,
+): Promise<EventAttendance | null> {
+  const dbData = forDbInsertAttendance(attendanceData);
+
+  const { data, error } = (await supabase
+    .from('event_attendances')
+    .upsert(dbData, { onConflict: 'event_id,user_id' })
+    .select()
+    .single()) as { data: EventAttendanceRow; error: QueryError | null };
+
+  if (error) {
+    logger.error('📅 API: Failed to save attendance', {
+      error,
+      attendanceData,
+    });
+    throw error;
+  }
+
+  if (!data) {
+    logger.error('📅 API: No data returned after saving attendance');
+    return null;
+  }
+
+  return toDomainEventAttendance(data);
+}
+
 export async function joinEvent(
   supabase: SupabaseClient<Database>,
   eventId: string,
@@ -16,56 +108,21 @@ export async function joinEvent(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
+    // Check if user is already joined with the same status
+    const existingAttendance = await getExistingAttendance(supabase, eventId, currentUserId);
+
+    if (existingAttendance && existingAttendance.status === status) {
+      logger.warn('📅 API: User already joined with same status', {
+        eventId,
+        userId: currentUserId,
+        status,
+      });
+      throw new Error('Already joined this event with the same status');
+    }
+
     // Check max attendees validation only for 'attending' status
     if (status === 'attending') {
-      // Get event details to check max attendees
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('max_attendees')
-        .eq('id', eventId)
-        .single();
-
-      if (eventError) {
-        logger.error('📅 API: Failed to fetch event details for capacity check', {
-          error: eventError,
-          eventId,
-        });
-        throw eventError;
-      }
-
-      if (!eventData) {
-        throw new Error('Event not found');
-      }
-
-      // Only check capacity if event has max attendees limit
-      if (eventData.max_attendees !== null) {
-        // Count current attendees with 'attending' status
-        const { count: attendeeCount, error: countError } = await supabase
-          .from('event_attendances')
-          .select('*', { count: 'exact', head: true })
-          .eq('event_id', eventId)
-          .eq('status', 'attending');
-
-        if (countError) {
-          logger.error('📅 API: Failed to count attendees for capacity check', {
-            error: countError,
-            eventId,
-          });
-          throw countError;
-        }
-
-        const currentAttendingCount = attendeeCount || 0;
-
-        // Check if adding this attendee would exceed max capacity
-        if (currentAttendingCount >= eventData.max_attendees) {
-          logger.warn('📅 API: Event at max capacity', {
-            eventId,
-            currentAttendingCount,
-            maxAttendees: eventData.max_attendees,
-          });
-          throw new Error('Event has reached maximum capacity');
-        }
-      }
+      await checkEventCapacity(supabase, eventId);
     }
 
     const attendanceData: EventAttendanceData = {
@@ -74,39 +131,13 @@ export async function joinEvent(
       status,
     };
 
-    const dbData = forDbInsertAttendance(attendanceData);
-
-    // Use upsert to handle cases where user already has a record
-    const { data, error } = (await supabase
-      .from('event_attendances')
-      .upsert(dbData, { onConflict: 'event_id,user_id' })
-      .select()
-      .single()) as { data: EventAttendanceRow; error: QueryError | null };
-
-    if (error) {
-      logger.error('📅 API: Failed to join event', {
-        error,
-        eventId,
-        status,
-      });
-      throw error;
-    }
-
-    if (!data) {
-      logger.error('📅 API: No data returned after joining event');
-      return null;
-    }
-
-    const attendance = toDomainEventAttendance(data);
+    const attendance = await saveAttendance(supabase, attendanceData);
 
     logger.debug('📅 API: Successfully joined event', {
       eventId,
       userId: currentUserId,
       status,
     });
-
-    // Note: Attendee count is maintained by database triggers or manual updates
-    // For now we skip automatic count updates to keep the implementation simple
 
     return attendance;
   } catch (error) {
