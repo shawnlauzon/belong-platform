@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { uploadImage } from '../api/imageUpload';
-import type { ImageUploadResult } from '../types';
 
 /**
  * Hook for uploading images to temporary storage.
@@ -23,9 +22,9 @@ import type { ImageUploadResult } from '../types';
  *     if (file) {
  *       setSelectedFile(file);
  *       uploadImage(file, {
- *         onSuccess: (result) => {
- *           console.log('Image uploaded:', result.url);
- *           // Use result.url in your form or store for later entity creation
+ *         onSuccess: (imageUrl) => {
+ *           console.log('Image uploaded:', imageUrl);
+ *           // Use imageUrl in your form or store for later entity creation
  *         },
  *         onError: (error) => {
  *           console.error('Upload failed:', error);
@@ -48,7 +47,7 @@ export function useImageUpload() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: async (file: File): Promise<ImageUploadResult> => {
+    mutationFn: async (file: File): Promise<string> => {
       return uploadImage({
         supabase,
         file,

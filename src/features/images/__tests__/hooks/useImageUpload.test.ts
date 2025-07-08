@@ -36,21 +36,16 @@ describe('useImageUpload', () => {
 
   it('should upload image with temp naming convention', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const expectedPath = `user-123/temp-upload-1234567890-abc123.jpg`;
-    const expectedUrl = `https://example.supabase.co/storage/v1/object/public/images/${expectedPath}`;
+    const mockUrl = 'https://example.com/some-url-we-dont-care-about';
 
-    mockUploadImage.mockResolvedValue({
-      url: expectedUrl,
-      tempPath: expectedPath,
-    });
+    mockUploadImage.mockResolvedValue(mockUrl);
 
     const { result } = renderHook(() => useImageUpload(), { wrapper });
 
     // Execute the upload
     const uploadResult = await result.current.mutateAsync(mockFile);
       
-    expect(uploadResult.url).toBe(expectedUrl);
-    expect(uploadResult.tempPath).toBe(expectedPath);
+    expect(uploadResult).toBe(mockUrl);
 
     // Verify uploadImage was called with correct parameters
     expect(mockUploadImage).toHaveBeenCalledWith({
@@ -123,23 +118,21 @@ describe('useImageUpload', () => {
     const mockFile1 = new File(['test1'], 'test1.jpg', { type: 'image/jpeg' });
     const mockFile2 = new File(['test2'], 'test2.jpg', { type: 'image/jpeg' });
     
+    const mockUrl1 = 'https://example.com/image1';
+    const mockUrl2 = 'https://example.com/image2';
+    
     mockUploadImage
-      .mockResolvedValueOnce({
-        url: `https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg`,
-        tempPath: `user-123/temp-upload-1234567890-abc123.jpg`,
-      })
-      .mockResolvedValueOnce({
-        url: `https://example.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567891-def456.jpg`,
-        tempPath: `user-123/temp-upload-1234567891-def456.jpg`,
-      });
+      .mockResolvedValueOnce(mockUrl1)
+      .mockResolvedValueOnce(mockUrl2);
 
     const { result } = renderHook(() => useImageUpload(), { wrapper });
 
     const result1 = await result.current.mutateAsync(mockFile1);
     const result2 = await result.current.mutateAsync(mockFile2);
 
-    expect(result1.tempPath).toBe(`user-123/temp-upload-1234567890-abc123.jpg`);
-    expect(result2.tempPath).toBe(`user-123/temp-upload-1234567891-def456.jpg`);
+    expect(result1).toBe(mockUrl1);
+    expect(result2).toBe(mockUrl2);
+    expect(result1).not.toBe(result2);
     
     // Verify both uploads called uploadImage correctly
     expect(mockUploadImage).toHaveBeenCalledTimes(2);
