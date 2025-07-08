@@ -75,7 +75,7 @@ export async function createCommunity(
           communityId: data.id,
           error,
         });
-        // Continue without throwing - community was created successfully
+        throw new Error(`Failed to commit community banner image: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 

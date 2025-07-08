@@ -5,6 +5,7 @@ import { createEvent } from '../../api/createEvent';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { EventData } from '@/features/events/types/domain';
+import { createFakeEventData, createFakeEventRow } from '../../__fakes__';
 
 describe('createEvent', () => {
   let mockSupabase: SupabaseClient<Database>;
@@ -82,7 +83,9 @@ describe('createEvent', () => {
         title: eventData.title,
         description: eventData.description,
         startDateTime: new Date(mockEventRow.start_date_time),
-        endDateTime: mockEventRow.end_date_time ? new Date(mockEventRow.end_date_time) : undefined,
+        endDateTime: mockEventRow.end_date_time
+          ? new Date(mockEventRow.end_date_time)
+          : undefined,
         location: eventData.location,
         communityId: eventData.communityId,
         organizerId: eventData.organizerId,
@@ -128,7 +131,10 @@ describe('createEvent', () => {
         organizer_id: allDayEventData.organizerId,
         coordinates: {
           type: 'Point',
-          coordinates: [allDayEventData.coordinates.lng, allDayEventData.coordinates.lat],
+          coordinates: [
+            allDayEventData.coordinates.lng,
+            allDayEventData.coordinates.lat,
+          ],
         },
         is_all_day: true,
         image_urls: allDayEventData.imageUrls,
@@ -282,7 +288,10 @@ describe('createEvent', () => {
         organizer_id: eventWithNoMax.organizerId,
         coordinates: {
           type: 'Point',
-          coordinates: [eventWithNoMax.coordinates.longitude, eventWithNoMax.coordinates.latitude],
+          coordinates: [
+            eventWithNoMax.coordinates.longitude,
+            eventWithNoMax.coordinates.latitude,
+          ],
         },
         is_all_day: eventWithNoMax.isAllDay,
         image_urls: eventWithNoMax.imageUrls,
@@ -310,12 +319,60 @@ describe('createEvent', () => {
     });
   });
 
+  describe('image auto-commit', () => {
+    beforeEach(() => {
+      // Mock the image commit module
+      vi.mock('@/features/images/api/imageCommit', () => ({
+        commitImageUrls: vi.fn(),
+      }));
+    });
+
+    it('should throw error when auto-commit fails and prevent event creation', async () => {
+      const eventWithImages = createFakeEventData({
+        imageUrls: [
+          'https://temp.supabase.co/storage/v1/object/public/images/user-123/temp-upload-1234567890-abc123.jpg',
+        ],
+      });
+
+      const mockEventRow = createFakeEventRow({
+        id: 'evt_123',
+        image_urls: eventWithImages.imageUrls,
+      });
+
+      // Mock successful database insert
+      const mockQueryBuilder = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockEventRow,
+          error: null,
+        }),
+      };
+
+      // @ts-expect-error Mock implementation doesn't need full QueryBuilder interface
+      vi.mocked(mockSupabase.from).mockReturnValue(mockQueryBuilder);
+
+      // Mock commitImageUrls to fail
+      const { commitImageUrls } = await import(
+        '@/features/images/api/imageCommit'
+      );
+      vi.mocked(commitImageUrls).mockRejectedValue(
+        new Error('Storage move failed'),
+      );
+
+      // Event creation should fail because auto-commit failed
+      await expect(createEvent(mockSupabase, eventWithImages)).rejects.toThrow(
+        'Failed to commit event images: Storage move failed',
+      );
+    });
+  });
+
   describe('trigger validation', () => {
     it('should expect organizer to be automatically added as attendee', async () => {
       // This test validates the expected behavior after the trigger is implemented
       // The trigger should automatically add the organizer to event_attendances
       // and increment the attendee_count in the events table
-      
+
       const mockEventRow = {
         id: faker.string.uuid(),
         title: eventData.title,

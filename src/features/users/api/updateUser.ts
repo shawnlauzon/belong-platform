@@ -46,7 +46,7 @@ export async function updateUser(
           userId: userData.id,
           error,
         });
-        // Continue with original URL as fallback
+        throw new Error(`Failed to commit user avatar image: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
