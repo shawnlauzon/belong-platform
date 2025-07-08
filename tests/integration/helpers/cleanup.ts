@@ -2,6 +2,7 @@ import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
 import type { CommunityInfo } from '@/features/communities/types';
 import type { ResourceInfo } from '@/features/resources/types';
+import type { EventInfo } from '@/features/events/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
 export async function cleanupAllTestData() {
@@ -21,6 +22,26 @@ export async function cleanupAllTestData() {
       .delete()
       .in('community_id', communityIds);
   }
+
+  // Delete event attendances for test events first
+  const { data: testEvents } = await serviceClient
+    .from('events')
+    .select('id')
+    .like('title', `${TEST_PREFIX}%`);
+
+  if (testEvents?.length) {
+    const eventIds = testEvents.map((e) => e.id);
+    await serviceClient
+      .from('event_attendances')
+      .delete()
+      .in('event_id', eventIds);
+  }
+
+  // Delete test events
+  await serviceClient
+    .from('events')
+    .delete()
+    .like('title', `${TEST_PREFIX}%`);
 
   // Delete test resources
   await serviceClient
@@ -124,4 +145,33 @@ export async function cleanupUser(userId: string) {
   if (error) {
     console.warn(`Failed to delete user ${userId}:`, error.message);
   }
+}
+
+// Cleanup specific event and its attendances (no-op if event is null/undefined)
+export async function cleanupEvent(
+  event: EventInfo | null | undefined,
+) {
+  if (!event) return;
+
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('event_attendances')
+    .delete()
+    .eq('event_id', event.id);
+
+  await serviceClient.from('events').delete().eq('id', event.id);
+}
+
+// Cleanup specific attendance
+export async function cleanupAttendance(eventId: string, userId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('event_attendances')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('user_id', userId);
 }
