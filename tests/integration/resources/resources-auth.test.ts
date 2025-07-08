@@ -26,11 +26,11 @@ describe('Resources API - Authentication Requirements', () => {
   beforeAll(async () => {
     // Set up authenticated client and test data
     authenticatedClient = createTestClient();
-    
+
     // Create test data with authenticated client
     testUser = await createTestUser(authenticatedClient);
     await signIn(authenticatedClient, testUser.email, 'TestPass123!');
-    
+
     testCommunity = await createTestCommunity(authenticatedClient);
     testResource = await createTestResource(
       authenticatedClient,
@@ -51,7 +51,7 @@ describe('Resources API - Authentication Requirements', () => {
     describe('fetchResources', () => {
       it('allows unauthenticated access', async () => {
         const resources = await api.fetchResources(unauthenticatedClient);
-        
+
         expect(Array.isArray(resources)).toBe(true);
         expect(resources.some((r) => r.id === testResource.id)).toBe(true);
       });
@@ -62,7 +62,7 @@ describe('Resources API - Authentication Requirements', () => {
           type: 'offer',
           communityId: testCommunity.id,
         });
-        
+
         expect(Array.isArray(resources)).toBe(true);
       });
 
@@ -70,7 +70,7 @@ describe('Resources API - Authentication Requirements', () => {
         const resources = await api.fetchResources(unauthenticatedClient, {
           searchTerm: 'test',
         });
-        
+
         expect(Array.isArray(resources)).toBe(true);
       });
     });
@@ -81,7 +81,7 @@ describe('Resources API - Authentication Requirements', () => {
           unauthenticatedClient,
           testResource.id,
         );
-        
+
         expect(result).toBeTruthy();
         expect(result!.id).toBe(testResource.id);
         expect(result!.title).toBe(testResource.title);
@@ -92,7 +92,7 @@ describe('Resources API - Authentication Requirements', () => {
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
         );
-        
+
         expect(result).toBeNull();
       });
     });
@@ -115,7 +115,8 @@ describe('Resources API - Authentication Requirements', () => {
     describe('updateResource', () => {
       it('requires authentication', async () => {
         await expect(
-          api.updateResource(unauthenticatedClient, testResource.id, {
+          api.updateResource(unauthenticatedClient, {
+            id: testResource.id,
             title: 'Unauthorized Update Attempt',
           }),
         ).rejects.toThrow();
@@ -123,11 +124,10 @@ describe('Resources API - Authentication Requirements', () => {
 
       it('requires authentication even for non-existent resource', async () => {
         await expect(
-          api.updateResource(
-            unauthenticatedClient,
-            '00000000-0000-0000-0000-000000000000',
-            { title: 'Test' },
-          ),
+          api.updateResource(unauthenticatedClient, {
+            id: '00000000-0000-0000-0000-000000000000',
+            title: 'Test',
+          }),
         ).rejects.toThrow();
       });
     });
@@ -164,13 +164,12 @@ describe('Resources API - Authentication Requirements', () => {
 
     it('authenticated client can update own resources', async () => {
       const newTitle = `${TEST_PREFIX}Auth_Update_Test_${Date.now()}`;
-      
-      const updated = await api.updateResource(
-        authenticatedClient,
-        testResource.id,
-        { title: newTitle },
-      );
-      
+
+      const updated = await api.updateResource(authenticatedClient, {
+        id: testResource.id,
+        title: newTitle,
+      });
+
       expect(updated).toBeTruthy();
       expect(updated!.title).toBe(newTitle);
     });
@@ -179,7 +178,7 @@ describe('Resources API - Authentication Requirements', () => {
       // Verify that unauthenticated read access still works after auth operations
       const resources = await api.fetchResources(unauthenticatedClient);
       expect(Array.isArray(resources)).toBe(true);
-      
+
       const resource = await api.fetchResourceInfoById(
         unauthenticatedClient,
         testResource.id,
