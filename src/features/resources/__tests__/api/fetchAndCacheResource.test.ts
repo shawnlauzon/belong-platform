@@ -7,8 +7,11 @@ import { createFakeUser } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { User } from '../../../users/types';
-import type { Community, CommunityInfo } from '../../../communities/types';
+import type { UserDetail } from '../../../users/types';
+import type {
+  CommunityDetail,
+  CommunityInfo,
+} from '../../../communities/types';
 
 // Mock the API functions at the lowest level
 vi.mock('../../api/fetchResourceInfoById', () => ({
@@ -26,7 +29,7 @@ vi.mock('../../../communities/api/fetchCommunityById', () => ({
 import { fetchResourceInfoById } from '../../api/fetchResourceInfoById';
 import { fetchUserById } from '../../../users/api/fetchUserById';
 import { fetchCommunityById } from '../../../communities/api/fetchCommunityById';
-import { Resource, ResourceInfo } from '../../types';
+import { ResourceDetail, ResourceInfo } from '../../types';
 
 const mockFetchResourceInfoById = vi.mocked(fetchResourceInfoById);
 const mockFetchUserById = vi.mocked(fetchUserById);
@@ -36,10 +39,10 @@ describe('fetchAndCacheResource', () => {
   let queryClient: QueryClient;
   let mockSupabase: SupabaseClient<Database>;
   let fakeResourceInfo: ResourceInfo;
-  let fakeResource: Resource;
-  let fakeOwner: User;
-  let fakeOrganizer: User;
-  let fakeCommunity: Community;
+  let fakeResource: ResourceDetail;
+  let fakeOwner: UserDetail;
+  let fakeOrganizer: UserDetail;
+  let fakeCommunity: CommunityDetail;
   let fakeCommunityInfo: CommunityInfo;
 
   beforeEach(() => {

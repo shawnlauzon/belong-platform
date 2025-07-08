@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
-import { createTestUser, createTestEvent, createTestCommunity } from '../helpers/test-data';
+import {
+  createTestUser,
+  createTestEvent,
+  createTestCommunity,
+} from '../helpers/test-data';
 import {
   cleanupAllTestData,
   cleanupAttendance,
@@ -11,13 +15,13 @@ import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { EventInfo } from '@/features/events/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import type { CommunityInfo } from '@/features/communities/types';
 
 describe('Events API - Attendance Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser1: User;
-  let testUser2: User;
+  let testUser1: UserDetail;
+  let testUser2: UserDetail;
   let testUser1Email: string;
   let testUser2Email: string;
   let testCommunity: CommunityInfo;
@@ -37,7 +41,11 @@ describe('Events API - Attendance Operations', () => {
 
     // Create community and event with testUser1 as organizer
     testCommunity = await createTestCommunity(supabase);
-    attendanceTestEvent = await createTestEvent(supabase, testUser1.id, testCommunity.id);
+    attendanceTestEvent = await createTestEvent(
+      supabase,
+      testUser1.id,
+      testCommunity.id,
+    );
   });
 
   afterAll(async () => {
@@ -103,8 +111,12 @@ describe('Events API - Attendance Operations', () => {
     it('handles maxAttendees capacity', async () => {
       // Create event with max capacity of 1 (organizer already attending)
       await signIn(supabase, testUser1Email, 'TestPass123!');
-      const capacityEvent = await createTestEvent(supabase, testUser1.id, testCommunity.id);
-      
+      const capacityEvent = await createTestEvent(
+        supabase,
+        testUser1.id,
+        testCommunity.id,
+      );
+
       // Update to set max capacity to 1
       await api.updateEvent(supabase, {
         id: capacityEvent.id,
@@ -167,7 +179,11 @@ describe('Events API - Attendance Operations', () => {
       await signIn(supabase, testUser1Email, 'TestPass123!');
 
       // Create a separate event to test organizer leaving
-      const organizerEvent = await createTestEvent(supabase, testUser1.id, testCommunity.id);
+      const organizerEvent = await createTestEvent(
+        supabase,
+        testUser1.id,
+        testCommunity.id,
+      );
 
       try {
         // Organizer should be able to leave their own event
@@ -247,7 +263,7 @@ describe('Events API - Attendance Operations', () => {
       try {
         // Join with different status by updating after joining
         await api.joinEvent(supabase, attendanceTestEvent.id);
-        
+
         // Update status to 'maybe' directly in database for testing
         await supabase
           .from('event_attendances')
@@ -281,8 +297,12 @@ describe('Events API - Attendance Operations', () => {
     it('returns empty array for event with no attendees', async () => {
       // Create a new event with no additional attendees
       await signIn(supabase, testUser1Email, 'TestPass123!');
-      const emptyEvent = await createTestEvent(supabase, testUser1.id, testCommunity.id);
-      
+      const emptyEvent = await createTestEvent(
+        supabase,
+        testUser1.id,
+        testCommunity.id,
+      );
+
       // Remove organizer attendance to make it truly empty
       await api.leaveEvent(supabase, emptyEvent.id);
 
@@ -317,8 +337,10 @@ describe('Events API - Attendance Operations', () => {
         supabase,
         attendanceTestEvent.id,
       );
-      
-      const userAttendances = attendances.filter(a => a.userId === testUser2.id);
+
+      const userAttendances = attendances.filter(
+        (a) => a.userId === testUser2.id,
+      );
       expect(userAttendances).toHaveLength(1);
       expect(userAttendances).toContainEqual({
         userId: testUser2.id,
@@ -339,7 +361,9 @@ describe('Events API - Attendance Operations', () => {
         attendanceTestEvent.id,
       );
 
-      const organizerAttendances = attendees.filter(a => a.userId === testUser1.id);
+      const organizerAttendances = attendees.filter(
+        (a) => a.userId === testUser1.id,
+      );
       expect(organizerAttendances).toContainEqual({
         userId: testUser1.id,
         eventId: attendanceTestEvent.id,
@@ -364,7 +388,9 @@ describe('Events API - Attendance Operations', () => {
         );
 
         // This user should not appear in the attendees list
-        const userAttendances = attendees.filter(a => a.userId === lonelyUser.id);
+        const userAttendances = attendees.filter(
+          (a) => a.userId === lonelyUser.id,
+        );
         expect(userAttendances).toHaveLength(0);
       } finally {
         await cleanupUser(lonelyUser.id);
@@ -374,10 +400,14 @@ describe('Events API - Attendance Operations', () => {
     it('handles multiple events for same user', async () => {
       // Create another event and have testUser2 join it
       await signIn(supabase, testUser1Email, 'TestPass123!');
-      const secondEvent = await createTestEvent(supabase, testUser1.id, testCommunity.id);
-      
+      const secondEvent = await createTestEvent(
+        supabase,
+        testUser1.id,
+        testCommunity.id,
+      );
+
       await signIn(supabase, testUser2Email, 'TestPass123!');
-      
+
       try {
         await api.joinEvent(supabase, secondEvent.id);
 
@@ -391,8 +421,8 @@ describe('Events API - Attendance Operations', () => {
         );
 
         // testUser2 should be in both events
-        expect(attendees1.some(a => a.userId === testUser2.id)).toBe(true);
-        expect(attendees2.some(a => a.userId === testUser2.id)).toBe(true);
+        expect(attendees1.some((a) => a.userId === testUser2.id)).toBe(true);
+        expect(attendees2.some((a) => a.userId === testUser2.id)).toBe(true);
       } finally {
         await cleanupAttendance(secondEvent.id, testUser2.id);
         await signIn(supabase, testUser1Email, 'TestPass123!');

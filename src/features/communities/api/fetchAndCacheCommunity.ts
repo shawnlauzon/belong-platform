@@ -4,8 +4,8 @@ import type { Database } from '@/shared/types/database';
 import { queryKeys } from '@/shared';
 import { fetchCommunityById } from './fetchCommunityById';
 import { fetchUserById } from '../../users/api/fetchUserById';
-import type { Community } from '../types';
-import type { User } from '../../users/types';
+import type { CommunityDetail } from '../types';
+import type { UserDetail } from '../../users/types';
 
 /**
  * Ensures a consolidated Community object is available, using cache when possible.
@@ -19,11 +19,11 @@ export async function fetchAndCacheCommunity(
   supabase: SupabaseClient<Database>,
   queryClient: QueryClient,
   communityId: string,
-): Promise<Community | null> {
+): Promise<CommunityDetail | null> {
   // Check if data is already in cache
   const communityQueryKey = queryKeys.communities.byId(communityId);
   const cachedCommunity =
-    queryClient.getQueryData<Community>(communityQueryKey);
+    queryClient.getQueryData<CommunityDetail>(communityQueryKey);
   if (cachedCommunity) {
     return cachedCommunity;
   }
@@ -34,7 +34,7 @@ export async function fetchAndCacheCommunity(
 
   // Get organizer, checking cache first
   const userQueryKey = queryKeys.users.byId(communityInfo.organizerId);
-  let organizer = queryClient.getQueryData<User>(userQueryKey) ?? null;
+  let organizer = queryClient.getQueryData<UserDetail>(userQueryKey) ?? null;
 
   if (!organizer) {
     organizer = await fetchUserById(supabase, communityInfo.organizerId);

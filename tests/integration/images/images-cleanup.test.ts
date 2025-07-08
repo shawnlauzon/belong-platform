@@ -7,7 +7,7 @@ import { commitImageUrls, uploadImage } from '@/features/images/api';
 import { StorageManager } from '@/features/images/utils/storage';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import {
   createTestImageFile,
   verifyImageExistsInStorage,
@@ -22,7 +22,7 @@ import {
 
 describe('Images API - Cleanup Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
 
   beforeAll(async () => {
     supabase = createTestClient();

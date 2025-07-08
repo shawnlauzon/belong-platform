@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createUser } from '../api';
-import type { UserData, User } from '../types';
+import type { UserData, UserDetail } from '../types';
 
 /**
  * Hook for creating new user profiles.
@@ -18,7 +18,7 @@ export function useCreateUser() {
       logger.debug('👤 useCreateUser: Creating user', { userData });
       return createUser(supabase, userData);
     },
-    onSuccess: (newUser: User) => {
+    onSuccess: (newUser: UserDetail) => {
       // Invalidate all user queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['users'] });
 

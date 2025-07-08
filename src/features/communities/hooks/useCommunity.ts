@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import type { Community } from '@/features/communities/types';
+import type { CommunityDetail } from '@/features/communities/types';
 import { fetchAndCacheCommunity } from '../api/fetchAndCacheCommunity';
 
 /**
@@ -38,7 +38,7 @@ export function useCommunity(id: string) {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
 
-  return useQuery<Community | null, Error>({
+  return useQuery<CommunityDetail | null, Error>({
     queryKey: queryKeys.communities.byId(id),
     queryFn: () => fetchAndCacheCommunity(supabase, queryClient, id),
     enabled: !!id,

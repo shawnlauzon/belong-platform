@@ -2,12 +2,12 @@ import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser, forDbInsert } from '../transformers/userTransformer';
-import { User, UserData } from '../types';
+import { UserDetail, UserData } from '../types';
 
 export async function createUser(
   supabase: SupabaseClient<Database>,
   userData: UserData,
-): Promise<User> {
+): Promise<UserDetail> {
   logger.debug('👤 API: Creating user', { email: userData.email });
 
   try {

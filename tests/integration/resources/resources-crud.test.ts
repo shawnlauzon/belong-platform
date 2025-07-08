@@ -14,12 +14,12 @@ import { ResourceCategory } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceInfo } from '@/features/resources/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import type { CommunityInfo } from '@/features/communities/types';
 
 describe('Resources API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let testCommunity: CommunityInfo;
   let readOnlyResource1: ResourceInfo;
   let readOnlyResource2: ResourceInfo;

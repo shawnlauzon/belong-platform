@@ -1,5 +1,5 @@
 export type {
-  Event,
+  EventDetail as Event,
   EventData,
   EventInfo,
   EventFilter,

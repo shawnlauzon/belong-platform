@@ -1,6 +1,6 @@
 import { Coordinates } from '../../../shared';
 
-export interface User {
+export interface UserDetail {
   id: string;
   firstName: string;
   lastName?: string;
@@ -14,7 +14,7 @@ export interface User {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UserData extends Omit<User, 'createdAt' | 'updatedAt'> {}
+export interface UserData extends Omit<UserDetail, 'createdAt' | 'updatedAt'> {}
 
 export interface UserFilter {
   email?: string;

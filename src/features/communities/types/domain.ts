@@ -1,5 +1,5 @@
 import { Coordinates } from '../../../shared';
-import { User } from '../../users';
+import { UserDetail } from '../../users';
 import { Polygon } from './geojson';
 
 // Boundary types for communities
@@ -15,9 +15,9 @@ export interface IsochroneBoundary {
 
 export type CommunityBoundary = IsochroneBoundary;
 
-export interface Community extends Omit<CommunityData, 'organizerId'> {
+export interface CommunityDetail extends Omit<CommunityData, 'organizerId'> {
   id: string;
-  organizer: User;
+  organizer: UserDetail;
 
   memberCount: number;
   createdAt: Date;
@@ -43,7 +43,7 @@ export interface CommunityData {
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface CommunityInfo extends Omit<Community, 'organizer'> {
+export interface CommunityInfo extends Omit<CommunityDetail, 'organizer'> {
   organizerId: string; // Replaces organizer: User
 }
 
@@ -57,8 +57,8 @@ export interface CommunityFilter {
 export interface CommunityMembership
   extends Omit<CommunityMembershipData, 'userId' | 'communityId'> {
   joinedAt: Date;
-  user: User;
-  community: Community;
+  user: UserDetail;
+  community: CommunityDetail;
 }
 
 export interface CommunityMembershipData {

@@ -1,12 +1,12 @@
 import { Coordinates } from '@/shared';
-import { Community } from '../../communities';
-import { User } from '../../users';
+import { CommunityDetail } from '../../communities';
+import { UserDetail } from '../../users';
 
-export interface Resource
+export interface ResourceDetail
   extends Omit<ResourceData, 'ownerId' | 'communityId'> {
   id: string;
-  owner: User;
-  community?: Community;
+  owner: UserDetail;
+  community?: CommunityDetail;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,7 +31,8 @@ export interface ResourceData {
 }
 
 // Info version for list operations - includes all domain properties but only IDs for references
-export interface ResourceInfo extends Omit<Resource, 'owner' | 'community'> {
+export interface ResourceInfo
+  extends Omit<ResourceDetail, 'owner' | 'community'> {
   ownerId: string; // Replaces owner: User
   communityId: string; // Replaces community?: Community
 }

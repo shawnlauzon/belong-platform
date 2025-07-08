@@ -12,22 +12,22 @@ import { createFakeCommunityData } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityInfo } from '@/features/communities/types';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 
 describe('Communities API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let testCommunity: CommunityInfo;
 
   beforeAll(async () => {
     // Set up authenticated client and test data
     authenticatedClient = createTestClient();
-    
+
     // Create test data with authenticated client
     testUser = await createTestUser(authenticatedClient);
     await signIn(authenticatedClient, testUser.email, 'TestPass123!');
-    
+
     testCommunity = await createTestCommunity(authenticatedClient);
 
     // Set up unauthenticated client
@@ -43,7 +43,7 @@ describe('Communities API - Authentication Requirements', () => {
     describe('fetchCommunities', () => {
       it('allows unauthenticated access', async () => {
         const communities = await api.fetchCommunities(unauthenticatedClient);
-        
+
         expect(Array.isArray(communities)).toBe(true);
         expect(communities.some((c) => c.id === testCommunity.id)).toBe(true);
       });
@@ -53,7 +53,7 @@ describe('Communities API - Authentication Requirements', () => {
           name: 'test',
           organizerId: testUser.id,
         });
-        
+
         expect(Array.isArray(communities)).toBe(true);
       });
     });
@@ -64,7 +64,7 @@ describe('Communities API - Authentication Requirements', () => {
           unauthenticatedClient,
           testCommunity.id,
         );
-        
+
         expect(result).toBeTruthy();
         expect(result!.id).toBe(testCommunity.id);
         expect(result!.name).toBe(testCommunity.name);
@@ -75,7 +75,7 @@ describe('Communities API - Authentication Requirements', () => {
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
         );
-        
+
         expect(result).toBeNull();
       });
     });
@@ -86,7 +86,7 @@ describe('Communities API - Authentication Requirements', () => {
           unauthenticatedClient,
           testCommunity.id,
         );
-        
+
         expect(Array.isArray(members)).toBe(true);
         expect(members.some((m) => m.userId === testUser.id)).toBe(true);
       });
@@ -98,9 +98,11 @@ describe('Communities API - Authentication Requirements', () => {
           unauthenticatedClient,
           testUser.id,
         );
-        
+
         expect(Array.isArray(communities)).toBe(true);
-        expect(communities.some((c) => c.communityId === testCommunity.id)).toBe(true);
+        expect(
+          communities.some((c) => c.communityId === testCommunity.id),
+        ).toBe(true);
       });
     });
   });
@@ -130,13 +132,10 @@ describe('Communities API - Authentication Requirements', () => {
 
       it('requires authentication even for non-existent community', async () => {
         await expect(
-          api.updateCommunity(
-            unauthenticatedClient,
-            {
-              id: '00000000-0000-0000-0000-000000000000',
-              name: 'Test',
-            },
-          ),
+          api.updateCommunity(unauthenticatedClient, {
+            id: '00000000-0000-0000-0000-000000000000',
+            name: 'Test',
+          }),
         ).rejects.toThrow();
       });
     });
@@ -188,15 +187,12 @@ describe('Communities API - Authentication Requirements', () => {
 
     it('authenticated client can update own communities', async () => {
       const newName = `${TEST_PREFIX}Auth_Update_Test_${Date.now()}`;
-      
-      const updated = await api.updateCommunity(
-        authenticatedClient,
-        {
-          id: testCommunity.id,
-          name: newName,
-        },
-      );
-      
+
+      const updated = await api.updateCommunity(authenticatedClient, {
+        id: testCommunity.id,
+        name: newName,
+      });
+
       expect(updated).toBeTruthy();
       expect(updated!.name).toBe(newName);
     });
@@ -205,20 +201,20 @@ describe('Communities API - Authentication Requirements', () => {
       // Create a second user and community
       const secondUser = await createTestUser(authenticatedClient);
       await signIn(authenticatedClient, secondUser.email, 'TestPass123!');
-      
+
       // Join the existing test community
       const membership = await api.joinCommunity(
         authenticatedClient,
         testCommunity.id,
       );
-      
+
       expect(membership).toBeTruthy();
       expect(membership!.communityId).toBe(testCommunity.id);
       expect(membership!.userId).toBe(secondUser.id);
-      
+
       // Leave the community
       await api.leaveCommunity(authenticatedClient, testCommunity.id);
-      
+
       // Verify membership is gone
       const members = await api.fetchCommunityMembers(
         authenticatedClient,
@@ -231,7 +227,7 @@ describe('Communities API - Authentication Requirements', () => {
       // Verify that unauthenticated read access still works after auth operations
       const communities = await api.fetchCommunities(unauthenticatedClient);
       expect(Array.isArray(communities)).toBe(true);
-      
+
       const community = await api.fetchCommunityById(
         unauthenticatedClient,
         testCommunity.id,

@@ -1,6 +1,6 @@
 import type {
   ResourceCategory,
-  Resource,
+  ResourceDetail,
   ResourceData,
   ResourceInfo,
 } from '../types';
@@ -10,16 +10,16 @@ import type {
   ResourceUpdateDbData,
 } from '../types/database';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
-import { User } from '../../users';
-import { Community } from '../../communities';
+import { UserDetail } from '../../users';
+import { CommunityDetail } from '../../communities';
 
 /**
  * Transform a database resource record to a domain resource object
  */
 export function toDomainResource(
   dbResource: ResourceRow,
-  refs: { owner: User; community?: Community },
-): Resource {
+  refs: { owner: UserDetail; community?: CommunityDetail },
+): ResourceDetail {
   if (dbResource.owner_id !== refs.owner.id) {
     throw new Error('Owner ID does not match');
   }

@@ -2,13 +2,13 @@ import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser, forDbUpdate } from '../transformers/userTransformer';
-import { User } from '../types';
+import { UserDetail } from '../types';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 
 export async function updateUser(
   supabase: SupabaseClient<Database>,
-  userData: Partial<User> & { id: string }
-): Promise<User> {
+  userData: Partial<UserDetail> & { id: string },
+): Promise<UserDetail> {
   logger.debug('👤 API: Updating user', { id: userData.id });
 
   try {
@@ -38,7 +38,10 @@ export async function updateUser(
           entityId: userData.id,
         });
 
-        if (permanentUrls.length > 0 && permanentUrls[0] !== userData.avatarUrl) {
+        if (
+          permanentUrls.length > 0 &&
+          permanentUrls[0] !== userData.avatarUrl
+        ) {
           finalAvatarUrl = permanentUrls[0];
         }
       } catch (error) {
@@ -46,11 +49,16 @@ export async function updateUser(
           userId: userData.id,
           error,
         });
-        throw new Error(`Failed to commit user avatar image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to commit user avatar image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
-    const updateData = forDbUpdate({ ...userData, avatarUrl: finalAvatarUrl }, currentProfile);
+    const updateData = forDbUpdate(
+      { ...userData, avatarUrl: finalAvatarUrl },
+      currentProfile,
+    );
 
     const { data, error } = await supabase
       .from('profiles')

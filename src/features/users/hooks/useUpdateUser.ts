@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateUser } from '../api';
-import type { User } from '../types';
+import type { UserDetail } from '../types';
 
 /**
  * Hook for updating existing user profiles.
@@ -102,13 +102,13 @@ export function useUpdateUser() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: async (userData: Partial<User> & { id: string }) => {
+    mutationFn: async (userData: Partial<UserDetail> & { id: string }) => {
       logger.debug('👤 useUpdateUser: Updating user', { id: userData.id });
-      
+
       // Update user (auto-commits images internally)
       return updateUser(supabase, userData);
     },
-    onSuccess: (updatedUser: User) => {
+    onSuccess: (updatedUser: UserDetail) => {
       // Invalidate all user queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['users'] });
 

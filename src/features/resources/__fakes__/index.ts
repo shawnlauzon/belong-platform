@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker';
 import {
-  Resource,
+  ResourceDetail,
   ResourceData,
   ResourceCategory,
   ResourceInfo,
 } from '../types';
 import { ResourceRow } from '../types/database';
-import { User } from '../../users';
+import { UserDetail } from '../../users';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeCommunity } from '../../communities/__fakes__';
 import { toResourceInfo } from '../transformers/resourceTransformer';
@@ -16,8 +16,8 @@ import { ProfileRow } from '@/features/users/types/database';
  * Creates a fake domain Resource object with an owner
  */
 export function createFakeResource(
-  overrides: Partial<Resource> = {},
-): Resource {
+  overrides: Partial<ResourceDetail> = {},
+): ResourceDetail {
   const now = new Date();
 
   const owner = createFakeUser();
@@ -49,9 +49,9 @@ export function createFakeResource(
  * Creates a fake domain Resource with a custom owner
  */
 export function createFakeResourceWithOwner(
-  owner: User,
-  overrides: Partial<Resource> = {},
-): Resource {
+  owner: UserDetail,
+  overrides: Partial<ResourceDetail> = {},
+): ResourceDetail {
   const resource = createFakeResource(overrides);
   return {
     ...resource,

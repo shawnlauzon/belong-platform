@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
-import { createTestUser, createTestCommunity, TEST_PREFIX } from '../helpers/test-data';
+import {
+  createTestUser,
+  createTestCommunity,
+  TEST_PREFIX,
+} from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { signIn } from '@/features/auth/api';
 import { uploadImage } from '@/features/images/api';
@@ -14,7 +18,7 @@ import { createFakeEventData } from '@/features/events/__fakes__';
 import { ResourceCategory } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
+import type { UserDetail } from '@/features/users/types';
 import type { CommunityInfo } from '@/features/communities/types';
 import {
   createTestImageFile,
@@ -24,7 +28,7 @@ import {
 
 describe('Entity Creation with Auto-Commit Image Workflow', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: UserDetail;
   let testCommunity: CommunityInfo;
 
   beforeAll(async () => {
@@ -93,8 +97,12 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(tempExists2After).toBe(false);
 
       // 5. Verify permanent images exist
-      const permExists1 = await verifyImageExistsInStorage(resource.imageUrls![0]);
-      const permExists2 = await verifyImageExistsInStorage(resource.imageUrls![1]);
+      const permExists1 = await verifyImageExistsInStorage(
+        resource.imageUrls![0],
+      );
+      const permExists2 = await verifyImageExistsInStorage(
+        resource.imageUrls![1],
+      );
       expect(permExists1).toBe(true);
       expect(permExists2).toBe(true);
     });
@@ -150,7 +158,9 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(tempExistsAfter).toBe(false);
 
       // Verify permanent banner exists
-      const permExists = await verifyImageExistsInStorage(community.bannerImageUrl!);
+      const permExists = await verifyImageExistsInStorage(
+        community.bannerImageUrl!,
+      );
       expect(permExists).toBe(true);
     });
 
@@ -200,7 +210,9 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(tempExistsAfter).toBe(false);
 
       // Verify permanent avatar exists
-      const permExists = await verifyImageExistsInStorage(updatedUser.avatarUrl!);
+      const permExists = await verifyImageExistsInStorage(
+        updatedUser.avatarUrl!,
+      );
       expect(permExists).toBe(true);
     });
 
@@ -280,7 +292,8 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       });
 
       // Use a fake permanent URL (simulating an already committed image)
-      const permanentUrl = 'https://test.supabase.co/storage/v1/object/public/images/user-123/resource-existing-123-image.jpg';
+      const permanentUrl =
+        'https://test.supabase.co/storage/v1/object/public/images/user-123/resource-existing-123-image.jpg';
 
       // Create resource with mixed URLs
       const resourceData = createFakeResourceData({
@@ -304,7 +317,9 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(tempExists).toBe(false);
 
       // Verify committed image exists
-      const permExists = await verifyImageExistsInStorage(resource.imageUrls![0]);
+      const permExists = await verifyImageExistsInStorage(
+        resource.imageUrls![0],
+      );
       expect(permExists).toBe(true);
     });
   });
