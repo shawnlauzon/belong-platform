@@ -16,6 +16,58 @@ export async function joinEvent(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
+    // Check max attendees validation only for 'attending' status
+    if (status === 'attending') {
+      // Get event details to check max attendees
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select('max_attendees')
+        .eq('id', eventId)
+        .single();
+
+      if (eventError) {
+        logger.error('📅 API: Failed to fetch event details for capacity check', {
+          error: eventError,
+          eventId,
+        });
+        throw eventError;
+      }
+
+      if (!eventData) {
+        throw new Error('Event not found');
+      }
+
+      // Only check capacity if event has max attendees limit
+      if (eventData.max_attendees !== null) {
+        // Count current attendees with 'attending' status
+        const { count: attendeeCount, error: countError } = await supabase
+          .from('event_attendances')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId)
+          .eq('status', 'attending');
+
+        if (countError) {
+          logger.error('📅 API: Failed to count attendees for capacity check', {
+            error: countError,
+            eventId,
+          });
+          throw countError;
+        }
+
+        const currentAttendingCount = attendeeCount || 0;
+
+        // Check if adding this attendee would exceed max capacity
+        if (currentAttendingCount >= eventData.max_attendees) {
+          logger.warn('📅 API: Event at max capacity', {
+            eventId,
+            currentAttendingCount,
+            maxAttendees: eventData.max_attendees,
+          });
+          throw new Error('Event has reached maximum capacity');
+        }
+      }
+    }
+
     const attendanceData: EventAttendanceData = {
       eventId,
       userId: currentUserId,
