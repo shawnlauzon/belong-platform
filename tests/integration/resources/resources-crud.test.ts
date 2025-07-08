@@ -240,7 +240,8 @@ describe('Resources API - CRUD Operations', () => {
         const newTitle = `${TEST_PREFIX}Updated_${Date.now()}`;
         const newDescription = 'Updated description for test';
 
-        const updated = await api.updateResource(supabase, resource.id, {
+        const updated = await api.updateResource(supabase, {
+          id: resource.id,
           title: newTitle,
           description: newDescription,
         });
@@ -265,7 +266,8 @@ describe('Resources API - CRUD Operations', () => {
         const newTitle = `${TEST_PREFIX}PartialUpdate_${Date.now()}`;
         const originalDescription = resource.description;
 
-        const updated = await api.updateResource(supabase, resource.id, {
+        const updated = await api.updateResource(supabase, {
+          id: resource.id,
           title: newTitle,
         });
 
@@ -287,7 +289,8 @@ describe('Resources API - CRUD Operations', () => {
           testCommunity.id,
         );
 
-        const updated = await api.updateResource(supabase, resource.id, {
+        const updated = await api.updateResource(supabase, {
+          id: resource.id,
           category: ResourceCategory.FOOD,
           type: 'request',
         });
