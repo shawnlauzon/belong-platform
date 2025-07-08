@@ -61,8 +61,8 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       });
 
       // Verify temp images exist
-      const tempExists1Before = await verifyImageExistsInStorage(tempImage1.url);
-      const tempExists2Before = await verifyImageExistsInStorage(tempImage2.url);
+      const tempExists1Before = await verifyImageExistsInStorage(tempImage1);
+      const tempExists2Before = await verifyImageExistsInStorage(tempImage2);
       expect(tempExists1Before).toBe(true);
       expect(tempExists2Before).toBe(true);
 
@@ -70,7 +70,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       const resourceData = createFakeResourceData({
         title: `${TEST_PREFIX}Auto-Commit Resource ${Date.now()}`,
         description: 'Test resource with auto-commit images',
-        imageUrls: [tempImage1.url, tempImage2.url],
+        imageUrls: [tempImage1, tempImage2],
         communityId: testCommunity.id,
         category: ResourceCategory.TOOLS,
         type: 'offer',
@@ -87,8 +87,8 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(resource.imageUrls![1]).toContain(`resource-${resource.id}`);
 
       // 4. Verify temp images were moved to permanent storage (not copied)
-      const tempExists1After = await verifyImageExistsInStorage(tempImage1.url);
-      const tempExists2After = await verifyImageExistsInStorage(tempImage2.url);
+      const tempExists1After = await verifyImageExistsInStorage(tempImage1);
+      const tempExists2After = await verifyImageExistsInStorage(tempImage2);
       expect(tempExists1After).toBe(false); // Moved, not copied
       expect(tempExists2After).toBe(false);
 
@@ -127,14 +127,14 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       });
 
       // Verify temp banner exists
-      const tempExists = await verifyImageExistsInStorage(tempBanner.url);
+      const tempExists = await verifyImageExistsInStorage(tempBanner);
       expect(tempExists).toBe(true);
 
       // Create community - should auto-commit banner
       const communityData = createFakeCommunityData({
         name: `${TEST_PREFIX}Auto-Commit Community ${Date.now()}`,
         description: 'Test community with auto-commit banner',
-        bannerImageUrl: tempBanner.url,
+        bannerImageUrl: tempBanner,
       });
 
       const community = await createCommunity(supabase, communityData);
@@ -146,7 +146,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(community.bannerImageUrl).toContain(`community-${community.id}`);
 
       // Verify temp banner was moved
-      const tempExistsAfter = await verifyImageExistsInStorage(tempBanner.url);
+      const tempExistsAfter = await verifyImageExistsInStorage(tempBanner);
       expect(tempExistsAfter).toBe(false);
 
       // Verify permanent banner exists
@@ -179,13 +179,13 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       });
 
       // Verify temp avatar exists
-      const tempExists = await verifyImageExistsInStorage(tempAvatar.url);
+      const tempExists = await verifyImageExistsInStorage(tempAvatar);
       expect(tempExists).toBe(true);
 
       // Update user - should auto-commit avatar
       const updatedUser = await updateUser(supabase, {
         id: testUser.id,
-        avatarUrl: tempAvatar.url,
+        avatarUrl: tempAvatar,
         bio: 'Updated bio with new avatar',
       });
 
@@ -196,7 +196,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(updatedUser.avatarUrl).toContain(`user-${testUser.id}`);
 
       // Verify temp avatar was moved
-      const tempExistsAfter = await verifyImageExistsInStorage(tempAvatar.url);
+      const tempExistsAfter = await verifyImageExistsInStorage(tempAvatar);
       expect(tempExistsAfter).toBe(false);
 
       // Verify permanent avatar exists
@@ -237,7 +237,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       const eventData = createFakeEventData({
         title: `${TEST_PREFIX}Auto-Commit Event ${Date.now()}`,
         description: 'Test event with auto-commit images',
-        imageUrls: [tempImage1.url, tempImage2.url],
+        imageUrls: [tempImage1, tempImage2],
         communityId: testCommunity.id,
         organizerId: testUser.id, // Add organizer ID for RLS
         startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
@@ -255,8 +255,8 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(event.imageUrls![1]).toContain(`event-${event.id}`);
 
       // Verify temp images were moved
-      const tempExists1 = await verifyImageExistsInStorage(tempImage1.url);
-      const tempExists2 = await verifyImageExistsInStorage(tempImage2.url);
+      const tempExists1 = await verifyImageExistsInStorage(tempImage1);
+      const tempExists2 = await verifyImageExistsInStorage(tempImage2);
       expect(tempExists1).toBe(false);
       expect(tempExists2).toBe(false);
 
@@ -285,7 +285,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       // Create resource with mixed URLs
       const resourceData = createFakeResourceData({
         title: `${TEST_PREFIX}Mixed URLs Resource ${Date.now()}`,
-        imageUrls: [tempImage.url, permanentUrl],
+        imageUrls: [tempImage, permanentUrl],
         communityId: testCommunity.id,
         category: ResourceCategory.OTHER,
         type: 'offer',
@@ -300,7 +300,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       expect(resource.imageUrls![1]).toBe(permanentUrl); // Unchanged
 
       // Verify temp image was moved
-      const tempExists = await verifyImageExistsInStorage(tempImage.url);
+      const tempExists = await verifyImageExistsInStorage(tempImage);
       expect(tempExists).toBe(false);
 
       // Verify committed image exists
@@ -323,7 +323,7 @@ describe('Entity Creation with Auto-Commit Image Workflow', () => {
       const resourceData = createFakeResourceData({
         title: `${TEST_PREFIX}Resilience Test Resource ${Date.now()}`,
         imageUrls: [
-          tempImage.url,
+          tempImage,
           'invalid-url',
           '', // Empty string
           'https://invalid-domain.com/image.jpg',

@@ -141,7 +141,7 @@ describe('Events API - CRUD Operations', () => {
       const testImageContent = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG header
       const testFile = new File([testImageContent], 'test-image.png', { type: 'image/png' });
       
-      let tempImageResult: { url: string; tempPath: string } | null = null;
+      let tempImageResult: string | null = null;
       let event;
       
       try {
@@ -149,12 +149,12 @@ describe('Events API - CRUD Operations', () => {
         tempImageResult = await uploadImage({ 
           supabase, 
           file: testFile, 
-          folder: 'temp-uploads' 
+          folder: 'temp-upload' 
         });
         
         expect(tempImageResult).toBeTruthy();
-        expect(tempImageResult.url).toContain('temp-uploads-');
-        expect(tempImageResult.tempPath).toBeTruthy();
+        expect(typeof tempImageResult).toBe('string');
+        expect(tempImageResult).toContain('temp-upload-');
         
         // Create event with the temporary image URL
         const data = createFakeEventData({
@@ -162,14 +162,14 @@ describe('Events API - CRUD Operations', () => {
           organizerId: testUser.id,
           communityId: testCommunity.id,
           startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          imageUrls: [tempImageResult.url],
+          imageUrls: [tempImageResult],
         });
 
         event = await api.createEvent(supabase, data);
 
         // If images are auto-committed, temp URLs should be converted to permanent URLs
         if (event!.imageUrls && event!.imageUrls.length > 0) {
-          expect(event!.imageUrls[0]).not.toContain('temp-uploads-');
+          expect(event!.imageUrls[0]).not.toContain('temp-upload-');
           expect(event!.imageUrls[0]).toContain(`event-${event!.id}`);
           
           // Verify the permanent image actually exists by checking storage

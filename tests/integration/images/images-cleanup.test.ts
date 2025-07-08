@@ -46,12 +46,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-cleanup-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Verify it exists
       const existsBefore = await verifyImageExistsInStorage(tempUrl);
@@ -72,12 +71,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-preserve-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Verify it exists
       const existsBefore = await verifyImageExistsInStorage(tempUrl);
@@ -88,7 +86,10 @@ describe('Images API - Cleanup Operations', () => {
       expect(existsAfter).toBe(true);
 
       // Clean up the test file manually
-      await StorageManager.deleteFile(uploadResult.tempPath, supabase);
+      const tempPath = extractStoragePathFromUrl(tempUrl);
+      if (tempPath) {
+        await StorageManager.deleteFile(tempPath, supabase);
+      }
     });
 
     it('handles cleanup when no temp images exist', async () => {
@@ -122,8 +123,7 @@ describe('Images API - Cleanup Operations', () => {
           folder: 'temp-upload',
         }),
       );
-      const uploadResults = await Promise.all(uploadPromises);
-      const tempUrls = uploadResults.map((result) => result.url);
+      const tempUrls = await Promise.all(uploadPromises);
 
       // Verify all exist
       for (const tempUrl of tempUrls) {
@@ -148,12 +148,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-to-permanent-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Commit to permanent storage
       const entityType = 'resource';
@@ -200,8 +199,7 @@ describe('Images API - Cleanup Operations', () => {
           folder: 'temp-upload',
         }),
       );
-      const uploadResults = await Promise.all(uploadPromises);
-      const tempUrls = uploadResults.map((result) => result.url);
+      const tempUrls = await Promise.all(uploadPromises);
 
       const entityType = 'resource';
       const entityId = `${TEST_PREFIX}cleanup-entity-${Date.now()}`;
@@ -255,12 +253,12 @@ describe('Images API - Cleanup Operations', () => {
         name: `${TEST_PREFIX}entity-specific-2-${Date.now()}.jpg`,
       });
 
-      const uploadResult1 = await uploadImage({
+      const tempUrl1 = await uploadImage({
         supabase,
         file: testFile1,
         folder: 'temp',
       });
-      const uploadResult2 = await uploadImage({
+      const tempUrl2 = await uploadImage({
         supabase,
         file: testFile2,
         folder: 'temp',
@@ -273,13 +271,13 @@ describe('Images API - Cleanup Operations', () => {
       // Commit both to permanent storage
       const committedUrls1 = await commitImageUrls({
         supabase,
-        imageUrls: [uploadResult1.url],
+        imageUrls: [tempUrl1],
         entityType,
         entityId: entityId1,
       });
       const committedUrls2 = await commitImageUrls({
         supabase,
-        imageUrls: [uploadResult2.url],
+        imageUrls: [tempUrl2],
         entityType,
         entityId: entityId2,
       });
@@ -319,12 +317,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}orphaned-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       const entityType = 'resource';
       const entityId = 'non-existent-resource-orphaned-999';
@@ -366,12 +363,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}orphaned-delete-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       const entityType = 'community';
       const entityId = 'non-existent-community-orphaned-999';
@@ -408,12 +404,11 @@ describe('Images API - Cleanup Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}temp-not-orphaned-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Verify temp file exists
       const tempExists = await verifyImageExistsInStorage(tempUrl);
@@ -430,7 +425,9 @@ describe('Images API - Cleanup Operations', () => {
       expect(orphanedImages).not.toContain(tempPath);
 
       // Clean up the temp file
-      await StorageManager.deleteFile(uploadResult.tempPath, supabase);
+      if (tempPath) {
+        await StorageManager.deleteFile(tempPath, supabase);
+      }
     });
 
     it('handles case when no orphaned images exist', async () => {

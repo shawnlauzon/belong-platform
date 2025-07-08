@@ -39,7 +39,7 @@ describe('Images API - Upload Operations', () => {
   });
 
   describe('uploadFile', () => {
-    it.only('uploads single image file successfully', async () => {
+    it('uploads single image file successfully', async () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}single-upload-${Date.now()}.jpg`,
       });
@@ -50,26 +50,25 @@ describe('Images API - Upload Operations', () => {
         folder: 'temp-upload',
       });
 
+      // Result should be a string URL
       expect(result).toBeTruthy();
-      expect(result.url).toBeTruthy();
-      expect(result.tempPath).toBeTruthy();
-      expect(result.tempPath).toContain(testUser.id);
-      expect(result.tempPath).toContain('temp-upload-');
+      expect(typeof result).toBe('string');
 
       // Verify file exists in storage
-      const exists = await verifyImageExistsInStorage(result.url);
+      const exists = await verifyImageExistsInStorage(result);
       expect(exists).toBe(true);
 
-      // Verify URL format - now includes user ID folder
-      expect(result.url).toMatch(
+      // Verify URL format - includes user ID folder and temp-upload prefix
+      expect(result).toMatch(
         new RegExp(
           `^https:\\/\\/.*\\/storage\\/v1\\/object\\/public\\/images\\/${testUser.id}\\/temp-upload-`,
         ),
       );
 
       // Verify path extraction works
-      const extractedPath = extractStoragePathFromUrl(result.url);
-      expect(extractedPath).toBe(result.tempPath);
+      const extractedPath = extractStoragePathFromUrl(result);
+      expect(extractedPath).toContain(testUser.id);
+      expect(extractedPath).toContain('temp-upload-');
     });
 
     it('uploads multiple image files successfully', async () => {
@@ -87,13 +86,17 @@ describe('Images API - Upload Operations', () => {
       expect(results).toHaveLength(3);
 
       for (const result of results) {
-        expect(result.url).toBeTruthy();
-        expect(result.tempPath).toContain(testUser.id);
-        expect(result.tempPath).toContain('temp-upload-');
+        expect(result).toBeTruthy();
+        expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result.url);
+        const exists = await verifyImageExistsInStorage(result);
         expect(exists).toBe(true);
+
+        // Verify path extraction works
+        const extractedPath = extractStoragePathFromUrl(result);
+        expect(extractedPath).toContain(testUser.id);
+        expect(extractedPath).toContain('temp-upload-');
       }
     });
 
@@ -112,13 +115,12 @@ describe('Images API - Upload Operations', () => {
         folder: 'temp-upload',
       });
 
-      // Should have different paths despite same filename
-      expect(result1.tempPath).not.toBe(result2.tempPath);
-      expect(result1.url).not.toBe(result2.url);
+      // Should have different URLs despite same filename
+      expect(result1).not.toBe(result2);
 
       // Both should exist
-      const exists1 = await verifyImageExistsInStorage(result1.url);
-      const exists2 = await verifyImageExistsInStorage(result2.url);
+      const exists1 = await verifyImageExistsInStorage(result1);
+      const exists2 = await verifyImageExistsInStorage(result2);
       expect(exists1).toBe(true);
       expect(exists2).toBe(true);
     });
@@ -131,7 +133,7 @@ describe('Images API - Upload Operations', () => {
         file: testFile,
         folder: 'temp-upload',
       });
-      const path = extractStoragePathFromUrl(result.url);
+      const path = extractStoragePathFromUrl(result);
 
       expect(path).toBeTruthy();
       expect(path).toMatch(
@@ -158,11 +160,11 @@ describe('Images API - Upload Operations', () => {
         folder: 'temp-upload',
       });
 
-        expect(result.url).toBeTruthy();
-        expect(result.tempPath).toBeTruthy();
+        expect(result).toBeTruthy();
+        expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result.url);
+        const exists = await verifyImageExistsInStorage(result);
         expect(exists).toBe(true);
       }
     });
@@ -208,7 +210,7 @@ describe('Images API - Upload Operations', () => {
       expect(result).toBeTruthy();
 
       // Verify file exists
-      const exists = await verifyImageExistsInStorage(result.url);
+      const exists = await verifyImageExistsInStorage(result);
       expect(exists).toBe(true);
     });
 
@@ -232,11 +234,11 @@ describe('Images API - Upload Operations', () => {
         folder: 'temp-upload',
       });
 
-        expect(result.url).toBeTruthy();
-        expect(result.tempPath).toBeTruthy();
+        expect(result).toBeTruthy();
+        expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result.url);
+        const exists = await verifyImageExistsInStorage(result);
         expect(exists).toBe(true);
       }
     });

@@ -40,12 +40,11 @@ describe('Images API - Commit Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}commit-single-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Verify it's in temp storage
       expect(tempUrl).toContain('temp-upload-');
@@ -99,8 +98,7 @@ describe('Images API - Commit Operations', () => {
           folder: 'temp-upload',
         }),
       );
-      const uploadResults = await Promise.all(uploadPromises);
-      const tempUrls = uploadResults.map((result) => result.url);
+      const tempUrls = await Promise.all(uploadPromises);
 
       // Verify all are in temp storage
       for (const tempUrl of tempUrls) {
@@ -151,12 +149,11 @@ describe('Images API - Commit Operations', () => {
         const testFile = createTestImageFile({
           name: `${TEST_PREFIX}${entityType}-test-${Date.now()}.jpg`,
         });
-        const uploadResult = await uploadImage({
+        const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-        const tempUrl = uploadResult.url;
 
         // Commit with the specific entity type
         const entityId = `${TEST_PREFIX}${entityType}-entity-${Date.now()}`;
@@ -185,12 +182,11 @@ describe('Images API - Commit Operations', () => {
       const testFile = createTestImageFile({
         name: `${TEST_PREFIX}mixed-temp-${Date.now()}.jpg`,
       });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Create a fake permanent URL (simulate already committed image)
       const permanentUrl =
@@ -225,12 +221,11 @@ describe('Images API - Commit Operations', () => {
     it('preserves original filenames in permanent paths', async () => {
       const originalFilename = `${TEST_PREFIX}preserve-name-test.jpg`;
       const testFile = createTestImageFile({ name: originalFilename });
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Commit to permanent storage
       const entityType = 'community';
@@ -266,12 +261,11 @@ describe('Images API - Commit Operations', () => {
     it('handles null and undefined URLs gracefully', async () => {
       // Upload a valid temporary image
       const testFile = createTestImageFile();
-      const uploadResult = await uploadImage({
+      const tempUrl = await uploadImage({
         supabase,
         file: testFile,
         folder: 'temp-upload',
       });
-      const tempUrl = uploadResult.url;
 
       // Mix valid URL with null/undefined values
       const urlsWithNulls = [tempUrl, null, undefined, ''] as string[];
@@ -317,12 +311,12 @@ describe('Images API - Commit Operations', () => {
       const testFile1 = createTestImageFile({ name: filename });
       const testFile2 = createTestImageFile({ name: filename });
 
-      const uploadResult1 = await uploadImage({
+      const tempUrl1 = await uploadImage({
         supabase,
         file: testFile1,
         folder: 'temp-upload',
       });
-      const uploadResult2 = await uploadImage({
+      const tempUrl2 = await uploadImage({
         supabase,
         file: testFile2,
         folder: 'temp-upload',
@@ -335,14 +329,14 @@ describe('Images API - Commit Operations', () => {
 
       const committedUrls1 = await commitImageUrls({
         supabase,
-        imageUrls: [uploadResult1.url],
+        imageUrls: [tempUrl1],
         entityType,
         entityId: entityId1,
       });
 
       const committedUrls2 = await commitImageUrls({
         supabase,
-        imageUrls: [uploadResult2.url],
+        imageUrls: [tempUrl2],
         entityType,
         entityId: entityId2,
       });
