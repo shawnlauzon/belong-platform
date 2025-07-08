@@ -50,8 +50,7 @@ export async function createResource(
         }
       }
     } catch (error) {
-      console.error('Failed to commit resource images:', error);
-      // Continue without throwing - resource was created successfully
+      throw new Error(`Failed to commit resource images: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

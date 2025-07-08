@@ -44,8 +44,7 @@ export async function createEvent(
         }
       }
     } catch (error) {
-      console.error('Failed to commit event images:', error);
-      // Continue without throwing - event was created successfully
+      throw new Error(`Failed to commit event images: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
