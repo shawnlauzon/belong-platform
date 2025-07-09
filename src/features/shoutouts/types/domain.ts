@@ -6,10 +6,10 @@ export interface ShoutoutData {
   resourceId: string;
   message: string;
   imageUrls?: string[];
+  impactDescription?: string;
 }
 
-export interface ShoutoutDetail
-  extends Omit<ShoutoutData, 'toUserId' | 'resourceId'> {
+export interface ShoutoutDetail extends ShoutoutData {
   id: string;
   fromUser: UserDetail;
   toUser: UserDetail;
@@ -26,9 +26,8 @@ export interface ShoutoutFilter {
   pageSize?: number;
 }
 
-export interface ShoutoutInfo
-  extends Omit<ShoutoutDetail, 'fromUser' | 'toUser' | 'resource'> {
-  fromUserId: string; // Replaces fromUser: User
-  toUserId: string; // Replaces toUser: User
-  resourceId: string; // Replaces resource: Resource
+export interface ShoutoutInfo extends ShoutoutDetail {
+  fromUserId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
