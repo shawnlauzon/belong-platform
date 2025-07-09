@@ -1,9 +1,8 @@
 import { faker } from '@faker-js/faker';
 import {
-  Event,
+  EventDetail,
   EventData,
   EventInfo,
-  EventAttendance,
   EventAttendanceData,
 } from '../types';
 import { EventRow, EventAttendanceRow } from '../types/database';
@@ -11,11 +10,14 @@ import { UserDetail } from '../../users';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeCommunity } from '../../communities/__fakes__';
 import { toEventInfo } from '../transformers/eventTransformer';
+import { EventAttendanceInfo } from '../types/domain';
 
 /**
  * Creates a fake domain Event object with organizer and community
  */
-export function createFakeEvent(overrides: Partial<Event> = {}): Event {
+export function createFakeEvent(
+  overrides: Partial<EventDetail> = {},
+): EventDetail {
   const startDateTime = faker.date.future();
   const endDateTime = faker.date.future({ refDate: startDateTime });
 
@@ -55,8 +57,8 @@ export function createFakeEvent(overrides: Partial<Event> = {}): Event {
  */
 export function createFakeEventWithOrganizer(
   organizer: UserDetail,
-  overrides: Partial<Event> = {},
-): Event {
+  overrides: Partial<EventDetail> = {},
+): EventDetail {
   const event = createFakeEvent(overrides);
   return {
     ...event,
@@ -128,9 +130,9 @@ export function createFakeEventData(overrides?: Partial<EventData>): EventData {
   };
 }
 
-export function createFakeEventAttendance(
-  overrides?: Partial<EventAttendance>,
-): EventAttendance {
+export function createFakeEventAttendanceInfo(
+  overrides?: Partial<EventAttendanceInfo>,
+): EventAttendanceInfo {
   return {
     eventId: faker.string.uuid(),
     userId: faker.string.uuid(),

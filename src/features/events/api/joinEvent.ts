@@ -1,10 +1,10 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { EventAttendance, EventAttendanceData } from '@/features/events';
+import type { EventAttendanceInfo, EventAttendanceData } from '../types';
 import {
   forDbInsertAttendance,
   toDomainEventAttendance,
-} from '@/features/events/transformers/eventTransformer';
+} from '../transformers/eventTransformer';
 import { EventAttendanceRow } from '../types/database';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
@@ -76,7 +76,7 @@ async function checkEventCapacity(
 async function saveAttendance(
   supabase: SupabaseClient<Database>,
   attendanceData: EventAttendanceData,
-): Promise<EventAttendance | null> {
+): Promise<EventAttendanceInfo | null> {
   const dbData = forDbInsertAttendance(attendanceData);
 
   const { data, error } = (await supabase
@@ -105,7 +105,7 @@ export async function joinEvent(
   supabase: SupabaseClient<Database>,
   eventId: string,
   status: 'attending' | 'maybe' = 'attending',
-): Promise<EventAttendance | null> {
+): Promise<EventAttendanceInfo | null> {
   logger.debug('📅 API: Joining event', { eventId, status });
 
   try {

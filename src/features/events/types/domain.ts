@@ -41,13 +41,9 @@ export interface EventFilter {
   searchTerm?: string;
 }
 
-export interface EventAttendance {
-  eventId: string;
-  userId: string;
-  status: 'attending' | 'not_attending' | 'maybe';
+export interface EventAttendanceInfo extends EventAttendanceData {
   createdAt: Date;
   updatedAt: Date;
-  user?: UserDetail;
 }
 
 export interface EventAttendanceData {

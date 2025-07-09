@@ -18,28 +18,28 @@ describe('fetchEventAttendees', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Create mock Supabase client
     mockSupabase = {
       from: vi.fn(),
-    } as SupabaseClient<Database>;
+    } as unknown as SupabaseClient<Database>;
   });
 
   it('should fetch event attendees with user data successfully', async () => {
     const eventId = 'test-event-id';
     const fakeUser1 = createFakeUser();
     const fakeUser2 = createFakeUser();
-    
+
     const fakeAttendanceRows = [
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser1.id, 
-        status: 'attending' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser1.id,
+        status: 'attending',
       }),
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser2.id, 
-        status: 'maybe' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser2.id,
+        status: 'maybe',
       }),
     ];
 
@@ -92,22 +92,22 @@ describe('fetchEventAttendees', () => {
     const fakeUser1 = createFakeUser();
     const fakeUser2 = createFakeUser();
     const fakeUser3 = createFakeUser();
-    
+
     const fakeAttendanceRows = [
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser1.id, 
-        status: 'attending' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser1.id,
+        status: 'attending',
       }),
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser2.id, 
-        status: 'maybe' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser2.id,
+        status: 'maybe',
       }),
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser3.id, 
-        status: 'not_attending' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser3.id,
+        status: 'not_attending',
       }),
     ];
 
@@ -188,17 +188,17 @@ describe('fetchEventAttendees', () => {
   it('should filter out null user results', async () => {
     const eventId = 'test-event-id';
     const fakeUser = createFakeUser();
-    
+
     const fakeAttendanceRows = [
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: fakeUser.id, 
-        status: 'attending' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: fakeUser.id,
+        status: 'attending',
       }),
-      createFakeEventAttendanceRow({ 
-        event_id: eventId, 
-        user_id: 'nonexistent-user', 
-        status: 'maybe' 
+      createFakeEventAttendanceRow({
+        event_id: eventId,
+        user_id: 'nonexistent-user',
+        status: 'maybe',
       }),
     ];
 
@@ -223,18 +223,18 @@ describe('fetchEventAttendees', () => {
     const result = await fetchEventAttendees(mockSupabase, eventId);
 
     expect(result).toHaveLength(1);
-    expect(result[0].user).toEqual(fakeUser);
+    expect(result[0].userId).toEqual(fakeUser.id);
     expect(mockFetchUserById).toHaveBeenCalledTimes(2);
   });
 
-  it('should return EventAttendance objects with proper structure', async () => {
+  it('should return EventAttendanceInfo objects with proper structure', async () => {
     const eventId = 'test-event-id';
     const fakeUser = createFakeUser();
-    
-    const fakeAttendanceRow = createFakeEventAttendanceRow({ 
-      event_id: eventId, 
-      user_id: fakeUser.id, 
-      status: 'attending' 
+
+    const fakeAttendanceRow = createFakeEventAttendanceRow({
+      event_id: eventId,
+      user_id: fakeUser.id,
+      status: 'attending',
     });
 
     // Mock the query chain
@@ -256,13 +256,12 @@ describe('fetchEventAttendees', () => {
     const result = await fetchEventAttendees(mockSupabase, eventId);
 
     expect(result).toHaveLength(1);
-    
+
     const attendance = result[0];
     expect(attendance.eventId).toBe(eventId);
     expect(attendance.userId).toBe(fakeUser.id);
     expect(attendance.status).toBe('attending');
     expect(attendance.createdAt).toBeInstanceOf(Date);
     expect(attendance.updatedAt).toBeInstanceOf(Date);
-    expect(attendance.user).toEqual(fakeUser);
   });
 });

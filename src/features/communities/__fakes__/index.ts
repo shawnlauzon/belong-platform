@@ -3,7 +3,6 @@ import {
   CommunityDetail,
   CommunityData,
   CommunityInfo,
-  CommunityMembership,
   CommunityMembershipInfo,
   CommunityMembershipData,
 } from '../types';
@@ -232,20 +231,6 @@ export function createFakeCommunityMembershipInfo(
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
     joinedAt: faker.date.past(),
-    ...overrides,
-  };
-}
-
-/**
- * Creates a fake CommunityMembership with optional composed objects
- */
-export function createFakeCommunityMembership(
-  overrides: Partial<CommunityMembership> = {},
-): CommunityMembership {
-  return {
-    joinedAt: faker.date.past(),
-    user: createFakeUser(),
-    community: createFakeCommunity(),
     ...overrides,
   };
 }

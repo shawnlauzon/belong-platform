@@ -2,17 +2,17 @@ import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserById } from '@/features/users/api';
 import type { EventAttendanceRow } from '../types/database';
-import type { EventAttendance } from '../types/domain';
+import type { EventAttendanceInfo } from '../types/domain';
 
 export async function fetchEventAttendees(
   supabase: SupabaseClient<Database>,
   eventId: string,
-): Promise<EventAttendance[]> {
+): Promise<EventAttendanceInfo[]> {
   // Get all event attendances for this event
   const { data: attendances, error } = (await supabase
     .from('event_attendances')
     .select('*')
-    .eq('event_id', eventId)) as { 
+    .eq('event_id', eventId)) as {
     data: EventAttendanceRow[];
     error: QueryError | null;
   };
@@ -21,10 +21,10 @@ export async function fetchEventAttendees(
     return [];
   }
 
-  // Fetch user data for each attendee and build EventAttendance objects
+  // Fetch user data for each attendee and build EventAttendanceInfo objects
   const attendancePromises = attendances.map(async (attendance) => {
     const user = await fetchUserById(supabase, attendance.user_id);
-    
+
     // Only include attendances where we successfully fetched user data
     if (!user) {
       return null;
@@ -37,11 +37,13 @@ export async function fetchEventAttendees(
       createdAt: new Date(attendance.created_at),
       updatedAt: new Date(attendance.updated_at),
       user,
-    } as EventAttendance;
+    } as EventAttendanceInfo;
   });
 
   const results = await Promise.all(attendancePromises);
-  
+
   // Filter out any null results
-  return results.filter((attendance): attendance is EventAttendance => attendance !== null);
+  return results.filter(
+    (attendance): attendance is EventAttendanceInfo => attendance !== null,
+  );
 }

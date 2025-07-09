@@ -3,7 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { Database } from '@/shared/types/database';
 import { queryKeys } from '@/shared';
 import { fetchEventInfoById } from './fetchEventInfoById';
-import type { Event } from '../types';
+import type { EventDetail } from '../types';
 import { fetchAndCacheCommunity } from '@/features/communities/api';
 import { fetchUserById } from '@/features/users/api';
 
@@ -19,11 +19,11 @@ export async function fetchAndCacheEvent(
   supabase: SupabaseClient<Database>,
   queryClient: QueryClient,
   eventId: string,
-): Promise<Event | null> {
+): Promise<EventDetail | null> {
   const queryKey = queryKeys.events.byId(eventId);
 
   // Check if data is already in cache
-  const cachedData = queryClient.getQueryData<Event>(queryKey);
+  const cachedData = queryClient.getQueryData<EventDetail>(queryKey);
   if (cachedData) {
     return cachedData;
   }
@@ -35,11 +35,7 @@ export async function fetchAndCacheEvent(
   // Get organizer and community using ensure functions
   const [organizer, community] = await Promise.all([
     fetchUserById(supabase, eventInfo.organizerId),
-    fetchAndCacheCommunity(
-      supabase,
-      queryClient,
-      eventInfo.communityId,
-    ),
+    fetchAndCacheCommunity(supabase, queryClient, eventInfo.communityId),
   ]);
 
   if (!organizer || !community) return null;
