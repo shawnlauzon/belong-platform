@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useUpdateProfile } from '../../hooks/useUpdateProfile';
 import { createMockSupabase } from '@/test-utils';
-import { createFakeUser } from '@/features/users/__fakes__';
+import { createFakeUserDetail } from '@/features/users/__fakes__';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -35,7 +35,7 @@ describe('useUpdateProfile', () => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeUser = createFakeUser();
+    fakeUser = createFakeUserDetail();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);

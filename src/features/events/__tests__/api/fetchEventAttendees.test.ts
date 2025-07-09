@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchEventAttendees } from '../../api/fetchEventAttendees';
 import { createFakeEventAttendanceRow } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
@@ -27,8 +27,8 @@ describe('fetchEventAttendees', () => {
 
   it('should fetch event attendees with user data successfully', async () => {
     const eventId = 'test-event-id';
-    const fakeUser1 = createFakeUser();
-    const fakeUser2 = createFakeUser();
+    const fakeUser1 = createFakeUserDetail();
+    const fakeUser2 = createFakeUserDetail();
 
     const fakeAttendanceRows = [
       createFakeEventAttendanceRow({
@@ -89,9 +89,9 @@ describe('fetchEventAttendees', () => {
 
   it('should handle different attendance statuses', async () => {
     const eventId = 'test-event-id';
-    const fakeUser1 = createFakeUser();
-    const fakeUser2 = createFakeUser();
-    const fakeUser3 = createFakeUser();
+    const fakeUser1 = createFakeUserDetail();
+    const fakeUser2 = createFakeUserDetail();
+    const fakeUser3 = createFakeUserDetail();
 
     const fakeAttendanceRows = [
       createFakeEventAttendanceRow({
@@ -187,7 +187,7 @@ describe('fetchEventAttendees', () => {
 
   it('should filter out null user results', async () => {
     const eventId = 'test-event-id';
-    const fakeUser = createFakeUser();
+    const fakeUser = createFakeUserDetail();
 
     const fakeAttendanceRows = [
       createFakeEventAttendanceRow({
@@ -229,7 +229,7 @@ describe('fetchEventAttendees', () => {
 
   it('should return EventAttendanceInfo objects with proper structure', async () => {
     const eventId = 'test-event-id';
-    const fakeUser = createFakeUser();
+    const fakeUser = createFakeUserDetail();
 
     const fakeAttendanceRow = createFakeEventAttendanceRow({
       event_id: eventId,

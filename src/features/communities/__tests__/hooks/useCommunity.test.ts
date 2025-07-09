@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useCommunity } from '../../hooks/useCommunity';
 import { createFakeCommunityInfo } from '../../__fakes__';
-import { createFakeUser } from '@/features/users/__fakes__';
+import { createFakeUserDetail } from '@/features/users/__fakes__';
 
 // Mock only external dependencies
 vi.mock('../../api/fetchCommunityById', () => ({
@@ -23,14 +23,14 @@ describe('useCommunity', () => {
   const mockFetchUserById = vi.mocked(fetchUserById);
 
   let fakeCommunityInfo: ReturnType<typeof createFakeCommunityInfo>;
-  let fakeOrganizer: ReturnType<typeof createFakeUser>;
+  let fakeOrganizer: ReturnType<typeof createFakeUserDetail>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     ({ wrapper } = createDefaultTestWrapper());
 
     // Setup mock data
-    fakeOrganizer = createFakeUser();
+    fakeOrganizer = createFakeUserDetail();
     fakeCommunityInfo = createFakeCommunityInfo({
       organizerId: fakeOrganizer.id,
     });

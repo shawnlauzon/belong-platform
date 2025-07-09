@@ -8,7 +8,10 @@ import {
 } from '../types';
 import { CommunityRow } from '../types/database';
 import { ProfileRow } from '../../users/types/database';
-import { createFakeDbProfile, createFakeUser } from '../../users/__fakes__';
+import {
+  createFakeDbProfile,
+  createFakeUserDetail,
+} from '../../users/__fakes__';
 
 export function createFakeCommunity(
   overrides: Partial<CommunityDetail> = {},
@@ -27,7 +30,7 @@ export function createFakeCommunity(
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
-    organizer: createFakeUser(),
+    organizer: createFakeUserDetail(),
     boundary: {
       type: 'isochrone',
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),

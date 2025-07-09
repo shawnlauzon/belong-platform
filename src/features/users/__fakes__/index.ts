@@ -5,7 +5,7 @@ import { ProfileRow } from '../types/database';
 /**
  * Creates a fake domain User object
  */
-export function createFakeUser(
+export function createFakeUserDetail(
   overrides: Partial<UserDetail> = {},
 ): UserDetail {
   const now = faker.date.recent();

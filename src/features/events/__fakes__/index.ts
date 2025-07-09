@@ -7,7 +7,7 @@ import {
 } from '../types';
 import { EventRow, EventAttendanceRow } from '../types/database';
 import { UserDetail } from '../../users';
-import { createFakeUser } from '../../users/__fakes__';
+import { createFakeUserDetail } from '../../users/__fakes__';
 import { createFakeCommunity } from '../../communities/__fakes__';
 import { toEventInfo } from '../transformers/eventTransformer';
 import { EventAttendanceInfo } from '../types/domain';
@@ -21,7 +21,7 @@ export function createFakeEvent(
   const startDateTime = faker.date.future();
   const endDateTime = faker.date.future({ refDate: startDateTime });
 
-  const organizer = createFakeUser();
+  const organizer = createFakeUserDetail();
   const community = createFakeCommunity();
 
   return {

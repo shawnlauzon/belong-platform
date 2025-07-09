@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { useResource } from '../../hooks/useResource';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResourceInfo } from '../../__fakes__/';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
 import { BelongProvider } from '../../../../config';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -86,8 +86,8 @@ describe('useResource - Cache Behavior', () => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeOwner = createFakeUser();
-    fakeOrganizer = createFakeUser(); // Separate organizer
+    fakeOwner = createFakeUserDetail();
+    fakeOrganizer = createFakeUserDetail(); // Separate organizer
     fakeCommunity = createFakeCommunity();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { organizer, ...rest } = fakeCommunity;

@@ -35,6 +35,7 @@ export interface EventInfo
 
 export interface EventFilter {
   communityId?: string;
+  communityIds?: string[];
   organizerId?: string;
   startAfter?: Date;
   startBefore?: Date;
