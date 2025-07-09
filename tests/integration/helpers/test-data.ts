@@ -6,6 +6,7 @@ import { createResource } from '@/features/resources/api';
 import { createFakeResourceData } from '@/features/resources/__fakes__';
 import { createEvent } from '@/features/events/api';
 import { createFakeEventData } from '@/features/events/__fakes__';
+import { createFakeDbShoutout } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
@@ -82,4 +83,35 @@ export async function createTestEvent(
   if (!event) throw new Error('Failed to create event');
 
   return event;
+}
+
+export async function createTestShoutout(
+  supabase: SupabaseClient<Database>,
+  fromUserId: string,
+  toUserId: string,
+  resourceId: string,
+) {
+  const shoutoutData = createFakeDbShoutout({
+    from_user_id: fromUserId,
+    to_user_id: toUserId,
+    resource_id: resourceId,
+    message: `${TEST_PREFIX}Thank you for sharing this resource!`,
+    impact_description: 'This helped me learn something new',
+  });
+
+  const { data, error } = await supabase
+    .from('shoutouts')
+    .insert([shoutoutData])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create test shoutout: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error('Failed to create test shoutout: No data returned');
+  }
+
+  return data;
 }
