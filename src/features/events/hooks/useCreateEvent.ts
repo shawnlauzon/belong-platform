@@ -94,11 +94,10 @@ export function useCreateEvent() {
       // Invalidate all events queries
       queryClient.invalidateQueries({ queryKey: ['events'] });
 
-      // Cache the EventInfo for potential useEvent calls
-      queryClient.setQueryData(
-        queryKeys.events.byId(newEventInfo.id),
-        newEventInfo,
-      );
+      // Invalidate the specific event to force fresh fetch with nested objects
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.byId(newEventInfo.id),
+      });
 
       logger.info('📅 API: Successfully created event', {
         id: newEventInfo.id,

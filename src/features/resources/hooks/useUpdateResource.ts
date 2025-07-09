@@ -81,11 +81,10 @@ export function useUpdateResource() {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
-      // Update the cache for this specific resource
-      queryClient.setQueryData(
-        queryKeys.resources.byId(updatedResource.id),
-        updatedResource,
-      );
+      // Invalidate the specific resource to force fresh fetch with nested objects
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.resources.byId(updatedResource.id),
+      });
 
       logger.info('📚 API: Successfully updated resource', {
         id: updatedResource.id,

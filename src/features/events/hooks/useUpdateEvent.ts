@@ -79,11 +79,10 @@ export function useUpdateEvent() {
       // Invalidate all events queries
       queryClient.invalidateQueries({ queryKey: ['events'] });
 
-      // Update the cache for this specific event
-      queryClient.setQueryData(
-        queryKeys.events.byId(updatedEvent.id),
-        updatedEvent,
-      );
+      // Invalidate the specific event to force fresh fetch with nested objects
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.byId(updatedEvent.id),
+      });
 
       logger.info('📅 API: Successfully updated event', {
         id: updatedEvent.id,
