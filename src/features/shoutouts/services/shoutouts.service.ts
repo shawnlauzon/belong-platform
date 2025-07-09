@@ -3,7 +3,7 @@ import type {
   ShoutoutData,
   ShoutoutInfo,
   ShoutoutFilter,
-  Shoutout,
+  ShoutoutDetail,
 } from '../types';
 import {
   toDomainShoutout,
@@ -24,11 +24,10 @@ import { ShoutoutRow } from '../types/database';
  */
 function validateShoutoutCreation(
   data: ShoutoutData,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _currentUserId: string,
+  currentUserId: string,
 ): void {
   // Rule: User cannot thank themselves
-  if (data.fromUserId === data.toUserId) {
+  if (currentUserId === data.toUserId) {
     throw new Error('Cannot thank yourself');
   }
 }
@@ -42,13 +41,7 @@ function validateShoutoutUpdate(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _currentUserId: string,
 ): void {
-  // Rule: Cannot change the sender of shoutout
-  if (
-    updateData.fromUserId &&
-    updateData.fromUserId !== existingShoutout.from_user_id
-  ) {
-    throw new Error('Cannot change the sender of shoutout');
-  }
+  // Note: fromUserId can no longer be changed via ShoutoutData
 
   // Rule: Cannot change receiver to yourself (the sender)
   if (
@@ -135,7 +128,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async fetchShoutoutById(id: string): Promise<Shoutout | null> {
+  async fetchShoutoutById(id: string): Promise<ShoutoutDetail | null> {
     logger.debug('📢 Shoutouts Service: Fetching shoutout by ID', {
       id,
     });
@@ -204,7 +197,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
     }
   },
 
-  async createShoutout(data: ShoutoutData): Promise<Shoutout> {
+  async createShoutout(data: ShoutoutData): Promise<ShoutoutDetail> {
     logger.debug('📢 Shoutouts Service: Creating shoutout', { data });
 
     try {
@@ -281,7 +274,7 @@ export const createShoutoutsService = (supabase: SupabaseClient<Database>) => ({
   async updateShoutout(
     id: string,
     data: Partial<ShoutoutData>,
-  ): Promise<Shoutout> {
+  ): Promise<ShoutoutDetail> {
     logger.debug('📢 Shoutouts Service: Updating shoutout', { id, data });
 
     try {

@@ -20,13 +20,8 @@ export function createFakeDbShoutout(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'people' })
     ),
-    impact_description: faker.datatype.boolean()
-      ? faker.lorem.paragraph()
-      : null,
     created_at: now,
     updated_at: now,
-    deleted_at: null,
-    deleted_by: null,
     ...overrides,
   };
 }
@@ -47,9 +42,6 @@ export function createFakeShoutoutInfo(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'people' })
     ),
-    impactDescription: faker.datatype.boolean()
-      ? faker.lorem.paragraph()
-      : undefined,
     createdAt: faker.date.recent(),
     updatedAt: faker.date.recent(),
     ...overrides,

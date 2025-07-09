@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
+import { fetchAndCacheShoutout } from '../api';
 import { STANDARD_CACHE_TIME } from '../../../config';
-import type { Shoutout } from '../types';
+import type { ShoutoutDetail } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
@@ -31,9 +31,6 @@ import type { UseQueryResult } from '@tanstack/react-query';
  *       <p>From: {shoutout.fromUser.firstName} {shoutout.fromUser.lastName}</p>
  *       <p>To: {shoutout.toUser.firstName} {shoutout.toUser.lastName}</p>
  *       <p>Resource: {shoutout.resource.title}</p>
- *       {shoutout.impactDescription && (
- *         <p>Impact: {shoutout.impactDescription}</p>
- *       )}
  *       {shoutout.imageUrls.map((url, index) => (
  *         <img key={index} src={url} alt={`Shoutout image ${index + 1}`} />
  *       ))}
@@ -44,15 +41,17 @@ import type { UseQueryResult } from '@tanstack/react-query';
  *
  * @category React Hooks
  */
-export function useShoutout(shoutoutId: string): UseQueryResult<Shoutout | null, Error> {
+export function useShoutout(
+  shoutoutId: string,
+): UseQueryResult<ShoutoutDetail | null, Error> {
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
+  const queryClient = useQueryClient();
 
-  const query = useQuery<Shoutout | null, Error>({
+  const query = useQuery<ShoutoutDetail | null, Error>({
     queryKey: queryKeys.shoutouts.byId(shoutoutId),
     queryFn: () => {
       logger.debug('📢 useShoutout: Fetching shoutout by ID', { shoutoutId });
-      return shoutoutsService.fetchShoutoutById(shoutoutId);
+      return fetchAndCacheShoutout(supabase, queryClient, shoutoutId);
     },
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(shoutoutId?.trim()),

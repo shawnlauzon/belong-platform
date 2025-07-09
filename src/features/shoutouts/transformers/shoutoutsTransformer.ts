@@ -1,6 +1,6 @@
 import { ResourceDetail } from '../../resources';
 import { UserDetail } from '../../users';
-import type { ShoutoutData, Shoutout, ShoutoutInfo } from '../types';
+import type { ShoutoutData, ShoutoutDetail, ShoutoutInfo } from '../types';
 import {
   ShoutoutInsertDbData,
   ShoutoutRow,
@@ -12,14 +12,13 @@ import {
  */
 export function toDomainShoutout(
   dbShoutout: ShoutoutRow,
-  refs: { fromUser: UserDetail; toUser: UserDetail; resource: ResourceDetail }
-): Shoutout {
+  refs: { fromUser: UserDetail; toUser: UserDetail; resource: ResourceDetail },
+): ShoutoutDetail {
   const {
     from_user_id,
     to_user_id,
     resource_id,
     image_urls,
-    impact_description,
     created_at,
     updated_at,
     ...rest
@@ -42,7 +41,6 @@ export function toDomainShoutout(
     id: dbShoutout.id,
     message: rest.message,
     imageUrls: image_urls || [],
-    impactDescription: impact_description || undefined,
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
     fromUser: refs.fromUser,
@@ -56,17 +54,9 @@ export function toDomainShoutout(
  */
 export function forDbInsert(
   shoutoutData: ShoutoutData,
-  fromUserId: string
+  fromUserId: string,
 ): ShoutoutInsertDbData {
-  const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fromUserId: _fromUserId, // Extract and ignore the fromUserId from data
-    toUserId,
-    resourceId,
-    imageUrls,
-    impactDescription,
-    message,
-  } = shoutoutData;
+  const { toUserId, resourceId, imageUrls, message } = shoutoutData;
 
   return {
     message,
@@ -74,7 +64,6 @@ export function forDbInsert(
     to_user_id: toUserId,
     resource_id: resourceId,
     image_urls: imageUrls || [],
-    impact_description: impactDescription || null,
   };
 }
 
@@ -82,24 +71,17 @@ export function forDbInsert(
  * Transform a domain shoutout data object to a database shoutout update record
  */
 export function forDbUpdate(
-  shoutoutData: Partial<ShoutoutData>
+  shoutoutData: Partial<ShoutoutData>,
 ): ShoutoutUpdateDbData {
-  const {
-    fromUserId,
-    toUserId,
-    resourceId,
-    imageUrls,
-    impactDescription,
-    message,
-  } = shoutoutData;
+  const { toUserId, resourceId, imageUrls, message } = shoutoutData;
 
   return {
     message,
-    from_user_id: fromUserId,
+    // Note: fromUserId cannot be updated via this method - it's set at creation
+    from_user_id: undefined,
     to_user_id: toUserId,
     resource_id: resourceId,
     image_urls: imageUrls,
-    impact_description: impactDescription || null,
   };
 }
 
@@ -110,13 +92,12 @@ export function toShoutoutInfo(
   dbShoutout: ShoutoutRow,
   fromUserId: string,
   toUserId: string,
-  resourceId: string
+  resourceId: string,
 ): ShoutoutInfo {
   return {
     id: dbShoutout.id,
     message: dbShoutout.message,
     imageUrls: dbShoutout.image_urls || [],
-    impactDescription: dbShoutout.impact_description || undefined,
     createdAt: new Date(dbShoutout.created_at),
     updatedAt: new Date(dbShoutout.updated_at),
     fromUserId: fromUserId,

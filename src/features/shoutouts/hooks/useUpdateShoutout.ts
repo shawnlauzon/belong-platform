@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createShoutoutsService } from '../services/shoutouts.service';
-import type { ShoutoutData, Shoutout } from '../types';
+import type { ShoutoutData, ShoutoutDetail } from '../types';
 
 /**
  * Hook for updating existing shoutouts.
@@ -18,7 +18,7 @@ import type { ShoutoutData, Shoutout } from '../types';
  * ```tsx
  * function EditShoutoutForm({ shoutout }: { shoutout: Shoutout }) {
  *   const updateShoutout = useUpdateShoutout();
- *   
+ *
  *   const handleSubmit = useCallback(async (updates: Partial<ShoutoutData>) => {
  *     try {
  *       const updatedShoutout = await updateShoutout.mutateAsync({
@@ -42,16 +42,16 @@ import type { ShoutoutData, Shoutout } from '../types';
  *         impactDescription: formData.get('impactDescription') as string,
  *       });
  *     }}>
- *       <textarea 
- *         name="message" 
+ *       <textarea
+ *         name="message"
  *         defaultValue={shoutout.message}
- *         placeholder="Your appreciation message..." 
- *         required 
+ *         placeholder="Your appreciation message..."
+ *         required
  *       />
- *       <textarea 
- *         name="impactDescription" 
+ *       <textarea
+ *         name="impactDescription"
  *         defaultValue={shoutout.impactDescription || ''}
- *         placeholder="How did this help you?" 
+ *         placeholder="How did this help you?"
  *       />
  *       <button type="submit" disabled={updateShoutout.isPending}>
  *         {updateShoutout.isPending ? 'Updating...' : 'Update Shoutout'}
@@ -73,14 +73,14 @@ export function useUpdateShoutout() {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
       return shoutoutsService.updateShoutout(id, data);
     },
-    onSuccess: (updatedShoutout: Shoutout) => {
+    onSuccess: (updatedShoutout: ShoutoutDetail) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 
       // Update the specific shoutout in cache
       queryClient.setQueryData(
         queryKeys.shoutouts.byId(updatedShoutout.id),
-        updatedShoutout
+        updatedShoutout,
       );
 
       logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {

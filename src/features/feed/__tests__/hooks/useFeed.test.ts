@@ -128,7 +128,10 @@ describe('useFeed', () => {
 
   it('should handle empty feed', async () => {
     // Arrange
-    const fakeUser = { id: 'user-1', email: 'test@example.com' };
+    const fakeUser = createFakeUserDetail({
+      id: 'user-1',
+      email: 'test@example.com',
+    });
 
     mockGetCurrentUser.mockResolvedValue(fakeUser);
     mockFetchUserCommunities.mockResolvedValue([]); // No communities
