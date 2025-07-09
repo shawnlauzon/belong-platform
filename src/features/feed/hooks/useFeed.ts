@@ -13,7 +13,7 @@ import type { FeedInfo } from '../types';
 /**
  * Hook for fetching the user's feed.
  *
- * Provides a chronologically ordered feed of resources and events from
+ * Provides a chronologically ordered feed of resources, events, and shoutouts from
  * all communities the user has joined.
  *
  * @returns Query state for feed data
