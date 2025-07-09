@@ -93,11 +93,10 @@ export function useCreateResource() {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
-      // Cache the ResourceInfo for potential useResource calls
-      queryClient.setQueryData(
-        queryKeys.resources.byId(newResourceInfo.id),
-        newResourceInfo,
-      );
+      // Invalidate the specific resource to force fresh fetch with nested objects
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.resources.byId(newResourceInfo.id),
+      });
 
       logger.info('📚 API: Successfully created resource', {
         id: newResourceInfo.id,
