@@ -85,6 +85,7 @@ export function toDomainCommunity(
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
+    type: dbCommunity.type,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
@@ -109,6 +110,7 @@ export function forDbInsert(
     center,
     organizerId,
     bannerImageUrl,
+    type,
     ...rest
   } = community;
 
@@ -116,6 +118,7 @@ export function forDbInsert(
 
   return {
     ...rest,
+    type,
     organizer_id: organizerId,
     banner_image_url: bannerImageUrl,
     time_zone: timeZone,
@@ -135,6 +138,7 @@ export function forDbUpdate(
     description: community.description,
     icon: community.icon,
     banner_image_url: community.bannerImageUrl,
+    type: community.type,
     time_zone: community.timeZone,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     boundary: community.boundary
@@ -190,6 +194,7 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
+    type: dbCommunity.type,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),

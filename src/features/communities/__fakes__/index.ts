@@ -22,6 +22,7 @@ export function createFakeCommunity(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
+    type: faker.helpers.arrayElement(['place', 'interest']),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -55,6 +56,7 @@ export function createFakeCommunityData(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
+    type: faker.helpers.arrayElement(['place', 'interest']),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -86,6 +88,7 @@ export function createFakeCommunityInfo(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
+    type: faker.helpers.arrayElement(['place', 'interest']),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -128,6 +131,7 @@ export function createFakeDbCommunity(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
     banner_image_url: faker.helpers.arrayElement([faker.image.url(), null]),
+    type: faker.helpers.arrayElement(['place', 'interest']),
     center: {
       type: 'Point',
       crs: { type: 'name', properties: { name: 'EPSG:4326' } },
@@ -181,24 +185,28 @@ export function createFakeCommunityHierarchy() {
   const country = createFakeDbCommunity({
     name: faker.location.country(),
     description: `Community for ${faker.location.country()} residents`,
+    type: 'place',
     created_at: now,
   });
 
   const state = createFakeDbCommunity({
     name: faker.location.state(),
     description: `Community for ${faker.location.state()} residents`,
+    type: 'place',
     created_at: now,
   });
 
   const city = createFakeDbCommunity({
     name: faker.location.city(),
     description: `Community for ${faker.location.city()} residents`,
+    type: 'place',
     created_at: now,
   });
 
   const neighborhood = createFakeDbCommunity({
     name: faker.location.street(),
     description: `Community for ${faker.location.street()} neighborhood`,
+    type: 'place',
     created_at: now,
   });
 
