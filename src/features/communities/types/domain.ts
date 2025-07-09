@@ -2,6 +2,9 @@ import { Coordinates } from '../../../shared';
 import { UserDetail } from '../../users';
 import { Polygon } from './geojson';
 
+// Community types
+export type CommunityType = 'place' | 'interest';
+
 // Boundary types for communities
 export type TravelMode = 'walking' | 'cycling' | 'driving';
 
@@ -30,6 +33,7 @@ export interface CommunityData {
   description?: string;
   icon?: string; // Visual icon for the community
   bannerImageUrl?: string; // Banner image for the community
+  type: CommunityType; // Type of community: place (geographic) or interest (topic-based)
 
   // Location (mandatory center point)
   center: Coordinates;

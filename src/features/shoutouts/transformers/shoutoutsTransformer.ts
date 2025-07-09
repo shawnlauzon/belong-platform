@@ -39,6 +39,9 @@ export function toDomainShoutout(
   return {
     ...rest,
     id: dbShoutout.id,
+    fromUserId: from_user_id,
+    toUserId: to_user_id,
+    resourceId: resource_id,
     message: rest.message,
     imageUrls: image_urls || [],
     createdAt: new Date(created_at),
@@ -88,20 +91,15 @@ export function forDbUpdate(
 /**
  * Transform a database shoutout record to a ShoutoutInfo object (lightweight for lists)
  */
-export function toShoutoutInfo(
-  dbShoutout: ShoutoutRow,
-  fromUserId: string,
-  toUserId: string,
-  resourceId: string,
-): ShoutoutInfo {
+export function toShoutoutInfo(dbShoutout: ShoutoutRow): ShoutoutInfo {
   return {
     id: dbShoutout.id,
     message: dbShoutout.message,
     imageUrls: dbShoutout.image_urls || [],
     createdAt: new Date(dbShoutout.created_at),
     updatedAt: new Date(dbShoutout.updated_at),
-    fromUserId: fromUserId,
-    toUserId: toUserId,
-    resourceId: resourceId,
+    fromUserId: dbShoutout.from_user_id,
+    toUserId: dbShoutout.to_user_id,
+    resourceId: dbShoutout.resource_id,
   };
 }
