@@ -6,6 +6,7 @@ import { getCurrentUser } from '../../auth/api';
 import { fetchUserCommunities } from '../../communities/api';
 import { fetchResources } from '../../resources/api';
 import { fetchEvents } from '../../events/api';
+import { fetchShoutouts } from '../../shoutouts/api';
 
 import type { FeedInfo } from '../types';
 
@@ -61,10 +62,11 @@ export function useFeed() {
         // Extract community IDs
         const communityIds = userCommunities.map(membership => membership.communityId);
 
-        // Fetch resources and events using single queries with communityIds arrays
-        const [resources, events] = await Promise.all([
+        // Fetch resources, events, and shoutouts using single queries with communityIds arrays
+        const [resources, events, shoutouts] = await Promise.all([
           fetchResources(supabase, { communityIds }),
           fetchEvents(supabase, { communityIds }),
+          fetchShoutouts(supabase),
         ]);
 
         // Transform to FeedItem format
@@ -78,8 +80,13 @@ export function useFeed() {
           data: event,
         }));
 
+        const shoutoutItems = shoutouts.map(shoutout => ({
+          type: 'shoutout' as const,
+          data: shoutout,
+        }));
+
         // Combine and sort by created_at (newest first)
-        const allItems = [...resourceItems, ...eventItems];
+        const allItems = [...resourceItems, ...eventItems, ...shoutoutItems];
         allItems.sort((a, b) => {
           const aDate = new Date(a.data.createdAt);
           const bDate = new Date(b.data.createdAt);
@@ -90,6 +97,7 @@ export function useFeed() {
           totalItems: allItems.length,
           resourceCount: resourceItems.length,
           eventCount: eventItems.length,
+          shoutoutCount: shoutoutItems.length,
         });
 
         return {

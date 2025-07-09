@@ -3,7 +3,6 @@ import { fetchFeed } from '../../api';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResourceInfo } from '../../../resources/__fakes__';
 import { createFakeEventInfo } from '../../../events/__fakes__';
-import { FeedInfo, FeedItem } from '../../types';
 
 // Mock the API functions
 vi.mock('../../../resources/api', () => ({

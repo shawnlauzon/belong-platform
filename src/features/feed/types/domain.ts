@@ -1,9 +1,10 @@
 import { ResourceInfo } from '../../resources';
 import { EventInfo } from '../../events';
+import { ShoutoutInfo } from '../../shoutouts';
 
 export interface FeedItem {
-  type: 'resource' | 'event';
-  data: ResourceInfo | EventInfo;
+  type: 'resource' | 'event' | 'shoutout';
+  data: ResourceInfo | EventInfo | ShoutoutInfo;
 }
 
 export interface FeedInfo {
