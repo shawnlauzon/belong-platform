@@ -7,7 +7,7 @@ import {
   TEST_PREFIX,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createShoutoutsService } from '@/features/shoutouts/services/shoutouts.service';
+import { createShoutout, fetchShoutouts, updateShoutout, deleteShoutout, fetchAndCacheShoutout } from '@/features/shoutouts/api';
 import { signIn } from '@/features/auth/api';
 import { createFakeDbShoutout } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -17,9 +17,8 @@ import type { CommunityInfo } from '@/features/communities/types';
 import type { ResourceInfo } from '@/features/resources/types';
 import type { ShoutoutData } from '@/features/shoutouts/types';
 
-describe('Shoutouts Service - CRUD Operations', () => {
+describe('Shoutouts API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let shoutoutsService: ReturnType<typeof createShoutoutsService>;
   let testUser: UserDetail;
   let testUser2: UserDetail;
   let testCommunity: CommunityInfo;
@@ -27,7 +26,6 @@ describe('Shoutouts Service - CRUD Operations', () => {
 
   beforeAll(async () => {
     supabase = createTestClient();
-    shoutoutsService = createShoutoutsService(supabase);
 
     // Create shared resources for tests
     testUser = await createTestUser(supabase);
@@ -51,22 +49,19 @@ describe('Shoutouts Service - CRUD Operations', () => {
   describe('createShoutout', () => {
     it('creates shoutout with valid data', async () => {
       const shoutoutData: ShoutoutData = {
-        fromUserId: testUser.id,
         toUserId: testUser2.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-        impactDescription: 'This helped me learn something new',
       };
 
-      const shoutout = await shoutoutsService.createShoutout(shoutoutData);
+      const shoutout = await createShoutout(supabase, shoutoutData);
 
       expect(shoutout).toBeTruthy();
       expect(shoutout.id).toBeTruthy();
       expect(shoutout.message).toBe(shoutoutData.message);
-      expect(shoutout.fromUser.id).toBe(testUser.id);
-      expect(shoutout.toUser.id).toBe(testUser2.id);
-      expect(shoutout.resource.id).toBe(testResource.id);
-      expect(shoutout.impactDescription).toBe(shoutoutData.impactDescription);
+      expect(shoutout.fromUserId).toBe(testUser.id);
+      expect(shoutout.toUserId).toBe(testUser2.id);
+      expect(shoutout.resourceId).toBe(testResource.id);
       expect(shoutout.createdAt).toBeTruthy();
       expect(shoutout.updatedAt).toBeTruthy();
 
@@ -89,14 +84,13 @@ describe('Shoutouts Service - CRUD Operations', () => {
 
     it('validates business rule: cannot thank yourself', async () => {
       const shoutoutData: ShoutoutData = {
-        fromUserId: testUser.id,
-        toUserId: testUser.id, // Same user
+        toUserId: testUser.id, // Same user as signed in user
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
       await expect(
-        shoutoutsService.createShoutout(shoutoutData),
+        createShoutout(supabase, shoutoutData),
       ).rejects.toThrow('Cannot thank yourself');
     });
   });
@@ -109,8 +103,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
       // Create test shoutouts for read-only operations
       // Sign in as testUser to create first shoutout
       await signIn(supabase, testUser.email, 'TestPass123!');
-      readOnlyShoutout1 = await shoutoutsService.createShoutout({
-        fromUserId: testUser.id,
+      readOnlyShoutout1 = await createShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}ReadOnly_Shoutout_1`,
@@ -118,8 +111,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
 
       // Sign in as testUser2 to create second shoutout
       await signIn(supabase, testUser2.email, 'TestPass123!');
-      readOnlyShoutout2 = await shoutoutsService.createShoutout({
-        fromUserId: testUser2.id,
+      readOnlyShoutout2 = await createShoutout(supabase, {
         toUserId: testUser.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}ReadOnly_Shoutout_2`,
@@ -140,7 +132,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
     });
 
     it('fetches all shoutouts', async () => {
-      const shoutouts = await shoutoutsService.fetchShoutouts();
+      const shoutouts = await fetchShoutouts(supabase);
 
       expect(Array.isArray(shoutouts)).toBe(true);
       expect(shoutouts.length).toBeGreaterThan(0);
@@ -158,7 +150,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
     });
 
     it('filters by sentBy', async () => {
-      const filtered = await shoutoutsService.fetchShoutouts({
+      const filtered = await fetchShoutouts(supabase, {
         sentBy: testUser.id,
       });
 
@@ -168,7 +160,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
     });
 
     it('filters by receivedBy', async () => {
-      const filtered = await shoutoutsService.fetchShoutouts({
+      const filtered = await fetchShoutouts(supabase, {
         receivedBy: testUser2.id,
       });
 
@@ -178,7 +170,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
     });
 
     it('filters by resourceId', async () => {
-      const filtered = await shoutoutsService.fetchShoutouts({
+      const filtered = await fetchShoutouts(supabase, {
         resourceId: testResource.id,
       });
 
@@ -192,17 +184,14 @@ describe('Shoutouts Service - CRUD Operations', () => {
   describe('fetchShoutoutById', () => {
     it('returns shoutout by id', async () => {
       // Create a shoutout to fetch
-      const createdShoutout = await shoutoutsService.createShoutout({
-        fromUserId: testUser.id,
+      const createdShoutout = await createShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Fetch_By_Id_Test`,
       });
 
       try {
-        const fetchedShoutout = await shoutoutsService.fetchShoutoutById(
-          createdShoutout.id,
-        );
+        const fetchedShoutout = await fetchAndCacheShoutout(supabase, null, createdShoutout.id);
 
         expect(fetchedShoutout).toBeTruthy();
         expect(fetchedShoutout!.id).toBe(createdShoutout.id);
@@ -217,7 +206,9 @@ describe('Shoutouts Service - CRUD Operations', () => {
     });
 
     it('returns null for non-existent id', async () => {
-      const result = await shoutoutsService.fetchShoutoutById(
+      const result = await fetchAndCacheShoutout(
+        supabase,
+        null,
         '00000000-0000-0000-0000-000000000000',
       );
       expect(result).toBeNull();
@@ -227,8 +218,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
   describe('updateShoutout', () => {
     it('updates shoutout message', async () => {
       // Create a shoutout to update
-      const createdShoutout = await shoutoutsService.createShoutout({
-        fromUserId: testUser.id,
+      const createdShoutout = await createShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Original_Message`,
@@ -236,57 +226,37 @@ describe('Shoutouts Service - CRUD Operations', () => {
 
       try {
         const newMessage = `${TEST_PREFIX}Updated_Message`;
-        const updatedShoutout = await shoutoutsService.updateShoutout(
+        const updatedShoutout = await updateShoutout(
+          supabase,
           createdShoutout.id,
           { message: newMessage },
         );
 
         expect(updatedShoutout).toBeTruthy();
-        expect(updatedShoutout.id).toBe(createdShoutout.id);
-        expect(updatedShoutout.message).toBe(newMessage);
-        expect(updatedShoutout.fromUser.id).toBe(testUser.id);
-        expect(updatedShoutout.toUser.id).toBe(testUser2.id);
-        expect(updatedShoutout.resource.id).toBe(testResource.id);
+        expect(updatedShoutout!.id).toBe(createdShoutout.id);
+        expect(updatedShoutout!.message).toBe(newMessage);
+        expect(updatedShoutout!.fromUserId).toBe(testUser.id);
+        expect(updatedShoutout!.toUserId).toBe(testUser2.id);
+        expect(updatedShoutout!.resourceId).toBe(testResource.id);
       } finally {
         // Cleanup
         await supabase.from('shoutouts').delete().eq('id', createdShoutout.id);
       }
     });
 
-    it('validates business rule: cannot change sender', async () => {
-      // Create a shoutout to update
-      const createdShoutout = await shoutoutsService.createShoutout({
-        fromUserId: testUser.id,
-        toUserId: testUser2.id,
-        resourceId: testResource.id,
-        message: `${TEST_PREFIX}Sender_Change_Test`,
-      });
-
-      try {
-        await expect(
-          shoutoutsService.updateShoutout(createdShoutout.id, {
-            fromUserId: testUser2.id, // Try to change sender
-          }),
-        ).rejects.toThrow('Cannot change the sender of shoutout');
-      } finally {
-        // Cleanup
-        await supabase.from('shoutouts').delete().eq('id', createdShoutout.id);
-      }
-    });
   });
 
   describe('deleteShoutout', () => {
     it('deletes shoutout successfully', async () => {
       // Create a shoutout to delete
-      const createdShoutout = await shoutoutsService.createShoutout({
-        fromUserId: testUser.id,
+      const createdShoutout = await createShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Delete_Test`,
       });
 
       // Delete the shoutout
-      await shoutoutsService.deleteShoutout(createdShoutout.id);
+      await deleteShoutout(supabase, createdShoutout.id);
 
       // Verify shoutout is deleted
       const { data, error } = await supabase
@@ -301,7 +271,7 @@ describe('Shoutouts Service - CRUD Operations', () => {
     it('handles non-existent shoutout deletion gracefully', async () => {
       // Should not throw error for non-existent shoutout
       await expect(
-        shoutoutsService.deleteShoutout('00000000-0000-0000-0000-000000000000'),
+        deleteShoutout(supabase, '00000000-0000-0000-0000-000000000000'),
       ).resolves.not.toThrow();
     });
   });

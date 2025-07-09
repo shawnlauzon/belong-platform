@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
-import type { ShoutoutData, Shoutout } from '../types';
+import { updateShoutout } from '../api';
+import type { ShoutoutData, ShoutoutInfo } from '../types';
 
 /**
  * Hook for updating existing shoutouts.
@@ -18,7 +18,7 @@ import type { ShoutoutData, Shoutout } from '../types';
  * ```tsx
  * function EditShoutoutForm({ shoutout }: { shoutout: Shoutout }) {
  *   const updateShoutout = useUpdateShoutout();
- *   
+ *
  *   const handleSubmit = useCallback(async (updates: Partial<ShoutoutData>) => {
  *     try {
  *       const updatedShoutout = await updateShoutout.mutateAsync({
@@ -42,16 +42,16 @@ import type { ShoutoutData, Shoutout } from '../types';
  *         impactDescription: formData.get('impactDescription') as string,
  *       });
  *     }}>
- *       <textarea 
- *         name="message" 
+ *       <textarea
+ *         name="message"
  *         defaultValue={shoutout.message}
- *         placeholder="Your appreciation message..." 
- *         required 
+ *         placeholder="Your appreciation message..."
+ *         required
  *       />
- *       <textarea 
- *         name="impactDescription" 
+ *       <textarea
+ *         name="impactDescription"
  *         defaultValue={shoutout.impactDescription || ''}
- *         placeholder="How did this help you?" 
+ *         placeholder="How did this help you?"
  *       />
  *       <button type="submit" disabled={updateShoutout.isPending}>
  *         {updateShoutout.isPending ? 'Updating...' : 'Update Shoutout'}
@@ -66,27 +66,28 @@ import type { ShoutoutData, Shoutout } from '../types';
 export function useUpdateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
 
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ShoutoutData> }) => {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
-      return shoutoutsService.updateShoutout(id, data);
+      return updateShoutout(supabase, id, data);
     },
-    onSuccess: (updatedShoutout: Shoutout) => {
+    onSuccess: (updatedShoutout: ShoutoutInfo | null) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 
       // Update the specific shoutout in cache
-      queryClient.setQueryData(
-        queryKeys.shoutouts.byId(updatedShoutout.id),
-        updatedShoutout
-      );
+      if (updatedShoutout) {
+        queryClient.setQueryData(
+          queryKeys.shoutouts.byId(updatedShoutout.id),
+          updatedShoutout,
+        );
 
-      logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
-        id: updatedShoutout.id,
-        message: updatedShoutout.message,
-      });
+        logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
+          id: updatedShoutout.id,
+          message: updatedShoutout.message,
+        });
+      }
     },
     onError: (error) => {
       logger.error('📢 useUpdateShoutout: Failed to update shoutout', {

@@ -1,7 +1,6 @@
-import { faker } from "@faker-js/faker";
-import { ShoutoutRow } from "../types/database";
-import type { ShoutoutData } from "../types";
-
+import { faker } from '@faker-js/faker';
+import { ShoutoutRow } from '../types/database';
+import type { ShoutoutData } from '../types';
 
 export function createFakeDbShoutout(
   overrides: Partial<ShoutoutRow> = {},
@@ -18,9 +17,6 @@ export function createFakeDbShoutout(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.url(),
     ),
-    impact_description: faker.datatype.boolean()
-      ? faker.lorem.sentence()
-      : null,
     created_at: now,
     updated_at: now,
     ...overrides,
@@ -31,7 +27,6 @@ export function createFakeShoutoutData(
   overrides: Partial<ShoutoutData> = {},
 ): ShoutoutData {
   return {
-    fromUserId: faker.string.uuid(),
     toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
     message: faker.lorem.paragraph(),
@@ -39,9 +34,6 @@ export function createFakeShoutoutData(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.url(),
     ),
-    impactDescription: faker.datatype.boolean()
-      ? faker.lorem.sentence()
-      : undefined,
     ...overrides,
   };
 }

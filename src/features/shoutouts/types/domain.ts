@@ -2,16 +2,14 @@ import { ResourceDetail } from '../../resources';
 import { UserDetail } from '../../users';
 
 export interface ShoutoutData {
-  fromUserId: string;
   toUserId: string;
   resourceId: string;
   message: string;
   imageUrls?: string[];
-  impactDescription?: string;
 }
 
-export interface Shoutout
-  extends Omit<ShoutoutData, 'fromUserId' | 'toUserId' | 'resourceId'> {
+export interface ShoutoutDetail
+  extends Omit<ShoutoutData, 'toUserId' | 'resourceId'> {
   id: string;
   fromUser: UserDetail;
   toUser: UserDetail;
@@ -29,7 +27,7 @@ export interface ShoutoutFilter {
 }
 
 export interface ShoutoutInfo
-  extends Omit<Shoutout, 'fromUser' | 'toUser' | 'resource'> {
+  extends Omit<ShoutoutDetail, 'fromUser' | 'toUser' | 'resource'> {
   fromUserId: string; // Replaces fromUser: User
   toUserId: string; // Replaces toUser: User
   resourceId: string; // Replaces resource: Resource

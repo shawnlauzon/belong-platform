@@ -31,7 +31,6 @@ describe('Shoutout Transformer', () => {
         id: dbShoutout.id,
         message: dbShoutout.message,
         imageUrls: dbShoutout.image_urls,
-        impactDescription: dbShoutout.impact_description || undefined,
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
@@ -61,25 +60,6 @@ describe('Shoutout Transformer', () => {
       expect(shoutout.resource).toEqual(mockResource);
     });
 
-    it('should handle null impact_description', () => {
-      const mockFromUser = createFakeUserDetail();
-      const mockToUser = createFakeUserDetail();
-      const mockResource = createFakeResource();
-      const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
-        resource_id: mockResource.id,
-        impact_description: null,
-      });
-
-      const shoutout = toDomainShoutout(dbShoutout, {
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
-      });
-
-      expect(shoutout.impactDescription).toBeUndefined();
-    });
 
     it('should handle empty image_urls array', () => {
       const mockFromUser = createFakeUserDetail();
@@ -196,7 +176,6 @@ describe('Shoutout Transformer', () => {
         to_user_id: shoutoutData.toUserId,
         resource_id: shoutoutData.resourceId,
         image_urls: shoutoutData.imageUrls || [],
-        impact_description: shoutoutData.impactDescription || null,
       });
     });
 
@@ -211,16 +190,6 @@ describe('Shoutout Transformer', () => {
       expect(dbShoutout.image_urls).toEqual([]);
     });
 
-    it('should handle undefined impactDescription', () => {
-      const shoutoutData = createFakeShoutoutData({
-        impactDescription: undefined,
-      });
-      const fromUserId = faker.string.uuid();
-
-      const dbShoutout = forDbInsert(shoutoutData, fromUserId);
-
-      expect(dbShoutout.impact_description).toBeNull();
-    });
   });
 
   describe('forDbUpdate', () => {
@@ -228,7 +197,6 @@ describe('Shoutout Transformer', () => {
       const partialShoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
-        impactDescription: faker.lorem.sentence(),
       };
 
       const dbShoutout = forDbUpdate(partialShoutoutData);
@@ -236,7 +204,6 @@ describe('Shoutout Transformer', () => {
       expect(dbShoutout).toMatchObject({
         message: partialShoutoutData.message,
         image_urls: partialShoutoutData.imageUrls,
-        impact_description: partialShoutoutData.impactDescription,
       });
     });
 
@@ -253,18 +220,8 @@ describe('Shoutout Transformer', () => {
         to_user_id: undefined,
         resource_id: undefined,
         image_urls: undefined,
-        impact_description: null,
       });
     });
 
-    it('should convert undefined impactDescription to null', () => {
-      const partialShoutoutData = {
-        impactDescription: undefined,
-      };
-
-      const dbShoutout = forDbUpdate(partialShoutoutData);
-
-      expect(dbShoutout.impact_description).toBeNull();
-    });
   });
 });

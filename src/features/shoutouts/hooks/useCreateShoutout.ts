@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
-import type { ShoutoutData, Shoutout } from '../types';
+import { createShoutout } from '../api';
+import type { ShoutoutData, ShoutoutInfo } from '../types';
 
 /**
  * Hook for creating new shoutouts.
@@ -38,13 +38,11 @@ import type { ShoutoutData, Shoutout } from '../types';
  *         message: formData.get('message') as string,
  *         toUserId: formData.get('toUserId') as string,
  *         resourceId: formData.get('resourceId') as string,
- *         impactDescription: formData.get('impactDescription') as string,
  *       });
  *     }}>
  *       <textarea name="message" placeholder="Your appreciation message..." required />
  *       <input name="toUserId" placeholder="Recipient user ID" required />
  *       <input name="resourceId" placeholder="Related resource ID" required />
- *       <textarea name="impactDescription" placeholder="How did this help you?" />
  *       <button type="submit" disabled={createShoutout.isPending}>
  *         {createShoutout.isPending ? 'Creating...' : 'Create Shoutout'}
  *       </button>
@@ -58,14 +56,13 @@ import type { ShoutoutData, Shoutout } from '../types';
 export function useCreateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
 
   const mutation = useMutation({
     mutationFn: (data: ShoutoutData) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { data });
-      return shoutoutsService.createShoutout(data);
+      return createShoutout(supabase, data);
     },
-    onSuccess: (newShoutout: Shoutout) => {
+    onSuccess: (newShoutout: ShoutoutInfo) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 
@@ -78,8 +75,8 @@ export function useCreateShoutout() {
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
         id: newShoutout.id,
         message: newShoutout.message,
-        fromUserId: newShoutout.fromUser?.id,
-        toUserId: newShoutout.toUser?.id,
+        fromUserId: newShoutout.fromUserId,
+        toUserId: newShoutout.toUserId,
       });
     },
     onError: (error) => {

@@ -428,12 +428,9 @@ export type Database = {
       shoutouts: {
         Row: {
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           from_user_id: string
           id: string
           image_urls: string[]
-          impact_description: string | null
           message: string
           resource_id: string
           to_user_id: string
@@ -441,12 +438,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id: string
           id?: string
           image_urls?: string[]
-          impact_description?: string | null
           message: string
           resource_id: string
           to_user_id: string
@@ -454,12 +448,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           from_user_id?: string
           id?: string
           image_urls?: string[]
-          impact_description?: string | null
           message?: string
           resource_id?: string
           to_user_id?: string
