@@ -95,7 +95,7 @@ describe('Events API - CRUD Operations', () => {
         // Check datetime fields separately to handle timezone format differences
         expect(new Date(dbRecord!.start_date_time)).toEqual(data.startDateTime);
         if (data.endDateTime) {
-          expect(new Date(dbRecord!.end_date_time)).toEqual(data.endDateTime);
+          expect(new Date(dbRecord!.end_date_time!)).toEqual(data.endDateTime);
         }
         expect(parsePostGisPoint(dbRecord!.coordinates)).toEqual(
           data.coordinates,
@@ -190,9 +190,12 @@ describe('Events API - CRUD Operations', () => {
       } finally {
         // Cleanup: Delete temporary file if it still exists
         if (tempImageResult) {
-          await supabase.storage
-            .from('images')
-            .remove([tempImageResult.tempPath]);
+          // Extract the path from the URL for storage deletion
+          const urlMatch = tempImageResult.match(/\/images\/(.+)$/);
+          if (urlMatch) {
+            const imagePath = urlMatch[1];
+            await supabase.storage.from('images').remove([imagePath]);
+          }
         }
 
         // Cleanup event (which should also cleanup permanent images)
@@ -227,7 +230,7 @@ describe('Events API - CRUD Operations', () => {
         );
 
         const filtered = await api.fetchEvents(supabase, {
-          title: 'UniqueFilter',
+          searchTerm: 'UniqueFilter',
         });
 
         expect(filtered.some((e) => e.title === uniqueTitle)).toBe(true);
@@ -419,7 +422,7 @@ describe('Events API - CRUD Operations', () => {
           .single();
 
         expect(new Date(dbRecord!.start_date_time)).toEqual(newStartTime);
-        expect(new Date(dbRecord!.end_date_time)).toEqual(newEndTime);
+        expect(new Date(dbRecord!.end_date_time!)).toEqual(newEndTime);
         expect(dbRecord!.is_all_day).toBe(true);
       } finally {
         await cleanupEvent(event);
