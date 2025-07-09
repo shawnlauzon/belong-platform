@@ -7,14 +7,19 @@ import {
   toDomainEventAttendance,
   forDbInsertAttendance,
 } from '../../transformers/eventTransformer';
-import { createFakeEventRow, createFakeEventData, createFakeEventAttendanceRow, createFakeEventAttendanceData } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import {
+  createFakeEventRow,
+  createFakeEventData,
+  createFakeEventAttendanceRow,
+  createFakeEventAttendanceData,
+} from '../../__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
 
 describe('eventTransformer', () => {
   describe('toDomainEvent', () => {
     it('should transform database event row to domain event', () => {
-      const fakeUser = createFakeUser();
+      const fakeUser = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const fakeEventRow = createFakeEventRow({
         organizer_id: fakeUser.id,
@@ -31,7 +36,9 @@ describe('eventTransformer', () => {
         title: fakeEventRow.title,
         description: fakeEventRow.description,
         startDateTime: new Date(fakeEventRow.start_date_time),
-        endDateTime: fakeEventRow.end_date_time ? new Date(fakeEventRow.end_date_time) : undefined,
+        endDateTime: fakeEventRow.end_date_time
+          ? new Date(fakeEventRow.end_date_time)
+          : undefined,
         isAllDay: fakeEventRow.is_all_day,
         location: fakeEventRow.location,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,
@@ -45,7 +52,7 @@ describe('eventTransformer', () => {
     });
 
     it('should throw error when organizer ID does not match', () => {
-      const fakeUser = createFakeUser();
+      const fakeUser = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const fakeEventRow = createFakeEventRow({
         organizer_id: 'different-organizer-id',
@@ -61,7 +68,7 @@ describe('eventTransformer', () => {
     });
 
     it('should throw error when community ID does not match', () => {
-      const fakeUser = createFakeUser();
+      const fakeUser = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const fakeEventRow = createFakeEventRow({
         organizer_id: fakeUser.id,
@@ -88,7 +95,9 @@ describe('eventTransformer', () => {
         title: fakeEventRow.title,
         description: fakeEventRow.description,
         startDateTime: new Date(fakeEventRow.start_date_time),
-        endDateTime: fakeEventRow.end_date_time ? new Date(fakeEventRow.end_date_time) : undefined,
+        endDateTime: fakeEventRow.end_date_time
+          ? new Date(fakeEventRow.end_date_time)
+          : undefined,
         isAllDay: fakeEventRow.is_all_day,
         location: fakeEventRow.location,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,

@@ -7,7 +7,7 @@ import {
 } from '../types';
 import { ResourceRow } from '../types/database';
 import { UserDetail } from '../../users';
-import { createFakeUser } from '../../users/__fakes__';
+import { createFakeUserDetail } from '../../users/__fakes__';
 import { createFakeCommunity } from '../../communities/__fakes__';
 import { toResourceInfo } from '../transformers/resourceTransformer';
 import { ProfileRow } from '@/features/users/types/database';
@@ -20,7 +20,7 @@ export function createFakeResource(
 ): ResourceDetail {
   const now = new Date();
 
-  const owner = createFakeUser();
+  const owner = createFakeUserDetail();
   const community = createFakeCommunity();
 
   return {

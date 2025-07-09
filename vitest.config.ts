@@ -15,7 +15,6 @@ export default defineConfig({
       '.cache',
       'packages',
       '**/conversations/**/*',
-      '**/shoutouts/**/*',
     ],
     // Suppress console output by default
     silent: process.env.VITEST_VERBOSE !== 'true',

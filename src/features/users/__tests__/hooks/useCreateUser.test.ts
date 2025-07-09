@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCreateUser } from '../../hooks/useCreateUser';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeUserData, createFakeUser } from '../../__fakes__';
+import { createFakeUserData, createFakeUserDetail } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API functions
@@ -34,7 +34,7 @@ describe('useCreateUser', () => {
 
   it('should return User after creation', async () => {
     // Arrange: Create test data using factories
-    const fakeUser = createFakeUser();
+    const fakeUser = createFakeUserDetail();
     const userData = createFakeUserData();
 
     mockCreateUser.mockResolvedValue(fakeUser);

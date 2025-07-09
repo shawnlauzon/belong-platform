@@ -23,6 +23,10 @@ export async function fetchResources(
       query = query.eq('community_id', filters.communityId);
     }
 
+    if (filters.communityIds && filters.communityIds.length > 0) {
+      query = query.in('community_id', filters.communityIds);
+    }
+
     if (filters.ownerId) {
       query = query.eq('owner_id', filters.ownerId);
     }

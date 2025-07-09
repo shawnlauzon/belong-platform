@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useEventAttendees } from '../../hooks/useEventAttendees';
 import { createTestWrapper } from '../../../../test-utils';
 import { createFakeEventAttendanceInfo } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import type { EventAttendanceInfo } from '../../types/domain';
 
 // Mock the API function
@@ -21,8 +21,8 @@ describe('useEventAttendees', () => {
 
   it('should fetch event attendees successfully', async () => {
     const eventId = 'test-event-id';
-    const fakeUser1 = createFakeUser();
-    const fakeUser2 = createFakeUser();
+    const fakeUser1 = createFakeUserDetail();
+    const fakeUser2 = createFakeUserDetail();
 
     const fakeAttendances: EventAttendanceInfo[] = [
       createFakeEventAttendanceInfo({
@@ -57,9 +57,9 @@ describe('useEventAttendees', () => {
 
   it('should handle different attendance statuses', async () => {
     const eventId = 'test-event-id';
-    const fakeUser1 = createFakeUser();
-    const fakeUser2 = createFakeUser();
-    const fakeUser3 = createFakeUser();
+    const fakeUser1 = createFakeUserDetail();
+    const fakeUser2 = createFakeUserDetail();
+    const fakeUser3 = createFakeUserDetail();
 
     const fakeAttendances: EventAttendanceInfo[] = [
       createFakeEventAttendanceInfo({
@@ -149,7 +149,7 @@ describe('useEventAttendees', () => {
 
   it('should include user data in each attendance record', async () => {
     const eventId = 'test-event-id';
-    const fakeUser = createFakeUser();
+    const fakeUser = createFakeUserDetail();
 
     const fakeAttendances: EventAttendanceInfo[] = [
       createFakeEventAttendanceInfo({

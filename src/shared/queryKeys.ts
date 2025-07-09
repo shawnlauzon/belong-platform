@@ -74,4 +74,9 @@ export const queryKeys = {
       ['conversations', 'messages', conversationId] as const,
     userList: (userId: string) => ['user', userId, 'conversations'] as const,
   },
+
+  // Feed
+  feed: {
+    all: ['feed'] as const,
+  },
 } as const;

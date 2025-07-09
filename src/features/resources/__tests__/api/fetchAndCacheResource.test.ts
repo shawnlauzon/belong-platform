@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { fetchAndCacheResource } from '../../api/fetchAndCacheResource';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResource, createFakeResourceInfo } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
@@ -56,8 +56,8 @@ describe('fetchAndCacheResource', () => {
     });
 
     // Create mock data using factories
-    fakeOwner = createFakeUser();
-    fakeOrganizer = createFakeUser();
+    fakeOwner = createFakeUserDetail();
+    fakeOrganizer = createFakeUserDetail();
     fakeCommunity = createFakeCommunity({
       organizer: fakeOrganizer,
     });

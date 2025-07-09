@@ -3,14 +3,14 @@ import {
   toDomainResource,
   forDbInsert,
 } from '../../transformers/resourceTransformer';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import { createFakeCommunity } from '../../../communities/__fakes__';
 import { createFakeDbResource, createFakeResourceData } from '../../__fakes__';
 
 describe('Resource Transformer', () => {
   describe('toDomainResource', () => {
     it('should transform a database resource to a domain resource', () => {
-      const fakeOwner = createFakeUser();
+      const fakeOwner = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const dbResource = createFakeDbResource({
         owner_id: fakeOwner.id,
@@ -33,7 +33,7 @@ describe('Resource Transformer', () => {
     });
 
     it('should include owner and community if provided', () => {
-      const fakeOwner = createFakeUser();
+      const fakeOwner = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const dbResource = createFakeDbResource({
         owner_id: fakeOwner.id,
@@ -51,7 +51,7 @@ describe('Resource Transformer', () => {
 
     it('should not return any field names with underscores', () => {
       // Arrange
-      const fakeOwner = createFakeUser();
+      const fakeOwner = createFakeUserDetail();
       const fakeCommunity = createFakeCommunity();
       const dbResource = createFakeDbResource({
         owner_id: fakeOwner.id,

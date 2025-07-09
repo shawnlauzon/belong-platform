@@ -6,7 +6,7 @@ import {
   createFakeResourceData,
   createFakeResourceInfo,
 } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeUserDetail } from '../../../users/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Global mocks for shared and config modules are now handled in vitest.setup.ts
@@ -42,7 +42,7 @@ describe('useCreateResource', () => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockCurrentUser = createFakeUser();
+    mockCurrentUser = createFakeUserDetail();
     fakeCommunity = createFakeCommunity();
 
     mockSupabase = createMockSupabase();
