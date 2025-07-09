@@ -54,8 +54,7 @@ export async function createShoutout(
         if (
           JSON.stringify(permanentUrls) !== JSON.stringify(shoutoutData.imageUrls)
         ) {
-          const updatedShoutout = await updateShoutout(supabase, {
-            id: createdShoutout.id,
+          const updatedShoutout = await updateShoutout(supabase, createdShoutout.id, {
             imageUrls: permanentUrls,
           });
           if (updatedShoutout) {

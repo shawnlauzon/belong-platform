@@ -10,18 +10,17 @@ import { getAuthIdOrThrow } from '../../../shared/utils';
  */
 export async function updateShoutout(
   supabase: SupabaseClient<Database>,
-  updateData: Partial<ShoutoutData> & { id: string },
+  id: string,
+  updateData: Partial<ShoutoutData>,
 ): Promise<ShoutoutInfo | null> {
   logger.debug('📢 API: Updating shoutout', {
-    id: updateData.id,
+    id,
     message: updateData.message,
   });
 
   try {
     await getAuthIdOrThrow(supabase, 'update shoutout');
-
-    const { id, ...updates } = updateData;
-    const dbData = forDbUpdate(updates);
+    const dbData = forDbUpdate(updateData);
 
     const { data, error } = await supabase
       .from('shoutouts')
@@ -31,14 +30,12 @@ export async function updateShoutout(
       .single();
 
     if (error) {
-      logger.error('📢 API: Failed to update shoutout', { error, updateData });
+      logger.error('📢 API: Failed to update shoutout', { error, id, updateData });
       throw error;
     }
 
     if (!data) {
-      logger.debug('📢 API: Shoutout not found for update', {
-        id: updateData.id,
-      });
+      logger.debug('📢 API: Shoutout not found for update', { id });
       return null;
     }
 
@@ -55,7 +52,7 @@ export async function updateShoutout(
     });
     return shoutoutInfo;
   } catch (error) {
-    logger.error('📢 API: Error updating shoutout', { error, updateData });
+    logger.error('📢 API: Error updating shoutout', { error, id, updateData });
     throw error;
   }
 }

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
-import type { ShoutoutData, ShoutoutDetail } from '../types';
+import { updateShoutout } from '../api';
+import type { ShoutoutData, ShoutoutInfo } from '../types';
 
 /**
  * Hook for updating existing shoutouts.
@@ -66,27 +66,28 @@ import type { ShoutoutData, ShoutoutDetail } from '../types';
 export function useUpdateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
 
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ShoutoutData> }) => {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
-      return shoutoutsService.updateShoutout(id, data);
+      return updateShoutout(supabase, id, data);
     },
-    onSuccess: (updatedShoutout: ShoutoutDetail) => {
+    onSuccess: (updatedShoutout: ShoutoutInfo | null) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 
       // Update the specific shoutout in cache
-      queryClient.setQueryData(
-        queryKeys.shoutouts.byId(updatedShoutout.id),
-        updatedShoutout,
-      );
+      if (updatedShoutout) {
+        queryClient.setQueryData(
+          queryKeys.shoutouts.byId(updatedShoutout.id),
+          updatedShoutout,
+        );
 
-      logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
-        id: updatedShoutout.id,
-        message: updatedShoutout.message,
-      });
+        logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
+          id: updatedShoutout.id,
+          message: updatedShoutout.message,
+        });
+      }
     },
     onError: (error) => {
       logger.error('📢 useUpdateShoutout: Failed to update shoutout', {

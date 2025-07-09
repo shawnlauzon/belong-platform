@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
+import { deleteShoutout } from '../api';
 
 /**
  * Hook for deleting shoutouts.
@@ -79,12 +79,11 @@ import { createShoutoutsService } from '../services/shoutouts.service';
 export function useDeleteShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
 
   const mutation = useMutation({
     mutationFn: (shoutoutId: string) => {
       logger.debug('📢 useDeleteShoutout: Deleting shoutout', { shoutoutId });
-      return shoutoutsService.deleteShoutout(shoutoutId);
+      return deleteShoutout(supabase, shoutoutId);
     },
     onSuccess: (_, shoutoutId) => {
       // Invalidate all shoutout queries to refetch lists

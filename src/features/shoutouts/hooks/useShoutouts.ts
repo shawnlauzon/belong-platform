@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys, toRecords } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutoutsService } from '../services/shoutouts.service';
+import { fetchShoutouts } from '../api';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { ShoutoutInfo, ShoutoutFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -49,7 +49,6 @@ import type { UseQueryResult } from '@tanstack/react-query';
  */
 export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<ShoutoutInfo[], Error> {
   const supabase = useSupabase();
-  const shoutoutsService = createShoutoutsService(supabase);
 
   const query = useQuery<ShoutoutInfo[], Error>({
     queryKey: filters
@@ -57,7 +56,7 @@ export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<ShoutoutI
       : queryKeys.shoutouts.all,
     queryFn: () => {
       logger.debug('📢 useShoutouts: Fetching shoutouts', { filters });
-      return shoutoutsService.fetchShoutouts(filters);
+      return fetchShoutouts(supabase, filters);
     },
     staleTime: STANDARD_CACHE_TIME,
   });
