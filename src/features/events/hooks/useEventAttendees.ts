@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { fetchEventAttendees } from '@/features/events/api/fetchEventAttendees';
 
-import type { EventAttendance } from '@/features/events/types';
+import type { EventAttendanceInfo } from '@/features/events/types';
 
 /**
  * Hook for fetching event attendees.
@@ -40,7 +40,7 @@ import type { EventAttendance } from '@/features/events/types';
 export function useEventAttendees(eventId: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<EventAttendance[], Error>({
+  const query = useQuery<EventAttendanceInfo[], Error>({
     queryKey: queryKeys.events.attendees(eventId),
     queryFn: () => fetchEventAttendees(supabase, eventId),
     staleTime: STANDARD_CACHE_TIME,

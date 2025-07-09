@@ -53,14 +53,6 @@ export interface CommunityFilter {
   organizerId?: string;
 }
 
-// Community membership types
-export interface CommunityMembership
-  extends Omit<CommunityMembershipData, 'userId' | 'communityId'> {
-  joinedAt: Date;
-  user: UserDetail;
-  community: CommunityDetail;
-}
-
 export interface CommunityMembershipData {
   userId: string;
   communityId: string;

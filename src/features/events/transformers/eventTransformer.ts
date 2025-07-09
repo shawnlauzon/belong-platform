@@ -1,9 +1,9 @@
 import type {
-  Event,
   EventData,
+  EventDetail,
   EventInfo,
-  EventAttendance,
   EventAttendanceData,
+  EventAttendanceInfo,
 } from '../types';
 import type {
   EventRow,
@@ -26,7 +26,7 @@ export function toDomainEvent(
     community: CommunityDetail;
     attendees?: UserDetail[];
   },
-): Event {
+): EventDetail {
   if (dbEvent.organizer_id !== refs.organizer.id) {
     throw new Error('Organizer ID does not match');
   }
@@ -125,7 +125,7 @@ export function toEventInfo(dbEvent: EventRow): EventInfo {
  */
 export function toDomainEventAttendance(
   dbAttendance: EventAttendanceRow,
-): EventAttendance {
+): EventAttendanceInfo {
   return {
     eventId: dbAttendance.event_id,
     userId: dbAttendance.user_id,

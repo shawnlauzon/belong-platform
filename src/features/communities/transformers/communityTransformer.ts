@@ -2,7 +2,6 @@ import type {
   CommunityData,
   CommunityDetail,
   CommunityInfo,
-  CommunityMembership,
   CommunityMembershipData,
   CommunityBoundary,
   IsochroneBoundary,
@@ -141,27 +140,6 @@ export function forDbUpdate(
     boundary: community.boundary
       ? JSON.stringify(boundaryForDatabase(community.boundary))
       : undefined,
-  };
-}
-
-/**
- * Transform a database community membership record to a domain membership object
- */
-export function toDomainMembership(
-  dbMembership: CommunityMembershipRow & {
-    user: UserDetail;
-    community: CommunityDetail;
-  },
-): CommunityMembership {
-  const { joined_at, ...rest } = dbMembership;
-
-  console.log('dbMembership', dbMembership);
-
-  return {
-    ...rest,
-    joinedAt: new Date(joined_at),
-    user: dbMembership.user,
-    community: dbMembership.community,
   };
 }
 

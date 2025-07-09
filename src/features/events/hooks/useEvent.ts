@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import type { Event } from '@/features/events/types';
 import { fetchAndCacheEvent } from '../api/fetchAndCacheEvent';
 
 /**
@@ -46,7 +45,7 @@ export function useEvent(id: string) {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
 
-  return useQuery<Event | null, Error>({
+  return useQuery({
     queryKey: queryKeys.events.byId(id),
     queryFn: () => fetchAndCacheEvent(supabase, queryClient, id),
     enabled: !!id,
