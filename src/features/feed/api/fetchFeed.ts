@@ -39,7 +39,7 @@ export async function fetchFeed(
     const [resources, events, shoutouts] = await Promise.all([
       fetchResources(supabase, { communityIds }),
       fetchEvents(supabase, { communityIds }),
-      fetchShoutouts(supabase),
+      fetchShoutouts(supabase, { communityIds }),
     ]);
 
     // Transform to FeedItem format

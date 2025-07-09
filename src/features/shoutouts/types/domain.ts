@@ -11,6 +11,7 @@ export interface ShoutoutData {
 
 export interface ShoutoutDetail extends ShoutoutData {
   id: string;
+  fromUserId: string;
   fromUser: UserDetail;
   toUser: UserDetail;
   resource: ResourceDetail;
@@ -19,6 +20,8 @@ export interface ShoutoutDetail extends ShoutoutData {
 }
 
 export interface ShoutoutFilter {
+  communityId?: string;
+  communityIds?: string[];
   sentBy?: string;
   receivedBy?: string;
   resourceId?: string;
@@ -26,7 +29,8 @@ export interface ShoutoutFilter {
   pageSize?: number;
 }
 
-export interface ShoutoutInfo extends ShoutoutDetail {
+export interface ShoutoutInfo extends ShoutoutData {
+  id: string;
   fromUserId: string;
   createdAt: Date;
   updatedAt: Date;
