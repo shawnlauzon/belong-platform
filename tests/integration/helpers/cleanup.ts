@@ -175,3 +175,26 @@ export async function cleanupAttendance(eventId: string, userId: string) {
     .eq('event_id', eventId)
     .eq('user_id', userId);
 }
+
+// Cleanup specific resource response
+export async function cleanupResourceResponse(resourceId: string, userId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('resource_responses')
+    .delete()
+    .eq('resource_id', resourceId)
+    .eq('user_id', userId);
+}
+
+// Cleanup all resource responses for a resource
+export async function cleanupResourceResponses(resourceId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('resource_responses')
+    .delete()
+    .eq('resource_id', resourceId);
+}
