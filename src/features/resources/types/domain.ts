@@ -51,3 +51,19 @@ export interface ResourceFilter {
 
 // Note: ResourceFilters interface was a duplicate with different field names
 // Consider consolidating with ResourceFilter if needed
+
+export type ResourceResponseStatus = 'accepted' | 'interested' | 'declined';
+
+export interface ResourceResponseData {
+  resourceId: string;
+  userId: string;
+  status: ResourceResponseStatus;
+}
+
+export interface ResourceResponseInfo {
+  resourceId: string;
+  userId: string;
+  status: ResourceResponseStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
