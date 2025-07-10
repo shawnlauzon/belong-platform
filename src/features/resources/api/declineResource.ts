@@ -1,6 +1,6 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceResponseInfo } from '../types';
+import type { ResourceResponseInfo, ResourceResponseStatus } from '../types';
 import { ResourceResponseRow } from '../types/database';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
@@ -44,7 +44,7 @@ export async function declineResource(
     const response: ResourceResponseInfo = {
       resourceId: data.resource_id,
       userId: data.user_id,
-      status: data.status as any,
+      status: data.status as ResourceResponseStatus,
       createdAt: new Date(data.created_at || ''),
       updatedAt: new Date(data.updated_at || ''),
     };
