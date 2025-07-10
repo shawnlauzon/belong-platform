@@ -33,7 +33,8 @@ export function createFakeResource(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),
     ),
-    location: {
+    location: faker.location.city(),
+    coordinates: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
@@ -71,10 +72,8 @@ export function createFakeResourceRow(
     owner_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
     image_urls: [faker.image.urlLoremFlickr({ category: 'object' })],
-    location: {
-      lat: faker.location.latitude(),
-      lng: faker.location.longitude(),
-    },
+    location: faker.location.city(),
+    coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     created_at: faker.date.past().toISOString(),
     updated_at: faker.date.recent().toISOString(),
     ...overrides,
@@ -99,7 +98,8 @@ export function createFakeResourceData(
     category: faker.helpers.enumValue(ResourceCategory),
     communityId: faker.string.uuid(),
     imageUrls: [faker.image.url(), faker.image.url()],
-    location: {
+    location: faker.location.city(),
+    coordinates: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
@@ -124,7 +124,8 @@ export function createFakeDbResource(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),
     ),
-    location: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
+    location: faker.location.city(),
+    coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     owner_id: faker.string.uuid(),
     created_at: now,
     updated_at: now,

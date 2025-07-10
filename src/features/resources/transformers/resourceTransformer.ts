@@ -38,8 +38,9 @@ export function toDomainResource(
     title: dbResource.title,
     description: dbResource.description,
     category: dbResource.category as ResourceCategory,
-    location: dbResource.location
-      ? parsePostGisPoint(dbResource.location)
+    location: dbResource.location || '',
+    coordinates: dbResource.coordinates
+      ? parsePostGisPoint(dbResource.coordinates)
       : undefined,
     imageUrls: dbResource.image_urls || [],
     createdAt: new Date(dbResource.created_at),
@@ -55,14 +56,15 @@ export function toDomainResource(
 export function forDbInsert(
   resource: ResourceData & { ownerId: string },
 ): ResourceInsertDbData {
-  const { communityId, imageUrls, ownerId, ...rest } = resource;
+  const { communityId, imageUrls, ownerId, location, coordinates, ...rest } = resource;
 
   return {
     ...rest,
     owner_id: ownerId,
     community_id: communityId,
     image_urls: imageUrls,
-    location: resource.location ? toPostGisPoint(resource.location) : undefined,
+    location: location,
+    coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
   };
 }
 
@@ -78,7 +80,8 @@ export function forDbUpdate(
     category: resource.category,
     type: resource.type,
     image_urls: resource.imageUrls,
-    location: resource.location ? toPostGisPoint(resource.location) : undefined,
+    location: resource.location,
+    coordinates: resource.coordinates ? toPostGisPoint(resource.coordinates) : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
     community_id: resource.communityId,
   };
@@ -94,8 +97,9 @@ export function toResourceInfo(dbResource: ResourceRow): ResourceInfo {
     title: dbResource.title,
     description: dbResource.description,
     category: dbResource.category as ResourceCategory,
-    location: dbResource.location
-      ? parsePostGisPoint(dbResource.location)
+    location: dbResource.location || '',
+    coordinates: dbResource.coordinates
+      ? parsePostGisPoint(dbResource.coordinates)
       : undefined,
     imageUrls: dbResource.image_urls || [],
     createdAt: new Date(dbResource.created_at),

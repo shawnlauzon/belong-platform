@@ -84,7 +84,8 @@ describe('Resource Transformer', () => {
         description: resourceData.description,
         owner_id: resourceData.ownerId,
         community_id: resourceData.communityId,
-        location: resourceData.location
+        location: resourceData.location,
+        coordinates: resourceData.coordinates
           ? expect.stringContaining('POINT')
           : undefined,
       });

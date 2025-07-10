@@ -375,11 +375,12 @@ export type Database = {
         Row: {
           category: string
           community_id: string
+          coordinates: unknown | null
           created_at: string
           description: string
           id: string
           image_urls: string[]
-          location: unknown | null
+          location: string | null
           owner_id: string
           title: string
           type: string
@@ -388,11 +389,12 @@ export type Database = {
         Insert: {
           category: string
           community_id: string
+          coordinates?: unknown | null
           created_at?: string
           description: string
           id?: string
           image_urls?: string[]
-          location?: unknown | null
+          location?: string | null
           owner_id: string
           title: string
           type: string
@@ -401,11 +403,12 @@ export type Database = {
         Update: {
           category?: string
           community_id?: string
+          coordinates?: unknown | null
           created_at?: string
           description?: string
           id?: string
           image_urls?: string[]
-          location?: unknown | null
+          location?: string | null
           owner_id?: string
           title?: string
           type?: string
