@@ -4,6 +4,7 @@ import { UserDetail } from '../../users';
 export interface ShoutoutData {
   toUserId: string;
   resourceId: string;
+  communityId: string;
   message: string;
   imageUrls?: string[];
   impactDescription?: string;

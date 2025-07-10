@@ -16,6 +16,7 @@ export function createFakeDbShoutout(
     from_user_id: faker.string.uuid(),
     to_user_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
+    community_id: faker.string.uuid(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'people' })
@@ -38,6 +39,7 @@ export function createFakeShoutoutInfo(
     fromUserId: faker.string.uuid(),
     toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
       () => faker.image.urlLoremFlickr({ category: 'people' })

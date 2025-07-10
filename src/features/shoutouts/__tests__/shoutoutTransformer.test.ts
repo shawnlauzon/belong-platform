@@ -4,6 +4,7 @@ import {
   toDomainShoutout,
   forDbInsert,
   forDbUpdate,
+  toShoutoutInfo,
 } from '../transformers/shoutoutsTransformer';
 import { createFakeDbShoutout, createFakeShoutoutData } from './test-utils';
 import { createFakeUserDetail } from '../../users/__fakes__';
@@ -31,6 +32,7 @@ describe('Shoutout Transformer', () => {
         id: dbShoutout.id,
         message: dbShoutout.message,
         imageUrls: dbShoutout.image_urls,
+        communityId: dbShoutout.community_id,
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
@@ -175,6 +177,7 @@ describe('Shoutout Transformer', () => {
         from_user_id: fromUserId,
         to_user_id: shoutoutData.toUserId,
         resource_id: shoutoutData.resourceId,
+        community_id: shoutoutData.communityId,
         image_urls: shoutoutData.imageUrls || [],
       });
     });
@@ -223,5 +226,35 @@ describe('Shoutout Transformer', () => {
       });
     });
 
+  });
+
+  describe('toShoutoutInfo', () => {
+    it('should transform database shoutout to ShoutoutInfo with communityId', () => {
+      const dbShoutout = createFakeDbShoutout();
+
+      const shoutoutInfo = toShoutoutInfo(dbShoutout);
+
+      expect(shoutoutInfo).toMatchObject({
+        id: dbShoutout.id,
+        message: dbShoutout.message,
+        imageUrls: dbShoutout.image_urls,
+        fromUserId: dbShoutout.from_user_id,
+        toUserId: dbShoutout.to_user_id,
+        resourceId: dbShoutout.resource_id,
+        communityId: dbShoutout.community_id,
+      });
+      expect(shoutoutInfo.createdAt).toBeInstanceOf(Date);
+      expect(shoutoutInfo.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should handle empty image_urls array in ShoutoutInfo', () => {
+      const dbShoutout = createFakeDbShoutout({
+        image_urls: [],
+      });
+
+      const shoutoutInfo = toShoutoutInfo(dbShoutout);
+
+      expect(shoutoutInfo.imageUrls).toEqual([]);
+    });
   });
 });

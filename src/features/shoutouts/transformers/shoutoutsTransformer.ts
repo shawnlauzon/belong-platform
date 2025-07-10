@@ -18,6 +18,7 @@ export function toDomainShoutout(
     from_user_id,
     to_user_id,
     resource_id,
+    community_id,
     image_urls,
     created_at,
     updated_at,
@@ -42,6 +43,7 @@ export function toDomainShoutout(
     fromUserId: from_user_id,
     toUserId: to_user_id,
     resourceId: resource_id,
+    communityId: community_id,
     message: rest.message,
     imageUrls: image_urls || [],
     createdAt: new Date(created_at),
@@ -59,13 +61,14 @@ export function forDbInsert(
   shoutoutData: ShoutoutData,
   fromUserId: string,
 ): ShoutoutInsertDbData {
-  const { toUserId, resourceId, imageUrls, message } = shoutoutData;
+  const { toUserId, resourceId, communityId, imageUrls, message } = shoutoutData;
 
   return {
     message,
     from_user_id: fromUserId,
     to_user_id: toUserId,
     resource_id: resourceId,
+    community_id: communityId,
     image_urls: imageUrls || [],
   };
 }
@@ -76,7 +79,7 @@ export function forDbInsert(
 export function forDbUpdate(
   shoutoutData: Partial<ShoutoutData>,
 ): ShoutoutUpdateDbData {
-  const { toUserId, resourceId, imageUrls, message } = shoutoutData;
+  const { toUserId, resourceId, communityId, imageUrls, message } = shoutoutData;
 
   return {
     message,
@@ -84,6 +87,7 @@ export function forDbUpdate(
     from_user_id: undefined,
     to_user_id: toUserId,
     resource_id: resourceId,
+    community_id: communityId,
     image_urls: imageUrls,
   };
 }
@@ -101,5 +105,6 @@ export function toShoutoutInfo(dbShoutout: ShoutoutRow): ShoutoutInfo {
     fromUserId: dbShoutout.from_user_id,
     toUserId: dbShoutout.to_user_id,
     resourceId: dbShoutout.resource_id,
+    communityId: dbShoutout.community_id,
   };
 }

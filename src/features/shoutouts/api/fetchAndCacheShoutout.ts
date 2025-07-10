@@ -42,10 +42,11 @@ export async function fetchAndCacheShoutout(
   if (!fromUser || !toUser || !resource) return null;
 
   // Return consolidated shoutout
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { fromUserId, toUserId, resourceId, ...shoutoutWithoutIds } = shoutoutInfo;
   const result = {
-    ...shoutoutWithoutIds,
+    ...shoutoutInfo,
+    fromUserId: shoutoutInfo.fromUserId,
+    toUserId: shoutoutInfo.toUserId,
+    resourceId: shoutoutInfo.resourceId,
     fromUser,
     toUser,
     resource,

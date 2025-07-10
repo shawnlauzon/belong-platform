@@ -12,6 +12,7 @@ export function createFakeDbShoutout(
     from_user_id: faker.string.uuid(),
     to_user_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
+    community_id: faker.string.uuid(),
     message: faker.lorem.paragraph(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
@@ -29,6 +30,7 @@ export function createFakeShoutoutData(
   return {
     toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
     message: faker.lorem.paragraph(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
