@@ -136,6 +136,8 @@ export function forDbInsert(
 export function forDbUpdate(
   community: Partial<CommunityData> & { id: string },
 ): CommunityUpdateDbData {
+  const boundaryGeometry = community.boundary ? community.boundary.polygon : undefined;
+
   return {
     id: community.id,
     name: community.name,
@@ -147,8 +149,9 @@ export function forDbUpdate(
     center: community.center ? toPostGisPoint(community.center) : undefined,
     center_name: community.centerName,
     boundary: community.boundary
-      ? JSON.stringify(boundaryForDatabase(community.boundary))
+      ? boundaryForDatabase(community.boundary)
       : undefined,
+    boundary_geometry: boundaryGeometry,
   };
 }
 

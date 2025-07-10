@@ -36,6 +36,7 @@ describe('communityTransformer', () => {
 
       // Should have boundary geometry
       expect(result.boundary_geometry).toBeDefined();
+      expect(result.boundary_geometry).toBe(communityData.boundary!.polygon);
     });
 
     it('should work with null boundary', () => {
@@ -99,6 +100,30 @@ describe('communityTransformer', () => {
       const result = forDbUpdate(updateData);
 
       expect(result.banner_image_url).toBeUndefined();
+    });
+
+    it('should include boundary_geometry when boundary is provided', () => {
+      const communityData = createFakeCommunityData();
+      const updateData = { 
+        id: faker.string.uuid(), 
+        boundary: communityData.boundary 
+      };
+
+      const result = forDbUpdate(updateData);
+
+      // Should have boundary_geometry when boundary is provided
+      expect(result.boundary_geometry).toBeDefined();
+      expect(result.boundary_geometry).toBe(communityData.boundary!.polygon);
+    });
+
+    it('should handle undefined boundary', () => {
+      const communityId = faker.string.uuid();
+      const updateData = { id: communityId, boundary: undefined };
+
+      const result = forDbUpdate(updateData);
+
+      expect(result.boundary).toBeUndefined();
+      expect(result.boundary_geometry).toBeUndefined();
     });
   });
 

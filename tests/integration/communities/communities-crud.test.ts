@@ -250,40 +250,23 @@ describe('Communities API - CRUD Operations', () => {
       }
     });
 
-    it('updates community boundary data - demonstrates constraint violation bug', async () => {
+    it('updates community boundary data', async () => {
       let community;
       try {
         community = await createTestCommunity(supabase);
-        
+
         // Define new boundary data that's different from the initial
-        const newBoundary = {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Polygon' as const,
-            coordinates: [
-              [
-                [-122.4194, 37.7749], // Different coordinates from initial
-                [-122.4094, 37.7749],
-                [-122.4094, 37.7849],
-                [-122.4194, 37.7849],
-                [-122.4194, 37.7749],
-              ],
-            ],
-          },
-          properties: {
-            name: 'Updated Test Boundary',
-          },
-        };
+        const fakeCommunityData = createFakeCommunityData();
 
         // This should trigger the boundary constraint violation
         // because forDbUpdate doesn't update boundary_geometry
         const updated = await api.updateCommunity(supabase, {
           id: community.id,
-          boundary: newBoundary,
+          boundary: fakeCommunityData.boundary,
         });
 
         expect(updated).toBeTruthy();
-        expect(updated!.boundary).toEqual(newBoundary);
+        expect(updated!.boundary).toEqual(fakeCommunityData.boundary);
 
         // Verify database record has both fields updated consistently
         const { data: dbRecord } = await supabase
@@ -292,14 +275,8 @@ describe('Communities API - CRUD Operations', () => {
           .eq('id', community.id)
           .single();
 
-        expect(dbRecord!.boundary).toEqual(newBoundary);
+        expect(dbRecord!.boundary).toEqual(fakeCommunityData.boundary);
         expect(dbRecord!.boundary_geometry).toBeTruthy();
-        
-      } catch (error) {
-        console.error('Boundary constraint violation caught:', error);
-        // This demonstrates the bug in forDbUpdate - constraint violation occurs
-        // because boundary is updated but boundary_geometry is not
-        throw error;
       } finally {
         await cleanupCommunity(community);
       }
