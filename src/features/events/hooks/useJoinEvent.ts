@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { joinEvent } from '@/features/events/api/joinEvent';
+import { useCurrentUser } from '@/features/auth';
 
 /**
  * Hook for joining an event.
@@ -50,6 +51,7 @@ import { joinEvent } from '@/features/events/api/joinEvent';
 export function useJoinEvent() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
     mutationFn: async ({
@@ -65,6 +67,11 @@ export function useJoinEvent() {
         queryClient.invalidateQueries({ queryKey: queryKeys.events.byId(eventId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.events.attendees(eventId) });
         queryClient.invalidateQueries({ queryKey: ['events'] });
+
+        // Invalidate all user data (including activities) using hierarchical invalidation
+        if (currentUser?.id) {
+          queryClient.invalidateQueries({ queryKey: ['user', currentUser.id] });
+        }
 
         logger.info('📅 API: Successfully joined event', {
           eventId,

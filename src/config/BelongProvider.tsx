@@ -48,6 +48,7 @@ const BelongContextProvider: React.FC<{
     return () => subscription.unsubscribe();
   }, [client.supabase, queryClient]);
 
+
   return <>{children}</>;
 };
 

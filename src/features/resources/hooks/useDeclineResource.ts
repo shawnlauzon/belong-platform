@@ -61,6 +61,11 @@ export function useDeclineResource() {
         queryClient.invalidateQueries({ queryKey: ['resource_responses'] });
         queryClient.invalidateQueries({ queryKey: ['resources'] });
 
+        // Invalidate all user data (including activities) using hierarchical invalidation
+        if (currentUser?.data?.id) {
+          queryClient.invalidateQueries({ queryKey: ['user', currentUser.data.id] });
+        }
+
         logger.info('📚 API: Successfully declined resource', {
           resourceId,
           userId: response.userId,

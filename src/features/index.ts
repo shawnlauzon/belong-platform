@@ -1,3 +1,4 @@
+export * from './activities';
 export * from './auth';
 export * from './communities';
 export * from './events';

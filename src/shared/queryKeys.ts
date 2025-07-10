@@ -79,4 +79,12 @@ export const queryKeys = {
   feed: {
     all: ['feed'] as const,
   },
+
+  // Activities - user-specific aggregated data  
+  activities: {
+    byUser: (userId: string) => ['user', userId, 'activities'] as const,
+    bySection: (userId: string, section: string) =>
+      ['user', userId, 'activities', section] as const,
+    counts: (userId: string) => ['user', userId, 'activities', 'counts'] as const,
+  },
 } as const;

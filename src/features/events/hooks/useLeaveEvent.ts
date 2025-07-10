@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveEvent } from '@/features/events/api/leaveEvent';
+import { useCurrentUser } from '@/features/auth';
 
 /**
  * Hook for leaving an event.
@@ -42,6 +43,7 @@ import { leaveEvent } from '@/features/events/api/leaveEvent';
 export function useLeaveEvent() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
     mutationFn: (eventId: string) => leaveEvent(supabase, eventId),
@@ -50,6 +52,11 @@ export function useLeaveEvent() {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.byId(eventId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.events.attendees(eventId) });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+
+      // Invalidate all user data (including activities) using hierarchical invalidation
+      if (currentUser?.id) {
+        queryClient.invalidateQueries({ queryKey: ['user', currentUser.id] });
+      }
 
       logger.info('📅 API: Successfully left event', {
         eventId,

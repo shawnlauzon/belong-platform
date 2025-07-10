@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createShoutout } from '../api';
+import { useCurrentUser } from '../../auth';
 import type { ShoutoutData, ShoutoutInfo } from '../types';
 
 /**
@@ -56,6 +57,7 @@ import type { ShoutoutData, ShoutoutInfo } from '../types';
 export function useCreateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (data: ShoutoutData) => {
@@ -71,6 +73,11 @@ export function useCreateShoutout() {
         queryKeys.shoutouts.byId(newShoutout.id),
         newShoutout
       );
+
+      // Invalidate all user data (including activities) using hierarchical invalidation
+      if (currentUser?.id) {
+        queryClient.invalidateQueries({ queryKey: ['user', currentUser.id] });
+      }
 
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
         id: newShoutout.id,
