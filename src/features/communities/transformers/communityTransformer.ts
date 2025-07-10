@@ -6,6 +6,7 @@ import type {
   CommunityBoundary,
   IsochroneBoundary,
   CommunityMembershipInfo,
+  CommunityType,
 } from '../types';
 import { toDomainUser } from '../../users/transformers/userTransformer';
 import {
@@ -85,7 +86,7 @@ export function toDomainCommunity(
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
-    type: dbCommunity.type,
+    type: dbCommunity.type as CommunityType,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
@@ -194,7 +195,7 @@ export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
     bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
-    type: dbCommunity.type,
+    type: dbCommunity.type as CommunityType,
     center: parsePostGisPoint(dbCommunity.center),
     memberCount: dbCommunity.member_count,
     createdAt: new Date(dbCommunity.created_at),
