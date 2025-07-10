@@ -70,19 +70,27 @@ describe('Feed API - Integration Tests', () => {
       testCommunity2.id,
     );
 
+    // Sign in as testUser2 to create shoutouts
+    await signIn(supabase, testUser2.email, 'TestPass123!');
+    
     // Create shoutouts for the resources (testUser2 thanking testUser)
     testShoutout1 = await createTestShoutout(
       supabase,
       testUser2.id,
       testUser.id,
       testResource1.id,
+      testCommunity1.id,
     );
     testShoutout2 = await createTestShoutout(
       supabase,
       testUser2.id,
       testUser.id,
       testResource2.id,
+      testCommunity2.id,
     );
+    
+    // Sign back in as testUser for the tests
+    await signIn(supabase, testUser.email, 'TestPass123!');
   });
 
   afterAll(async () => {
