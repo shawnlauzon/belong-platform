@@ -371,41 +371,76 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_responses: {
+        Row: {
+          created_at: string | null
+          resource_id: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          resource_id: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          resource_id?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_responses_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
-          category: string
+          category: string | null
           community_id: string
+          coordinates: unknown | null
           created_at: string
           description: string
           id: string
           image_urls: string[]
-          location: unknown | null
+          location: string | null
           owner_id: string
           title: string
           type: string
           updated_at: string
         }
         Insert: {
-          category: string
+          category?: string | null
           community_id: string
+          coordinates?: unknown | null
           created_at?: string
           description: string
           id?: string
           image_urls?: string[]
-          location?: unknown | null
+          location?: string | null
           owner_id: string
           title: string
           type: string
           updated_at?: string
         }
         Update: {
-          category?: string
+          category?: string | null
           community_id?: string
+          coordinates?: unknown | null
           created_at?: string
           description?: string
           id?: string
           image_urls?: string[]
-          location?: unknown | null
+          location?: string | null
           owner_id?: string
           title?: string
           type?: string
