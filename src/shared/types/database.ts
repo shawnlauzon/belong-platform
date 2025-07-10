@@ -430,6 +430,7 @@ export type Database = {
       }
       shoutouts: {
         Row: {
+          community_id: string
           created_at: string
           from_user_id: string
           id: string
@@ -440,6 +441,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          community_id: string
           created_at?: string
           from_user_id: string
           id?: string
@@ -450,6 +452,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          community_id?: string
           created_at?: string
           from_user_id?: string
           id?: string
@@ -460,6 +463,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_shoutouts_community_id"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shoutouts_from_user_id_fkey"
             columns: ["from_user_id"]

@@ -2,7 +2,10 @@ import { logger } from '../../../shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import type { ShoutoutData, ShoutoutInfo } from '../types';
-import { forDbInsert, toShoutoutInfo } from '../transformers/shoutoutsTransformer';
+import {
+  forDbInsert,
+  toShoutoutInfo,
+} from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
@@ -52,11 +55,16 @@ export async function createShoutout(
 
         // Update shoutout with permanent URLs if they changed
         if (
-          JSON.stringify(permanentUrls) !== JSON.stringify(shoutoutData.imageUrls)
+          JSON.stringify(permanentUrls) !==
+          JSON.stringify(shoutoutData.imageUrls)
         ) {
-          const updatedShoutout = await updateShoutout(supabase, createdShoutout.id, {
-            imageUrls: permanentUrls,
-          });
+          const updatedShoutout = await updateShoutout(
+            supabase,
+            createdShoutout.id,
+            {
+              imageUrls: permanentUrls,
+            },
+          );
           if (updatedShoutout) {
             return updatedShoutout;
           }
@@ -70,12 +78,7 @@ export async function createShoutout(
     }
 
     // Convert to ShoutoutInfo
-    const shoutoutInfo = toShoutoutInfo(
-      createdShoutout,
-      createdShoutout.from_user_id,
-      createdShoutout.to_user_id,
-      createdShoutout.resource_id,
-    );
+    const shoutoutInfo = toShoutoutInfo(createdShoutout);
 
     logger.info('📢 API: Successfully created shoutout', {
       id: shoutoutInfo.id,

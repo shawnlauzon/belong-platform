@@ -31,12 +31,7 @@ export async function fetchShoutoutInfoById(
       throw error;
     }
 
-    const shoutoutInfo = toShoutoutInfo(
-      data as ShoutoutRow,
-      data.from_user_id,
-      data.to_user_id,
-      data.resource_id,
-    );
+    const shoutoutInfo = toShoutoutInfo(data as ShoutoutRow);
 
     logger.debug('📢 API: Successfully fetched shoutout info', {
       id,

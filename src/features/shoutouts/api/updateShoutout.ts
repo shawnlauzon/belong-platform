@@ -39,12 +39,7 @@ export async function updateShoutout(
       return null;
     }
 
-    const shoutoutInfo = toShoutoutInfo(
-      data,
-      data.from_user_id,
-      data.to_user_id,
-      data.resource_id,
-    );
+    const shoutoutInfo = toShoutoutInfo(data);
 
     logger.debug('📢 API: Successfully updated shoutout', {
       id: shoutoutInfo.id,
