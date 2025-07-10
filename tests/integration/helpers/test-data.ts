@@ -90,13 +90,14 @@ export async function createTestShoutout(
   fromUserId: string,
   toUserId: string,
   resourceId: string,
+  communityId: string,
 ) {
   const shoutoutData = createFakeDbShoutout({
     from_user_id: fromUserId,
     to_user_id: toUserId,
     resource_id: resourceId,
+    community_id: communityId,
     message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-    impact_description: 'This helped me learn something new',
   });
 
   const { data, error } = await supabase
