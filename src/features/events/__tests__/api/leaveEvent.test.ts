@@ -27,23 +27,50 @@ describe('leaveEvent', () => {
   });
 
   describe('successful leave scenarios', () => {
-    it('should leave event and return void', async () => {
-      // Mock successful deletion
-      const mockDelete = vi.fn().mockResolvedValue({ error: null });
-      vi.mocked(
-        mockSupabase.from('event_attendances').delete,
-      ).mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: mockDelete,
-        }),
+    it('should leave event and return attendance info with not_attending status', async () => {
+      // Mock successful upsert that returns attendance data
+      const mockAttendanceData = {
+        id: faker.string.uuid(),
+        event_id: eventId,
+        user_id: userId,
+        status: 'not_attending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Mock the entire chain: upsert().select().single()
+      const mockSingle = vi.fn().mockResolvedValue({ 
+        data: mockAttendanceData, 
+        error: null 
       });
+      const mockSelect = vi.fn().mockReturnValue({
+        single: mockSingle,
+      });
+      const mockUpsert = vi.fn().mockReturnValue({
+        select: mockSelect,
+      });
+      
+      // Mock the from().upsert() chain
+      vi.mocked(mockSupabase.from).mockReturnValue({
+        upsert: mockUpsert,
+      } as ReturnType<typeof mockSupabase.from>);
 
       const result = await leaveEvent(mockSupabase, eventId);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeDefined();
+      expect(result?.status).toBe('not_attending');
+      expect(result?.eventId).toBe(eventId);
+      expect(result?.userId).toBe(userId);
 
-      // Verify the delete was called with correct parameters
-      expect(mockDelete).toHaveBeenCalled();
+      // Verify upsert was called with correct parameters
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_id: eventId,
+          user_id: userId,
+          status: 'not_attending',
+        }),
+        { onConflict: 'event_id,user_id' }
+      );
     });
   });
 
@@ -58,18 +85,25 @@ describe('leaveEvent', () => {
       await expect(leaveEvent(mockSupabase, eventId)).rejects.toThrow();
     });
 
-    it('should throw database error when delete fails', async () => {
+    it('should throw database error when upsert fails', async () => {
       const dbError = new Error('Database error');
 
-      // Mock deletion failure
-      const mockDelete = vi.fn().mockResolvedValue({ error: dbError });
-      vi.mocked(
-        mockSupabase.from('event_attendances').delete,
-      ).mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: mockDelete,
-        }),
+      // Mock upsert failure
+      const mockSingle = vi.fn().mockResolvedValue({ 
+        data: null, 
+        error: dbError 
       });
+      const mockSelect = vi.fn().mockReturnValue({
+        single: mockSingle,
+      });
+      const mockUpsert = vi.fn().mockReturnValue({
+        select: mockSelect,
+      });
+      
+      // Mock the from().upsert() chain
+      vi.mocked(mockSupabase.from).mockReturnValue({
+        upsert: mockUpsert,
+      } as ReturnType<typeof mockSupabase.from>);
 
       await expect(leaveEvent(mockSupabase, eventId)).rejects.toThrow(
         dbError,
@@ -91,23 +125,44 @@ describe('leaveEvent', () => {
       expect(vi.mocked(mockSupabase.from)).not.toHaveBeenCalled();
     });
 
-    it('should only delete attendance record for the authenticated user', async () => {
-      // Mock successful deletion - the chain resolves to { error: null }
-      const mockSecondEq = vi.fn().mockResolvedValue({ error: null });
-      const mockFirstEq = vi.fn().mockReturnValue({
-        eq: mockSecondEq,
+    it('should only update attendance record for the authenticated user', async () => {
+      // Mock successful upsert
+      const mockAttendanceData = {
+        id: faker.string.uuid(),
+        event_id: eventId,
+        user_id: userId,
+        status: 'not_attending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const mockSingle = vi.fn().mockResolvedValue({ 
+        data: mockAttendanceData, 
+        error: null 
       });
-      vi.mocked(
-        mockSupabase.from('event_attendances').delete,
-      ).mockReturnValue({
-        eq: mockFirstEq,
+      const mockSelect = vi.fn().mockReturnValue({
+        single: mockSingle,
       });
+      const mockUpsert = vi.fn().mockReturnValue({
+        select: mockSelect,
+      });
+      
+      // Mock the from().upsert() chain
+      vi.mocked(mockSupabase.from).mockReturnValue({
+        upsert: mockUpsert,
+      } as ReturnType<typeof mockSupabase.from>);
 
       await leaveEvent(mockSupabase, eventId);
 
-      // Verify that both event_id and user_id filters are applied
-      expect(mockFirstEq).toHaveBeenCalledWith('event_id', eventId);
-      expect(mockSecondEq).toHaveBeenCalledWith('user_id', userId);
+      // Verify that the upsert includes the correct user_id and event_id
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_id: eventId,
+          user_id: userId,
+          status: 'not_attending',
+        }),
+        { onConflict: 'event_id,user_id' }
+      );
     });
   });
 });

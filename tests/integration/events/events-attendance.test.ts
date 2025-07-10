@@ -150,13 +150,20 @@ describe('Events API - Attendance Operations', () => {
       await signOut(supabase);
     });
 
-    it('removes attendance', async () => {
+    it('updates attendance status to not_attending', async () => {
       // First join
       await api.joinEvent(supabase, attendanceTestEvent.id);
 
       // Then leave
-      await api.leaveEvent(supabase, attendanceTestEvent.id);
+      const result = await api.leaveEvent(supabase, attendanceTestEvent.id);
 
+      // Verify the function returns attendance info with not_attending status
+      expect(result).toBeDefined();
+      expect(result!.status).toBe('not_attending');
+      expect(result!.eventId).toBe(attendanceTestEvent.id);
+      expect(result!.userId).toBe(testUser2.id);
+
+      // Verify database record is updated, not deleted
       const { data } = await supabase
         .from('event_attendances')
         .select()
@@ -164,7 +171,8 @@ describe('Events API - Attendance Operations', () => {
         .eq('user_id', testUser2.id)
         .maybeSingle();
 
-      expect(data).toBeNull();
+      expect(data).not.toBeNull();
+      expect(data!.status).toBe('not_attending');
     });
 
     it('handles leaving when not attending', async () => {
@@ -187,7 +195,11 @@ describe('Events API - Attendance Operations', () => {
 
       try {
         // Organizer should be able to leave their own event
-        await api.leaveEvent(supabase, organizerEvent.id);
+        const result = await api.leaveEvent(supabase, organizerEvent.id);
+
+        // Verify the function returns attendance info with not_attending status
+        expect(result).toBeDefined();
+        expect(result!.status).toBe('not_attending');
 
         const { data } = await supabase
           .from('event_attendances')
@@ -196,7 +208,8 @@ describe('Events API - Attendance Operations', () => {
           .eq('user_id', testUser1.id)
           .maybeSingle();
 
-        expect(data).toBeNull();
+        expect(data).not.toBeNull();
+        expect(data!.status).toBe('not_attending');
       } finally {
         // Clean up the event
         await api.deleteEvent(supabase, organizerEvent.id);
@@ -294,7 +307,7 @@ describe('Events API - Attendance Operations', () => {
       }
     });
 
-    it('returns empty array for event with no attendees', async () => {
+    it('returns only not_attending attendees after organizer leaves', async () => {
       // Create a new event with no additional attendees
       await signIn(supabase, testUser1Email, 'TestPass123!');
       const emptyEvent = await createTestEvent(
@@ -303,7 +316,7 @@ describe('Events API - Attendance Operations', () => {
         testCommunity.id,
       );
 
-      // Remove organizer attendance to make it truly empty
+      // Organizer leaves the event (sets status to not_attending)
       await api.leaveEvent(supabase, emptyEvent.id);
 
       try {
@@ -312,7 +325,10 @@ describe('Events API - Attendance Operations', () => {
           emptyEvent.id,
         );
 
-        expect(attendees).toHaveLength(0);
+        // Should still have the organizer but with not_attending status
+        expect(attendees).toHaveLength(1);
+        expect(attendees[0].userId).toBe(testUser1.id);
+        expect(attendees[0].status).toBe('not_attending');
       } finally {
         await api.deleteEvent(supabase, emptyEvent.id);
         await signIn(supabase, testUser2Email, 'TestPass123!');

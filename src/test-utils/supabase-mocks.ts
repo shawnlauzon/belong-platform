@@ -18,6 +18,7 @@ interface MockQueryBuilder {
   select: ReturnType<typeof vi.fn>;
   insert: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
+  upsert: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
   neq: ReturnType<typeof vi.fn>;
@@ -46,6 +47,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
     select: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
+    upsert: vi.fn(),
     delete: vi.fn(),
     eq: vi.fn(),
     neq: vi.fn(),
@@ -67,7 +69,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
 
   // Chain all methods to return the builder itself
   Object.keys(mockQueryBuilder).forEach((method) => {
-    if (method !== 'eq' && method !== 'insert' && method !== 'select' && method !== 'single' && method !== 'maybeSingle') {
+    if (method !== 'eq' && method !== 'insert' && method !== 'upsert' && method !== 'select' && method !== 'single' && method !== 'maybeSingle') {
       (mockQueryBuilder as Record<string, ReturnType<typeof vi.fn>>)[method].mockReturnValue(mockQueryBuilder);
     }
   });
@@ -82,6 +84,13 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
   let insertedData: unknown = null;
   mockQueryBuilder.insert.mockImplementation((data: unknown) => {
     insertedData = Array.isArray(data) ? data : [data];
+    return mockQueryBuilder;
+  });
+
+  // Handle upsert with select
+  let upsertedData: unknown = null;
+  mockQueryBuilder.upsert.mockImplementation((data: unknown) => {
+    upsertedData = Array.isArray(data) ? data : [data];
     return mockQueryBuilder;
   });
 
@@ -135,6 +144,19 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
     if (insertedData) {
       const result = insertedData;
       insertedData = null; // Reset for next operation
+      
+      const selectBuilder = { ...mockQueryBuilder };
+      selectBuilder.single = vi.fn().mockResolvedValue({ data: result[0], error: null });
+      selectBuilder.then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
+        return Promise.resolve({ data: result, error: null }).then(onFulfilled);
+      };
+      return selectBuilder;
+    }
+
+    // If this follows an upsert, return the upserted data
+    if (upsertedData) {
+      const result = upsertedData;
+      upsertedData = null; // Reset for next operation
       
       const selectBuilder = { ...mockQueryBuilder };
       selectBuilder.single = vi.fn().mockResolvedValue({ data: result[0], error: null });

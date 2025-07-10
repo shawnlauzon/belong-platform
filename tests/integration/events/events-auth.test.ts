@@ -222,14 +222,22 @@ describe('Events API - Authentication Requirements', () => {
       expect(attendance!.userId).toBe(secondUser.id);
 
       // Leave the event
-      await api.leaveEvent(authenticatedClient, testEvent.id);
+      const leaveResult = await api.leaveEvent(authenticatedClient, testEvent.id);
 
-      // Verify attendance is gone
+      // Verify leave operation returned attendance info with not_attending status
+      expect(leaveResult).toBeDefined();
+      expect(leaveResult!.status).toBe('not_attending');
+      expect(leaveResult!.eventId).toBe(testEvent.id);
+      expect(leaveResult!.userId).toBe(secondUser.id);
+
+      // Verify attendance record still exists but with not_attending status
       const attendees = await api.fetchEventAttendees(
         authenticatedClient,
         testEvent.id,
       );
-      expect(attendees.some((a) => a.userId === secondUser.id)).toBe(false);
+      const userAttendance = attendees.find((a) => a.userId === secondUser.id);
+      expect(userAttendance).toBeDefined();
+      expect(userAttendance!.status).toBe('not_attending');
     });
 
     it('authenticated client can delete own events', async () => {
