@@ -27,6 +27,7 @@ export function createFakeCommunity(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
+    centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
@@ -61,6 +62,7 @@ export function createFakeCommunityData(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
+    centerName: faker.location.streetAddress(),
     memberCount: faker.number.int({ min: 1, max: 10000 }),
     timeZone: faker.location.timeZone(),
     boundary: {
@@ -93,6 +95,7 @@ export function createFakeCommunityInfo(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
+    centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
     createdAt: faker.date.past(),
@@ -137,6 +140,7 @@ export function createFakeDbCommunity(
       crs: { type: 'name', properties: { name: 'EPSG:4326' } },
       coordinates: [lng, lat],
     }, // GeoJSON format returned by PostGIS
+    center_name: faker.location.streetAddress(),
     member_count: faker.number.int({ min: 1, max: 10000 }),
     created_at: now,
     updated_at: now,

@@ -24,7 +24,7 @@ describe('createEvent', () => {
       description: faker.lorem.paragraph(),
       startDateTime: faker.date.future(),
       endDateTime: faker.date.future(),
-      location: faker.location.streetAddress(),
+      locationName: faker.location.streetAddress(),
       communityId,
       organizerId,
       coordinates: {
@@ -48,7 +48,7 @@ describe('createEvent', () => {
         description: eventData.description,
         start_date_time: eventData.startDateTime.toISOString(),
         end_date_time: eventData.endDateTime?.toISOString() || null,
-        location: eventData.location,
+        location_name: eventData.locationName,
         community_id: eventData.communityId,
         organizer_id: eventData.organizerId,
         coordinates: {
@@ -86,7 +86,7 @@ describe('createEvent', () => {
         endDateTime: mockEventRow.end_date_time
           ? new Date(mockEventRow.end_date_time)
           : undefined,
-        location: eventData.location,
+        locationName: eventData.locationName,
         communityId: eventData.communityId,
         organizerId: eventData.organizerId,
         coordinates: eventData.coordinates,
@@ -103,7 +103,7 @@ describe('createEvent', () => {
         description: eventData.description,
         start_date_time: eventData.startDateTime.toISOString(),
         end_date_time: eventData.endDateTime?.toISOString() || null,
-        location: eventData.location,
+        location_name: eventData.locationName,
         community_id: eventData.communityId,
         organizer_id: eventData.organizerId,
         coordinates: `POINT(${eventData.coordinates.lng} ${eventData.coordinates.lat})`,
@@ -126,7 +126,7 @@ describe('createEvent', () => {
         description: allDayEventData.description,
         start_date_time: allDayEventData.startDateTime.toISOString(),
         end_date_time: null,
-        location: allDayEventData.location,
+        location_name: allDayEventData.locationName,
         community_id: allDayEventData.communityId,
         organizer_id: allDayEventData.organizerId,
         coordinates: {
@@ -164,7 +164,7 @@ describe('createEvent', () => {
         description: allDayEventData.description,
         startDateTime: new Date(mockEventRow.start_date_time),
         endDateTime: undefined,
-        location: allDayEventData.location,
+        locationName: allDayEventData.locationName,
         communityId: allDayEventData.communityId,
         organizerId: allDayEventData.organizerId,
         coordinates: allDayEventData.coordinates,
@@ -226,7 +226,7 @@ describe('createEvent', () => {
         description: eventData.description,
         start_date_time: eventData.startDateTime.toISOString(),
         end_date_time: eventData.endDateTime?.toISOString() || null,
-        location: eventData.location,
+        location_name: eventData.locationName,
         community_id: eventData.communityId,
         organizer_id: eventData.organizerId,
         coordinates: {
@@ -261,7 +261,7 @@ describe('createEvent', () => {
         description: eventData.description,
         start_date_time: eventData.startDateTime.toISOString(),
         end_date_time: eventData.endDateTime?.toISOString() || null,
-        location: eventData.location,
+        location_name: eventData.locationName,
         community_id: eventData.communityId,
         organizer_id: eventData.organizerId,
         coordinates: `POINT(${eventData.coordinates.lng} ${eventData.coordinates.lat})`,
@@ -283,7 +283,7 @@ describe('createEvent', () => {
         description: eventWithNoMax.description,
         start_date_time: eventWithNoMax.startDateTime.toISOString(),
         end_date_time: eventWithNoMax.endDateTime?.toISOString() || null,
-        location: eventWithNoMax.location,
+        location_name: eventWithNoMax.locationName,
         community_id: eventWithNoMax.communityId,
         organizer_id: eventWithNoMax.organizerId,
         coordinates: {
@@ -379,7 +379,7 @@ describe('createEvent', () => {
         description: eventData.description,
         start_date_time: eventData.startDateTime.toISOString(),
         end_date_time: eventData.endDateTime?.toISOString() || null,
-        location: eventData.location,
+        location_name: eventData.locationName,
         community_id: eventData.communityId,
         organizer_id: eventData.organizerId,
         coordinates: {

@@ -40,7 +40,7 @@ describe('eventTransformer', () => {
           ? new Date(fakeEventRow.end_date_time)
           : undefined,
         isAllDay: fakeEventRow.is_all_day,
-        location: fakeEventRow.location,
+        locationName: fakeEventRow.location_name,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,
         imageUrls: fakeEventRow.image_urls,
         attendeeCount: fakeEventRow.attendee_count,
@@ -99,7 +99,7 @@ describe('eventTransformer', () => {
           ? new Date(fakeEventRow.end_date_time)
           : undefined,
         isAllDay: fakeEventRow.is_all_day,
-        location: fakeEventRow.location,
+        locationName: fakeEventRow.location_name,
         maxAttendees: fakeEventRow.max_attendees ?? undefined,
         imageUrls: fakeEventRow.image_urls,
         attendeeCount: fakeEventRow.attendee_count,
@@ -125,7 +125,7 @@ describe('eventTransformer', () => {
         start_date_time: fakeEventData.startDateTime.toISOString(),
         end_date_time: fakeEventData.endDateTime?.toISOString() || null,
         is_all_day: fakeEventData.isAllDay,
-        location: fakeEventData.location,
+        location_name: fakeEventData.locationName,
         max_attendees: fakeEventData.maxAttendees ?? null,
         image_urls: fakeEventData.imageUrls || [],
       });
@@ -149,7 +149,7 @@ describe('eventTransformer', () => {
         start_date_time: partialEventData.startDateTime.toISOString(),
         end_date_time: null,
         is_all_day: undefined,
-        location: undefined,
+        location_name: undefined,
         coordinates: undefined,
         max_attendees: null,
         image_urls: [],

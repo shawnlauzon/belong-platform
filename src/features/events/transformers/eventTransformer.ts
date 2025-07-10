@@ -44,7 +44,7 @@ export function toDomainEvent(
       ? new Date(dbEvent.end_date_time)
       : undefined,
     isAllDay: dbEvent.is_all_day,
-    location: dbEvent.location,
+    locationName: dbEvent.location_name,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     maxAttendees: dbEvent.max_attendees ?? undefined,
     imageUrls: dbEvent.image_urls || [],
@@ -69,7 +69,7 @@ export function forDbInsert(event: EventData): EventInsert {
     start_date_time: event.startDateTime.toISOString(),
     end_date_time: event.endDateTime?.toISOString() || null,
     is_all_day: event.isAllDay,
-    location: event.location,
+    location_name: event.locationName,
     coordinates: toPostGisPoint(event.coordinates),
     max_attendees: event.maxAttendees ?? null,
     image_urls: event.imageUrls || [],
@@ -86,7 +86,7 @@ export function forDbUpdate(event: Partial<EventData>): EventUpdate {
     start_date_time: event.startDateTime?.toISOString(),
     end_date_time: event.endDateTime?.toISOString() || null,
     is_all_day: event.isAllDay,
-    location: event.location,
+    location_name: event.locationName,
     coordinates: event.coordinates
       ? toPostGisPoint(event.coordinates)
       : undefined,
@@ -108,7 +108,7 @@ export function toEventInfo(dbEvent: EventRow): EventInfo {
       ? new Date(dbEvent.end_date_time)
       : undefined,
     isAllDay: dbEvent.is_all_day,
-    location: dbEvent.location,
+    locationName: dbEvent.location_name,
     coordinates: parsePostGisPoint(dbEvent.coordinates),
     maxAttendees: dbEvent.max_attendees ?? undefined,
     imageUrls: dbEvent.image_urls || [],

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { faker } from '@faker-js/faker';
 import {
   toDomainResource,
   forDbInsert,
@@ -74,18 +75,20 @@ describe('Resource Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform a domain resource to a database resource', () => {
       const resourceData = createFakeResourceData();
+      const ownerId = faker.string.uuid();
+      const resourceWithOwner = { ...resourceData, ownerId };
 
-      const dbResource = forDbInsert(resourceData);
+      const dbResource = forDbInsert(resourceWithOwner);
 
       expect(dbResource).toMatchObject({
-        type: resourceData.type,
-        category: resourceData.category,
-        title: resourceData.title,
-        description: resourceData.description,
-        owner_id: resourceData.ownerId,
-        community_id: resourceData.communityId,
-        location: resourceData.location,
-        coordinates: resourceData.coordinates
+        type: resourceWithOwner.type,
+        category: resourceWithOwner.category,
+        title: resourceWithOwner.title,
+        description: resourceWithOwner.description,
+        owner_id: resourceWithOwner.ownerId,
+        community_id: resourceWithOwner.communityId,
+        location_name: resourceWithOwner.locationName,
+        coordinates: resourceWithOwner.coordinates
           ? expect.stringContaining('POINT')
           : undefined,
       });

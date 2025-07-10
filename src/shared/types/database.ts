@@ -20,6 +20,7 @@ export type Database = {
           boundary: Json | null
           boundary_geometry: unknown | null
           center: unknown
+          center_name: string | null
           created_at: string
           description: string | null
           icon: string | null
@@ -36,6 +37,7 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           center: unknown
+          center_name?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           boundary?: Json | null
           boundary_geometry?: unknown | null
           center?: unknown
+          center_name?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -260,7 +263,7 @@ export type Database = {
           id: string
           image_urls: string[]
           is_all_day: boolean
-          location: string
+          location_name: string
           max_attendees: number | null
           organizer_id: string
           start_date_time: string
@@ -277,7 +280,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_all_day?: boolean
-          location: string
+          location_name: string
           max_attendees?: number | null
           organizer_id: string
           start_date_time: string
@@ -294,7 +297,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_all_day?: boolean
-          location?: string
+          location_name?: string
           max_attendees?: number | null
           organizer_id?: string
           start_date_time?: string
@@ -412,7 +415,7 @@ export type Database = {
           description: string
           id: string
           image_urls: string[]
-          location: string | null
+          location_name: string | null
           owner_id: string
           title: string
           type: string
@@ -426,7 +429,7 @@ export type Database = {
           description: string
           id?: string
           image_urls?: string[]
-          location?: string | null
+          location_name?: string | null
           owner_id: string
           title: string
           type: string
@@ -440,7 +443,7 @@ export type Database = {
           description?: string
           id?: string
           image_urls?: string[]
-          location?: string | null
+          location_name?: string | null
           owner_id?: string
           title?: string
           type?: string

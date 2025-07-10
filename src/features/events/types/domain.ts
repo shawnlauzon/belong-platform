@@ -21,7 +21,7 @@ export interface EventData {
   startDateTime: Date;
   endDateTime?: Date;
   isAllDay: boolean;
-  location: string;
+  locationName: string;
   coordinates: Coordinates;
   maxAttendees?: number;
   imageUrls?: string[];

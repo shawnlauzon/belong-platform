@@ -37,6 +37,7 @@ export interface CommunityData {
 
   // Location (mandatory center point)
   center: Coordinates;
+  centerName?: string; // Human-readable name for the community center location
 
   // Boundary configuration (new isochrone support)
   boundary?: CommunityBoundary;

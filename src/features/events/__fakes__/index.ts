@@ -31,7 +31,7 @@ export function createFakeEvent(
     startDateTime,
     endDateTime: faker.datatype.boolean() ? endDateTime : undefined,
     isAllDay: faker.datatype.boolean(),
-    location: faker.location.streetAddress(),
+    locationName: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -79,7 +79,7 @@ export function createFakeEventRow(overrides?: Partial<EventRow>): EventRow {
     start_date_time: startDateTime.toISOString(),
     end_date_time: faker.datatype.boolean() ? endDateTime.toISOString() : null,
     is_all_day: faker.datatype.boolean(),
-    location: faker.location.streetAddress(),
+    location_name: faker.location.streetAddress(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     max_attendees: faker.datatype.boolean()
       ? faker.number.int({ min: 5, max: 100 })
@@ -114,7 +114,7 @@ export function createFakeEventData(overrides?: Partial<EventData>): EventData {
       ? faker.date.future({ refDate: startDateTime })
       : undefined,
     isAllDay: faker.datatype.boolean(),
-    location: faker.location.streetAddress(),
+    locationName: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
