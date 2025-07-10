@@ -18,11 +18,12 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'attending',
           created_at: '2024-01-10T10:00:00Z',
+          updated_at: '2024-01-10T10:00:00Z',
           event: {
             id: 'event1',
             title: 'Community Meeting',
             description: 'Monthly community gathering',
-            location: 'Community Center',
+            location_name: 'Community Center',
             community_id: 'community1',
             start_date_time: futureDate.toISOString(),
             end_date_time: futureEndDate.toISOString()
@@ -54,10 +55,11 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'attending',
           created_at: '2024-01-10T10:00:00Z',
+          updated_at: '2024-01-10T10:00:00Z',
           event: {
             id: 'urgent_event',
             title: 'Urgent Event',
-            location: 'Office',
+            location_name: 'Office',
             community_id: 'community1',
             start_date_time: urgentEventTime.toISOString(),
             end_date_time: null
@@ -68,10 +70,11 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'maybe',
           created_at: '2024-01-10T10:00:00Z',
+          updated_at: '2024-01-10T10:00:00Z',
           event: {
             id: 'soon_event',
             title: 'Soon Event',
-            location: 'Park',
+            location_name: 'Park',
             community_id: 'community1',
             start_date_time: soonEventTime.toISOString(),
             end_date_time: null
@@ -82,10 +85,11 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'attending',
           created_at: '2024-01-10T10:00:00Z',
+          updated_at: '2024-01-10T10:00:00Z',
           event: {
             id: 'normal_event',
             title: 'Normal Event',
-            location: 'Library',
+            location_name: 'Library',
             community_id: 'community1',
             start_date_time: normalEventTime.toISOString(),
             end_date_time: null

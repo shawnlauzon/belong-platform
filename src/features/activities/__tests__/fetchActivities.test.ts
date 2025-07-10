@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { ActivityFilter } from '../types';
+import type { BelongClient } from '../../../config/client';
 
 // Mock the entire API module
 const mockFetchActivities = vi.fn();
@@ -41,7 +42,7 @@ describe('fetchActivities', () => {
     mockFetchActivities.mockResolvedValue(mockActivities);
 
     const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as any, filter);
+    const result = await fetchActivities({} as BelongClient, filter);
 
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe('event_upcoming');
@@ -52,7 +53,7 @@ describe('fetchActivities', () => {
     mockFetchActivities.mockResolvedValue([]);
 
     const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as any, filter);
+    const result = await fetchActivities({} as BelongClient, filter);
 
     expect(result).toHaveLength(0);
   });
@@ -63,6 +64,6 @@ describe('fetchActivities', () => {
 
     const filter: ActivityFilter = { userId: 'user1' };
 
-    await expect(fetchActivities({} as any, filter)).rejects.toThrow('Database error');
+    await expect(fetchActivities({} as BelongClient, filter)).rejects.toThrow('Database error');
   });
 });

@@ -1,9 +1,65 @@
 import type { ActivityInfo, ActivityType, UrgencyLevel } from '../types';
+import type { Database } from '../../../shared/types/database';
+
+// Database row types for convenience
+type Json = Database['public']['Tables']['profiles']['Row']['user_metadata'];
+
+// Partial profile data as returned by API
+interface PartialProfile {
+  id: string;
+  email: string;
+  user_metadata: Json;
+}
+
+// Simplified types that match actual API response shapes
+interface EventAttendanceWithEvent {
+  created_at: string;
+  event_id: string;
+  status: string;
+  updated_at: string;
+  user_id: string;
+  event: {
+    id: string;
+    title: string;
+    description: string;
+    start_date_time: string;
+    end_date_time: string | null;
+    location_name: string;
+    community_id: string;
+    [key: string]: unknown; // Allow additional properties
+  };
+}
+
+interface ResourceResponseWithResource {
+  created_at: string | null;
+  resource_id: string;
+  status: string;
+  updated_at: string | null;
+  user_id: string;
+  resource: {
+    id: string;
+    title: string;
+    description: string;
+    community_id: string;
+    owner_id: string;
+    owner: PartialProfile;
+    [key: string]: unknown; // Allow additional properties
+  };
+}
+
+interface MessageWithUser {
+  id: string;
+  content: string;
+  created_at: string;
+  from_user_id: string;
+  from_user: PartialProfile;
+  [key: string]: unknown; // Allow additional properties
+}
 
 /**
  * Transform event attendances to activity info
  */
-export function transformEventsToActivities(eventAttendances: any[]): ActivityInfo[] {
+export function transformEventsToActivities(eventAttendances: EventAttendanceWithEvent[]): ActivityInfo[] {
   return eventAttendances.map(attendance => {
     const event = attendance.event;
     const startDateTime = new Date(event.start_date_time);
@@ -13,7 +69,7 @@ export function transformEventsToActivities(eventAttendances: any[]): ActivityIn
       id: `event_upcoming_${event.id}`,
       type: 'event_upcoming' as ActivityType,
       title: event.title,
-      description: `Event at ${event.location}`,
+      description: `Event at ${event.location_name}`,
       urgencyLevel: calculateEventUrgency(startDateTime),
       dueDate: startDateTime,
       entityId: event.id,
@@ -31,7 +87,7 @@ export function transformEventsToActivities(eventAttendances: any[]): ActivityIn
 /**
  * Transform resource responses to activity info
  */
-export function transformResourcesToActivities(resourceResponses: any[]): ActivityInfo[] {
+export function transformResourcesToActivities(resourceResponses: ResourceResponseWithResource[]): ActivityInfo[] {
   return resourceResponses.map(response => {
     const resource = response.resource;
     const isPending = response.status === 'pending';
@@ -46,10 +102,10 @@ export function transformResourcesToActivities(resourceResponses: any[]): Activi
       type: type as ActivityType,
       title,
       description: resource.description,
-      urgencyLevel: calculateResourceUrgency(new Date(response.created_at), isPending),
+      urgencyLevel: calculateResourceUrgency(new Date(response.created_at || response.updated_at || Date.now()), isPending),
       entityId: resource.id,
       communityId: resource.community_id,
-      createdAt: new Date(response.created_at),
+      createdAt: new Date(response.created_at || response.updated_at || Date.now()),
       metadata: {
         resourceOwnerId: resource.owner_id,
         resourceOwnerName: getUserDisplayName(resource.owner),
@@ -62,7 +118,7 @@ export function transformResourcesToActivities(resourceResponses: any[]): Activi
 /**
  * Transform pending shoutout opportunities to activity info
  */
-export function transformShoutoutsToActivities(pendingShoutouts: any[]): ActivityInfo[] {
+export function transformShoutoutsToActivities(pendingShoutouts: ResourceResponseWithResource[]): ActivityInfo[] {
   return pendingShoutouts.map(response => {
     const resource = response.resource;
     
@@ -71,10 +127,10 @@ export function transformShoutoutsToActivities(pendingShoutouts: any[]): Activit
       type: 'shoutout_pending' as ActivityType,
       title: `Give shoutout for: ${resource.title}`,
       description: `Thank ${getUserDisplayName(resource.owner)} for their help`,
-      urgencyLevel: calculateShoutoutUrgency(new Date(response.updated_at)),
+      urgencyLevel: calculateShoutoutUrgency(new Date(response.updated_at || response.created_at || Date.now())),
       entityId: resource.id,
       communityId: resource.community_id,
-      createdAt: new Date(response.updated_at),
+      createdAt: new Date(response.updated_at || response.created_at || Date.now()),
       metadata: {
         resourceOwnerId: resource.owner_id,
         resourceOwnerName: getUserDisplayName(resource.owner),
@@ -88,7 +144,7 @@ export function transformShoutoutsToActivities(pendingShoutouts: any[]): Activit
 /**
  * Transform unread messages to activity info
  */
-export function transformMessagesToActivities(messages: any[]): ActivityInfo[] {
+export function transformMessagesToActivities(messages: MessageWithUser[]): ActivityInfo[] {
   return messages.map(message => {
     return {
       id: `message_unread_${message.id}`,
@@ -164,9 +220,18 @@ function calculateMessageUrgency(receivedDate: Date): UrgencyLevel {
 /**
  * Get display name from user profile data
  */
-function getUserDisplayName(user: any): string {
+function getUserDisplayName(user: PartialProfile): string {
   if (!user) return 'Unknown User';
   
-  const metadata = user.user_metadata || {};
-  return metadata.full_name || metadata.name || user.email || 'Unknown User';
+  const metadata = user.user_metadata;
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    const metadataObj = metadata as Record<string, unknown>;
+    const fullName = metadataObj.full_name;
+    const name = metadataObj.name;
+    
+    if (typeof fullName === 'string') return fullName;
+    if (typeof name === 'string') return name;
+  }
+  
+  return user.email || 'Unknown User';
 }
