@@ -37,7 +37,7 @@ export function toDomainResource(
     type: dbResource.type as 'offer' | 'request',
     title: dbResource.title,
     description: dbResource.description,
-    category: dbResource.category as ResourceCategory,
+    category: dbResource.category as ResourceCategory | undefined,
     location: dbResource.location || '',
     coordinates: dbResource.coordinates
       ? parsePostGisPoint(dbResource.coordinates)
@@ -96,7 +96,7 @@ export function toResourceInfo(dbResource: ResourceRow): ResourceInfo {
     type: dbResource.type as 'offer' | 'request',
     title: dbResource.title,
     description: dbResource.description,
-    category: dbResource.category as ResourceCategory,
+    category: dbResource.category as ResourceCategory | undefined,
     location: dbResource.location || '',
     coordinates: dbResource.coordinates
       ? parsePostGisPoint(dbResource.coordinates)

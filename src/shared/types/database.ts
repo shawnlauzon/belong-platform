@@ -373,7 +373,7 @@ export type Database = {
       }
       resources: {
         Row: {
-          category: string
+          category: string | null
           community_id: string
           coordinates: unknown | null
           created_at: string
@@ -387,7 +387,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category: string
+          category?: string | null
           community_id: string
           coordinates?: unknown | null
           created_at?: string
@@ -401,7 +401,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: string
+          category?: string | null
           community_id?: string
           coordinates?: unknown | null
           created_at?: string

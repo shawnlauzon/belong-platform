@@ -22,7 +22,7 @@ export enum ResourceCategory {
 
 export interface ResourceData {
   type: 'offer' | 'request';
-  category: ResourceCategory;
+  category?: ResourceCategory;
   title: string;
   description: string;
   communityId: string;

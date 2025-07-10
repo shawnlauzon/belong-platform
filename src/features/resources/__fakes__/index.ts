@@ -26,7 +26,7 @@ export function createFakeResource(
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.enumValue(ResourceCategory),
+    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) as ResourceCategory | undefined,
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     imageUrls: Array.from(
@@ -68,7 +68,7 @@ export function createFakeResourceRow(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.enumValue(ResourceCategory),
+    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) ?? null,
     owner_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
     image_urls: [faker.image.urlLoremFlickr({ category: 'object' })],
@@ -95,7 +95,7 @@ export function createFakeResourceData(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.enumValue(ResourceCategory),
+    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) as ResourceCategory | undefined,
     communityId: faker.string.uuid(),
     imageUrls: [faker.image.url(), faker.image.url()],
     location: faker.location.city(),
@@ -118,7 +118,7 @@ export function createFakeDbResource(
     community_id: faker.string.uuid(),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    category: faker.helpers.arrayElement(categories),
+    category: faker.helpers.maybe(() => faker.helpers.arrayElement(categories), { probability: 0.8 }) ?? null,
     type: faker.helpers.arrayElement(['offer', 'request']),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
