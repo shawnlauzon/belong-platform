@@ -20,11 +20,13 @@ export async function fetchAndCacheCommunity(
   queryClient: QueryClient,
   communityId: string,
 ): Promise<CommunityDetail | null> {
-  // Check if data is already in cache
+  // Check if data is already in cache AND not stale
   const communityQueryKey = queryKeys.communities.byId(communityId);
-  const cachedCommunity =
-    queryClient.getQueryData<CommunityDetail>(communityQueryKey);
-  if (cachedCommunity) {
+  const queryState = queryClient.getQueryState(communityQueryKey);
+  const cachedCommunity = queryClient.getQueryData<CommunityDetail>(communityQueryKey);
+  
+  // Only use cached data if it exists and is not stale
+  if (cachedCommunity && queryState && !queryState.isInvalidated) {
     return cachedCommunity;
   }
 
