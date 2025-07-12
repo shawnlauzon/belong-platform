@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
-import { getCurrentUser } from '../../auth/api';
-import { fetchUserCommunities } from '../../communities/api';
-import { fetchResources } from '../../resources/api';
-import { fetchGatherings } from '../../gatherings/api';
-import { fetchShoutouts } from '../../shoutouts/api';
+import { fetchFeed } from '../api';
 
 import type { Feed } from '../types';
 
@@ -42,82 +37,9 @@ export function useFeed() {
 
   const query = useQuery<Feed, Error>({
     queryKey: ['feed'] as const,
-    queryFn: async () => {
-      try {
-        logger.debug('📰 API: Fetching feed data');
-
-        // Get current user first
-        const currentUser = await getCurrentUser(supabase);
-        if (!currentUser) {
-          return { items: [], hasMore: false };
-        }
-
-        // Get user's communities
-        const userCommunities = await fetchUserCommunities(supabase, currentUser.id);
-        
-        if (userCommunities.length === 0) {
-          return { items: [], hasMore: false };
-        }
-
-        // Extract community IDs
-        const communityIds = userCommunities.map(membership => membership.communityId);
-
-        // Fetch resources, gatherings, and shoutouts using single queries with communityIds arrays
-        const [resources, gatherings, shoutouts] = await Promise.all([
-          fetchResources(supabase, { communityIds }),
-          fetchGatherings(supabase, { communityIds }),
-          fetchShoutouts(supabase),
-        ]);
-
-        // Transform to FeedItem format
-        const resourceItems = resources.map(resource => ({
-          type: 'resource' as const,
-          data: resource,
-        }));
-
-        const gatheringItems = gatherings.map(gathering => ({
-          type: 'gathering' as const,
-          data: gathering,
-        }));
-
-        const shoutoutItems = shoutouts.map(shoutout => ({
-          type: 'shoutout' as const,
-          data: shoutout,
-        }));
-
-        // Combine and sort by created_at (newest first)
-        const allItems = [...resourceItems, ...gatheringItems, ...shoutoutItems];
-        allItems.sort((a, b) => {
-          const aDate = new Date(a.data.createdAt);
-          const bDate = new Date(b.data.createdAt);
-          return bDate.getTime() - aDate.getTime();
-        });
-
-        logger.debug('📰 API: Successfully fetched feed data', {
-          totalItems: allItems.length,
-          resourceCount: resourceItems.length,
-          gatheringCount: gatheringItems.length,
-          shoutoutCount: shoutoutItems.length,
-        });
-
-        return {
-          items: allItems,
-          hasMore: false, // No pagination for MVP
-        };
-
-      } catch (error) {
-        logger.error('📰 API: Error fetching feed data', { error });
-        return { items: [], hasMore: false };
-      }
-    },
+    queryFn: () => fetchFeed(supabase),
     staleTime: STANDARD_CACHE_TIME,
   });
-
-  if (query.error) {
-    logger.error('📰 API: Error fetching feed', {
-      error: query.error,
-    });
-  }
 
   return query;
 }

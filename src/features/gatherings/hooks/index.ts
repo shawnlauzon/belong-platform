@@ -5,4 +5,4 @@ export { useUpdateGathering } from './useUpdateGathering';
 export { useDeleteGathering } from './useDeleteGathering';
 export { useJoinGathering } from './useJoinGathering';
 export { useLeaveGathering } from './useLeaveGathering';
-export { useGatheringAttendees } from './useGatheringAttendees';
+export { useGatheringResponses } from './useGatheringResponses';

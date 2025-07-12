@@ -13,7 +13,7 @@ vi.mock('../../../users/api/fetchUserById', () => ({
 import { fetchUserById } from '../../../users/api/fetchUserById';
 const mockFetchUserById = vi.mocked(fetchUserById);
 
-describe('fetchGatheringAttendees', () => {
+describe('fetchGatheringResponses', () => {
   let mockSupabase: SupabaseClient<Database>;
 
   beforeEach(() => {
@@ -226,7 +226,7 @@ describe('fetchGatheringAttendees', () => {
     expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 
-  it('should return GatheringAttendanceInfo objects with proper structure', async () => {
+  it('should return GatheringResponses with proper structure', async () => {
     const gatheringId = 'test-gathering-id';
     const fakeUser = createFakeUser();
 

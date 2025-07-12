@@ -6,4 +6,3 @@ export { deleteGathering } from './deleteGathering';
 export { joinGathering } from './joinGathering';
 export { leaveGathering } from './leaveGathering';
 export { fetchGatheringResponses } from './fetchGatheringResponses';
-export { fetchGatheringResponses as fetchGatheringAttendees } from './fetchGatheringResponses';

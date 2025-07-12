@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
-import { fetchGatheringAttendees } from '../api';
-
+import { fetchGatheringResponses } from '../api';
 import type { GatheringResponse } from '../types';
 
 /**
@@ -16,15 +15,15 @@ import type { GatheringResponse } from '../types';
  *
  * @example
  * ```tsx
- * function GatheringAttendees({ gatheringId }) {
- *   const { data: attendances, isPending, error } = useGatheringAttendees(gatheringId);
+ * function GatheringResponses({ gatheringId }) {
+ *   const { data: responses, isPending, error } = useGatheringResponses(gatheringId);
  *
- *   if (isPending) return <div>Loading attendees...</div>;
+ *   if (isPending) return <div>Loading responses...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
  *
  *   return (
  *     <div>
- *       <h3>Attendees ({attendances?.length || 0})</h3>
+ *       <h3>Responses ({responses?.length || 0})</h3>
  *       {attendances?.map(attendance => (
  *         <div key={attendance.userId}>
  *           <span>{attendance.user?.firstName} {attendance.user?.lastName}</span>
@@ -37,12 +36,12 @@ import type { GatheringResponse } from '../types';
  * }
  * ```
  */
-export function useGatheringAttendees(gatheringId: string) {
+export function useGatheringResponses(gatheringId: string) {
   const supabase = useSupabase();
 
   const query = useQuery<GatheringResponse[], Error>({
     queryKey: queryKeys.gatherings.attendees(gatheringId),
-    queryFn: () => fetchGatheringAttendees(supabase, gatheringId),
+    queryFn: () => fetchGatheringResponses(supabase, gatheringId),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!gatheringId,
   });

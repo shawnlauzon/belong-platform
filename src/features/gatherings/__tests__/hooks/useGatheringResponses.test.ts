@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useGatheringAttendees } from '../../hooks/useGatheringAttendees';
+import { useGatheringResponses } from '../../hooks/useGatheringResponses';
 import { createTestWrapper } from '../../../../test-utils';
 import { createFakeGatheringResponse } from '../../__fakes__';
 import { createFakeUser } from '../../../users/__fakes__';
@@ -8,13 +8,13 @@ import type { GatheringResponse } from '../../types';
 
 // Mock the API function
 vi.mock('../../api', () => ({
-  fetchGatheringAttendees: vi.fn(),
+  fetchGatheringResponses: vi.fn(),
 }));
 
-import { fetchGatheringAttendees } from '../../api';
-const mockFetchGatheringResponses = vi.mocked(fetchGatheringAttendees);
+import { fetchGatheringResponses } from '../../api';
+const mockFetchGatheringResponses = vi.mocked(fetchGatheringResponses);
 
-describe('useGatheringAttendees', () => {
+describe('useGatheringResponses', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -40,7 +40,7 @@ describe('useGatheringAttendees', () => {
     mockFetchGatheringResponses.mockResolvedValue(fakeAttendances);
 
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(gatheringId), {
+    const { result } = renderHook(() => useGatheringResponses(gatheringId), {
       wrapper,
     });
 
@@ -82,7 +82,7 @@ describe('useGatheringAttendees', () => {
     mockFetchGatheringResponses.mockResolvedValue(fakeAttendances);
 
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(gatheringId), {
+    const { result } = renderHook(() => useGatheringResponses(gatheringId), {
       wrapper,
     });
 
@@ -104,7 +104,7 @@ describe('useGatheringAttendees', () => {
     mockFetchGatheringResponses.mockResolvedValue(fakeAttendances);
 
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(gatheringId), {
+    const { result } = renderHook(() => useGatheringResponses(gatheringId), {
       wrapper,
     });
 
@@ -125,7 +125,7 @@ describe('useGatheringAttendees', () => {
     mockFetchGatheringResponses.mockRejectedValue(error);
 
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(gatheringId), {
+    const { result } = renderHook(() => useGatheringResponses(gatheringId), {
       wrapper,
     });
 
@@ -138,7 +138,7 @@ describe('useGatheringAttendees', () => {
 
   it('should not fetch when gatheringId is empty', async () => {
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(''), { wrapper });
+    const { result } = renderHook(() => useGatheringResponses(''), { wrapper });
 
     // Should not call the API when gatheringId is empty
     expect(mockFetchGatheringResponses).not.toHaveBeenCalled();
@@ -162,7 +162,7 @@ describe('useGatheringAttendees', () => {
     mockFetchGatheringResponses.mockResolvedValue(fakeAttendances);
 
     const { wrapper } = createTestWrapper();
-    const { result } = renderHook(() => useGatheringAttendees(gatheringId), {
+    const { result } = renderHook(() => useGatheringResponses(gatheringId), {
       wrapper,
     });
 

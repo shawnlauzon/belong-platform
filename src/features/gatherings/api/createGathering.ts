@@ -13,7 +13,7 @@ import { CommunityRow } from '@/features/communities';
 export async function createGathering(
   supabase: SupabaseClient<Database>,
   gatheringData: GatheringInput,
-): Promise<Gathering | null> {
+): Promise<Gathering> {
   const currentUserId = await getAuthIdOrThrow(supabase);
   const dbData = toGatheringInsertRow({
     ...gatheringData,
