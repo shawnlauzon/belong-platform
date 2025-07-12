@@ -25,11 +25,29 @@ describe('joinCommunity', () => {
   });
 
   describe('successful join scenarios', () => {
-    it('should join community and return CommunityMembershipInfo', async () => {
+    it('should join community and return CommunityMembershipInfo when not already a member', async () => {
+      // Mock membership check - user is NOT already a member
+      const mockMembershipCheck = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(
+        mockSupabase.from('community_memberships').select,
+      ).mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: mockMembershipCheck,
+          }),
+        }),
+      });
+
       const mockMembershipRow = {
         user_id: userId,
         community_id: communityId,
         joined_at: '2023-01-01T00:00:00Z',
+        created_at: '2023-01-01T00:00:00Z',
+        updated_at: '2023-01-01T00:00:00Z',
       };
 
       // Mock successful database insert
@@ -52,8 +70,12 @@ describe('joinCommunity', () => {
       expect(result).toEqual({
         userId: userId,
         communityId: communityId,
-        joinedAt: new Date('2023-01-01T00:00:00Z'),
+        createdAt: new Date('2023-01-01T00:00:00Z'),
+        updatedAt: new Date('2023-01-01T00:00:00Z'),
       });
+
+      // Verify membership check was performed first
+      expect(vi.mocked(mockSupabase.from('community_memberships').select)).toHaveBeenCalled();
 
       // Verify correct data transformation for database insert
       expect(
@@ -97,28 +119,33 @@ describe('joinCommunity', () => {
       );
     });
 
-    it('should throw error when trying to join a community already a member of', async () => {
-      // Mock a duplicate key violation error (PostgreSQL error for unique constraint)
-      const duplicateError = new Error(
-        'duplicate key value violates unique constraint "community_memberships_pkey"',
-      );
-
-      const mockInsert = vi.fn().mockResolvedValue({
-        data: null,
-        error: duplicateError,
+    it('should throw meaningful error when already a member of the community', async () => {
+      // Mock existing membership check - user is already a member
+      const mockSelect = vi.fn().mockResolvedValue({
+        data: {
+          user_id: userId,
+          community_id: communityId,
+          created_at: '2023-01-01T00:00:00Z',
+        },
+        error: null,
       });
 
       vi.mocked(
-        mockSupabase.from('community_memberships').insert,
+        mockSupabase.from('community_memberships').select,
       ).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: mockInsert,
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: mockSelect,
+          }),
         }),
       });
 
       await expect(joinCommunity(mockSupabase, communityId)).rejects.toThrow(
-        duplicateError,
+        'User is already a member of this community',
       );
+
+      // Verify that insert is not called when already a member
+      expect(vi.mocked(mockSupabase.from('community_memberships').insert)).not.toHaveBeenCalled();
     });
 
     it('should return null when no data is returned after insert', async () => {

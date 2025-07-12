@@ -2,46 +2,39 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useCommunity } from '../../hooks/useCommunity';
-import { createFakeCommunityInfo } from '../../__fakes__';
-import { createFakeUserDetail } from '@/features/users/__fakes__';
+import { createFakeCommunity } from '../../__fakes__';
+import { createFakeUser } from '@/features/users/__fakes__';
 
 // Mock only external dependencies
 vi.mock('../../api/fetchCommunityById', () => ({
   fetchCommunityById: vi.fn(),
 }));
 
-vi.mock('@/features/users/api/fetchUserById', () => ({
-  fetchUserById: vi.fn(),
-}));
-
 import { fetchCommunityById } from '../../api/fetchCommunityById';
-import { fetchUserById } from '@/features/users/api/fetchUserById';
 
 describe('useCommunity', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   const mockFetchCommunityById = vi.mocked(fetchCommunityById);
-  const mockFetchUserById = vi.mocked(fetchUserById);
 
-  let fakeCommunityInfo: ReturnType<typeof createFakeCommunityInfo>;
-  let fakeOrganizer: ReturnType<typeof createFakeUserDetail>;
+  let fakeCommunity: ReturnType<typeof createFakeCommunity>;
+  let fakeOrganizer: ReturnType<typeof createFakeUser>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     ({ wrapper } = createDefaultTestWrapper());
 
     // Setup mock data
-    fakeOrganizer = createFakeUserDetail();
-    fakeCommunityInfo = createFakeCommunityInfo({
+    fakeOrganizer = createFakeUser();
+    fakeCommunity = createFakeCommunity({
       organizerId: fakeOrganizer.id,
     });
 
     // Setup mocks
-    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
-    mockFetchUserById.mockResolvedValue(fakeOrganizer);
+    mockFetchCommunityById.mockResolvedValue(fakeCommunity);
   });
 
-  it('should compose full Community from CommunityInfo + User', async () => {
-    const { result } = renderHook(() => useCommunity(fakeCommunityInfo.id), {
+  it('should fetch and return Community', async () => {
+    const { result } = renderHook(() => useCommunity(fakeCommunity.id), {
       wrapper,
     });
 
@@ -52,27 +45,24 @@ describe('useCommunity', () => {
       throw result.current.error;
     }
 
-    // Should return full Community object with composed data
+    // Should return Community object with basic data (no relations)
     expect(result.current.data).toEqual(
       expect.objectContaining({
-        id: fakeCommunityInfo.id,
-        name: fakeCommunityInfo.name,
-        description: fakeCommunityInfo.description,
-        organizer: fakeOrganizer, // Full User object, not just ID
+        id: fakeCommunity.id,
+        name: fakeCommunity.name,
+        description: fakeCommunity.description,
       }),
     );
 
-    // Should NOT have ID reference (Info pattern converted to Domain)
-    expect(result.current.data).not.toHaveProperty('organizerId');
+    // Should NOT have organizer object, only organizerId
+    expect(result.current.data).not.toHaveProperty('organizer');
+    expect(result.current.data).toHaveProperty('organizerId');
+    expect(result.current.data?.organizerId).toBe(fakeCommunity.organizerId);
 
     // Verify external calls were made correctly
     expect(mockFetchCommunityById).toHaveBeenCalledWith(
       expect.any(Object),
-      fakeCommunityInfo.id,
-    );
-    expect(mockFetchUserById).toHaveBeenCalledWith(
-      expect.any(Object),
-      fakeCommunityInfo.organizerId,
+      fakeCommunity.id,
     );
   });
 
@@ -92,10 +82,9 @@ describe('useCommunity', () => {
   });
 
   it('should return null when organizer not found', async () => {
-    mockFetchCommunityById.mockResolvedValue(fakeCommunityInfo);
-    mockFetchUserById.mockResolvedValue(null); // Organizer not found
+    mockFetchCommunityById.mockResolvedValue(fakeCommunity);
 
-    const { result } = renderHook(() => useCommunity(fakeCommunityInfo.id), {
+    const { result } = renderHook(() => useCommunity(fakeCommunity.id), {
       wrapper,
     });
 

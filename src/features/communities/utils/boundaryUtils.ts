@@ -2,7 +2,7 @@ import type {
   CommunityBoundary,
   IsochroneBoundary,
   TravelMode,
-} from '../types/domain';
+} from '../types/community';
 import { Polygon } from '../types/geojson';
 
 /**

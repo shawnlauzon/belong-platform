@@ -3,7 +3,7 @@ import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUsers } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
-import type { UserDetail, UserFilter } from '../types';
+import type { User, UserFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { toRecords } from '@/shared';
 
@@ -48,12 +48,10 @@ import { toRecords } from '@/shared';
  *
  * @category React Hooks
  */
-export function useUsers(
-  filters?: UserFilter,
-): UseQueryResult<UserDetail[], Error> {
+export function useUsers(filters?: UserFilter): UseQueryResult<User[], Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<UserDetail[], Error>({
+  const query = useQuery<User[], Error>({
     queryKey: filters
       ? queryKeys.users.filtered(toRecords(filters))
       : queryKeys.users.all,

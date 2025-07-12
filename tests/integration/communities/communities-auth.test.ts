@@ -8,17 +8,17 @@ import {
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
-import { createFakeCommunityData } from '@/features/communities/__fakes__';
+import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityInfo } from '@/features/communities/types';
-import type { UserDetail } from '@/features/users/types';
+import type { User } from '@/features/users/types';
+import { Community } from '@/features';
 
 describe('Communities API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let testCommunity: CommunityInfo;
+  let testUser: User;
+  let testCommunity: Community;
 
   beforeAll(async () => {
     // Set up authenticated client and test data
@@ -82,7 +82,7 @@ describe('Communities API - Authentication Requirements', () => {
 
     describe('fetchCommunityMembers', () => {
       it('allows unauthenticated access to community members', async () => {
-        const members = await api.fetchCommunityMembers(
+        const members = await api.fetchCommunityMemberships(
           unauthenticatedClient,
           testCommunity.id,
         );
@@ -110,7 +110,7 @@ describe('Communities API - Authentication Requirements', () => {
   describe('Unauthenticated Write Operations', () => {
     describe('createCommunity', () => {
       it('requires authentication', async () => {
-        const data = createFakeCommunityData({
+        const data = createFakeCommunityInput({
           name: `${TEST_PREFIX}Unauth_Create_Test`,
         });
 
@@ -176,7 +176,7 @@ describe('Communities API - Authentication Requirements', () => {
 
   describe('Security Boundary Verification', () => {
     it('authenticated client can create communities', async () => {
-      const data = createFakeCommunityData({
+      const data = createFakeCommunityInput({
         name: `${TEST_PREFIX}Auth_Create_Test_${Date.now()}`,
       });
 
@@ -216,7 +216,7 @@ describe('Communities API - Authentication Requirements', () => {
       await api.leaveCommunity(authenticatedClient, testCommunity.id);
 
       // Verify membership is gone
-      const members = await api.fetchCommunityMembers(
+      const members = await api.fetchCommunityMemberships(
         authenticatedClient,
         testCommunity.id,
       );

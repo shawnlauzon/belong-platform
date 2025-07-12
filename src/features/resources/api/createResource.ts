@@ -1,29 +1,29 @@
-import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceData, ResourceInfo } from '@/features/resources';
-import { forDbInsert } from '@/features/resources/transformers/resourceTransformer';
-import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
-import { ResourceRow } from '../types/database';
-import { getAuthIdOrThrow } from '@/shared';
+import type { ResourceInput, Resource } from '@/features/resources';
+import { toResourceInsertRow } from '@/features/resources/transformers/resourceTransformer';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
+import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
+import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
-  resourceData: ResourceData,
-): Promise<ResourceInfo | null> {
+  resourceData: ResourceInput,
+): Promise<Resource> {
   const currentUserId = await getAuthIdOrThrow(supabase);
 
-  const dbData = forDbInsert({
+  const dbData = toResourceInsertRow({
     ...resourceData,
     ownerId: currentUserId,
   });
 
-  const { data, error } = (await supabase
+  const { data, error } = await supabase
     .from('resources')
     .insert(dbData)
-    .select()
-    .single()) as { data: ResourceRow; error: QueryError | null };
+    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .single();
 
   if (error || !data) {
     throw new Error(error?.message || 'Failed to create resource');
@@ -58,5 +58,5 @@ export async function createResource(
     }
   }
 
-  return toResourceInfo(data);
+  return toDomainResource(data);
 }

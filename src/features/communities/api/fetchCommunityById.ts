@@ -1,19 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityInfo } from '../types';
-import { toCommunityInfo } from '../transformers/communityTransformer';
+import type { Community } from '../types';
+import { toDomainCommunity } from '../transformers/communityTransformer';
+import { SELECT_COMMUNITY_WITH_RELATIONS } from '../types/communityRow';
 import { logger } from '@/shared';
 
 export async function fetchCommunityById(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<CommunityInfo | null> {
+): Promise<Community | null> {
   logger.debug('🏘️ API: Fetching community by ID', { id });
 
   try {
     const { data, error } = await supabase
       .from('communities')
-      .select('*')
+      .select(SELECT_COMMUNITY_WITH_RELATIONS)
       .eq('id', id)
       .single();
 
@@ -31,13 +32,13 @@ export async function fetchCommunityById(
       return null;
     }
 
-    const communityInfo = toCommunityInfo(data);
+    const community = toDomainCommunity(data);
 
     logger.debug('🏘️ API: Successfully fetched community', {
       id,
-      name: communityInfo.name,
+      name: community.name,
     });
-    return communityInfo;
+    return community;
   } catch (error) {
     logger.error('🏘️ API: Error fetching community by ID', { error, id });
     throw error;

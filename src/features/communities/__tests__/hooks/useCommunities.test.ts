@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useCommunities } from '../../hooks/useCommunities';
-import { createFakeCommunityInfo } from '../../__fakes__';
+import { createFakeCommunity } from '../../__fakes__';
 
 // Mock only the API function, not the shared utilities
 vi.mock('../../api/fetchCommunities', () => ({
@@ -22,8 +22,8 @@ describe('useCommunities', () => {
 
   it('should return array of CommunityInfo when communities exist', async () => {
     const mockCommunities = [
-      createFakeCommunityInfo({ id: '1', name: 'Test Community 1' }),
-      createFakeCommunityInfo({ id: '2', name: 'Test Community 2' }),
+      createFakeCommunity({ id: '1', name: 'Test Community 1' }),
+      createFakeCommunity({ id: '2', name: 'Test Community 2' }),
     ];
     mockFetchCommunities.mockResolvedValue(mockCommunities);
 
@@ -39,7 +39,7 @@ describe('useCommunities', () => {
   it('should apply filters when provided', async () => {
     const filters = { name: 'Test', organizerId: 'user-123' };
     const mockCommunities = [
-      createFakeCommunityInfo({ name: 'Test Community' }),
+      createFakeCommunity({ name: 'Test Community' }),
     ];
     mockFetchCommunities.mockResolvedValue(mockCommunities);
 

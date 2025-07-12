@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { toDomainUser, forDbInsert, forDbUpdate } from '../../transformers/userTransformer';
-import { createFakeDbProfile, createFakeUserData } from '../../__fakes__';
+import {
+  toDomainUser,
+  toUserInsertRow,
+  toUserUpdateRow,
+} from '../../transformers/userTransformer';
+import { createFakeProfileRow, createFakeUserInput } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -21,7 +25,7 @@ describe('User Transformer', () => {
       lng: faker.location.longitude(),
     };
 
-    const dbProfile = createFakeDbProfile({
+    const dbProfile = createFakeProfileRow({
       id: userId,
       email: email,
       user_metadata: {
@@ -61,7 +65,7 @@ describe('User Transformer', () => {
   it('should transform bio field from user_metadata', () => {
     // Arrange
     const bio = faker.lorem.paragraph();
-    const dbProfile = createFakeDbProfile({
+    const dbProfile = createFakeProfileRow({
       user_metadata: {
         first_name: faker.person.firstName(),
         bio: bio,
@@ -77,7 +81,7 @@ describe('User Transformer', () => {
 
   it('should handle optional fields correctly in User', () => {
     // Arrange
-    const dbProfile = createFakeDbProfile({
+    const dbProfile = createFakeProfileRow({
       user_metadata: {
         first_name: faker.person.firstName(),
         last_name: null,
@@ -105,17 +109,16 @@ describe('User Transformer', () => {
     ]);
   });
 
-  describe('forDbInsert', () => {
+  describe('toUserInsertRow', () => {
     it('should transform domain user to database format', () => {
       // Arrange
-      const userData = createFakeUserData();
+      const userData = createFakeUserInput();
 
       // Act
-      const dbData = forDbInsert(userData);
+      const dbData = toUserInsertRow(userData);
 
       // Assert
       expect(dbData).toMatchObject({
-        id: userData.id,
         email: userData.email,
         user_metadata: {
           first_name: userData.firstName,
@@ -130,7 +133,7 @@ describe('User Transformer', () => {
 
     it('should handle minimal user data for database insert', () => {
       // Arrange
-      const userData = createFakeUserData({
+      const userData = createFakeUserInput({
         lastName: undefined,
         fullName: undefined,
         avatarUrl: undefined,
@@ -139,11 +142,10 @@ describe('User Transformer', () => {
       });
 
       // Act
-      const dbData = forDbInsert(userData);
+      const dbData = toUserInsertRow(userData);
 
       // Assert
       expect(dbData).toMatchObject({
-        id: userData.id,
         email: userData.email,
         user_metadata: {
           first_name: userData.firstName,
@@ -157,18 +159,18 @@ describe('User Transformer', () => {
     });
   });
 
-  describe('forDbUpdate', () => {
+  describe('toUserUpdateRow', () => {
     it('should prepare partial update data for database', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
           last_name: 'Doe',
           full_name: 'John Doe',
           avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.0060 },
+          location: { lat: 40.7128, lng: -74.006 },
         },
       });
 
@@ -178,7 +180,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should only update firstName, preserve other fields
       expect(dbData.user_metadata).toEqual({
@@ -186,7 +188,7 @@ describe('User Transformer', () => {
         last_name: 'Doe',
         full_name: 'John Doe',
         avatar_url: 'https://example.com/avatar.jpg',
-        location: { lat: 40.7128, lng: -74.0060 },
+        location: { lat: 40.7128, lng: -74.006 },
       });
       expect(dbData.updated_at).toBeDefined();
     });
@@ -195,7 +197,7 @@ describe('User Transformer', () => {
       // Arrange
       const userId = faker.string.uuid();
       const newBio = faker.lorem.paragraph();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
@@ -210,7 +212,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should update bio, preserve other fields
       expect(dbData.user_metadata).toEqual({
@@ -224,14 +226,14 @@ describe('User Transformer', () => {
     it('should handle multiple field updates', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
           last_name: 'Doe',
           full_name: 'John Doe',
           avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.0060 },
+          location: { lat: 40.7128, lng: -74.006 },
         },
       });
 
@@ -243,7 +245,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert
       expect(dbData.user_metadata).toEqual({
@@ -251,21 +253,21 @@ describe('User Transformer', () => {
         last_name: 'Smith',
         full_name: 'Jane Smith',
         avatar_url: 'https://example.com/avatar.jpg',
-        location: { lat: 40.7128, lng: -74.0060 },
+        location: { lat: 40.7128, lng: -74.006 },
       });
     });
 
     it('should handle null values to clear fields', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
           last_name: 'Doe',
           full_name: 'John Doe',
           avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.0060 },
+          location: { lat: 40.7128, lng: -74.006 },
         },
       });
 
@@ -276,7 +278,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - null values should clear fields
       expect(dbData.user_metadata).toEqual({
@@ -291,14 +293,14 @@ describe('User Transformer', () => {
     it('should handle undefined values by preserving existing data', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
           last_name: 'Doe',
           full_name: 'John Doe',
           avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.0060 },
+          location: { lat: 40.7128, lng: -74.006 },
         },
       });
 
@@ -310,7 +312,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - undefined values should be ignored
       expect(dbData.user_metadata).toEqual({
@@ -318,21 +320,21 @@ describe('User Transformer', () => {
         last_name: 'Doe',
         full_name: 'John Doe',
         avatar_url: 'https://example.com/avatar.jpg',
-        location: { lat: 40.7128, lng: -74.0060 },
+        location: { lat: 40.7128, lng: -74.006 },
       });
     });
 
     it('should handle empty partial update', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {
           first_name: 'John',
           last_name: 'Doe',
           full_name: 'John Doe',
           avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.0060 },
+          location: { lat: 40.7128, lng: -74.006 },
         },
       });
 
@@ -341,7 +343,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should preserve all existing data
       expect(dbData.user_metadata).toEqual({
@@ -349,14 +351,14 @@ describe('User Transformer', () => {
         last_name: 'Doe',
         full_name: 'John Doe',
         avatar_url: 'https://example.com/avatar.jpg',
-        location: { lat: 40.7128, lng: -74.0060 },
+        location: { lat: 40.7128, lng: -74.006 },
       });
     });
 
     it('should work when current profile has empty user_metadata', () => {
       // Arrange
       const userId = faker.string.uuid();
-      const currentProfile = createFakeDbProfile({
+      const currentProfile = createFakeProfileRow({
         id: userId,
         user_metadata: {},
       });
@@ -368,7 +370,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = forDbUpdate(partialUpdate, currentProfile);
+      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert
       expect(dbData.user_metadata).toEqual({

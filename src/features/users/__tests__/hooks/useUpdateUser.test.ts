@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeUserDetail } from '../../__fakes__';
+import { createFakeUser } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
@@ -31,7 +31,7 @@ describe('useUpdateUser', () => {
 
   it('should return User after update', async () => {
     // Arrange: Create test data using factories
-    const mockUpdatedUser = createFakeUserDetail();
+    const mockUpdatedUser = createFakeUser();
     const updateData: Partial<UserData> = {
       firstName: 'Updated First',
       lastName: 'Updated Last',

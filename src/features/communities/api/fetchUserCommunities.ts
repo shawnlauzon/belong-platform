@@ -1,14 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityMembershipInfo } from '../types';
 import { toDomainMembershipInfo } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
-import { CommunityMembershipRow } from '../types/database';
+import { CommunityMembershipRow } from '../types/communityRow';
+import { CommunityMembership } from '../types';
 
 export async function fetchUserCommunities(
   supabase: SupabaseClient<Database>,
   userId: string,
-): Promise<CommunityMembershipInfo[]> {
+): Promise<CommunityMembership[]> {
   logger.debug('🏘️ API: Fetching user communities', { userId });
 
   try {
@@ -16,7 +16,7 @@ export async function fetchUserCommunities(
       .from('community_memberships')
       .select('*')
       .eq('user_id', userId)
-      .order('joined_at', { ascending: false })) as {
+      .order('created_at', { ascending: false })) as {
       data: CommunityMembershipRow[];
       error: Error | null;
     };
@@ -29,7 +29,7 @@ export async function fetchUserCommunities(
       throw error;
     }
 
-    const memberships: CommunityMembershipInfo[] = (data || []).map(
+    const memberships: CommunityMembership[] = (data || []).map(
       (dbMembership) => toDomainMembershipInfo(dbMembership),
     );
 

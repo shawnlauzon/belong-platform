@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useUpdateProfile } from '../../hooks/useUpdateProfile';
 import { createMockSupabase } from '@/test-utils';
-import { createFakeUserDetail } from '@/features/users/__fakes__';
+import { createFakeUser } from '@/features/users/__fakes__';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { UserDetail } from '@/features/users/types';
+import type { User } from '@/features/users/types';
 
 // Mock the API functions
 vi.mock('@/features/users/api', () => ({
@@ -29,13 +29,13 @@ const mockUseCurrentUser = vi.mocked(useCurrentUser);
 describe('useUpdateProfile', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let fakeUser: UserDetail;
+  let fakeUser: User;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeUser = createFakeUserDetail();
+    fakeUser = createFakeUser();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);

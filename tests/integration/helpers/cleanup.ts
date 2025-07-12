@@ -2,7 +2,7 @@ import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
 import type { CommunityInfo } from '@/features/communities/types';
 import type { ResourceInfo } from '@/features/resources/types';
-import type { EventInfo } from '@/features/events/types';
+import type { Gathering } from '@/features/gatherings/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
 export async function cleanupAllTestData() {
@@ -23,23 +23,23 @@ export async function cleanupAllTestData() {
       .in('community_id', communityIds);
   }
 
-  // Delete event attendances for test events first
-  const { data: testEvents } = await serviceClient
-    .from('events')
+  // Delete gathering responses for test gatherings first
+  const { data: testGatherings } = await serviceClient
+    .from('gatherings')
     .select('id')
     .like('title', `${TEST_PREFIX}%`);
 
-  if (testEvents?.length) {
-    const eventIds = testEvents.map((e) => e.id);
+  if (testGatherings?.length) {
+    const gatheringIds = testGatherings.map((g) => g.id);
     await serviceClient
-      .from('event_attendances')
+      .from('gathering_responses')
       .delete()
-      .in('event_id', eventIds);
+      .in('gathering_id', gatheringIds);
   }
 
-  // Delete test events
+  // Delete test gatherings
   await serviceClient
-    .from('events')
+    .from('gatherings')
     .delete()
     .like('title', `${TEST_PREFIX}%`);
 
@@ -147,32 +147,32 @@ export async function cleanupUser(userId: string) {
   }
 }
 
-// Cleanup specific event and its attendances (no-op if event is null/undefined)
-export async function cleanupEvent(
-  event: EventInfo | null | undefined,
+// Cleanup specific gathering and its responses (no-op if gathering is null/undefined)
+export async function cleanupGathering(
+  gathering: Gathering | null | undefined,
 ) {
-  if (!event) return;
+  if (!gathering) return;
 
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
   await serviceClient
-    .from('event_attendances')
+    .from('gathering_responses')
     .delete()
-    .eq('event_id', event.id);
+    .eq('gathering_id', gathering.id);
 
-  await serviceClient.from('events').delete().eq('id', event.id);
+  await serviceClient.from('gatherings').delete().eq('id', gathering.id);
 }
 
-// Cleanup specific attendance
-export async function cleanupAttendance(eventId: string, userId: string) {
+// Cleanup specific gathering response
+export async function cleanupGatheringResponse(gatheringId: string, userId: string) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
   await serviceClient
-    .from('event_attendances')
+    .from('gathering_responses')
     .delete()
-    .eq('event_id', eventId)
+    .eq('gathering_id', gatheringId)
     .eq('user_id', userId);
 }
 

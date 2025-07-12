@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { fetchUserCommunities } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityMembershipInfo } from '@/features/communities/types';
+import type { CommunityMembership } from '@/features/communities/types';
 
 /**
  * Hook for fetching communities a user is a member of.
@@ -59,7 +59,7 @@ import type { CommunityMembershipInfo } from '@/features/communities/types';
 export function useUserCommunities(userId?: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<CommunityMembershipInfo[], Error>({
+  const query = useQuery<CommunityMembership[], Error>({
     queryKey: queryKeys.communities.userMemberships(userId!),
     queryFn: () => fetchUserCommunities(supabase, userId!),
     staleTime: STANDARD_CACHE_TIME,

@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useUser } from '../../hooks/useUser';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeUserDetail } from '../../__fakes__/';
+import { createFakeUser } from '../../__fakes__/';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { UserDetail } from '../../types';
+import type { User } from '../../types';
 
 // Mock the API functions
 vi.mock('../../api', () => ({
@@ -22,13 +22,13 @@ const mockFetchUserById = vi.mocked(fetchUserById);
 describe('useUser', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let fakeUser: UserDetail;
+  let fakeUser: User;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeUser = createFakeUserDetail();
+    fakeUser = createFakeUser();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);

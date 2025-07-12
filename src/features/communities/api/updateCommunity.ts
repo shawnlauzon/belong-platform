@@ -1,20 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type {
-  CommunityData,
-  CommunityInfo,
+  CommunityInput,
+  Community,
 } from '@/features/communities/types';
 import {
-  forDbUpdate,
-  toCommunityInfo,
+  toCommunityUpdateRow,
+  toDomainCommunity,
 } from '@/features/communities/transformers/communityTransformer';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function updateCommunity(
   supabase: SupabaseClient<Database>,
-  updateData: Partial<CommunityData> & { id: string },
-): Promise<CommunityInfo | null> {
+  updateData: Partial<CommunityInput> & { id: string },
+): Promise<Community | null> {
   logger.debug('🏘️ API: Updating community', {
     id: updateData.id,
     name: updateData.name,
@@ -23,7 +23,7 @@ export async function updateCommunity(
   try {
     await getAuthIdOrThrow(supabase);
 
-    const dbData = forDbUpdate(updateData);
+    const dbData = toCommunityUpdateRow(updateData);
 
     const { data, error } = await supabase
       .from('communities')
@@ -44,13 +44,13 @@ export async function updateCommunity(
       return null;
     }
 
-    const communityInfo = toCommunityInfo(data);
+    const community = toDomainCommunity(data);
 
     logger.debug('🏘️ API: Successfully updated community', {
-      id: communityInfo.id,
-      name: communityInfo.name,
+      id: community.id,
+      name: community.name,
     });
-    return communityInfo;
+    return community;
   } catch (error) {
     logger.error('🏘️ API: Error updating community', { error, updateData });
     throw error;

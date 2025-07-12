@@ -6,13 +6,13 @@ import * as api from '@/features/users/api';
 import { signIn, signUp } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { UserDetail } from '@/features/users/types';
+import type { User } from '@/features/users/types';
 
 describe('Users API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let readOnlyUser1: UserDetail;
-  let readOnlyUser2: UserDetail;
+  let testUser: User;
+  let readOnlyUser1: User;
+  let readOnlyUser2: User;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -85,7 +85,7 @@ describe('Users API - CRUD Operations', () => {
       const firstName = `${TEST_PREFIX}UpdateTest`;
       const lastName = 'Test';
       const email = `${TEST_PREFIX}update_${Date.now()}@example.com`;
-      
+
       const createdUser = await signUp(
         supabase,
         email,
@@ -97,7 +97,7 @@ describe('Users API - CRUD Operations', () => {
       try {
         // Sign in as the new user (required for updateUser)
         await signIn(supabase, email, 'TestPass123!');
-        
+
         const newBio = 'Updated bio content';
         const updatedUser = await api.updateUser(supabase, {
           id: createdUser.id,
@@ -107,6 +107,21 @@ describe('Users API - CRUD Operations', () => {
         expect(updatedUser).toBeTruthy();
         expect(updatedUser!.id).toBe(createdUser.id);
         expect(updatedUser!.bio).toBe(newBio);
+
+        // Verify database record has been updated with all expected fields
+        const { data: dbRecord } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', createdUser.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: createdUser.id,
+          user_metadata: expect.objectContaining({
+            bio: newBio,
+          }),
+        });
+        expect(dbRecord!.updated_at).toBeTruthy();
 
         // Verify user can be fetched with bio field
         const fetchedUser = await api.fetchUserById(supabase, createdUser.id);

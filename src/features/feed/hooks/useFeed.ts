@@ -5,15 +5,15 @@ import { STANDARD_CACHE_TIME } from '@/config';
 import { getCurrentUser } from '../../auth/api';
 import { fetchUserCommunities } from '../../communities/api';
 import { fetchResources } from '../../resources/api';
-import { fetchEvents } from '../../events/api';
+import { fetchGatherings } from '../../gatherings/api';
 import { fetchShoutouts } from '../../shoutouts/api';
 
-import type { FeedInfo } from '../types';
+import type { Feed } from '../types';
 
 /**
  * Hook for fetching the user's feed.
  *
- * Provides a chronologically ordered feed of resources, events, and shoutouts from
+ * Provides a chronologically ordered feed of resources, gatherings, and shoutouts from
  * all communities the user has joined.
  *
  * @returns Query state for feed data
@@ -40,7 +40,7 @@ import type { FeedInfo } from '../types';
 export function useFeed() {
   const supabase = useSupabase();
 
-  const query = useQuery<FeedInfo, Error>({
+  const query = useQuery<Feed, Error>({
     queryKey: ['feed'] as const,
     queryFn: async () => {
       try {
@@ -62,10 +62,10 @@ export function useFeed() {
         // Extract community IDs
         const communityIds = userCommunities.map(membership => membership.communityId);
 
-        // Fetch resources, events, and shoutouts using single queries with communityIds arrays
-        const [resources, events, shoutouts] = await Promise.all([
+        // Fetch resources, gatherings, and shoutouts using single queries with communityIds arrays
+        const [resources, gatherings, shoutouts] = await Promise.all([
           fetchResources(supabase, { communityIds }),
-          fetchEvents(supabase, { communityIds }),
+          fetchGatherings(supabase, { communityIds }),
           fetchShoutouts(supabase),
         ]);
 
@@ -75,9 +75,9 @@ export function useFeed() {
           data: resource,
         }));
 
-        const eventItems = events.map(event => ({
-          type: 'event' as const,
-          data: event,
+        const gatheringItems = gatherings.map(gathering => ({
+          type: 'gathering' as const,
+          data: gathering,
         }));
 
         const shoutoutItems = shoutouts.map(shoutout => ({
@@ -86,7 +86,7 @@ export function useFeed() {
         }));
 
         // Combine and sort by created_at (newest first)
-        const allItems = [...resourceItems, ...eventItems, ...shoutoutItems];
+        const allItems = [...resourceItems, ...gatheringItems, ...shoutoutItems];
         allItems.sort((a, b) => {
           const aDate = new Date(a.data.createdAt);
           const bDate = new Date(b.data.createdAt);
@@ -96,7 +96,7 @@ export function useFeed() {
         logger.debug('📰 API: Successfully fetched feed data', {
           totalItems: allItems.length,
           resourceCount: resourceItems.length,
-          eventCount: eventItems.length,
+          gatheringCount: gatheringItems.length,
           shoutoutCount: shoutoutItems.length,
         });
 

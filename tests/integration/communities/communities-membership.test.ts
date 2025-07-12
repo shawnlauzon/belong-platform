@@ -10,16 +10,16 @@ import * as api from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityInfo } from '@/features/communities/types';
-import type { UserDetail } from '@/features/users/types';
+import type { User } from '@/features/users/types';
+import { Community } from '@/features';
 
 describe('Communities API - Membership Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser1: UserDetail;
-  let testUser2: UserDetail;
+  let testUser1: User;
+  let testUser2: User;
   let testUser1Email: string;
   let testUser2Email: string;
-  let membershipTestCommunity: CommunityInfo;
+  let membershipTestCommunity: Community;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -139,27 +139,29 @@ describe('Communities API - Membership Operations', () => {
     });
 
     it('returns members with user data', async () => {
-      const members = await api.fetchCommunityMembers(
+      const members = await api.fetchCommunityMemberships(
         supabase,
         membershipTestCommunity.id,
       );
 
       expect(members).toContainEqual({
         userId: testUser2.id,
-        joinedAt: expect.any(Date),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
       });
     });
 
     it('includes organizer as a member', async () => {
-      const members = await api.fetchCommunityMembers(
+      const members = await api.fetchCommunityMemberships(
         supabase,
         membershipTestCommunity.id,
       );
 
       expect(members).toContainEqual({
         userId: testUser1.id,
-        joinedAt: expect.any(Date),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
       });
     });
@@ -186,8 +188,9 @@ describe('Communities API - Membership Operations', () => {
       expect(memberships).toHaveLength(1);
       expect(memberships).toContainEqual({
         userId: testUser2.id,
-        joinedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       });
     });
 
@@ -199,8 +202,9 @@ describe('Communities API - Membership Operations', () => {
 
       expect(communities).toContainEqual({
         userId: testUser1.id,
-        joinedAt: expect.any(Date),
         communityId: membershipTestCommunity.id,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       });
     });
 

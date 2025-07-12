@@ -3,7 +3,7 @@ import { logger, queryKeys, toRecords } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { fetchShoutouts } from '../api';
 import { STANDARD_CACHE_TIME } from '../../../config';
-import type { ShoutoutInfo, ShoutoutFilter } from '../types';
+import type { Shoutout, ShoutoutFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
@@ -47,10 +47,10 @@ import type { UseQueryResult } from '@tanstack/react-query';
  *
  * @category React Hooks
  */
-export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<ShoutoutInfo[], Error> {
+export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<Shoutout[], Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<ShoutoutInfo[], Error>({
+  const query = useQuery<Shoutout[], Error>({
     queryKey: filters
       ? queryKeys.shoutouts.filtered(toRecords(filters))
       : queryKeys.shoutouts.all,

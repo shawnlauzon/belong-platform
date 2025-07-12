@@ -2,12 +2,12 @@ import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser } from '../transformers/userTransformer';
-import { UserDetail, UserFilter } from '../types';
+import { User, UserFilter } from '../types';
 
 export async function fetchUsers(
   supabase: SupabaseClient<Database>,
   options?: UserFilter,
-): Promise<UserDetail[]> {
+): Promise<User[]> {
   logger.debug('👤 API: Fetching users', { options });
 
   try {

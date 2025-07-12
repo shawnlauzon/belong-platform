@@ -1,9 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { fetchAndCacheShoutout } from '../api';
+import { fetchShoutoutById } from '../api';
 import { STANDARD_CACHE_TIME } from '../../../config';
-import type { ShoutoutDetail } from '../types';
+import type { Shoutout } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
@@ -43,15 +43,14 @@ import type { UseQueryResult } from '@tanstack/react-query';
  */
 export function useShoutout(
   shoutoutId: string,
-): UseQueryResult<ShoutoutDetail | null, Error> {
+): UseQueryResult<Shoutout | null, Error> {
   const supabase = useSupabase();
-  const queryClient = useQueryClient();
 
-  const query = useQuery<ShoutoutDetail | null, Error>({
+  const query = useQuery<Shoutout | null, Error>({
     queryKey: queryKeys.shoutouts.byId(shoutoutId),
     queryFn: () => {
       logger.debug('📢 useShoutout: Fetching shoutout by ID', { shoutoutId });
-      return fetchAndCacheShoutout(supabase, queryClient, shoutoutId);
+      return fetchShoutoutById(supabase, shoutoutId);
     },
     staleTime: STANDARD_CACHE_TIME,
     enabled: Boolean(shoutoutId?.trim()),

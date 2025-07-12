@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import type { ResourceDetail } from '@/features/resources/types';
-import { fetchAndCacheResource } from '../api/fetchAndCacheResource';
+import type { Resource } from '@/features/resources/types';
+import { fetchResourceById } from '../api/fetchResourceInfoById';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -40,11 +40,10 @@ import { fetchAndCacheResource } from '../api/fetchAndCacheResource';
  */
 export function useResource(id: string) {
   const supabase = useSupabase();
-  const queryClient = useQueryClient();
 
-  return useQuery<ResourceDetail | null, Error>({
+  return useQuery<Resource | null, Error>({
     queryKey: queryKeys.resources.byId(id),
-    queryFn: () => fetchAndCacheResource(supabase, queryClient, id),
+    queryFn: () => fetchResourceById(supabase, id),
     enabled: !!id,
   });
 }

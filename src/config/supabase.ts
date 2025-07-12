@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../shared/types/database';
-import { logger as defaultLogger } from '../shared';
+import type { Database } from '@/shared/types/database';
+import { logger as defaultLogger } from '@/shared';
 
 /**
  * Creates a configured Supabase client instance with type safety for the Belong Network database.
@@ -53,7 +53,7 @@ import { logger as defaultLogger } from '../shared';
 export function createSupabaseClient(
   supabaseUrl: string,
   supabaseAnonKey: string,
-  logger = defaultLogger
+  logger = defaultLogger,
 ): SupabaseClient<Database> {
   // Debug logging for configuration
   logger.debug('🔧 Supabase Client Debug Info:', {

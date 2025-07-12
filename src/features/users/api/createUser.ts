@@ -1,17 +1,19 @@
 import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toDomainUser, forDbInsert } from '../transformers/userTransformer';
-import { UserDetail, UserData } from '../types';
+import { toDomainUser, toUserInsertRow } from '../transformers/userTransformer';
+import { User, UserData } from '../types';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function createUser(
   supabase: SupabaseClient<Database>,
   userData: UserData,
-): Promise<UserDetail> {
+): Promise<User> {
   logger.debug('👤 API: Creating user', { email: userData.email });
 
   try {
-    const dbData = forDbInsert({ ...userData });
+    const userId = await getAuthIdOrThrow(supabase);
+    const dbData = toUserInsertRow({ ...userData, id: userId });
 
     const { data, error } = await supabase
       .from('profiles')
@@ -21,7 +23,6 @@ export async function createUser(
 
     if (error) {
       logger.error('👤 API: Failed to create user', {
-        id: userData.id,
         email: userData.email,
         error,
       });
@@ -38,7 +39,6 @@ export async function createUser(
     return user;
   } catch (error) {
     logger.error('👤 API: Error creating user', {
-      id: userData.id,
       email: userData.email,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,

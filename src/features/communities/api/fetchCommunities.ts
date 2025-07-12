@@ -1,19 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityFilter, CommunityInfo } from '../types';
-import { toCommunityInfo } from '../transformers/communityTransformer';
+import type { CommunityFilter, Community } from '../types';
+import { toDomainCommunity } from '../transformers/communityTransformer';
+import { SELECT_COMMUNITY_WITH_RELATIONS } from '../types/communityRow';
 import { logger } from '@/shared';
 
 export async function fetchCommunities(
   supabase: SupabaseClient<Database>,
   filter?: CommunityFilter,
-): Promise<CommunityInfo[]> {
+): Promise<Community[]> {
   logger.debug('🏘️ API: Fetching communities', { filter });
 
   try {
     let query = supabase
       .from('communities')
-      .select('*')
+      .select(SELECT_COMMUNITY_WITH_RELATIONS)
       .order('created_at', { ascending: false });
 
     // Apply filters if provided
@@ -31,9 +32,9 @@ export async function fetchCommunities(
       throw error;
     }
 
-    const communities: CommunityInfo[] = (data || []).map((dbCommunity) =>
-      toCommunityInfo(dbCommunity),
-    );
+    const communities: Community[] = (data || []).map((dbCommunity) => {
+      return toDomainCommunity(dbCommunity);
+    });
 
     logger.debug('🏘️ API: Successfully fetched communities', {
       count: communities.length,

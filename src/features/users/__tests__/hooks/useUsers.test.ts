@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useUsers } from '../../hooks/useUsers';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeUserDetail } from '../../__fakes__';
+import { createFakeUser } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
@@ -31,7 +31,7 @@ describe('useUsers', () => {
 
   it('should return User[] from fetchUsers', async () => {
     // Arrange: Mock return value should be User[]
-    const fakeUsers = [createFakeUserDetail(), createFakeUserDetail()];
+    const fakeUsers = [createFakeUser(), createFakeUser()];
 
     mockFetchUsers.mockResolvedValue(fakeUsers);
 
@@ -51,7 +51,7 @@ describe('useUsers', () => {
     const filters: UserFilter = {
       email: 'test@example.com',
     };
-    const fakeUsers = [createFakeUserDetail()];
+    const fakeUsers = [createFakeUser()];
     mockFetchUsers.mockResolvedValue(fakeUsers);
 
     // Act

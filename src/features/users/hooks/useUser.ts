@@ -3,7 +3,7 @@ import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUserById } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
-import type { UserDetail } from '../types';
+import type { User } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
@@ -65,10 +65,10 @@ import type { UseQueryResult } from '@tanstack/react-query';
  */
 export function useUser(
   userId: string | null,
-): UseQueryResult<UserDetail | null, Error> {
+): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<UserDetail | null, Error>({
+  const query = useQuery<User | null, Error>({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => {
       logger.debug('👤 useUser: Fetching user by ID', { userId });

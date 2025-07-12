@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { updateShoutout } from '../api';
-import type { ShoutoutData, ShoutoutInfo } from '../types';
+import type { ShoutoutInput, Shoutout } from '../types';
 
 /**
  * Hook for updating existing shoutouts.
@@ -19,7 +19,7 @@ import type { ShoutoutData, ShoutoutInfo } from '../types';
  * function EditShoutoutForm({ shoutout }: { shoutout: Shoutout }) {
  *   const updateShoutout = useUpdateShoutout();
  *
- *   const handleSubmit = useCallback(async (updates: Partial<ShoutoutData>) => {
+ *   const handleSubmit = useCallback(async (updates: Partial<ShoutoutInput>) => {
  *     try {
  *       const updatedShoutout = await updateShoutout.mutateAsync({
  *         id: shoutout.id,
@@ -68,11 +68,17 @@ export function useUpdateShoutout() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ShoutoutData> }) => {
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<ShoutoutInput>;
+    }) => {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
       return updateShoutout(supabase, id, data);
     },
-    onSuccess: (updatedShoutout: ShoutoutInfo | null) => {
+    onSuccess: (updatedShoutout: Shoutout | null) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 

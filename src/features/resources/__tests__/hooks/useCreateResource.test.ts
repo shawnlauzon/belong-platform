@@ -3,10 +3,10 @@ import { renderHook } from '@testing-library/react';
 import { useCreateResource } from '../../hooks/useCreateResource';
 import { createMockSupabase } from '../../../../test-utils';
 import {
-  createFakeResourceData,
-  createFakeResourceInfo,
+  createFakeResourceInput,
+  createFakeResourceWithOwner,
 } from '../../__fakes__';
-import { createFakeUserDetail } from '../../../users/__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Global mocks for shared and config modules are now handled in vitest.setup.ts
@@ -24,9 +24,9 @@ import { createResource } from '../../api';
 import { useCurrentUser } from '../../../auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
-import type { UserDetail } from '../../../users/types';
-import { CommunityDetail } from '@/features/communities';
+import type { User } from '../../../users/types';
 import { createFakeCommunity } from '@/features/communities/__fakes__';
+import type { Community } from '@/features/communities';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResource = vi.mocked(createResource);
@@ -35,14 +35,14 @@ const mockUseCurrentUser = vi.mocked(useCurrentUser);
 describe('useCreateResource', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let mockCurrentUser: UserDetail;
-  let fakeCommunity: CommunityDetail;
+  let mockCurrentUser: User;
+  let fakeCommunity: Community;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockCurrentUser = createFakeUserDetail();
+    mockCurrentUser = createFakeUser();
     fakeCommunity = createFakeCommunity();
 
     mockSupabase = createMockSupabase();
@@ -57,42 +57,41 @@ describe('useCreateResource', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return ResourceInfo after creation', async () => {
+  it('should return Resource after creation', async () => {
     // Arrange: Create test data using factories
-    const fakeResourceInfo = createFakeResourceInfo({
-      ownerId: mockCurrentUser.id,
+    const fakeResource = createFakeResourceWithOwner(mockCurrentUser, {
       communityId: fakeCommunity.id,
     });
 
-    const resourceData = createFakeResourceData({
-      ownerId: mockCurrentUser.id,
+    const resourceData = createFakeResourceInput({
       communityId: fakeCommunity.id,
     });
 
-    mockCreateResource.mockResolvedValue(fakeResourceInfo);
+    mockCreateResource.mockResolvedValue(fakeResource);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    const createdResourceInfo = await result.current.mutateAsync(resourceData);
+    const createdResource = await result.current.mutateAsync(resourceData);
 
-    // Assert: Should return ResourceInfo with ID references
-    expect(createdResourceInfo).toBeDefined();
-    expect(createdResourceInfo).toEqual(
+    // Assert: Should return Resource with ID references
+    expect(createdResource).toBeDefined();
+    expect(createdResource).toEqual(
       expect.objectContaining({
-        id: fakeResourceInfo.id,
-        title: fakeResourceInfo.title,
+        id: fakeResource.id,
+        title: fakeResource.title,
         ownerId: mockCurrentUser.id,
         communityId: resourceData.communityId,
       }),
     );
 
-    // Should have ID references (ResourceInfo pattern)
-    expect(createdResourceInfo).toHaveProperty('ownerId');
-    expect(createdResourceInfo).toHaveProperty('communityId');
-
-    // Should NOT have composed objects (these are only in Resource type)
-    expect(createdResourceInfo).not.toHaveProperty('owner');
-    expect(createdResourceInfo).not.toHaveProperty('community');
+    // Should have objects as returned by the fake
+    expect(createdResource.owner).toEqual(
+      expect.objectContaining({
+        id: mockCurrentUser.id,
+        firstName: mockCurrentUser.firstName,
+        avatarUrl: mockCurrentUser.avatarUrl,
+      }),
+    );
 
     // Verify API was called with correct parameters
     expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
@@ -105,58 +104,54 @@ describe('useCreateResource', () => {
       'https://example.supabase.co/storage/v1/object/public/images/temp/user-123/photo2.jpg',
     ];
 
-    const fakeResourceInfo = createFakeResourceInfo({
-      ownerId: mockCurrentUser.id,
+    const fakeResource = createFakeResourceWithOwner(mockCurrentUser, {
       communityId: fakeCommunity.id,
       imageUrls: tempImageUrls,
     });
 
-    const resourceData = createFakeResourceData({
-      ownerId: mockCurrentUser.id,
+    const resourceData = createFakeResourceInput({
       communityId: fakeCommunity.id,
       imageUrls: tempImageUrls,
     });
 
     // Mock the API to return the resource with committed images
-    mockCreateResource.mockResolvedValue(fakeResourceInfo);
+    mockCreateResource.mockResolvedValue(fakeResource);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    const createdResourceInfo = await result.current.mutateAsync(resourceData);
+    const createdResource = await result.current.mutateAsync(resourceData);
 
     // Assert: Should return resource info (image commit happens internally in API)
-    expect(createdResourceInfo).toEqual(fakeResourceInfo);
+    expect(createdResource).toEqual(fakeResource);
     expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 
   it('should handle resources without images', async () => {
     // Arrange: Create test data without images
-    const fakeResourceInfo = createFakeResourceInfo({
-      ownerId: mockCurrentUser.id,
-      communityId: fakeCommunity.id,
-    });
-
-    const resourceData = createFakeResourceData({
-      ownerId: mockCurrentUser.id,
+    const fakeResource = createFakeResourceWithOwner(mockCurrentUser, {
       communityId: fakeCommunity.id,
       imageUrls: undefined, // Explicitly no images
     });
 
-    mockCreateResource.mockResolvedValue(fakeResourceInfo);
+    const resourceData = createFakeResourceInput({
+      communityId: fakeCommunity.id,
+      imageUrls: undefined, // Explicitly no images
+    });
+
+    mockCreateResource.mockResolvedValue(fakeResource);
 
     // Act
     const { result } = renderHook(() => useCreateResource(), { wrapper });
-    const createdResourceInfo = await result.current.mutateAsync(resourceData);
+    const createdResource = await result.current.mutateAsync(resourceData);
 
     // Assert: Should complete successfully
-    expect(createdResourceInfo).toEqual(fakeResourceInfo);
+    expect(createdResource).toEqual(fakeResource);
     expect(mockCreateResource).toHaveBeenCalledWith(mockSupabase, resourceData);
   });
 
   it('should handle API errors gracefully', async () => {
     // Arrange: Create test data
-    const resourceData = createFakeResourceData({
-      ownerId: mockCurrentUser.id,
+    const resourceData = createFakeResourceInput({
       communityId: fakeCommunity.id,
     });
 

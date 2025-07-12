@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useUpdateCommunity } from '../../hooks/useUpdateCommunity';
-import { createFakeCommunityInfo } from '../../__fakes__';
+import { createFakeCommunity } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
@@ -28,7 +28,7 @@ describe('useUpdateCommunity', () => {
       name: faker.company.name(),
       description: faker.lorem.paragraph(),
     };
-    const mockUpdatedInfo = createFakeCommunityInfo({
+    const mockUpdatedInfo = createFakeCommunity({
       id: communityId,
       name: updateData.name,
       description: updateData.description,

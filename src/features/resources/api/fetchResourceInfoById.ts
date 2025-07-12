@@ -1,22 +1,22 @@
-import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceInfo } from '@/features/resources';
-import type { ResourceRow } from '@/features/resources/types/database';
-import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
+import type { Resource } from '@/features/resources';
+import { toDomainResource } from '../transformers/resourceTransformer';
+import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
-export async function fetchResourceInfoById(
+export async function fetchResourceById(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<ResourceInfo | null> {
-  const { data, error } = (await supabase
+): Promise<Resource | null> {
+  const { data, error } = await supabase
     .from('resources')
-    .select('*')
+    .select(SELECT_RESOURCE_WITH_RELATIONS)
     .eq('id', id)
-    .single()) as { data: ResourceRow; error: QueryError | null };
+    .single();
 
   if (error || !data) {
     return null;
   }
 
-  return toResourceInfo(data);
+  return toDomainResource(data);
 }

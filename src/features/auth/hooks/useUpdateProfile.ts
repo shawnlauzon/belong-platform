@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserDetail } from '@/features/users';
+import { User } from '@/features/users';
 import { updateUser } from '@/features/users/api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
@@ -54,8 +54,8 @@ export function useUpdateProfile() {
   const supabase = useSupabase();
   const currentUser = useCurrentUser();
 
-  return useMutation<UserDetail, Error, Partial<UserDetail>>({
-    mutationFn: (updates: Partial<UserDetail>) => {
+  return useMutation<User, Error, Partial<User>>({
+    mutationFn: (updates: Partial<User>) => {
       if (!currentUser?.data?.id) {
         throw new Error('No authenticated user to update');
       }
@@ -64,14 +64,13 @@ export function useUpdateProfile() {
         ...updates,
       });
     },
-    onSuccess: (updatedUser: UserDetail) => {
+    onSuccess: (updatedUser: User) => {
       logger.info('🔐 API: Profile updated successfully', {
         userId: updatedUser.id,
       });
 
-      // Update the user cache with new data
-      queryClient.setQueryData(['user', updatedUser.id], updatedUser);
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Clear entire cache since user data (name, avatar) is embedded in many entities
+      queryClient.invalidateQueries();
     },
     onError: (error) => {
       logger.error('🔐 API: Failed to update profile', { error });

@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCreateShoutout } from '../../hooks/useCreateShoutout';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeShoutoutInfo } from '../../__fakes__';
-import { createFakeUserDetail } from '../../../users/__fakes__';
+import { createFakeShoutout } from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
-import type { ShoutoutData } from '../../types';
+import type { ShoutoutInput } from '../../types';
 
 // Mock the API functions
 vi.mock('../../api', () => ({
@@ -23,13 +23,13 @@ const mockUseCurrentUser = vi.mocked(useCurrentUser);
 describe('useCreateShoutout', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: ReturnType<typeof createMockSupabase>;
-  let mockCurrentUser: ReturnType<typeof createFakeUserDetail>;
+  let mockCurrentUser: ReturnType<typeof createFakeUser>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    mockCurrentUser = createFakeUserDetail();
+    mockCurrentUser = createFakeUser();
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
     mockUseCurrentUser.mockReturnValue({
@@ -42,13 +42,13 @@ describe('useCreateShoutout', () => {
 
   it('should create shoutout without requiring fromUserId in data', async () => {
     // Arrange: Create test data without fromUserId (it should be auto-assigned)
-    const shoutoutData: ShoutoutData = {
+    const shoutoutData: ShoutoutInput = {
       toUserId: 'user-456',
       resourceId: 'resource-789',
       message: 'Thank you for helping me with this!',
     };
 
-    const expectedShoutoutInfo = createFakeShoutoutInfo({
+    const expectedShoutoutInfo = createFakeShoutout({
       fromUserId: mockCurrentUser.id, // Should be auto-assigned
       toUserId: shoutoutData.toUserId,
       resourceId: shoutoutData.resourceId,
@@ -79,7 +79,7 @@ describe('useCreateShoutout', () => {
 
   it('should handle API errors gracefully', async () => {
     // Arrange: Create test data
-    const shoutoutData: ShoutoutData = {
+    const shoutoutData: ShoutoutInput = {
       toUserId: 'user-456',
       resourceId: 'resource-789',
       message: 'Thank you!',

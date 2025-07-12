@@ -1,38 +1,30 @@
 import { faker } from '@faker-js/faker';
-import {
-  ResourceDetail,
-  ResourceData,
-  ResourceCategory,
-  ResourceInfo,
-} from '../types';
-import { ResourceRow } from '../types/database';
-import { UserDetail } from '../../users';
-import { createFakeUserDetail } from '../../users/__fakes__';
-import { createFakeCommunity } from '../../communities/__fakes__';
-import { toResourceInfo } from '../transformers/resourceTransformer';
-import { ProfileRow } from '@/features/users/types/database';
+import { Resource, ResourceInput, ResourceCategory } from '../types';
+import { ResourceRow, ResourceRowWithRelations } from '../types/resourceRow';
+import { User } from '../../users';
+import { createFakeProfileRow, createFakeUser } from '../../users/__fakes__';
+import { createFakeCommunityRow } from '../../communities/__fakes__';
 
 /**
  * Creates a fake domain Resource object with an owner
  */
 export function createFakeResource(
-  overrides: Partial<ResourceDetail> = {},
-): ResourceDetail {
+  overrides: Partial<Resource> = {},
+): Resource {
   const now = new Date();
 
-  const owner = createFakeUserDetail();
-  const community = createFakeCommunity();
+  const owner = createFakeUser();
 
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) as ResourceCategory | undefined,
+    category: faker.helpers.maybe(
+      () => faker.helpers.enumValue(ResourceCategory),
+      { probability: 0.8 },
+    ) as ResourceCategory | undefined,
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    imageUrls: Array.from(
-      { length: faker.number.int({ min: 1, max: 5 }) },
-      () => faker.image.urlLoremFlickr({ category: 'object' }),
-    ),
+    imageUrls: [],
     locationName: faker.location.city(),
     coordinates: {
       lat: faker.location.latitude(),
@@ -40,8 +32,9 @@ export function createFakeResource(
     },
     createdAt: now,
     updatedAt: now,
+    ownerId: owner.id,
     owner,
-    community,
+    communityId: faker.string.uuid(),
     ...overrides,
   };
 }
@@ -50,17 +43,17 @@ export function createFakeResource(
  * Creates a fake domain Resource with a custom owner
  */
 export function createFakeResourceWithOwner(
-  owner: UserDetail,
-  overrides: Partial<ResourceDetail> = {},
-): ResourceDetail {
-  const resource = createFakeResource(overrides);
+  owner: User,
+  overrides: Partial<Resource> = {},
+): Resource {
+  const resource = createFakeResource({ ...overrides, ownerId: owner.id });
   return {
     ...resource,
     owner,
   };
 }
 
-export function createFakeResourceRow(
+export function createFakeResourceRowWithoutRelations(
   overrides?: Partial<ResourceRow>,
 ): ResourceRow {
   return {
@@ -68,10 +61,13 @@ export function createFakeResourceRow(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) ?? null,
+    category:
+      faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), {
+        probability: 0.8,
+      }) ?? null,
     owner_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
-    image_urls: [faker.image.urlLoremFlickr({ category: 'object' })],
+    image_urls: [],
     location_name: faker.location.city(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     created_at: faker.date.past().toISOString(),
@@ -80,24 +76,16 @@ export function createFakeResourceRow(
   };
 }
 
-export function createFakeResourceInfo(
-  overrides?: Partial<ResourceInfo>,
-): ResourceInfo {
-  const row = createFakeResourceRow();
-  const baseResourceInfo = toResourceInfo(row);
-  return { ...baseResourceInfo, ...overrides };
-}
-
-export function createFakeResourceData(
-  overrides?: Partial<ResourceData>,
-): ResourceData {
+export function createFakeResourceInput(
+  overrides?: Partial<ResourceInput>,
+): ResourceInput {
   return {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), { probability: 0.8 }) as ResourceCategory | undefined,
+    category: faker.helpers.enumValue(ResourceCategory),
     communityId: faker.string.uuid(),
-    imageUrls: [faker.image.url(), faker.image.url()],
+    imageUrls: [],
     locationName: faker.location.city(),
     coordinates: {
       lat: faker.location.latitude(),
@@ -107,18 +95,23 @@ export function createFakeResourceData(
   };
 }
 
-export function createFakeDbResource(
-  overrides: Partial<ResourceRow> = {},
-): ResourceRow {
+export function createFakeResourceRow(
+  overrides: Partial<ResourceRowWithRelations> = {},
+): ResourceRowWithRelations {
   const now = new Date().toISOString();
   const categories = ['tools', 'skills', 'food', 'supplies', 'other'];
 
   return {
     id: faker.string.uuid(),
+    owner: createFakeProfileRow(),
+    community: createFakeCommunityRow(),
     community_id: faker.string.uuid(),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    category: faker.helpers.maybe(() => faker.helpers.arrayElement(categories), { probability: 0.8 }) ?? null,
+    category:
+      faker.helpers.maybe(() => faker.helpers.arrayElement(categories), {
+        probability: 0.8,
+      }) ?? null,
     type: faker.helpers.arrayElement(['offer', 'request']),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
@@ -130,22 +123,5 @@ export function createFakeDbResource(
     created_at: now,
     updated_at: now,
     ...overrides,
-  };
-}
-
-/**
- * Creates a fake database Resource with a custom owner
- */
-export function createFakeDbResourceWithOwner(
-  owner: ProfileRow,
-  overrides: Partial<ResourceRow> = {},
-): ResourceRow & { owner: ProfileRow } {
-  const resource = createFakeDbResource({
-    owner_id: owner.id,
-    ...overrides,
-  });
-  return {
-    ...resource,
-    owner,
   };
 }

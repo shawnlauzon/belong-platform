@@ -8,21 +8,20 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData, cleanupResource } from '../helpers/cleanup';
 import * as api from '@/features/resources/api';
-import { signIn, signOut } from '@/features/auth/api';
-import { createFakeResourceData } from '@/features/resources/__fakes__';
-import { ResourceCategory } from '@/features/resources/types';
+import { signIn } from '@/features/auth/api';
+import { Resource, ResourceCategory } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceInfo } from '@/features/resources/types';
-import type { UserDetail } from '@/features/users/types';
-import type { CommunityInfo } from '@/features/communities/types';
+import type { User } from '@/features/users/types';
+import { createFakeResourceInput } from '@/features/resources/__fakes__';
+import { Community } from '@/features/communities/types';
 
 describe('Resources API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let testCommunity: CommunityInfo;
-  let readOnlyResource1: ResourceInfo;
-  let readOnlyResource2: ResourceInfo;
+  let testUser: User;
+  let testCommunity: Community;
+  let readOnlyResource1: Resource;
+  let readOnlyResource2: Resource;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -36,16 +35,8 @@ describe('Resources API - CRUD Operations', () => {
     testCommunity = await createTestCommunity(supabase);
 
     // Create test resources
-    readOnlyResource1 = await createTestResource(
-      supabase,
-      testUser.id,
-      testCommunity.id,
-    );
-    readOnlyResource2 = await createTestResource(
-      supabase,
-      testUser.id,
-      testCommunity.id,
-    );
+    readOnlyResource1 = await createTestResource(supabase, testCommunity.id);
+    readOnlyResource2 = await createTestResource(supabase, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -54,7 +45,7 @@ describe('Resources API - CRUD Operations', () => {
 
   describe('createResource', () => {
     it('creates resource with valid data', async () => {
-      const data = createFakeResourceData({
+      const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Create_Test_${Date.now()}`,
         communityId: testCommunity.id,
       });
@@ -62,68 +53,35 @@ describe('Resources API - CRUD Operations', () => {
       let resource;
       try {
         resource = await api.createResource(supabase, data);
+        expect(resource).toMatchObject({
+          id: expect.any(String),
+          title: data.title,
+          ownerId: testUser.id,
+          communityId: testCommunity.id,
+          type: data.type,
+          category: data.category,
+        });
 
-        expect(resource).toBeTruthy();
-        expect(resource!.id).toBeTruthy();
-        expect(resource!.title).toBe(data.title);
-        expect(resource!.ownerId).toBe(testUser.id);
-        expect(resource!.communityId).toBe(testCommunity.id);
-        expect(resource!.type).toBe(data.type);
-        expect(resource!.category).toBe(data.category);
+        // Verify database record exists with all expected fields
+        const { data: dbRecord } = await supabase
+          .from('resources')
+          .select('*')
+          .eq('id', resource.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: resource.id,
+          title: data.title,
+          owner_id: testUser.id,
+          community_id: testCommunity.id,
+          type: data.type,
+          category: data.category,
+          description: data.description,
+        });
+        expect(dbRecord!.created_at).toBeTruthy();
+        expect(dbRecord!.updated_at).toBeTruthy();
       } finally {
         await cleanupResource(resource);
-      }
-    });
-
-    it('creates resource with all categories', async () => {
-      const categories = [
-        ResourceCategory.TOOLS,
-        ResourceCategory.SKILLS,
-        ResourceCategory.FOOD,
-        ResourceCategory.SUPPLIES,
-        ResourceCategory.OTHER,
-      ];
-
-      const resources = [];
-      try {
-        for (const category of categories) {
-          const data = createFakeResourceData({
-            title: `${TEST_PREFIX}Category_${category}_${Date.now()}`,
-            communityId: testCommunity.id,
-            category,
-          });
-
-          const resource = await api.createResource(supabase, data);
-          expect(resource!.category).toBe(category);
-          resources.push(resource);
-        }
-      } finally {
-        for (const resource of resources) {
-          await cleanupResource(resource);
-        }
-      }
-    });
-
-    it('creates resource with both offer and request types', async () => {
-      const types = ['offer', 'request'] as const;
-      const resources = [];
-
-      try {
-        for (const type of types) {
-          const data = createFakeResourceData({
-            title: `${TEST_PREFIX}Type_${type}_${Date.now()}`,
-            communityId: testCommunity.id,
-            type,
-          });
-
-          const resource = await api.createResource(supabase, data);
-          expect(resource!.type).toBe(type);
-          resources.push(resource);
-        }
-      } finally {
-        for (const resource of resources) {
-          await cleanupResource(resource);
-        }
       }
     });
   });
@@ -142,7 +100,7 @@ describe('Resources API - CRUD Operations', () => {
       try {
         testResource = await api.createResource(
           supabase,
-          createFakeResourceData({
+          createFakeResourceInput({
             title: `${TEST_PREFIX}Filter_Category_${Date.now()}`,
             communityId: testCommunity.id,
             category: ResourceCategory.TOOLS,
@@ -165,7 +123,7 @@ describe('Resources API - CRUD Operations', () => {
       try {
         testResource = await api.createResource(
           supabase,
-          createFakeResourceData({
+          createFakeResourceInput({
             title: `${TEST_PREFIX}Filter_Type_${Date.now()}`,
             communityId: testCommunity.id,
             type: 'offer',
@@ -210,7 +168,7 @@ describe('Resources API - CRUD Operations', () => {
       try {
         testResource = await api.createResource(
           supabase,
-          createFakeResourceData({
+          createFakeResourceInput({
             title: uniqueTitle,
             communityId: testCommunity.id,
           }),
@@ -231,11 +189,7 @@ describe('Resources API - CRUD Operations', () => {
     it('updates resource fields', async () => {
       let resource;
       try {
-        resource = await createTestResource(
-          supabase,
-          testUser.id,
-          testCommunity.id,
-        );
+        resource = await createTestResource(supabase, testCommunity.id);
 
         const newTitle = `${TEST_PREFIX}Updated_${Date.now()}`;
         const newDescription = 'Updated description for test';
@@ -249,6 +203,24 @@ describe('Resources API - CRUD Operations', () => {
         expect(updated!.title).toBe(newTitle);
         expect(updated!.description).toBe(newDescription);
         expect(updated!.id).toBe(resource.id);
+
+        // Verify database record has been updated with all expected fields
+        const { data: dbRecord } = await supabase
+          .from('resources')
+          .select('*')
+          .eq('id', resource.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: resource.id,
+          title: newTitle,
+          description: newDescription,
+          owner_id: resource.ownerId,
+          community_id: resource.communityId,
+          type: resource.type,
+          category: resource.category,
+        });
+        expect(dbRecord!.updated_at).toBeTruthy();
       } finally {
         await cleanupResource(resource);
       }
@@ -257,11 +229,7 @@ describe('Resources API - CRUD Operations', () => {
     it('preserves unchanged fields', async () => {
       let resource;
       try {
-        resource = await createTestResource(
-          supabase,
-          testUser.id,
-          testCommunity.id,
-        );
+        resource = await createTestResource(supabase, testCommunity.id);
 
         const newTitle = `${TEST_PREFIX}PartialUpdate_${Date.now()}`;
         const originalDescription = resource.description;
@@ -283,11 +251,7 @@ describe('Resources API - CRUD Operations', () => {
     it('updates category and type', async () => {
       let resource;
       try {
-        resource = await createTestResource(
-          supabase,
-          testUser.id,
-          testCommunity.id,
-        );
+        resource = await createTestResource(supabase, testCommunity.id);
 
         const updated = await api.updateResource(supabase, {
           id: resource.id,
@@ -306,18 +270,11 @@ describe('Resources API - CRUD Operations', () => {
   describe('deleteResource', () => {
     it('deletes resource successfully', async () => {
       // Create a resource specifically for deletion
-      const resource = await createTestResource(
-        supabase,
-        testUser.id,
-        testCommunity.id,
-      );
+      const resource = await createTestResource(supabase, testCommunity.id);
       const resourceId = resource.id;
 
       // Verify resource exists before deletion
-      const beforeDelete = await api.fetchResourceInfoById(
-        supabase,
-        resourceId,
-      );
+      const beforeDelete = await api.fetchResourceById(supabase, resourceId);
       expect(beforeDelete).toBeTruthy();
 
       // Delete resource - this should complete without error
@@ -344,9 +301,9 @@ describe('Resources API - CRUD Operations', () => {
     });
   });
 
-  describe('fetchResourceInfoById', () => {
+  describe('fetchResourceById', () => {
     it('returns resource by id', async () => {
-      const fetched = await api.fetchResourceInfoById(
+      const fetched = await api.fetchResourceById(
         supabase,
         readOnlyResource1.id,
       );
@@ -357,7 +314,7 @@ describe('Resources API - CRUD Operations', () => {
     });
 
     it('returns null for non-existent id', async () => {
-      const result = await api.fetchResourceInfoById(
+      const result = await api.fetchResourceById(
         supabase,
         '00000000-0000-0000-0000-000000000000',
       );

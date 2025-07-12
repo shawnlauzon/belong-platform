@@ -1,14 +1,14 @@
-import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceInfo, ResourceFilter } from '@/features/resources';
-import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
-import { ResourceRow } from '../types/database';
+import type { Resource, ResourceFilter } from '@/features/resources';
+import { toDomainResource } from '../transformers/resourceTransformer';
+import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 export async function fetchResources(
   supabase: SupabaseClient<Database>,
   filters?: ResourceFilter,
-): Promise<ResourceInfo[]> {
-  let query = supabase.from('resources').select('*');
+): Promise<Resource[]> {
+  let query = supabase.from('resources').select(SELECT_RESOURCE_WITH_RELATIONS);
 
   if (filters) {
     if (filters.category && filters.category !== 'all') {
@@ -38,16 +38,13 @@ export async function fetchResources(
     }
   }
 
-  const { data, error } = (await query.order('created_at', {
+  const { data, error } = await query.order('created_at', {
     ascending: false,
-  })) as {
-    data: ResourceRow[];
-    error: QueryError | null;
-  };
+  });
 
   if (error || !data) {
     return [];
   }
 
-  return data.map((row) => toResourceInfo(row));
+  return data.map((row) => toDomainResource(row));
 }

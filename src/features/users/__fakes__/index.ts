@@ -1,13 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { UserDetail, UserData } from '../types';
-import { ProfileRow } from '../types/database';
+import { User, UserData } from '../types';
+import { ProfileRow } from '../types/profileRow';
 
 /**
- * Creates a fake domain User object
+ * Creates a fake domain User object (Entity)
  */
-export function createFakeUserDetail(
-  overrides: Partial<UserDetail> = {},
-): UserDetail {
+export function createFakeUser(overrides: Partial<User> = {}): User {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
@@ -24,11 +22,10 @@ export function createFakeUserDetail(
   };
 }
 
-export function createFakeUserData(
+export function createFakeUserInput(
   overrides: Partial<UserData> = {},
 ): UserData {
   return {
-    id: faker.string.uuid(),
     email: faker.internet.email(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
@@ -43,7 +40,7 @@ export function createFakeUserData(
   };
 }
 
-export function createFakeDbProfile(
+export function createFakeProfileRow(
   overrides: Partial<ProfileRow> = {},
 ): ProfileRow {
   const firstName = faker.person.firstName();

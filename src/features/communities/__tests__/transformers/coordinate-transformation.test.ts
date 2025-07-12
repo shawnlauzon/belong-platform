@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { parsePostGisPoint, toPostGisPoint } from '@/shared/utils/postgis';
 import {
-  forDbInsert,
-  toCommunityInfo,
+  toCommunityInsertRow,
+  toDomainCommunity,
 } from '../../transformers/communityTransformer';
 import {
-  createFakeCommunityData,
-  createFakeDbCommunity,
+  createFakeCommunityInput,
+  createFakeCommunityRow,
 } from '../../__fakes__';
 import type { Coordinates } from '@/shared/types';
 
 describe('Coordinate Transformation Pipeline', () => {
   describe('Domain → Database (toPostGisPoint)', () => {
     it('should transform domain coordinates to PostGIS string format', () => {
-      const domainCoords: Coordinates = { lat: 40.7128, lng: -74.0060 };
+      const domainCoords: Coordinates = { lat: 40.7128, lng: -74.006 };
 
       const postgisString = toPostGisPoint(domainCoords);
 
@@ -43,14 +43,14 @@ describe('Coordinate Transformation Pipeline', () => {
       const geoJsonPoint = {
         type: 'Point',
         crs: { type: 'name', properties: { name: 'EPSG:4326' } },
-        coordinates: [-74.0060, 40.7128],
+        coordinates: [-74.006, 40.7128],
       };
 
       const domainCoords = parsePostGisPoint(geoJsonPoint);
 
       expect(domainCoords).toEqual({
         lat: 40.7128,
-        lng: -74.0060,
+        lng: -74.006,
       });
     });
 
@@ -61,7 +61,7 @@ describe('Coordinate Transformation Pipeline', () => {
 
       expect(domainCoords).toEqual({
         lat: 40.7128,
-        lng: -74.0060,
+        lng: -74.006,
       });
     });
 
@@ -76,7 +76,7 @@ describe('Coordinate Transformation Pipeline', () => {
 
   describe('Round-trip Transformation', () => {
     it('should preserve coordinates through round-trip transformation', () => {
-      const originalCoords: Coordinates = { lat: 40.7128, lng: -74.0060 };
+      const originalCoords: Coordinates = { lat: 40.7128, lng: -74.006 };
 
       // Domain → PostGIS string
       const postgisString = toPostGisPoint(originalCoords);
@@ -97,12 +97,12 @@ describe('Coordinate Transformation Pipeline', () => {
   });
 
   describe('Community Transformer Integration', () => {
-    it('should correctly transform center coordinates in forDbInsert', () => {
-      const communityData = createFakeCommunityData({
-        center: { lat: 40.7128, lng: -74.0060 },
+    it('should correctly transform center coordinates in toCommunityInsertRow', () => {
+      const communityData = createFakeCommunityInput({
+        center: { lat: 40.7128, lng: -74.006 },
       });
 
-      const dbData = forDbInsert({
+      const dbData = toCommunityInsertRow({
         ...communityData,
         organizerId: 'test-user-id',
       });
@@ -112,20 +112,20 @@ describe('Coordinate Transformation Pipeline', () => {
     });
 
     it('should correctly transform center coordinates in toCommunityInfo', () => {
-      const dbCommunity = createFakeDbCommunity({
+      const dbCommunity = createFakeCommunityRow({
         center: {
           type: 'Point',
           crs: { type: 'name', properties: { name: 'EPSG:4326' } },
-          coordinates: [-74.0060, 40.7128],
+          coordinates: [-74.006, 40.7128],
         },
       });
 
-      const communityInfo = toCommunityInfo(dbCommunity);
+      const communityInfo = toDomainCommunity(dbCommunity);
 
       // Should convert GeoJSON back to domain coordinates
       expect(communityInfo.center).toEqual({
         lat: 40.7128,
-        lng: -74.0060,
+        lng: -74.006,
       });
     });
 
@@ -134,14 +134,14 @@ describe('Coordinate Transformation Pipeline', () => {
       const originalCenter: Coordinates = { lat: 51.5074, lng: -0.1278 }; // London
 
       // 1. Transform to database format (for insertion)
-      const dbInsertData = forDbInsert({
-        ...createFakeCommunityData({ center: originalCenter }),
+      const dbInsertData = toCommunityInsertRow({
+        ...createFakeCommunityInput({ center: originalCenter }),
         organizerId: 'test-user',
       });
       expect(dbInsertData.center).toBe('POINT(-0.1278 51.5074)');
 
       // 2. Simulate database response (what PostGIS returns)
-      const dbResponse = createFakeDbCommunity({
+      const dbResponse = createFakeCommunityRow({
         center: {
           type: 'Point',
           crs: { type: 'name', properties: { name: 'EPSG:4326' } },
@@ -150,7 +150,7 @@ describe('Coordinate Transformation Pipeline', () => {
       });
 
       // 3. Transform back to domain format (from database read)
-      const finalCommunityInfo = toCommunityInfo(dbResponse);
+      const finalCommunityInfo = toDomainCommunity(dbResponse);
 
       // Should match original coordinates exactly
       expect(finalCommunityInfo.center).toEqual(originalCenter);

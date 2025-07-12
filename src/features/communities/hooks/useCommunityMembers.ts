@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
-import { fetchCommunityMembers } from '@/features/communities/api';
+import { fetchCommunityMemberships } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityMembershipInfo } from '@/features/communities/types';
+import type { CommunityMembership } from '@/features/communities/types';
 
 /**
  * Hook for fetching community members.
@@ -39,9 +39,9 @@ import type { CommunityMembershipInfo } from '@/features/communities/types';
 export function useCommunityMembers(communityId: string) {
   const supabase = useSupabase();
 
-  const query = useQuery<CommunityMembershipInfo[], Error>({
+  const query = useQuery<CommunityMembership[], Error>({
     queryKey: queryKeys.communities.memberships(communityId),
-    queryFn: () => fetchCommunityMembers(supabase, communityId),
+    queryFn: () => fetchCommunityMemberships(supabase, communityId),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!communityId,
   });

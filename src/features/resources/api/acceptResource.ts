@@ -1,7 +1,7 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceResponseInfo, ResourceResponseStatus } from '../types';
-import { ResourceResponseRow } from '../types/database';
+import type { ResourceResponse } from '../types';
+import { ResourceResponseRow } from '../types/resourceRow';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
@@ -10,7 +10,7 @@ async function getExistingResponse(
   supabase: SupabaseClient<Database>,
   resourceId: string,
   userId: string,
-): Promise<{ status: ResourceResponseStatus } | null> {
+): Promise<{ status: 'accepted' | 'interested' | 'declined' } | null> {
   const { data, error } = await supabase
     .from('resource_responses')
     .select('status')
@@ -27,7 +27,7 @@ async function getExistingResponse(
     throw error;
   }
 
-  return data as { status: ResourceResponseStatus } | null;
+  return data as { status: 'accepted' | 'interested' | 'declined' } | null;
 }
 
 // Helper function to save response
@@ -35,17 +35,17 @@ async function saveResponse(
   supabase: SupabaseClient<Database>,
   resourceId: string,
   userId: string,
-  status: ResourceResponseStatus,
-): Promise<ResourceResponseInfo | null> {
+  status: 'accepted' | 'interested' | 'declined',
+): Promise<ResourceResponse | null> {
   const { data, error } = (await supabase
     .from('resource_responses')
     .upsert(
-      { 
-        resource_id: resourceId, 
-        user_id: userId, 
-        status 
-      }, 
-      { onConflict: 'resource_id,user_id' }
+      {
+        resource_id: resourceId,
+        user_id: userId,
+        status,
+      },
+      { onConflict: 'resource_id,user_id' },
     )
     .select()
     .single()) as { data: ResourceResponseRow; error: QueryError | null };
@@ -68,7 +68,7 @@ async function saveResponse(
   return {
     resourceId: data.resource_id,
     userId: data.user_id,
-    status: data.status as ResourceResponseStatus,
+    status: data.status as 'accepted' | 'interested' | 'declined',
     createdAt: new Date(data.created_at || ''),
     updatedAt: new Date(data.updated_at || ''),
   };
@@ -77,8 +77,8 @@ async function saveResponse(
 export async function acceptResource(
   supabase: SupabaseClient<Database>,
   resourceId: string,
-  status: ResourceResponseStatus = 'accepted',
-): Promise<ResourceResponseInfo | null> {
+  status: 'accepted' | 'interested' | 'declined' = 'accepted',
+): Promise<ResourceResponse | null> {
   logger.debug('📚 API: Accepting resource', { resourceId, status });
 
   try {
@@ -97,10 +97,17 @@ export async function acceptResource(
         userId: currentUserId,
         status,
       });
-      throw new Error('Already responded to this resource with the same status');
+      throw new Error(
+        'Already responded to this resource with the same status',
+      );
     }
 
-    const response = await saveResponse(supabase, resourceId, currentUserId, status);
+    const response = await saveResponse(
+      supabase,
+      resourceId,
+      currentUserId,
+      status,
+    );
 
     logger.debug('📚 API: Successfully accepted resource', {
       resourceId,

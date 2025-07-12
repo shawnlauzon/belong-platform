@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { fetchResources } from '@/features/resources/api';
 
-import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
+import type { Resource, ResourceFilter } from '@/features/resources/types';
 
 /**
  * Hook for fetching resources list.
@@ -61,7 +61,7 @@ import type { ResourceInfo, ResourceFilter } from '@/features/resources/types';
 export function useResources(filters?: ResourceFilter) {
   const supabase = useSupabase();
 
-  const query = useQuery<ResourceInfo[], Error>({
+  const query = useQuery<Resource[], Error>({
     queryKey: filters
       ? queryKeys.resources.filtered(toRecords(filters))
       : queryKeys.resources.all,

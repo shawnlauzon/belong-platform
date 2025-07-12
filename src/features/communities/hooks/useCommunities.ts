@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { fetchCommunities } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
 
-import type { CommunityInfo, CommunityFilter } from '@/features/communities/types';
+import type { Community, CommunityFilter } from '@/features/communities/types';
 
 /**
  * Hook for fetching communities list.
@@ -55,7 +55,7 @@ import type { CommunityInfo, CommunityFilter } from '@/features/communities/type
 export function useCommunities(filters?: CommunityFilter) {
   const supabase = useSupabase();
 
-  const query = useQuery<CommunityInfo[], Error>({
+  const query = useQuery<Community[], Error>({
     queryKey: filters
       ? queryKeys.communities.filtered(toRecords(filters))
       : queryKeys.communities.all,

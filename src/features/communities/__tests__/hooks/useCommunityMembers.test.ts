@@ -6,15 +6,15 @@ import { createFakeCommunityMembershipInfo } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
-vi.mock('../../api/fetchCommunityMembers', () => ({
-  fetchCommunityMembers: vi.fn(),
+vi.mock('../../api/fetchCommunityMemberships', () => ({
+  fetchCommunityMemberships: vi.fn(),
 }));
 
-import { fetchCommunityMembers } from '../../api/fetchCommunityMembers';
+import { fetchCommunityMemberships } from '../../api/fetchCommunityMemberships';
 
 describe('useCommunityMembers', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
-  const mockFetchCommunityMembers = vi.mocked(fetchCommunityMembers);
+  const mockFetchCommunityMemberships = vi.mocked(fetchCommunityMemberships);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -28,7 +28,7 @@ describe('useCommunityMembers', () => {
       createFakeCommunityMembershipInfo({ communityId }),
       createFakeCommunityMembershipInfo({ communityId }),
     ];
-    mockFetchCommunityMembers.mockResolvedValue(mockMembers);
+    mockFetchCommunityMemberships.mockResolvedValue(mockMembers);
 
     const { result } = renderHook(() => useCommunityMembers(communityId), {
       wrapper,
@@ -39,7 +39,7 @@ describe('useCommunityMembers', () => {
     });
 
     expect(result.current.data).toEqual(mockMembers);
-    expect(mockFetchCommunityMembers).toHaveBeenCalledWith(
+    expect(mockFetchCommunityMemberships).toHaveBeenCalledWith(
       expect.any(Object),
       communityId,
     );
@@ -47,7 +47,7 @@ describe('useCommunityMembers', () => {
 
   it('should return empty array when no members found', async () => {
     const communityId = faker.string.uuid();
-    mockFetchCommunityMembers.mockResolvedValue([]);
+    mockFetchCommunityMemberships.mockResolvedValue([]);
 
     const { result } = renderHook(() => useCommunityMembers(communityId), {
       wrapper,

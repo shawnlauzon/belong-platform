@@ -38,19 +38,19 @@ export const queryKeys = {
       ['resources', 'filtered', filter] as const,
   },
 
-  // Events
-  events: {
-    all: ['events'] as const,
-    byId: (id: string) => ['event', id] as const,
+  // Gatherings
+  gatherings: {
+    all: ['gatherings'] as const,
+    byId: (id: string) => ['gathering', id] as const,
     byCommunity: (communityId: string) =>
-      ['events', 'community', communityId] as const,
+      ['gatherings', 'community', communityId] as const,
     byOrganizer: (organizerId: string) =>
-      ['events', 'organizer', organizerId] as const,
-    attendees: (eventId: string) => ['event', eventId, 'attendees'] as const,
+      ['gatherings', 'organizer', organizerId] as const,
+    attendees: (gatheringId: string) => ['gathering', gatheringId, 'attendees'] as const,
     userAttendances: (userId: string) =>
       ['user', userId, 'attendances'] as const,
     filtered: (filter: Record<string, unknown>) =>
-      ['events', 'filtered', filter] as const,
+      ['gatherings', 'filtered', filter] as const,
   },
 
   // Shoutouts

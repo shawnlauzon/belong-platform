@@ -183,7 +183,7 @@ import type {
   EventData,
   MessageData,
   ConversationData,
-  ShoutoutData,
+  ShoutoutInput,
   // Filters
   ResourceFilter,
   EventFilter,

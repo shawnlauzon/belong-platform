@@ -1,11 +1,8 @@
 import { logger } from '../../../shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
-import type { ShoutoutData, ShoutoutInfo } from '../types';
-import {
-  forDbInsert,
-  toShoutoutInfo,
-} from '../transformers/shoutoutsTransformer';
+import type { ShoutoutInput, Shoutout } from '../types';
+import { toShoutoutInsertRow } from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
@@ -15,8 +12,8 @@ import { updateShoutout } from './updateShoutout';
  */
 export async function createShoutout(
   supabase: SupabaseClient<Database>,
-  shoutoutData: ShoutoutData,
-): Promise<ShoutoutInfo> {
+  shoutoutData: ShoutoutInput,
+): Promise<Shoutout> {
   logger.debug('📢 API: Creating shoutout', { shoutoutData });
 
   try {
@@ -25,11 +22,11 @@ export async function createShoutout(
 
     // Validate business rules before database operation
     if (shoutoutData.toUserId === currentUserId) {
-      throw new Error('Cannot thank yourself');
+      throw new Error('Cannot send shoutout to yourself');
     }
 
     // Transform to database format with auto-assigned fromUserId
-    const dbShoutout = forDbInsert(shoutoutData, currentUserId);
+    const dbShoutout = toShoutoutInsertRow(shoutoutData, currentUserId);
 
     // Insert into database
     const { data: createdShoutout, error } = await supabase
@@ -77,17 +74,66 @@ export async function createShoutout(
       }
     }
 
-    // Convert to ShoutoutInfo
-    const shoutoutInfo = toShoutoutInfo(createdShoutout);
+    // Convert to Shoutout
+    const shoutout = createdShoutout;
 
     logger.info('📢 API: Successfully created shoutout', {
-      id: shoutoutInfo.id,
-      fromUserId: shoutoutInfo.fromUserId,
-      toUserId: shoutoutInfo.toUserId,
-      resourceId: shoutoutInfo.resourceId,
+      id: shoutout.id,
+      fromUserId: shoutout.from_user_id,
+      toUserId: shoutout.to_user_id,
+      resourceId: shoutout.resource_id,
     });
 
-    return shoutoutInfo;
+    return {
+      ...shoutout,
+      fromUserId: shoutout.from_user_id,
+      toUserId: shoutout.to_user_id,
+      resourceId: shoutout.resource_id,
+      communityId: shoutout.community_id,
+      imageUrls: shoutout.image_urls || [],
+      createdAt: new Date(shoutout.created_at),
+      updatedAt: new Date(shoutout.updated_at),
+      // Add required relation fields as placeholders
+      fromUser: {
+        id: shoutout.from_user_id,
+        firstName: '',
+        avatarUrl: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      toUser: {
+        id: shoutout.to_user_id,
+        firstName: '',
+        avatarUrl: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      resource: {
+        id: shoutout.resource_id,
+        title: '',
+        type: 'offer' as const,
+        ownerId: '',
+        owner: {
+          id: '',
+          firstName: '',
+          avatarUrl: undefined,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        imageUrls: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      community: {
+        id: shoutout.community_id,
+        name: '',
+        type: 'place' as const,
+        icon: undefined,
+        memberCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
   } catch (error) {
     logger.error('📢 API: Error creating shoutout', {
       error: error instanceof Error ? error.message : 'Unknown error',

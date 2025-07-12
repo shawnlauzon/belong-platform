@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { fetchActivities } from '../api';
-import type { ActivityInfo, ActivityFilter, ActivityCounts } from '../types';
+import type { ActivitySummary, ActivityFilter, ActivityCounts } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 const SHORT_CACHE_TIME = 2 * 60 * 1000; // 2 minutes - short due to urgency tracking
@@ -66,10 +66,10 @@ const SHORT_CACHE_TIME = 2 * 60 * 1000; // 2 minutes - short due to urgency trac
  *
  * @category React Hooks
  */
-export function useActivities(filter: ActivityFilter): UseQueryResult<ActivityInfo[], Error> {
+export function useActivities(filter: ActivityFilter): UseQueryResult<ActivitySummary[], Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<ActivityInfo[], Error>({
+  const query = useQuery<ActivitySummary[], Error>({
     queryKey: filter.section
       ? queryKeys.activities.bySection(filter.userId, filter.section)
       : queryKeys.activities.byUser(filter.userId),

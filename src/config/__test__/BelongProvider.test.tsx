@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UseQueryResult } from '@tanstack/react-query';
+import { User } from '@/features/users';
 
 // Mock the useCurrentUser hook instead of useAuth
 vi.mock('../../features/auth/hooks/useCurrentUser', () => ({
@@ -74,7 +75,7 @@ describe('BelongProvider', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as UseQueryResult<unknown, Error>);
+    } as UseQueryResult<User | null, Error>);
   });
 
   const defaultConfig = {

@@ -66,22 +66,33 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communities_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_memberships: {
         Row: {
           community_id: string
-          joined_at: string
+          created_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           community_id: string
-          joined_at?: string
+          created_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           community_id?: string
-          joined_at?: string
+          created_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -220,39 +231,46 @@ export type Database = {
           },
         ]
       }
-      event_attendances: {
+      gathering_responses: {
         Row: {
           created_at: string
-          event_id: string
+          gathering_id: string
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          event_id: string
+          gathering_id: string
           status: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          event_id?: string
+          gathering_id?: string
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "event_attendances_event_id_fkey"
-            columns: ["event_id"]
+            foreignKeyName: "gathering_responses_gathering_id_fkey"
+            columns: ["gathering_id"]
             isOneToOne: false
-            referencedRelation: "events"
+            referencedRelation: "gatherings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gathering_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      events: {
+      gatherings: {
         Row: {
           attendee_count: number
           community_id: string
@@ -306,10 +324,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "events_community_id_fkey"
+            foreignKeyName: "gatherings_community_id_fkey"
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gatherings_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

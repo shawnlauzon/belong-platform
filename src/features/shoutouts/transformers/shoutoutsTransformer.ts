@@ -1,19 +1,27 @@
-import { ResourceDetail } from '../../resources';
-import { UserDetail } from '../../users';
-import type { ShoutoutData, ShoutoutDetail, ShoutoutInfo } from '../types';
+import { ResourceSummary } from '../../resources';
+import { UserSummary } from '../../users';
+import { CommunitySummary } from '../../communities';
+import { toDomainCommunitySummary } from '../../communities/transformers/communityTransformer';
+import type { ShoutoutInput, Shoutout } from '../types';
 import {
-  ShoutoutInsertDbData,
+  ShoutoutInsertRow,
   ShoutoutRow,
-  ShoutoutUpdateDbData,
-} from '../types/database';
+  ShoutoutRowWithRelations,
+  ShoutoutUpdateRow,
+} from '../types/shoutoutRow';
 
 /**
  * Transform a database shoutout record to a domain shoutout object
  */
 export function toDomainShoutout(
   dbShoutout: ShoutoutRow,
-  refs: { fromUser: UserDetail; toUser: UserDetail; resource: ResourceDetail },
-): ShoutoutDetail {
+  refs: {
+    fromUser: UserSummary;
+    toUser: UserSummary;
+    resource: ResourceSummary;
+    community: CommunitySummary;
+  },
+): Shoutout {
   const {
     from_user_id,
     to_user_id,
@@ -51,17 +59,19 @@ export function toDomainShoutout(
     fromUser: refs.fromUser,
     toUser: refs.toUser,
     resource: refs.resource,
+    community: refs.community,
   };
 }
 
 /**
  * Transform a domain shoutout data object to a database shoutout insert record
  */
-export function forDbInsert(
-  shoutoutData: ShoutoutData,
+export function toShoutoutInsertRow(
+  shoutoutData: ShoutoutInput,
   fromUserId: string,
-): ShoutoutInsertDbData {
-  const { toUserId, resourceId, communityId, imageUrls, message } = shoutoutData;
+): ShoutoutInsertRow {
+  const { toUserId, resourceId, communityId, imageUrls, message } =
+    shoutoutData;
 
   return {
     message,
@@ -76,10 +86,11 @@ export function forDbInsert(
 /**
  * Transform a domain shoutout data object to a database shoutout update record
  */
-export function forDbUpdate(
-  shoutoutData: Partial<ShoutoutData>,
-): ShoutoutUpdateDbData {
-  const { toUserId, resourceId, communityId, imageUrls, message } = shoutoutData;
+export function toShoutoutUpdateRow(
+  shoutoutData: Partial<ShoutoutInput>,
+): ShoutoutUpdateRow {
+  const { toUserId, resourceId, communityId, imageUrls, message } =
+    shoutoutData;
 
   return {
     message,
@@ -93,9 +104,84 @@ export function forDbUpdate(
 }
 
 /**
- * Transform a database shoutout record to a ShoutoutInfo object (lightweight for lists)
+ * Transform a database shoutout record with joined relations to a Shoutout object
  */
-export function toShoutoutInfo(dbShoutout: ShoutoutRow): ShoutoutInfo {
+export function toShoutoutWithJoinedRelations(
+  dbShoutout: ShoutoutRowWithRelations,
+): Shoutout {
+  // Handle potential array results from Supabase joins
+  const fromUser = Array.isArray(dbShoutout.fromUser)
+    ? dbShoutout.fromUser[0]
+    : dbShoutout.fromUser;
+  const toUser = Array.isArray(dbShoutout.toUser)
+    ? dbShoutout.toUser[0]
+    : dbShoutout.toUser;
+  const resource = Array.isArray(dbShoutout.resource)
+    ? dbShoutout.resource[0]
+    : dbShoutout.resource;
+  const community = Array.isArray(dbShoutout.community)
+    ? dbShoutout.community[0]
+    : dbShoutout.community;
+
+  // Validate required joined data
+  if (!fromUser) {
+    throw new Error(`Shoutout ${dbShoutout.id} missing required fromUser data`);
+  }
+  if (!toUser) {
+    throw new Error(`Shoutout ${dbShoutout.id} missing required toUser data`);
+  }
+  if (!resource) {
+    throw new Error(`Shoutout ${dbShoutout.id} missing required resource data`);
+  }
+  if (!community) {
+    throw new Error(`Shoutout ${dbShoutout.id} missing required community data`);
+  }
+  if (!resource.owner) {
+    throw new Error(`Shoutout ${dbShoutout.id} resource missing required owner data`);
+  }
+
+  // Transform users to UserSummary
+  const partialFromUser = fromUser
+    ? {
+        id: fromUser.id,
+        firstName: fromUser.user_metadata?.first_name || '',
+        avatarUrl: fromUser.user_metadata?.avatar_url,
+        createdAt: new Date(fromUser.created_at),
+        updatedAt: new Date(fromUser.updated_at),
+      }
+    : null;
+
+  const partialToUser = toUser
+    ? {
+        id: toUser.id,
+        firstName: toUser.user_metadata?.first_name || '',
+        avatarUrl: toUser.user_metadata?.avatar_url,
+        createdAt: new Date(toUser.created_at),
+        updatedAt: new Date(toUser.updated_at),
+      }
+    : null;
+
+  // Transform resource to ResourceSummary
+  const resourceSummary = resource
+    ? {
+        id: resource.id,
+        type: resource.type as 'offer' | 'request',
+        category: resource.category,
+        title: resource.title,
+        ownerId: resource.owner_id,
+        owner: {
+          id: resource.owner.id,
+          firstName: resource.owner.user_metadata?.first_name || '',
+          avatarUrl: resource.owner.user_metadata?.avatar_url,
+          createdAt: new Date(resource.owner.created_at),
+          updatedAt: new Date(resource.owner.updated_at),
+        },
+        imageUrls: resource.image_urls || [],
+        createdAt: new Date(resource.created_at),
+        updatedAt: new Date(resource.updated_at),
+      }
+    : null;
+
   return {
     id: dbShoutout.id,
     message: dbShoutout.message,
@@ -103,8 +189,12 @@ export function toShoutoutInfo(dbShoutout: ShoutoutRow): ShoutoutInfo {
     createdAt: new Date(dbShoutout.created_at),
     updatedAt: new Date(dbShoutout.updated_at),
     fromUserId: dbShoutout.from_user_id,
+    fromUser: partialFromUser!,
     toUserId: dbShoutout.to_user_id,
+    toUser: partialToUser!,
     resourceId: dbShoutout.resource_id,
+    resource: resourceSummary!,
     communityId: dbShoutout.community_id,
+    community: toDomainCommunitySummary(community),
   };
 }

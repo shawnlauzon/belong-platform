@@ -2,15 +2,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserCommunities } from '../../communities/api';
 import { fetchResources } from '../../resources/api';
-import { fetchEvents } from '../../events/api';
+import { fetchGatherings } from '../../gatherings/api';
 import { fetchShoutouts } from '../../shoutouts/api';
 import { getCurrentUser } from '../../auth/api';
-import { FeedInfo, FeedItem } from '../types';
+import { Feed, FeedItem } from '../types';
 import { logger } from '@/shared';
 
 export async function fetchFeed(
   supabase: SupabaseClient<Database>,
-): Promise<FeedInfo> {
+): Promise<Feed> {
   logger.debug('📰 API: Fetching feed data');
 
   try {
@@ -35,10 +35,10 @@ export async function fetchFeed(
       (membership) => membership.communityId,
     );
 
-    // Fetch resources, events, and shoutouts using single queries with communityIds arrays
-    const [resources, events, shoutouts] = await Promise.all([
+    // Fetch resources, gatherings, and shoutouts using single queries with communityIds arrays
+    const [resources, gatherings, shoutouts] = await Promise.all([
       fetchResources(supabase, { communityIds }),
-      fetchEvents(supabase, { communityIds }),
+      fetchGatherings(supabase, { communityIds }),
       fetchShoutouts(supabase, { communityIds }),
     ]);
 
@@ -48,9 +48,9 @@ export async function fetchFeed(
       data: resource,
     }));
 
-    const eventItems: FeedItem[] = events.map((event) => ({
-      type: 'event',
-      data: event,
+    const gatheringItems: FeedItem[] = gatherings.map((gathering) => ({
+      type: 'gathering',
+      data: gathering,
     }));
 
     const shoutoutItems: FeedItem[] = shoutouts.map((shoutout) => ({
@@ -59,7 +59,7 @@ export async function fetchFeed(
     }));
 
     // Combine and sort by created_at (newest first)
-    const allItems = [...resourceItems, ...eventItems, ...shoutoutItems];
+    const allItems = [...resourceItems, ...gatheringItems, ...shoutoutItems];
     allItems.sort((a, b) => {
       const aDate = new Date(a.data.createdAt);
       const bDate = new Date(b.data.createdAt);
@@ -69,7 +69,7 @@ export async function fetchFeed(
     logger.debug('📰 API: Successfully fetched feed data', {
       totalItems: allItems.length,
       resourceCount: resourceItems.length,
-      eventCount: eventItems.length,
+      gatheringCount: gatheringItems.length,
       shoutoutCount: shoutoutItems.length,
     });
 

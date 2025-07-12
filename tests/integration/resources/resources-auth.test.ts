@@ -9,19 +9,19 @@ import {
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/resources/api';
 import { signIn, signOut } from '@/features/auth/api';
-import { createFakeResourceData } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceInfo } from '@/features/resources/types';
-import type { UserDetail } from '@/features/users/types';
-import type { CommunityInfo } from '@/features/communities/types';
+import type { User } from '@/features/users/types';
+import type { Community } from '@/features/communities/types';
+import { Resource } from '@/features';
+import { createFakeResourceInput } from '@/features/resources/__fakes__';
 
 describe('Resources API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let testCommunity: CommunityInfo;
-  let testResource: ResourceInfo;
+  let testUser: User;
+  let testCommunity: Community;
+  let testResource: Resource;
 
   beforeAll(async () => {
     // Set up authenticated client and test data
@@ -34,7 +34,6 @@ describe('Resources API - Authentication Requirements', () => {
     testCommunity = await createTestCommunity(authenticatedClient);
     testResource = await createTestResource(
       authenticatedClient,
-      testUser.id,
       testCommunity.id,
     );
 
@@ -75,9 +74,9 @@ describe('Resources API - Authentication Requirements', () => {
       });
     });
 
-    describe('fetchResourceInfoById', () => {
+    describe('fetchResourceById', () => {
       it('allows unauthenticated access to existing resource', async () => {
-        const result = await api.fetchResourceInfoById(
+        const result = await api.fetchResourceById(
           unauthenticatedClient,
           testResource.id,
         );
@@ -88,7 +87,7 @@ describe('Resources API - Authentication Requirements', () => {
       });
 
       it('returns null for non-existent resource without authentication', async () => {
-        const result = await api.fetchResourceInfoById(
+        const result = await api.fetchResourceById(
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
         );
@@ -101,7 +100,7 @@ describe('Resources API - Authentication Requirements', () => {
   describe('Unauthenticated Write Operations', () => {
     describe('createResource', () => {
       it('requires authentication', async () => {
-        const data = createFakeResourceData({
+        const data = createFakeResourceInput({
           title: `${TEST_PREFIX}Unauth_Create_Test`,
           communityId: testCommunity.id,
         });
@@ -152,7 +151,7 @@ describe('Resources API - Authentication Requirements', () => {
 
   describe('Security Boundary Verification', () => {
     it('authenticated client can create resources', async () => {
-      const data = createFakeResourceData({
+      const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Auth_Create_Test_${Date.now()}`,
         communityId: testCommunity.id,
       });
@@ -179,7 +178,7 @@ describe('Resources API - Authentication Requirements', () => {
       const resources = await api.fetchResources(unauthenticatedClient);
       expect(Array.isArray(resources)).toBe(true);
 
-      const resource = await api.fetchResourceInfoById(
+      const resource = await api.fetchResourceById(
         unauthenticatedClient,
         testResource.id,
       );

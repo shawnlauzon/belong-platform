@@ -4,7 +4,7 @@ import type { Database } from '@/shared/types/database';
 import { queryKeys } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { fetchUserById } from './fetchUserById';
-import type { UserDetail } from '../types';
+import type { User } from '../types';
 
 /**
  * Ensures a User object is available, using cache when possible.
@@ -18,7 +18,7 @@ export async function ensureQueryUser(
   supabase: SupabaseClient<Database>,
   queryClient: QueryClient,
   userId: string,
-): Promise<UserDetail | null> {
+): Promise<User | null> {
   return queryClient.ensureQueryData({
     queryKey: queryKeys.users.byId(userId),
     queryFn: () => fetchUserById(supabase, userId),

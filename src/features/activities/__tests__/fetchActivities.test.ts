@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { ActivityFilter } from '../types';
-import type { BelongClient } from '../../../config/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/shared/types/database';
 
 // Mock the entire API module
 const mockFetchActivities = vi.fn();
@@ -42,7 +43,7 @@ describe('fetchActivities', () => {
     mockFetchActivities.mockResolvedValue(mockActivities);
 
     const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as BelongClient, filter);
+    const result = await fetchActivities({} as SupabaseClient<Database>, filter);
 
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe('event_upcoming');
@@ -53,7 +54,7 @@ describe('fetchActivities', () => {
     mockFetchActivities.mockResolvedValue([]);
 
     const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as BelongClient, filter);
+    const result = await fetchActivities({} as SupabaseClient<Database>, filter);
 
     expect(result).toHaveLength(0);
   });
@@ -64,6 +65,6 @@ describe('fetchActivities', () => {
 
     const filter: ActivityFilter = { userId: 'user1' };
 
-    await expect(fetchActivities({} as BelongClient, filter)).rejects.toThrow('Database error');
+    await expect(fetchActivities({} as SupabaseClient<Database>, filter)).rejects.toThrow('Database error');
   });
 });

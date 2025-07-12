@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { createCommunity } from '@/features/communities/api';
 
 import type {
-  CommunityData,
+  CommunityInput,
 } from '@/features/communities/types';
 
 /**
@@ -61,7 +61,7 @@ export function useCreateCommunity() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: async (data: CommunityData) => {
+    mutationFn: async (data: CommunityInput) => {
       // Create the community (auto-commits images internally)
       const result = await createCommunity(supabase, data);
       if (!result) {
@@ -70,24 +70,27 @@ export function useCreateCommunity() {
 
       return result;
     },
-    onSuccess: (newCommunityInfo) => {
+    onSuccess: (newCommunity) => {
       // Invalidate all communities queries
       queryClient.invalidateQueries({ queryKey: ['communities'] });
 
       // Also invalidate membership queries since organizer is auto-added as member
-      if (newCommunityInfo) {
+      if (newCommunity) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.memberships(newCommunityInfo.id),
+          queryKey: queryKeys.communities.memberships(newCommunity.id),
         });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.userMemberships(
-            newCommunityInfo.organizerId,
-          ),
+        // Get current user and invalidate their memberships
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.communities.userMemberships(user.id),
+            });
+          }
         });
 
         logger.info('🏘️ API: Successfully created community', {
-          id: newCommunityInfo.id,
-          name: newCommunityInfo.name,
+          id: newCommunity.id,
+          name: newCommunity.name,
         });
       }
     },

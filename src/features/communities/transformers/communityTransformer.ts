@@ -1,22 +1,21 @@
 import type {
-  CommunityData,
-  CommunityDetail,
-  CommunityInfo,
-  CommunityMembershipData,
+  Community,
+  CommunitySummary,
+  CommunityInput,
+  CommunityMembershipInput,
   CommunityBoundary,
   IsochroneBoundary,
-  CommunityMembershipInfo,
   CommunityType,
+  CommunityMembership,
 } from '../types';
-import { toDomainUser } from '../../users/transformers/userTransformer';
 import {
-  CommunityInsertDbData,
-  CommunityMembershipInsertDbData,
+  CommunityInsertRow,
+  CommunityMembershipInsertRow,
   CommunityMembershipRow,
   CommunityRow,
-  CommunityUpdateDbData,
-} from '../types/database';
-import { UserDetail } from '../../users';
+  CommunityRowWithRelations,
+  CommunityUpdateRow,
+} from '../types/communityRow';
 import {
   parsePostGisPoint,
   toPostGisPoint,
@@ -42,46 +41,16 @@ function boundaryForDatabase(boundary: CommunityBoundary): any {
 }
 
 /**
- * Transform database boundary format to domain format with camelCase field names
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function boundaryFromDatabase(dbBoundary: any): CommunityBoundary | undefined {
-  if (!dbBoundary || typeof dbBoundary !== 'object') {
-    return undefined;
-  }
-
-  if (dbBoundary.type === 'isochrone') {
-    return {
-      type: 'isochrone',
-      travelMode: dbBoundary.travelMode,
-      travelTimeMin: dbBoundary.travelTimeMin,
-      polygon: dbBoundary.polygon,
-      areaSqKm: dbBoundary.areaSqKm,
-    } as IsochroneBoundary;
-  }
-
-  return undefined;
-}
-
-/**
  * Transform a database community record to a domain community object
  */
 export function toDomainCommunity(
-  dbCommunity: CommunityRow & {
-    organizer: UserDetail;
-  },
-): CommunityDetail {
+  dbCommunity: CommunityRowWithRelations | CommunityRow,
+): Community {
   // Explicitly extract only the fields we need to avoid leaking database properties
-
-  // Check if organizer is already a User (has firstName) or needs to be transformed from ProfileRow
-  const organizer =
-    'firstName' in dbCommunity.organizer
-      ? dbCommunity.organizer
-      : toDomainUser(dbCommunity.organizer);
 
   return {
     id: dbCommunity.id,
-    organizer,
+    organizerId: dbCommunity.organizer_id,
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
@@ -100,14 +69,30 @@ export function toDomainCommunity(
 }
 
 /**
+ * Transform a database community record to a domain community summary object
+ */
+export function toDomainCommunitySummary(
+  dbCommunity: CommunityRow,
+): CommunitySummary {
+  return {
+    id: dbCommunity.id,
+    name: dbCommunity.name,
+    type: dbCommunity.type as CommunityType,
+    icon: dbCommunity.icon ?? undefined,
+    memberCount: dbCommunity.member_count,
+    createdAt: new Date(dbCommunity.created_at),
+    updatedAt: new Date(dbCommunity.updated_at),
+  };
+}
+
+/**
  * Transform a domain community object to a database community record
  */
-export function forDbInsert(
-  community: CommunityData & { organizerId: string },
-): CommunityInsertDbData {
+export function toCommunityInsertRow(
+  community: CommunityInput & { organizerId: string },
+): CommunityInsertRow {
   const {
     timeZone,
-    memberCount,
     boundary,
     center,
     centerName,
@@ -125,7 +110,7 @@ export function forDbInsert(
     organizer_id: organizerId,
     banner_image_url: bannerImageUrl,
     time_zone: timeZone,
-    member_count: memberCount,
+    member_count: 0, // Default for new communities
     center: toPostGisPoint(center),
     center_name: centerName,
     boundary: boundary ? boundaryForDatabase(boundary) : undefined,
@@ -133,10 +118,12 @@ export function forDbInsert(
   };
 }
 
-export function forDbUpdate(
-  community: Partial<CommunityData> & { id: string },
-): CommunityUpdateDbData {
-  const boundaryGeometry = community.boundary ? community.boundary.polygon : undefined;
+export function toCommunityUpdateRow(
+  community: Partial<CommunityInput> & { id: string },
+): CommunityUpdateRow {
+  const boundaryGeometry = community.boundary
+    ? community.boundary.polygon
+    : undefined;
 
   return {
     id: community.id,
@@ -160,56 +147,23 @@ export function forDbUpdate(
  */
 export function toDomainMembershipInfo(
   dbMembership: CommunityMembershipRow,
-): CommunityMembershipInfo {
-  const { joined_at, user_id, community_id, ...rest } = dbMembership;
-
+): CommunityMembership {
   return {
-    ...rest,
-    userId: user_id,
-    communityId: community_id,
-    joinedAt: new Date(joined_at),
+    userId: dbMembership.user_id,
+    communityId: dbMembership.community_id,
+    createdAt: new Date(dbMembership.created_at),
+    updatedAt: new Date(dbMembership.updated_at || dbMembership.created_at),
   };
 }
 
 /**
  * Transform a domain membership object to a database membership record for insert
  */
-export function forDbMembershipInsert(
-  membership: CommunityMembershipData,
-): CommunityMembershipInsertDbData {
+export function toCommunityMembershipInsertRow(
+  membership: CommunityMembershipInput,
+): CommunityMembershipInsertRow {
   return {
     user_id: membership.userId,
     community_id: membership.communityId,
-  };
-}
-
-/**
- * Transform a database community record to a CommunityInfo object (lightweight for lists)
- */
-export function toCommunityInfo(dbCommunity: CommunityRow): CommunityInfo {
-  // Parse boundary JSON
-  const boundary = dbCommunity.boundary
-    ? boundaryFromDatabase(
-        typeof dbCommunity.boundary === 'string'
-          ? JSON.parse(dbCommunity.boundary)
-          : dbCommunity.boundary,
-      )
-    : undefined;
-
-  return {
-    id: dbCommunity.id,
-    name: dbCommunity.name,
-    description: dbCommunity.description ?? undefined,
-    icon: dbCommunity.icon ?? undefined,
-    bannerImageUrl: dbCommunity.banner_image_url ?? undefined,
-    type: dbCommunity.type as CommunityType,
-    center: parsePostGisPoint(dbCommunity.center),
-    centerName: dbCommunity.center_name ?? undefined,
-    memberCount: dbCommunity.member_count,
-    createdAt: new Date(dbCommunity.created_at),
-    updatedAt: new Date(dbCommunity.updated_at),
-    organizerId: dbCommunity.organizer_id,
-    timeZone: dbCommunity.time_zone,
-    boundary,
   };
 }

@@ -1,22 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { 
-  forDbInsert, 
-  forDbUpdate,
-  forDbMembershipInsert, 
+import {
+  toCommunityInsertRow,
+  toCommunityUpdateRow,
+  toCommunityMembershipInsertRow,
   toDomainMembershipInfo,
   toDomainCommunity,
-  toCommunityInfo
 } from '../../transformers/communityTransformer';
-import { createFakeCommunityData, createFakeDbCommunityWithOrganizer, createFakeDbCommunity } from '../../__fakes__';
+import {
+  createFakeCommunityInput,
+  createFakeDbCommunityWithOrganizer,
+} from '../../__fakes__';
 
 describe('communityTransformer', () => {
-  describe('forDbInsert', () => {
+  describe('toCommunityInsertRow', () => {
     it('should transform community data with boundary but not include center in boundary JSON', () => {
-      const communityData = createFakeCommunityData();
+      const communityData = createFakeCommunityInput();
       const organizerId = faker.string.uuid();
 
-      const result = forDbInsert({ ...communityData, organizerId });
+      const result = toCommunityInsertRow({ ...communityData, organizerId });
 
       // Should have boundary JSON without center
       expect(result.boundary).toEqual({
@@ -40,12 +42,12 @@ describe('communityTransformer', () => {
     });
 
     it('should work with null boundary', () => {
-      const communityData = createFakeCommunityData({
+      const communityData = createFakeCommunityInput({
         boundary: undefined,
       });
       const organizerId = faker.string.uuid();
 
-      const result = forDbInsert({ ...communityData, organizerId });
+      const result = toCommunityInsertRow({ ...communityData, organizerId });
 
       expect(result.boundary).toBeUndefined();
       expect(result.boundary_geometry).toBeUndefined();
@@ -53,10 +55,10 @@ describe('communityTransformer', () => {
     });
 
     it('should properly transform organizer ID to snake_case', () => {
-      const communityData = createFakeCommunityData();
+      const communityData = createFakeCommunityInput();
       const organizerId = faker.string.uuid();
 
-      const result = forDbInsert({ ...communityData, organizerId });
+      const result = toCommunityInsertRow({ ...communityData, organizerId });
 
       expect(result.organizer_id).toBe(organizerId);
       expect(result).not.toHaveProperty('organizerId');
@@ -64,31 +66,33 @@ describe('communityTransformer', () => {
 
     it('should transform bannerImageUrl to banner_image_url', () => {
       const bannerImageUrl = faker.image.url();
-      const communityData = createFakeCommunityData({ bannerImageUrl });
+      const communityData = createFakeCommunityInput({ bannerImageUrl });
       const organizerId = faker.string.uuid();
 
-      const result = forDbInsert({ ...communityData, organizerId });
+      const result = toCommunityInsertRow({ ...communityData, organizerId });
 
       expect(result.banner_image_url).toBe(bannerImageUrl);
     });
 
     it('should handle undefined bannerImageUrl', () => {
-      const communityData = createFakeCommunityData({ bannerImageUrl: undefined });
+      const communityData = createFakeCommunityInput({
+        bannerImageUrl: undefined,
+      });
       const organizerId = faker.string.uuid();
 
-      const result = forDbInsert({ ...communityData, organizerId });
+      const result = toCommunityInsertRow({ ...communityData, organizerId });
 
       expect(result.banner_image_url).toBeUndefined();
     });
   });
 
-  describe('forDbUpdate', () => {
+  describe('toCommunityUpdateRow', () => {
     it('should transform bannerImageUrl to banner_image_url', () => {
       const bannerImageUrl = faker.image.url();
       const communityId = faker.string.uuid();
       const updateData = { id: communityId, bannerImageUrl };
 
-      const result = forDbUpdate(updateData);
+      const result = toCommunityUpdateRow(updateData);
 
       expect(result.banner_image_url).toBe(bannerImageUrl);
     });
@@ -97,19 +101,19 @@ describe('communityTransformer', () => {
       const communityId = faker.string.uuid();
       const updateData = { id: communityId, bannerImageUrl: undefined };
 
-      const result = forDbUpdate(updateData);
+      const result = toCommunityUpdateRow(updateData);
 
       expect(result.banner_image_url).toBeUndefined();
     });
 
     it('should include boundary_geometry when boundary is provided', () => {
-      const communityData = createFakeCommunityData();
-      const updateData = { 
-        id: faker.string.uuid(), 
-        boundary: communityData.boundary 
+      const communityData = createFakeCommunityInput();
+      const updateData = {
+        id: faker.string.uuid(),
+        boundary: communityData.boundary,
       };
 
-      const result = forDbUpdate(updateData);
+      const result = toCommunityUpdateRow(updateData);
 
       // Should have boundary_geometry when boundary is provided
       expect(result.boundary_geometry).toBeDefined();
@@ -120,7 +124,7 @@ describe('communityTransformer', () => {
       const communityId = faker.string.uuid();
       const updateData = { id: communityId, boundary: undefined };
 
-      const result = forDbUpdate(updateData);
+      const result = toCommunityUpdateRow(updateData);
 
       expect(result.boundary).toBeUndefined();
       expect(result.boundary_geometry).toBeUndefined();
@@ -150,37 +154,14 @@ describe('communityTransformer', () => {
     });
   });
 
-  describe('toCommunityInfo', () => {
-    it('should transform banner_image_url to bannerImageUrl', () => {
-      const bannerImageUrl = faker.image.url();
-      const dbCommunity = createFakeDbCommunity({
-        banner_image_url: bannerImageUrl,
-      });
-
-      const result = toCommunityInfo(dbCommunity);
-
-      expect(result.bannerImageUrl).toBe(bannerImageUrl);
-    });
-
-    it('should handle null banner_image_url', () => {
-      const dbCommunity = createFakeDbCommunity({
-        banner_image_url: null,
-      });
-
-      const result = toCommunityInfo(dbCommunity);
-
-      expect(result.bannerImageUrl).toBeUndefined();
-    });
-  });
-
-  describe('forDbMembershipInsert', () => {
+  describe('toCommunityMembershipInsertRow', () => {
     it('should transform domain membership data to database format', () => {
       const membershipData = {
         userId: faker.string.uuid(),
         communityId: faker.string.uuid(),
       };
 
-      const result = forDbMembershipInsert(membershipData);
+      const result = toCommunityMembershipInsertRow(membershipData);
 
       expect(result).toEqual({
         user_id: membershipData.userId,
@@ -195,6 +176,8 @@ describe('communityTransformer', () => {
         user_id: faker.string.uuid(),
         community_id: faker.string.uuid(),
         joined_at: '2023-01-01T00:00:00Z',
+        created_at: '2023-01-01T00:00:00Z',
+        updated_at: '2023-01-01T00:00:00Z',
       };
 
       const result = toDomainMembershipInfo(dbMembership);
@@ -202,7 +185,8 @@ describe('communityTransformer', () => {
       expect(result).toEqual({
         userId: dbMembership.user_id,
         communityId: dbMembership.community_id,
-        joinedAt: new Date('2023-01-01T00:00:00Z'),
+        createdAt: new Date('2023-01-01T00:00:00Z'),
+        updatedAt: new Date('2023-01-01T00:00:00Z'),
       });
     });
   });

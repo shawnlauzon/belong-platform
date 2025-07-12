@@ -3,7 +3,7 @@ import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { createShoutout } from '../api';
 import { useCurrentUser } from '../../auth';
-import type { ShoutoutData, ShoutoutInfo } from '../types';
+import type { ShoutoutInput, Shoutout } from '../types';
 
 /**
  * Hook for creating new shoutouts.
@@ -19,8 +19,8 @@ import type { ShoutoutData, ShoutoutInfo } from '../types';
  * ```tsx
  * function CreateShoutoutForm() {
  *   const createShoutout = useCreateShoutout();
- *   
- *   const handleSubmit = useCallback(async (formData: ShoutoutData) => {
+ *
+ *   const handleSubmit = useCallback(async (formData: ShoutoutInput) => {
  *     try {
  *       const newShoutout = await createShoutout.mutateAsync(formData);
  *       console.log('Created shoutout:', newShoutout.id);
@@ -60,18 +60,18 @@ export function useCreateShoutout() {
   const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: (data: ShoutoutData) => {
+    mutationFn: (data: ShoutoutInput) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { data });
       return createShoutout(supabase, data);
     },
-    onSuccess: (newShoutout: ShoutoutInfo) => {
+    onSuccess: (newShoutout: Shoutout) => {
       // Invalidate all shoutout queries to refetch lists
       queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
 
       // Set the new shoutout in cache for immediate access
       queryClient.setQueryData(
         queryKeys.shoutouts.byId(newShoutout.id),
-        newShoutout
+        newShoutout,
       );
 
       // Invalidate all user data (including activities) using hierarchical invalidation

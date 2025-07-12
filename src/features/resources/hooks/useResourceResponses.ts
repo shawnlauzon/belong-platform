@@ -3,12 +3,12 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchResourceResponses } from '../api';
 
-import type { ResourceResponseInfo, ResourceResponseStatus } from '../types';
+import type { ResourceResponse } from '../types';
 
 export interface UseResourceResponsesParams {
   resourceId?: string;
   userId?: string;
-  status?: ResourceResponseStatus;
+  status?: 'accepted' | 'interested' | 'declined';
   enabled?: boolean;
 }
 
@@ -17,7 +17,7 @@ export interface UseResourceResponsesParams {
  *
  * @param params - Parameters for filtering responses
  * @param params.resourceId - Filter by specific resource ID
- * @param params.userId - Filter by specific user ID  
+ * @param params.userId - Filter by specific user ID
  * @param params.status - Filter by response status
  * @param params.enabled - Whether the query should be enabled (default: true)
  *
@@ -73,12 +73,12 @@ export function useResourceResponses(params: UseResourceResponsesParams = {}) {
 
   return useQuery({
     queryKey: [
-      'resource_responses', 
+      'resource_responses',
       ...(resourceId ? ['by_resource', resourceId] : []),
       ...(userId ? ['by_user', userId] : []),
-      ...(status ? ['status', status] : [])
+      ...(status ? ['status', status] : []),
     ],
-    queryFn: async (): Promise<ResourceResponseInfo[]> => {
+    queryFn: async (): Promise<ResourceResponse[]> => {
       logger.info('📚 API: Fetching resource responses', {
         resourceId,
         userId,

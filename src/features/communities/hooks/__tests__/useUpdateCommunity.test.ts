@@ -10,9 +10,6 @@ vi.mock('@/features/communities/api/updateCommunity', () => ({
   updateCommunity: vi.fn(),
 }));
 
-vi.mock('@/features/communities/api/fetchAndCacheCommunity', () => ({
-  fetchAndCacheCommunity: vi.fn(),
-}));
 
 vi.mock('@/features/communities/api/fetchCommunityById', () => ({
   fetchCommunityById: vi.fn(),
@@ -57,11 +54,11 @@ describe('useUpdateCommunity caching behavior', () => {
 
     // Mock the API functions
     const { updateCommunity } = await import('@/features/communities/api/updateCommunity');
-    const { fetchAndCacheCommunity } = await import('@/features/communities/api/fetchAndCacheCommunity');
+    const { fetchCommunityById } = await import('@/features/communities/api/fetchCommunityById');
     
     // Setup mock behavior to simulate real caching issue
     // First call returns original community and caches it
-    vi.mocked(fetchAndCacheCommunity).mockResolvedValueOnce(originalCommunity);
+    vi.mocked(fetchCommunityById).mockResolvedValueOnce(originalCommunity);
     vi.mocked(updateCommunity).mockResolvedValueOnce(updatedCommunity);
 
     const { wrapper, queryClient } = createTestWrapper();
@@ -78,7 +75,7 @@ describe('useUpdateCommunity caching behavior', () => {
     const { result: updateResult } = renderHook(() => useUpdateCommunity(), { wrapper });
     
     // For the second call, mock should return updated data but cache might still have old data
-    vi.mocked(fetchAndCacheCommunity).mockResolvedValueOnce(updatedCommunity);
+    vi.mocked(fetchCommunityById).mockResolvedValueOnce(updatedCommunity);
     
     // Trigger the update
     await updateResult.current.mutateAsync({
@@ -92,7 +89,7 @@ describe('useUpdateCommunity caching behavior', () => {
 
     // Verify that fetchAndCacheCommunity was called again after invalidation
     // The first call was for the initial fetch, the second should be after invalidation
-    expect(vi.mocked(fetchAndCacheCommunity)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetchCommunityById)).toHaveBeenCalledTimes(2);
 
     // Now fetch the community again - it should return the updated data
     const { result: freshCommunityResult } = renderHook(() => useCommunity(communityId), { wrapper });

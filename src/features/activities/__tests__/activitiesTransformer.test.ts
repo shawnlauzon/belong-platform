@@ -59,6 +59,7 @@ describe('activitiesTransformer', () => {
           event: {
             id: 'urgent_event',
             title: 'Urgent Event',
+            description: 'Urgent event description',
             location_name: 'Office',
             community_id: 'community1',
             start_date_time: urgentEventTime.toISOString(),
@@ -74,6 +75,7 @@ describe('activitiesTransformer', () => {
           event: {
             id: 'soon_event',
             title: 'Soon Event',
+            description: 'Soon event description',
             location_name: 'Park',
             community_id: 'community1',
             start_date_time: soonEventTime.toISOString(),
@@ -89,6 +91,7 @@ describe('activitiesTransformer', () => {
           event: {
             id: 'normal_event',
             title: 'Normal Event',
+            description: 'Normal event description',
             location_name: 'Library',
             community_id: 'community1',
             start_date_time: normalEventTime.toISOString(),
@@ -115,6 +118,7 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'pending',
           created_at: recentDate.toISOString(),
+          updated_at: recentDate.toISOString(),
           resource: {
             id: 'resource1',
             title: 'Help with gardening',
@@ -149,6 +153,7 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'accepted',
           created_at: '2024-01-10T10:00:00Z',
+          updated_at: '2024-01-10T10:00:00Z',
           resource: {
             id: 'resource1',
             title: 'Bike repair',
@@ -196,6 +201,7 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'pending',
           created_at: oldResponse.toISOString(),
+          updated_at: oldResponse.toISOString(),
           resource: {
             id: 'old_resource',
             title: 'Old Request',
@@ -210,6 +216,7 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'pending',
           created_at: mediumResponse.toISOString(),
+          updated_at: mediumResponse.toISOString(),
           resource: {
             id: 'medium_resource',
             title: 'Medium Request',
@@ -224,6 +231,7 @@ describe('activitiesTransformer', () => {
           user_id: 'user1',
           status: 'pending',
           created_at: recentResponse.toISOString(),
+          updated_at: recentResponse.toISOString(),
           resource: {
             id: 'recent_resource',
             title: 'Recent Request',
@@ -252,6 +260,7 @@ describe('activitiesTransformer', () => {
           resource_id: 'resource1',
           user_id: 'user1',
           status: 'completed',
+          created_at: recentDate.toISOString(),
           updated_at: recentDate.toISOString(),
           resource: {
             id: 'resource1',

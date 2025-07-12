@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useUpdateResource } from '../../hooks/useUpdateResource';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeResourceInfo } from '../../__fakes__';
+import { createFakeResource } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
@@ -31,7 +31,7 @@ describe('useUpdateResource', () => {
 
   it('should return ResourceInfo after update with new parameter structure', async () => {
     // Arrange: Create test data using factories
-    const mockUpdatedResourceInfo = createFakeResourceInfo();
+    const mockUpdatedResourceInfo = createFakeResource();
     const updateData: Partial<ResourceData> & { id: string } = {
       id: mockUpdatedResourceInfo.id,
       title: 'Updated Title',
@@ -48,13 +48,12 @@ describe('useUpdateResource', () => {
     expect(updatedResourceInfo).toBeDefined();
     expect(updatedResourceInfo).toEqual(mockUpdatedResourceInfo);
 
-    // Should have ID references (ResourceInfo pattern)
+    // Should have ID references and composed objects (Resource type)
     expect(updatedResourceInfo).toHaveProperty('ownerId');
     expect(updatedResourceInfo).toHaveProperty('communityId');
 
-    // Should NOT have composed objects (these are only in Resource type)
-    expect(updatedResourceInfo).not.toHaveProperty('owner');
-    expect(updatedResourceInfo).not.toHaveProperty('community');
+    // Should HAVE composed objects (Resource type includes relations)
+    expect(updatedResourceInfo).toHaveProperty('owner');
 
     // Verify API was called with correct parameters (new single parameter structure)
     expect(mockUpdateResource).toHaveBeenCalledWith(mockSupabase, updateData);

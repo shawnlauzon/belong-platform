@@ -69,12 +69,56 @@ Benefits:
 - Clear separation of concerns
 - Better testability
 
-### 4. Type Safety Requirements
+### 4. Type System
 
-- No `any` types allowed
-- Use discriminated unions for complex states
-- Leverage generated database types
-- All functions must have explicit return types
+Each feature follows a consistent 4-type pattern:
+
+#### Entity Types
+
+1. **Entity** (e.g., `Community`) - Full entity with all relations loaded
+   - Combines `EntityInput` and `EntitySummary` with persistence fields
+   - Used when displaying complete entity details
+   - Example: `Community = IsPersisted<CommunityInput & CommunitySummary>`
+
+2. **PartialEntity** (e.g., `PartialCommunity`) - Embedded reference type
+   - Contains only `EntitySummary` with persistence fields
+   - Used when entity is referenced by other entities
+   - Example: `PartialCommunity = IsPersisted<CommunitySummary>`
+
+3. **EntityInput** (e.g., `CommunityInput`) - User input for creates/updates
+   - Contains only fields users can modify
+   - Excludes system fields, relations, and computed fields
+   - Example: `CommunityInput = Omit<CommunitySummary, 'memberCount' | 'organizerId' | 'organizer'> & {...}`
+
+4. **EntitySummary** (e.g., `CommunitySummary`) - Essential fields including relations
+   - Contains core fields, embedded relations (PartialUser, etc.), and computed fields
+   - Internal type, not exported
+   - Example: Contains `name`, `organizer: PartialUser`, `memberCount`, etc.
+
+#### Special Type Variants
+
+- **EntityDetail** - Alias for Entity with additional loaded relations
+  - Example: `EventDetail = Event & { attendees?: PartialUser[] }`
+  
+- **EntityInfo** - Lightweight version with just IDs instead of embedded objects
+  - Used for list operations where relations aren't needed
+  - Example: `CommunityInfo` has `organizerId` instead of `organizer: PartialUser`
+
+#### Type Rules
+
+- **No optional foreign keys** in Input types - always defaults to current user
+- **Computed fields** (like `memberCount`, `attendeeCount`) belong in Summary types
+- **System fields** (`id`, `createdAt`, `updatedAt`) come from `IsPersisted<T>`
+- **Connector entities** (like `EventAttendance`) only contain IDs, not embedded entities
+- **No `any` types** - use proper types or type assertions
+- **Dynamic data** (trust levels, online status) should use separate queries
+
+#### Cache Invalidation Strategy
+
+- **Explicit updates** (user/community edits): Clear entire cache with `queryClient.invalidateQueries()`
+- **Discovered changes**: Accept eventual consistency
+- **Reasoning**: User data (names, avatars) and community data are embedded throughout the cache
+- **Trade-off**: Simple invalidation over complex dependency tracking
 
 ## Implementation Patterns
 
@@ -123,7 +167,7 @@ export function useCreateCommunity() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: (data: CommunityData) => createCommunity(supabase, data),
+    mutationFn: (data: CommunityInput) => createCommunity(supabase, data),
     onSuccess: (newCommunity) => {
       queryClient.invalidateQueries({ queryKey: ['communities'] });
       queryClient.setQueryData(

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../../../test-utils';
-import type { ActivityInfo, ActivityFilter } from '../types';
+import type { ActivitySummary, ActivityFilter } from '../types';
 
 // Mock the API function
 const mockFetchActivities = vi.fn();
@@ -33,7 +33,7 @@ describe('useActivities', () => {
     vi.clearAllMocks();
   });
 
-  const mockActivities: ActivityInfo[] = [
+  const mockActivities: ActivitySummary[] = [
     {
       id: 'event_upcoming_event1',
       type: 'event_upcoming',
@@ -153,7 +153,7 @@ describe('useActivityCounts', () => {
     vi.clearAllMocks();
   });
 
-  const mockActivitiesForCounts: ActivityInfo[] = [
+  const mockActivitiesForCounts: ActivitySummary[] = [
     // Needs attention (urgent)
     {
       id: 'event_upcoming_urgent',

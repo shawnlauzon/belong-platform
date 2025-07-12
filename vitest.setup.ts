@@ -67,20 +67,20 @@ vi.mock('./src/shared', async (importOriginal) => {
           ['resources', 'filtered', filter] as const,
       },
 
-      // Events
-      events: {
-        all: ['events'] as const,
-        byId: (id: string) => ['event', id] as const,
+      // Gatherings
+      gatherings: {
+        all: ['gatherings'] as const,
+        byId: (id: string) => ['gathering', id] as const,
         byCommunity: (communityId: string) =>
-          ['events', 'community', communityId] as const,
+          ['gatherings', 'community', communityId] as const,
         byOrganizer: (organizerId: string) =>
-          ['events', 'organizer', organizerId] as const,
-        attendees: (eventId: string) =>
-          ['event', eventId, 'attendees'] as const,
+          ['gatherings', 'organizer', organizerId] as const,
+        attendees: (gatheringId: string) =>
+          ['gathering', gatheringId, 'attendees'] as const,
         userAttendances: (userId: string) =>
           ['user', userId, 'attendances'] as const,
         filtered: (filter: Record<string, any>) =>
-          ['events', 'filtered', filter] as const,
+          ['gatherings', 'filtered', filter] as const,
       },
 
       // Shoutouts
@@ -193,19 +193,19 @@ vi.mock('./src/features/auth', async (importOriginal) => {
   };
 });
 
-// Mock events feature hooks
-vi.mock('./src/features/events', async (importOriginal) => {
+// Mock gatherings feature hooks
+vi.mock('./src/features/gatherings', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual, // Keep all real exports (types, etc.)
     // Override only the hooks
-    useEvents: vi.fn(),
-    useEvent: vi.fn(),
-    useCreateEvent: vi.fn(),
-    useUpdateEvent: vi.fn(),
-    useDeleteEvent: vi.fn(),
-    useJoinEvent: vi.fn(),
-    useLeaveEvent: vi.fn(),
+    useGatherings: vi.fn(),
+    useGathering: vi.fn(),
+    useCreateGathering: vi.fn(),
+    useUpdateGathering: vi.fn(),
+    useDeleteGathering: vi.fn(),
+    useJoinGathering: vi.fn(),
+    useLeaveGathering: vi.fn(),
   };
 });
 

@@ -1,15 +1,15 @@
 import { createCommunity } from '@/features/communities/api';
 import { signUp } from '@/features/auth/api';
-import { createFakeCommunityData } from '@/features/communities/__fakes__';
-import { createFakeUserData } from '@/features/users/__fakes__';
+import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import { createResource } from '@/features/resources/api';
-import { createFakeResourceData } from '@/features/resources/__fakes__';
-import { createEvent } from '@/features/events/api';
-import { createFakeEventData } from '@/features/events/__fakes__';
-import { createFakeDbShoutout } from '@/features/shoutouts/__fakes__';
+import { createFakeResourceInput } from '@/features/resources/__fakes__';
+import { createGathering } from '@/features/gatherings/api';
+import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
+import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
+import { Shoutout, Gathering, createShoutout } from '@/features';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -35,7 +35,7 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
 }
 
 export async function createTestCommunity(supabase: SupabaseClient<Database>) {
-  const data = createFakeCommunityData({
+  const data = createFakeCommunityInput({
     name: `${TEST_PREFIX}Community_${Date.now()}`,
     description: `${TEST_PREFIX} test community`,
   });
@@ -48,13 +48,11 @@ export async function createTestCommunity(supabase: SupabaseClient<Database>) {
 
 export async function createTestResource(
   supabase: SupabaseClient<Database>,
-  ownerId: string,
   communityId: string,
 ) {
-  const data = createFakeResourceData({
+  const data = createFakeResourceInput({
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
     description: `${TEST_PREFIX} test resource`,
-    ownerId,
     communityId,
   });
 
@@ -64,55 +62,51 @@ export async function createTestResource(
   return resource;
 }
 
-export async function createTestEvent(
-  supabase: SupabaseClient<Database>,
-  organizerId: string,
-  communityId: string,
-) {
-  const data = createFakeEventData({
-    title: `${TEST_PREFIX}Event_${Date.now()}`,
-    description: `${TEST_PREFIX} test event`,
-    organizerId,
+export async function createTestGathering({
+  supabase,
+  organizerId,
+  communityId,
+}: {
+  supabase: SupabaseClient<Database>;
+  organizerId: string;
+  communityId: string;
+}): Promise<Gathering> {
+  const data = createFakeGatheringInput({
+    title: `${TEST_PREFIX}Gathering_${Date.now()}`,
+    description: `${TEST_PREFIX} test gathering`,
     communityId,
+    organizerId,
     startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
     endDateTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
     imageUrls: undefined, // Don't generate random banner URLs
   });
 
-  const event = await createEvent(supabase, data);
-  if (!event) throw new Error('Failed to create event');
+  const gathering = await createGathering(supabase, data);
+  if (!gathering) throw new Error('Failed to create gathering');
 
-  return event;
+  return gathering;
 }
 
-export async function createTestShoutout(
-  supabase: SupabaseClient<Database>,
-  fromUserId: string,
-  toUserId: string,
-  resourceId: string,
-  communityId: string,
-) {
-  const shoutoutData = createFakeDbShoutout({
-    from_user_id: fromUserId,
-    to_user_id: toUserId,
-    resource_id: resourceId,
-    community_id: communityId,
+export async function createTestShoutout({
+  supabase,
+  toUserId,
+  resourceId,
+  communityId,
+}: {
+  supabase: SupabaseClient<Database>;
+  toUserId: string;
+  resourceId: string;
+  communityId: string;
+}): Promise<Shoutout> {
+  const shoutoutData = createFakeShoutoutInput({
+    toUserId,
+    resourceId,
+    communityId,
     message: `${TEST_PREFIX}Thank you for sharing this resource!`,
   });
 
-  const { data, error } = await supabase
-    .from('shoutouts')
-    .insert([shoutoutData])
-    .select()
-    .single();
+  const shoutout = await createShoutout(supabase, shoutoutData);
+  if (!shoutout) throw new Error('Failed to create shoutout');
 
-  if (error) {
-    throw new Error(`Failed to create test shoutout: ${error.message}`);
-  }
-
-  if (!data) {
-    throw new Error('Failed to create test shoutout: No data returned');
-  }
-
-  return data;
+  return shoutout;
 }

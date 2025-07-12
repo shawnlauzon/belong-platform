@@ -3,7 +3,7 @@ import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateResource } from '@/features/resources/api';
 
-import type { ResourceData, ResourceInfo } from '@/features/resources/types';
+import type { ResourceInput, Resource } from '@/features/resources/types';
 
 /**
  * Hook for updating an existing resource.
@@ -69,15 +69,15 @@ export function useUpdateResource() {
 
   const mutation = useMutation({
     mutationFn: async (
-      updateData: Partial<ResourceData> & { id: string }
-    ): Promise<ResourceInfo> => {
+      updateData: Partial<ResourceInput> & { id: string }
+    ): Promise<Resource> => {
       const result = await updateResource(supabase, updateData);
       if (!result) {
         throw new Error('Failed to update resource');
       }
       return result;
     },
-    onSuccess: (updatedResource: ResourceInfo) => {
+    onSuccess: (updatedResource: Resource) => {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 

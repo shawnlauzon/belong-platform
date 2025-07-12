@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ShoutoutRow } from '../types/database';
-import type { ShoutoutData } from '../types';
+import type { ShoutoutInput } from '../types';
 
 export function createFakeDbShoutout(
   overrides: Partial<ShoutoutRow> = {},
@@ -24,9 +24,9 @@ export function createFakeDbShoutout(
   };
 }
 
-export function createFakeShoutoutData(
-  overrides: Partial<ShoutoutData> = {},
-): ShoutoutData {
+export function createFakeShoutoutInput(
+  overrides: Partial<ShoutoutInput> = {},
+): ShoutoutInput {
   return {
     toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),

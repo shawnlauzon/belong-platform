@@ -4,33 +4,33 @@ import {
   createTestUser,
   createTestCommunity,
   createTestResource,
-  createTestEvent,
+  createTestGathering,
   createTestShoutout,
-  TEST_PREFIX,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchFeed } from '@/features/feed/api';
 import { signIn } from '@/features/auth/api';
-import { joinCommunity } from '@/features/communities/api';
+import { joinCommunity, leaveCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { UserDetail } from '@/features/users/types';
-import type { CommunityInfo } from '@/features/communities/types';
-import type { ResourceInfo } from '@/features/resources/types';
-import type { EventInfo } from '@/features/events/types';
+import type { User } from '@/features/users/types';
+import type { Community } from '@/features/communities/types';
+import type { Resource } from '@/features/resources/types';
+import type { Gathering } from '@/features/gatherings/types';
+import type { Shoutout } from '@/features/shoutouts/types';
 
 describe('Feed API - Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let testUser2: UserDetail;
-  let testCommunity1: CommunityInfo;
-  let testCommunity2: CommunityInfo;
-  let testResource1: ResourceInfo;
-  let testResource2: ResourceInfo;
-  let testEvent1: EventInfo;
-  let testEvent2: EventInfo;
-  let testShoutout1: any;
-  let testShoutout2: any;
+  let testUser: User;
+  let testUser2: User;
+  let testCommunity1: Community;
+  let testCommunity2: Community;
+  let testResource1: Resource;
+  let testResource2: Resource;
+  let testGathering1: Gathering;
+  let testGathering2: Gathering;
+  let testShoutout1: Shoutout;
+  let testShoutout2: Shoutout;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -47,48 +47,38 @@ describe('Feed API - Integration Tests', () => {
     testCommunity2 = await createTestCommunity(supabase);
 
     // Create resources in both communities
-    testResource1 = await createTestResource(
-      supabase,
-      testUser.id,
-      testCommunity1.id,
-    );
-    testResource2 = await createTestResource(
-      supabase,
-      testUser.id,
-      testCommunity2.id,
-    );
+    testResource1 = await createTestResource(supabase, testCommunity1.id);
+    testResource2 = await createTestResource(supabase, testCommunity2.id);
 
-    // Create events in both communities
-    testEvent1 = await createTestEvent(
+    // Create gatherings in both communities
+    testGathering1 = await createTestGathering({
       supabase,
-      testUser.id,
-      testCommunity1.id,
-    );
-    testEvent2 = await createTestEvent(
+      organizerId: testUser.id,
+      communityId: testCommunity1.id,
+    });
+    testGathering2 = await createTestGathering({
       supabase,
-      testUser.id,
-      testCommunity2.id,
-    );
+      organizerId: testUser.id,
+      communityId: testCommunity2.id,
+    });
 
     // Sign in as testUser2 to create shoutouts
     await signIn(supabase, testUser2.email, 'TestPass123!');
-    
+
     // Create shoutouts for the resources (testUser2 thanking testUser)
-    testShoutout1 = await createTestShoutout(
+    testShoutout1 = await createTestShoutout({
       supabase,
-      testUser2.id,
-      testUser.id,
-      testResource1.id,
-      testCommunity1.id,
-    );
-    testShoutout2 = await createTestShoutout(
+      toUserId: testUser.id,
+      resourceId: testResource1.id,
+      communityId: testCommunity1.id,
+    });
+    testShoutout2 = await createTestShoutout({
       supabase,
-      testUser2.id,
-      testUser.id,
-      testResource2.id,
-      testCommunity2.id,
-    );
-    
+      toUserId: testUser.id,
+      resourceId: testResource2.id,
+      communityId: testCommunity2.id,
+    });
+
     // Sign back in as testUser for the tests
     await signIn(supabase, testUser.email, 'TestPass123!');
   });
@@ -109,32 +99,52 @@ describe('Feed API - Integration Tests', () => {
       expect(Array.isArray(feed.items)).toBe(true);
       expect(feed.items.length).toBeGreaterThan(0);
 
-      // Verify feed contains resources, events, and shoutouts from user's communities
-      const resourceItems = feed.items.filter((item) => item.type === 'resource');
-      const eventItems = feed.items.filter((item) => item.type === 'event');
-      const shoutoutItems = feed.items.filter((item) => item.type === 'shoutout');
+      // Verify feed contains resources, gatherings, and shoutouts from user's communities
+      const resourceItems = feed.items.filter(
+        (item) => item.type === 'resource',
+      );
+      const gatheringItems = feed.items.filter(
+        (item) => item.type === 'gathering',
+      );
+      const shoutoutItems = feed.items.filter(
+        (item) => item.type === 'shoutout',
+      );
 
       expect(resourceItems.length).toBeGreaterThan(0);
-      expect(eventItems.length).toBeGreaterThan(0);
+      expect(gatheringItems.length).toBeGreaterThan(0);
       expect(shoutoutItems.length).toBeGreaterThan(0);
 
       // Verify our test resources are included
-      expect(resourceItems.some((item) => item.data.id === testResource1.id)).toBe(true);
-      expect(resourceItems.some((item) => item.data.id === testResource2.id)).toBe(true);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource1.id),
+      ).toBe(true);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource2.id),
+      ).toBe(true);
 
-      // Verify our test events are included
-      expect(eventItems.some((item) => item.data.id === testEvent1.id)).toBe(true);
-      expect(eventItems.some((item) => item.data.id === testEvent2.id)).toBe(true);
+      // Verify our test gatherings are included
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering1.id),
+      ).toBe(true);
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering2.id),
+      ).toBe(true);
 
       // Verify our test shoutouts are included
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout1.id)).toBe(true);
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout2.id)).toBe(true);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout1.id),
+      ).toBe(true);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout2.id),
+      ).toBe(true);
 
       // Verify items are sorted by createdAt (newest first)
       for (let i = 0; i < feed.items.length - 1; i++) {
         const currentDate = new Date(feed.items[i].data.createdAt);
         const nextDate = new Date(feed.items[i + 1].data.createdAt);
-        expect(currentDate.getTime()).toBeGreaterThanOrEqual(nextDate.getTime());
+        expect(currentDate.getTime()).toBeGreaterThanOrEqual(
+          nextDate.getTime(),
+        );
       }
     });
 
@@ -154,16 +164,8 @@ describe('Feed API - Integration Tests', () => {
     it('filters content based on community membership', async () => {
       // Sign in as testUser2 and join only community1
       await signIn(supabase, testUser2.email, 'TestPass123!');
-      
-      // Try to join community, ignore error if already a member
-      try {
-        await joinCommunity(supabase, testCommunity1.id);
-      } catch (error: any) {
-        // Ignore duplicate key error (already a member)
-        if (error.code !== '23505') {
-          throw error;
-        }
-      }
+
+      await joinCommunity(supabase, testCommunity1.id);
 
       const feed = await fetchFeed(supabase);
 
@@ -173,24 +175,45 @@ describe('Feed API - Integration Tests', () => {
       expect(feed.items.length).toBeGreaterThan(0);
 
       // Verify feed only contains content from community1
-      const resourceItems = feed.items.filter((item) => item.type === 'resource');
-      const eventItems = feed.items.filter((item) => item.type === 'event');
-      const shoutoutItems = feed.items.filter((item) => item.type === 'shoutout');
+      const resourceItems = feed.items.filter(
+        (item) => item.type === 'resource',
+      );
+      const gatheringItems = feed.items.filter(
+        (item) => item.type === 'gathering',
+      );
+      const shoutoutItems = feed.items.filter(
+        (item) => item.type === 'shoutout',
+      );
 
       // Should contain content from community1
-      expect(resourceItems.some((item) => item.data.id === testResource1.id)).toBe(true);
-      expect(eventItems.some((item) => item.data.id === testEvent1.id)).toBe(true);
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout1.id)).toBe(true);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource1.id),
+      ).toBe(true);
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering1.id),
+      ).toBe(true);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout1.id),
+      ).toBe(true);
 
       // Should NOT contain content from community2 (not a member)
-      expect(resourceItems.some((item) => item.data.id === testResource2.id)).toBe(false);
-      expect(eventItems.some((item) => item.data.id === testEvent2.id)).toBe(false);
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout2.id)).toBe(false);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource2.id),
+      ).toBe(false);
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering2.id),
+      ).toBe(false);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout2.id),
+      ).toBe(false);
 
       // Verify all items are from community1
       feed.items.forEach((item) => {
         expect(item.data.communityId).toBe(testCommunity1.id);
       });
+
+      // Clean up: leave the community
+      await leaveCommunity(supabase, testCommunity1.id);
     });
 
     it('returns empty feed for unauthenticated user', async () => {
@@ -212,25 +235,9 @@ describe('Feed API - Integration Tests', () => {
     it('aggregates content from multiple communities correctly', async () => {
       // Sign in as testUser2 and join both communities
       await signIn(supabase, testUser2.email, 'TestPass123!');
-      
-      // Try to join communities, ignore errors if already a member
-      try {
-        await joinCommunity(supabase, testCommunity1.id);
-      } catch (error: any) {
-        // Ignore duplicate key error (already a member)
-        if (error.code !== '23505') {
-          throw error;
-        }
-      }
-      
-      try {
-        await joinCommunity(supabase, testCommunity2.id);
-      } catch (error: any) {
-        // Ignore duplicate key error (already a member)
-        if (error.code !== '23505') {
-          throw error;
-        }
-      }
+
+      await joinCommunity(supabase, testCommunity1.id);
+      await joinCommunity(supabase, testCommunity2.id);
 
       const feed = await fetchFeed(supabase);
 
@@ -239,25 +246,56 @@ describe('Feed API - Integration Tests', () => {
       expect(Array.isArray(feed.items)).toBe(true);
       expect(feed.items.length).toBeGreaterThan(0);
 
+      expect(feed).toBeTruthy();
+      expect(feed.items).toBeTruthy();
+      expect(Array.isArray(feed.items)).toBe(true);
+      expect(feed.items.length).toBeGreaterThan(0);
+
       // Verify feed contains content from both communities
-      const resourceItems = feed.items.filter((item) => item.type === 'resource');
-      const eventItems = feed.items.filter((item) => item.type === 'event');
-      const shoutoutItems = feed.items.filter((item) => item.type === 'shoutout');
+      const resourceItems = feed.items.filter(
+        (item) => item.type === 'resource',
+      );
+      const gatheringItems = feed.items.filter(
+        (item) => item.type === 'gathering',
+      );
+      const shoutoutItems = feed.items.filter(
+        (item) => item.type === 'shoutout',
+      );
 
       // Should contain content from both communities
-      expect(resourceItems.some((item) => item.data.id === testResource1.id)).toBe(true);
-      expect(resourceItems.some((item) => item.data.id === testResource2.id)).toBe(true);
-      expect(eventItems.some((item) => item.data.id === testEvent1.id)).toBe(true);
-      expect(eventItems.some((item) => item.data.id === testEvent2.id)).toBe(true);
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout1.id)).toBe(true);
-      expect(shoutoutItems.some((item) => item.data.id === testShoutout2.id)).toBe(true);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource1.id),
+      ).toBe(true);
+      expect(
+        resourceItems.some((item) => item.data.id === testResource2.id),
+      ).toBe(true);
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering1.id),
+      ).toBe(true);
+      expect(
+        gatheringItems.some((item) => item.data.id === testGathering2.id),
+      ).toBe(true);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout1.id),
+      ).toBe(true);
+      expect(
+        shoutoutItems.some((item) => item.data.id === testShoutout2.id),
+      ).toBe(true);
 
       // Verify community distribution
-      const community1Items = feed.items.filter((item) => item.data.communityId === testCommunity1.id);
-      const community2Items = feed.items.filter((item) => item.data.communityId === testCommunity2.id);
+      const community1Items = feed.items.filter(
+        (item) => item.data.communityId === testCommunity1.id,
+      );
+      const community2Items = feed.items.filter(
+        (item) => item.data.communityId === testCommunity2.id,
+      );
 
       expect(community1Items.length).toBeGreaterThan(0);
       expect(community2Items.length).toBeGreaterThan(0);
+
+      // Clean up: leave both communities
+      await leaveCommunity(supabase, testCommunity1.id);
+      await leaveCommunity(supabase, testCommunity2.id);
     });
 
     it('returns proper feed structure', async () => {
@@ -278,7 +316,7 @@ describe('Feed API - Integration Tests', () => {
       feed.items.forEach((item) => {
         expect(item).toHaveProperty('type');
         expect(item).toHaveProperty('data');
-        expect(['resource', 'event', 'shoutout']).toContain(item.type);
+        expect(['resource', 'gathering', 'shoutout']).toContain(item.type);
         expect(item.data).toHaveProperty('id');
         expect(item.data).toHaveProperty('communityId');
         expect(item.data).toHaveProperty('createdAt');

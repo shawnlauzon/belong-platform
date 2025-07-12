@@ -9,7 +9,7 @@ export type UrgencyLevel = 'urgent' | 'soon' | 'normal';
 
 export type ActivitySection = 'attention' | 'in_progress' | 'upcoming' | 'history';
 
-export interface ActivityInfo {
+export interface ActivitySummary {
   id: string;              // Composite ID: `${type}_${entityId}`
   type: ActivityType;
   title: string;

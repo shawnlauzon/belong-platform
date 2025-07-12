@@ -8,18 +8,18 @@ import {
 import { cleanupAllTestData, cleanupCommunity } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
-import { createFakeCommunityData } from '@/features/communities/__fakes__';
+import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityInfo } from '@/features/communities/types';
-import type { UserDetail } from '@/features/users/types';
+import type { Community } from '@/features/communities';
+import type { User } from '@/features/users';
 import { parsePostGisPoint } from '@/shared';
 
 describe('Communities API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: UserDetail;
-  let readOnlyCommunity1: CommunityInfo;
-  let readOnlyCommunity2: CommunityInfo;
+  let testUser: User;
+  let readOnlyCommunity1: Community;
+  let readOnlyCommunity2: Community;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -40,7 +40,7 @@ describe('Communities API - CRUD Operations', () => {
 
   describe('createCommunity', () => {
     it('creates community with valid data', async () => {
-      const data = createFakeCommunityData({
+      const data = createFakeCommunityInput({
         name: `${TEST_PREFIX}Create_Test_${Date.now()}`,
       });
 
@@ -81,7 +81,7 @@ describe('Communities API - CRUD Operations', () => {
     });
 
     it('auto-creates organizer membership', async () => {
-      const data = createFakeCommunityData({
+      const data = createFakeCommunityInput({
         name: `${TEST_PREFIX}Membership_Test_${Date.now()}`,
       });
 
@@ -123,7 +123,7 @@ describe('Communities API - CRUD Operations', () => {
       try {
         filteredCommunity = await api.createCommunity(
           supabase,
-          createFakeCommunityData({
+          createFakeCommunityInput({
             name: uniqueName,
           }),
         );
@@ -256,7 +256,7 @@ describe('Communities API - CRUD Operations', () => {
         community = await createTestCommunity(supabase);
 
         // Define new boundary data that's different from the initial
-        const fakeCommunityData = createFakeCommunityData();
+        const fakeCommunityData = createFakeCommunityInput();
 
         // This should trigger the boundary constraint violation
         // because forDbUpdate doesn't update boundary_geometry

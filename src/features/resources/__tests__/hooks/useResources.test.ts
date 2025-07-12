@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useResources } from '../../hooks/useResources';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeResourceInfo } from '../../__fakes__';
+import { createFakeResource } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API
@@ -32,8 +32,8 @@ describe('useResources', () => {
   it('should return ResourceInfo[] from fetchResources', async () => {
     // Arrange: Mock return value should be ResourceInfo[]
     const fakeResourceInfos = [
-      createFakeResourceInfo(),
-      createFakeResourceInfo(),
+      createFakeResource(),
+      createFakeResource(),
     ];
 
     mockFetchResources.mockResolvedValue(fakeResourceInfos);
@@ -48,12 +48,11 @@ describe('useResources', () => {
 
     expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, undefined);
 
-    // Verify the returned data has ID references, not full objects
+    // Verify the returned data has full Resource objects with relations
     const resource = result.current.data![0];
     expect(typeof resource.ownerId).toBe('string');
     expect(typeof resource.communityId).toBe('string');
-    expect(resource).not.toHaveProperty('owner');
-    expect(resource).not.toHaveProperty('community');
+    expect(resource).toHaveProperty('owner');
   });
 
   it('should pass filters to fetchResources', async () => {
@@ -62,7 +61,7 @@ describe('useResources', () => {
       communityId: 'test-community-id',
       type: 'offer',
     };
-    const fakeResourceInfos = [createFakeResourceInfo()];
+    const fakeResourceInfos = [createFakeResource()];
     mockFetchResources.mockResolvedValue(fakeResourceInfos);
 
     // Act

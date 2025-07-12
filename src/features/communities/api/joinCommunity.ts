@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityMembershipInfo } from '../types';
+import type { CommunityMembership } from '../types';
 import {
   toDomainMembershipInfo,
-  forDbMembershipInsert,
+  toCommunityMembershipInsertRow,
 } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
@@ -11,13 +11,39 @@ import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 export async function joinCommunity(
   supabase: SupabaseClient<Database>,
   communityId: string,
-): Promise<CommunityMembershipInfo | null> {
+): Promise<CommunityMembership | null> {
   logger.debug('🏘️ API: Joining community', { communityId });
 
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
-    const membershipData = forDbMembershipInsert({
+    // Check if user is already a member of this community
+    const { data: existingMembership, error: checkError } = await supabase
+      .from('community_memberships')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('community_id', communityId)
+      .maybeSingle();
+
+    if (checkError) {
+      logger.error('🏘️ API: Failed to check existing membership', {
+        error: checkError,
+        communityId,
+        userId: currentUserId,
+      });
+      throw checkError;
+    }
+
+    if (existingMembership) {
+      const error = new Error('User is already a member of this community');
+      logger.error('🏘️ API: User already a member', {
+        communityId,
+        userId: currentUserId,
+      });
+      throw error;
+    }
+
+    const membershipData = toCommunityMembershipInsertRow({
       userId: currentUserId,
       communityId,
     });

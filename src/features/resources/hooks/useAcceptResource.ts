@@ -4,7 +4,6 @@ import { useSupabase } from '@/shared';
 import { acceptResource } from '../api';
 import { useCurrentUser } from '@/features/auth';
 
-import type { ResourceResponseStatus } from '../types';
 
 /**
  * Hook for accepting a resource (offer or request).
@@ -61,7 +60,7 @@ export function useAcceptResource() {
       status = 'accepted',
     }: {
       resourceId: string;
-      status?: ResourceResponseStatus;
+      status?: 'accepted' | 'interested' | 'declined';
     }) => {
       if (!currentUser?.data?.id) {
         throw new Error('User must be authenticated to accept resources');

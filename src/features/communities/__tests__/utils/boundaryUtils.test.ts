@@ -5,7 +5,7 @@ import {
   transformBoundaryFromDb,
   type BoundaryDbData,
 } from '../../utils/boundaryUtils';
-import { createFakeCommunityData } from '../../__fakes__';
+import { createFakeCommunityInput } from '../../__fakes__';
 import type { IsochroneBoundary } from '../../types/domain';
 
 describe('boundaryUtils', () => {
@@ -30,7 +30,7 @@ describe('boundaryUtils', () => {
 
   describe('transformBoundaryToDb', () => {
     it('should transform boundary without including center field', () => {
-      const communityData = createFakeCommunityData();
+      const communityData = createFakeCommunityInput();
       const boundary = communityData.boundary!;
 
       const result = transformBoundaryToDb(boundary);
@@ -49,7 +49,7 @@ describe('boundaryUtils', () => {
     });
 
     it('should generate WKT geometry from polygon', () => {
-      const communityData = createFakeCommunityData();
+      const communityData = createFakeCommunityInput();
       const boundary = communityData.boundary!;
 
       const result = transformBoundaryToDb(boundary);

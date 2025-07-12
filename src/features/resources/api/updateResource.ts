@@ -1,15 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceData, ResourceInfo } from '@/features/resources';
+import type { ResourceInput, Resource } from '@/features/resources';
 import { forDbUpdate } from '@/features/resources/transformers/resourceTransformer';
-import { toResourceInfo } from '@/features/resources/transformers/resourceTransformer';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
+import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
+import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 export async function updateResource(
   supabase: SupabaseClient<Database>,
-  updateData: Partial<ResourceData> & { id: string },
-): Promise<ResourceInfo | null> {
+  updateData: Partial<ResourceInput> & { id: string },
+): Promise<Resource | null> {
   logger.debug('📚 API: Updating resource', {
     id: updateData.id,
     title: updateData.title,
@@ -25,7 +26,7 @@ export async function updateResource(
       .from('resources')
       .update(dbData)
       .eq('id', id)
-      .select()
+      .select(SELECT_RESOURCE_WITH_RELATIONS)
       .single();
 
     if (error) {
@@ -40,13 +41,13 @@ export async function updateResource(
       return null;
     }
 
-    const resourceInfo = toResourceInfo(data);
+    const resource = toDomainResource(data);
 
     logger.debug('📚 API: Successfully updated resource', {
-      id: resourceInfo.id,
-      title: resourceInfo.title,
+      id: resource.id,
+      title: resource.title,
     });
-    return resourceInfo;
+    return resource;
   } catch (error) {
     logger.error('📚 API: Error updating resource', { error, updateData });
     throw error;

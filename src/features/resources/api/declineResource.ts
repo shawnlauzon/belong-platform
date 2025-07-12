@@ -1,14 +1,14 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ResourceResponseInfo, ResourceResponseStatus } from '../types';
-import { ResourceResponseRow } from '../types/database';
+import type { ResourceResponse } from '../types';
+import { ResourceResponseRow } from '../types/resourceRow';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function declineResource(
   supabase: SupabaseClient<Database>,
   resourceId: string,
-): Promise<ResourceResponseInfo | null> {
+): Promise<ResourceResponse | null> {
   logger.debug('📚 API: Declining resource', { resourceId });
 
   try {
@@ -18,12 +18,12 @@ export async function declineResource(
     const { data, error } = (await supabase
       .from('resource_responses')
       .upsert(
-        { 
-          resource_id: resourceId, 
-          user_id: currentUserId, 
-          status: 'declined' 
-        }, 
-        { onConflict: 'resource_id,user_id' }
+        {
+          resource_id: resourceId,
+          user_id: currentUserId,
+          status: 'declined',
+        },
+        { onConflict: 'resource_id,user_id' },
       )
       .select()
       .single()) as { data: ResourceResponseRow; error: QueryError | null };
@@ -41,10 +41,10 @@ export async function declineResource(
       return null;
     }
 
-    const response: ResourceResponseInfo = {
+    const response: ResourceResponse = {
       resourceId: data.resource_id,
       userId: data.user_id,
-      status: data.status as ResourceResponseStatus,
+      status: data.status as 'accepted' | 'interested' | 'declined',
       createdAt: new Date(data.created_at || ''),
       updatedAt: new Date(data.updated_at || ''),
     };

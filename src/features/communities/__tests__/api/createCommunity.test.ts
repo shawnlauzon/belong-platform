@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCommunity } from '../../api/createCommunity';
 import {
-  createFakeCommunityData,
-  createFakeDbCommunity,
+  createFakeCommunityInput,
+  createFakeCommunityRow,
 } from '../../__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -33,7 +33,7 @@ describe('createCommunity API', () => {
     vi.clearAllMocks();
 
     // Setup the mock chain with completely fake data
-    const fakeDbCommunity = createFakeDbCommunity({
+    const fakeDbCommunity = createFakeCommunityRow({
       organizer_id: fakeOrganizerId,
     });
 
@@ -50,7 +50,7 @@ describe('createCommunity API', () => {
   });
 
   it('should transform organizerId to organizer_id in database insert', async () => {
-    const communityData = createFakeCommunityData({
+    const communityData = createFakeCommunityInput({
       name: 'Test Community',
     });
 
@@ -82,7 +82,7 @@ describe('createCommunity API', () => {
       },
     });
 
-    const communityData = createFakeCommunityData({
+    const communityData = createFakeCommunityInput({
       name: 'Test Community',
     });
 
@@ -93,8 +93,8 @@ describe('createCommunity API', () => {
 
   it('should correctly store all community data with proper transformations', async () => {
     // Use completely fake data
-    const communityData = createFakeCommunityData();
-    const mockDbResponse = createFakeDbCommunity({
+    const communityData = createFakeCommunityInput();
+    const mockDbResponse = createFakeCommunityRow({
       organizer_id: fakeOrganizerId,
     });
 
@@ -109,7 +109,7 @@ describe('createCommunity API', () => {
         description: communityData.description,
         icon: communityData.icon,
         organizer_id: fakeOrganizerId,
-        member_count: communityData.memberCount,
+        member_count: 0, // Default for new communities
         time_zone: communityData.timeZone,
         center: `POINT(${communityData.center.lng} ${communityData.center.lat})`,
         boundary: expect.objectContaining({
@@ -124,7 +124,7 @@ describe('createCommunity API', () => {
       }),
     );
 
-    // Verify the returned CommunityInfo object has correct structure and proper transformations
+    // Verify the returned Community object has correct structure and proper transformations
     expect(result).toEqual(
       expect.objectContaining({
         // Basic fields should match database response
@@ -132,16 +132,20 @@ describe('createCommunity API', () => {
         name: mockDbResponse.name,
         description: mockDbResponse.description,
         icon: mockDbResponse.icon || undefined, // Handle null vs undefined
-        organizerId: fakeOrganizerId,
+        type: mockDbResponse.type,
+        bannerImageUrl: mockDbResponse.banner_image_url || undefined,
+        centerName: mockDbResponse.center_name || undefined,
         memberCount: mockDbResponse.member_count,
         timeZone: mockDbResponse.time_zone,
-        
+
         // Center should be transformed from GeoJSON to domain coordinates
         center: {
-          lat: (mockDbResponse.center as { coordinates: [number, number] }).coordinates[1],
-          lng: (mockDbResponse.center as { coordinates: [number, number] }).coordinates[0],
+          lat: (mockDbResponse.center as { coordinates: [number, number] })
+            .coordinates[1],
+          lng: (mockDbResponse.center as { coordinates: [number, number] })
+            .coordinates[0],
         },
-        
+
         // Boundary should be properly parsed with domain field names
         boundary: expect.objectContaining({
           type: 'isochrone',
@@ -153,7 +157,7 @@ describe('createCommunity API', () => {
             coordinates: expect.any(Array),
           }),
         }),
-        
+
         // Dates should be properly transformed
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),

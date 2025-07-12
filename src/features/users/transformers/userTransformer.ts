@@ -1,9 +1,9 @@
-import type { UserDetail, UserData } from '..';
+import type { User, UserData } from '..';
 import type {
   ProfileRow,
-  ProfileInsertDbData,
-  ProfileUpdateDbData,
-} from '../types/database';
+  ProfileInsertRow,
+  ProfileUpdateRow,
+} from '../types/profileRow';
 
 // Type for the user_metadata JSONB column
 type UserMetadata = {
@@ -21,7 +21,7 @@ type UserMetadata = {
 /**
  * Transforms a database profile record to a domain user object
  */
-export function toDomainUser(profile: ProfileRow): UserDetail {
+export function toDomainUser(profile: ProfileRow): User {
   const metadata = (profile.user_metadata || {}) as UserMetadata;
   const { first_name, last_name, full_name, avatar_url, bio, location } =
     metadata;
@@ -43,7 +43,9 @@ export function toDomainUser(profile: ProfileRow): UserDetail {
 /**
  * Prepares user data for database insertion into profiles table
  */
-export function forDbInsert(userData: UserData): ProfileInsertDbData {
+export function toUserInsertRow(
+  userData: UserData & { id: string },
+): ProfileInsertRow {
   const { id, email, firstName, lastName, fullName, avatarUrl, bio, location } =
     userData;
 
@@ -66,10 +68,10 @@ export function forDbInsert(userData: UserData): ProfileInsertDbData {
 /**
  * Prepares user data for updating the profiles table
  */
-export function forDbUpdate(
+export function toUserUpdateRow(
   userData: Partial<UserData> & { id: string },
   currentProfile: ProfileRow,
-): ProfileUpdateDbData {
+): ProfileUpdateRow {
   const currentMetadata = (currentProfile.user_metadata || {}) as UserMetadata;
 
   // Only include fields that are explicitly provided in userData
@@ -104,6 +106,6 @@ export function forDbUpdate(
 // Export types for testing
 export type {
   ProfileRow as UserRow,
-  ProfileInsertDbData as UserInsertDbData,
-  ProfileUpdateDbData as UserUpdateDbData,
+  ProfileInsertRow as UserInsertRow,
+  ProfileUpdateRow as UserUpdateRow,
 };

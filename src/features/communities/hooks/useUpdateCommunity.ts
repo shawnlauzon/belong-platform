@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateCommunity } from '@/features/communities/api';
 
 import type {
-  CommunityData,
+  CommunityInput,
 } from '@/features/communities/types';
 
 /**
@@ -58,19 +58,16 @@ export function useUpdateCommunity() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: (updateData: Partial<CommunityData> & { id: string }) =>
+    mutationFn: (updateData: Partial<CommunityInput> & { id: string }) =>
       updateCommunity(supabase, updateData),
-    onSuccess: (updatedCommunityInfo) => {
-      // Invalidate all communities queries
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
-      if (updatedCommunityInfo) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.byId(updatedCommunityInfo.id),
-        });
+    onSuccess: (updatedCommunity) => {
+      // Clear entire cache since community data (name, etc) is embedded in many entities
+      queryClient.invalidateQueries();
 
+      if (updatedCommunity) {
         logger.info('🏘️ API: Successfully updated community', {
-          id: updatedCommunityInfo.id,
-          name: updatedCommunityInfo.name,
+          id: updatedCommunity.id,
+          name: updatedCommunity.name,
         });
       }
     },

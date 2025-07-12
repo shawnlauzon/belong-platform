@@ -3,8 +3,8 @@ import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useCreateCommunity } from '../../hooks/useCreateCommunity';
 import {
-  createFakeCommunityData,
-  createFakeCommunityInfo,
+  createFakeCommunityInput,
+  createFakeCommunity,
 } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
@@ -25,8 +25,8 @@ describe('useCreateCommunity', () => {
   });
 
   it('should return CommunityInfo after creation using mutateAsync', async () => {
-    const communityData = createFakeCommunityData();
-    const mockCreatedInfo = createFakeCommunityInfo({
+    const communityData = createFakeCommunityInput();
+    const mockCreatedInfo = createFakeCommunity({
       id: faker.string.uuid(),
       name: communityData.name,
     });

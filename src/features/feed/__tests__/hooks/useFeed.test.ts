@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useFeed } from '../../hooks/useFeed';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeResourceInfo } from '../../../resources/__fakes__';
-import { createFakeEventInfo } from '../../../events/__fakes__';
-import { createFakeShoutoutInfo } from '../../../shoutouts/__fakes__';
+import { createFakeResource } from '../../../resources/__fakes__';
+import { createFakeGathering } from '../../../gatherings/__fakes__';
+import { createFakeShoutout } from '../../../shoutouts/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
 // Mock the API functions
@@ -20,8 +20,8 @@ vi.mock('../../../resources/api', () => ({
   fetchResources: vi.fn(),
 }));
 
-vi.mock('../../../events/api', () => ({
-  fetchEvents: vi.fn(),
+vi.mock('../../../gatherings/api', () => ({
+  fetchGatherings: vi.fn(),
 }));
 
 vi.mock('../../../shoutouts/api', () => ({
@@ -32,15 +32,15 @@ import { useSupabase } from '../../../../shared';
 import { getCurrentUser } from '../../../auth/api';
 import { fetchUserCommunities } from '../../../communities/api';
 import { fetchResources } from '../../../resources/api';
-import { fetchEvents } from '../../../events/api';
+import { fetchGatherings } from '../../../gatherings/api';
 import { fetchShoutouts } from '../../../shoutouts/api';
-import { createFakeUserDetail } from '@/features/users/__fakes__';
+import { createFakeUser } from '@/features/users/__fakes__';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockFetchUserCommunities = vi.mocked(fetchUserCommunities);
 const mockFetchResources = vi.mocked(fetchResources);
-const mockFetchEvents = vi.mocked(fetchEvents);
+const mockFetchGatherings = vi.mocked(fetchGatherings);
 const mockFetchShoutouts = vi.mocked(fetchShoutouts);
 
 describe('useFeed', () => {
@@ -55,16 +55,16 @@ describe('useFeed', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return FeedInfo from combined resources and events', async () => {
+  it('should return Feed from combined resources and gatherings', async () => {
     // Arrange
-    const fakeUser = createFakeUserDetail({
+    const fakeUser = createFakeUser({
       id: 'user-1',
       email: 'test@example.com',
     });
-    const fakeResourceInfo = createFakeResourceInfo({
+    const fakeResource = createFakeResource({
       communityId: 'community-1',
     });
-    const fakeEventInfo = createFakeEventInfo({ communityId: 'community-1' });
+    const fakeGathering = createFakeGathering({ communityId: 'community-1' });
     const fakeMembership = {
       userId: 'user-1',
       communityId: 'community-1',
@@ -73,8 +73,8 @@ describe('useFeed', () => {
 
     mockGetCurrentUser.mockResolvedValue(fakeUser);
     mockFetchUserCommunities.mockResolvedValue([fakeMembership]);
-    mockFetchResources.mockResolvedValue([fakeResourceInfo]);
-    mockFetchEvents.mockResolvedValue([fakeEventInfo]);
+    mockFetchResources.mockResolvedValue([fakeResource]);
+    mockFetchGatherings.mockResolvedValue([fakeGathering]);
     mockFetchShoutouts.mockResolvedValue([]);
 
     // Act
@@ -86,18 +86,17 @@ describe('useFeed', () => {
       expect(result.current.data?.items).toHaveLength(2);
     });
 
-    expect(result.current.data?.items).toEqual(
-      expect.arrayContaining([
-        {
-          type: 'resource',
-          data: fakeResourceInfo,
-        },
-        {
-          type: 'event',
-          data: fakeEventInfo,
-        },
-      ]),
-    );
+    // Check that all items are present (order may vary due to timestamps)
+    const types = result.current.data?.items.map(item => item.type);
+    expect(types).toContain('resource');
+    expect(types).toContain('gathering');
+    
+    // Find each item and verify it matches
+    const resourceItem = result.current.data?.items.find(item => item.type === 'resource');
+    const gatheringItem = result.current.data?.items.find(item => item.type === 'gathering');
+    
+    expect(resourceItem?.data).toEqual(fakeResource);
+    expect(gatheringItem?.data).toEqual(fakeGathering);
   });
 
   it('should handle loading state', async () => {
@@ -128,7 +127,7 @@ describe('useFeed', () => {
 
   it('should handle empty feed', async () => {
     // Arrange
-    const fakeUser = createFakeUserDetail({
+    const fakeUser = createFakeUser({
       id: 'user-1',
       email: 'test@example.com',
     });
@@ -148,11 +147,11 @@ describe('useFeed', () => {
 
   it('should include shoutouts in the feed', async () => {
     // Arrange
-    const fakeUser = createFakeUserDetail({
+    const fakeUser = createFakeUser({
       id: 'user-1',
       email: 'test@example.com',
     });
-    const fakeShoutoutInfo = createFakeShoutoutInfo({
+    const fakeShoutout = createFakeShoutout({
       fromUserId: 'user-2',
       toUserId: 'user-1',
       resourceId: 'resource-1',
@@ -166,8 +165,8 @@ describe('useFeed', () => {
     mockGetCurrentUser.mockResolvedValue(fakeUser);
     mockFetchUserCommunities.mockResolvedValue([fakeMembership]);
     mockFetchResources.mockResolvedValue([]);
-    mockFetchEvents.mockResolvedValue([]);
-    mockFetchShoutouts.mockResolvedValue([fakeShoutoutInfo]);
+    mockFetchGatherings.mockResolvedValue([]);
+    mockFetchShoutouts.mockResolvedValue([fakeShoutout]);
 
     // Act
     const { result } = renderHook(() => useFeed(), { wrapper });
@@ -180,7 +179,7 @@ describe('useFeed', () => {
 
     expect(result.current.data?.items[0]).toEqual({
       type: 'shoutout',
-      data: fakeShoutoutInfo,
+      data: fakeShoutout,
     });
   });
 });

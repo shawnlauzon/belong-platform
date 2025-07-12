@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityData, CommunityInfo } from '../types';
+import type { CommunityInput, Community } from '../types';
 import {
-  forDbInsert,
-  toCommunityInfo,
+  toCommunityInsertRow,
+  toDomainCommunity,
 } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
@@ -12,14 +12,14 @@ import { updateCommunity } from './updateCommunity';
 
 export async function createCommunity(
   supabase: SupabaseClient<Database>,
-  communityData: CommunityData,
-): Promise<CommunityInfo | null> {
+  communityData: CommunityInput,
+): Promise<Community> {
   logger.debug('🏘️ API: Creating community', { name: communityData.name });
 
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
-    const dbData = forDbInsert({
+    const dbData = toCommunityInsertRow({
       ...communityData,
       organizerId: currentUserId,
     });
@@ -40,7 +40,7 @@ export async function createCommunity(
 
     if (!data) {
       logger.error('🏘️ API: No data returned after creating community');
-      return null;
+      throw new Error('No data returned after creating community');
     }
 
     // Organizer membership is auto-created by database trigger
@@ -87,13 +87,13 @@ export async function createCommunity(
       }
     }
 
-    const communityInfo = toCommunityInfo(data);
+    const community = toDomainCommunity(data);
 
     logger.debug('🏘️ API: Successfully created community', {
-      id: communityInfo.id,
-      name: communityInfo.name,
+      id: community.id,
+      name: community.name,
     });
-    return communityInfo;
+    return community;
   } catch (error) {
     logger.error('🏘️ API: Error creating community', { error, communityData });
     throw error;

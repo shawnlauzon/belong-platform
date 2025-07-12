@@ -4,13 +4,13 @@ import { useSupabase } from '@/shared';
 import { createResource } from '@/features/resources/api';
 import { useCurrentUser } from '@/features/auth';
 
-import type { ResourceInfo, ResourceData } from '@/features/resources/types';
+import type { Resource, ResourceInput } from '@/features/resources/types';
 
 /**
  * Hook for creating a new resource.
  *
  * Provides a mutation function for creating resources (offers/requests).
- * Returns ResourceInfo (with ID references) rather than full composed Resource object.
+ * Returns Resource (with ID references) rather than full composed Resource object.
  * Automatically invalidates resource caches on successful creation.
  *
  * @returns React Query mutation result with create function and state
@@ -76,7 +76,7 @@ export function useCreateResource() {
   const currentUser = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: async (data: ResourceData): Promise<ResourceInfo> => {
+    mutationFn: async (data: ResourceInput): Promise<Resource> => {
       if (!currentUser?.data?.id) {
         throw new Error('User must be authenticated to create resources');
       }
@@ -89,18 +89,18 @@ export function useCreateResource() {
 
       return result;
     },
-    onSuccess: (newResourceInfo: ResourceInfo) => {
+    onSuccess: (newResource: Resource) => {
       // Invalidate all resources queries
       queryClient.invalidateQueries({ queryKey: ['resources'] });
 
       // Invalidate the specific resource to force fresh fetch with nested objects
       queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byId(newResourceInfo.id),
+        queryKey: queryKeys.resources.byId(newResource.id),
       });
 
       logger.info('📚 API: Successfully created resource', {
-        id: newResourceInfo.id,
-        title: newResourceInfo.title,
+        id: newResource.id,
+        title: newResource.title,
       });
     },
     onError: (error) => {

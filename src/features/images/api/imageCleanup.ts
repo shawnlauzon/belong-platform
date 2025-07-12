@@ -343,7 +343,7 @@ export async function isImageOrphaned(
       }
       case 'event': {
         const { data } = await supabase
-          .from('events')
+          .from('gatherings')
           .select('id')
           .eq('id', entityId)
           .single();

@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
 import { fetchUserById } from '@/features/users/api';
-import type { UserDetail } from '@/features/users/types';
+import type { User } from '@/features/users/types';
 
 /**
  * Gets the current authenticated user from Supabase auth
@@ -54,7 +54,7 @@ export async function getCurrentAuthUser(
  */
 export async function getCurrentUser(
   supabase: SupabaseClient<Database>,
-): Promise<UserDetail | null> {
+): Promise<User | null> {
   const authUser = await getCurrentAuthUser(supabase);
 
   if (!authUser) {
