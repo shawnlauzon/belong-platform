@@ -42,7 +42,7 @@ export async function createShoutout(
     }
 
     // Transform to domain object using the transformer
-    let domainShoutout = toShoutoutWithJoinedRelations(createdShoutout);
+    const domainShoutout = toShoutoutWithJoinedRelations(createdShoutout);
 
     // Auto-commit any temporary image URLs after shoutout creation
     if (shoutoutData.imageUrls && shoutoutData.imageUrls.length > 0) {

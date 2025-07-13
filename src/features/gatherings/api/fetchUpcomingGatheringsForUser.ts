@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Gathering } from '../types';
 import { toGatheringWithJoinedRelations } from '../transformers/gatheringTransformer';
-import { SELECT_GATHERING_WITH_RELATIONS } from '../types/gatheringRow';
+import { SELECT_GATHERING_WITH_RELATIONS, type GatheringRowWithRelations } from '../types/gatheringRow';
 
 /**
  * Fetches upcoming gatherings where the user has responded with a specific status
@@ -31,6 +31,6 @@ export async function fetchUpcomingGatheringsForUser(
   }
 
   return data
-    .filter(row => row.gathering)
-    .map(row => toGatheringWithJoinedRelations(row.gathering as any));
+    .filter((row): row is { gathering: GatheringRowWithRelations } => !!row.gathering)
+    .map(row => toGatheringWithJoinedRelations(row.gathering));
 }

@@ -32,7 +32,7 @@ function createFakeGatheringRowWithRelations(overrides: Partial<GatheringRowWith
       description: community.description,
       center_name: community.centerName,
       center: `POINT(${community.center.lng} ${community.center.lat})`,
-      boundary: community.boundary as any,
+      boundary: community.boundary,
       type: community.type,
       organizer_id: community.organizerId,
       member_count: community.memberCount,
