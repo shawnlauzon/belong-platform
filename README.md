@@ -13,7 +13,7 @@ npm install @belongnetwork/platform
 **For Community Members:**
 
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
-- 📅 **Event Management** - Create and attend community gatherings and activities
+- 📅 **Gathering Management** - Create and attend community gatherings and activities
 - 💬 **Direct Messaging** - Send private messages to other community members
 - 💌 **Gratitude System** - Send shoutouts to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
@@ -174,19 +174,19 @@ import type {
   User,
   Community,
   Resource,
-  Event,
+  Gathering,
   Message,
   Conversation,
   Shoutout,
   // Data Transfer Objects
   ResourceData,
-  EventData,
+  GatheringData,
   MessageData,
   ConversationData,
   ShoutoutInput,
   // Filters
   ResourceFilter,
-  EventFilter,
+  GatheringFilter,
   MessageFilter,
   // Geography
   Coordinates,
@@ -278,27 +278,28 @@ await createResource.mutateAsync({
 });
 ```
 
-### Events
+### Gatherings
 
 ```tsx
 import {
-  useEvents,
-  useEvent,
-  useCreateEvent,
-  useJoinEvent,
-  useLeaveEvent,
+  useGatherings,
+  useGathering,
+  useCreateGathering,
+  useJoinGathering,
+  useLeaveGathering,
 } from '@belongnetwork/platform';
 
-// List events
-const { data: events } = useEvents();
+// List gatherings
+const { data: gatherings } = useGatherings();
 
-// Create event
-const createEvent = useCreateEvent();
-await createEvent.mutateAsync({
+// Create gathering
+const createGathering = useCreateGathering();
+await createGathering.mutateAsync({
   title: 'Community Garden Workday',
   description: 'Help maintain our community garden',
   startTime: new Date('2024-07-15T10:00:00'),
   endTime: new Date('2024-07-15T14:00:00'),
+  locationName: 'Community Garden at Main St',
   location: { lat: 30.2672, lng: -97.7431 },
   maxAttendees: 20,
   communityId: 'community-123',

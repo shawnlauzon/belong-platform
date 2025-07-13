@@ -45,7 +45,7 @@ src/features/
 │   └── types/         # Type definitions
 ├── communities/
 ├── resources/
-├── events/
+├── gatherings/
 └── users/
 ```
 
@@ -98,7 +98,7 @@ Each feature follows a consistent 4-type pattern:
 #### Special Type Variants
 
 - **EntityDetail** - Alias for Entity with additional loaded relations
-  - Example: `EventDetail = Event & { attendees?: PartialUser[] }`
+  - Example: `GatheringDetail = Gathering & { attendees?: PartialUser[] }`
   
 - **EntityInfo** - Lightweight version with just IDs instead of embedded objects
   - Used for list operations where relations aren't needed
