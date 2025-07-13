@@ -38,6 +38,10 @@ export function BelongProvider({ children, config }: BelongProviderProps) {
 
 ```
 src/features/
+├── agenda/            # Personal todo/task aggregation
+│   ├── api/           # API functions
+│   ├── hooks/         # React Query hooks
+│   └── types/         # Type definitions
 ├── auth/
 │   ├── api/           # API functions
 │   ├── hooks/         # React Query hooks

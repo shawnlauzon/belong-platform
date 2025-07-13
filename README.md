@@ -14,6 +14,7 @@ npm install @belongnetwork/platform
 
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
 - 📅 **Gathering Management** - Create and attend community gatherings and activities
+- 📋 **Personal Agenda** - Unified todo list combining gatherings, shoutouts, and community activities
 - 💬 **Direct Messaging** - Send private messages to other community members
 - 💌 **Gratitude System** - Send shoutouts to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
@@ -76,6 +77,7 @@ import {
   useCommunities,
   useResources,
   useCreateResource,
+  useAgenda,
   useSignIn,
   useSignOut,
 } from '@belongnetwork/platform';
@@ -84,6 +86,7 @@ function CommunityDashboard() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const { data: communities } = useCommunities();
   const { data: resources } = useResources({ type: 'offer' });
+  const { data: agenda } = useAgenda();
   const createResource = useCreateResource();
   const signIn = useSignIn();
   const signOut = useSignOut();
@@ -116,6 +119,17 @@ function CommunityDashboard() {
         <h2>Your Communities</h2>
         {communities?.map((community) => (
           <div key={community.id}>{community.name}</div>
+        ))}
+      </section>
+
+      <section>
+        <h2>Your Agenda</h2>
+        {agenda?.items.map((todo) => (
+          <div key={todo.id}>
+            <h3>{todo.title}</h3>
+            <p>{todo.description}</p>
+            {todo.dueDate && <small>Due: {todo.dueDate.toLocaleDateString()}</small>}
+          </div>
         ))}
       </section>
 
@@ -178,6 +192,9 @@ import type {
   Message,
   Conversation,
   Shoutout,
+  Agenda,
+  Todo,
+  TodoType,
   // Data Transfer Objects
   ResourceData,
   GatheringData,
@@ -327,6 +344,32 @@ const sendMessage = useSendMessage();
 await sendMessage.mutateAsync({
   conversationId,
   content: 'Hello!',
+});
+```
+
+### Agenda
+
+```tsx
+import { useAgenda } from '@belongnetwork/platform';
+
+// Get unified agenda with todos from gatherings and shoutouts
+const { data: agenda } = useAgenda();
+
+// Access agenda items
+agenda?.items.forEach((todo) => {
+  console.log(`${todo.type}: ${todo.title}`);
+  // Types: 'gathering-confirmed', 'gathering-maybe', 'gathering-organizer',
+  //        'shoutout-gathering', 'shoutout-offer', 'shoutout-favor'
+  
+  if (todo.gathering) {
+    // Access gathering details for gathering-related todos
+    console.log('Gathering:', todo.gathering.title);
+  }
+  
+  if (todo.resource) {
+    // Access resource details for resource-related todos
+    console.log('Resource:', todo.resource.title);
+  }
 });
 ```
 
