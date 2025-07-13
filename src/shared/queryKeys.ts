@@ -80,8 +80,8 @@ export const queryKeys = {
     all: ['feed'] as const,
   },
 
-  // Agenda - user-specific aggregated data  
+  // Agenda - current user aggregated data  
   agenda: {
-    byUser: (userId: string) => ['user', userId, 'agenda'] as const,
+    current: ['agenda'] as const,
   },
 } as const;

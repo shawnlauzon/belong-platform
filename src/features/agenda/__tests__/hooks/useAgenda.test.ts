@@ -17,7 +17,7 @@ vi.mock('../../../../shared', async () => {
     queryKeys: {
       ...actual.queryKeys,
       agenda: {
-        byUser: (userId: string) => ['user', userId, 'agenda'],
+        current: ['agenda'] as const,
       }
     }
   };
@@ -65,10 +65,10 @@ describe('useAgenda', () => {
     hasMore: false
   };
 
-  it('should fetch agenda for a user', async () => {
+  it('should fetch agenda for current user', async () => {
     mockFetchAgenda.mockResolvedValue(mockAgenda);
 
-    const { result } = renderHook(() => useAgenda('user1'), {
+    const { result } = renderHook(() => useAgenda(), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -84,20 +84,27 @@ describe('useAgenda', () => {
     );
   });
 
-  it('should not fetch when userId is not provided', () => {
-    const { result } = renderHook(() => useAgenda(''), {
+  it('should always fetch agenda for current user', async () => {
+    mockFetchAgenda.mockResolvedValue(mockAgenda);
+
+    const { result } = renderHook(() => useAgenda(), {
       wrapper: createTestWrapper().wrapper
     });
 
-    expect(result.current.isPending).toBe(true);
-    expect(mockFetchAgenda).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(mockFetchAgenda).toHaveBeenCalledWith(
+      expect.any(Object)
+    );
   });
 
   it('should handle fetch errors gracefully', async () => {
     const error = new Error('Failed to fetch agenda');
     mockFetchAgenda.mockRejectedValue(error);
 
-    const { result } = renderHook(() => useAgenda('user1'), {
+    const { result } = renderHook(() => useAgenda(), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -111,7 +118,7 @@ describe('useAgenda', () => {
   it('should use correct query keys for caching', async () => {
     mockFetchAgenda.mockResolvedValue(mockAgenda);
 
-    const { result } = renderHook(() => useAgenda('user1'), {
+    const { result } = renderHook(() => useAgenda(), {
       wrapper: createTestWrapper().wrapper
     });
 
