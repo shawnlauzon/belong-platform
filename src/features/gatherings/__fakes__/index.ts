@@ -27,7 +27,7 @@ export function createFakeGathering(
     title: faker.lorem.words(3),
     description: faker.lorem.paragraph(),
     startDateTime,
-    endDateTime: faker.datatype.boolean() ? endDateTime : undefined,
+    endDateTime: faker.datatype.boolean() ? endDateTime : null,
     isAllDay: faker.datatype.boolean(),
     locationName: faker.location.streetAddress(),
     coordinates: {
@@ -107,7 +107,7 @@ export function createFakeGatheringWithoutRelations(
     title: row.title,
     description: row.description,
     startDateTime: new Date(row.start_date_time),
-    endDateTime: row.end_date_time ? new Date(row.end_date_time) : undefined,
+    endDateTime: row.end_date_time ? new Date(row.end_date_time) : null,
     isAllDay: row.is_all_day,
     locationName: row.location_name,
     coordinates: { lat: 0, lng: 0 }, // simplified for fake

@@ -167,7 +167,7 @@ export function createFakeCommunityHierarchy() {
 /**
  * Creates a fake CommunityMembershipData
  */
-export function createFakeCommunityMembershipData(
+export function createFakeCommunityMembershipInput(
   overrides: Partial<CommunityMembershipInput> = {},
 ): CommunityMembershipInput {
   return {
@@ -180,7 +180,7 @@ export function createFakeCommunityMembershipData(
 /**
  * Creates a fake CommunityMembershipInfo
  */
-export function createFakeCommunityMembershipInfo(
+export function createFakeCommunityMembership(
   overrides: Partial<CommunityMembership> = {},
 ): CommunityMembership {
   const joinedAt = faker.date.past();
@@ -201,7 +201,7 @@ export function createFakeDbCommunityWithOrganizer(
 ): CommunityRowWithRelations {
   const communityRow = createFakeCommunityRow(overrides);
   const organizer = createFakeProfileRow();
-  
+
   return {
     ...communityRow,
     organizer,

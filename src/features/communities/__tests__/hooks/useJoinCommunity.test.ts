@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import { useJoinCommunity } from '../../hooks/useJoinCommunity';
-import { createFakeCommunityMembershipInfo } from '../../__fakes__';
+import { createFakeCommunityMembership } from '../../__fakes__';
 import { faker } from '@faker-js/faker';
 
 // Mock only the API function
@@ -23,7 +23,7 @@ describe('useJoinCommunity', () => {
 
   it('should return CommunityMembershipInfo after joining using mutateAsync', async () => {
     const communityId = faker.string.uuid();
-    const mockMembershipInfo = createFakeCommunityMembershipInfo({
+    const mockMembershipInfo = createFakeCommunityMembership({
       communityId,
     });
     mockJoinCommunity.mockResolvedValue(mockMembershipInfo);

@@ -43,7 +43,7 @@ export function toDomainGathering(
     startDateTime: new Date(dbGathering.start_date_time),
     endDateTime: dbGathering.end_date_time
       ? new Date(dbGathering.end_date_time)
-      : undefined,
+      : null,
     isAllDay: dbGathering.is_all_day,
     locationName: dbGathering.location_name,
     coordinates: parsePostGisPoint(dbGathering.coordinates),
@@ -145,7 +145,7 @@ export function toGatheringWithJoinedRelations(
     startDateTime: new Date(dbGathering.start_date_time),
     endDateTime: dbGathering.end_date_time
       ? new Date(dbGathering.end_date_time)
-      : undefined,
+      : null,
     isAllDay: dbGathering.is_all_day,
     locationName: dbGathering.location_name,
     coordinates: parsePostGisPoint(dbGathering.coordinates),

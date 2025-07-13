@@ -42,7 +42,7 @@ describe('gatheringTransformer', () => {
         startDateTime: new Date(fakeGatheringRow.start_date_time),
         endDateTime: fakeGatheringRow.end_date_time
           ? new Date(fakeGatheringRow.end_date_time)
-          : undefined,
+          : null,
         isAllDay: fakeGatheringRow.is_all_day,
         locationName: fakeGatheringRow.location_name,
         maxAttendees: fakeGatheringRow.max_attendees ?? undefined,
@@ -111,7 +111,7 @@ describe('gatheringTransformer', () => {
         startDateTime: new Date(fakeGatheringRow.start_date_time),
         endDateTime: fakeGatheringRow.end_date_time
           ? new Date(fakeGatheringRow.end_date_time)
-          : undefined,
+          : null,
         isAllDay: fakeGatheringRow.is_all_day,
         locationName: fakeGatheringRow.location_name,
         maxAttendees: fakeGatheringRow.max_attendees ?? undefined,
