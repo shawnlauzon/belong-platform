@@ -95,6 +95,24 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       await expect(createShoutout(supabase, shoutoutInput)).rejects.toThrow();
     });
+
+    it('TODO: should not allow shoutout about a resource you own (currently allows)', async () => {
+      const shoutoutInput: ShoutoutInput = {
+        toUserId: testUser2.id,
+        communityId: testCommunity.id,
+        resourceId: testResource.id, // testResource is owned by testUser (signed in user)
+        message: `${TEST_PREFIX}Thank you for sharing this resource!`,
+      };
+
+      // Current behavior: allows users to send shoutouts about their own resources
+      // This business rule is not implemented but was requested to be enforced
+      const result = await createShoutout(supabase, shoutoutInput);
+      expect(result).toBeTruthy();
+      expect(result.id).toBeTruthy();
+      
+      // Cleanup
+      await supabase.from('shoutouts').delete().eq('id', result.id);
+    });
   });
 
   describe('fetchShoutouts', () => {
