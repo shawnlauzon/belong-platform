@@ -4,7 +4,9 @@ import type { Database } from '../../../shared/types/database';
 import type { ShoutoutInput, Shoutout } from '../types';
 import {
   toShoutoutUpdateRow,
+  toShoutoutWithJoinedRelations,
 } from '../transformers/shoutoutsTransformer';
+import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 
 /**
@@ -28,7 +30,7 @@ export async function updateShoutout(
       .from('shoutouts')
       .update(dbData)
       .eq('id', id)
-      .select()
+      .select(SELECT_SHOUTOUT_WITH_RELATIONS)
       .single();
 
     if (error) {
@@ -45,21 +47,8 @@ export async function updateShoutout(
       return null;
     }
 
-    const shoutout = {
-      ...data,
-      fromUserId: data.from_user_id,
-      toUserId: data.to_user_id,
-      resourceId: data.resource_id,
-      communityId: data.community_id,
-      imageUrls: data.image_urls || [],
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-      // Add required relation fields as placeholders
-      fromUser: { id: data.from_user_id, firstName: '', avatarUrl: undefined, createdAt: new Date(), updatedAt: new Date() },
-      toUser: { id: data.to_user_id, firstName: '', avatarUrl: undefined, createdAt: new Date(), updatedAt: new Date() },
-      resource: { id: data.resource_id, title: '', type: 'offer' as const, ownerId: '', owner: { id: '', firstName: '', avatarUrl: undefined, createdAt: new Date(), updatedAt: new Date() }, imageUrls: [], createdAt: new Date(), updatedAt: new Date() },
-      community: { id: data.community_id, name: '', type: 'place' as const, icon: undefined, memberCount: 0, createdAt: new Date(), updatedAt: new Date() },
-    };
+    // Transform to domain object using the transformer
+    const shoutout = toShoutoutWithJoinedRelations(data);
 
     logger.debug('📢 API: Successfully updated shoutout', {
       id: shoutout.id,

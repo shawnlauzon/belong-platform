@@ -1,10 +1,11 @@
-import type { ResourceCategory, Resource, ResourceInput } from '../types';
+import type { ResourceCategory, Resource, ResourceInput, ResourceSummary } from '../types';
 import type {
   ResourceRowWithRelations,
   ResourceInsertDbData,
   ResourceUpdateDbData,
 } from '../types/resourceRow';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
+import { toUserSummary } from '../../users/transformers/userTransformer';
 
 /**
  * Transform a domain resource object to a database resource record
@@ -69,13 +70,7 @@ export function toDomainResource(
   }
 
   // Transform owner to UserSummary
-  const partialOwner = {
-    id: owner.id,
-    firstName: owner.user_metadata?.first_name || '',
-    avatarUrl: owner.user_metadata?.avatar_url,
-    createdAt: new Date(owner.created_at),
-    updatedAt: new Date(owner.updated_at),
-  };
+  const partialOwner = toUserSummary(owner);
 
   return {
     id: dbResource.id,
@@ -93,5 +88,34 @@ export function toDomainResource(
     ownerId: dbResource.owner_id,
     owner: partialOwner,
     communityId: dbResource.community_id,
+  };
+}
+
+/**
+ * Transform a database resource record with joined relations to a ResourceSummary object
+ */
+export function toResourceSummary(
+  dbResource: ResourceRowWithRelations,
+): ResourceSummary {
+  // Handle potential array results from Supabase joins
+  const owner = Array.isArray(dbResource.owner)
+    ? dbResource.owner[0]
+    : dbResource.owner;
+
+  // Validate required joined data
+  if (!owner) {
+    throw new Error(`Resource ${dbResource.id} missing required owner data`);
+  }
+
+  return {
+    id: dbResource.id,
+    type: dbResource.type as 'offer' | 'request',
+    category: dbResource.category as ResourceCategory,
+    title: dbResource.title,
+    ownerId: dbResource.owner_id,
+    owner: toUserSummary(owner),
+    imageUrls: dbResource.image_urls || [],
+    createdAt: new Date(dbResource.created_at),
+    updatedAt: new Date(dbResource.updated_at),
   };
 }

@@ -19,6 +19,7 @@ export function createFakeDbShoutout(
     from_user_id: faker.string.uuid(),
     to_user_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
+    gathering_id: null,
     community_id: faker.string.uuid(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
@@ -31,7 +32,7 @@ export function createFakeDbShoutout(
 }
 
 /**
- * Creates a fake Shoutout for testing
+ * Creates a fake Shoutout for testing (resource shoutout by default)
  */
 export function createFakeShoutout(
   overrides: Partial<Shoutout> = {},
@@ -59,7 +60,7 @@ export function createFakeShoutout(
     createdAt: faker.date.recent(),
     updatedAt: faker.date.recent(),
     ...overrides,
-  };
+  } as Shoutout;
 }
 
 /**
@@ -87,7 +88,7 @@ export function createFakeShoutoutWithoutRelations(
     resource: null!,
     community: null!,
     ...overrides,
-  };
+  } as Shoutout;
 }
 
 /**
@@ -106,5 +107,5 @@ export function createFakeShoutoutInput(
       () => faker.image.urlLoremFlickr({ category: 'people' }),
     ),
     ...overrides,
-  };
+  } as ShoutoutInput;
 }

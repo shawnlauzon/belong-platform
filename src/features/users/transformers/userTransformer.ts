@@ -1,4 +1,4 @@
-import type { User, UserData } from '..';
+import type { User, UserData, UserSummary } from '..';
 import type {
   ProfileRow,
   ProfileInsertRow,
@@ -100,6 +100,20 @@ export function toUserUpdateRow(
   return {
     user_metadata: updatedMetadata,
     updated_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Transform a database profile record to a UserSummary object
+ */
+export function toUserSummary(profile: ProfileRow): UserSummary {
+  const metadata = (profile.user_metadata || {}) as UserMetadata;
+  return {
+    id: profile.id,
+    firstName: metadata.first_name || '',
+    avatarUrl: metadata.avatar_url,
+    createdAt: new Date(profile.created_at),
+    updatedAt: new Date(profile.updated_at),
   };
 }
 

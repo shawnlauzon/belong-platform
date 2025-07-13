@@ -496,10 +496,11 @@ export type Database = {
           community_id: string
           created_at: string
           from_user_id: string
+          gathering_id: string | null
           id: string
           image_urls: string[]
           message: string
-          resource_id: string
+          resource_id: string | null
           to_user_id: string
           updated_at: string
         }
@@ -507,10 +508,11 @@ export type Database = {
           community_id: string
           created_at?: string
           from_user_id: string
+          gathering_id?: string | null
           id?: string
           image_urls?: string[]
           message: string
-          resource_id: string
+          resource_id?: string | null
           to_user_id: string
           updated_at?: string
         }
@@ -518,10 +520,11 @@ export type Database = {
           community_id?: string
           created_at?: string
           from_user_id?: string
+          gathering_id?: string | null
           id?: string
           image_urls?: string[]
           message?: string
-          resource_id?: string
+          resource_id?: string | null
           to_user_id?: string
           updated_at?: string
         }
@@ -538,6 +541,13 @@ export type Database = {
             columns: ["from_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_gathering_id_fkey"
+            columns: ["gathering_id"]
+            isOneToOne: false
+            referencedRelation: "gatherings"
             referencedColumns: ["id"]
           },
           {

@@ -2,6 +2,7 @@ import { IsPersisted } from '@/shared';
 import { ResourceSummary } from '../../resources';
 import { UserSummary } from '../../users';
 import { CommunitySummary } from '@/features/communities/types/community';
+import { GatheringSummary } from '../../gatherings';
 
 export type Shoutout = IsPersisted<ShoutoutInput & ShoutoutSummaryFields>;
 export type ShoutoutSummary = IsPersisted<ShoutoutSummaryFields>;
@@ -9,12 +10,14 @@ export type ShoutoutSummary = IsPersisted<ShoutoutSummaryFields>;
 // For creating / updating Shoutout
 export type ShoutoutInput = Omit<
   ShoutoutSummaryFields,
-  'fromUserId' | 'fromUser' | 'toUser' | 'resource' | 'community'
+  'fromUserId' | 'fromUser' | 'toUser' | 'resource' | 'gathering' | 'community'
 > & {
   toUserId: string;
-  resourceId: string;
   communityId: string;
-};
+} & (
+  | { resourceId: string; gatheringId?: never }
+  | { gatheringId: string; resourceId?: never }
+);
 
 // Summary information about a Shoutout
 type ShoutoutSummaryFields = {
@@ -23,6 +26,8 @@ type ShoutoutSummaryFields = {
   fromUserId: string;
   fromUser: UserSummary;
   toUser: UserSummary;
-  resource: ResourceSummary;
   community: CommunitySummary;
-};
+} & (
+  | { resource: ResourceSummary; gathering?: never }
+  | { gathering: GatheringSummary; resource?: never }
+);

@@ -2,10 +2,11 @@ import { logger } from '../../../shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import type { ShoutoutInput, Shoutout } from '../types';
-import { toShoutoutInsertRow } from '../transformers/shoutoutsTransformer';
+import { toShoutoutInsertRow, toShoutoutWithJoinedRelations } from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
+import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
 
 /**
  * Creates a new shoutout with the current user as the sender
@@ -28,17 +29,20 @@ export async function createShoutout(
     // Transform to database format with auto-assigned fromUserId
     const dbShoutout = toShoutoutInsertRow(shoutoutData, currentUserId);
 
-    // Insert into database
+    // Insert into database with joined relations
     const { data: createdShoutout, error } = await supabase
       .from('shoutouts')
       .insert([dbShoutout])
-      .select('*')
+      .select(SELECT_SHOUTOUT_WITH_RELATIONS)
       .single();
 
     if (error) {
       logger.error('📢 API: Failed to create shoutout', { error });
       throw error;
     }
+
+    // Transform to domain object using the transformer
+    let domainShoutout = toShoutoutWithJoinedRelations(createdShoutout);
 
     // Auto-commit any temporary image URLs after shoutout creation
     if (shoutoutData.imageUrls && shoutoutData.imageUrls.length > 0) {
@@ -74,66 +78,15 @@ export async function createShoutout(
       }
     }
 
-    // Convert to Shoutout
-    const shoutout = createdShoutout;
-
     logger.info('📢 API: Successfully created shoutout', {
-      id: shoutout.id,
-      fromUserId: shoutout.from_user_id,
-      toUserId: shoutout.to_user_id,
-      resourceId: shoutout.resource_id,
+      id: domainShoutout.id,
+      fromUserId: domainShoutout.fromUserId,
+      toUserId: domainShoutout.toUserId,
+      resourceId: 'resourceId' in domainShoutout ? domainShoutout.resourceId : undefined,
+      gatheringId: 'gatheringId' in domainShoutout ? domainShoutout.gatheringId : undefined,
     });
 
-    return {
-      ...shoutout,
-      fromUserId: shoutout.from_user_id,
-      toUserId: shoutout.to_user_id,
-      resourceId: shoutout.resource_id,
-      communityId: shoutout.community_id,
-      imageUrls: shoutout.image_urls || [],
-      createdAt: new Date(shoutout.created_at),
-      updatedAt: new Date(shoutout.updated_at),
-      // Add required relation fields as placeholders
-      fromUser: {
-        id: shoutout.from_user_id,
-        firstName: '',
-        avatarUrl: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      toUser: {
-        id: shoutout.to_user_id,
-        firstName: '',
-        avatarUrl: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      resource: {
-        id: shoutout.resource_id,
-        title: '',
-        type: 'offer' as const,
-        ownerId: '',
-        owner: {
-          id: '',
-          firstName: '',
-          avatarUrl: undefined,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        imageUrls: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      community: {
-        id: shoutout.community_id,
-        name: '',
-        type: 'place' as const,
-        icon: undefined,
-        memberCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
+    return domainShoutout;
   } catch (error) {
     logger.error('📢 API: Error creating shoutout', {
       error: error instanceof Error ? error.message : 'Unknown error',
