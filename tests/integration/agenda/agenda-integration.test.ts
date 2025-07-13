@@ -19,10 +19,23 @@ import type { Agenda, Todo, TodoType } from '@/features/agenda/types';
 
 describe('Agenda Integration Tests - Core Aggregation', () => {
   let supabase: SupabaseClient<Database>;
+  let testUser: any;
+  let testOrganizer: any;
+  let testAttendee: any;
+  let testCommunity: any;
 
   beforeAll(async () => {
     supabase = createTestClient();
     await cleanupAllTestData(supabase);
+    
+    // Create shared test data
+    testUser = await createTestUser(supabase);
+    testOrganizer = await createTestUser(supabase);
+    testAttendee = await createTestUser(supabase);
+    testCommunity = await createTestCommunity(supabase);
+    
+    // Pre-authenticate users to avoid repeated sign-ins
+    await signIn(supabase, testUser.email, 'TestPass123!');
   });
 
   afterAll(async () => {
@@ -31,237 +44,155 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
 
   describe('Basic agenda fetching', () => {
     it('returns empty agenda for newly created user', async () => {
-      // Arrange
-      const user = await createTestUser(supabase);
-      await signIn(supabase, user.email, 'TestPass123!');
-      console.log('🐛 DEBUG: Created test user', { userId: user.id });
+      // Act (using testUser pre-authenticated in beforeAll)
+      const agenda: Agenda = await fetchAgenda(supabase);
 
-      try {
-        // Act
-        const agenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Fetched agenda', { agenda });
-
-        // Assert
-        expect(agenda).toBeDefined();
-        expect(agenda.items).toEqual([]);
-        expect(agenda.hasMore).toBe(false);
-        expect(agenda.nextCursor).toBeUndefined();
-      } finally {
-        // Cleanup handled by afterAll
-      }
+      // Assert
+      expect(agenda).toBeDefined();
+      expect(agenda.items).toEqual([]);
+      expect(agenda.hasMore).toBe(false);
+      expect(agenda.nextCursor).toBeUndefined();
     });
 
     it('returns proper Agenda interface structure when user has data', async () => {
-      // Arrange
-      const user = await createTestUser(supabase);
-      await signIn(supabase, user.email, 'TestPass123!');
-      const community = await createTestCommunity(supabase);
+      // Arrange - Switch to organizer
+      await signIn(supabase, testOrganizer.email, 'TestPass123!');
       
       // Create a future gathering that will appear in agenda
       const gathering = await createTestGathering({
         supabase,
-        organizerId: user.id,
-        communityId: community.id,
-      });
-      console.log('🐛 DEBUG: Created test data', { 
-        userId: user.id, 
-        communityId: community.id,
-        gatheringId: gathering.id 
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
 
-      try {
-        // Act
-        const agenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Fetched agenda with data', { agenda });
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
 
-        // Assert - Verify interface structure
-        expect(agenda).toBeDefined();
-        expect(agenda).toHaveProperty('items');
-        expect(agenda).toHaveProperty('hasMore');
-        expect(Array.isArray(agenda.items)).toBe(true);
-        expect(typeof agenda.hasMore).toBe('boolean');
-        
-        // Should have at least one item (the gathering as organizer)
-        expect(agenda.items.length).toBeGreaterThan(0);
-      } finally {
-        // Cleanup handled by afterAll
-      }
+      // Assert - Verify interface structure
+      expect(agenda).toBeDefined();
+      expect(agenda).toHaveProperty('items');
+      expect(agenda).toHaveProperty('hasMore');
+      expect(Array.isArray(agenda.items)).toBe(true);
+      expect(typeof agenda.hasMore).toBe('boolean');
+      
+      // Should have at least one item (the gathering as organizer)
+      expect(agenda.items.length).toBeGreaterThan(0);
     });
   });
 
   describe('Multi-source aggregation', () => {
     it('aggregates data from gatherings correctly', async () => {
-      // Arrange - Focus on organizer agenda (known to work)
-      const organizer = await createTestUser(supabase);
-      const community = await createTestCommunity(supabase);
-      
-      // Organizer creates gathering and checks their agenda
-      await signIn(supabase, organizer.email, 'TestPass123!');
+      // Arrange - Continue using organizer (no sign-in needed)
       const gathering = await createTestGathering({
         supabase,
-        organizerId: organizer.id,
-        communityId: community.id,
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
+
+      // Act
+      const organizerAgenda: Agenda = await fetchAgenda(supabase);
+
+      // Assert - Should have agenda items from gathering aggregation
+      expect(organizerAgenda.items.length).toBeGreaterThan(0);
+      const organizerItems = organizerAgenda.items.filter(item => 
+        item.type === 'gathering-organizer'
+      );
+      expect(organizerItems.length).toBeGreaterThan(0);
       
-      console.log('🐛 DEBUG: Created organizer test data', {
-        organizerId: organizer.id,
-        gatheringId: gathering.id
-      });
-
-      try {
-        // Act - Check organizer's agenda (should have organizer gathering)
-        const organizerAgenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Organizer agenda', { agenda: organizerAgenda });
-
-        // Assert - Should have agenda items from gathering aggregation
-        expect(organizerAgenda.items.length).toBeGreaterThan(0);
-        const organizerItems = organizerAgenda.items.filter(item => 
-          item.type === 'gathering-organizer'
-        );
-        expect(organizerItems.length).toBeGreaterThan(0);
-        
-        // Verify the aggregation includes gathering data
-        const gatheringItem = organizerItems[0];
-        expect(gatheringItem.gathering).toBeDefined();
-        expect(gatheringItem.gathering!.id).toBe(gathering.id);
-      } finally {
-        // Cleanup handled by afterAll
-      }
+      // Verify the aggregation includes gathering data
+      const gatheringItem = organizerItems[0];
+      expect(gatheringItem.gathering).toBeDefined();
+      expect(gatheringItem.gathering!.id).toBe(gathering.id);
     });
 
     it('correctly represents organizer TodoType', async () => {
-      // Arrange - Focus on organizer functionality (known to work)
-      const organizer = await createTestUser(supabase);
-      const community = await createTestCommunity(supabase);
-      
-      // Sign in as organizer and create gathering
-      await signIn(supabase, organizer.email, 'TestPass123!');
+      // Arrange - Continue using organizer (no sign-in needed)
       const gathering = await createTestGathering({
         supabase,
-        organizerId: organizer.id,
-        communityId: community.id,
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
 
-      console.log('🐛 DEBUG: Created organizer TodoType test data', {
-        organizerId: organizer.id,
-        gatheringId: gathering.id
-      });
-
-      try {
-        // Act - Check organizer's agenda (should have gathering-organizer)
-        const organizerAgenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Organizer agenda', { agenda: organizerAgenda });
-        
-        // Assert - Should have organizer todo type
-        expect(organizerAgenda.items.length).toBeGreaterThan(0);
-        const organizerTodos = organizerAgenda.items.filter(item => item.type === 'gathering-organizer');
-        expect(organizerTodos.length).toBeGreaterThan(0);
-        
-        // Verify todo structure
-        const organizerTodo = organizerTodos[0];
-        expect(organizerTodo.type).toBe('gathering-organizer');
-        expect(organizerTodo.gathering).toBeDefined();
-        expect(organizerTodo.gathering!.id).toBe(gathering.id);
-        
-        console.log('ℹ️ INFO: Found TodoTypes', { 
-          types: organizerAgenda.items.map(item => item.type)
-        });
-      } finally {
-        // Cleanup handled by afterAll
-      }
+      // Act
+      const organizerAgenda: Agenda = await fetchAgenda(supabase);
+      
+      // Assert - Should have organizer todo type
+      expect(organizerAgenda.items.length).toBeGreaterThan(0);
+      const organizerTodos = organizerAgenda.items.filter(item => item.type === 'gathering-organizer');
+      expect(organizerTodos.length).toBeGreaterThan(0);
+      
+      // Verify todo structure
+      const organizerTodo = organizerTodos[0];
+      expect(organizerTodo.type).toBe('gathering-organizer');
+      expect(organizerTodo.gathering).toBeDefined();
+      expect(organizerTodo.gathering!.id).toBe(gathering.id);
     });
   });
 
   describe('Data transformation', () => {
     it('correctly transforms gathering data to Todo format', async () => {
-      // Arrange
-      const user = await createTestUser(supabase);
-      await signIn(supabase, user.email, 'TestPass123!');
-      const community = await createTestCommunity(supabase);
+      // Arrange - Continue using organizer (no sign-in needed)
       const gathering = await createTestGathering({
         supabase,
-        organizerId: user.id,
-        communityId: community.id,
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
 
-      console.log('🐛 DEBUG: Created gathering for transformation test', {
-        gatheringId: gathering.id,
-        gatheringTitle: gathering.title
-      });
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
 
-      try {
-        // Act
-        const agenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Agenda for transformation test', { agenda });
-
-        // Assert - Find the gathering todo
-        const gatheringTodo = agenda.items.find(item => 
-          item.type === 'gathering-organizer' && item.gathering?.id === gathering.id
-        );
-        
-        expect(gatheringTodo).toBeDefined();
-        expect(gatheringTodo!.title).toBe(gathering.title);
-        expect(gatheringTodo!.description).toBe("You're organizing this gathering"); // System-generated description
-        expect(gatheringTodo!.dueDate).toBeDefined();
-        expect(gatheringTodo!.gathering).toBeDefined();
-        expect(gatheringTodo!.gathering!.id).toBe(gathering.id);
-      } finally {
-        // Cleanup handled by afterAll
-      }
+      // Assert - Find the gathering todo
+      const gatheringTodo = agenda.items.find(item => 
+        item.type === 'gathering-organizer' && item.gathering?.id === gathering.id
+      );
+      
+      expect(gatheringTodo).toBeDefined();
+      expect(gatheringTodo!.title).toBe(gathering.title);
+      expect(gatheringTodo!.description).toBe("You're organizing this gathering"); // System-generated description
+      expect(gatheringTodo!.dueDate).toBeDefined();
+      expect(gatheringTodo!.gathering).toBeDefined();
+      expect(gatheringTodo!.gathering!.id).toBe(gathering.id);
     });
 
     it('correctly populates optional fields (gathering/resource)', async () => {
-      // Arrange
-      const user = await createTestUser(supabase);
-      await signIn(supabase, user.email, 'TestPass123!');
-      const community = await createTestCommunity(supabase);
+      // Arrange - Continue using organizer (no sign-in needed)
       
       // Create gathering todo
       const gathering = await createTestGathering({
         supabase,
-        organizerId: user.id,
-        communityId: community.id,
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
 
       // Create resource todo (via accepted offer)
-      const resource = await createTestResource(supabase, community.id);
+      const resource = await createTestResource(supabase, testCommunity.id);
       await acceptResource(supabase, resource.id, 'accepted');
 
-      console.log('🐛 DEBUG: Created data for optional fields test', {
-        gatheringId: gathering.id,
-        resourceId: resource.id
-      });
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
 
-      try {
-        // Act
-        const agenda: Agenda = await fetchAgenda(supabase);
-        console.log('🐛 DEBUG: Agenda for optional fields test', { agenda });
+      // Assert - Gathering todos should have gathering field populated
+      const gatheringTodos = agenda.items.filter(item => 
+        item.type.startsWith('gathering-')
+      );
+      
+      for (const todo of gatheringTodos) {
+        expect(todo.gathering).toBeDefined();
+        expect(todo.gathering!.id).toBeDefined();
+        expect(todo.resource).toBeUndefined(); // Should not have resource field
+      }
 
-        // Assert - Gathering todos should have gathering field populated
-        const gatheringTodos = agenda.items.filter(item => 
-          item.type.startsWith('gathering-')
-        );
-        
-        for (const todo of gatheringTodos) {
-          expect(todo.gathering).toBeDefined();
-          expect(todo.gathering!.id).toBeDefined();
-          expect(todo.resource).toBeUndefined(); // Should not have resource field
+      // Assert - Shoutout todos should have resource field populated (if any)
+      const shoutoutTodos = agenda.items.filter(item => 
+        item.type.startsWith('shoutout-')
+      );
+      
+      for (const todo of shoutoutTodos) {
+        if (todo.type === 'shoutout-offer') {
+          expect(todo.resource).toBeDefined();
+          expect(todo.resource!.id).toBeDefined();
+          expect(todo.gathering).toBeUndefined(); // Should not have gathering field
         }
-
-        // Assert - Shoutout todos should have resource field populated (if any)
-        const shoutoutTodos = agenda.items.filter(item => 
-          item.type.startsWith('shoutout-')
-        );
-        
-        for (const todo of shoutoutTodos) {
-          if (todo.type === 'shoutout-offer') {
-            expect(todo.resource).toBeDefined();
-            expect(todo.resource!.id).toBeDefined();
-            expect(todo.gathering).toBeUndefined(); // Should not have gathering field
-          }
-        }
-      } finally {
-        // Cleanup handled by afterAll
       }
     });
   });
@@ -391,28 +322,17 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
 
   describe('Accepted gatherings in attendee agenda', () => {
     it('includes accepted gatherings in attendee agenda', async () => {
-      // Arrange
-      const organizer = await createTestUser(supabase);
-      const attendee = await createTestUser(supabase);
-      const community = await createTestCommunity(supabase);
-      
-      await signIn(supabase, organizer.email, 'TestPass123!');
+      // Arrange - Organizer creates gathering (continue using organizer from previous tests)
       const gathering = await createTestGathering({
         supabase,
-        organizerId: organizer.id,
-        communityId: community.id,
+        organizerId: testOrganizer.id,
+        communityId: testCommunity.id,
       });
 
-      // Act - Attendee joins gathering
-      await signIn(supabase, attendee.email, 'TestPass123!');
+      // Act - Switch to attendee and join gathering
+      await signIn(supabase, testAttendee.email, 'TestPass123!');
       await joinGathering(supabase, gathering.id);
       const agenda = await fetchAgenda(supabase);
-
-      console.log('🐛 DEBUG: Attendee agenda:', agenda.items.map(item => ({ 
-        type: item.type, 
-        title: item.title,
-        gatheringId: item.gathering?.id 
-      })));
 
       // Assert - Attendee should see gathering in agenda
       const attendeeTodos = agenda.items.filter(item => 
