@@ -8,7 +8,7 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/shoutouts/api';
-import { signIn, signOut } from '@/features/auth/api';
+import { signOut } from '@/features/auth/api';
 import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -30,23 +30,16 @@ describe('Shoutouts API - Authentication Requirements', () => {
     // Set up authenticated client and test data
     authenticatedClient = createTestClient();
 
-    // Create test data with authenticated client
-    testUser = await createTestUser(authenticatedClient);
-    await signIn(authenticatedClient, testUser.email, 'TestPass123!');
-
     testUser2 = await createTestUser(authenticatedClient);
     testCommunity = await createTestCommunity(authenticatedClient);
-    
-    // Sign in as testUser2 to create a resource owned by them
-    await signIn(authenticatedClient, testUser2.email, 'TestPass123!');
     testResource = await createTestResource(
       authenticatedClient,
       testCommunity.id,
     );
 
-    // Sign back in as testUser to create the shoutout
-    await signIn(authenticatedClient, testUser.email, 'TestPass123!');
-    
+    // Create test data with authenticated client
+    testUser = await createTestUser(authenticatedClient);
+
     // Create a test shoutout (testUser sends shoutout to testUser2 about testUser2's resource)
     testShoutout = await api.createShoutout(authenticatedClient, {
       toUserId: testUser2.id,

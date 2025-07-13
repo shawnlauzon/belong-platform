@@ -8,10 +8,9 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/resources/api';
-import { signIn, signOut } from '@/features/auth/api';
+import { signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 import { Resource } from '@/features';
 import { createFakeResourceInput } from '@/features/resources/__fakes__';
@@ -19,7 +18,6 @@ import { createFakeResourceInput } from '@/features/resources/__fakes__';
 describe('Resources API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: User;
   let testCommunity: Community;
   let testResource: Resource;
 
@@ -28,8 +26,7 @@ describe('Resources API - Authentication Requirements', () => {
     authenticatedClient = createTestClient();
 
     // Create test data with authenticated client
-    testUser = await createTestUser(authenticatedClient);
-    await signIn(authenticatedClient, testUser.email, 'TestPass123!');
+    await createTestUser(authenticatedClient);
 
     testCommunity = await createTestCommunity(authenticatedClient);
     testResource = await createTestResource(
