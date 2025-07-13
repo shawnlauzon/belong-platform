@@ -1,10 +1,50 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchGatherings } from '../../api/fetchGatherings';
 import { createMockSupabase } from '../../../../test-utils';
-import { createFakeGathering } from '../../__fakes__';
+import { createFakeGathering, createFakeGatheringRow } from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCommunity } from '../../../communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';
 import type { Gathering, GatheringFilter } from '../../types';
+import type { GatheringRowWithRelations } from '../../types/gatheringRow';
+
+// Helper function to create fake gathering with relations for testing
+function createFakeGatheringRowWithRelations(overrides: Partial<GatheringRowWithRelations> = {}): GatheringRowWithRelations {
+  const row = createFakeGatheringRow();
+  const organizer = createFakeUser();
+  const community = createFakeCommunity();
+  
+  return {
+    ...row,
+    organizer: {
+      id: organizer.id,
+      created_at: organizer.createdAt.toISOString(),
+      updated_at: organizer.updatedAt.toISOString(),
+      user_metadata: {
+        first_name: organizer.firstName,
+        avatar_url: organizer.avatarUrl,
+      },
+    },
+    community: {
+      id: community.id,
+      name: community.name,
+      description: community.description,
+      center_name: community.centerName,
+      center: `POINT(${community.center.lng} ${community.center.lat})`,
+      boundary: community.boundary as any,
+      type: community.type,
+      organizer_id: community.organizerId,
+      member_count: community.memberCount,
+      time_zone: community.timeZone,
+      icon: community.icon,
+      banner_image_url: community.bannerImageUrl,
+      created_at: community.createdAt.toISOString(),
+      updated_at: community.updatedAt.toISOString(),
+    },
+    ...overrides,
+  };
+}
 
 describe('fetchGatherings', () => {
   let mockSupabase: SupabaseClient<Database>;
@@ -182,59 +222,108 @@ describe('fetchGatherings', () => {
   it('should apply time-based filtering when includePast is false', async () => {
     const filters: GatheringFilter = { includePast: false };
 
+    // Create fake gatherings - one past, one future
+    const pastGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+      end_date_time: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(), // 23 hours ago
+    });
+    
+    const futureGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+      end_date_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+    });
+
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
-        data: [fakeGatherings[0]],
+        data: [pastGathering, futureGathering],
         error: null,
       }),
     };
 
     vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
 
-    await fetchGatherings(mockSupabase, filters);
+    const result = await fetchGatherings(mockSupabase, filters);
 
-    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day.eq.true'));
-    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day.eq.false'));
+    // Should only return future gathering, not past
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(futureGathering.id);
   });
 
   it('should apply time-based filtering when includeCurrent is false', async () => {
     const filters: GatheringFilter = { includeCurrent: false };
 
+    // Create fake gatherings - one current, one past, one future
+    const currentGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
+      end_date_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min from now
+    });
+    
+    const pastGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+      end_date_time: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(), // 23 hours ago
+    });
+    
+    const futureGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+      end_date_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+    });
+
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
-        data: [fakeGatherings[0]],
+        data: [currentGathering, pastGathering, futureGathering],
         error: null,
       }),
     };
 
     vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
 
-    await fetchGatherings(mockSupabase, filters);
+    const result = await fetchGatherings(mockSupabase, filters);
 
-    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('start_date_time.gt.'));
+    // Should return past and future, but not current
+    expect(result).toHaveLength(2);
+    expect(result.map(g => g.id)).toContain(pastGathering.id);
+    expect(result.map(g => g.id)).toContain(futureGathering.id);
+    expect(result.map(g => g.id)).not.toContain(currentGathering.id);
   });
 
   it('should apply time-based filtering when includeFuture is false', async () => {
     const filters: GatheringFilter = { includeFuture: false };
 
+    // Create fake gatherings - one current, one past, one future
+    const currentGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
+      end_date_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min from now
+    });
+    
+    const pastGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+      end_date_time: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(), // 23 hours ago
+    });
+    
+    const futureGathering = createFakeGatheringRowWithRelations({
+      start_date_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+      end_date_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+    });
+
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
-        data: [fakeGatherings[0]],
+        data: [currentGathering, pastGathering, futureGathering],
         error: null,
       }),
     };
 
     vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
 
-    await fetchGatherings(mockSupabase, filters);
+    const result = await fetchGatherings(mockSupabase, filters);
 
-    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day'));
+    // Should return past and current, but not future
+    expect(result).toHaveLength(2);
+    expect(result.map(g => g.id)).toContain(pastGathering.id);
+    expect(result.map(g => g.id)).toContain(currentGathering.id);
+    expect(result.map(g => g.id)).not.toContain(futureGathering.id);
   });
 
   it('should not apply time-based filtering when all time flags are default (true)', async () => {
@@ -279,5 +368,62 @@ describe('fetchGatherings', () => {
 
     expect(mockQuery.or).not.toHaveBeenCalled();
     expect(mockQuery.eq).toHaveBeenCalledWith('community_id', 'test-id');
+  });
+
+  it('should classify all-day gatherings correctly by start time', async () => {
+    const filters: GatheringFilter = { includePast: false, includeCurrent: true, includeFuture: false };
+
+    // Mock current time to be 11:00 AM  
+    const mockNow = new Date();
+    mockNow.setHours(11, 0, 0, 0); // 11:00 AM
+    vi.spyOn(Date, 'now').mockReturnValue(mockNow.getTime());
+    // Also mock new Date() constructor to return the mocked time
+    const OriginalDate = Date;
+    vi.spyOn(global, 'Date').mockImplementation((...args) => {
+      if (args.length === 0) {
+        return new OriginalDate(mockNow.getTime());
+      }
+      return new OriginalDate(...args);
+    });
+
+    // Create an all-day gathering for today at 5 AM - should be current (before 6 AM cutoff)
+    const todayMorning = new Date();
+    todayMorning.setHours(5, 0, 0, 0);
+    
+    const todayAllDayGathering = createFakeGatheringRowWithRelations({
+      start_date_time: todayMorning.toISOString(),
+      end_date_time: null,
+      is_all_day: true,
+    });
+
+    // Create an all-day gathering for today at noon - should be future (before noon)
+    const todayNoon = new Date();
+    todayNoon.setHours(12, 0, 0, 0);
+    
+    const todayFutureAllDayGathering = createFakeGatheringRowWithRelations({
+      start_date_time: todayNoon.toISOString(),
+      end_date_time: null,
+      is_all_day: true,
+    });
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [todayAllDayGathering, todayFutureAllDayGathering],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    const result = await fetchGatherings(mockSupabase, filters);
+
+
+    // Should include 5 AM gathering (current at 11 AM) but not noon gathering (future at 11 AM)
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(todayAllDayGathering.id);
+
+    // Restore Date.now
+    vi.restoreAllMocks();
   });
 });

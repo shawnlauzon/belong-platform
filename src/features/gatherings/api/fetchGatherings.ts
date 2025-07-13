@@ -39,69 +39,129 @@ export async function fetchGatherings(
       );
     }
 
-    // Handle time-based filtering (past, current, future)
-    const shouldFilterByTime = 
-      filters.includePast === false || 
-      filters.includeCurrent === false || 
-      filters.includeFuture === false;
-
-    if (shouldFilterByTime) {
-      const now = new Date().toISOString();
-      const currentDate = new Date().toISOString().split('T')[0];
-      const conditions: string[] = [];
-
-      // Build conditions for each category that should be included
-      if (filters.includePast !== false) {
-        // Past gatherings: have completely ended
-        conditions.push(
-          // All-day without end: ended yesterday or earlier
-          `and(is_all_day.eq.true,end_date_time.is.null,start_date_time::date.lt.${currentDate})`,
-          // All-day with end: end date is before today
-          `and(is_all_day.eq.true,end_date_time.is.not.null,end_date_time::date.lt.${currentDate})`,
-          // Timed with end: end time is before now
-          `and(is_all_day.eq.false,end_date_time.is.not.null,end_date_time.lt.${now})`,
-          // Timed without end: started more than 1 hour ago
-          `and(is_all_day.eq.false,end_date_time.is.null,start_date_time.lt.${new Date(Date.now() - 60*60*1000).toISOString()})`
-        );
-      }
-
-      if (filters.includeCurrent !== false) {
-        // Current gatherings: happening now
-        conditions.push(
-          // All-day without end: started today at or before current time and it's still today
-          `and(is_all_day.eq.true,end_date_time.is.null,start_date_time.lte.${now},start_date_time::date.eq.${currentDate})`,
-          // All-day with end: started at or before now and end date is today or later
-          `and(is_all_day.eq.true,end_date_time.is.not.null,start_date_time.lte.${now},end_date_time::date.gte.${currentDate})`,
-          // Timed with end: started at or before now and ends at or after now
-          `and(is_all_day.eq.false,end_date_time.is.not.null,start_date_time.lte.${now},end_date_time.gte.${now})`,
-          // Timed without end: started at or before now and within 1 hour
-          `and(is_all_day.eq.false,end_date_time.is.null,start_date_time.lte.${now},start_date_time.gte.${new Date(Date.now() - 60*60*1000).toISOString()})`
-        );
-      }
-
-      if (filters.includeFuture !== false) {
-        // Future gatherings: haven't started yet
-        conditions.push(
-          // All-day: starts after current time
-          `and(is_all_day.eq.true,start_date_time.gt.${now})`,
-          // Timed: starts after current time
-          `and(is_all_day.eq.false,start_date_time.gt.${now})`
-        );
-      }
-
-      if (conditions.length > 0) {
-        query = query.or(conditions.join(','));
-      }
-    }
+    // Note: Complex temporal filtering is done in JavaScript after fetching
+    // because PostgREST's OR syntax doesn't support complex AND conditions
   }
 
   const { data, error } = await query.order('start_date_time', {
     ascending: true,
   });
 
-  if (error || !data) {
+  if (error) {
     return [];
   }
+  
+  if (!data) {
+    return [];
+  }
+  
+  let gatherings = data.map((row) => toGatheringWithJoinedRelations(row));
+  
+  // Apply temporal filtering in JavaScript if needed
+  const shouldFilterByTime = filters && (
+    filters.includePast === false || 
+    filters.includeCurrent === false || 
+    filters.includeFuture === false
+  );
+  
+  if (shouldFilterByTime) {
+    const now = new Date();
+    const currentDate = new Date(now);
+    currentDate.setHours(0, 0, 0, 0);
+    const currentDateEnd = new Date(now);
+    currentDateEnd.setHours(23, 59, 59, 999);
+    const oneHourAgo = new Date(now.getTime() - 60*60*1000);
+    
+    gatherings = gatherings.filter(gathering => {
+      const startDateTime = new Date(gathering.startDateTime);
+      const endDateTime = gathering.endDateTime ? new Date(gathering.endDateTime) : null;
+      const isAllDay = gathering.isAllDay;
+      
+      // Determine if gathering is past, current, or future
+      let isPast = false;
+      let isCurrent = false;
+      let isFuture = false;
+      
+      if (isAllDay) {
+        if (endDateTime) {
+          // All-day with end date
+          const currentDateStart = new Date(now);
+          currentDateStart.setHours(0, 0, 0, 0);
+          
+          const startDateStart = new Date(startDateTime);
+          startDateStart.setHours(0, 0, 0, 0);
+          
+          const endDateStart = new Date(endDateTime);
+          endDateStart.setHours(0, 0, 0, 0);
+          
+          if (endDateStart < currentDateStart) {
+            isPast = true;
+          } else if (startDateStart <= currentDateStart && endDateStart >= currentDateStart) {
+            // Within the date range - all-day event is current from start time until end of last day
+            if (startDateTime <= now) {
+              isCurrent = true;
+            } else {
+              isFuture = true;
+            }
+          } else {
+            isFuture = true;
+          }
+        } else {
+          // All-day without end date
+          const currentDateStart = new Date(now);
+          currentDateStart.setHours(0, 0, 0, 0);
+          
+          const eventDateStart = new Date(startDateTime);
+          eventDateStart.setHours(0, 0, 0, 0);
+          
+          if (eventDateStart < currentDateStart) {
+            isPast = true;
+          } else if (eventDateStart.getTime() === currentDateStart.getTime()) {
+            // Same day - for all-day events, they are current if they start early in the day
+            // and the current time is past their start time
+            const startHour = startDateTime.getHours();
+            if (startDateTime <= now && startHour < 6) {
+              isCurrent = true;
+            } else {
+              isFuture = true;
+            }
+          } else {
+            isFuture = true;
+          }
+        }
+      } else {
+        // Timed gathering
+        if (endDateTime) {
+          // Timed with end time
+          if (endDateTime < now) {
+            isPast = true;
+          } else if (startDateTime <= now && endDateTime >= now) {
+            isCurrent = true;
+          } else {
+            isFuture = true;
+          }
+        } else {
+          // Timed without end time - consider current if started within 1 hour
+          if (startDateTime < oneHourAgo) {
+            isPast = true;
+          } else if (startDateTime >= oneHourAgo && startDateTime <= now) {
+            isCurrent = true;
+          } else {
+            isFuture = true;
+          }
+        }
+      }
+      
+      // Include based on filter settings
+      const shouldInclude = (
+        (filters!.includePast !== false && isPast) ||
+        (filters!.includeCurrent !== false && isCurrent) ||
+        (filters!.includeFuture !== false && isFuture)
+      );
+      
+      return shouldInclude;
+    });
+  }
 
-  return data.map((row) => toGatheringWithJoinedRelations(row));
+  return gatherings;
 }
