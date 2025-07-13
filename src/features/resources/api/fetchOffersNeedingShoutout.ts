@@ -25,12 +25,12 @@ export async function fetchOffersNeedingShoutout(
       .from('resources')
       .select(`
         ${SELECT_RESOURCE_WITH_RELATIONS},
-        resource_responses!inner(response),
+        resource_responses!inner(status),
         shoutouts!left(id)
       `)
       .eq('type', 'offer')
       .eq('resource_responses.user_id', currentUserId)
-      .eq('resource_responses.response', 'accepted')
+      .eq('resource_responses.status', 'accepted')
       .is('shoutouts.id', null) // No shoutout exists
       .eq('shoutouts.from_user_id', currentUserId); // Left join condition
 

@@ -129,7 +129,7 @@ export async function fetchAgenda(
     };
   } catch (error) {
     logger.error('📊 API: Error fetching agenda', { error });
-    return { items: [], hasMore: false };
+    throw error;
   }
 }
 

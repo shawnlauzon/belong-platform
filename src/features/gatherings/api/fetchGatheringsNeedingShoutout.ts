@@ -26,11 +26,11 @@ export async function fetchGatheringsNeedingShoutout(
       .from('gatherings')
       .select(`
         ${SELECT_GATHERING_WITH_RELATIONS},
-        gathering_responses!inner(response),
+        gathering_responses!inner(status),
         shoutouts!left(id)
       `)
       .eq('gathering_responses.user_id', currentUserId)
-      .eq('gathering_responses.response', 'yes')
+      .eq('gathering_responses.status', 'yes')
       .lt('end_time', new Date().toISOString()) // Gathering has ended
       .is('shoutouts.id', null) // No shoutout exists
       .eq('shoutouts.from_user_id', currentUserId); // Left join condition
