@@ -8,6 +8,7 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchFeed } from '@/features/feed/api';
+import { getGatheringItems } from '@/features/feed/types';
 import { signIn } from '@/features/auth/api';
 import { createGathering } from '@/features/gatherings/api';
 import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
@@ -15,7 +16,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
-import type { Gathering } from '@/features/gatherings/types';
 
 describe('Feed API - Gatherings Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -80,10 +80,8 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Fetch the feed
       const feed = await fetchFeed(supabase);
 
-      // Filter gatherings from the feed
-      const gatheringItems = feed.items.filter(
-        (item) => item.type === 'gathering',
-      );
+      // Filter gatherings from the feed using type-safe function
+      const gatheringItems = getGatheringItems(feed.items);
 
       // Verify that past gathering is NOT in the feed
       expect(
@@ -148,10 +146,8 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Fetch the feed
       const feed = await fetchFeed(supabase);
 
-      // Filter gatherings from the feed
-      const gatheringItems = feed.items.filter(
-        (item) => item.type === 'gathering',
-      );
+      // Filter gatherings from the feed using type-safe function
+      const gatheringItems = getGatheringItems(feed.items);
 
       // Verify that recent ongoing gathering (30 min ago, no end time) IS in the feed
       expect(
@@ -215,10 +211,8 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Fetch the feed
       const feed = await fetchFeed(supabase);
 
-      // Filter gatherings from the feed
-      const gatheringItems = feed.items.filter(
-        (item) => item.type === 'gathering',
-      );
+      // Filter gatherings from the feed using type-safe function
+      const gatheringItems = getGatheringItems(feed.items);
 
       // Verify that today's all-day gathering IS in the feed
       expect(
@@ -233,7 +227,7 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Find the all-day gathering in the feed and verify its properties
       const allDayItem = gatheringItems.find((item) => item.data.id === todayAllDay.id);
       if (allDayItem) {
-        expect(allDayItem.data.allDay).toBe(true);
+        expect(allDayItem.data.isAllDay).toBe(true);
         expect(allDayItem.data.endDateTime).toBeNull();
       }
     });
