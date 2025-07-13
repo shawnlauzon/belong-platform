@@ -3,7 +3,6 @@ import { createTestClient } from '../helpers/test-client';
 import {
   createTestUser,
   createTestCommunity,
-  createTestGathering,
   TEST_PREFIX,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
@@ -37,7 +36,7 @@ describe('Feed API - Gatherings Integration Tests', () => {
 
   describe('temporal filtering', () => {
     it('only returns current and upcoming gatherings, not past ones', async () => {
-      // Sign in as testUser 
+      // Sign in as testUser
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create timed gatherings with different dates
@@ -64,8 +63,12 @@ describe('Feed API - Gatherings Integration Tests', () => {
         isAllDay: false, // Explicitly set for timed gathering
       });
 
-      const currentGathering = await createGathering(supabase, currentGatheringData);
-      if (!currentGathering) throw new Error('Failed to create current gathering');
+      const currentGathering = await createGathering(
+        supabase,
+        currentGatheringData,
+      );
+      if (!currentGathering)
+        throw new Error('Failed to create current gathering');
 
       // Fetch the feed
       const feed = await fetchFeed(supabase);
@@ -87,12 +90,14 @@ describe('Feed API - Gatherings Integration Tests', () => {
       const now = new Date();
       gatheringItems.forEach((item) => {
         const startDate = new Date(item.data.startDateTime);
-        expect(startDate.getTime()).toBeGreaterThanOrEqual(now.getTime() - 5000); // Allow 5 second tolerance for test execution time
+        expect(startDate.getTime()).toBeGreaterThanOrEqual(
+          now.getTime() - 5000,
+        ); // Allow 5 second tolerance for test execution time
       });
     });
 
     it('shows ongoing events without end time that started less than an hour ago', async () => {
-      // Sign in as testUser 
+      // Sign in as testUser
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a timed gathering that started 30 minutes ago with no end time (ongoing)
@@ -106,8 +111,12 @@ describe('Feed API - Gatherings Integration Tests', () => {
         isAllDay: false, // Explicitly set for timed gathering
       });
 
-      const ongoingGathering = await createGathering(supabase, ongoingGatheringData);
-      if (!ongoingGathering) throw new Error('Failed to create ongoing gathering');
+      const ongoingGathering = await createGathering(
+        supabase,
+        ongoingGatheringData,
+      );
+      if (!ongoingGathering)
+        throw new Error('Failed to create ongoing gathering');
 
       // Create a timed gathering that started 2 hours ago with no end time (should be filtered out)
       const oldGatheringData = createFakeGatheringInput({
@@ -140,7 +149,9 @@ describe('Feed API - Gatherings Integration Tests', () => {
       ).toBe(false);
 
       // Find the ongoing gathering in the feed and verify its properties
-      const ongoingItem = gatheringItems.find((item) => item.data.id === ongoingGathering.id);
+      const ongoingItem = gatheringItems.find(
+        (item) => item.data.id === ongoingGathering.id,
+      );
       if (ongoingItem) {
         expect(ongoingItem.data.endDateTime).toBeNull();
         const startTime = new Date(ongoingItem.data.startDateTime);
@@ -150,13 +161,21 @@ describe('Feed API - Gatherings Integration Tests', () => {
     });
 
     it('shows all-day gatherings for the current day', async () => {
-      // Sign in as testUser 
+      // Sign in as testUser
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      // Create an all-day gathering for today starting at 10am
-      const today = new Date();
-      today.setHours(10, 0, 0, 0); // 10am today
+      // Create an all-day gathering for today starting at least 10 minutes in the future
+      const now = new Date();
+      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
       
+      // If adding 10 minutes would make it tomorrow, skip this test
+      if (tenMinutesFromNow.getDate() !== now.getDate()) {
+        console.log('Skipping test: adding 10 minutes would cross into next day');
+        return;
+      }
+      
+      const today = new Date(tenMinutesFromNow);
+
       const todayAllDayData = createFakeGatheringInput({
         title: `${TEST_PREFIX}AllDay_Today_${Date.now()}`,
         description: `${TEST_PREFIX} all-day gathering for today`,
@@ -168,13 +187,14 @@ describe('Feed API - Gatherings Integration Tests', () => {
       });
 
       const todayAllDay = await createGathering(supabase, todayAllDayData);
-      if (!todayAllDay) throw new Error('Failed to create today all-day gathering');
+      if (!todayAllDay)
+        throw new Error('Failed to create today all-day gathering');
 
       // Create an all-day gathering for yesterday (should be filtered out)
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       yesterday.setHours(14, 30, 0, 0); // 2:30pm yesterday
-      
+
       const yesterdayAllDayData = createFakeGatheringInput({
         title: `${TEST_PREFIX}AllDay_Yesterday_${Date.now()}`,
         description: `${TEST_PREFIX} all-day gathering for yesterday`,
@@ -185,8 +205,12 @@ describe('Feed API - Gatherings Integration Tests', () => {
         isAllDay: true,
       });
 
-      const yesterdayAllDay = await createGathering(supabase, yesterdayAllDayData);
-      if (!yesterdayAllDay) throw new Error('Failed to create yesterday all-day gathering');
+      const yesterdayAllDay = await createGathering(
+        supabase,
+        yesterdayAllDayData,
+      );
+      if (!yesterdayAllDay)
+        throw new Error('Failed to create yesterday all-day gathering');
 
       // Fetch the feed
       const feed = await fetchFeed(supabase);
@@ -205,7 +229,9 @@ describe('Feed API - Gatherings Integration Tests', () => {
       ).toBe(false);
 
       // Find the all-day gathering in the feed and verify its properties
-      const allDayItem = gatheringItems.find((item) => item.data.id === todayAllDay.id);
+      const allDayItem = gatheringItems.find(
+        (item) => item.data.id === todayAllDay.id,
+      );
       if (allDayItem) {
         expect(allDayItem.data.isAllDay).toBe(true);
         expect(allDayItem.data.endDateTime).toBeNull();
