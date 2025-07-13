@@ -1,4 +1,4 @@
-export * from './todos';
+export * from './agenda';
 export * from './auth';
 export * from './communities';
 export * from './gatherings';

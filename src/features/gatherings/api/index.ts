@@ -6,3 +6,6 @@ export { deleteGathering } from './deleteGathering';
 export { joinGathering } from './joinGathering';
 export { leaveGathering } from './leaveGathering';
 export { fetchGatheringResponses } from './fetchGatheringResponses';
+export { fetchGatheringsNeedingShoutout } from './fetchGatheringsNeedingShoutout';
+export { fetchUpcomingGatheringsForUser } from './fetchUpcomingGatheringsForUser';
+export { fetchUpcomingOrganizerGatherings } from './fetchUpcomingOrganizerGatherings';

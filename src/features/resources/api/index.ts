@@ -6,3 +6,5 @@ export * from './deleteResource';
 export * from './acceptResource';
 export * from './declineResource';
 export * from './fetchResourceResponses';
+export * from './fetchOffersNeedingShoutout';
+export * from './fetchFavorsNeedingShoutout';
