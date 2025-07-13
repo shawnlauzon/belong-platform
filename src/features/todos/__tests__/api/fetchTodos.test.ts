@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { TodoFilter } from '../types';
+import type { TodoFilter } from '../../types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
 // Mock the entire API module
 const mockFetchTodos = vi.fn();
-vi.mock('../api/fetchTodos', () => ({
+vi.mock('../../api/fetchTodos', () => ({
   fetchTodos: mockFetchTodos
 }));
 
 // Import after mocking
-const { fetchTodos } = await import('../api/fetchTodos');
+const { fetchTodos } = await import('../../api/fetchTodos');
 
 describe('fetchTodos', () => {
   it('should fetch and aggregate todos from all sources', async () => {

@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { createTestWrapper } from '../../../test-utils';
-import type { TodoSummary, TodoFilter } from '../types';
+import { createTestWrapper } from '../../../../test-utils';
+import type { TodoSummary, TodoFilter } from '../../types';
 
 // Mock the API function
 const mockFetchTodos = vi.fn();
-vi.mock('../api', () => ({
+vi.mock('../../api', () => ({
   fetchTodos: mockFetchTodos,
 }));
 
 // Mock queryKeys properly
-vi.mock('../../../shared', async () => {
-  const actual = await vi.importActual('../../../shared');
+vi.mock('../../../../shared', async () => {
+  const actual = await vi.importActual('../../../../shared');
   return {
     ...actual,
     queryKeys: {
@@ -26,7 +26,7 @@ vi.mock('../../../shared', async () => {
 });
 
 // Import after mocking
-const { useTodos, useTodoCounts } = await import('../hooks/useTodos');
+const { useTodos, useTodoCounts } = await import('../../hooks/useTodos');
 
 describe('useTodos', () => {
   beforeEach(() => {

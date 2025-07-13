@@ -4,7 +4,7 @@ import {
   transformResourcesToTodos,
   transformShoutoutsToTodos,
   transformMessagesToTodos
-} from '../transformers/todosTransformer';
+} from '../../transformers/todosTransformer';
 
 describe('todosTransformer', () => {
   describe('transformEventsToTodos', () => {
