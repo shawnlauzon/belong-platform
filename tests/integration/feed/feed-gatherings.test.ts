@@ -40,42 +40,32 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Sign in as testUser 
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      // Create gatherings with different dates
-      const pastGathering = await createTestGathering({
-        supabase,
-        organizerId: testUser.id,
+      // Create timed gatherings with different dates
+      const pastGatheringData = createFakeGatheringInput({
+        title: `${TEST_PREFIX}Past_Timed_${Date.now()}`,
+        description: `${TEST_PREFIX} past timed gathering`,
         communityId: testCommunity.id,
+        organizerId: testUser.id,
+        startDateTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
+        endDateTime: new Date(Date.now() - 23 * 60 * 60 * 1000), // Yesterday + 1 hour
+        isAllDay: false, // Explicitly set for timed gathering
       });
 
-      // Update the past gathering to have a past date
-      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // Yesterday
-      const { error: updateError } = await supabase
-        .from('gatherings')
-        .update({
-          start_date_time: pastDate.toISOString(),
-          end_date_time: new Date(pastDate.getTime() + 60 * 60 * 1000).toISOString(), // Yesterday + 1 hour
-        })
-        .eq('id', pastGathering.id);
+      const pastGathering = await createGathering(supabase, pastGatheringData);
+      if (!pastGathering) throw new Error('Failed to create past gathering');
 
-      expect(updateError).toBeNull();
-
-      const currentGathering = await createTestGathering({
-        supabase,
-        organizerId: testUser.id,
+      const currentGatheringData = createFakeGatheringInput({
+        title: `${TEST_PREFIX}Current_Timed_${Date.now()}`,
+        description: `${TEST_PREFIX} current timed gathering`,
         communityId: testCommunity.id,
+        organizerId: testUser.id,
+        startDateTime: new Date(), // Now
+        endDateTime: new Date(Date.now() + 60 * 60 * 1000), // Now + 1 hour
+        isAllDay: false, // Explicitly set for timed gathering
       });
 
-      // Update the current gathering to start now
-      const currentDate = new Date();
-      const { error: updateError2 } = await supabase
-        .from('gatherings')
-        .update({
-          start_date_time: currentDate.toISOString(),
-          end_date_time: new Date(currentDate.getTime() + 60 * 60 * 1000).toISOString(), // Now + 1 hour
-        })
-        .eq('id', currentGathering.id);
-
-      expect(updateError2).toBeNull();
+      const currentGathering = await createGathering(supabase, currentGatheringData);
+      if (!currentGathering) throw new Error('Failed to create current gathering');
 
       // Fetch the feed
       const feed = await fetchFeed(supabase);
@@ -105,43 +95,33 @@ describe('Feed API - Gatherings Integration Tests', () => {
       // Sign in as testUser 
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      // Create a gathering that started 30 minutes ago with no end time
-      const ongoingGathering = await createTestGathering({
-        supabase,
-        organizerId: testUser.id,
+      // Create a timed gathering that started 30 minutes ago with no end time (ongoing)
+      const ongoingGatheringData = createFakeGatheringInput({
+        title: `${TEST_PREFIX}Ongoing_Timed_${Date.now()}`,
+        description: `${TEST_PREFIX} ongoing timed gathering`,
         communityId: testCommunity.id,
+        organizerId: testUser.id,
+        startDateTime: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        endDateTime: undefined, // No end time - ongoing event
+        isAllDay: false, // Explicitly set for timed gathering
       });
 
-      // Update to have started 30 minutes ago with no end time
-      const recentStartTime = new Date(Date.now() - 30 * 60 * 1000); // 30 minutes ago
-      const { error: updateError } = await supabase
-        .from('gatherings')
-        .update({
-          start_date_time: recentStartTime.toISOString(),
-          end_date_time: null, // No end time - ongoing event
-        })
-        .eq('id', ongoingGathering.id);
+      const ongoingGathering = await createGathering(supabase, ongoingGatheringData);
+      if (!ongoingGathering) throw new Error('Failed to create ongoing gathering');
 
-      expect(updateError).toBeNull();
-
-      // Create a gathering that started 2 hours ago with no end time (should be filtered out)
-      const oldGathering = await createTestGathering({
-        supabase,
-        organizerId: testUser.id,
+      // Create a timed gathering that started 2 hours ago with no end time (should be filtered out)
+      const oldGatheringData = createFakeGatheringInput({
+        title: `${TEST_PREFIX}Old_Timed_${Date.now()}`,
+        description: `${TEST_PREFIX} old timed gathering`,
         communityId: testCommunity.id,
+        organizerId: testUser.id,
+        startDateTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        endDateTime: undefined, // No end time - ongoing event
+        isAllDay: false, // Explicitly set for timed gathering
       });
 
-      // Update to have started 2 hours ago with no end time
-      const oldStartTime = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2 hours ago
-      const { error: updateError2 } = await supabase
-        .from('gatherings')
-        .update({
-          start_date_time: oldStartTime.toISOString(),
-          end_date_time: null, // No end time - ongoing event
-        })
-        .eq('id', oldGathering.id);
-
-      expect(updateError2).toBeNull();
+      const oldGathering = await createGathering(supabase, oldGatheringData);
+      if (!oldGathering) throw new Error('Failed to create old gathering');
 
       // Fetch the feed
       const feed = await fetchFeed(supabase);
