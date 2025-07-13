@@ -204,4 +204,51 @@ describe('fetchFeed', () => {
       hasMore: false,
     });
   });
+
+  it('should only return items from communities where user is a member', async () => {
+    // Arrange
+    const fakeUser = { id: 'user-1', email: 'test@example.com' };
+    
+    // User is member of community-1 and community-2, but NOT community-3
+    const userMemberships = [
+      { userId: 'user-1', communityId: 'community-1', joinedAt: new Date() },
+      { userId: 'user-1', communityId: 'community-2', joinedAt: new Date() },
+    ];
+    
+    // Create content in both member and non-member communities
+    const resourceFromMemberCommunity = createFakeResource({ communityId: 'community-1' });
+    const gatheringFromMemberCommunity = createFakeGathering({ communityId: 'community-2' });
+    const shoutoutFromMemberCommunity = createFakeShoutout({ 
+      fromUserId: 'user-2', 
+      toUserId: 'user-1', 
+      resourceId: 'resource-1' 
+    });
+    
+    mockGetCurrentUser.mockResolvedValue(fakeUser);
+    mockFetchUserCommunities.mockResolvedValue(userMemberships);
+    mockFetchResources.mockResolvedValue([resourceFromMemberCommunity]);
+    mockFetchGatherings.mockResolvedValue([gatheringFromMemberCommunity]);
+    mockFetchShoutouts.mockResolvedValue([shoutoutFromMemberCommunity]);
+
+    // Act
+    const result = await fetchFeed(mockSupabase);
+
+    // Assert
+    // Verify content fetch functions were called with only member community IDs
+    expect(mockFetchResources).toHaveBeenCalledWith(mockSupabase, { 
+      communityIds: ['community-1', 'community-2'] 
+    });
+    expect(mockFetchGatherings).toHaveBeenCalledWith(mockSupabase, { 
+      communityIds: ['community-1', 'community-2'] 
+    });
+    expect(mockFetchShoutouts).toHaveBeenCalledWith(mockSupabase, { 
+      communityIds: ['community-1', 'community-2'] 
+    });
+    
+    // Verify only content from member communities is returned
+    expect(result.items).toHaveLength(3);
+    expect(result.items.find(item => item.type === 'resource')?.data).toEqual(resourceFromMemberCommunity);
+    expect(result.items.find(item => item.type === 'gathering')?.data).toEqual(gatheringFromMemberCommunity);
+    expect(result.items.find(item => item.type === 'shoutout')?.data).toEqual(shoutoutFromMemberCommunity);
+  });
 });

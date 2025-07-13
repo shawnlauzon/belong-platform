@@ -2,25 +2,25 @@ import { logger } from '@/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type {
-  ActivitySummary,
-  ActivityFilter,
-  ActivitySection,
+  TodoSummary,
+  TodoFilter,
+  TodoSection,
 } from '../types';
 import {
-  transformEventsToActivities,
-  transformResourcesToActivities,
-  transformShoutoutsToActivities,
-  transformMessagesToActivities,
-} from '../transformers/activitiesTransformer';
+  transformEventsToTodos,
+  transformResourcesToTodos,
+  transformShoutoutsToTodos,
+  transformMessagesToTodos,
+} from '../transformers/todosTransformer';
 
 /**
- * Fetches and aggregates user activities from multiple sources
+ * Fetches and aggregates user todos from multiple sources
  */
-export async function fetchActivities(
+export async function fetchTodos(
   supabase: SupabaseClient<Database>,
-  filter: ActivityFilter,
-): Promise<ActivitySummary[]> {
-  logger.debug('📊 API: Fetching activities', { filter });
+  filter: TodoFilter,
+): Promise<TodoSummary[]> {
+  logger.debug('📊 API: Fetching todos', { filter });
 
   try {
     // Parallel fetch from all sources
@@ -32,35 +32,35 @@ export async function fetchActivities(
         fetchUnreadMessages(supabase, filter.userId),
       ]);
 
-    // Transform each data type to activities
-    const eventActivities = transformEventsToActivities(
+    // Transform each data type to todos
+    const eventTodos = transformEventsToTodos(
       eventsResult.data || [],
     );
-    const resourceActivities = transformResourcesToActivities(
+    const resourceTodos = transformResourcesToTodos(
       resourcesResult.data || [],
     );
-    const shoutoutActivities = transformShoutoutsToActivities(
+    const shoutoutTodos = transformShoutoutsToTodos(
       shoutoutsResult.data || [],
     );
-    const messageActivities = transformMessagesToActivities(
+    const messageTodos = transformMessagesToTodos(
       messagesResult.data || [],
     );
 
-    // Combine all activities
-    let activities = [
-      ...eventActivities,
-      ...resourceActivities,
-      ...shoutoutActivities,
-      ...messageActivities,
+    // Combine all todos
+    let todos = [
+      ...eventTodos,
+      ...resourceTodos,
+      ...shoutoutTodos,
+      ...messageTodos,
     ];
 
     // Filter by section if specified
     if (filter.section) {
-      activities = filterBySection(activities, filter.section);
+      todos = filterBySection(todos, filter.section);
     }
 
     // Sort by urgency and date
-    activities.sort((a, b) => {
+    todos.sort((a, b) => {
       // Sort by urgency first
       const urgencyOrder: { [key: string]: number } = {
         urgent: 0,
@@ -84,17 +84,17 @@ export async function fetchActivities(
 
     // Apply limit if specified
     if (filter.limit) {
-      activities = activities.slice(0, filter.limit);
+      todos = todos.slice(0, filter.limit);
     }
 
-    logger.info('📊 API: Successfully fetched activities', {
-      count: activities.length,
+    logger.info('📊 API: Successfully fetched todos', {
+      count: todos.length,
       userId: filter.userId,
     });
 
-    return activities;
+    return todos;
   } catch (error) {
-    logger.error('📊 API: Error fetching activities', { error, filter });
+    logger.error('📊 API: Error fetching todos', { error, filter });
     throw error;
   }
 }
@@ -234,26 +234,26 @@ async function fetchUnreadMessages(
 }
 
 /**
- * Filter activities by section
+ * Filter todos by section
  */
 function filterBySection(
-  activities: ActivitySummary[],
-  section: ActivitySection,
-): ActivitySummary[] {
+  todos: TodoSummary[],
+  section: TodoSection,
+): TodoSummary[] {
   const now = new Date();
   const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   switch (section) {
     case 'attention':
-      return activities.filter(
+      return todos.filter(
         (a) =>
           a.urgencyLevel === 'urgent' ||
           (a.dueDate && a.dueDate < now && a.type !== 'event_upcoming'),
       );
 
     case 'in_progress':
-      return activities.filter(
+      return todos.filter(
         (a) =>
           a.type === 'resource_accepted' ||
           (a.type === 'event_upcoming' &&
@@ -263,13 +263,13 @@ function filterBySection(
       );
 
     case 'upcoming':
-      return activities.filter(
+      return todos.filter(
         (a) =>
           a.type === 'event_upcoming' && a.dueDate && a.dueDate > oneDayFromNow,
       );
 
     case 'history':
-      return activities.filter(
+      return todos.filter(
         (a) =>
           a.createdAt >= sevenDaysAgo &&
           ((a.type === 'event_upcoming' && a.dueDate && a.dueDate < now) ||
@@ -278,6 +278,6 @@ function filterBySection(
       );
 
     default:
-      return activities;
+      return todos;
   }
 }

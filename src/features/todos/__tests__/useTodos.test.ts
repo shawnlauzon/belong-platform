@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../../../test-utils';
-import type { ActivitySummary, ActivityFilter } from '../types';
+import type { TodoSummary, TodoFilter } from '../types';
 
 // Mock the API function
-const mockFetchActivities = vi.fn();
+const mockFetchTodos = vi.fn();
 vi.mock('../api', () => ({
-  fetchActivities: mockFetchActivities,
+  fetchTodos: mockFetchTodos,
 }));
 
 // Mock queryKeys properly
@@ -16,24 +16,24 @@ vi.mock('../../../shared', async () => {
     ...actual,
     queryKeys: {
       ...actual.queryKeys,
-      activities: {
-        byUser: (userId: string) => ['user', userId, 'activities'],
-        bySection: (userId: string, section: string) => ['user', userId, 'activities', section],
-        counts: (userId: string) => ['user', userId, 'activities', 'counts'],
+      todos: {
+        byUser: (userId: string) => ['user', userId, 'todos'],
+        bySection: (userId: string, section: string) => ['user', userId, 'todos', section],
+        counts: (userId: string) => ['user', userId, 'todos', 'counts'],
       }
     }
   };
 });
 
 // Import after mocking
-const { useActivities, useActivityCounts } = await import('../hooks/useActivities');
+const { useTodos, useTodoCounts } = await import('../hooks/useTodos');
 
-describe('useActivities', () => {
+describe('useTodos', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const mockActivities: ActivitySummary[] = [
+  const mockTodos: TodoSummary[] = [
     {
       id: 'event_upcoming_event1',
       type: 'event_upcoming',
@@ -66,11 +66,11 @@ describe('useActivities', () => {
     }
   ];
 
-  it('should fetch activities for a user', async () => {
-    mockFetchActivities.mockResolvedValue(mockActivities);
+  it('should fetch todos for a user', async () => {
+    mockFetchTodos.mockResolvedValue(mockTodos);
 
-    const filter: ActivityFilter = { userId: 'user1' };
-    const { result } = renderHook(() => useActivities(filter), {
+    const filter: TodoFilter = { userId: 'user1' };
+    const { result } = renderHook(() => useTodos(filter), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -78,19 +78,19 @@ describe('useActivities', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(mockActivities);
-    expect(mockFetchActivities).toHaveBeenCalledWith(
+    expect(result.current.data).toEqual(mockTodos);
+    expect(mockFetchTodos).toHaveBeenCalledWith(
       expect.any(Object),
       filter
     );
   });
 
   it('should fetch activities filtered by section', async () => {
-    const urgentActivities = mockActivities.filter(a => a.urgencyLevel === 'urgent');
-    mockFetchActivities.mockResolvedValue(urgentActivities);
+    const urgentTodos = mockTodos.filter(a => a.urgencyLevel === 'urgent');
+    mockFetchTodos.mockResolvedValue(urgentTodos);
 
-    const filter: ActivityFilter = { userId: 'user1', section: 'attention' };
-    const { result } = renderHook(() => useActivities(filter), {
+    const filter: TodoFilter = { userId: 'user1', section: 'attention' };
+    const { result } = renderHook(() => useTodos(filter), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -98,29 +98,29 @@ describe('useActivities', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(urgentActivities);
-    expect(mockFetchActivities).toHaveBeenCalledWith(
+    expect(result.current.data).toEqual(urgentTodos);
+    expect(mockFetchTodos).toHaveBeenCalledWith(
       expect.any(Object),
       filter
     );
   });
 
   it('should not fetch when userId is not provided', () => {
-    const filter: ActivityFilter = { userId: '' };
-    const { result } = renderHook(() => useActivities(filter), {
+    const filter: TodoFilter = { userId: '' };
+    const { result } = renderHook(() => useTodos(filter), {
       wrapper: createTestWrapper().wrapper
     });
 
     expect(result.current.isPending).toBe(true);
-    expect(mockFetchActivities).not.toHaveBeenCalled();
+    expect(mockFetchTodos).not.toHaveBeenCalled();
   });
 
   it('should handle fetch errors gracefully', async () => {
-    const error = new Error('Failed to fetch activities');
-    mockFetchActivities.mockRejectedValue(error);
+    const error = new Error('Failed to fetch todos');
+    mockFetchTodos.mockRejectedValue(error);
 
-    const filter: ActivityFilter = { userId: 'user1' };
-    const { result } = renderHook(() => useActivities(filter), {
+    const filter: TodoFilter = { userId: 'user1' };
+    const { result } = renderHook(() => useTodos(filter), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -132,10 +132,10 @@ describe('useActivities', () => {
   });
 
   it('should use correct query keys for caching', async () => {
-    mockFetchActivities.mockResolvedValue(mockActivities);
+    mockFetchTodos.mockResolvedValue(mockTodos);
 
-    const filter: ActivityFilter = { userId: 'user1', section: 'attention' };
-    const { result } = renderHook(() => useActivities(filter), {
+    const filter: TodoFilter = { userId: 'user1', section: 'attention' };
+    const { result } = renderHook(() => useTodos(filter), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -148,12 +148,12 @@ describe('useActivities', () => {
   });
 });
 
-describe('useActivityCounts', () => {
+describe('useTodoCounts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const mockActivitiesForCounts: ActivitySummary[] = [
+  const mockTodosForCounts: TodoSummary[] = [
     // Needs attention (urgent)
     {
       id: 'event_upcoming_urgent',
@@ -206,10 +206,10 @@ describe('useActivityCounts', () => {
     }
   ];
 
-  it('should calculate activity counts correctly', async () => {
-    mockFetchActivities.mockResolvedValue(mockActivitiesForCounts);
+  it('should calculate todo counts correctly', async () => {
+    mockFetchTodos.mockResolvedValue(mockTodosForCounts);
 
-    const { result } = renderHook(() => useActivityCounts('user1'), {
+    const { result } = renderHook(() => useTodoCounts('user1'), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -219,7 +219,7 @@ describe('useActivityCounts', () => {
 
     const counts = result.current.data;
     expect(counts).toEqual({
-      needsAttention: 1, // 1 urgent activity
+      needsAttention: 1, // 1 urgent todo
       inProgress: 2,     // 1 accepted resource + 1 urgent event (within 24h)
       upcoming: 1,       // 1 future event
       recent: 0,         // No recent history
@@ -227,10 +227,10 @@ describe('useActivityCounts', () => {
     });
   });
 
-  it('should handle empty activities list', async () => {
-    mockFetchActivities.mockResolvedValue([]);
+  it('should handle empty todos list', async () => {
+    mockFetchTodos.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useActivityCounts('user1'), {
+    const { result } = renderHook(() => useTodoCounts('user1'), {
       wrapper: createTestWrapper().wrapper
     });
 
@@ -249,19 +249,19 @@ describe('useActivityCounts', () => {
   });
 
   it('should not fetch when userId is not provided', () => {
-    const { result } = renderHook(() => useActivityCounts(''), {
+    const { result } = renderHook(() => useTodoCounts(''), {
       wrapper: createTestWrapper().wrapper
     });
 
     expect(result.current.isPending).toBe(true);
-    expect(mockFetchActivities).not.toHaveBeenCalled();
+    expect(mockFetchTodos).not.toHaveBeenCalled();
   });
 
   it('should handle fetch errors gracefully', async () => {
-    const error = new Error('Failed to fetch activity counts');
-    mockFetchActivities.mockRejectedValue(error);
+    const error = new Error('Failed to fetch todo counts');
+    mockFetchTodos.mockRejectedValue(error);
 
-    const { result } = renderHook(() => useActivityCounts('user1'), {
+    const { result } = renderHook(() => useTodoCounts('user1'), {
       wrapper: createTestWrapper().wrapper
     });
 

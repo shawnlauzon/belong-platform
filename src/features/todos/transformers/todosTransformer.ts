@@ -1,4 +1,4 @@
-import type { ActivitySummary, ActivityType, UrgencyLevel } from '../types';
+import type { TodoSummary, TodoType, UrgencyLevel } from '../types';
 import type { Database } from '@/shared/types/database';
 
 // Database row types for convenience
@@ -57,11 +57,11 @@ interface MessageWithUser {
 }
 
 /**
- * Transform event attendances to activity info
+ * Transform event attendances to todo info
  */
-export function transformEventsToActivities(
+export function transformEventsToTodos(
   eventAttendances: EventAttendanceWithEvent[],
-): ActivitySummary[] {
+): TodoSummary[] {
   return eventAttendances.map((attendance) => {
     const event = attendance.event;
     const startDateTime = new Date(event.start_date_time);
@@ -71,7 +71,7 @@ export function transformEventsToActivities(
 
     return {
       id: `event_upcoming_${event.id}`,
-      type: 'event_upcoming' as ActivityType,
+      type: 'event_upcoming' as TodoType,
       title: event.title,
       description: `Event at ${event.location_name}`,
       urgencyLevel: calculateEventUrgency(startDateTime),
@@ -89,11 +89,11 @@ export function transformEventsToActivities(
 }
 
 /**
- * Transform resource responses to activity info
+ * Transform resource responses to todo info
  */
-export function transformResourcesToActivities(
+export function transformResourcesToTodos(
   resourceResponses: ResourceResponseWithResource[],
-): ActivitySummary[] {
+): TodoSummary[] {
   return resourceResponses.map((response) => {
     const resource = response.resource;
     const isPending = response.status === 'pending';
@@ -105,7 +105,7 @@ export function transformResourcesToActivities(
 
     return {
       id: `${type}_${resource.id}`,
-      type: type as ActivityType,
+      type: type as TodoType,
       title,
       description: resource.description,
       urgencyLevel: calculateResourceUrgency(
@@ -127,17 +127,17 @@ export function transformResourcesToActivities(
 }
 
 /**
- * Transform pending shoutout opportunities to activity info
+ * Transform pending shoutout opportunities to todo info
  */
-export function transformShoutoutsToActivities(
+export function transformShoutoutsToTodos(
   pendingShoutouts: ResourceResponseWithResource[],
-): ActivitySummary[] {
+): TodoSummary[] {
   return pendingShoutouts.map((response) => {
     const resource = response.resource;
 
     return {
       id: `shoutout_pending_${resource.id}`,
-      type: 'shoutout_pending' as ActivityType,
+      type: 'shoutout_pending' as TodoType,
       title: `Give shoutout for: ${resource.title}`,
       description: `Thank ${getUserDisplayName(resource.owner)} for their help`,
       urgencyLevel: calculateShoutoutUrgency(
@@ -159,15 +159,15 @@ export function transformShoutoutsToActivities(
 }
 
 /**
- * Transform unread messages to activity info
+ * Transform unread messages to todo info
  */
-export function transformMessagesToActivities(
+export function transformMessagesToTodos(
   messages: MessageWithUser[],
-): ActivitySummary[] {
+): TodoSummary[] {
   return messages.map((message) => {
     return {
       id: `message_unread_${message.id}`,
-      type: 'message_unread' as ActivityType,
+      type: 'message_unread' as TodoType,
       title: `Message from ${getUserDisplayName(message.from_user)}`,
       description:
         message.content.substring(0, 100) +

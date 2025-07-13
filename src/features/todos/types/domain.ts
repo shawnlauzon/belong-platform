@@ -1,4 +1,4 @@
-export type ActivityType = 
+export type TodoType = 
   | 'event_upcoming'      // RSVP'd events
   | 'resource_pending'    // Resources awaiting response
   | 'resource_accepted'   // Accepted resources (active commitments)
@@ -7,11 +7,11 @@ export type ActivityType =
 
 export type UrgencyLevel = 'urgent' | 'soon' | 'normal';
 
-export type ActivitySection = 'attention' | 'in_progress' | 'upcoming' | 'history';
+export type TodoSection = 'attention' | 'in_progress' | 'upcoming' | 'history';
 
-export interface ActivitySummary {
+export interface TodoSummary {
   id: string;              // Composite ID: `${type}_${entityId}`
-  type: ActivityType;
+  type: TodoType;
   title: string;
   description: string;
   urgencyLevel: UrgencyLevel;
@@ -33,14 +33,14 @@ export interface ActivitySummary {
   };
 }
 
-export interface ActivityFilter {
+export interface TodoFilter {
   userId: string;          // Required - always filter by current user
-  section?: ActivitySection;
+  section?: TodoSection;
   communityIds?: string[];
   limit?: number;
 }
 
-export interface ActivityCounts {
+export interface TodoCounts {
   needsAttention: number;
   inProgress: number;
   upcoming: number;

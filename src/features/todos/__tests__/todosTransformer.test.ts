@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
-  transformEventsToActivities,
-  transformResourcesToActivities,
-  transformShoutoutsToActivities,
-  transformMessagesToActivities
-} from '../transformers/activitiesTransformer';
+  transformEventsToTodos,
+  transformResourcesToTodos,
+  transformShoutoutsToTodos,
+  transformMessagesToTodos
+} from '../transformers/todosTransformer';
 
-describe('activitiesTransformer', () => {
-  describe('transformEventsToActivities', () => {
-    it('should transform event attendances to activity info', () => {
+describe('todosTransformer', () => {
+  describe('transformEventsToTodos', () => {
+    it('should transform event attendances to todo info', () => {
       const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
       const futureEndDate = new Date(futureDate.getTime() + 60 * 60 * 1000); // 1 hour later
 
@@ -31,7 +31,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformEventsToActivities(eventAttendances);
+      const result = transformEventsToTodos(eventAttendances);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('event_upcoming_event1');
@@ -100,7 +100,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformEventsToActivities(eventAttendances);
+      const result = transformEventsToTodos(eventAttendances);
 
       expect(result[0].urgencyLevel).toBe('urgent');
       expect(result[1].urgencyLevel).toBe('soon');
@@ -108,8 +108,8 @@ describe('activitiesTransformer', () => {
     });
   });
 
-  describe('transformResourcesToActivities', () => {
-    it('should transform pending resource responses to activity info', () => {
+  describe('transformResourcesToTodos', () => {
+    it('should transform pending resource responses to todo info', () => {
       const recentDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
 
       const resourceResponses = [
@@ -134,7 +134,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformResourcesToActivities(resourceResponses);
+      const result = transformResourcesToTodos(resourceResponses);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('resource_pending_resource1');
@@ -146,7 +146,7 @@ describe('activitiesTransformer', () => {
       expect(result[0].communityId).toBe('community1');
     });
 
-    it('should transform accepted resource responses to activity info', () => {
+    it('should transform accepted resource responses to todo info', () => {
       const resourceResponses = [
         {
           resource_id: 'resource1',
@@ -169,7 +169,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformResourcesToActivities(resourceResponses);
+      const result = transformResourcesToTodos(resourceResponses);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -243,7 +243,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformResourcesToActivities(resourceResponses);
+      const result = transformResourcesToTodos(resourceResponses);
 
       expect(result[0].urgencyLevel).toBe('urgent'); // 8 days old
       expect(result[1].urgencyLevel).toBe('soon');   // 4 days old
@@ -251,8 +251,8 @@ describe('activitiesTransformer', () => {
     });
   });
 
-  describe('transformShoutoutsToActivities', () => {
-    it('should transform pending shoutout opportunities to activity info', () => {
+  describe('transformShoutoutsToTodos', () => {
+    it('should transform pending shoutout opportunities to todo info', () => {
       const recentDate = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12 hours ago
 
       const pendingShoutouts = [
@@ -277,7 +277,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformShoutoutsToActivities(pendingShoutouts);
+      const result = transformShoutoutsToTodos(pendingShoutouts);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('shoutout_pending_resource1');
@@ -290,8 +290,8 @@ describe('activitiesTransformer', () => {
     });
   });
 
-  describe('transformMessagesToActivities', () => {
-    it('should transform unread messages to activity info', () => {
+  describe('transformMessagesToTodos', () => {
+    it('should transform unread messages to todo info', () => {
       const recentDate = new Date(Date.now() - 6 * 60 * 60 * 1000); // 6 hours ago
 
       const messages = [
@@ -309,7 +309,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformMessagesToActivities(messages);
+      const result = transformMessagesToTodos(messages);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('message_unread_message1');
@@ -338,7 +338,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformMessagesToActivities(messages);
+      const result = transformMessagesToTodos(messages);
 
       expect(result[0].description).toHaveLength(103); // 100 chars + '...'
       expect(result[0].description.endsWith('...')).toBe(true);
@@ -360,7 +360,7 @@ describe('activitiesTransformer', () => {
         }
       ];
 
-      const result = transformMessagesToActivities(messages);
+      const result = transformMessagesToTodos(messages);
 
       expect(result[0].title).toBe('Message from john@example.com');
       expect(result[0].metadata.fromUserName).toBe('john@example.com');

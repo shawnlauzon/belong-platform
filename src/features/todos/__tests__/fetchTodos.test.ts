@@ -1,20 +1,20 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { ActivityFilter } from '../types';
+import type { TodoFilter } from '../types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
 // Mock the entire API module
-const mockFetchActivities = vi.fn();
-vi.mock('../api/fetchActivities', () => ({
-  fetchActivities: mockFetchActivities
+const mockFetchTodos = vi.fn();
+vi.mock('../api/fetchTodos', () => ({
+  fetchTodos: mockFetchTodos
 }));
 
 // Import after mocking
-const { fetchActivities } = await import('../api/fetchActivities');
+const { fetchTodos } = await import('../api/fetchTodos');
 
-describe('fetchActivities', () => {
-  it('should fetch and aggregate activities from all sources', async () => {
-    const mockActivities = [
+describe('fetchTodos', () => {
+  it('should fetch and aggregate todos from all sources', async () => {
+    const mockTodos = [
       {
         id: 'event_upcoming_event1',
         type: 'event_upcoming',
@@ -40,10 +40,10 @@ describe('fetchActivities', () => {
       }
     ];
 
-    mockFetchActivities.mockResolvedValue(mockActivities);
+    mockFetchTodos.mockResolvedValue(mockTodos);
 
-    const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as SupabaseClient<Database>, filter);
+    const filter: TodoFilter = { userId: 'user1' };
+    const result = await fetchTodos({} as SupabaseClient<Database>, filter);
 
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe('event_upcoming');
@@ -51,20 +51,20 @@ describe('fetchActivities', () => {
   });
 
   it('should handle empty results', async () => {
-    mockFetchActivities.mockResolvedValue([]);
+    mockFetchTodos.mockResolvedValue([]);
 
-    const filter: ActivityFilter = { userId: 'user1' };
-    const result = await fetchActivities({} as SupabaseClient<Database>, filter);
+    const filter: TodoFilter = { userId: 'user1' };
+    const result = await fetchTodos({} as SupabaseClient<Database>, filter);
 
     expect(result).toHaveLength(0);
   });
 
   it('should handle errors gracefully', async () => {
     const error = new Error('Database error');
-    mockFetchActivities.mockRejectedValue(error);
+    mockFetchTodos.mockRejectedValue(error);
 
-    const filter: ActivityFilter = { userId: 'user1' };
+    const filter: TodoFilter = { userId: 'user1' };
 
-    await expect(fetchActivities({} as SupabaseClient<Database>, filter)).rejects.toThrow('Database error');
+    await expect(fetchTodos({} as SupabaseClient<Database>, filter)).rejects.toThrow('Database error');
   });
 });
