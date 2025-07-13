@@ -30,7 +30,7 @@ export async function fetchGatheringsNeedingShoutout(
         shoutouts!left(id)
       `)
       .eq('gathering_responses.user_id', currentUserId)
-      .eq('gathering_responses.status', 'yes')
+      .eq('gathering_responses.status', 'attending')
       .lt('end_date_time', new Date().toISOString()) // Gathering has ended
       .is('shoutouts.id', null) // No shoutout exists
       .eq('shoutouts.from_user_id', currentUserId); // Left join condition
