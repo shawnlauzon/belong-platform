@@ -5,4 +5,7 @@ export type GatheringFilter = {
   startAfter?: Date;
   startBefore?: Date;
   searchTerm?: string;
+  includePast?: boolean;    // default true
+  includeCurrent?: boolean; // default true
+  includeFuture?: boolean;  // default true
 };

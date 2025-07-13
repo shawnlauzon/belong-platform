@@ -239,7 +239,8 @@ describe('fetchFeed', () => {
       communityIds: ['community-1', 'community-2'] 
     });
     expect(mockFetchGatherings).toHaveBeenCalledWith(mockSupabase, { 
-      communityIds: ['community-1', 'community-2'] 
+      communityIds: ['community-1', 'community-2'],
+      includePast: false
     });
     expect(mockFetchShoutouts).toHaveBeenCalledWith(mockSupabase, { 
       communityIds: ['community-1', 'community-2'] 

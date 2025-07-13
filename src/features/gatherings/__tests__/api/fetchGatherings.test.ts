@@ -178,4 +178,106 @@ describe('fetchGatherings', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('should apply time-based filtering when includePast is false', async () => {
+    const filters: GatheringFilter = { includePast: false };
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [fakeGatherings[0]],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    await fetchGatherings(mockSupabase, filters);
+
+    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day.eq.true'));
+    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day.eq.false'));
+  });
+
+  it('should apply time-based filtering when includeCurrent is false', async () => {
+    const filters: GatheringFilter = { includeCurrent: false };
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [fakeGatherings[0]],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    await fetchGatherings(mockSupabase, filters);
+
+    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('start_date_time.gt.'));
+  });
+
+  it('should apply time-based filtering when includeFuture is false', async () => {
+    const filters: GatheringFilter = { includeFuture: false };
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [fakeGatherings[0]],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    await fetchGatherings(mockSupabase, filters);
+
+    expect(mockQuery.or).toHaveBeenCalledWith(expect.stringContaining('is_all_day'));
+  });
+
+  it('should not apply time-based filtering when all time flags are default (true)', async () => {
+    const filters: GatheringFilter = { 
+      includePast: true, 
+      includeCurrent: true, 
+      includeFuture: true 
+    };
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [fakeGatherings[0]],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    await fetchGatherings(mockSupabase, filters);
+
+    expect(mockQuery.or).not.toHaveBeenCalled();
+  });
+
+  it('should not apply time-based filtering when no time flags are specified', async () => {
+    const filters: GatheringFilter = { communityId: 'test-id' };
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [fakeGatherings[0]],
+        error: null,
+      }),
+    };
+
+    vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
+
+    await fetchGatherings(mockSupabase, filters);
+
+    expect(mockQuery.or).not.toHaveBeenCalled();
+    expect(mockQuery.eq).toHaveBeenCalledWith('community_id', 'test-id');
+  });
 });

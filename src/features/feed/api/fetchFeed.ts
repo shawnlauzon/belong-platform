@@ -38,7 +38,7 @@ export async function fetchFeed(
     // Fetch resources, gatherings, and shoutouts using single queries with communityIds arrays
     const [resources, gatherings, shoutouts] = await Promise.all([
       fetchResources(supabase, { communityIds }),
-      fetchGatherings(supabase, { communityIds }),
+      fetchGatherings(supabase, { communityIds, includePast: false }),
       fetchShoutouts(supabase, { communityIds }),
     ]);
 

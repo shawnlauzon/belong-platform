@@ -38,6 +38,61 @@ export async function fetchGatherings(
         `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
       );
     }
+
+    // Handle time-based filtering (past, current, future)
+    const shouldFilterByTime = 
+      filters.includePast === false || 
+      filters.includeCurrent === false || 
+      filters.includeFuture === false;
+
+    if (shouldFilterByTime) {
+      const now = new Date().toISOString();
+      const currentDate = new Date().toISOString().split('T')[0];
+      const conditions: string[] = [];
+
+      // Build conditions for each category that should be included
+      if (filters.includePast !== false) {
+        // Past gatherings: have completely ended
+        conditions.push(
+          // All-day without end: ended yesterday or earlier
+          `and(is_all_day.eq.true,end_date_time.is.null,start_date_time::date.lt.${currentDate})`,
+          // All-day with end: end date is before today
+          `and(is_all_day.eq.true,end_date_time.is.not.null,end_date_time::date.lt.${currentDate})`,
+          // Timed with end: end time is before now
+          `and(is_all_day.eq.false,end_date_time.is.not.null,end_date_time.lt.${now})`,
+          // Timed without end: started more than 1 hour ago
+          `and(is_all_day.eq.false,end_date_time.is.null,start_date_time.lt.${new Date(Date.now() - 60*60*1000).toISOString()})`
+        );
+      }
+
+      if (filters.includeCurrent !== false) {
+        // Current gatherings: happening now
+        conditions.push(
+          // All-day without end: started today at or before current time and it's still today
+          `and(is_all_day.eq.true,end_date_time.is.null,start_date_time.lte.${now},start_date_time::date.eq.${currentDate})`,
+          // All-day with end: started at or before now and end date is today or later
+          `and(is_all_day.eq.true,end_date_time.is.not.null,start_date_time.lte.${now},end_date_time::date.gte.${currentDate})`,
+          // Timed with end: started at or before now and ends at or after now
+          `and(is_all_day.eq.false,end_date_time.is.not.null,start_date_time.lte.${now},end_date_time.gte.${now})`,
+          // Timed without end: started at or before now and within 1 hour
+          `and(is_all_day.eq.false,end_date_time.is.null,start_date_time.lte.${now},start_date_time.gte.${new Date(Date.now() - 60*60*1000).toISOString()})`
+        );
+      }
+
+      if (filters.includeFuture !== false) {
+        // Future gatherings: haven't started yet
+        conditions.push(
+          // All-day: starts after current time
+          `and(is_all_day.eq.true,start_date_time.gt.${now})`,
+          // Timed: starts after current time
+          `and(is_all_day.eq.false,start_date_time.gt.${now})`
+        );
+      }
+
+      if (conditions.length > 0) {
+        query = query.or(conditions.join(','));
+      }
+    }
   }
 
   const { data, error } = await query.order('start_date_time', {
