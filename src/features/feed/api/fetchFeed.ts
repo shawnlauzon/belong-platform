@@ -44,16 +44,19 @@ export async function fetchFeed(
 
     // Transform to FeedItem format
     const resourceItems: FeedItem[] = resources.map((resource) => ({
+      id: resource.id,
       type: 'resource',
       data: resource,
     }));
 
     const gatheringItems: FeedItem[] = gatherings.map((gathering) => ({
+      id: gathering.id,
       type: 'gathering',
       data: gathering,
     }));
 
     const shoutoutItems: FeedItem[] = shoutouts.map((shoutout) => ({
+      id: shoutout.id,
       type: 'shoutout',
       data: shoutout,
     }));
