@@ -12,12 +12,13 @@ export type ShoutoutInput = Omit<
   ShoutoutSummaryFields,
   'fromUserId' | 'fromUser' | 'toUser' | 'resource' | 'gathering' | 'community'
 > & {
+  // TODO this is also optional, it should be either resource or gathering or user
   toUserId: string;
   communityId: string;
 } & (
-  | { resourceId: string; gatheringId?: never }
-  | { gatheringId: string; resourceId?: never }
-);
+    | { resourceId: string; gatheringId?: never }
+    | { gatheringId: string; resourceId?: never }
+  );
 
 // Summary information about a Shoutout
 type ShoutoutSummaryFields = {

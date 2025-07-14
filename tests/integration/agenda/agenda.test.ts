@@ -8,6 +8,8 @@ import {
   createTestCommunity,
   createTestGathering,
   createTestResource,
+  createTestShoutout,
+  createTestGatheringShoutout,
 } from '../helpers/test-data';
 import { fetchAgenda } from '@/features/agenda/api';
 import { joinGathering } from '@/features/gatherings/api';
@@ -231,6 +233,51 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
           expect(prevDate.getTime()).toBeLessThanOrEqual(currentDate.getTime());
         }
       }
+    });
+
+    it('excludes gatherings with shoutouts from agenda', async () => {
+      // Arrange - Create a gathering and then create a shoutout for it
+      const gatheringWithShoutout = await createTestGathering({
+        supabase,
+        organizerId: organizerUser.id,
+        communityId: organizerCommunity.id,
+      });
+
+      // Create a second user to send shoutout from
+      const shoutoutSender = await createTestUser(supabase);
+      await signIn(supabase, shoutoutSender.email, 'TestPass123!');
+      await joinCommunity(supabase, organizerCommunity.id);
+
+      // Create a shoutout for this gathering
+      await createTestGatheringShoutout({
+        supabase,
+        toUserId: organizerUser.id, // Shoutout to the organizer
+        gatheringId: gatheringWithShoutout.id,
+        communityId: organizerCommunity.id,
+      });
+
+      // Switch back to organizer user to check their agenda
+      await signIn(supabase, organizerUser.email, 'TestPass123!');
+
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
+
+      // Assert - The gathering with shoutout should NOT appear in agenda
+      const gatheringTodos = agenda.items.filter(
+        (item) => item.type.startsWith('gathering-') && 
+        item.gathering?.id === gatheringWithShoutout.id,
+      );
+
+      expect(gatheringTodos).toHaveLength(0);
+
+      // Verify that other gatherings without shoutouts still appear
+      const allGatheringTodos = agenda.items.filter(
+        (item) => item.type.startsWith('gathering-'),
+      );
+      expect(allGatheringTodos.length).toBeGreaterThan(0);
+
+      // Verify the gathering still exists but just isn't in agenda
+      expect(gatheringWithShoutout.id).toBeDefined();
     });
   });
 

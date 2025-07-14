@@ -80,7 +80,7 @@ describe('Users API - CRUD Operations', () => {
   });
 
   describe('updateUser', () => {
-    it.skip('updates user fields including bio', async () => {
+    it('updates user fields including bio', async () => {
       // Create a new user for updating via signUp
       const firstName = `${TEST_PREFIX}UpdateTest`;
       const lastName = 'Test';
