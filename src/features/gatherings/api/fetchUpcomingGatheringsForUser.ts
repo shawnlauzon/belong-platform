@@ -23,14 +23,19 @@ export async function fetchUpcomingGatheringsForUser(
     `)
     .eq('user_id', userId)
     .eq('status', status)
-    .gte('gathering.start_date_time', now)
-    .order('gathering.start_date_time', { ascending: true });
+    .gte('gathering.start_date_time', now);
 
   if (error || !data) {
     return [];
   }
 
-  return data
-    .filter((row): row is { gathering: GatheringRowWithRelations } => !!row.gathering)
-    .map(row => toGatheringWithJoinedRelations(row.gathering));
+  const filtered = data
+    .filter((row): row is { gathering: GatheringRowWithRelations } => !!row.gathering);
+
+  const gatherings = filtered.map(row => toGatheringWithJoinedRelations(row.gathering));
+  
+  // Sort by start date time since we can't do it in the query due to nested select
+  gatherings.sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime());
+  
+  return gatherings;
 }
