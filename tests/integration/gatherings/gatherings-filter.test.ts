@@ -173,8 +173,7 @@ describe('Gatherings Filter - Temporal Flags Integration Tests', () => {
     if (!futureLaterToday) throw new Error('Failed to create future later today gathering');
 
     // Future: All-day gathering (starts later today but all-day)
-    const allDayLaterToday = new Date();
-    allDayLaterToday.setHours(12, 0, 0, 0); // Noon today (but all-day)
+    const allDayLaterToday = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
     const futureAllDayLaterData = createFakeGatheringInput({
       title: `${TEST_PREFIX}Future_AllDay_Later_Today`,
