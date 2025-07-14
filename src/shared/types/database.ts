@@ -280,7 +280,6 @@ export type Database = {
           end_date_time: string | null
           id: string
           image_urls: string[]
-          is_all_day: boolean
           location_name: string
           max_attendees: number | null
           organizer_id: string
@@ -297,7 +296,6 @@ export type Database = {
           end_date_time?: string | null
           id?: string
           image_urls?: string[]
-          is_all_day?: boolean
           location_name: string
           max_attendees?: number | null
           organizer_id: string
@@ -314,7 +312,6 @@ export type Database = {
           end_date_time?: string | null
           id?: string
           image_urls?: string[]
-          is_all_day?: boolean
           location_name?: string
           max_attendees?: number | null
           organizer_id?: string

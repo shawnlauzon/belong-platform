@@ -43,8 +43,7 @@ export function toDomainGathering(
     startDateTime: new Date(dbGathering.start_date_time),
     endDateTime: dbGathering.end_date_time
       ? new Date(dbGathering.end_date_time)
-      : null,
-    isAllDay: dbGathering.is_all_day,
+      : undefined,
     locationName: dbGathering.location_name,
     coordinates: parsePostGisPoint(dbGathering.coordinates),
     maxAttendees: dbGathering.max_attendees ?? undefined,
@@ -72,7 +71,6 @@ export function toGatheringInsertRow(
     organizer_id: gathering.organizerId,
     start_date_time: gathering.startDateTime.toISOString(),
     end_date_time: gathering.endDateTime?.toISOString() || null,
-    is_all_day: gathering.isAllDay,
     location_name: gathering.locationName,
     coordinates: toPostGisPoint(gathering.coordinates),
     max_attendees: gathering.maxAttendees ?? null,
@@ -91,7 +89,6 @@ export function toGatheringUpdateRow(
     description: gathering.description,
     start_date_time: gathering.startDateTime?.toISOString(),
     end_date_time: gathering.endDateTime?.toISOString() || null,
-    is_all_day: gathering.isAllDay,
     location_name: gathering.locationName,
     coordinates: gathering.coordinates
       ? toPostGisPoint(gathering.coordinates)
@@ -145,8 +142,7 @@ export function toGatheringWithJoinedRelations(
     startDateTime: new Date(dbGathering.start_date_time),
     endDateTime: dbGathering.end_date_time
       ? new Date(dbGathering.end_date_time)
-      : null,
-    isAllDay: dbGathering.is_all_day,
+      : undefined,
     locationName: dbGathering.location_name,
     coordinates: parsePostGisPoint(dbGathering.coordinates),
     maxAttendees: dbGathering.max_attendees ?? undefined,

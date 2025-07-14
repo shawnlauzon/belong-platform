@@ -27,8 +27,7 @@ export function createFakeGathering(
     title: faker.lorem.words(3),
     description: faker.lorem.paragraph(),
     startDateTime,
-    endDateTime: faker.datatype.boolean() ? endDateTime : null,
-    isAllDay: faker.datatype.boolean(),
+    endDateTime: faker.datatype.boolean() ? endDateTime : undefined,
     locationName: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),
@@ -80,7 +79,6 @@ export function createFakeGatheringRow(
     organizer_id: faker.string.uuid(),
     start_date_time: startDateTime.toISOString(),
     end_date_time: faker.datatype.boolean() ? endDateTime.toISOString() : null,
-    is_all_day: faker.datatype.boolean(),
     location_name: faker.location.streetAddress(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     max_attendees: faker.datatype.boolean()
@@ -107,8 +105,7 @@ export function createFakeGatheringWithoutRelations(
     title: row.title,
     description: row.description,
     startDateTime: new Date(row.start_date_time),
-    endDateTime: row.end_date_time ? new Date(row.end_date_time) : null,
-    isAllDay: row.is_all_day,
+    endDateTime: row.end_date_time ? new Date(row.end_date_time) : undefined,
     locationName: row.location_name,
     coordinates: { lat: 0, lng: 0 }, // simplified for fake
     maxAttendees: row.max_attendees ?? undefined,
@@ -152,7 +149,6 @@ export function createFakeGatheringInput(
     endDateTime: faker.datatype.boolean()
       ? faker.date.future({ refDate: startDateTime })
       : undefined,
-    isAllDay: faker.datatype.boolean(),
     locationName: faker.location.streetAddress(),
     coordinates: {
       lat: faker.location.latitude(),

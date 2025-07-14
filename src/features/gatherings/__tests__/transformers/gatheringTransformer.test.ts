@@ -42,8 +42,7 @@ describe('gatheringTransformer', () => {
         startDateTime: new Date(fakeGatheringRow.start_date_time),
         endDateTime: fakeGatheringRow.end_date_time
           ? new Date(fakeGatheringRow.end_date_time)
-          : null,
-        isAllDay: fakeGatheringRow.is_all_day,
+          : undefined,
         locationName: fakeGatheringRow.location_name,
         maxAttendees: fakeGatheringRow.max_attendees ?? undefined,
         imageUrls: fakeGatheringRow.image_urls,
@@ -111,8 +110,7 @@ describe('gatheringTransformer', () => {
         startDateTime: new Date(fakeGatheringRow.start_date_time),
         endDateTime: fakeGatheringRow.end_date_time
           ? new Date(fakeGatheringRow.end_date_time)
-          : null,
-        isAllDay: fakeGatheringRow.is_all_day,
+          : undefined,
         locationName: fakeGatheringRow.location_name,
         maxAttendees: fakeGatheringRow.max_attendees ?? undefined,
         imageUrls: fakeGatheringRow.image_urls,
@@ -140,7 +138,6 @@ describe('gatheringTransformer', () => {
         organizer_id: fakeGatheringData.organizerId,
         start_date_time: fakeGatheringData.startDateTime.toISOString(),
         end_date_time: fakeGatheringData.endDateTime?.toISOString() || null,
-        is_all_day: fakeGatheringData.isAllDay,
         location_name: fakeGatheringData.locationName,
         max_attendees: fakeGatheringData.maxAttendees ?? null,
         image_urls: fakeGatheringData.imageUrls || [],
@@ -164,7 +161,6 @@ describe('gatheringTransformer', () => {
         description: partialEventData.description,
         start_date_time: partialEventData.startDateTime.toISOString(),
         end_date_time: null,
-        is_all_day: undefined,
         location_name: undefined,
         coordinates: undefined,
         max_attendees: null,

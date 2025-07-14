@@ -7,26 +7,23 @@ export type GatheringSummary = IsPersisted<GatheringSummaryFields>;
 
 export type GatheringInput = Omit<
   GatheringSummaryFields,
-  'organizer' | 'community' | 'attendeeCount' | 'endDateTime' | 'isAllDay'
+  'organizer' | 'community' | 'attendeeCount'
 > & {
-  description: string;
   communityId: string;
-  endDateTime?: Date | null;
-  isAllDay: boolean;
-  maxAttendees?: number;
 };
 
 type GatheringSummaryFields = {
   title: string;
+  description: string;
   startDateTime: Date;
-  endDateTime: Date | null;
+  endDateTime?: Date;
   organizerId: string;
   organizer: UserSummary;
   communityId: string;
   community: CommunitySummary;
   attendeeCount: number;
+  maxAttendees?: number;
   coordinates: Coordinates;
   locationName: string;
   imageUrls?: string[];
-  isAllDay: boolean;
 };
