@@ -71,7 +71,6 @@ describe('fetchGatherings', () => {
           end_date_time: gathering.endDateTime?.toISOString() || null,
           organizer_id: gathering.organizerId,
           community_id: gathering.communityId,
-          is_all_day: gathering.isAllDay,
           max_attendees: gathering.maxAttendees || null,
           image_urls: gathering.imageUrls,
           attendee_count: gathering.attendeeCount,
@@ -368,7 +367,7 @@ describe('fetchGatherings', () => {
     expect(mockQuery.eq).toHaveBeenCalledWith('community_id', 'test-id');
   });
 
-  it('should classify all-day gatherings correctly by start time', async () => {
+  it('should classify gatherings correctly with 2-hour current window for events without end time', async () => {
     const filters: GatheringFilter = { includePast: false, includeCurrent: true, includeFuture: false };
 
     // Mock current time to be 11:00 AM  
@@ -384,30 +383,26 @@ describe('fetchGatherings', () => {
       return new OriginalDate(...args);
     });
 
-    // Create an all-day gathering for today at 5 AM - should be current (before 6 AM cutoff)
-    const todayMorning = new Date();
-    todayMorning.setHours(5, 0, 0, 0);
+    // Create a gathering that started 1 hour ago (within 2-hour window) - should be current
+    const oneHourAgo = new Date(mockNow.getTime() - 60 * 60 * 1000);
     
-    const todayAllDayGathering = createFakeGatheringRowWithRelations({
-      start_date_time: todayMorning.toISOString(),
+    const currentGathering = createFakeGatheringRowWithRelations({
+      start_date_time: oneHourAgo.toISOString(),
       end_date_time: null,
-      is_all_day: true,
     });
 
-    // Create an all-day gathering for today at noon - should be future (before noon)
-    const todayNoon = new Date();
-    todayNoon.setHours(12, 0, 0, 0);
+    // Create a gathering that started 3 hours ago (outside 2-hour window) - should be past
+    const threeHoursAgo = new Date(mockNow.getTime() - 3 * 60 * 60 * 1000);
     
-    const todayFutureAllDayGathering = createFakeGatheringRowWithRelations({
-      start_date_time: todayNoon.toISOString(),
+    const pastGathering = createFakeGatheringRowWithRelations({
+      start_date_time: threeHoursAgo.toISOString(),
       end_date_time: null,
-      is_all_day: true,
     });
 
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
-        data: [todayAllDayGathering, todayFutureAllDayGathering],
+        data: [currentGathering, pastGathering],
         error: null,
       }),
     };
@@ -416,10 +411,9 @@ describe('fetchGatherings', () => {
 
     const result = await fetchGatherings(mockSupabase, filters);
 
-
-    // Should include 5 AM gathering (current at 11 AM) but not noon gathering (future at 11 AM)
+    // Should include 1-hour-ago gathering (current within 2-hour window) but not 3-hour-ago gathering (past)
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe(todayAllDayGathering.id);
+    expect(result[0].id).toBe(currentGathering.id);
 
     // Restore Date.now
     vi.restoreAllMocks();
