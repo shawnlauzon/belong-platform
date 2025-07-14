@@ -25,7 +25,11 @@ export async function fetchUpcomingGatheringsForUser(
     .eq('status', status)
     .gte('gathering.start_date_time', now);
 
-  if (error || !data) {
+  if (error) {
+    throw error;
+  }
+  
+  if (!data) {
     return [];
   }
 

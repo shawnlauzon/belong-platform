@@ -48,7 +48,7 @@ export async function fetchGatherings(
   });
 
   if (error) {
-    return [];
+    throw error;
   }
   
   if (!data) {

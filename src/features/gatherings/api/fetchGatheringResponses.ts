@@ -17,7 +17,11 @@ export async function fetchGatheringResponses(
     error: QueryError | null;
   };
 
-  if (error || !attendances) {
+  if (error) {
+    throw error;
+  }
+  
+  if (!attendances) {
     return [];
   }
 

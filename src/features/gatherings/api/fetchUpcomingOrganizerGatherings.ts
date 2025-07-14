@@ -20,7 +20,11 @@ export async function fetchUpcomingOrganizerGatherings(
     .gte('start_date_time', now)
     .order('start_date_time', { ascending: true });
 
-  if (error || !data) {
+  if (error) {
+    throw error;
+  }
+  
+  if (!data) {
     return [];
   }
 

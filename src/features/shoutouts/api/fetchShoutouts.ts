@@ -45,7 +45,11 @@ export async function fetchShoutouts(
     ascending: true,
   });
 
-  if (error || !data) {
+  if (error) {
+    throw error;
+  }
+  
+  if (!data) {
     return [];
   }
 

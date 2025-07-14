@@ -42,7 +42,11 @@ export async function fetchResources(
     ascending: false,
   });
 
-  if (error || !data) {
+  if (error) {
+    throw error;
+  }
+  
+  if (!data) {
     return [];
   }
 

@@ -6,6 +6,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - DO NOT edit more code than you have to.
 - DO NOT WASTE TOKENS, be succinct and concise.
 
+## CRITICAL: Error Handling Guidelines
+
+**NEVER SWALLOW DATABASE/API ERRORS**
+
+### ❌ NEVER DO THIS:
+
+```typescript
+if (error) {
+  return [];  // ❌ SILENT ERROR SWALLOWING - NEVER OK
+}
+
+if (error || !data) {
+  return [];  // ❌ HIDES CRITICAL SQL FAILURES
+}
+
+} catch (error) {
+  return { items: [], hasMore: false };  // ❌ MASKS DATABASE OUTAGES
+}
+```
+
+### ✅ ALWAYS DO THIS:
+
+```typescript
+if (error) {
+  throw error;  // ✅ PROPER - Let React Query handle errors
+}
+
+if (!data) {
+  return [];  // ✅ OK - No data is different from errors
+}
+
+} catch (error) {
+  logger.error('Context info', { error });
+  throw error;  // ✅ PROPER - Log and re-throw
+}
+```
+
+**Why this matters:**
+
+- Silent error swallowing makes debugging impossible
+- Tests see empty results instead of actual SQL errors
+- Users see mysterious empty states instead of proper error handling
+- React Query error boundaries can't work if errors are swallowed
+
 ## Documentation
 
 For detailed information about the platform, refer to these documents:

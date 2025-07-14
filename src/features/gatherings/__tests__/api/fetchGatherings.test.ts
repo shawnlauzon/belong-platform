@@ -187,7 +187,7 @@ describe('fetchGatherings', () => {
     );
   });
 
-  it('should return empty array when query fails', async () => {
+  it('should throw error when query fails', async () => {
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
@@ -198,9 +198,7 @@ describe('fetchGatherings', () => {
 
     vi.mocked(mockSupabase.from).mockReturnValue(mockQuery as ReturnType<typeof mockSupabase.from>);
 
-    const result = await fetchGatherings(mockSupabase);
-
-    expect(result).toEqual([]);
+    await expect(fetchGatherings(mockSupabase)).rejects.toThrow();
   });
 
   it('should return empty array when no data returned', async () => {

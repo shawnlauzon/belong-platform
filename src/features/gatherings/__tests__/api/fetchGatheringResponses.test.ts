@@ -161,7 +161,7 @@ describe('fetchGatheringResponses', () => {
     expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 
-  it('should handle database errors', async () => {
+  it('should throw error on database errors', async () => {
     const gatheringId = 'test-gathering-id';
     const error = new Error('Database error');
 
@@ -179,9 +179,7 @@ describe('fetchGatheringResponses', () => {
       error,
     });
 
-    const result = await fetchGatheringResponses(mockSupabase, gatheringId);
-
-    expect(result).toEqual([]);
+    await expect(fetchGatheringResponses(mockSupabase, gatheringId)).rejects.toThrow('Database error');
     expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 

@@ -82,6 +82,6 @@ export async function fetchFeed(
     };
   } catch (error) {
     logger.error('📰 API: Error fetching feed data', { error });
-    return { items: [], hasMore: false };
+    throw error;
   }
 }

@@ -48,18 +48,12 @@ describe('fetchFeed', () => {
     mockSupabase = createMockSupabase({});
   });
 
-  it('should return empty feed when user is not authenticated', async () => {
+  it('should throw error when user is not authenticated', async () => {
     // Arrange
     mockGetCurrentUser.mockResolvedValue(null);
 
-    // Act
-    const result = await fetchFeed(mockSupabase);
-
-    // Assert
-    expect(result).toEqual({
-      items: [],
-      hasMore: false,
-    });
+    // Act & Assert
+    await expect(fetchFeed(mockSupabase)).rejects.toThrow('User not authenticated');
     expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
     expect(mockFetchUserCommunities).not.toHaveBeenCalled();
     expect(mockFetchResources).not.toHaveBeenCalled();
@@ -206,18 +200,12 @@ describe('fetchFeed', () => {
     });
   });
 
-  it('should handle API errors gracefully', async () => {
+  it('should throw API errors', async () => {
     // Arrange
     mockGetCurrentUser.mockRejectedValue(new Error('API Error'));
 
-    // Act
-    const result = await fetchFeed(mockSupabase);
-
-    // Assert
-    expect(result).toEqual({
-      items: [],
-      hasMore: false,
-    });
+    // Act & Assert
+    await expect(fetchFeed(mockSupabase)).rejects.toThrow('API Error');
   });
 
   it('should only return items from communities where user is a member', async () => {
