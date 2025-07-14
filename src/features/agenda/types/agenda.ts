@@ -8,7 +8,7 @@ export interface Agenda {
 }
 
 export interface Todo {
-  id: string; // Composite ID: `${type}-${entityId}`
+  id: string;
   type: TodoType;
   title: string;
   description: string;
@@ -19,7 +19,7 @@ export interface Todo {
 
 export type TodoType =
   | 'gathering-confirmed' // Upcoming confirmed gatherings (user said yes)
-  | 'gathering-maybe' // Upcoming maybe gatherings (user said maybe) 
+  | 'gathering-maybe' // Upcoming maybe gatherings (user said maybe)
   | 'gathering-organizer' // My future gatherings (user is organizer)
   | 'shoutout-gathering' // Gathering shoutout (attended gatherings needing thank you)
   | 'shoutout-offer' // Offer shoutout (accepted offers needing thank you)
