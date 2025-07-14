@@ -48,7 +48,7 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
       communityId: organizerCommunity.id,
     });
 
-    const _organizerGathering2 = await createTestGathering({
+    await createTestGathering({
       supabase,
       organizerId: organizerUser.id,
       communityId: organizerCommunity.id,
