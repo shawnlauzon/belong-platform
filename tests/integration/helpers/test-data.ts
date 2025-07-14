@@ -9,7 +9,7 @@ import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
-import { Shoutout, Gathering, createShoutout } from '@/features';
+import { Shoutout, Gathering, createShoutout, ShoutoutInput } from '@/features';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -107,6 +107,32 @@ export async function createTestShoutout({
 
   const shoutout = await createShoutout(supabase, shoutoutData);
   if (!shoutout) throw new Error('Failed to create shoutout');
+
+  return shoutout;
+}
+
+export async function createTestGatheringShoutout({
+  supabase,
+  toUserId,
+  gatheringId,
+  communityId,
+}: {
+  supabase: SupabaseClient<Database>;
+  toUserId: string;
+  gatheringId: string;
+  communityId: string;
+}): Promise<Shoutout> {
+  // Create ShoutoutInput manually to ensure only gatheringId is set (not resourceId)
+  const shoutoutData: ShoutoutInput = {
+    message: `${TEST_PREFIX}Thank you for organizing this gathering!`,
+    toUserId,
+    gatheringId,
+    communityId,
+    imageUrls: [],
+  };
+
+  const shoutout = await createShoutout(supabase, shoutoutData);
+  if (!shoutout) throw new Error('Failed to create gathering shoutout');
 
   return shoutout;
 }
