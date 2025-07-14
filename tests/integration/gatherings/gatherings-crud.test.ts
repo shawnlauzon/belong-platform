@@ -83,7 +83,6 @@ describe('Gatherings API - CRUD Operations', () => {
           description: data.description,
           organizer_id: testUser.id,
           community_id: testCommunity.id,
-          is_all_day: data.isAllDay,
           location_name: data.locationName,
           max_attendees: data.maxAttendees ?? null,
           attendee_count: 1, // Organizer is auto-attendee
@@ -417,12 +416,10 @@ describe('Gatherings API - CRUD Operations', () => {
           id: gathering.id,
           startDateTime: newStartTime,
           endDateTime: newEndTime,
-          isAllDay: true,
         });
 
         expect(updated!.startDateTime).toEqual(newStartTime);
         expect(updated!.endDateTime).toEqual(newEndTime);
-        expect(updated!.isAllDay).toBe(true);
 
         // Verify database record
         const { data: dbRecord } = await supabase
@@ -433,7 +430,6 @@ describe('Gatherings API - CRUD Operations', () => {
 
         expect(new Date(dbRecord!.start_date_time)).toEqual(newStartTime);
         expect(new Date(dbRecord!.end_date_time!)).toEqual(newEndTime);
-        expect(dbRecord!.is_all_day).toBe(true);
       } finally {
         await cleanupGathering(gathering);
       }
