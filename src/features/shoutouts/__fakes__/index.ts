@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ShoutoutRow } from '../types/shoutoutRow';
-import { Shoutout, ShoutoutInput } from '../types';
+import { Shoutout, ShoutoutResourceInput } from '../types';
 import { createFakeUser } from '@/features/users/__fakes__';
 import { createFakeResource } from '@/features/resources/__fakes__';
 import { createFakeCommunity } from '@/features/communities/__fakes__';
@@ -95,17 +95,12 @@ export function createFakeShoutoutWithoutRelations(
  * Creates a fake ShoutoutInput for testing
  */
 export function createFakeShoutoutInput(
-  overrides: Partial<ShoutoutInput> = {},
-): ShoutoutInput {
+  overrides: Partial<ShoutoutResourceInput> = {},
+): ShoutoutResourceInput {
   return {
     message: faker.lorem.sentence(),
-    toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
-    communityId: faker.string.uuid(),
-    imageUrls: Array.from(
-      { length: faker.number.int({ min: 0, max: 3 }) },
-      () => faker.image.urlLoremFlickr({ category: 'people' }),
-    ),
+    imageUrls: [],
     ...overrides,
-  } as ShoutoutInput;
+  };
 }
