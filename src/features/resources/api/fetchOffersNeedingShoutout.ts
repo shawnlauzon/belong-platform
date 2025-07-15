@@ -7,7 +7,7 @@ import type { Resource } from '../types';
 import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 /**
- * Fetch offers that the user has approved claims for but hasn't sent shoutouts for yet.
+ * Fetch offers that the user has completed claims for but hasn't sent shoutouts for yet.
  * Uses two queries to work around Supabase's LEFT JOIN limitations.
  */
 export async function fetchOffersNeedingShoutout(
@@ -18,7 +18,7 @@ export async function fetchOffersNeedingShoutout(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase, 'fetch offers needing shoutout');
 
-    // Step 1: Get all offers that the user has approved claims for
+    // Step 1: Get all offers that the user has completed claims for
     const { data: resources, error } = await supabase
       .from('resources')
       .select(`
@@ -27,7 +27,7 @@ export async function fetchOffersNeedingShoutout(
       `)
       .eq('type', 'offer')
       .eq('resource_claims.user_id', currentUserId)
-      .eq('resource_claims.status', 'approved');
+      .eq('resource_claims.status', 'completed');
 
     if (error) {
       logger.error('🎁 API: Failed to fetch offers needing shoutout', { error });
@@ -35,7 +35,7 @@ export async function fetchOffersNeedingShoutout(
     }
 
     if (!resources || resources.length === 0) {
-      logger.debug('🎁 API: No offers with approved claims found');
+      logger.debug('🎁 API: No offers with completed claims found');
       return [];
     }
 

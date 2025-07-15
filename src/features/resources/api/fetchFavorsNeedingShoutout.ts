@@ -7,7 +7,7 @@ import type { Resource } from '../types';
 import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 /**
- * Fetch favors (requests) that the user owns which have approved claims but haven't been thanked yet.
+ * Fetch favors (requests) that the user owns which have completed claims but haven't been thanked yet.
  * Uses two queries to work around Supabase's LEFT JOIN limitations.
  */
 export async function fetchFavorsNeedingShoutout(
@@ -21,7 +21,7 @@ export async function fetchFavorsNeedingShoutout(
       'fetch favors needing shoutout',
     );
 
-    // Step 1: Get all requests owned by the user that have approved claims
+    // Step 1: Get all requests owned by the user that have completed claims
     const { data: resources, error } = await supabase
       .from('resources')
       .select(
@@ -32,7 +32,7 @@ export async function fetchFavorsNeedingShoutout(
       )
       .eq('type', 'request')
       .eq('owner_id', currentUserId)
-      .eq('resource_claims.status', 'approved');
+      .eq('resource_claims.status', 'completed');
 
     if (error) {
       logger.error('🙏 API: Failed to fetch favors needing shoutout', {
@@ -42,7 +42,7 @@ export async function fetchFavorsNeedingShoutout(
     }
 
     if (!resources || resources.length === 0) {
-      logger.debug('🙏 API: No favors with approved claims found');
+      logger.debug('🙏 API: No favors with completed claims found');
       return [];
     }
 
