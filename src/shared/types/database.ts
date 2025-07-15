@@ -396,6 +396,54 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_claims: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          resource_id: string
+          status: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resource_id: string
+          status?: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resource_id?: string
+          status?: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_claims_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_claims_timeslot_id_fkey"
+            columns: ["timeslot_id"]
+            isOneToOne: false
+            referencedRelation: "resource_timeslots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_responses: {
         Row: {
           created_at: string | null
@@ -428,6 +476,44 @@ export type Database = {
           },
         ]
       }
+      resource_timeslots: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          max_claims: number
+          resource_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          max_claims?: number
+          resource_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          max_claims?: number
+          resource_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_timeslots_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
           category: string | null
@@ -435,10 +521,14 @@ export type Database = {
           coordinates: unknown | null
           created_at: string
           description: string
+          expires_at: string | null
           id: string
           image_urls: string[]
           location_name: string | null
+          max_claims: number | null
           owner_id: string
+          requires_approval: boolean | null
+          status: Database["public"]["Enums"]["resource_status"]
           title: string
           type: string
           updated_at: string
@@ -449,10 +539,14 @@ export type Database = {
           coordinates?: unknown | null
           created_at?: string
           description: string
+          expires_at?: string | null
           id?: string
           image_urls?: string[]
           location_name?: string | null
+          max_claims?: number | null
           owner_id: string
+          requires_approval?: boolean | null
+          status?: Database["public"]["Enums"]["resource_status"]
           title: string
           type: string
           updated_at?: string
@@ -463,10 +557,14 @@ export type Database = {
           coordinates?: unknown | null
           created_at?: string
           description?: string
+          expires_at?: string | null
           id?: string
           image_urls?: string[]
           location_name?: string | null
+          max_claims?: number | null
           owner_id?: string
+          requires_approval?: boolean | null
+          status?: Database["public"]["Enums"]["resource_status"]
           title?: string
           type?: string
           updated_at?: string
@@ -2424,7 +2522,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      resource_claim_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      resource_status: "open" | "completed" | "cancelled"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2559,6 +2663,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      resource_claim_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      resource_status: ["open", "completed", "cancelled"],
+    },
   },
 } as const

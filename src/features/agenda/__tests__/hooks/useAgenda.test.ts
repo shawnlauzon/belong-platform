@@ -18,8 +18,8 @@ vi.mock('../../../../shared', async () => {
       ...actual.queryKeys,
       agenda: {
         current: ['agenda'] as const,
-      }
-    }
+      },
+    },
   };
 });
 
@@ -35,7 +35,7 @@ describe('useAgenda', () => {
     items: [
       {
         id: 'event_upcoming_event1',
-        type: 'event_upcoming',
+        type: 'gathering-confirmed',
         title: 'Team Meeting',
         description: 'Event at Conference Room',
         dueDate: new Date('2024-01-15T10:00:00Z'),
@@ -44,8 +44,8 @@ describe('useAgenda', () => {
         createdAt: new Date('2024-01-10T10:00:00Z'),
         metadata: {
           eventStartTime: new Date('2024-01-15T10:00:00Z'),
-          status: 'attending'
-        }
+          status: 'attending',
+        },
       },
       {
         id: 'resource_pending_resource1',
@@ -58,18 +58,18 @@ describe('useAgenda', () => {
         metadata: {
           resourceOwnerId: 'user2',
           resourceOwnerName: 'Jane Doe',
-          status: 'pending'
-        }
-      }
+          status: 'pending',
+        },
+      },
     ],
-    hasMore: false
+    hasMore: false,
   };
 
   it('should fetch agenda for current user', async () => {
     mockFetchAgenda.mockResolvedValue(mockAgenda);
 
     const { result } = renderHook(() => useAgenda(), {
-      wrapper: createTestWrapper().wrapper
+      wrapper: createTestWrapper().wrapper,
     });
 
     await waitFor(() => {
@@ -79,25 +79,21 @@ describe('useAgenda', () => {
     expect(result.current.data).toEqual(mockAgenda);
     expect(result.current.data?.items).toHaveLength(2);
     expect(result.current.data?.hasMore).toBe(false);
-    expect(mockFetchAgenda).toHaveBeenCalledWith(
-      expect.any(Object)
-    );
+    expect(mockFetchAgenda).toHaveBeenCalledWith(expect.any(Object));
   });
 
   it('should always fetch agenda for current user', async () => {
     mockFetchAgenda.mockResolvedValue(mockAgenda);
 
     const { result } = renderHook(() => useAgenda(), {
-      wrapper: createTestWrapper().wrapper
+      wrapper: createTestWrapper().wrapper,
     });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(mockFetchAgenda).toHaveBeenCalledWith(
-      expect.any(Object)
-    );
+    expect(mockFetchAgenda).toHaveBeenCalledWith(expect.any(Object));
   });
 
   it('should handle fetch errors gracefully', async () => {
@@ -105,7 +101,7 @@ describe('useAgenda', () => {
     mockFetchAgenda.mockRejectedValue(error);
 
     const { result } = renderHook(() => useAgenda(), {
-      wrapper: createTestWrapper().wrapper
+      wrapper: createTestWrapper().wrapper,
     });
 
     await waitFor(() => {
@@ -119,7 +115,7 @@ describe('useAgenda', () => {
     mockFetchAgenda.mockResolvedValue(mockAgenda);
 
     const { result } = renderHook(() => useAgenda(), {
-      wrapper: createTestWrapper().wrapper
+      wrapper: createTestWrapper().wrapper,
     });
 
     await waitFor(() => {

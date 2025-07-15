@@ -24,3 +24,21 @@ export type ResourceResponseInsertDbData =
   Database['public']['Tables']['resource_responses']['Insert'];
 export type ResourceResponseUpdateDbData =
   Database['public']['Tables']['resource_responses']['Update'];
+
+export type ResourceTimeslotRow =
+  Database['public']['Tables']['resource_timeslots']['Row'];
+export type ResourceTimeslotInsertDbData =
+  Database['public']['Tables']['resource_timeslots']['Insert'];
+export type ResourceTimeslotUpdateDbData =
+  Database['public']['Tables']['resource_timeslots']['Update'];
+
+export type ResourceClaimRow =
+  Database['public']['Tables']['resource_claims']['Row'];
+export type ResourceClaimInsertDbData =
+  Database['public']['Tables']['resource_claims']['Insert'];
+export type ResourceClaimUpdateDbData =
+  Database['public']['Tables']['resource_claims']['Update'];
+
+export type ResourceStatus = Database['public']['Enums']['resource_status'];
+export type ResourceClaimStatus =
+  Database['public']['Enums']['resource_claim_status'];

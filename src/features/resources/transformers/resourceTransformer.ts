@@ -19,6 +19,9 @@ export function toResourceInsertRow(
     ownerId,
     locationName,
     coordinates,
+    maxClaims,
+    requiresApproval,
+    expiresAt,
     ...rest
   } = resource;
 
@@ -29,6 +32,9 @@ export function toResourceInsertRow(
     image_urls: imageUrls,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
+    max_claims: maxClaims,
+    requires_approval: requiresApproval,
+    expires_at: expiresAt?.toISOString(),
   };
 }
 
@@ -50,6 +56,10 @@ export function forDbUpdate(
       : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
     community_id: resource.communityId,
+    status: resource.status,
+    max_claims: resource.maxClaims,
+    requires_approval: resource.requiresApproval,
+    expires_at: resource.expiresAt?.toISOString(),
   };
 }
 
@@ -88,6 +98,10 @@ export function toDomainResource(
     ownerId: dbResource.owner_id,
     owner: partialOwner,
     communityId: dbResource.community_id,
+    status: dbResource.status,
+    maxClaims: dbResource.max_claims ?? undefined,
+    requiresApproval: dbResource.requires_approval || false,
+    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
   };
 }
 
@@ -117,5 +131,9 @@ export function toResourceSummary(
     imageUrls: dbResource.image_urls || [],
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
+    status: dbResource.status,
+    maxClaims: dbResource.max_claims ?? undefined,
+    requiresApproval: dbResource.requires_approval || false,
+    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
   };
 }
