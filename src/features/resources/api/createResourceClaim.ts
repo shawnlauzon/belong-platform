@@ -34,6 +34,12 @@ export async function createResourceClaim(
       error,
       claimInput,
     });
+    
+    // Handle duplicate claim constraint violation
+    if (error.code === '23505' && error.message.includes('resource_claims_unique_non_timeslot')) {
+      throw new Error('You have already claimed this resource');
+    }
+    
     throw new Error(error.message || 'Failed to create resource claim');
   }
 

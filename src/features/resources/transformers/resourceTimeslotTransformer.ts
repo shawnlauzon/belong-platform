@@ -1,11 +1,12 @@
-import type { ResourceTimeslot, ResourceTimeslotInput, ResourceTimeslotRow, ResourceTimeslotInsert, ResourceTimeslotUpdate } from '../types';
+import type { ResourceTimeslot, ResourceTimeslotInput } from '../types';
+import type { ResourceTimeslotRow, ResourceTimeslotInsertDbData, ResourceTimeslotUpdateDbData } from '../types/resourceRow';
 
 /**
  * Transform a domain timeslot object to a database timeslot record
  */
 export function toResourceTimeslotInsertRow(
   timeslot: ResourceTimeslotInput,
-): ResourceTimeslotInsert {
+): ResourceTimeslotInsertDbData {
   return {
     resource_id: timeslot.resourceId,
     start_time: timeslot.startTime.toISOString(),
@@ -19,7 +20,7 @@ export function toResourceTimeslotInsertRow(
  */
 export function forDbTimeslotUpdate(
   timeslot: Partial<ResourceTimeslotInput>,
-): ResourceTimeslotUpdate {
+): ResourceTimeslotUpdateDbData {
   return {
     start_time: timeslot.startTime?.toISOString(),
     end_time: timeslot.endTime?.toISOString(),

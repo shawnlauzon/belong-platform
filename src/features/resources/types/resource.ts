@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { Coordinates, IsPersisted } from '@/shared';
 import { UserSummary } from '../../users';
-import { ResourceStatus } from './resourceRow';
+import { ResourceStatus, ResourceCategory } from './resourceRow';
 
 export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields>;
 export type ResourceSummary = IsPersisted<ResourceSummaryFields>;
@@ -30,12 +30,3 @@ type ResourceSummaryFields = {
   expiresAt?: Date;
 };
 
-// Enum needed for database operations
-export enum ResourceCategory {
-  TOOLS = 'tools',
-  SKILLS = 'skills',
-  FOOD = 'food',
-  SUPPLIES = 'supplies',
-  OTHER = 'other',
-  EVENT = 'event',
-}

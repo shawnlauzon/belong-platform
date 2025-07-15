@@ -42,3 +42,4 @@ export type ResourceClaimUpdateDbData =
 export type ResourceStatus = Database['public']['Enums']['resource_status'];
 export type ResourceClaimStatus =
   Database['public']['Enums']['resource_claim_status'];
+export type ResourceCategory = Database['public']['Enums']['resource_category'];

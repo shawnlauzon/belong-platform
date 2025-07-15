@@ -20,7 +20,7 @@ export function createFakeResource(
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category: faker.helpers.maybe(
-      () => faker.helpers.enumValue(ResourceCategory),
+      () => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const),
       { probability: 0.8 },
     ) as ResourceCategory | undefined,
     title: faker.commerce.productName(),
@@ -67,7 +67,7 @@ export function createFakeResourceRowWithoutRelations(
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category:
-      faker.helpers.maybe(() => faker.helpers.enumValue(ResourceCategory), {
+      faker.helpers.maybe(() => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const), {
         probability: 0.8,
       }) ?? null,
     owner_id: faker.string.uuid(),
@@ -92,7 +92,7 @@ export function createFakeResourceInput(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.enumValue(ResourceCategory),
+    category: faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const),
     communityId: faker.string.uuid(),
     imageUrls: [],
     locationName: faker.location.city(),
@@ -112,7 +112,6 @@ export function createFakeResourceRow(
   overrides: Partial<ResourceRowWithRelations> = {},
 ): ResourceRowWithRelations {
   const now = new Date().toISOString();
-  const categories = ['tools', 'skills', 'food', 'supplies', 'other'];
 
   return {
     id: faker.string.uuid(),
@@ -122,7 +121,7 @@ export function createFakeResourceRow(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category:
-      faker.helpers.maybe(() => faker.helpers.arrayElement(categories), {
+      faker.helpers.maybe(() => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const), {
         probability: 0.8,
       }) ?? null,
     type: faker.helpers.arrayElement(['offer', 'request']),
