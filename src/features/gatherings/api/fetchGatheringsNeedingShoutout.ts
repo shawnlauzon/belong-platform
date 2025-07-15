@@ -16,41 +16,73 @@ export async function fetchGatheringsNeedingShoutout(
   logger.debug('🎉 API: Fetching gatherings needing shoutout');
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase, 'fetch gatherings needing shoutout');
+    const currentUserId = await getAuthIdOrThrow(
+      supabase,
+      'fetch gatherings needing shoutout',
+    );
 
-    // Query for completed gatherings where:
-    // 1. User responded "yes" 
-    // 2. Gathering is completed (ended)
-    // 3. No shoutout exists from this user for this gathering
+    // Step 1: Get gatherings the user attended that have ended
+    // For gatherings to be "ended", either:
+    // - end_date_time is in the past, OR
+    // - start_date_time is in the past AND end_date_time is null
+    const now = new Date().toISOString();
     const { data: gatherings, error } = await supabase
       .from('gatherings')
-      .select(`
+      .select(
+        `
         ${SELECT_GATHERING_WITH_RELATIONS},
-        gathering_responses!inner(status),
-        shoutouts!left(id)
-      `)
+        gathering_responses!inner(status)
+      `,
+      )
       .eq('gathering_responses.user_id', currentUserId)
       .eq('gathering_responses.status', 'attending')
-      .lt('end_date_time', new Date().toISOString()) // Gathering has ended
-      .is('shoutouts.id', null) // No shoutout exists
-      .eq('shoutouts.from_user_id', currentUserId); // Left join condition
+      .neq('organizer_id', currentUserId)
+      .or(`end_date_time.lt.${now},and(end_date_time.is.null,start_date_time.lt.${now})`); // Gathering has ended
 
     if (error) {
-      logger.error('🎉 API: Failed to fetch gatherings needing shoutout', { error });
+      logger.error('🎉 API: Failed to fetch gatherings needing shoutout', {
+        error,
+      });
       throw error;
     }
 
     if (!gatherings || gatherings.length === 0) {
+      logger.debug('🎉 API: No attended gatherings found');
+      return [];
+    }
+
+    // Step 2: Get existing shoutouts from the user for these gatherings
+    const gatheringIds = gatherings.map((g) => g.id);
+    const { data: shoutouts, error: shoutoutError } = await supabase
+      .from('shoutouts')
+      .select('gathering_id')
+      .eq('from_user_id', currentUserId)
+      .in('gathering_id', gatheringIds);
+
+    if (shoutoutError) {
+      logger.error('🎉 API: Failed to fetch existing shoutouts', {
+        error: shoutoutError,
+      });
+      throw shoutoutError;
+    }
+
+    // Step 3: Filter out gatherings that already have shoutouts
+    const shoutoutGatheringIds = new Set(shoutouts?.map((s) => s.gathering_id) || []);
+    const gatheringsNeedingShoutout = gatherings.filter(
+      (g) => !shoutoutGatheringIds.has(g.id),
+    );
+
+    if (gatheringsNeedingShoutout.length === 0) {
       logger.debug('🎉 API: No gatherings needing shoutout found');
       return [];
     }
 
     // Transform to domain objects
-    const domainGatherings = gatherings.map(toGatheringWithJoinedRelations);
+    const domainGatherings = gatheringsNeedingShoutout.map(toGatheringWithJoinedRelations);
 
     logger.info('🎉 API: Successfully fetched gatherings needing shoutout', {
       count: domainGatherings.length,
-      gatheringIds: domainGatherings.map(g => g.id),
+      gatheringIds: domainGatherings.map((g) => g.id),
     });
 
     return domainGatherings;

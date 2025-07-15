@@ -5,11 +5,17 @@ import { createResource } from '@/features/resources/api';
 import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import { createGathering } from '@/features/gatherings/api';
 import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
-import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
-import { Shoutout, Gathering, createShoutout, ShoutoutInput } from '@/features';
+import {
+  Shoutout,
+  Gathering,
+  createGatheringShoutout,
+  createResourceShoutout,
+  ShoutoutGatheringInput,
+  ShoutoutResourceInput,
+} from '@/features';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -87,25 +93,28 @@ export async function createTestGathering({
   return gathering;
 }
 
-export async function createTestShoutout({
+export async function createTestResourceShoutout({
   supabase,
-  toUserId,
   resourceId,
+  toUserId,
   communityId,
 }: {
   supabase: SupabaseClient<Database>;
-  toUserId: string;
   resourceId: string;
+  toUserId: string;
   communityId: string;
 }): Promise<Shoutout> {
-  const shoutoutData = createFakeShoutoutInput({
-    toUserId,
+  const shoutoutData: ShoutoutResourceInput & {
+    toUserId: string;
+    communityId: string;
+  } = {
     resourceId,
-    communityId,
     message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-  });
+    toUserId,
+    communityId,
+  };
 
-  const shoutout = await createShoutout(supabase, shoutoutData);
+  const shoutout = await createResourceShoutout(supabase, shoutoutData);
   if (!shoutout) throw new Error('Failed to create shoutout');
 
   return shoutout;
@@ -114,24 +123,27 @@ export async function createTestShoutout({
 export async function createTestGatheringShoutout({
   supabase,
   toUserId,
-  gatheringId,
   communityId,
+  gatheringId,
 }: {
   supabase: SupabaseClient<Database>;
   toUserId: string;
-  gatheringId: string;
   communityId: string;
+  gatheringId: string;
 }): Promise<Shoutout> {
   // Create ShoutoutInput manually to ensure only gatheringId is set (not resourceId)
-  const shoutoutData: ShoutoutInput = {
+  const shoutoutData: ShoutoutGatheringInput & {
+    toUserId: string;
+    communityId: string;
+  } = {
     message: `${TEST_PREFIX}Thank you for organizing this gathering!`,
-    toUserId,
     gatheringId,
-    communityId,
     imageUrls: [],
+    toUserId,
+    communityId,
   };
 
-  const shoutout = await createShoutout(supabase, shoutoutData);
+  const shoutout = await createGatheringShoutout(supabase, shoutoutData);
   if (!shoutout) throw new Error('Failed to create gathering shoutout');
 
   return shoutout;

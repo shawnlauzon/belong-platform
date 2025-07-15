@@ -8,7 +8,7 @@ import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 /**
  * Fetch offers that the user accepted but hasn't sent shoutouts for yet.
- * Uses LEFT JOIN to find accepted offers where no shoutout exists.
+ * Uses two queries to work around Supabase's LEFT JOIN limitations.
  */
 export async function fetchOffersNeedingShoutout(
   supabase: SupabaseClient<Database>,
@@ -18,21 +18,16 @@ export async function fetchOffersNeedingShoutout(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase, 'fetch offers needing shoutout');
 
-    // Query for offers where:
-    // 1. User has an accepted response to the offer
-    // 2. No shoutout exists from this user for this resource
+    // Step 1: Get all offers that the user has accepted
     const { data: resources, error } = await supabase
       .from('resources')
       .select(`
         ${SELECT_RESOURCE_WITH_RELATIONS},
-        resource_responses!inner(status),
-        shoutouts!left(id)
+        resource_responses!inner(status)
       `)
       .eq('type', 'offer')
       .eq('resource_responses.user_id', currentUserId)
-      .eq('resource_responses.status', 'accepted')
-      .is('shoutouts.id', null) // No shoutout exists
-      .eq('shoutouts.from_user_id', currentUserId); // Left join condition
+      .eq('resource_responses.status', 'accepted');
 
     if (error) {
       logger.error('🎁 API: Failed to fetch offers needing shoutout', { error });
@@ -40,12 +35,38 @@ export async function fetchOffersNeedingShoutout(
     }
 
     if (!resources || resources.length === 0) {
+      logger.debug('🎁 API: No accepted offers found');
+      return [];
+    }
+
+    // Step 2: Get all shoutouts from the current user for these resources
+    const resourceIds = resources.map((r) => r.id);
+    const { data: shoutouts, error: shoutoutError } = await supabase
+      .from('shoutouts')
+      .select('resource_id')
+      .eq('from_user_id', currentUserId)
+      .in('resource_id', resourceIds);
+
+    if (shoutoutError) {
+      logger.error('🎁 API: Failed to fetch existing shoutouts', { 
+        error: shoutoutError 
+      });
+      throw shoutoutError;
+    }
+
+    // Step 3: Filter out resources that already have shoutouts
+    const shoutoutResourceIds = new Set(shoutouts?.map((s) => s.resource_id) || []);
+    const resourcesNeedingShoutout = resources.filter(
+      (r) => !shoutoutResourceIds.has(r.id),
+    );
+
+    if (resourcesNeedingShoutout.length === 0) {
       logger.debug('🎁 API: No offers needing shoutout found');
       return [];
     }
 
     // Transform to domain objects
-    const domainResources = resources.map(toDomainResource);
+    const domainResources = resourcesNeedingShoutout.map(toDomainResource);
 
     logger.info('🎁 API: Successfully fetched offers needing shoutout', {
       count: domainResources.length,

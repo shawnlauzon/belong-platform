@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import {
   toDomainShoutout,
-  toShoutoutInsertRow,
+  toResourceShoutoutInsertRow,
+  toGatheringShoutoutInsertRow,
   toShoutoutUpdateRow,
 } from '../transformers/shoutoutsTransformer';
 import { createFakeDbShoutout, createFakeShoutoutInput } from './test-utils';
@@ -163,32 +164,83 @@ describe('Shoutout Transformer', () => {
     });
   });
 
-  describe('toShoutoutInsertRow', () => {
-    it('should transform domain shoutout data to database insert format', () => {
-      const shoutoutData = createFakeShoutoutInput();
+  describe('toResourceShoutoutInsertRow', () => {
+    it('should transform domain resource shoutout data to database insert format', () => {
       const fromUserId = faker.string.uuid();
+      const toUserId = faker.string.uuid();
+      const communityId = faker.string.uuid();
+      const resourceId = faker.string.uuid();
+      
+      const shoutoutData = {
+        message: faker.lorem.paragraph(),
+        imageUrls: [faker.image.url()],
+        resourceId,
+        fromUserId,
+        toUserId,
+        communityId,
+      };
 
-      const dbShoutout = toShoutoutInsertRow(shoutoutData, fromUserId);
+      const dbShoutout = toResourceShoutoutInsertRow(shoutoutData);
 
       expect(dbShoutout).toMatchObject({
         message: shoutoutData.message,
         from_user_id: fromUserId,
-        to_user_id: shoutoutData.toUserId,
-        resource_id: shoutoutData.resourceId,
-        community_id: shoutoutData.communityId,
-        image_urls: shoutoutData.imageUrls || [],
+        to_user_id: toUserId,
+        resource_id: resourceId,
+        community_id: communityId,
+        image_urls: shoutoutData.imageUrls,
+        gathering_id: null,
       });
     });
 
     it('should handle undefined imageUrls', () => {
-      const shoutoutData = createFakeShoutoutInput({
-        imageUrls: undefined,
-      });
       const fromUserId = faker.string.uuid();
+      const toUserId = faker.string.uuid();
+      const communityId = faker.string.uuid();
+      const resourceId = faker.string.uuid();
+      
+      const shoutoutData = {
+        message: faker.lorem.paragraph(),
+        imageUrls: undefined,
+        resourceId,
+        fromUserId,
+        toUserId,
+        communityId,
+      };
 
-      const dbShoutout = toShoutoutInsertRow(shoutoutData, fromUserId);
+      const dbShoutout = toResourceShoutoutInsertRow(shoutoutData);
 
       expect(dbShoutout.image_urls).toEqual([]);
+    });
+  });
+
+  describe('toGatheringShoutoutInsertRow', () => {
+    it('should transform domain gathering shoutout data to database insert format', () => {
+      const fromUserId = faker.string.uuid();
+      const toUserId = faker.string.uuid();
+      const communityId = faker.string.uuid();
+      const gatheringId = faker.string.uuid();
+      
+      const shoutoutData = {
+        message: faker.lorem.paragraph(),
+        imageUrls: [faker.image.url()],
+        gatheringId,
+        fromUserId,
+        toUserId,
+        communityId,
+      };
+
+      const dbShoutout = toGatheringShoutoutInsertRow(shoutoutData);
+
+      expect(dbShoutout).toMatchObject({
+        message: shoutoutData.message,
+        from_user_id: fromUserId,
+        to_user_id: toUserId,
+        gathering_id: gatheringId,
+        community_id: communityId,
+        image_urls: shoutoutData.imageUrls,
+        resource_id: null,
+      });
     });
   });
 
@@ -216,9 +268,6 @@ describe('Shoutout Transformer', () => {
 
       expect(dbShoutout).toMatchObject({
         message: partialShoutoutInput.message,
-        from_user_id: undefined,
-        to_user_id: undefined,
-        resource_id: undefined,
         image_urls: undefined,
       });
     });

@@ -7,8 +7,8 @@ import type { Resource } from '../types';
 import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 
 /**
- * Fetch favors (requests) that the user accepted but hasn't sent shoutouts for yet.
- * Uses LEFT JOIN to find accepted favors where no shoutout exists.
+ * Fetch favors (requests) that the user owns which have been accepted but haven't been thanked yet.
+ * Uses two queries to work around Supabase's LEFT JOIN limitations.
  */
 export async function fetchFavorsNeedingShoutout(
   supabase: SupabaseClient<Database>,
@@ -16,40 +16,68 @@ export async function fetchFavorsNeedingShoutout(
   logger.debug('🙏 API: Fetching favors needing shoutout');
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase, 'fetch favors needing shoutout');
+    const currentUserId = await getAuthIdOrThrow(
+      supabase,
+      'fetch favors needing shoutout',
+    );
 
-    // Query for requests (favors) where:
-    // 1. User has an accepted response to the request
-    // 2. No shoutout exists from this user for this resource
+    // Step 1: Get all requests owned by the user that have been accepted
     const { data: resources, error } = await supabase
       .from('resources')
-      .select(`
+      .select(
+        `
         ${SELECT_RESOURCE_WITH_RELATIONS},
-        resource_responses!inner(status),
-        shoutouts!left(id)
-      `)
+        resource_responses!inner(status)
+      `,
+      )
       .eq('type', 'request')
-      .eq('resource_responses.user_id', currentUserId)
-      .eq('resource_responses.status', 'accepted')
-      .is('shoutouts.id', null) // No shoutout exists
-      .eq('shoutouts.from_user_id', currentUserId); // Left join condition
+      .eq('owner_id', currentUserId)
+      .eq('resource_responses.status', 'accepted');
 
     if (error) {
-      logger.error('🙏 API: Failed to fetch favors needing shoutout', { error });
+      logger.error('🙏 API: Failed to fetch favors needing shoutout', {
+        error,
+      });
       throw error;
     }
 
     if (!resources || resources.length === 0) {
+      logger.debug('🙏 API: No accepted favors found');
+      return [];
+    }
+
+    // Step 2: Get all shoutouts from the current user for these resources
+    const resourceIds = resources.map((r) => r.id);
+    const { data: shoutouts, error: shoutoutError } = await supabase
+      .from('shoutouts')
+      .select('resource_id')
+      .eq('from_user_id', currentUserId)
+      .in('resource_id', resourceIds);
+
+    if (shoutoutError) {
+      logger.error('🙏 API: Failed to fetch existing shoutouts', {
+        error: shoutoutError,
+      });
+      throw shoutoutError;
+    }
+
+    // Step 3: Filter out resources that already have shoutouts
+    const shoutoutResourceIds = new Set(shoutouts?.map((s) => s.resource_id) || []);
+    const resourcesNeedingShoutout = resources.filter(
+      (r) => !shoutoutResourceIds.has(r.id),
+    );
+
+    if (resourcesNeedingShoutout.length === 0) {
       logger.debug('🙏 API: No favors needing shoutout found');
       return [];
     }
 
     // Transform to domain objects
-    const domainResources = resources.map(toDomainResource);
+    const domainResources = resourcesNeedingShoutout.map(toDomainResource);
 
     logger.info('🙏 API: Successfully fetched favors needing shoutout', {
       count: domainResources.length,
-      resourceIds: domainResources.map(r => r.id),
+      resourceIds: domainResources.map((r) => r.id),
     });
 
     return domainResources;

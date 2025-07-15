@@ -1,9 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { createShoutout } from '../api';
 import { useCurrentUser } from '../../auth';
-import type { ShoutoutInput, Shoutout } from '../types';
+import type {
+  Shoutout,
+  ShoutoutResourceInput,
+  ShoutoutGatheringInput,
+} from '../types';
+import { isShoutoutResourceInput } from '../types/shoutout';
+import { Resource } from '@/features/resources';
+import { Gathering } from '@/features/gatherings';
+import {
+  createGatheringShoutout,
+  createResourceShoutout,
+} from '../api/createShoutout';
 
 /**
  * Hook for creating new shoutouts.
@@ -60,9 +70,34 @@ export function useCreateShoutout() {
   const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: (data: ShoutoutInput) => {
-      logger.debug('📢 useCreateShoutout: Creating shoutout', { data });
-      return createShoutout(supabase, data);
+    mutationFn: (input: ShoutoutResourceInput | ShoutoutGatheringInput) => {
+      logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
+      if (isShoutoutResourceInput(input)) {
+        const resource = queryClient.getQueryData<Resource>(
+          queryKeys.resources.byId(input.resourceId),
+        );
+        if (!resource) {
+          throw new Error('Resource not found');
+        }
+        return createResourceShoutout(supabase, {
+          ...input,
+          ...resource,
+          toUserId: resource.ownerId,
+        });
+      } else {
+        // isShoutoutGatheringInput
+        const gathering = queryClient.getQueryData<Gathering>(
+          queryKeys.gatherings.byId(input.gatheringId),
+        );
+        if (!gathering) {
+          throw new Error('Gathering not found');
+        }
+        return createGatheringShoutout(supabase, {
+          ...input,
+          ...gathering,
+          toUserId: gathering.organizerId,
+        });
+      }
     },
     onSuccess: (newShoutout: Shoutout) => {
       // Invalidate all shoutout queries to refetch lists

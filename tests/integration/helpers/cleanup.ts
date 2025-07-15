@@ -1,7 +1,7 @@
 import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
-import type { CommunityInfo } from '@/features/communities/types';
-import type { ResourceInfo } from '@/features/resources/types';
+import type { Community } from '@/features/communities/types';
+import type { Resource } from '@/features/resources/types';
 import type { Gathering } from '@/features/gatherings/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
@@ -66,22 +66,29 @@ export async function cleanupAllTestData() {
     for (const profile of testProfiles) {
       const { error } = await serviceClient.auth.admin.deleteUser(profile.id);
       if (error) {
-        console.warn(`Failed to delete auth user ${profile.id}:`, error.message);
+        console.warn(
+          `Failed to delete auth user ${profile.id}:`,
+          error.message,
+        );
       }
     }
   }
 
   // Also delete any remaining auth users by listing them directly
-  const { data: authUsers, error: listError } = await serviceClient.auth.admin.listUsers();
+  const { data: authUsers, error: listError } =
+    await serviceClient.auth.admin.listUsers();
   if (!listError && authUsers?.users) {
-    const testAuthUsers = authUsers.users.filter(user => 
-      user.email?.startsWith(TEST_PREFIX)
+    const testAuthUsers = authUsers.users.filter((user) =>
+      user.email?.startsWith(TEST_PREFIX),
     );
-    
+
     for (const user of testAuthUsers) {
       const { error } = await serviceClient.auth.admin.deleteUser(user.id);
       if (error) {
-        console.warn(`Failed to delete auth user ${user.id} (${user.email}):`, error.message);
+        console.warn(
+          `Failed to delete auth user ${user.id} (${user.email}):`,
+          error.message,
+        );
       }
     }
   }
@@ -95,7 +102,7 @@ export async function cleanupAllTestData() {
 
 // Cleanup specific community and its memberships (no-op if community is null/undefined)
 export async function cleanupCommunity(
-  community: CommunityInfo | null | undefined,
+  community: Community | null | undefined,
 ) {
   if (!community) return;
 
@@ -123,9 +130,7 @@ export async function cleanupMembership(communityId: string, userId: string) {
 }
 
 // Cleanup specific resource
-export async function cleanupResource(
-  resource: ResourceInfo | null | undefined,
-) {
+export async function cleanupResource(resource: Resource | null | undefined) {
   if (!resource) return;
 
   // Use service key client for cleanup to bypass RLS policies
@@ -165,7 +170,10 @@ export async function cleanupGathering(
 }
 
 // Cleanup specific gathering response
-export async function cleanupGatheringResponse(gatheringId: string, userId: string) {
+export async function cleanupGatheringResponse(
+  gatheringId: string,
+  userId: string,
+) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
@@ -177,7 +185,10 @@ export async function cleanupGatheringResponse(gatheringId: string, userId: stri
 }
 
 // Cleanup specific resource response
-export async function cleanupResourceResponse(resourceId: string, userId: string) {
+export async function cleanupResourceResponse(
+  resourceId: string,
+  userId: string,
+) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 

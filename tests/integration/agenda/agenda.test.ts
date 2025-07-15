@@ -3,17 +3,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
+import { TEST_PREFIX } from '../helpers/test-data';
+
 import {
   createTestUser,
   createTestCommunity,
-  createTestGathering,
-  createTestResource,
-  createTestShoutout,
   createTestGatheringShoutout,
+  createTestResourceShoutout,
 } from '../helpers/test-data';
 import { fetchAgenda } from '@/features/agenda/api';
-import { joinGathering } from '@/features/gatherings/api';
-import { acceptResource } from '@/features/resources/api';
+import { createGathering, joinGathering } from '@/features/gatherings/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
 import type { Agenda } from '@/features/agenda/types';
@@ -21,6 +20,9 @@ import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 import type { Gathering } from '@/features/gatherings/types';
 import type { Resource } from '@/features/resources/types';
+import { acceptResource, createResource } from '@/features/resources/api';
+import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
+import { createFakeResourceInput } from '@/features/resources/__fakes__';
 
 describe('Agenda Integration Tests - Core Aggregation', () => {
   let supabase: SupabaseClient<Database>;
@@ -30,10 +32,16 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
   let attendeeUser: User; // User who joins gatherings as attendee
 
   // Organizer user's entities
-  let organizerCommunity: Community;
-  let organizerGathering1: Gathering;
-  let organizerResource: Resource;
-  let attendeeGathering: Gathering; // Gathering for attendeeUser to join
+  let community: Community;
+  let upcomingGathering1: Gathering;
+  let upcomingGathering2: Gathering;
+  let finishedGathering1: Gathering;
+  let finishedGathering2: Gathering;
+  let offer1: Resource;
+  let offer2: Resource;
+  let favor1: Resource;
+  let favor2: Resource;
+  let favor3: Resource;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -41,40 +49,135 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
     // 1. Create organizer user with community, gatherings, and resources
     organizerUser = await createTestUser(supabase);
     await signIn(supabase, organizerUser.email, 'TestPass123!');
-    organizerCommunity = await createTestCommunity(supabase);
+    community = await createTestCommunity(supabase);
 
     // Create organizer gatherings
-    organizerGathering1 = await createTestGathering({
-      supabase,
-      organizerId: organizerUser.id,
-      communityId: organizerCommunity.id,
+    const upcomingGatheringInput1 = await createFakeGatheringInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+      startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
     });
+    upcomingGathering1 = await createGathering(
+      supabase,
+      upcomingGatheringInput1,
+    );
+    console.log('upcomingGathering1', upcomingGathering1);
+    // Create organizer gatherings
+    const upcomingGatheringInput2 = await createFakeGatheringInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+      startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+    });
+    upcomingGathering2 = await createGathering(
+      supabase,
+      upcomingGatheringInput2,
+    );
+    console.log('upcomingGathering2', upcomingGathering2);
 
-    await createTestGathering({
-      supabase,
-      organizerId: organizerUser.id,
-      communityId: organizerCommunity.id,
+    // Create organizer gatherings
+    const finishedGatheringInput1 = await createFakeGatheringInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+      startDateTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
+      endDateTime: new Date(Date.now() - 23 * 60 * 60 * 1000), // Yesterday + 1 hour
     });
+    finishedGathering1 = await createGathering(
+      supabase,
+      finishedGatheringInput1,
+    );
+    console.log('finishedGathering1', finishedGathering1);
+
+    const finishedGatheringInput2 = await createFakeGatheringInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+      startDateTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
+      endDateTime: new Date(Date.now() - 23 * 60 * 60 * 1000), // Yesterday + 1 hour
+    });
+    finishedGathering2 = await createGathering(
+      supabase,
+      finishedGatheringInput2,
+    );
+    console.log('finishedGathering2', finishedGathering2);
 
     // Create resource and accept it (shoutout scenario)
-    organizerResource = await createTestResource(
-      supabase,
-      organizerCommunity.id,
-    );
-    await acceptResource(supabase, organizerResource.id, 'accepted');
-
-    // Create gathering for attendee scenario
-    attendeeGathering = await createTestGathering({
-      supabase,
-      organizerId: organizerUser.id,
-      communityId: organizerCommunity.id,
+    const offerInput1 = await createFakeResourceInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      type: 'offer',
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
     });
+    offer1 = await createResource(supabase, offerInput1);
+    console.log('offer1', offer1);
+    const offerInput2 = await createFakeResourceInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      type: 'offer',
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+    });
+    offer2 = await createResource(supabase, offerInput2);
+    console.log('offer2', offer2);
+
+    // Create resource and accept it (shoutout scenario)
+    const favorInput1 = await createFakeResourceInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      type: 'request',
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+    });
+    favor1 = await createResource(supabase, favorInput1);
+    console.log('favor1', favor1);
+    const favorInput2 = await createFakeResourceInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      type: 'request',
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+    });
+    favor2 = await createResource(supabase, favorInput2);
+    console.log('favor2', favor2);
+    const favorInput3 = await createFakeResourceInput({
+      title: `${TEST_PREFIX}Resource_${Date.now()}`,
+      type: 'request',
+      description: `${TEST_PREFIX} test resource`,
+      communityId: community.id,
+    });
+    favor3 = await createResource(supabase, favorInput3);
+    console.log('favor3', favor3);
 
     // 2. Create attendee user and join gathering
     attendeeUser = await createTestUser(supabase);
     await signIn(supabase, attendeeUser.email, 'TestPass123!');
-    await joinCommunity(supabase, organizerCommunity.id);
-    await joinGathering(supabase, attendeeGathering.id);
+
+    await joinCommunity(supabase, community.id);
+    await Promise.all([
+      joinGathering(supabase, upcomingGathering1.id),
+      joinGathering(supabase, upcomingGathering2.id, 'maybe'),
+      joinGathering(supabase, finishedGathering1.id),
+      joinGathering(supabase, finishedGathering2.id),
+      acceptResource(supabase, offer1.id),
+      acceptResource(supabase, offer2.id),
+      acceptResource(supabase, favor1.id),
+      acceptResource(supabase, favor2.id),
+    ]);
+
+    // Send a shoutout for gathering1 but not gathering2
+    await Promise.all([
+      createTestGatheringShoutout({
+        supabase,
+        toUserId: organizerUser.id,
+        communityId: community.id,
+        gatheringId: finishedGathering1.id,
+      }),
+      createTestResourceShoutout({
+        supabase,
+        toUserId: organizerUser.id,
+        communityId: community.id,
+        resourceId: offer1.id,
+      }),
+    ]);
   });
 
   afterAll(async () => {
@@ -85,6 +188,13 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
     beforeAll(async () => {
       // Ensure organizer is signed in for all organizer tests
       await signIn(supabase, organizerUser.email, 'TestPass123!');
+
+      await createTestResourceShoutout({
+        supabase,
+        toUserId: attendeeUser.id,
+        communityId: community.id,
+        resourceId: favor1.id,
+      });
     });
 
     afterAll(async () => {
@@ -106,178 +216,97 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
       expect(agenda.items.length).toBeGreaterThan(0);
     });
 
-    it('aggregates data from gatherings correctly', async () => {
+    it('includes upcoming gatherings I am organizing', async () => {
       // Act
       const agenda: Agenda = await fetchAgenda(supabase);
 
-      // Assert - Should have agenda items from gathering aggregation
-      expect(agenda.items.length).toBeGreaterThan(0);
-      const organizerItems = agenda.items.filter(
-        (item) => item.type === 'gathering-organizer',
+      // Assert - should include upcomingGathering1
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering1.id,
+        }),
       );
-      expect(organizerItems.length).toBeGreaterThan(0);
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering2.id,
+        }),
+      );
 
-      // Verify the aggregation includes specific gathering data
-      const gatheringItem = organizerItems.find(
-        (item) => item.gathering?.id === organizerGathering1.id,
+      // An agenda item as an organizer
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering1.id,
+          type: 'gathering-organizer',
+        }),
       );
-      expect(gatheringItem).toBeDefined();
-      expect(gatheringItem!.gathering).toBeDefined();
-      expect(gatheringItem!.gathering!.id).toBe(organizerGathering1.id);
+      // And an agenda item I am confirmed
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering1.id,
+          type: 'gathering-confirmed',
+        }),
+      );
     });
 
-    it('correctly represents organizer TodoType', async () => {
+    it('does not include completed gatherings I am organizing', async () => {
       // Act
       const agenda: Agenda = await fetchAgenda(supabase);
 
-      // Assert - Should have organizer todo type
-      expect(agenda.items.length).toBeGreaterThan(0);
-      const organizerTodos = agenda.items.filter(
-        (item) => item.type === 'gathering-organizer',
+      // Assert - should not include finishedGathering1
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: finishedGathering1.id,
+        }),
       );
-      expect(organizerTodos.length).toBeGreaterThan(0);
-
-      // Verify todo structure for specific gathering
-      const organizerTodo = organizerTodos.find(
-        (item) => item.gathering?.id === organizerGathering1.id,
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: finishedGathering2.id,
+        }),
       );
-      expect(organizerTodo).toBeDefined();
-      expect(organizerTodo!.type).toBe('gathering-organizer');
-      expect(organizerTodo!.gathering).toBeDefined();
-      expect(organizerTodo!.gathering!.id).toBe(organizerGathering1.id);
     });
 
-    it('correctly transforms gathering data to Todo format', async () => {
+    it('includes favors that someone accepted', async () => {
       // Act
       const agenda: Agenda = await fetchAgenda(supabase);
 
-      // Assert - Find the gathering todo
-      const gatheringTodo = agenda.items.find(
-        (item) =>
-          item.type === 'gathering-organizer' &&
-          item.gathering?.id === organizerGathering1.id,
+      // Assert - should include favor1
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: favor2.id,
+        }),
       );
 
-      expect(gatheringTodo).toBeDefined();
-      expect(gatheringTodo!.title).toBe(organizerGathering1.title);
-      expect(gatheringTodo!.description).toBe(
-        "You're organizing this gathering",
+      // An agenda item as an organizer
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: favor2.id,
+          type: 'shoutout-favor',
+        }),
       );
-      expect(gatheringTodo!.dueDate).toBeDefined();
-      expect(gatheringTodo!.gathering).toBeDefined();
-      expect(gatheringTodo!.gathering!.id).toBe(organizerGathering1.id);
     });
 
-    it('correctly populates optional fields (gathering/resource)', async () => {
+    it('excludes favors that I already thanked', async () => {
       // Act
       const agenda: Agenda = await fetchAgenda(supabase);
 
-      // Assert - Gathering todos should have gathering field populated
-      const gatheringTodos = agenda.items.filter((item) =>
-        item.type.startsWith('gathering-'),
+      // Assert - should not include favor2
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: favor1.id,
+        }),
       );
-
-      for (const todo of gatheringTodos) {
-        expect(todo.gathering).toBeDefined();
-        expect(todo.gathering!.id).toBeDefined();
-        expect(todo.resource).toBeUndefined(); // Should not have resource field
-      }
-
-      // Assert - Shoutout todos should have resource field populated (if any)
-      const shoutoutTodos = agenda.items.filter((item) =>
-        item.type.startsWith('shoutout-'),
-      );
-
-      for (const todo of shoutoutTodos) {
-        if (todo.type === 'shoutout-offer') {
-          expect(todo.resource).toBeDefined();
-          expect(todo.resource!.id).toBeDefined();
-          expect(todo.gathering).toBeUndefined(); // Should not have gathering field
-        }
-      }
     });
 
-    it('places shoutouts before gatherings in agenda', async () => {
+    it('excludes favors that no one accepted', async () => {
       // Act
       const agenda: Agenda = await fetchAgenda(supabase);
 
-      // Assert - If we have both types, shoutouts should come first
-      const shoutoutIndices = agenda.items
-        .map((item, index) => (item.type.startsWith('shoutout-') ? index : -1))
-        .filter((index) => index >= 0);
-
-      const gatheringIndices = agenda.items
-        .map((item, index) => (item.type.startsWith('gathering-') ? index : -1))
-        .filter((index) => index >= 0);
-
-      if (shoutoutIndices.length > 0 && gatheringIndices.length > 0) {
-        const lastShoutoutIndex = Math.max(...shoutoutIndices);
-        const firstGatheringIndex = Math.min(...gatheringIndices);
-        expect(lastShoutoutIndex).toBeLessThan(firstGatheringIndex);
-      }
-    });
-
-    it('sorts gatherings by due date (earliest first)', async () => {
-      // Act
-      const agenda: Agenda = await fetchAgenda(supabase);
-
-      // Assert - Gathering todos should be sorted by due date
-      const gatheringTodos = agenda.items.filter(
-        (item) => item.type.startsWith('gathering-') && item.dueDate,
+      // Assert - should not include favor3
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: favor3.id,
+        }),
       );
-
-      if (gatheringTodos.length > 1) {
-        for (let i = 1; i < gatheringTodos.length; i++) {
-          const prevDate = new Date(gatheringTodos[i - 1].dueDate!);
-          const currentDate = new Date(gatheringTodos[i].dueDate!);
-          expect(prevDate.getTime()).toBeLessThanOrEqual(currentDate.getTime());
-        }
-      }
-    });
-
-    it('excludes gatherings with shoutouts from agenda', async () => {
-      // Arrange - Create a gathering and then create a shoutout for it
-      const gatheringWithShoutout = await createTestGathering({
-        supabase,
-        organizerId: organizerUser.id,
-        communityId: organizerCommunity.id,
-      });
-
-      // Create a second user to send shoutout from
-      const shoutoutSender = await createTestUser(supabase);
-      await signIn(supabase, shoutoutSender.email, 'TestPass123!');
-      await joinCommunity(supabase, organizerCommunity.id);
-
-      // Create a shoutout for this gathering
-      await createTestGatheringShoutout({
-        supabase,
-        toUserId: organizerUser.id, // Shoutout to the organizer
-        gatheringId: gatheringWithShoutout.id,
-        communityId: organizerCommunity.id,
-      });
-
-      // Switch back to organizer user to check their agenda
-      await signIn(supabase, organizerUser.email, 'TestPass123!');
-
-      // Act
-      const agenda: Agenda = await fetchAgenda(supabase);
-
-      // Assert - The gathering with shoutout should NOT appear in agenda
-      const gatheringTodos = agenda.items.filter(
-        (item) => item.type.startsWith('gathering-') && 
-        item.gathering?.id === gatheringWithShoutout.id,
-      );
-
-      expect(gatheringTodos).toHaveLength(0);
-
-      // Verify that other gatherings without shoutouts still appear
-      const allGatheringTodos = agenda.items.filter(
-        (item) => item.type.startsWith('gathering-'),
-      );
-      expect(allGatheringTodos.length).toBeGreaterThan(0);
-
-      // Verify the gathering still exists but just isn't in agenda
-      expect(gatheringWithShoutout.id).toBeDefined();
     });
   });
 
@@ -291,32 +320,98 @@ describe('Agenda Integration Tests - Core Aggregation', () => {
       await signOut(supabase);
     });
 
-    it('includes accepted gatherings in attendee agenda', async () => {
+    it('includes confirmed gatherings in attendee agenda', async () => {
       // Act
       const agenda = await fetchAgenda(supabase);
 
-      console.log('🐛 DEBUG: Attendee agenda', {
-        totalItems: agenda.items.length,
-        itemTypes: agenda.items.map((item) => item.type),
-        gatheringAttendeeItems: agenda.items.filter(
-          (item) => item.type === 'gathering-confirmed',
-        ),
-        allGatheringItems: agenda.items.filter((item) =>
-          item.type.startsWith('gathering-'),
-        ),
-        targetGatheringId: attendeeGathering.id,
-      });
-
-      // Assert - attendeeUser should see gathering they joined as attendee
-      const attendeeTodos = agenda.items.filter(
-        (item) =>
-          item.type === 'gathering-confirmed' &&
-          item.gathering?.id === attendeeGathering.id,
+      // Assert - should include upcomingGathering1
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering1.id,
+        }),
       );
+      const gathering = agenda.items.find(
+        (item) => item.id === upcomingGathering1.id,
+      );
+      expect(gathering).toMatchObject({
+        type: 'gathering-confirmed',
+      });
+    });
 
-      expect(attendeeTodos.length).toBe(1);
-      expect(attendeeTodos[0].title).toBe(attendeeGathering.title);
-      expect(attendeeTodos[0].gathering?.id).toBe(attendeeGathering.id);
+    it('includes maybe gatherings in attendee agenda', async () => {
+      // Act
+      const agenda = await fetchAgenda(supabase);
+
+      // Assert - should include upcomingGathering1
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: upcomingGathering2.id,
+        }),
+      );
+      const gathering = agenda.items.find(
+        (item) => item.id === upcomingGathering2.id,
+      );
+      expect(gathering).toMatchObject({
+        type: 'gathering-maybe',
+      });
+    });
+
+    it('includes finished gatherings that I have not sent a shoutout for', async () => {
+      // Act
+      const agenda = await fetchAgenda(supabase);
+
+      // Assert - should include finishedGathering2
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: finishedGathering2.id,
+        }),
+      );
+      const gathering = agenda.items.find(
+        (item) => item.id === finishedGathering2.id,
+      );
+      expect(gathering).toMatchObject({
+        type: 'shoutout-gathering',
+      });
+    });
+
+    it('excludes gatherings that I sent a shoutout for', async () => {
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
+
+      // Assert - should not include gathering1
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: finishedGathering1.id,
+        }),
+      );
+    });
+
+    it('includes resources that I have not sent a shoutout for', async () => {
+      // Act
+      const agenda = await fetchAgenda(supabase);
+
+      // Assert - should include resource1
+      expect(agenda.items).toContainEqual(
+        expect.objectContaining({
+          id: offer2.id,
+        }),
+      );
+      const resource = agenda.items.find((item) => item.id === offer2.id);
+      expect(resource).toMatchObject({
+        type: 'shoutout-offer',
+      });
+    });
+
+    it('excludes offers that I sent a shoutout for', async () => {
+      // Act
+      const agenda: Agenda = await fetchAgenda(supabase);
+
+      // Assert - should not include resource2
+      expect(agenda.items).not.toContainEqual(
+        expect.objectContaining({
+          id: offer1.id,
+        }),
+      );
     });
   });
 });

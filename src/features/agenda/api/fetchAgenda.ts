@@ -45,7 +45,7 @@ export async function fetchAgenda(
     const todos: Todo[] = [
       // Upcoming confirmed gatherings (user said yes)
       ...upcomingGatherings.map((gathering) => ({
-        id: `gathering-yes-${gathering.id}`,
+        id: gathering.id,
         type: 'gathering-confirmed' as const,
         title: gathering.title,
         description: `You're attending this gathering`,
@@ -55,7 +55,7 @@ export async function fetchAgenda(
 
       // Upcoming maybe gatherings (user said maybe)
       ...maybeGatherings.map((gathering) => ({
-        id: `gathering-maybe-${gathering.id}`,
+        id: gathering.id,
         type: 'gathering-maybe' as const,
         title: gathering.title,
         description: `You might attend this gathering - confirm your attendance`,
@@ -65,7 +65,7 @@ export async function fetchAgenda(
 
       // My future gatherings (user is organizer)
       ...organizerGatherings.map((gathering) => ({
-        id: `gathering-organizer-${gathering.id}`,
+        id: gathering.id,
         type: 'gathering-organizer' as const,
         title: gathering.title,
         description: `You're organizing this gathering`,
@@ -75,7 +75,7 @@ export async function fetchAgenda(
 
       // Gathering shoutouts (attended gatherings needing thank you)
       ...gatheringsNeedingShoutout.map((gathering) => ({
-        id: `shoutout-gathering-${gathering.id}`,
+        id: gathering.id,
         type: 'shoutout-gathering' as const,
         title: `Thank ${gathering.organizer.firstName} for organizing "${gathering.title}"`,
         description: `Send a shoutout for attending this gathering`,
@@ -84,7 +84,7 @@ export async function fetchAgenda(
 
       // Offer shoutouts (accepted offers needing thank you)
       ...offersNeedingShoutout.map((resource) => ({
-        id: `shoutout-offer-${resource.id}`,
+        id: resource.id,
         type: 'shoutout-offer' as const,
         title: `Thank ${resource.owner.firstName} for their offer: "${resource.title}"`,
         description: `Send a shoutout for accepting this offer`,
@@ -93,7 +93,7 @@ export async function fetchAgenda(
 
       // Favor shoutouts (accepted favors needing thank you)
       ...favorsNeedingShoutout.map((resource) => ({
-        id: `shoutout-favor-${resource.id}`,
+        id: resource.id,
         type: 'shoutout-favor' as const,
         title: `Thank ${resource.owner.firstName} for helping with: "${resource.title}"`,
         description: `Send a shoutout for accepting this favor request`,

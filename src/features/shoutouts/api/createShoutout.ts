@@ -1,38 +1,107 @@
 import { logger } from '../../../shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
-import type { ShoutoutInput, Shoutout } from '../types';
-import { toShoutoutInsertRow, toShoutoutWithJoinedRelations } from '../transformers/shoutoutsTransformer';
+import {
+  type Shoutout,
+  ShoutoutResourceInput,
+  ShoutoutGatheringInput,
+} from '../types';
+import {
+  toResourceShoutoutInsertRow,
+  toGatheringShoutoutInsertRow,
+  toShoutoutWithJoinedRelations,
+} from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
-import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
+import {
+  SELECT_SHOUTOUT_WITH_RELATIONS,
+  ShoutoutInsertRow,
+} from '../types/shoutoutRow';
 
 /**
  * Creates a new shoutout with the current user as the sender
  */
-export async function createShoutout(
+export async function createGatheringShoutout(
   supabase: SupabaseClient<Database>,
-  shoutoutData: ShoutoutInput,
+  shoutoutData: ShoutoutGatheringInput & {
+    toUserId: string;
+    communityId: string;
+  },
 ): Promise<Shoutout> {
   logger.debug('📢 API: Creating shoutout', { shoutoutData });
 
+  // Get current user
+  const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
+
+  validBusinessRulesOrThrow({
+    toUserId: shoutoutData.toUserId,
+    currentUserId,
+  });
+
+  // Transform to database format with auto-assigned fromUserId
+  const dbShoutout = toGatheringShoutoutInsertRow({
+    ...shoutoutData,
+    fromUserId: currentUserId,
+  });
+
+  return insertShoutout(supabase, dbShoutout);
+}
+
+/**
+ * Creates a new shoutout with the current user as the sender
+ */
+export async function createResourceShoutout(
+  supabase: SupabaseClient<Database>,
+  shoutoutData: ShoutoutResourceInput & {
+    toUserId: string;
+    communityId: string;
+  },
+): Promise<Shoutout> {
+  logger.debug('📢 API: Creating shoutout', { shoutoutData });
+
+  // Get current user
+  const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
+
+  validBusinessRulesOrThrow({
+    toUserId: shoutoutData.toUserId,
+    currentUserId,
+  });
+
+  // Transform to database format with auto-assigned fromUserId
+  const dbShoutout = toResourceShoutoutInsertRow({
+    ...shoutoutData,
+    fromUserId: currentUserId,
+  });
+
+  return insertShoutout(supabase, dbShoutout);
+}
+
+function validBusinessRulesOrThrow({
+  toUserId,
+  currentUserId,
+}: {
+  toUserId: string;
+  currentUserId: string;
+}) {
+  // Validate business rules before database operation
+  if (toUserId === currentUserId) {
+    throw new Error('Cannot send shoutout to yourself');
+  }
+}
+
+/**
+ * Creates a new shoutout with the current user as the sender
+ */
+async function insertShoutout(
+  supabase: SupabaseClient<Database>,
+  dbShoutout: ShoutoutInsertRow,
+): Promise<Shoutout> {
   try {
-    // Get current user
-    const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
-
-    // Validate business rules before database operation
-    if (shoutoutData.toUserId === currentUserId) {
-      throw new Error('Cannot send shoutout to yourself');
-    }
-
-    // Transform to database format with auto-assigned fromUserId
-    const dbShoutout = toShoutoutInsertRow(shoutoutData, currentUserId);
-
     // Insert into database with joined relations
     const { data: createdShoutout, error } = await supabase
       .from('shoutouts')
-      .insert([dbShoutout])
+      .insert(dbShoutout)
       .select(SELECT_SHOUTOUT_WITH_RELATIONS)
       .single();
 
@@ -45,11 +114,11 @@ export async function createShoutout(
     const domainShoutout = toShoutoutWithJoinedRelations(createdShoutout);
 
     // Auto-commit any temporary image URLs after shoutout creation
-    if (shoutoutData.imageUrls && shoutoutData.imageUrls.length > 0) {
+    if (domainShoutout.imageUrls && domainShoutout.imageUrls.length > 0) {
       try {
         const permanentUrls = await commitImageUrls({
           supabase,
-          imageUrls: shoutoutData.imageUrls,
+          imageUrls: domainShoutout.imageUrls,
           entityType: 'shoutout',
           entityId: createdShoutout.id,
         });
@@ -57,7 +126,7 @@ export async function createShoutout(
         // Update shoutout with permanent URLs if they changed
         if (
           JSON.stringify(permanentUrls) !==
-          JSON.stringify(shoutoutData.imageUrls)
+          JSON.stringify(domainShoutout.imageUrls)
         ) {
           const updatedShoutout = await updateShoutout(
             supabase,
@@ -82,8 +151,12 @@ export async function createShoutout(
       id: domainShoutout.id,
       fromUserId: domainShoutout.fromUserId,
       toUserId: domainShoutout.toUserId,
-      resourceId: 'resourceId' in domainShoutout ? domainShoutout.resourceId : undefined,
-      gatheringId: 'gatheringId' in domainShoutout ? domainShoutout.gatheringId : undefined,
+      resourceId:
+        'resourceId' in domainShoutout ? domainShoutout.resourceId : undefined,
+      gatheringId:
+        'gatheringId' in domainShoutout
+          ? domainShoutout.gatheringId
+          : undefined,
     });
 
     return domainShoutout;
