@@ -6,7 +6,7 @@ import {
   toGatheringShoutoutInsertRow,
   toShoutoutUpdateRow,
 } from '../transformers/shoutoutsTransformer';
-import { createFakeDbShoutout, createFakeShoutoutInput } from './test-utils';
+import { createFakeDbShoutout } from './test-utils';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeResource } from '../../resources/__fakes__';
 
@@ -170,7 +170,7 @@ describe('Shoutout Transformer', () => {
       const toUserId = faker.string.uuid();
       const communityId = faker.string.uuid();
       const resourceId = faker.string.uuid();
-      
+
       const shoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
@@ -198,7 +198,7 @@ describe('Shoutout Transformer', () => {
       const toUserId = faker.string.uuid();
       const communityId = faker.string.uuid();
       const resourceId = faker.string.uuid();
-      
+
       const shoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: undefined,
@@ -220,7 +220,7 @@ describe('Shoutout Transformer', () => {
       const toUserId = faker.string.uuid();
       const communityId = faker.string.uuid();
       const gatheringId = faker.string.uuid();
-      
+
       const shoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
@@ -272,5 +272,4 @@ describe('Shoutout Transformer', () => {
       });
     });
   });
-
 });
