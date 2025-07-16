@@ -29,6 +29,9 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
     provider: 'example.com',
   });
 
+  // Add 300ms pause before signUp to avoid rate limiting
+  await new Promise(resolve => setTimeout(resolve, 300));
+
   const account = await signUp(
     supabase,
     testEmail,
@@ -55,11 +58,14 @@ export async function createTestCommunity(supabase: SupabaseClient<Database>) {
 export async function createTestResource(
   supabase: SupabaseClient<Database>,
   communityId: string,
+  type: 'offer' | 'request' = 'request',
 ) {
   const data = createFakeResourceInput({
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
     description: `${TEST_PREFIX} test resource`,
+    type,
     communityId,
+    category: 'tools', // Use a valid category
   });
 
   const resource = await createResource(supabase, data);

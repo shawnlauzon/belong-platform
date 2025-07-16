@@ -8,8 +8,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import {
-  createFastTestImageFile,
-  optimizedCleanupAllTestImages,
+  createTestImageFile,
+  cleanupAllTestImages,
 } from './image-helpers-optimized';
 import {
   optimizedCleanupTempImages,
@@ -32,7 +32,7 @@ describe.skip('Images API - Cleanup Operations (Optimized)', () => {
   });
 
   afterAll(async () => {
-    await optimizedCleanupAllTestImages();
+    await cleanupAllTestImages();
     await cleanupAllTestData();
   });
 
@@ -85,7 +85,7 @@ describe.skip('Images API - Cleanup Operations (Optimized)', () => {
 
       try {
         // Single upload to minimize auth issues
-        const testFile = createFastTestImageFile({
+        const testFile = createTestImageFile({
           name: `${TEST_PREFIX}workflow-${Date.now()}.jpg`,
         });
 
@@ -110,7 +110,7 @@ describe.skip('Images API - Cleanup Operations (Optimized)', () => {
     it('handles commit and entity cleanup workflow', async () => {
       try {
         // Single upload and commit workflow
-        const testFile = createFastTestImageFile({
+        const testFile = createTestImageFile({
           name: `${TEST_PREFIX}commit-${Date.now()}.jpg`,
         });
 

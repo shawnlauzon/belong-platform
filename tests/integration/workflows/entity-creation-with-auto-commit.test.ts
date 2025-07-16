@@ -15,7 +15,6 @@ import { updateUser } from '@/features/users/api';
 import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
-import { ResourceCategory } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
@@ -76,7 +75,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
         description: 'Test resource with auto-commit images',
         imageUrls: [tempImage1, tempImage2],
         communityId: testCommunity.id,
-        category: ResourceCategory.TOOLS,
+        category: 'tools',
         type: 'offer',
       });
 
@@ -108,7 +107,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
       const resourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}No Images Resource ${Date.now()}`,
         communityId: testCommunity.id,
-        category: ResourceCategory.SKILLS,
+        category: 'skills',
         type: 'request',
         // No imageUrls
       });
@@ -295,7 +294,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
         title: `${TEST_PREFIX}Mixed URLs Resource ${Date.now()}`,
         imageUrls: [tempImage, permanentUrl],
         communityId: testCommunity.id,
-        category: ResourceCategory.OTHER,
+        category: 'other',
         type: 'offer',
       });
 
@@ -337,7 +336,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
           'https://invalid-domain.com/image.jpg',
         ],
         communityId: testCommunity.id,
-        category: ResourceCategory.SUPPLIES,
+        category: 'supplies',
         type: 'request',
       });
 
@@ -362,7 +361,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
         title: `${TEST_PREFIX}Empty Images Resource ${Date.now()}`,
         imageUrls: [], // Empty array
         communityId: testCommunity.id,
-        category: ResourceCategory.FOOD,
+        category: 'food',
         type: 'offer',
       });
 

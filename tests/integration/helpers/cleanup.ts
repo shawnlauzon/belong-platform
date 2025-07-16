@@ -209,3 +209,25 @@ export async function cleanupResourceResponses(resourceId: string) {
     .delete()
     .eq('resource_id', resourceId);
 }
+
+// Cleanup all resource claims for a resource
+export async function cleanupResourceClaims(resourceId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('resource_claims')
+    .delete()
+    .eq('resource_id', resourceId);
+}
+
+// Cleanup specific resource claim
+export async function cleanupResourceClaim(claimId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  await serviceClient
+    .from('resource_claims')
+    .delete()
+    .eq('id', claimId);
+}

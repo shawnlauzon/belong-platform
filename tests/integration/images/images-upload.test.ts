@@ -9,8 +9,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import {
-  createFastTestImageFile,
-  verifyImageExistsInStorage,
+  createTestImageFile,
+  verifyImagesExist,
   cleanupAllTestImages,
   extractStoragePathFromUrl,
 } from './image-helpers-optimized';
@@ -37,7 +37,7 @@ describe.skip('Images API - Upload Operations', () => {
 
   describe('uploadFile', () => {
     it('uploads single image file successfully', async () => {
-      const testFile = createFastTestImageFile({
+      const testFile = createTestImageFile({
         name: `${TEST_PREFIX}single-upload-${Date.now()}.jpg`,
       });
 
@@ -52,8 +52,8 @@ describe.skip('Images API - Upload Operations', () => {
       expect(typeof result).toBe('string');
 
       // Verify file exists in storage
-      const exists = await verifyImageExistsInStorage(result);
-      expect(exists).toBe(true);
+      const existsResults = await verifyImagesExist([result]);
+      expect(existsResults[result]).toBe(true);
 
       // Verify URL format - includes user ID folder and temp-upload prefix
       expect(result).toMatch(
@@ -69,7 +69,11 @@ describe.skip('Images API - Upload Operations', () => {
     });
 
     it('uploads multiple image files successfully', async () => {
-      const testFiles = createMultipleTestImageFiles(3);
+      const testFiles = Array.from({ length: 3 }, (_, i) => 
+        createTestImageFile({
+          name: `${TEST_PREFIX}batch-${i}-${Date.now()}.jpg`,
+        })
+      );
       const uploadPromises = testFiles.map((file) =>
         uploadImage({
           supabase,
@@ -87,8 +91,8 @@ describe.skip('Images API - Upload Operations', () => {
         expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result);
-        expect(exists).toBe(true);
+        const existsResults = await verifyImagesExist([result]);
+        expect(existsResults[result]).toBe(true);
 
         // Verify path extraction works
         const extractedPath = extractStoragePathFromUrl(result);
@@ -116,8 +120,9 @@ describe.skip('Images API - Upload Operations', () => {
       expect(result1).not.toBe(result2);
 
       // Both should exist
-      const exists1 = await verifyImageExistsInStorage(result1);
-      const exists2 = await verifyImageExistsInStorage(result2);
+      const existsResults = await verifyImagesExist([result1, result2]);
+      const exists1 = existsResults[result1];
+      const exists2 = existsResults[result2];
       expect(exists1).toBe(true);
       expect(exists2).toBe(true);
     });
@@ -148,8 +153,8 @@ describe.skip('Images API - Upload Operations', () => {
         { name: 'test.gif', type: 'image/gif' },
       ];
 
-      for (const { name, type } of imageTypes) {
-        const testFile = createTestImageFile({ name, type });
+      for (const { name } of imageTypes) {
+        const testFile = createTestImageFile({ name });
 
         const result = await uploadImage({
           supabase,
@@ -161,13 +166,13 @@ describe.skip('Images API - Upload Operations', () => {
         expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result);
-        expect(exists).toBe(true);
+        const existsResults = await verifyImagesExist([result]);
+        expect(existsResults[result]).toBe(true);
       }
     });
 
     it('validates file type and rejects non-image files', async () => {
-      const nonImageFile = createNonImageFile();
+      const nonImageFile = new File(['some text content'], 'test.txt', { type: 'text/plain' });
 
       // Should throw validation error
       await expect(
@@ -180,7 +185,10 @@ describe.skip('Images API - Upload Operations', () => {
     });
 
     it('validates file size and rejects oversized files', async () => {
-      const oversizedFile = createOversizedTestImageFile();
+      const oversizedFile = createTestImageFile({ 
+        name: 'oversized.jpg', 
+        size: 20 * 1024 * 1024 // 20MB
+      });
 
       // Should throw validation error
       await expect(
@@ -207,8 +215,8 @@ describe.skip('Images API - Upload Operations', () => {
       expect(result).toBeTruthy();
 
       // Verify file exists
-      const exists = await verifyImageExistsInStorage(result);
-      expect(exists).toBe(true);
+      const existsResults = await verifyImagesExist([result]);
+      expect(existsResults[result]).toBe(true);
     });
 
     it('handles various file sizes within limits', async () => {
@@ -235,8 +243,8 @@ describe.skip('Images API - Upload Operations', () => {
         expect(typeof result).toBe('string');
 
         // Verify file exists in storage
-        const exists = await verifyImageExistsInStorage(result);
-        expect(exists).toBe(true);
+        const existsResults = await verifyImagesExist([result]);
+        expect(existsResults[result]).toBe(true);
       }
     });
   });
@@ -252,15 +260,15 @@ describe.skip('Images API - Upload Operations', () => {
       );
 
       // Verify file exists
-      const existsBefore = await verifyImageExistsInStorage(uploadResult.url);
-      expect(existsBefore).toBe(true);
+      const existsResultsBefore = await verifyImagesExist([uploadResult.url]);
+      expect(existsResultsBefore[uploadResult.url]).toBe(true);
 
       // Delete the file
       await StorageManager.deleteFile(uploadResult.path, supabase);
 
       // Verify file was deleted
-      const existsAfter = await verifyImageExistsInStorage(uploadResult.url);
-      expect(existsAfter).toBe(false);
+      const existsResultsAfter = await verifyImagesExist([uploadResult.url]);
+      expect(existsResultsAfter[uploadResult.url]).toBe(false);
     });
 
     it('handles deletion of non-existent files gracefully', async () => {

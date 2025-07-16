@@ -5,11 +5,11 @@ import {
   createTestCommunity,
   createTestResource,
   TEST_PREFIX,
-  createTestShoutout,
+  createTestResourceShoutout,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
-  createShoutout,
+  createResourceShoutout,
   fetchShoutouts,
   fetchShoutoutById,
   updateShoutout,
@@ -19,7 +19,7 @@ import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
-import type { Shoutout, ShoutoutInput } from '@/features/shoutouts/types';
+import type { Shoutout } from '@/features/shoutouts/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 
@@ -50,21 +50,21 @@ describe('Shoutouts API - CRUD Operations', () => {
 
   describe('createShoutout', () => {
     it('creates shoutout with valid data', async () => {
-      const shoutoutInput: ShoutoutInput = {
-        communityId: testCommunity.id,
-        toUserId: testUser2.id,
+      const shoutoutInput = {
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
+        toUserId: testUser2.id,
+        communityId: testCommunity.id,
       };
 
-      const shoutout = await createShoutout(supabase, shoutoutInput);
+      const shoutout = await createResourceShoutout(supabase, shoutoutInput);
 
       expect(shoutout).toBeTruthy();
       expect(shoutout.id).toBeTruthy();
       expect(shoutout.message).toBe(shoutoutInput.message);
       expect(shoutout.fromUserId).toBe(testUser.id);
       expect(shoutout.toUserId).toBe(testUser2.id);
-      expect(shoutout.resourceId).toBe(testResource.id);
+      expect(shoutout.resource?.id).toBe(testResource.id);
       expect(shoutout.createdAt).toBeTruthy();
       expect(shoutout.updatedAt).toBeTruthy();
 
@@ -86,18 +86,18 @@ describe('Shoutouts API - CRUD Operations', () => {
     });
 
     it('cannot send shoutout to yourself', async () => {
-      const shoutoutInput: ShoutoutInput = {
+      const shoutoutInput = {
         toUserId: testUser.id, // Same user as signed in user
         communityId: testCommunity.id,
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
-      await expect(createShoutout(supabase, shoutoutInput)).rejects.toThrow();
+      await expect(createResourceShoutout(supabase, shoutoutInput)).rejects.toThrow();
     });
 
     it('TODO: should not allow shoutout about a resource you own (currently allows)', async () => {
-      const shoutoutInput: ShoutoutInput = {
+      const shoutoutInput = {
         toUserId: testUser2.id,
         communityId: testCommunity.id,
         resourceId: testResource.id, // testResource is owned by testUser (signed in user)
@@ -106,7 +106,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       // Current behavior: allows users to send shoutouts about their own resources
       // This business rule is not implemented but was requested to be enforced
-      const result = await createShoutout(supabase, shoutoutInput);
+      const result = await createResourceShoutout(supabase, shoutoutInput);
       expect(result).toBeTruthy();
       expect(result.id).toBeTruthy();
       
@@ -123,7 +123,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       // Create test shoutouts for read-only operations
       // Sign in as testUser to create first shoutout
       await signIn(supabase, testUser.email, 'TestPass123!');
-      readOnlyShoutout1 = await createTestShoutout({
+      readOnlyShoutout1 = await createTestResourceShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,
@@ -132,7 +132,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       // Sign in as testUser2 to create second shoutout
       await signIn(supabase, testUser2.email, 'TestPass123!');
-      readOnlyShoutout2 = await createTestShoutout({
+      readOnlyShoutout2 = await createTestResourceShoutout({
         supabase,
         toUserId: testUser.id,
         resourceId: testResource.id,
@@ -205,7 +205,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(Array.isArray(filtered)).toBe(true);
       expect(filtered.some((s) => s.id === readOnlyShoutout1.id)).toBe(true);
       expect(filtered.some((s) => s.id === readOnlyShoutout2.id)).toBe(true);
-      expect(filtered.every((s) => s.resourceId === testResource.id)).toBe(
+      expect(filtered.every((s) => s.resource?.id === testResource.id)).toBe(
         true,
       );
     });
@@ -214,7 +214,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('fetchShoutoutById', () => {
     it('returns shoutout by id', async () => {
       // Create a shoutout to fetch
-      const createdShoutout = await createShoutout(supabase, {
+      const createdShoutout = await createResourceShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
@@ -259,7 +259,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('updateShoutout', () => {
     it('updates shoutout message', async () => {
       // Create a shoutout to update
-      const createdShoutout = await createTestShoutout({
+      const createdShoutout = await createTestResourceShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,
@@ -279,7 +279,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         expect(updatedShoutout!.message).toBe(newMessage);
         expect(updatedShoutout!.fromUserId).toBe(testUser.id);
         expect(updatedShoutout!.toUserId).toBe(testUser2.id);
-        expect(updatedShoutout!.resourceId).toBe(testResource.id);
+        expect(updatedShoutout!.resource?.id).toBe(testResource.id);
 
         // Verify database record has been updated with all expected fields
         const { data: dbRecord } = await supabase
@@ -307,7 +307,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('deleteShoutout', () => {
     it('deletes shoutout successfully', async () => {
       // Create a shoutout to delete
-      const createdShoutout = await createTestShoutout({
+      const createdShoutout = await createTestResourceShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,

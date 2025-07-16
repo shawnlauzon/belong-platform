@@ -5,7 +5,7 @@ import {
   createTestCommunity,
   createTestResource,
   createTestGathering,
-  createTestShoutout,
+  createTestResourceShoutout,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchFeed } from '@/features/feed/api';
@@ -66,13 +66,13 @@ describe('Feed API - Integration Tests', () => {
     await signIn(supabase, testUser2.email, 'TestPass123!');
 
     // Create shoutouts for the resources (testUser2 thanking testUser)
-    testShoutout1 = await createTestShoutout({
+    testShoutout1 = await createTestResourceShoutout({
       supabase,
       toUserId: testUser.id,
       resourceId: testResource1.id,
       communityId: testCommunity1.id,
     });
-    testShoutout2 = await createTestShoutout({
+    testShoutout2 = await createTestResourceShoutout({
       supabase,
       toUserId: testUser.id,
       resourceId: testResource2.id,
