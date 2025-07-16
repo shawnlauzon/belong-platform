@@ -31,13 +31,6 @@ This guide covers usage patterns and best practices for the Belong Network Platf
 - **`useUpdateResource()`** - Update resource details
 - **`useDeleteResource()`** - Delete resource
 
-### Gatherings
-
-- **`useGatherings()`** - List gatherings with filters
-- **`useGathering()`** - Get single gathering details
-- **`useCreateGathering()`** - Create new gathering
-- **`useUpdateGathering()`** - Update gathering details
-- **`useDeleteGathering()`** - Delete gathering
 
 ### Users
 
@@ -57,7 +50,6 @@ This guide covers usage patterns and best practices for the Belong Network Platf
 - **Authentication**: `Account`, `User`
 - **Communities**: `Community`, `CommunityData`, `CommunityFilter`
 - **Resources**: `Resource`, `ResourceData`, `ResourceFilter`, `ResourceInfo`
-- **Gatherings**: `Gathering`, `GatheringData`, `GatheringFilter`, `GatheringInfo`
 - **Users**: `User`, `UserData`, `UserFilter`
 - **Images**: `ImageUploadResult`, `EntityType`
 - **Geography**: `Coordinates`, `AddressSearchResult`

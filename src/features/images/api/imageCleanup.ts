@@ -341,14 +341,6 @@ export async function isImageOrphaned(
           .single();
         return !data;
       }
-      case 'event': {
-        const { data } = await supabase
-          .from('gatherings')
-          .select('id')
-          .eq('id', entityId)
-          .single();
-        return !data;
-      }
       case 'community': {
         const { data } = await supabase
           .from('communities')

@@ -8,7 +8,7 @@ import type { Feed } from '../types';
 /**
  * Hook for fetching the user's feed.
  *
- * Provides a chronologically ordered feed of resources, gatherings, and shoutouts from
+ * Provides a chronologically ordered feed of resources and shoutouts from
  * all communities the user has joined.
  *
  * @returns Query state for feed data

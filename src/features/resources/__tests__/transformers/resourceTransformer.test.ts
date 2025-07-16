@@ -5,7 +5,6 @@ import {
   toResourceInsertRow,
 } from '../../transformers/resourceTransformer';
 import { createFakeUser } from '../../../users/__fakes__';
-import { createFakeCommunity } from '../../../communities/__fakes__';
 import {
   createFakeResourceRow,
   createFakeResourceInput,
@@ -23,9 +22,9 @@ describe('Resource Transformer', () => {
         title: dbResource.title,
         description: dbResource.description,
         category: dbResource.category,
-        communityId: dbResource.community_id,
       });
       expect(resource.owner).toBeDefined();
+      expect(resource.communities).toHaveLength(1);
     });
 
     it('should include owner if provided', () => {
@@ -33,23 +32,30 @@ describe('Resource Transformer', () => {
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.owner).toEqual({
+      expect(resource.owner).toMatchObject({
         id: dbResource.owner.id,
-        firstName: (dbResource.owner.user_metadata as any)?.first_name || '',
-        avatarUrl: (dbResource.owner.user_metadata as any)?.avatar_url,
-        createdAt: new Date(dbResource.owner.created_at),
-        updatedAt: new Date(dbResource.owner.updated_at),
+        firstName:
+          (
+            dbResource.owner.user_metadata as {
+              first_name?: string;
+              avatar_url?: string;
+            }
+          )?.first_name || '',
+        avatarUrl: (
+          dbResource.owner.user_metadata as {
+            first_name?: string;
+            avatar_url?: string;
+          }
+        )?.avatar_url,
       });
-      expect(resource.communityId).toEqual(dbResource.community_id);
+      expect(resource.communities).toHaveLength(1);
     });
 
     it('should not return any field names with underscores', () => {
       // Arrange
       const fakeOwner = createFakeUser();
-      const fakeCommunity = createFakeCommunity();
       const dbResource = createFakeResourceRow({
         owner_id: fakeOwner.id,
-        community_id: fakeCommunity.id,
       });
 
       // Act
@@ -76,7 +82,6 @@ describe('Resource Transformer', () => {
         title: resourceWithOwner.title,
         description: resourceWithOwner.description,
         owner_id: resourceWithOwner.ownerId,
-        community_id: resourceWithOwner.communityId,
         location_name: resourceWithOwner.locationName,
         coordinates: resourceWithOwner.coordinates
           ? expect.stringContaining('POINT')
@@ -87,7 +92,10 @@ describe('Resource Transformer', () => {
     it('should handle partial updates', () => {
       const resourceData = createFakeResourceInput();
 
-      const dbResource = toResourceInsertRow({ ...resourceData, ownerId: 'user-1' });
+      const dbResource = toResourceInsertRow({
+        ...resourceData,
+        ownerId: 'user-1',
+      });
 
       expect(dbResource).toMatchObject({
         title: resourceData.title,

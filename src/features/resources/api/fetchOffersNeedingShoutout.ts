@@ -66,7 +66,9 @@ export async function fetchOffersNeedingShoutout(
     }
 
     // Transform to domain objects
-    const domainResources = resourcesNeedingShoutout.map(toDomainResource);
+    const domainResources = resourcesNeedingShoutout.map(r => 
+      toDomainResource(r)
+    );
 
     logger.info('🎁 API: Successfully fetched offers needing shoutout', {
       count: domainResources.length,

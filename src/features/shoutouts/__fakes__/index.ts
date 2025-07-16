@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ShoutoutRow } from '../types/shoutoutRow';
-import { Shoutout, ShoutoutResourceInput } from '../types';
+import { Shoutout, ShoutoutInput } from '../types';
 import { createFakeUser } from '@/features/users/__fakes__';
 import { createFakeResource } from '@/features/resources/__fakes__';
 import { createFakeCommunity } from '@/features/communities/__fakes__';
@@ -19,7 +19,6 @@ export function createFakeDbShoutout(
     from_user_id: faker.string.uuid(),
     to_user_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
-    gathering_id: null,
     community_id: faker.string.uuid(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
@@ -95,8 +94,8 @@ export function createFakeShoutoutWithoutRelations(
  * Creates a fake ShoutoutInput for testing
  */
 export function createFakeShoutoutInput(
-  overrides: Partial<ShoutoutResourceInput> = {},
-): ShoutoutResourceInput {
+  overrides: Partial<ShoutoutInput> = {},
+): ShoutoutInput {
   return {
     message: faker.lorem.sentence(),
     resourceId: faker.string.uuid(),

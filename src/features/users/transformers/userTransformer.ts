@@ -112,8 +112,6 @@ export function toUserSummary(profile: ProfileRow): UserSummary {
     id: profile.id,
     firstName: metadata.first_name || '',
     avatarUrl: metadata.avatar_url,
-    createdAt: new Date(profile.created_at),
-    updatedAt: new Date(profile.updated_at),
   };
 }
 

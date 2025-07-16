@@ -45,7 +45,11 @@ describe('useUpdateProfile', () => {
       data: fakeUser,
       error: null,
       isLoading: false,
-    } as any);
+      isError: false,
+      isSuccess: true,
+      isPending: false,
+      status: 'success',
+    } as ReturnType<typeof useCurrentUser>);
 
     // Use shared test wrapper
     ({ wrapper } = createDefaultTestWrapper());

@@ -205,8 +205,6 @@ export function createFakeCommunitySummary(
     type: faker.helpers.arrayElement(['place', 'interest']),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     memberCount: faker.number.int({ min: 10, max: 140 }),
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.past(),
     ...overrides,
   };
 }

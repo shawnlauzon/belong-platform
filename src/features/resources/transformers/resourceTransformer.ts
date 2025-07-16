@@ -1,4 +1,10 @@
-import type { ResourceCategory, Resource, ResourceInput, ResourceSummary } from '../types';
+import type {
+  ResourceCategory,
+  Resource,
+  ResourceInput,
+  ResourceSummary,
+} from '../types';
+import type { CommunitySummary } from '../../communities';
 import type {
   ResourceRowWithRelations,
   ResourceInsertDbData,
@@ -6,15 +12,15 @@ import type {
 } from '../types/resourceRow';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { toUserSummary } from '../../users/transformers/userTransformer';
+import { toDomainCommunitySummary } from '@/features/communities/transformers/communityTransformer';
 
 /**
  * Transform a domain resource object to a database resource record
  */
 export function toResourceInsertRow(
-  resource: ResourceInput & { ownerId: string },
+  resource: Omit<ResourceInput, 'communityIds'> & { ownerId: string },
 ): ResourceInsertDbData {
   const {
-    communityId,
     imageUrls,
     ownerId,
     locationName,
@@ -28,7 +34,6 @@ export function toResourceInsertRow(
   return {
     ...rest,
     owner_id: ownerId,
-    community_id: communityId,
     image_urls: imageUrls,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
@@ -55,7 +60,7 @@ export function forDbUpdate(
       ? toPostGisPoint(resource.coordinates)
       : undefined,
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
-    community_id: resource.communityId,
+    // Note: communityIds changes should be handled separately via resource_communities table
     status: resource.status,
     max_claims: resource.maxClaims,
     requires_approval: resource.requiresApproval,
@@ -97,11 +102,15 @@ export function toDomainResource(
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
     owner: partialOwner,
-    communityId: dbResource.community_id,
+    communities: dbResource.resource_communities.map((community) =>
+      toDomainCommunitySummary(community.community),
+    ),
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
-    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
+    expiresAt: dbResource.expires_at
+      ? new Date(dbResource.expires_at)
+      : undefined,
   };
 }
 
@@ -110,6 +119,7 @@ export function toDomainResource(
  */
 export function toResourceSummary(
   dbResource: ResourceRowWithRelations,
+  communities: CommunitySummary[] = [],
 ): ResourceSummary {
   // Handle potential array results from Supabase joins
   const owner = Array.isArray(dbResource.owner)
@@ -126,14 +136,20 @@ export function toResourceSummary(
     type: dbResource.type as 'offer' | 'request',
     category: dbResource.category as ResourceCategory,
     title: dbResource.title,
+    description: dbResource.description,
+    locationName: dbResource.location_name || '',
+    coordinates: dbResource.coordinates
+      ? parsePostGisPoint(dbResource.coordinates)
+      : undefined,
     ownerId: dbResource.owner_id,
     owner: toUserSummary(owner),
+    communities,
     imageUrls: dbResource.image_urls || [],
-    createdAt: new Date(dbResource.created_at),
-    updatedAt: new Date(dbResource.updated_at),
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
-    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
+    expiresAt: dbResource.expires_at
+      ? new Date(dbResource.expires_at)
+      : undefined,
   };
 }

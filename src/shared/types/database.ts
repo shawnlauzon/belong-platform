@@ -444,6 +444,42 @@ export type Database = {
           },
         ]
       }
+      resource_communities: {
+        Row: {
+          community_id: string
+          created_at: string
+          resource_id: string
+          updated_at: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          resource_id: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          resource_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_communities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_communities_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_responses: {
         Row: {
           created_at: string | null
@@ -517,7 +553,6 @@ export type Database = {
       resources: {
         Row: {
           category: Database["public"]["Enums"]["resource_category"] | null
-          community_id: string
           coordinates: unknown | null
           created_at: string
           description: string
@@ -535,7 +570,6 @@ export type Database = {
         }
         Insert: {
           category?: Database["public"]["Enums"]["resource_category"] | null
-          community_id: string
           coordinates?: unknown | null
           created_at?: string
           description: string
@@ -553,7 +587,6 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["resource_category"] | null
-          community_id?: string
           coordinates?: unknown | null
           created_at?: string
           description?: string
@@ -571,13 +604,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "resources_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "resources_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
@@ -591,11 +617,10 @@ export type Database = {
           community_id: string
           created_at: string
           from_user_id: string
-          gathering_id: string | null
           id: string
           image_urls: string[]
           message: string
-          resource_id: string | null
+          resource_id: string
           to_user_id: string
           updated_at: string
         }
@@ -603,11 +628,10 @@ export type Database = {
           community_id: string
           created_at?: string
           from_user_id: string
-          gathering_id?: string | null
           id?: string
           image_urls?: string[]
           message: string
-          resource_id?: string | null
+          resource_id: string
           to_user_id: string
           updated_at?: string
         }
@@ -615,11 +639,10 @@ export type Database = {
           community_id?: string
           created_at?: string
           from_user_id?: string
-          gathering_id?: string | null
           id?: string
           image_urls?: string[]
           message?: string
-          resource_id?: string | null
+          resource_id?: string
           to_user_id?: string
           updated_at?: string
         }
@@ -636,13 +659,6 @@ export type Database = {
             columns: ["from_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_gathering_id_fkey"
-            columns: ["gathering_id"]
-            isOneToOne: false
-            referencedRelation: "gatherings"
             referencedColumns: ["id"]
           },
           {

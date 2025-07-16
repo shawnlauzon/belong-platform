@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserCommunities } from '../../communities/api';
 import { fetchResources } from '../../resources/api';
-import { fetchGatherings } from '../../gatherings/api';
 import { fetchShoutouts } from '../../shoutouts/api';
 import { getCurrentUser } from '../../auth/api';
 import { Feed, FeedItem } from '../types';
@@ -35,10 +34,9 @@ export async function fetchFeed(
       (membership) => membership.communityId,
     );
 
-    // Fetch resources, gatherings, and shoutouts using single queries with communityIds arrays
-    const [resources, gatherings, shoutouts] = await Promise.all([
+    // Fetch resources and shoutouts using single queries with communityIds arrays
+    const [resources, shoutouts] = await Promise.all([
       fetchResources(supabase, { communityIds }),
-      fetchGatherings(supabase, { communityIds, includePast: false }),
       fetchShoutouts(supabase, { communityIds }),
     ]);
 
@@ -49,12 +47,6 @@ export async function fetchFeed(
       data: resource,
     }));
 
-    const gatheringItems: FeedItem[] = gatherings.map((gathering) => ({
-      id: gathering.id,
-      type: 'gathering',
-      data: gathering,
-    }));
-
     const shoutoutItems: FeedItem[] = shoutouts.map((shoutout) => ({
       id: shoutout.id,
       type: 'shoutout',
@@ -62,7 +54,7 @@ export async function fetchFeed(
     }));
 
     // Combine and sort by created_at (newest first)
-    const allItems = [...resourceItems, ...gatheringItems, ...shoutoutItems];
+    const allItems = [...resourceItems, ...shoutoutItems];
     allItems.sort((a, b) => {
       const aDate = new Date(a.data.createdAt);
       const bDate = new Date(b.data.createdAt);
@@ -72,7 +64,6 @@ export async function fetchFeed(
     logger.debug('📰 API: Successfully fetched feed data', {
       totalItems: allItems.length,
       resourceCount: resourceItems.length,
-      gatheringCount: gatheringItems.length,
       shoutoutCount: shoutoutItems.length,
     });
 

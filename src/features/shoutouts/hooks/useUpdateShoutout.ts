@@ -2,11 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { updateShoutout } from '../api';
-import type {
-  ShoutoutResourceInput,
-  ShoutoutGatheringInput,
-  Shoutout,
-} from '../types';
+import type { ShoutoutInput, Shoutout } from '../types';
 
 /**
  * Hook for updating existing shoutouts.
@@ -77,7 +73,7 @@ export function useUpdateShoutout() {
       data,
     }: {
       id: string;
-      data: Partial<ShoutoutResourceInput | ShoutoutGatheringInput>;
+      data: Partial<ShoutoutInput>;
     }) => {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
       return updateShoutout(supabase, id, data);

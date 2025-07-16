@@ -2,14 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import {
   toDomainShoutout,
-  toResourceShoutoutInsertRow,
-  toGatheringShoutoutInsertRow,
+  toShoutoutInsertRow,
   toShoutoutUpdateRow,
 } from '../transformers/shoutoutsTransformer';
-import { createFakeDbShoutout } from './test-utils';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeResource } from '../../resources/__fakes__';
 import { createFakeCommunitySummary } from '../../communities/__fakes__';
+import { createFakeDbShoutout } from '../__fakes__';
 
 describe('Shoutout Transformer', () => {
   describe('toDomainShoutout', () => {
@@ -179,7 +178,7 @@ describe('Shoutout Transformer', () => {
     });
   });
 
-  describe('toResourceShoutoutInsertRow', () => {
+  describe('toShoutoutInsertRow', () => {
     it('should transform domain resource shoutout data to database insert format', () => {
       const fromUserId = faker.string.uuid();
       const toUserId = faker.string.uuid();
@@ -195,7 +194,7 @@ describe('Shoutout Transformer', () => {
         communityId,
       };
 
-      const dbShoutout = toResourceShoutoutInsertRow(shoutoutData);
+      const dbShoutout = toShoutoutInsertRow(shoutoutData);
 
       expect(dbShoutout).toMatchObject({
         message: shoutoutData.message,
@@ -204,7 +203,6 @@ describe('Shoutout Transformer', () => {
         resource_id: resourceId,
         community_id: communityId,
         image_urls: shoutoutData.imageUrls,
-        gathering_id: null,
       });
     });
 
@@ -223,38 +221,23 @@ describe('Shoutout Transformer', () => {
         communityId,
       };
 
-      const dbShoutout = toResourceShoutoutInsertRow(shoutoutData);
+      const dbShoutout = toShoutoutInsertRow(shoutoutData);
 
       expect(dbShoutout.image_urls).toEqual([]);
     });
   });
 
-  describe('toGatheringShoutoutInsertRow', () => {
-    it('should transform domain gathering shoutout data to database insert format', () => {
-      const fromUserId = faker.string.uuid();
-      const toUserId = faker.string.uuid();
-      const communityId = faker.string.uuid();
-      const gatheringId = faker.string.uuid();
-
+  describe('toShoutoutUpdateRow', () => {
+    it('should transform domain shoutout data to database update format', () => {
       const shoutoutData = {
         message: faker.lorem.paragraph(),
         imageUrls: [faker.image.url()],
-        gatheringId,
-        fromUserId,
-        toUserId,
-        communityId,
       };
-
-      const dbShoutout = toGatheringShoutoutInsertRow(shoutoutData);
+      const dbShoutout = toShoutoutUpdateRow(shoutoutData);
 
       expect(dbShoutout).toMatchObject({
         message: shoutoutData.message,
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        gathering_id: gatheringId,
-        community_id: communityId,
         image_urls: shoutoutData.imageUrls,
-        resource_id: null,
       });
     });
   });

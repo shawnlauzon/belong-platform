@@ -2,15 +2,9 @@ import { ResourceSummary } from '../../resources';
 import { UserSummary } from '../../users';
 import { CommunitySummary } from '../../communities';
 import { toDomainCommunitySummary } from '../../communities/transformers/communityTransformer';
-import { toGatheringWithJoinedRelations } from '../../gatherings/transformers/gatheringTransformer';
 import { toResourceSummary } from '../../resources/transformers/resourceTransformer';
 import { toUserSummary } from '../../users/transformers/userTransformer';
-import type {
-  Shoutout,
-  ShoutoutGatheringInput,
-  ShoutoutInputRefs,
-  ShoutoutResourceInput,
-} from '../types';
+import type { Shoutout, ShoutoutInput, ShoutoutInputRefs } from '../types';
 
 import {
   ShoutoutInsertRow,
@@ -27,7 +21,7 @@ export function toDomainShoutout(
   refs: {
     fromUser: UserSummary;
     toUser: UserSummary;
-    resource: ResourceSummary;
+    resource?: ResourceSummary;
     community: CommunitySummary;
   },
 ): Shoutout {
@@ -39,7 +33,8 @@ export function toDomainShoutout(
     image_urls,
     created_at,
     updated_at,
-    ...rest
+    id,
+    message,
   } = dbShoutout;
 
   if (from_user_id !== refs.fromUser.id) {
@@ -50,18 +45,17 @@ export function toDomainShoutout(
     throw new Error('To user ID does not match');
   }
 
-  if (resource_id !== refs.resource.id) {
+  if (resource_id && refs.resource && resource_id !== refs.resource.id) {
     throw new Error('Resource ID does not match');
   }
 
   return {
-    ...rest,
-    id: dbShoutout.id,
+    id,
     fromUserId: from_user_id,
     toUserId: to_user_id,
     resourceId: resource_id,
     communityId: community_id,
-    message: rest.message,
+    message,
     imageUrls: image_urls || [],
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
@@ -72,24 +66,8 @@ export function toDomainShoutout(
   };
 }
 
-export function toGatheringShoutoutInsertRow(
-  shoutoutData: ShoutoutGatheringInput & ShoutoutInputRefs,
-): ShoutoutInsertRow {
-  const { imageUrls, message } = shoutoutData;
-
-  return {
-    message,
-    from_user_id: shoutoutData.fromUserId,
-    to_user_id: shoutoutData.toUserId,
-    community_id: shoutoutData.communityId,
-    image_urls: imageUrls || [],
-    resource_id: null,
-    gathering_id: shoutoutData.gatheringId,
-  };
-}
-
-export function toResourceShoutoutInsertRow(
-  shoutoutData: ShoutoutResourceInput & ShoutoutInputRefs,
+export function toShoutoutInsertRow(
+  shoutoutData: ShoutoutInput & ShoutoutInputRefs,
 ): ShoutoutInsertRow {
   const { imageUrls, message } = shoutoutData;
 
@@ -100,7 +78,6 @@ export function toResourceShoutoutInsertRow(
     community_id: shoutoutData.communityId,
     image_urls: imageUrls || [],
     resource_id: shoutoutData.resourceId,
-    gathering_id: null,
   };
 }
 
@@ -108,7 +85,7 @@ export function toResourceShoutoutInsertRow(
  * Transform a domain shoutout data object to a database shoutout update record
  */
 export function toShoutoutUpdateRow(
-  shoutoutData: Partial<ShoutoutResourceInput | ShoutoutGatheringInput>,
+  shoutoutData: Partial<ShoutoutInput>,
 ): ShoutoutUpdateRow {
   const { imageUrls, message } = shoutoutData;
 
@@ -134,9 +111,6 @@ export function toShoutoutWithJoinedRelations(
   const resource = Array.isArray(dbShoutout.resource)
     ? dbShoutout.resource[0]
     : dbShoutout.resource;
-  const gathering = Array.isArray(dbShoutout.gathering)
-    ? dbShoutout.gathering[0]
-    : dbShoutout.gathering;
   const community = Array.isArray(dbShoutout.community)
     ? dbShoutout.community[0]
     : dbShoutout.community;
@@ -154,19 +128,7 @@ export function toShoutoutWithJoinedRelations(
     );
   }
 
-  // Validate that exactly one target (resource OR gathering) exists
-  if (!resource && !gathering) {
-    throw new Error(
-      `Shoutout ${dbShoutout.id} missing required target (resource or gathering) data`,
-    );
-  }
-  if (resource && gathering) {
-    throw new Error(
-      `Shoutout ${dbShoutout.id} has both resource and gathering data - should have exactly one`,
-    );
-  }
-
-  // Common shoutout data (90% of the transformation)
+  // Common shoutout data
   const commonShoutout = {
     id: dbShoutout.id,
     message: dbShoutout.message,
@@ -181,7 +143,7 @@ export function toShoutoutWithJoinedRelations(
     community: toDomainCommunitySummary(community),
   };
 
-  // Special case: Resource shoutout
+  // Handle resource shoutout
   if (resource) {
     if (!resource.owner) {
       throw new Error(
@@ -196,23 +158,10 @@ export function toShoutoutWithJoinedRelations(
     } as Shoutout;
   }
 
-  // Special case: Gathering shoutout
-  if (gathering) {
-    if (!gathering.organizer || !gathering.community) {
-      throw new Error(
-        `Shoutout ${dbShoutout.id} gathering missing required organizer or community data`,
-      );
-    }
-
-    return {
-      ...commonShoutout,
-      gatheringId: dbShoutout.gathering_id!,
-      gathering: toGatheringWithJoinedRelations(gathering),
-    } as Shoutout;
-  }
-
-  // This should never happen due to validation above
-  throw new Error(
-    `Shoutout ${dbShoutout.id} has neither resource nor gathering data`,
-  );
+  // Handle general shoutout (no resource)
+  return {
+    ...commonShoutout,
+    resourceId: dbShoutout.resource_id || undefined,
+    resource: undefined,
+  } as Shoutout;
 }

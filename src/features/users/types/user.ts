@@ -1,7 +1,7 @@
 import { Coordinates, IsPersisted } from '@/shared';
 
 export type User = IsPersisted<UserData & UserSummaryFields>;
-export type UserSummary = IsPersisted<UserSummaryFields>;
+export type UserSummary = UserSummaryFields & { id: string };
 
 export type UserData = UserSummaryFields & {
   lastName?: string;

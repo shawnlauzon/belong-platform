@@ -1,5 +1,6 @@
 export * from './fetchResources';
 export * from './fetchResourceById';
+export * from './fetchResourceCommunities';
 export * from './createResource';
 export * from './updateResource';
 export * from './deleteResource';
