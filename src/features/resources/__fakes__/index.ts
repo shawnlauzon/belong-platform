@@ -1,7 +1,19 @@
 import { faker } from '@faker-js/faker';
-import { Resource, ResourceInput, ResourceCategory, ResourceTimeslot, ResourceTimeslotInput, ResourceClaim, ResourceClaimInput } from '../types';
+import {
+  Resource,
+  ResourceInput,
+  ResourceCategory,
+  ResourceTimeslot,
+  ResourceTimeslotInput,
+  ResourceClaim,
+  ResourceClaimInput,
+} from '../types';
 import { ResourceRow, ResourceRowWithRelations } from '../types/resourceRow';
-import { ResourceTimeslotRow, ResourceTimeslotUpdateDbData, ResourceClaimRow } from '../types/resourceRow';
+import {
+  ResourceTimeslotRow,
+  ResourceTimeslotUpdateDbData,
+  ResourceClaimRow,
+} from '../types/resourceRow';
 import { User } from '../../users';
 import { createFakeProfileRow, createFakeUser } from '../../users/__fakes__';
 import { createFakeCommunityRow } from '../../communities/__fakes__';
@@ -20,7 +32,14 @@ export function createFakeResource(
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category: faker.helpers.maybe(
-      () => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const),
+      () =>
+        faker.helpers.arrayElement([
+          'tools',
+          'skills',
+          'food',
+          'supplies',
+          'other',
+        ] as const),
       { probability: 0.8 },
     ) as ResourceCategory | undefined,
     title: faker.commerce.productName(),
@@ -36,7 +55,11 @@ export function createFakeResource(
     ownerId: owner.id,
     owner,
     communityId: faker.string.uuid(),
-    status: faker.helpers.arrayElement(['open', 'completed', 'cancelled'] as const),
+    status: faker.helpers.arrayElement([
+      'open',
+      'completed',
+      'cancelled',
+    ] as const),
     maxClaims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })),
     requiresApproval: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
@@ -67,9 +90,19 @@ export function createFakeResourceRowWithoutRelations(
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
     category:
-      faker.helpers.maybe(() => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const), {
-        probability: 0.8,
-      }) ?? null,
+      faker.helpers.maybe(
+        () =>
+          faker.helpers.arrayElement([
+            'tools',
+            'skills',
+            'food',
+            'supplies',
+            'other',
+          ] as const),
+        {
+          probability: 0.8,
+        },
+      ) ?? null,
     owner_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
     image_urls: [],
@@ -77,10 +110,16 @@ export function createFakeResourceRowWithoutRelations(
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     created_at: faker.date.past().toISOString(),
     updated_at: faker.date.recent().toISOString(),
-    status: faker.helpers.arrayElement(['open', 'completed', 'cancelled'] as const),
-    max_claims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
+    status: faker.helpers.arrayElement([
+      'open',
+      'completed',
+      'cancelled',
+    ] as const),
+    max_claims:
+      faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
     requires_approval: faker.datatype.boolean(),
-    expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    expires_at:
+      faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     ...overrides,
   };
 }
@@ -92,7 +131,13 @@ export function createFakeResourceInput(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category: faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const),
+    category: faker.helpers.arrayElement([
+      'tools',
+      'skills',
+      'food',
+      'supplies',
+      'other',
+    ] as const),
     communityId: faker.string.uuid(),
     imageUrls: [],
     locationName: faker.location.city(),
@@ -100,7 +145,11 @@ export function createFakeResourceInput(
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
     },
-    status: faker.helpers.arrayElement(['open', 'completed', 'cancelled'] as const),
+    status: faker.helpers.arrayElement([
+      'open',
+      'completed',
+      'cancelled',
+    ] as const),
     maxClaims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })),
     requiresApproval: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
@@ -121,9 +170,19 @@ export function createFakeResourceRow(
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category:
-      faker.helpers.maybe(() => faker.helpers.arrayElement(['tools', 'skills', 'food', 'supplies', 'other'] as const), {
-        probability: 0.8,
-      }) ?? null,
+      faker.helpers.maybe(
+        () =>
+          faker.helpers.arrayElement([
+            'tools',
+            'skills',
+            'food',
+            'supplies',
+            'other',
+          ] as const),
+        {
+          probability: 0.8,
+        },
+      ) ?? null,
     type: faker.helpers.arrayElement(['offer', 'request']),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
@@ -134,10 +193,16 @@ export function createFakeResourceRow(
     owner_id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
-    status: faker.helpers.arrayElement(['open', 'completed', 'cancelled'] as const),
-    max_claims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
+    status: faker.helpers.arrayElement([
+      'open',
+      'completed',
+      'cancelled',
+    ] as const),
+    max_claims:
+      faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
     requires_approval: faker.datatype.boolean(),
-    expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    expires_at:
+      faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     ...overrides,
   };
 }
@@ -150,7 +215,9 @@ export function createFakeResourceTimeslot(
 ): ResourceTimeslot {
   const now = new Date();
   const startTime = faker.date.future();
-  const endTime = new Date(startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000);
+  const endTime = new Date(
+    startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
+  );
 
   return {
     id: faker.string.uuid(),
@@ -160,6 +227,12 @@ export function createFakeResourceTimeslot(
     maxClaims: faker.number.int({ min: 1, max: 10 }),
     createdAt: now,
     updatedAt: now,
+    claims: [],
+    status: faker.helpers.arrayElement([
+      'available',
+      'maybeAvailable',
+      'unavailable',
+    ] as const),
     ...overrides,
   };
 }
@@ -171,7 +244,9 @@ export function createFakeResourceTimeslotInput(
   overrides: Partial<ResourceTimeslotInput> = {},
 ): ResourceTimeslotInput {
   const startTime = faker.date.future();
-  const endTime = new Date(startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000);
+  const endTime = new Date(
+    startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
+  );
 
   return {
     resourceId: faker.string.uuid(),
@@ -189,7 +264,9 @@ export function createFakeResourceTimeslotUpdate(
   overrides: Partial<ResourceTimeslotUpdateDbData> = {},
 ): ResourceTimeslotUpdateDbData {
   const startTime = faker.date.future();
-  const endTime = new Date(startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000);
+  const endTime = new Date(
+    startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
+  );
 
   return {
     start_time: startTime.toISOString(),
@@ -207,7 +284,9 @@ export function createFakeResourceTimeslotRow(
 ): ResourceTimeslotRow {
   const now = new Date().toISOString();
   const startTime = faker.date.future();
-  const endTime = new Date(startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000);
+  const endTime = new Date(
+    startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
+  );
 
   return {
     id: faker.string.uuid(),
@@ -233,8 +312,14 @@ export function createFakeResourceClaim(
     id: faker.string.uuid(),
     resourceId: faker.string.uuid(),
     userId: faker.string.uuid(),
-    timeslotId: faker.helpers.maybe(() => faker.string.uuid()),
-    status: faker.helpers.arrayElement(['pending', 'approved', 'rejected', 'completed', 'cancelled'] as const),
+    timeslotId: faker.string.uuid(),
+    status: faker.helpers.arrayElement([
+      'pending',
+      'approved',
+      'rejected',
+      'completed',
+      'cancelled',
+    ] as const),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     createdAt: now,
     updatedAt: now,
@@ -250,8 +335,8 @@ export function createFakeResourceClaimInput(
 ): ResourceClaimInput {
   return {
     resourceId: faker.string.uuid(),
-    timeslotId: faker.helpers.maybe(() => faker.string.uuid()),
-    status: faker.helpers.arrayElement(['pending', 'approved', 'rejected', 'completed', 'cancelled'] as const),
+    timeslotId: faker.string.uuid(),
+    status: 'pending',
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     ...overrides,
   };
@@ -269,8 +354,14 @@ export function createFakeResourceClaimRow(
     id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
     user_id: faker.string.uuid(),
-    timeslot_id: faker.helpers.maybe(() => faker.string.uuid()) ?? null,
-    status: faker.helpers.arrayElement(['pending', 'approved', 'rejected', 'completed', 'cancelled'] as const),
+    timeslot_id: faker.string.uuid(),
+    status: faker.helpers.arrayElement([
+      'pending',
+      'approved',
+      'rejected',
+      'completed',
+      'cancelled',
+    ] as const),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()) ?? null,
     created_at: now,
     updated_at: now,

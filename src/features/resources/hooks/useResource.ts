@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import type { Resource } from '@/features/resources/types';
-import { fetchResourceById } from '../api/fetchResourceInfoById';
+import { fetchResourceById } from '../api/fetchResourceById';
 
 /**
  * Hook for fetching a single resource by ID.

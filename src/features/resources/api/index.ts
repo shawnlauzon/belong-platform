@@ -1,5 +1,5 @@
-export * from './fetchResourceInfoById';
 export * from './fetchResources';
+export * from './fetchResourceById';
 export * from './createResource';
 export * from './updateResource';
 export * from './deleteResource';
@@ -15,5 +15,6 @@ export * from './deleteResourceTimeslot';
 // Resource claim management
 export * from './createResourceClaim';
 export * from './fetchResourceClaims';
+export * from './fetchResourceClaimById';
 export * from './updateResourceClaim';
 export * from './deleteResourceClaim';

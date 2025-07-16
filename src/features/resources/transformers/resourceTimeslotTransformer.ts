@@ -1,5 +1,11 @@
 import type { ResourceTimeslot, ResourceTimeslotInput } from '../types';
-import type { ResourceTimeslotRow, ResourceTimeslotInsertDbData, ResourceTimeslotUpdateDbData } from '../types/resourceRow';
+import type {
+  ResourceTimeslotRowWithRelations,
+  ResourceTimeslotInsertDbData,
+  ResourceTimeslotUpdateDbData,
+  ResourceClaimRow,
+} from '../types/resourceRow';
+import { toDomainResourceClaim } from './resourceClaimTransformer';
 
 /**
  * Transform a domain timeslot object to a database timeslot record
@@ -32,7 +38,7 @@ export function forDbTimeslotUpdate(
  * Transform a database timeslot record to a ResourceTimeslot object
  */
 export function toDomainResourceTimeslot(
-  dbTimeslot: ResourceTimeslotRow,
+  dbTimeslot: ResourceTimeslotRowWithRelations,
 ): ResourceTimeslot {
   return {
     id: dbTimeslot.id,
@@ -40,7 +46,37 @@ export function toDomainResourceTimeslot(
     startTime: new Date(dbTimeslot.start_time),
     endTime: new Date(dbTimeslot.end_time),
     maxClaims: dbTimeslot.max_claims,
+    claims: dbTimeslot.resource_claims
+      ? dbTimeslot.resource_claims.map(toDomainResourceClaim)
+      : [],
+    status: calculateTimeslotStatus(
+      dbTimeslot.resource_claims,
+      dbTimeslot.max_claims,
+    ),
     createdAt: new Date(dbTimeslot.created_at),
     updatedAt: new Date(dbTimeslot.updated_at),
   };
+}
+
+function calculateTimeslotStatus(
+  claims: ResourceClaimRow[],
+  maxClaims: number,
+): 'available' | 'maybeAvailable' | 'unavailable' {
+  const validClaims = claims.filter(
+    (claim) => claim.status !== 'rejected' && claim.status !== 'cancelled',
+  );
+
+  if (validClaims.length < maxClaims) {
+    return 'available';
+  }
+
+  if (
+    validClaims.every(
+      (claim) => claim.status === 'approved' || claim.status === 'completed',
+    )
+  ) {
+    return 'unavailable';
+  }
+
+  return 'maybeAvailable';
 }

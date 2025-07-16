@@ -28,7 +28,7 @@ vi.mock('../../../communities/api/fetchCommunityById', () => ({
 }));
 
 import { useSupabase } from '../../../../shared';
-import { fetchResourceById } from '../../api/fetchResourceInfoById';
+import { fetchResourceById } from '../../api/fetchResourceById';
 import { fetchUserById } from '../../../users/api/fetchUserById';
 import { fetchCommunityById } from '../../../communities/api/fetchCommunityById';
 

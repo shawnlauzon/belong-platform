@@ -6,7 +6,10 @@ import {
   toResourceTimeslotInsertRow,
   toDomainResourceTimeslot,
 } from '../transformers';
-import { ResourceTimeslotRow } from '../types/resourceRow';
+import {
+  ResourceTimeslotRowWithRelations,
+  SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS,
+} from '../types/resourceRow';
 
 export async function createResourceTimeslot(
   supabase: SupabaseClient<Database>,
@@ -59,9 +62,9 @@ export async function createResourceTimeslot(
   const { data, error } = (await supabase
     .from('resource_timeslots')
     .insert(insertData)
-    .select()
+    .select(SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS)
     .single()) as {
-    data: ResourceTimeslotRow | null;
+    data: ResourceTimeslotRowWithRelations | null;
     error: QueryError | null;
   };
 

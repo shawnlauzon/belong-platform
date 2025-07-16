@@ -1,6 +1,6 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { getAuthIdOrThrow, logger } from '@/shared';
+import { logger } from '@/shared';
 import { ResourceClaim, ResourceClaimInput } from '../types';
 import { forDbClaimUpdate, toDomainResourceClaim } from '../transformers';
 import { ResourceClaimRow } from '../types/resourceRow';
@@ -10,8 +10,6 @@ export async function updateResourceClaim(
   id: string,
   claimInput: Partial<ResourceClaimInput>,
 ): Promise<ResourceClaim> {
-  await getAuthIdOrThrow(supabase);
-
   // Transform to database format
   const updateData = forDbClaimUpdate(claimInput);
 
@@ -36,7 +34,7 @@ export async function updateResourceClaim(
       id,
       claimInput,
     });
-    throw new Error('No data returned from claim update');
+    throw new Error('Claim not found');
   }
 
   const claim = toDomainResourceClaim(data);
