@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { Coordinates, IsPersisted } from '@/shared';
 import { UserSummary } from '../../users';
 import { ResourceStatus, ResourceCategory } from '../index';

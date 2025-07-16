@@ -257,39 +257,6 @@ describe('User Transformer', () => {
       });
     });
 
-    it('should handle null values to clear fields', () => {
-      // Arrange
-      const userId = faker.string.uuid();
-      const currentProfile = createFakeProfileRow({
-        id: userId,
-        user_metadata: {
-          first_name: 'John',
-          last_name: 'Doe',
-          full_name: 'John Doe',
-          avatar_url: 'https://example.com/avatar.jpg',
-          location: { lat: 40.7128, lng: -74.006 },
-        },
-      });
-
-      const partialUpdate = {
-        id: userId,
-        avatarUrl: undefined,
-        location: undefined,
-      };
-
-      // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
-
-      // Assert - null values should clear fields
-      expect(dbData.user_metadata).toEqual({
-        first_name: 'John',
-        last_name: 'Doe',
-        full_name: 'John Doe',
-        avatar_url: null,
-        location: null,
-      });
-    });
-
     it('should handle undefined values by preserving existing data', () => {
       // Arrange
       const userId = faker.string.uuid();

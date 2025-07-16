@@ -9,19 +9,7 @@ vi.mock('../../api', () => ({
   fetchAgenda: mockFetchAgenda,
 }));
 
-// Mock queryKeys properly
-vi.mock('../../../../shared', async () => {
-  const actual = await vi.importActual('../../../../shared');
-  return {
-    ...(actual as object),
-    queryKeys: {
-      ...(actual as any)?.queryKeys,
-      agenda: {
-        current: ['agenda'] as const,
-      },
-    },
-  };
-});
+// Don't mock queryKeys - use actual implementation
 
 // Import after mocking
 const { useAgenda } = await import('../../hooks/useAgenda');

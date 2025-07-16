@@ -35,8 +35,8 @@ describe('Resource Transformer', () => {
 
       expect(resource.owner).toEqual({
         id: dbResource.owner.id,
-        firstName: (dbResource.owner.user_metadata as any)?.first_name || '',
-        avatarUrl: (dbResource.owner.user_metadata as any)?.avatar_url,
+        firstName: (dbResource.owner.user_metadata as { first_name?: string; avatar_url?: string })?.first_name || '',
+        avatarUrl: (dbResource.owner.user_metadata as { first_name?: string; avatar_url?: string })?.avatar_url,
         createdAt: new Date(dbResource.owner.created_at),
         updatedAt: new Date(dbResource.owner.updated_at),
       });
