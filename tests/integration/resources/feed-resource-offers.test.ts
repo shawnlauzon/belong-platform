@@ -105,7 +105,6 @@ describe('Feed API - Resource Offers Integration Tests', () => {
       ).toBe(true);
 
       // All returned resource offers should have timeslots with start dates in the future or current
-      const now = new Date();
       resourceItems.forEach((item) => {
         if (item.data.type === 'offer') {
           // Check if this resource has timeslots that are current or future

@@ -12,7 +12,6 @@ import {
   createTestUser,
   createTestCommunity,
   createTestResource,
-  TEST_PREFIX,
 } from '../helpers/test-data';
 import { cleanupAllTestData, cleanupResourceClaims } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
@@ -629,7 +628,7 @@ describe('Resources API - Comprehensive Claims Testing', () => {
       createdTimeslots.push(timeslot);
 
       // Create both types of claims
-      const nonTimeslottedClaim = await resourcesApi.createResourceClaim(
+      await resourcesApi.createResourceClaim(
         supabase,
         createFakeResourceClaimInput({
           resourceId: testResource.id,
@@ -639,7 +638,7 @@ describe('Resources API - Comprehensive Claims Testing', () => {
         }),
       );
 
-      const timeslottedClaim = await resourcesApi.createResourceClaim(
+      await resourcesApi.createResourceClaim(
         supabase,
         createFakeResourceClaimInput({
           resourceId: testResource.id,

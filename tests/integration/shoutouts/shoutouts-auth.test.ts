@@ -41,11 +41,11 @@ describe('Shoutouts API - Authentication Requirements', () => {
     testUser = await createTestUser(authenticatedClient);
 
     // Create a test shoutout (testUser sends shoutout to testUser2 about testUser2's resource)
-    testShoutout = await api.createShoutout(authenticatedClient, {
-      toUserId: testUser2.id,
+    testShoutout = await api.createResourceShoutout(authenticatedClient, {
       resourceId: testResource.id,
-      communityId: testCommunity.id,
       message: `${TEST_PREFIX}Test shoutout for auth tests`,
+      toUserId: testUser2.id,
+      communityId: testCommunity.id,
     });
 
     // Set up unauthenticated client
@@ -104,14 +104,16 @@ describe('Shoutouts API - Authentication Requirements', () => {
     describe('createShoutout', () => {
       it('requires authentication', async () => {
         const data = createFakeShoutoutInput({
-          toUserId: testUser2.id,
           resourceId: testResource.id,
-          communityId: testCommunity.id,
           message: `${TEST_PREFIX}Unauth_Create_Test`,
         });
 
         await expect(
-          api.createShoutout(unauthenticatedClient, data),
+          api.createResourceShoutout(unauthenticatedClient, {
+            ...data,
+            toUserId: testUser2.id,
+            communityId: testCommunity.id,
+          }),
         ).rejects.toThrow();
       });
     });

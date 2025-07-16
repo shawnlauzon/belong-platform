@@ -14,7 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
-import type { Resource, ResourceTimeslot } from '@/features/resources/types';
+import type { Resource } from '@/features/resources/types';
 
 describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -23,25 +23,15 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
 
   // Test resource offer references
   let pastCompletedYesterday: Resource;
-  let pastCompletedYesterdayTimeslot: ResourceTimeslot;
   let pastRegularYesterday: Resource;
-  let pastRegularYesterdayTimeslot: ResourceTimeslot;
   let pastNoEndOld: Resource;
-  let pastNoEndOldTimeslot: ResourceTimeslot;
   let pastCompletedToday: Resource;
-  let pastCompletedTodayTimeslot: ResourceTimeslot;
   let currentActive: Resource;
-  let currentActiveTimeslot: ResourceTimeslot;
   let currentRegularToday: Resource;
-  let currentRegularTodayTimeslot: ResourceTimeslot;
   let currentNoEndRecent: Resource;
-  let currentNoEndRecentTimeslot: ResourceTimeslot;
   let futureLaterToday: Resource;
-  let futureLaterTodayTimeslot: ResourceTimeslot;
   let futureRegularLaterToday: Resource;
-  let futureRegularLaterTodayTimeslot: ResourceTimeslot;
   let futureTomorrow: Resource;
-  let futureTomorrowTimeslot: ResourceTimeslot;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -71,7 +61,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!pastCompletedYesterday)
       throw new Error('Failed to create past completed resource offer');
 
-    pastCompletedYesterdayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: pastCompletedYesterday.id,
@@ -96,7 +86,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!pastRegularYesterday)
       throw new Error('Failed to create past regular resource offer');
 
-    pastRegularYesterdayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: pastRegularYesterday.id,
@@ -119,7 +109,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!pastNoEndOld)
       throw new Error('Failed to create past no-end resource offer');
 
-    pastNoEndOldTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: pastNoEndOld.id,
@@ -146,7 +136,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!pastCompletedToday)
       throw new Error('Failed to create past completed today resource offer');
 
-    pastCompletedTodayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: pastCompletedToday.id,
@@ -172,7 +162,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!currentActive)
       throw new Error('Failed to create current active resource offer');
 
-    currentActiveTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: currentActive.id,
@@ -195,7 +185,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!currentRegularToday)
       throw new Error('Failed to create current regular resource offer');
 
-    currentRegularTodayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: currentRegularToday.id,
@@ -218,7 +208,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!currentNoEndRecent)
       throw new Error('Failed to create current no-end resource offer');
 
-    currentNoEndRecentTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: currentNoEndRecent.id,
@@ -244,7 +234,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!futureLaterToday)
       throw new Error('Failed to create future later today resource offer');
 
-    futureLaterTodayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: futureLaterToday.id,
@@ -270,7 +260,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!futureRegularLaterToday)
       throw new Error('Failed to create future regular later today resource offer');
 
-    futureRegularLaterTodayTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: futureRegularLaterToday.id,
@@ -296,7 +286,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     if (!futureTomorrow)
       throw new Error('Failed to create future tomorrow resource offer');
 
-    futureTomorrowTimeslot = await createResourceTimeslot(
+    await createResourceTimeslot(
       supabase,
       createFakeResourceTimeslotInput({
         resourceId: futureTomorrow.id,
@@ -318,7 +308,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
         communityId: testCommunity.id,
         includePast: false,
         includeCurrent: true,
-        includeFuture: true,
+        includeUpcoming: true,
       });
 
       // Should include current resource offers
@@ -354,7 +344,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
         communityId: testCommunity.id,
         includePast: true,
         includeCurrent: false,
-        includeFuture: false,
+        includeUpcoming: false,
       });
 
       // Should include past resource offers
@@ -390,7 +380,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
         communityId: testCommunity.id,
         includePast: false,
         includeCurrent: true,
-        includeFuture: false,
+        includeUpcoming: false,
       });
 
       // Should include current resource offers with different current logic:

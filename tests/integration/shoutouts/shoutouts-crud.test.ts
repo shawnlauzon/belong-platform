@@ -64,7 +64,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(shoutout.message).toBe(shoutoutInput.message);
       expect(shoutout.fromUserId).toBe(testUser.id);
       expect(shoutout.toUserId).toBe(testUser2.id);
-      expect(shoutout.resourceId).toBe(testResource.id);
+      expect(shoutout.resource?.id).toBe(testResource.id);
       expect(shoutout.createdAt).toBeTruthy();
       expect(shoutout.updatedAt).toBeTruthy();
 
@@ -205,7 +205,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(Array.isArray(filtered)).toBe(true);
       expect(filtered.some((s) => s.id === readOnlyShoutout1.id)).toBe(true);
       expect(filtered.some((s) => s.id === readOnlyShoutout2.id)).toBe(true);
-      expect(filtered.every((s) => s.resourceId === testResource.id)).toBe(
+      expect(filtered.every((s) => s.resource?.id === testResource.id)).toBe(
         true,
       );
     });
@@ -279,7 +279,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         expect(updatedShoutout!.message).toBe(newMessage);
         expect(updatedShoutout!.fromUserId).toBe(testUser.id);
         expect(updatedShoutout!.toUserId).toBe(testUser2.id);
-        expect(updatedShoutout!.resourceId).toBe(testResource.id);
+        expect(updatedShoutout!.resource?.id).toBe(testResource.id);
 
         // Verify database record has been updated with all expected fields
         const { data: dbRecord } = await supabase

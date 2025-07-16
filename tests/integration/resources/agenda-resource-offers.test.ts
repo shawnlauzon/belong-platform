@@ -377,7 +377,7 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
         status: 'pending', // "maybe" equivalent
       });
 
-      const maybeClaim = await createResourceClaim(supabase, maybeClaimInput);
+      await createResourceClaim(supabase, maybeClaimInput);
 
       // Act
       const agenda = await fetchAgenda(supabase);

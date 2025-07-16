@@ -4,7 +4,6 @@ import {
   createTestUser,
   createTestCommunity,
   createTestResource,
-  TEST_PREFIX,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
