@@ -1,7 +1,6 @@
 export * from './agenda';
 export * from './auth';
 export * from './communities';
-export * from './gatherings';
 export * from './feed';
 export * from './images';
 export * from './resources';

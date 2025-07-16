@@ -4,7 +4,6 @@ import { useSupabase } from '../../../shared';
 import { updateShoutout } from '../api';
 import type {
   ShoutoutResourceInput,
-  ShoutoutGatheringInput,
   Shoutout,
 } from '../types';
 
@@ -77,7 +76,7 @@ export function useUpdateShoutout() {
       data,
     }: {
       id: string;
-      data: Partial<ShoutoutResourceInput | ShoutoutGatheringInput>;
+      data: Partial<ShoutoutResourceInput>;
     }) => {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
       return updateShoutout(supabase, id, data);

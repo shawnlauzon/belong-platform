@@ -2,7 +2,6 @@ import { TEST_PREFIX } from './test-data';
 import { createServiceClient } from './test-client';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
-import type { Gathering } from '@/features/gatherings/types';
 
 // Cleanup all test data (for afterAll) - uses service key for elevated permissions
 export async function cleanupAllTestData() {
@@ -22,26 +21,6 @@ export async function cleanupAllTestData() {
       .delete()
       .in('community_id', communityIds);
   }
-
-  // Delete gathering responses for test gatherings first
-  const { data: testGatherings } = await serviceClient
-    .from('gatherings')
-    .select('id')
-    .like('title', `${TEST_PREFIX}%`);
-
-  if (testGatherings?.length) {
-    const gatheringIds = testGatherings.map((g) => g.id);
-    await serviceClient
-      .from('gathering_responses')
-      .delete()
-      .in('gathering_id', gatheringIds);
-  }
-
-  // Delete test gatherings
-  await serviceClient
-    .from('gatherings')
-    .delete()
-    .like('title', `${TEST_PREFIX}%`);
 
   // Delete test resources
   await serviceClient
@@ -152,37 +131,6 @@ export async function cleanupUser(userId: string) {
   }
 }
 
-// Cleanup specific gathering and its responses (no-op if gathering is null/undefined)
-export async function cleanupGathering(
-  gathering: Gathering | null | undefined,
-) {
-  if (!gathering) return;
-
-  // Use service key client for cleanup to bypass RLS policies
-  const serviceClient = createServiceClient();
-
-  await serviceClient
-    .from('gathering_responses')
-    .delete()
-    .eq('gathering_id', gathering.id);
-
-  await serviceClient.from('gatherings').delete().eq('id', gathering.id);
-}
-
-// Cleanup specific gathering response
-export async function cleanupGatheringResponse(
-  gatheringId: string,
-  userId: string,
-) {
-  // Use service key client for cleanup to bypass RLS policies
-  const serviceClient = createServiceClient();
-
-  await serviceClient
-    .from('gathering_responses')
-    .delete()
-    .eq('gathering_id', gatheringId)
-    .eq('user_id', userId);
-}
 
 // Cleanup specific resource response
 export async function cleanupResourceResponse(

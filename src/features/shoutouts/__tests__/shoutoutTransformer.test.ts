@@ -204,7 +204,6 @@ describe('Shoutout Transformer', () => {
         resource_id: resourceId,
         community_id: communityId,
         image_urls: shoutoutData.imageUrls,
-        gathering_id: null,
       });
     });
 

@@ -5,22 +5,21 @@ import { createMockSupabase, createTestWrapper } from '../../../../test-utils';
 import { createFakeShoutout } from '../../__fakes__';
 import { createFakeUser } from '../../../users/__fakes__';
 import { createFakeResource } from '../../../resources/__fakes__';
-import { createFakeGathering } from '../../../gatherings/__fakes__';
-import type { ShoutoutResourceInput, ShoutoutGatheringInput } from '../../types';
+import type { ShoutoutResourceInput } from '../../types';
 
 // Mock the API functions
 vi.mock('../../api/createShoutout', () => ({
   createResourceShoutout: vi.fn(),
-  createGatheringShoutout: vi.fn(),
+  createGeneralShoutout: vi.fn(),
 }));
 
 import { useSupabase } from '../../../../shared';
-import { createResourceShoutout, createGatheringShoutout } from '../../api/createShoutout';
+import { createResourceShoutout, createGeneralShoutout } from '../../api/createShoutout';
 import { useCurrentUser } from '../../../auth';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockCreateResourceShoutout = vi.mocked(createResourceShoutout);
-const mockCreateGatheringShoutout = vi.mocked(createGatheringShoutout);
+const mockCreateGeneralShoutout = vi.mocked(createGeneralShoutout);
 const mockUseCurrentUser = vi.mocked(useCurrentUser);
 
 describe('useCreateShoutout', () => {
@@ -86,46 +85,39 @@ describe('useCreateShoutout', () => {
     });
   });
 
-  it('should create gathering shoutout with data from cache', async () => {
-    // Arrange: Create test data for gathering shoutout
-    const mockGathering = createFakeGathering();
-    const shoutoutData: ShoutoutGatheringInput = {
-      gatheringId: mockGathering.id,
-      message: 'Thank you for organizing this event!',
+  it('should create general shoutout', async () => {
+    // Arrange: Create test data for general shoutout
+    const generalShoutoutData = {
+      message: 'Thank you for your help!',
+      toUserId: 'user-123',
+      communityId: 'community-456',
     };
-
-    // Mock queryClient to return the gathering data
-    vi.spyOn(queryClient, 'getQueryData').mockReturnValue(mockGathering);
 
     const expectedShoutout = createFakeShoutout({
       fromUserId: mockCurrentUser.id,
-      toUserId: mockGathering.organizerId,
-      message: shoutoutData.message,
+      toUserId: generalShoutoutData.toUserId,
+      message: generalShoutoutData.message,
     });
 
-    mockCreateGatheringShoutout.mockResolvedValue(expectedShoutout);
+    mockCreateGeneralShoutout.mockResolvedValue(expectedShoutout);
 
     // Act
     const { result } = renderHook(() => useCreateShoutout(), { wrapper });
-    const createdShoutout = await result.current.mutateAsync(shoutoutData);
+    const createdShoutout = await result.current.mutateAsync(generalShoutoutData);
 
-    // Assert: Should return shoutout with auto-assigned fromUserId and toUserId from gathering
+    // Assert: Should return shoutout with provided data
     expect(createdShoutout).toBeDefined();
     expect(createdShoutout).toEqual(
       expect.objectContaining({
         id: expectedShoutout.id,
-        message: shoutoutData.message,
+        message: generalShoutoutData.message,
         fromUserId: mockCurrentUser.id,
-        toUserId: mockGathering.organizerId,
+        toUserId: generalShoutoutData.toUserId,
       }),
     );
 
-    // Verify API was called with combined data
-    expect(mockCreateGatheringShoutout).toHaveBeenCalledWith(mockSupabase, {
-      ...shoutoutData,
-      ...mockGathering,
-      toUserId: mockGathering.organizerId,
-    });
+    // Verify API was called with the data
+    expect(mockCreateGeneralShoutout).toHaveBeenCalledWith(mockSupabase, generalShoutoutData);
   });
 
   it('should handle resource not found error', async () => {
@@ -147,24 +139,6 @@ describe('useCreateShoutout', () => {
     expect(mockCreateResourceShoutout).not.toHaveBeenCalled();
   });
 
-  it('should handle gathering not found error', async () => {
-    // Arrange: Create test data but don't mock gathering in cache
-    const shoutoutData: ShoutoutGatheringInput = {
-      gatheringId: 'nonexistent-gathering',
-      message: 'Thank you!',
-    };
-
-    // Mock queryClient to return undefined (gathering not found)
-    vi.spyOn(queryClient, 'getQueryData').mockReturnValue(undefined);
-
-    // Act & Assert: Should throw gathering not found error
-    const { result } = renderHook(() => useCreateShoutout(), { wrapper });
-
-    await expect(result.current.mutateAsync(shoutoutData)).rejects.toThrow(
-      'Gathering not found',
-    );
-    expect(mockCreateGatheringShoutout).not.toHaveBeenCalled();
-  });
 
   it('should handle API errors gracefully', async () => {
     // Arrange: Create test data with valid resource in cache

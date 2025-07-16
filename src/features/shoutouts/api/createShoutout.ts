@@ -4,11 +4,10 @@ import type { Database } from '../../../shared/types/database';
 import {
   type Shoutout,
   ShoutoutResourceInput,
-  ShoutoutGatheringInput,
 } from '../types';
 import {
   toResourceShoutoutInsertRow,
-  toGatheringShoutoutInsertRow,
+  toGeneralShoutoutInsertRow,
   toShoutoutWithJoinedRelations,
 } from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
@@ -18,35 +17,6 @@ import {
   SELECT_SHOUTOUT_WITH_RELATIONS,
   ShoutoutInsertRow,
 } from '../types/shoutoutRow';
-
-/**
- * Creates a new shoutout with the current user as the sender
- */
-export async function createGatheringShoutout(
-  supabase: SupabaseClient<Database>,
-  shoutoutData: ShoutoutGatheringInput & {
-    toUserId: string;
-    communityId: string;
-  },
-): Promise<Shoutout> {
-  logger.debug('📢 API: Creating shoutout', { shoutoutData });
-
-  // Get current user
-  const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
-
-  validBusinessRulesOrThrow({
-    toUserId: shoutoutData.toUserId,
-    currentUserId,
-  });
-
-  // Transform to database format with auto-assigned fromUserId
-  const dbShoutout = toGatheringShoutoutInsertRow({
-    ...shoutoutData,
-    fromUserId: currentUserId,
-  });
-
-  return insertShoutout(supabase, dbShoutout);
-}
 
 /**
  * Creates a new shoutout with the current user as the sender
@@ -70,6 +40,38 @@ export async function createResourceShoutout(
 
   // Transform to database format with auto-assigned fromUserId
   const dbShoutout = toResourceShoutoutInsertRow({
+    ...shoutoutData,
+    fromUserId: currentUserId,
+  });
+
+  return insertShoutout(supabase, dbShoutout);
+}
+
+/**
+ * Creates a new general shoutout with the current user as the sender
+ */
+export async function createGeneralShoutout(
+  supabase: SupabaseClient<Database>,
+  shoutoutData: {
+    message: string;
+    imageUrls?: string[];
+    toUserId: string;
+    communityId: string;
+    resourceId?: string;
+  },
+): Promise<Shoutout> {
+  logger.debug('📢 API: Creating general shoutout', { shoutoutData });
+
+  // Get current user
+  const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
+
+  validBusinessRulesOrThrow({
+    toUserId: shoutoutData.toUserId,
+    currentUserId,
+  });
+
+  // Transform to database format with auto-assigned fromUserId
+  const dbShoutout = toGeneralShoutoutInsertRow({
     ...shoutoutData,
     fromUserId: currentUserId,
   });
@@ -151,12 +153,7 @@ async function insertShoutout(
       id: domainShoutout.id,
       fromUserId: domainShoutout.fromUserId,
       toUserId: domainShoutout.toUserId,
-      resourceId:
-        'resourceId' in domainShoutout ? domainShoutout.resourceId : undefined,
-      gatheringId:
-        'gatheringId' in domainShoutout
-          ? domainShoutout.gatheringId
-          : undefined,
+      resourceId: domainShoutout.resourceId,
     });
 
     return domainShoutout;

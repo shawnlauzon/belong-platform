@@ -6,12 +6,10 @@ interface MockData {
   resources?: Database['public']['Tables']['resources']['Row'][];
   profiles?: Database['public']['Tables']['profiles']['Row'][];
   communities?: Database['public']['Tables']['communities']['Row'][];
-  gatherings?: Database['public']['Tables']['gatherings']['Row'][];
   shoutouts?: Database['public']['Tables']['shoutouts']['Row'][];
   direct_messages?: Database['public']['Tables']['direct_messages']['Row'][];
   conversations?: Database['public']['Tables']['conversations']['Row'][];
   community_memberships?: Database['public']['Tables']['community_memberships']['Row'][];
-  gathering_responses?: Database['public']['Tables']['gathering_responses']['Row'][];
 }
 
 interface MockQueryBuilder {

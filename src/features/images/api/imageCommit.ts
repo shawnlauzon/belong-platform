@@ -8,7 +8,6 @@ import { logger } from '@/shared/logger';
  */
 export type EntityType =
   | 'resource'
-  | 'gathering'
   | 'community'
   | 'user'
   | 'shoutout';

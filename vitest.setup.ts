@@ -67,21 +67,6 @@ vi.mock('./src/shared', async (importOriginal) => {
           ['resources', 'filtered', filter] as const,
       },
 
-      // Gatherings
-      gatherings: {
-        all: ['gatherings'] as const,
-        byId: (id: string) => ['gathering', id] as const,
-        byCommunity: (communityId: string) =>
-          ['gatherings', 'community', communityId] as const,
-        byOrganizer: (organizerId: string) =>
-          ['gatherings', 'organizer', organizerId] as const,
-        attendees: (gatheringId: string) =>
-          ['gathering', gatheringId, 'attendees'] as const,
-        userAttendances: (userId: string) =>
-          ['user', userId, 'attendances'] as const,
-        filtered: (filter: Record<string, any>) =>
-          ['gatherings', 'filtered', filter] as const,
-      },
 
       // Shoutouts
       shoutouts: {
@@ -193,21 +178,6 @@ vi.mock('./src/features/auth', async (importOriginal) => {
   };
 });
 
-// Mock gatherings feature hooks
-vi.mock('./src/features/gatherings', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual, // Keep all real exports (types, etc.)
-    // Override only the hooks
-    useGatherings: vi.fn(),
-    useGathering: vi.fn(),
-    useCreateGathering: vi.fn(),
-    useUpdateGathering: vi.fn(),
-    useDeleteGathering: vi.fn(),
-    useJoinGathering: vi.fn(),
-    useLeaveGathering: vi.fn(),
-  };
-});
 
 // Mock resources feature hooks
 vi.mock('./src/features/resources', async (importOriginal) => {

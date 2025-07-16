@@ -4,11 +4,6 @@ import type { Database } from '@/shared/types/database';
 import { getAuthIdOrThrow } from '@/shared/utils';
 import type { Agenda, Todo } from '../types';
 import {
-  fetchUpcomingGatheringsForUser,
-  fetchUpcomingOrganizerGatherings,
-  fetchGatheringsNeedingShoutout,
-} from '../../gatherings/api';
-import {
   fetchOffersNeedingShoutout,
   fetchFavorsNeedingShoutout,
 } from '../../resources/api';
@@ -22,66 +17,19 @@ export async function fetchAgenda(
   logger.debug('📊 API: Fetching agenda');
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase, 'fetch agenda');
+    await getAuthIdOrThrow(supabase, 'fetch agenda');
 
     // Fetch all agenda data in parallel from different domain APIs
     const [
-      upcomingGatherings,
-      maybeGatherings, // Will be filtered from upcomingGatherings
-      organizerGatherings,
-      gatheringsNeedingShoutout,
       offersNeedingShoutout,
       favorsNeedingShoutout,
     ] = await Promise.all([
-      fetchUpcomingGatheringsForUser(supabase, currentUserId, 'attending'),
-      fetchUpcomingGatheringsForUser(supabase, currentUserId, 'maybe'),
-      fetchUpcomingOrganizerGatherings(supabase, currentUserId),
-      fetchGatheringsNeedingShoutout(supabase),
       fetchOffersNeedingShoutout(supabase),
       fetchFavorsNeedingShoutout(supabase),
     ]);
 
     // Transform each data source into Todo items
     const todos: Todo[] = [
-      // Upcoming confirmed gatherings (user said yes)
-      ...upcomingGatherings.map((gathering) => ({
-        id: gathering.id,
-        type: 'gathering-confirmed' as const,
-        title: gathering.title,
-        description: `You're attending this gathering`,
-        dueDate: gathering.startDateTime,
-        gathering,
-      })),
-
-      // Upcoming maybe gatherings (user said maybe)
-      ...maybeGatherings.map((gathering) => ({
-        id: gathering.id,
-        type: 'gathering-maybe' as const,
-        title: gathering.title,
-        description: `You might attend this gathering - confirm your attendance`,
-        dueDate: gathering.startDateTime,
-        gathering,
-      })),
-
-      // My future gatherings (user is organizer)
-      ...organizerGatherings.map((gathering) => ({
-        id: gathering.id,
-        type: 'gathering-organizer' as const,
-        title: gathering.title,
-        description: `You're organizing this gathering`,
-        dueDate: gathering.startDateTime,
-        gathering,
-      })),
-
-      // Gathering shoutouts (attended gatherings needing thank you)
-      ...gatheringsNeedingShoutout.map((gathering) => ({
-        id: gathering.id,
-        type: 'shoutout-gathering' as const,
-        title: `Thank ${gathering.organizer.firstName} for organizing "${gathering.title}"`,
-        description: `Send a shoutout for attending this gathering`,
-        gathering,
-      })),
-
       // Offer shoutouts (accepted offers needing thank you)
       ...offersNeedingShoutout.map((resource) => ({
         id: resource.id,

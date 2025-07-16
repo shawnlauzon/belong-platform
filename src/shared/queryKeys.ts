@@ -38,20 +38,6 @@ export const queryKeys = {
       ['resources', 'filtered', filter] as const,
   },
 
-  // Gatherings
-  gatherings: {
-    all: ['gatherings'] as const,
-    byId: (id: string) => ['gathering', id] as const,
-    byCommunity: (communityId: string) =>
-      ['gatherings', 'community', communityId] as const,
-    byOrganizer: (organizerId: string) =>
-      ['gatherings', 'organizer', organizerId] as const,
-    attendees: (gatheringId: string) => ['gathering', gatheringId, 'attendees'] as const,
-    userAttendances: (userId: string) =>
-      ['user', userId, 'attendances'] as const,
-    filtered: (filter: Record<string, unknown>) =>
-      ['gatherings', 'filtered', filter] as const,
-  },
 
   // Shoutouts
   shoutouts: {

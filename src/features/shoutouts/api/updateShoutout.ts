@@ -3,7 +3,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import type {
   ShoutoutResourceInput,
-  ShoutoutGatheringInput,
   Shoutout,
 } from '../types';
 import {
@@ -19,7 +18,7 @@ import { getAuthIdOrThrow } from '../../../shared/utils';
 export async function updateShoutout(
   supabase: SupabaseClient<Database>,
   id: string,
-  updateData: Partial<ShoutoutResourceInput | ShoutoutGatheringInput>,
+  updateData: Partial<ShoutoutResourceInput>,
 ): Promise<Shoutout | null> {
   logger.debug('📢 API: Updating shoutout', {
     id,

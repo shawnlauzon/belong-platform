@@ -2,50 +2,50 @@
 
 ## Executive Summary
 
-This document outlines the design for unifying the current resources and gatherings systems into a single, comprehensive resources system that supports both offers and requests with optional timeslots and claims management.
+This document outlines the design for unifying the current resources system into a comprehensive platform that supports both offers and requests with optional timeslots and claims management.
 
-**Key Insight**: Gatherings are simply offers with one timeslot. By recognizing this pattern, we can create a unified system that handles:
+**Key Insight**: Events are simply offers with one timeslot. By recognizing this pattern, we can create a unified system that handles:
 - Multi-timeslot services (guitar lessons, workshops)
 - Simple quantity-based offers (jam jars, tool lending)
-- Event-style gatherings (community BBQ, meetings)
+- Event-style activities (community BBQ, meetings)
 - Approval workflows and capacity management
 
 ## Problem Statement
 
 ### Current System Limitations
 
-The platform currently has two separate but overlapping systems:
+The platform currently has a resources system that could be enhanced:
 
-1. **Resources System**: Handles offers and requests for items/services
+1. **Current Resources System**: Handles offers and requests for items/services
    - Basic offer/request categorization
    - Simple response system
    - No timeslot management
    - No sophisticated claims tracking
 
-2. **Gatherings System**: Manages community events
+2. **Future Event Support**: Would manage community events
    - Time-based events with RSVPs
    - Capacity management
    - Location handling
-   - Mature API and hook system
+   - Integrated API and hook system
 
 ### The Overlap Problem
 
-Many use cases blur the line between resources and gatherings:
+Many use cases blur the line between resources and events:
 - "Free guitar lessons" - Is this an event or a service offer?
 - "Cooking class for 8 people" - Event or educational service?
 - "Tool lending Saturdays 9-12pm" - Resource sharing or recurring event?
 
-This overlap creates:
-- **Developer confusion**: Which system to use for new features?
+This overlap creates potential challenges:
+- **Developer confusion**: Which approach to use for new features?
 - **User experience inconsistency**: Different interfaces for similar concepts
-- **Code duplication**: Similar functionality in two systems
-- **Maintenance burden**: Two systems to maintain and extend
+- **Code duplication**: Similar functionality in different areas
+- **Maintenance burden**: Multiple systems to maintain and extend
 
 ## Design Philosophy
 
 ### Core Insight
 
-**Gatherings are offers with one timeslot.**
+**Events are offers with one timeslot.**
 
 This realization led to the unified approach:
 - **Everything is a resource** (offer or request)
@@ -56,7 +56,7 @@ This realization led to the unified approach:
 ### Design Principles
 
 1. **Simplicity over Feature Richness**: Start with essential features, add complexity only when needed
-2. **Backward Compatibility**: Existing resources and gatherings must continue working
+2. **Backward Compatibility**: Existing resources must continue working
 3. **Unified API Surface**: One set of endpoints handles all resource types
 4. **Flexible UI**: Data model supports multiple presentation styles
 5. **Owner Control**: Resource owners have full control over availability and status
@@ -96,7 +96,7 @@ CREATE TABLE resources (
 - `max_claims`: Flexible capacity management
 - `requires_approval`: Optional approval workflow
 - `expires_at`: Time-based expiration for offers
-- `location_name` + `coordinates`: Spatial features from gatherings
+- `location_name` + `coordinates`: Spatial features for events
 
 #### Resource Timeslots Table
 
@@ -215,7 +215,7 @@ VALUES
 4. Teacher approves/rejects
 5. If approved, user can also claim Wednesday slot
 
-### 3. Event-Style Gatherings
+### 3. Event-Style Activities
 
 ```sql
 -- "Community BBQ this Saturday"
@@ -279,11 +279,11 @@ VALUES (resource_id, helper_user_id, 'approved');
 2. Create resource_timeslots and resource_claims tables
 3. Migrate existing resource_responses to resource_claims
 
-### Phase 2: Convert Gatherings
-1. Convert gathering records to resources with type='offer'
-2. Create single timeslot for each gathering
-3. Convert gathering_responses to resource_claims
-4. Update gathering APIs to use unified system
+### Phase 2: Add Event Support
+1. Extend resources to support event-style activities
+2. Create timeslot management for events
+3. Implement claims system for event RSVPs
+4. Build unified event APIs
 
 ### Phase 3: API Evolution
 1. Extend existing resource APIs with new functionality
@@ -291,10 +291,10 @@ VALUES (resource_id, helper_user_id, 'approved');
 3. Update React Query hooks
 4. Maintain backward compatibility
 
-### Phase 4: Deprecation
-1. Mark old gathering APIs as deprecated
-2. Provide migration guide for consumers
-3. Eventually remove old gathering system
+### Phase 4: Enhancement
+1. Add advanced event features
+2. Provide documentation for event patterns
+3. Optimize performance for event use cases
 
 ## Implementation Roadmap
 
@@ -318,7 +318,7 @@ VALUES (resource_id, helper_user_id, 'approved');
 
 ### Sprint 4: Integration
 - [ ] React Query hooks
-- [ ] Gathering migration scripts
+- [ ] Event pattern implementation
 - [ ] End-to-end testing
 - [ ] Performance optimization
 
@@ -332,13 +332,13 @@ VALUES (resource_id, helper_user_id, 'approved');
 
 ### Decision 1: Unified vs Separate Systems
 **Options**: 
-- A) Extend gatherings to support offers
+- A) Create separate event system
 - B) Extend resources to support timeslots
 - C) Create new unified system
 
 **Chosen**: B) Extend resources to support timeslots
 
-**Rationale**: Resources already had the right conceptual foundation (offers/requests, ownership, categories). Gatherings were more specialized for events. Extending resources was more natural.
+**Rationale**: Resources already had the right conceptual foundation (offers/requests, ownership, categories). Events are more specialized and can be handled as a special case of resources. Extending resources was more natural.
 
 ### Decision 2: Timeslot Model
 **Options**:
@@ -415,7 +415,7 @@ VALUES (resource_id, helper_user_id, 'approved');
 
 ## Conclusion
 
-The unified resources system provides a flexible, scalable foundation for community sharing that handles both marketplace-style offers and event-style gatherings through a single, coherent data model. By recognizing that gatherings are simply offers with one timeslot, we create a system that's both powerful and intuitive.
+The unified resources system provides a flexible, scalable foundation for community sharing that handles both marketplace-style offers and event-style activities through a single, coherent data model. By recognizing that events are simply offers with one timeslot, we create a system that's both powerful and intuitive.
 
 The design prioritizes simplicity and owner control while maintaining the flexibility to support diverse community needs. The migration strategy ensures backward compatibility while providing a clear path to system unification.
 

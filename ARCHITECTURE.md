@@ -49,7 +49,6 @@ src/features/
 │   └── types/         # Type definitions
 ├── communities/
 ├── resources/
-├── gatherings/
 └── users/
 ```
 
@@ -102,7 +101,7 @@ Each feature follows a consistent 4-type pattern:
 #### Special Type Variants
 
 - **EntityDetail** - Alias for Entity with additional loaded relations
-  - Example: `GatheringDetail = Gathering & { attendees?: PartialUser[] }`
+  - Example: `ResourceDetail = Resource & { responses?: PartialUser[] }`
   
 - **EntityInfo** - Lightweight version with just IDs instead of embedded objects
   - Used for list operations where relations aren't needed
@@ -113,7 +112,7 @@ Each feature follows a consistent 4-type pattern:
 - **No optional foreign keys** in Input types - always defaults to current user
 - **Computed fields** (like `memberCount`, `attendeeCount`) belong in Summary types
 - **System fields** (`id`, `createdAt`, `updatedAt`) come from `IsPersisted<T>`
-- **Connector entities** (like `EventAttendance`) only contain IDs, not embedded entities
+- **Connector entities** (like `ResourceResponse`) only contain IDs, not embedded entities
 - **No `any` types** - use proper types or type assertions
 - **Dynamic data** (trust levels, online status) should use separate queries
 

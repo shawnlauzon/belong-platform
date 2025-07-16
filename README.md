@@ -13,8 +13,7 @@ npm install @belongnetwork/platform
 **For Community Members:**
 
 - 🤝 **Resource Sharing** - Offer or request tools, skills, food, and supplies within your local community
-- 📅 **Gathering Management** - Create and attend community gatherings and activities
-- 📋 **Personal Agenda** - Unified todo list combining gatherings, shoutouts, and community activities
+- 📋 **Personal Agenda** - Unified todo list combining shoutouts and community activities
 - 💬 **Direct Messaging** - Send private messages to other community members
 - 💌 **Gratitude System** - Send shoutouts to community members who have helped
 - 🏘️ **Geographic Communities** - Join hierarchical communities (neighborhood → city → state)
@@ -188,7 +187,6 @@ import type {
   User,
   Community,
   Resource,
-  Gathering,
   Message,
   Conversation,
   Shoutout,
@@ -197,13 +195,11 @@ import type {
   TodoType,
   // Data Transfer Objects
   ResourceData,
-  GatheringData,
   MessageData,
   ConversationData,
   ShoutoutInput,
   // Filters
   ResourceFilter,
-  GatheringFilter,
   MessageFilter,
   // Geography
   Coordinates,
@@ -295,33 +291,6 @@ await createResource.mutateAsync({
 });
 ```
 
-### Gatherings
-
-```tsx
-import {
-  useGatherings,
-  useGathering,
-  useCreateGathering,
-  useJoinGathering,
-  useLeaveGathering,
-} from '@belongnetwork/platform';
-
-// List gatherings
-const { data: gatherings } = useGatherings();
-
-// Create gathering
-const createGathering = useCreateGathering();
-await createGathering.mutateAsync({
-  title: 'Community Garden Workday',
-  description: 'Help maintain our community garden',
-  startTime: new Date('2024-07-15T10:00:00'),
-  endTime: new Date('2024-07-15T14:00:00'),
-  locationName: 'Community Garden at Main St',
-  location: { lat: 30.2672, lng: -97.7431 },
-  maxAttendees: 20,
-  communityId: 'community-123',
-});
-```
 
 ### Direct Messaging
 
@@ -352,19 +321,13 @@ await sendMessage.mutateAsync({
 ```tsx
 import { useAgenda } from '@belongnetwork/platform';
 
-// Get unified agenda with todos from gatherings and shoutouts
+// Get unified agenda with todos from shoutouts and community activities
 const { data: agenda } = useAgenda();
 
 // Access agenda items
 agenda?.items.forEach((todo) => {
   console.log(`${todo.type}: ${todo.title}`);
-  // Types: 'gathering-confirmed', 'gathering-maybe', 'gathering-organizer',
-  //        'shoutout-gathering', 'shoutout-offer', 'shoutout-favor'
-  
-  if (todo.gathering) {
-    // Access gathering details for gathering-related todos
-    console.log('Gathering:', todo.gathering.title);
-  }
+  // Types: 'shoutout-offer', 'shoutout-favor'
   
   if (todo.resource) {
     // Access resource details for resource-related todos

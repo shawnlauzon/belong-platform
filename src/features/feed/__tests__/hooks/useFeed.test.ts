@@ -3,7 +3,6 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useFeed } from '../../hooks/useFeed';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeResource } from '../../../resources/__fakes__';
-import { createFakeGathering } from '../../../gatherings/__fakes__';
 import { createFakeShoutout } from '../../../shoutouts/__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 
@@ -30,17 +29,21 @@ describe('useFeed', () => {
     ({ wrapper } = createDefaultTestWrapper());
   });
 
-  it('should return Feed from combined resources and gatherings', async () => {
+  it('should return Feed from combined resources and shoutouts', async () => {
     // Arrange
     const fakeResource = createFakeResource({
       communityId: 'community-1',
     });
-    const fakeGathering = createFakeGathering({ communityId: 'community-1' });
+    const fakeShoutout = createFakeShoutout({
+      fromUserId: 'user-2',
+      toUserId: 'user-1',
+      resourceId: 'resource-1',
+    });
     
     const mockFeed = {
       items: [
         { id: fakeResource.id, type: 'resource' as const, data: fakeResource },
-        { id: fakeGathering.id, type: 'gathering' as const, data: fakeGathering }
+        { id: fakeShoutout.id, type: 'shoutout' as const, data: fakeShoutout }
       ],
       hasMore: false
     };
@@ -59,14 +62,14 @@ describe('useFeed', () => {
     // Check that all items are present (order may vary due to timestamps)
     const types = result.current.data?.items.map(item => item.type);
     expect(types).toContain('resource');
-    expect(types).toContain('gathering');
+    expect(types).toContain('shoutout');
     
     // Find each item and verify it matches
     const resourceItem = result.current.data?.items.find(item => item.type === 'resource');
-    const gatheringItem = result.current.data?.items.find(item => item.type === 'gathering');
+    const shoutoutItem = result.current.data?.items.find(item => item.type === 'shoutout');
     
     expect(resourceItem?.data).toEqual(fakeResource);
-    expect(gatheringItem?.data).toEqual(fakeGathering);
+    expect(shoutoutItem?.data).toEqual(fakeShoutout);
   });
 
   it('should handle loading state', async () => {

@@ -5,14 +5,12 @@ import { useCurrentUser } from '../../auth';
 import type {
   Shoutout,
   ShoutoutResourceInput,
-  ShoutoutGatheringInput,
 } from '../types';
 import { isShoutoutResourceInput } from '../types/shoutout';
 import { Resource } from '@/features/resources';
-import { Gathering } from '@/features/gatherings';
 import {
-  createGatheringShoutout,
   createResourceShoutout,
+  createGeneralShoutout,
 } from '../api/createShoutout';
 
 /**
@@ -70,7 +68,7 @@ export function useCreateShoutout() {
   const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: (input: ShoutoutResourceInput | ShoutoutGatheringInput) => {
+    mutationFn: (input: ShoutoutResourceInput | { message: string; imageUrls?: string[]; toUserId: string; communityId: string; resourceId?: string }) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
       if (isShoutoutResourceInput(input)) {
         const resource = queryClient.getQueryData<Resource>(
@@ -85,18 +83,8 @@ export function useCreateShoutout() {
           toUserId: resource.ownerId,
         });
       } else {
-        // isShoutoutGatheringInput
-        const gathering = queryClient.getQueryData<Gathering>(
-          queryKeys.gatherings.byId(input.gatheringId),
-        );
-        if (!gathering) {
-          throw new Error('Gathering not found');
-        }
-        return createGatheringShoutout(supabase, {
-          ...input,
-          ...gathering,
-          toUserId: gathering.organizerId,
-        });
+        // General shoutout
+        return createGeneralShoutout(supabase, input);
       }
     },
     onSuccess: (newShoutout: Shoutout) => {
