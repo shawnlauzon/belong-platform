@@ -39,8 +39,8 @@ describe('useFeed', () => {
     
     const mockFeed = {
       items: [
-        { type: 'resource' as const, data: fakeResource },
-        { type: 'gathering' as const, data: fakeGathering }
+        { id: fakeResource.id, type: 'resource' as const, data: fakeResource },
+        { id: fakeGathering.id, type: 'gathering' as const, data: fakeGathering }
       ],
       hasMore: false
     };
@@ -119,7 +119,7 @@ describe('useFeed', () => {
     });
 
     const mockFeed = {
-      items: [{ type: 'shoutout' as const, data: fakeShoutout }],
+      items: [{ id: fakeShoutout.id, type: 'shoutout' as const, data: fakeShoutout }],
       hasMore: false
     };
 

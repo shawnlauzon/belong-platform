@@ -52,10 +52,8 @@ describe('useResource', () => {
     fakeOwner = createFakeUser();
     fakeOrganizer = createFakeUser(); // Separate organizer
     fakeCommunity = createFakeCommunity();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { organizer, ...rest } = fakeCommunity;
     fakeCommunity = {
-      ...rest,
+      ...fakeCommunity,
       organizerId: fakeOrganizer.id,
     };
 

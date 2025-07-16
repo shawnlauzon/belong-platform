@@ -17,12 +17,14 @@ describe('requireAuthentication', () => {
     vi.clearAllMocks();
 
     mockSupabase = createMockSupabase({});
+    // Make getUser a proper mock function
+    mockSupabase.auth.getUser = vi.fn();
   });
 
   it('should return user ID when authentication succeeds', async () => {
     // Arrange
     const expectedUserId = 'test-user-123';
-    mockSupabase.auth.getUser.mockResolvedValue({
+    (mockSupabase.auth.getUser as any).mockResolvedValue({
       data: {
         user: {
           id: expectedUserId,
@@ -42,7 +44,7 @@ describe('requireAuthentication', () => {
   it('should throw authentication error when getUser returns error', async () => {
     // Arrange
     const userError = new Error('Auth failed');
-    mockSupabase.auth.getUser.mockResolvedValue({
+    (mockSupabase.auth.getUser as any).mockResolvedValue({
       data: null,
       error: userError,
     });
@@ -55,7 +57,7 @@ describe('requireAuthentication', () => {
 
   it('should throw authentication error when user data is missing', async () => {
     // Arrange
-    mockSupabase.auth.getUser.mockResolvedValue({
+    (mockSupabase.auth.getUser as any).mockResolvedValue({
       data: null,
       error: null,
     });
@@ -68,7 +70,7 @@ describe('requireAuthentication', () => {
 
   it('should throw authentication error when user is missing', async () => {
     // Arrange
-    mockSupabase.auth.getUser.mockResolvedValue({
+    (mockSupabase.auth.getUser as any).mockResolvedValue({
       data: {
         user: null,
       },
@@ -83,7 +85,7 @@ describe('requireAuthentication', () => {
 
   it('should throw authentication error when user ID is missing', async () => {
     // Arrange
-    mockSupabase.auth.getUser.mockResolvedValue({
+    (mockSupabase.auth.getUser as any).mockResolvedValue({
       data: {
         user: {
           id: null,

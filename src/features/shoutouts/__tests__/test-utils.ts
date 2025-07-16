@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { ShoutoutRow } from '../types/database';
-import type { ShoutoutInput } from '../types';
+import { ShoutoutRow } from '../types/shoutoutRow';
+import type { ShoutoutResourceInput } from '../types';
 
 export function createFakeDbShoutout(
   overrides: Partial<ShoutoutRow> = {},
@@ -13,6 +13,7 @@ export function createFakeDbShoutout(
     to_user_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
+    gathering_id: null,
     message: faker.lorem.paragraph(),
     image_urls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },
@@ -25,12 +26,10 @@ export function createFakeDbShoutout(
 }
 
 export function createFakeShoutoutInput(
-  overrides: Partial<ShoutoutInput> = {},
-): ShoutoutInput {
+  overrides: Partial<ShoutoutResourceInput> = {},
+): ShoutoutResourceInput {
   return {
-    toUserId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
-    communityId: faker.string.uuid(),
     message: faker.lorem.paragraph(),
     imageUrls: Array.from(
       { length: faker.number.int({ min: 0, max: 3 }) },

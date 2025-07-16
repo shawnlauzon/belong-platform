@@ -12,7 +12,6 @@ vi.mock('../../api', () => ({
 
 import { useSupabase } from '../../../../shared';
 import { updateResource } from '../../api';
-import { ResourceData } from '../../types';
 
 const mockUseSupabase = vi.mocked(useSupabase);
 const mockUpdateResource = vi.mocked(updateResource);
@@ -32,7 +31,7 @@ describe('useUpdateResource', () => {
   it('should return ResourceInfo after update with new parameter structure', async () => {
     // Arrange: Create test data using factories
     const mockUpdatedResourceInfo = createFakeResource();
-    const updateData: Partial<ResourceData> & { id: string } = {
+    const updateData = {
       id: mockUpdatedResourceInfo.id,
       title: 'Updated Title',
       description: 'Updated Description',
