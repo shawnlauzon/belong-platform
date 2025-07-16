@@ -2,7 +2,9 @@ import { Polygon } from './geojson';
 import { Coordinates, IsPersisted } from '@/shared';
 
 export type Community = IsPersisted<CommunityInput & CommunitySummaryFields>;
-export type CommunitySummary = IsPersisted<CommunitySummaryFields>;
+export type CommunitySummary = CommunitySummaryFields & {
+  id: string;
+};
 
 // For creating / updating Community
 export type CommunityInput = Omit<CommunitySummaryFields, 'memberCount'> & {

@@ -33,12 +33,21 @@ describe('Resource Transformer', () => {
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.owner).toEqual({
+      expect(resource.owner).toMatchObject({
         id: dbResource.owner.id,
-        firstName: (dbResource.owner.user_metadata as { first_name?: string; avatar_url?: string })?.first_name || '',
-        avatarUrl: (dbResource.owner.user_metadata as { first_name?: string; avatar_url?: string })?.avatar_url,
-        createdAt: new Date(dbResource.owner.created_at),
-        updatedAt: new Date(dbResource.owner.updated_at),
+        firstName:
+          (
+            dbResource.owner.user_metadata as {
+              first_name?: string;
+              avatar_url?: string;
+            }
+          )?.first_name || '',
+        avatarUrl: (
+          dbResource.owner.user_metadata as {
+            first_name?: string;
+            avatar_url?: string;
+          }
+        )?.avatar_url,
       });
       expect(resource.communityId).toEqual(dbResource.community_id);
     });
@@ -87,7 +96,10 @@ describe('Resource Transformer', () => {
     it('should handle partial updates', () => {
       const resourceData = createFakeResourceInput();
 
-      const dbResource = toResourceInsertRow({ ...resourceData, ownerId: 'user-1' });
+      const dbResource = toResourceInsertRow({
+        ...resourceData,
+        ownerId: 'user-1',
+      });
 
       expect(dbResource).toMatchObject({
         title: resourceData.title,

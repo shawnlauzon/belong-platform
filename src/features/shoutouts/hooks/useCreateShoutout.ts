@@ -2,16 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger, queryKeys } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { useCurrentUser } from '../../auth';
-import type {
-  Shoutout,
-  ShoutoutResourceInput,
-} from '../types';
-import { isShoutoutResourceInput } from '../types/shoutout';
+import type { Shoutout, ShoutoutInput } from '../types';
 import { Resource } from '@/features/resources';
-import {
-  createResourceShoutout,
-  createGeneralShoutout,
-} from '../api/createShoutout';
+import { createShoutout } from '../api/createShoutout';
 
 /**
  * Hook for creating new shoutouts.
@@ -68,24 +61,19 @@ export function useCreateShoutout() {
   const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
-    mutationFn: (input: ShoutoutResourceInput | { message: string; imageUrls?: string[]; toUserId: string; communityId: string; resourceId?: string }) => {
+    mutationFn: (input: ShoutoutInput) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
-      if (isShoutoutResourceInput(input)) {
-        const resource = queryClient.getQueryData<Resource>(
-          queryKeys.resources.byId(input.resourceId),
-        );
-        if (!resource) {
-          throw new Error('Resource not found');
-        }
-        return createResourceShoutout(supabase, {
-          ...input,
-          ...resource,
-          toUserId: resource.ownerId,
-        });
-      } else {
-        // General shoutout
-        return createGeneralShoutout(supabase, input);
+      const resource = queryClient.getQueryData<Resource>(
+        queryKeys.resources.byId(input.resourceId),
+      );
+      if (!resource) {
+        throw new Error('Resource not found');
       }
+      return createShoutout(supabase, {
+        ...input,
+        ...resource,
+        toUserId: resource.ownerId,
+      });
     },
     onSuccess: (newShoutout: Shoutout) => {
       // Invalidate all shoutout queries to refetch lists

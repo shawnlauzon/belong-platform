@@ -20,8 +20,6 @@ describe('Community Summary Transformer', () => {
       type: dbCommunity.type,
       icon: dbCommunity.icon ?? undefined,
       memberCount: dbCommunity.member_count,
-      createdAt: new Date(dbCommunity.created_at),
-      updatedAt: new Date(dbCommunity.updated_at),
     });
 
     // Assert - Should NOT have snake_case properties

@@ -1,7 +1,7 @@
 export { fetchShoutouts } from './fetchShoutouts';
 export { fetchShoutoutById } from './fetchShoutoutById';
 export {
-  createResourceShoutout,
+  createShoutout as createResourceShoutout,
   createGeneralShoutout,
 } from './createShoutout';
 export { updateShoutout } from './updateShoutout';

@@ -17,4 +17,5 @@ export interface Todo {
 
 export type TodoType =
   | 'shoutout-offer' // Offer shoutout (accepted offers needing thank you)
-  | 'shoutout-favor'; // Favor shoutout (accepted favors needing thank you)
+  | 'shoutout-favor' // Favor shoutout (accepted favors needing thank you)
+  | 'upcoming-event'; // Upcoming event (confirmed gatherings)

@@ -4,11 +4,7 @@ import { CommunitySummary } from '../../communities';
 import { toDomainCommunitySummary } from '../../communities/transformers/communityTransformer';
 import { toResourceSummary } from '../../resources/transformers/resourceTransformer';
 import { toUserSummary } from '../../users/transformers/userTransformer';
-import type {
-  Shoutout,
-  ShoutoutInputRefs,
-  ShoutoutResourceInput,
-} from '../types';
+import type { Shoutout, ShoutoutInput, ShoutoutInputRefs } from '../types';
 
 import {
   ShoutoutInsertRow,
@@ -57,7 +53,7 @@ export function toDomainShoutout(
     id,
     fromUserId: from_user_id,
     toUserId: to_user_id,
-    resourceId: resource_id || undefined,
+    resourceId: resource_id,
     communityId: community_id,
     message,
     imageUrls: image_urls || [],
@@ -70,8 +66,8 @@ export function toDomainShoutout(
   };
 }
 
-export function toResourceShoutoutInsertRow(
-  shoutoutData: ShoutoutResourceInput & ShoutoutInputRefs,
+export function toShoutoutInsertRow(
+  shoutoutData: ShoutoutInput & ShoutoutInputRefs,
 ): ShoutoutInsertRow {
   const { imageUrls, message } = shoutoutData;
 
@@ -85,26 +81,11 @@ export function toResourceShoutoutInsertRow(
   };
 }
 
-export function toGeneralShoutoutInsertRow(
-  shoutoutData: { message: string; imageUrls?: string[] } & ShoutoutInputRefs,
-): ShoutoutInsertRow {
-  const { imageUrls, message } = shoutoutData;
-
-  return {
-    message,
-    from_user_id: shoutoutData.fromUserId,
-    to_user_id: shoutoutData.toUserId,
-    community_id: shoutoutData.communityId,
-    image_urls: imageUrls || [],
-    resource_id: shoutoutData.resourceId || null,
-  };
-}
-
 /**
  * Transform a domain shoutout data object to a database shoutout update record
  */
 export function toShoutoutUpdateRow(
-  shoutoutData: Partial<ShoutoutResourceInput>,
+  shoutoutData: Partial<ShoutoutInput>,
 ): ShoutoutUpdateRow {
   const { imageUrls, message } = shoutoutData;
 

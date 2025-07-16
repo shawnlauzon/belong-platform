@@ -3,7 +3,9 @@ import { UserSummary } from '../../users';
 import { ResourceStatus, ResourceCategory } from '../index';
 
 export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields>;
-export type ResourceSummary = IsPersisted<ResourceSummaryFields>;
+export type ResourceSummary = ResourceSummaryFields & {
+  id: string;
+};
 
 export type ResourceInput = Omit<ResourceSummaryFields, 'ownerId' | 'owner'> & {
   description: string;

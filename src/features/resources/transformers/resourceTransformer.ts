@@ -1,4 +1,9 @@
-import type { ResourceCategory, Resource, ResourceInput, ResourceSummary } from '../types';
+import type {
+  ResourceCategory,
+  Resource,
+  ResourceInput,
+  ResourceSummary,
+} from '../types';
 import type {
   ResourceRowWithRelations,
   ResourceInsertDbData,
@@ -101,7 +106,9 @@ export function toDomainResource(
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
-    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
+    expiresAt: dbResource.expires_at
+      ? new Date(dbResource.expires_at)
+      : undefined,
   };
 }
 
@@ -129,11 +136,11 @@ export function toResourceSummary(
     ownerId: dbResource.owner_id,
     owner: toUserSummary(owner),
     imageUrls: dbResource.image_urls || [],
-    createdAt: new Date(dbResource.created_at),
-    updatedAt: new Date(dbResource.updated_at),
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
-    expiresAt: dbResource.expires_at ? new Date(dbResource.expires_at) : undefined,
+    expiresAt: dbResource.expires_at
+      ? new Date(dbResource.expires_at)
+      : undefined,
   };
 }
