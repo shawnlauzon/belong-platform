@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import {
   createTestUser,
@@ -25,7 +33,7 @@ describe('Resource Claims - Duplicate Prevention', () => {
   let testCommunity: Community;
   let testResource: Resource;
   let testTimeslot: ResourceTimeslot;
-  let createdTimeslots: ResourceTimeslot[] = [];
+  const createdTimeslots: ResourceTimeslot[] = [];
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -36,9 +44,6 @@ describe('Resource Claims - Duplicate Prevention', () => {
 
     testCommunity = await createTestCommunity(supabase);
     testResource = await createTestResource(supabase, testCommunity.id);
-
-    // Create user who will make claims
-    claimant = await createTestUser(supabase);
 
     // Create a test timeslot for duplicate testing
     const timeslotInput = createFakeResourceTimeslotInput({
@@ -53,11 +58,9 @@ describe('Resource Claims - Duplicate Prevention', () => {
       timeslotInput,
     );
     createdTimeslots.push(testTimeslot);
-  });
 
-  beforeEach(async () => {
-    // Start each test with claimant signed in
-    await signIn(supabase, claimant.email, 'TestPass123!');
+    // Create user who will make claims
+    claimant = await createTestUser(supabase);
   });
 
   afterEach(async () => {
@@ -187,8 +190,12 @@ describe('Resource Claims - Duplicate Prevention', () => {
       });
 
       expect(allClaims).toHaveLength(2);
-      expect(allClaims.some(claim => claim.timeslotId === undefined)).toBe(true);
-      expect(allClaims.some(claim => claim.timeslotId === timeslot.id)).toBe(true);
+      expect(allClaims.some((claim) => claim.timeslotId === undefined)).toBe(
+        true,
+      );
+      expect(allClaims.some((claim) => claim.timeslotId === timeslot.id)).toBe(
+        true,
+      );
     });
 
     it('fetches claims correctly by filtering timeslotted vs non-timeslotted', async () => {
@@ -229,8 +236,12 @@ describe('Resource Claims - Duplicate Prevention', () => {
         resourceId: testResource.id,
       });
 
-      const nonTimeslottedClaims = allClaims.filter(claim => claim.timeslotId === undefined);
-      const timeslottedClaims = allClaims.filter(claim => claim.timeslotId !== undefined);
+      const nonTimeslottedClaims = allClaims.filter(
+        (claim) => claim.timeslotId === undefined,
+      );
+      const timeslottedClaims = allClaims.filter(
+        (claim) => claim.timeslotId !== undefined,
+      );
 
       expect(nonTimeslottedClaims).toHaveLength(1);
       expect(timeslottedClaims).toHaveLength(1);

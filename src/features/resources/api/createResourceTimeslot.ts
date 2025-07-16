@@ -1,23 +1,41 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { getAuthIdOrThrow, logger } from '@/shared';
 import { ResourceTimeslotInput, ResourceTimeslot } from '../types';
-import { toResourceTimeslotInsertRow, toDomainResourceTimeslot } from '../transformers';
+import {
+  toResourceTimeslotInsertRow,
+  toDomainResourceTimeslot,
+} from '../transformers';
 import { ResourceTimeslotRow } from '../types/resourceRow';
 
 export async function createResourceTimeslot(
   supabase: SupabaseClient<Database>,
   timeslotInput: ResourceTimeslotInput,
 ): Promise<ResourceTimeslot> {
-  // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to create resource timeslot', {
-      authError,
-      timeslotInput,
+  const currentUserId = await getAuthIdOrThrow(supabase);
+
+  // Verify user owns the resource
+  const { data: resource, error: resourceError } = await supabase
+    .from('resources')
+    .select('owner_id')
+    .eq('id', timeslotInput.resourceId)
+    .single();
+
+  if (resourceError || !resource) {
+    logger.error('🏘️ API: Resource not found for timeslot creation', {
+      resourceError,
+      resourceId: timeslotInput.resourceId,
     });
-    throw new Error('Authentication required');
+    throw new Error('Resource not found');
+  }
+
+  if (resource.owner_id !== currentUserId) {
+    logger.error('🏘️ API: User does not own resource for timeslot creation', {
+      userId: currentUserId,
+      resourceId: timeslotInput.resourceId,
+      resourceOwnerId: resource.owner_id,
+    });
+    throw new Error('Only resource owners can create timeslots');
   }
 
   // Validate input
@@ -42,7 +60,10 @@ export async function createResourceTimeslot(
     .from('resource_timeslots')
     .insert(insertData)
     .select()
-    .single()) as { data: ResourceTimeslotRow | null; error: QueryError | null };
+    .single()) as {
+    data: ResourceTimeslotRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to create resource timeslot', {
