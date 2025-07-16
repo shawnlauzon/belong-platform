@@ -13,9 +13,9 @@ vi.mock('../../api', () => ({
 vi.mock('../../../../shared', async () => {
   const actual = await vi.importActual('../../../../shared');
   return {
-    ...actual,
+    ...(actual as object),
     queryKeys: {
-      ...actual.queryKeys,
+      ...(actual as any)?.queryKeys,
       agenda: {
         current: ['agenda'] as const,
       },
@@ -39,27 +39,12 @@ describe('useAgenda', () => {
         title: 'Team Meeting',
         description: 'Event at Conference Room',
         dueDate: new Date('2024-01-15T10:00:00Z'),
-        entityId: 'event1',
-        communityId: 'community1',
-        createdAt: new Date('2024-01-10T10:00:00Z'),
-        metadata: {
-          eventStartTime: new Date('2024-01-15T10:00:00Z'),
-          status: 'attending',
-        },
       },
       {
         id: 'resource_pending_resource1',
-        type: 'resource_pending',
+        type: 'shoutout-favor',
         title: 'Response needed: Help with gardening',
         description: 'Need help with community garden maintenance',
-        entityId: 'resource1',
-        communityId: 'community1',
-        createdAt: new Date('2024-01-12T10:00:00Z'),
-        metadata: {
-          resourceOwnerId: 'user2',
-          resourceOwnerName: 'Jane Doe',
-          status: 'pending',
-        },
       },
     ],
     hasMore: false,

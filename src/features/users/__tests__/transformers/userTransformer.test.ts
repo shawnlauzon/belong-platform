@@ -115,7 +115,7 @@ describe('User Transformer', () => {
       const userData = createFakeUserInput();
 
       // Act
-      const dbData = toUserInsertRow(userData);
+      const dbData = toUserInsertRow({ ...userData, id: faker.string.uuid() });
 
       // Assert
       expect(dbData).toMatchObject({
@@ -142,7 +142,7 @@ describe('User Transformer', () => {
       });
 
       // Act
-      const dbData = toUserInsertRow(userData);
+      const dbData = toUserInsertRow({ ...userData, id: faker.string.uuid() });
 
       // Assert
       expect(dbData).toMatchObject({
@@ -273,8 +273,8 @@ describe('User Transformer', () => {
 
       const partialUpdate = {
         id: userId,
-        avatarUrl: null,
-        location: null,
+        avatarUrl: undefined,
+        location: undefined,
       };
 
       // Act

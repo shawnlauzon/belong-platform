@@ -9,6 +9,7 @@ import {
 import { createFakeDbShoutout } from './test-utils';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeResource } from '../../resources/__fakes__';
+import { createFakeCommunitySummary } from '../../communities/__fakes__';
 
 describe('Shoutout Transformer', () => {
   describe('toDomainShoutout', () => {
@@ -22,10 +23,12 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
+        community: mockCommunity,
       });
 
       expect(shoutout).toMatchObject({
@@ -51,10 +54,12 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
+        community: mockCommunity,
       });
 
       expect(shoutout.fromUser).toEqual(mockFromUser);
@@ -73,10 +78,12 @@ describe('Shoutout Transformer', () => {
         image_urls: [],
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       const shoutout = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
+        community: mockCommunity,
       });
 
       expect(shoutout.imageUrls).toEqual([]);
@@ -92,11 +99,13 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       expect(() =>
         toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
+          community: mockCommunity,
         }),
       ).toThrow('From user ID does not match');
     });
@@ -111,11 +120,13 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       expect(() =>
         toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
+          community: mockCommunity,
         }),
       ).toThrow('To user ID does not match');
     });
@@ -130,11 +141,13 @@ describe('Shoutout Transformer', () => {
         resource_id: 'different-id',
       });
 
+      const mockCommunity = createFakeCommunitySummary();
       expect(() =>
         toDomainShoutout(dbShoutout, {
           fromUser: mockFromUser,
           toUser: mockToUser,
           resource: mockResource,
+          community: mockCommunity,
         }),
       ).toThrow('Resource ID does not match');
     });
@@ -151,10 +164,12 @@ describe('Shoutout Transformer', () => {
       });
 
       // Act
+      const mockCommunity = createFakeCommunitySummary();
       const result = toDomainShoutout(dbShoutout, {
         fromUser: mockFromUser,
         toUser: mockToUser,
         resource: mockResource,
+        community: mockCommunity,
       });
 
       // Assert

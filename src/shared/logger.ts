@@ -79,9 +79,9 @@ export function createLogger(
 }
 
 // Configure log level based on environment
-const isDevelopment = import.meta.env.DEV;
+const isDevelopment = typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env.DEV ?? false : false;
 const defaultLogLevel =
-  import.meta.env.VITE_LOG_LEVEL || (isDevelopment ? 'trace' : 'info');
+  (typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env.VITE_LOG_LEVEL : undefined) || (isDevelopment ? 'trace' : 'info');
 
 export const logger = createLogger(
   defaultLogLevel as 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent'

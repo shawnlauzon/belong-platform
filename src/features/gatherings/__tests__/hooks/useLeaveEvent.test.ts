@@ -45,7 +45,7 @@ describe('useLeaveGathering', () => {
   it('should leave gathering successfully', async () => {
     // Arrange
     const gatheringId = 'test-event-id';
-    mockLeaveGathering.mockResolvedValue();
+    mockLeaveGathering.mockResolvedValue(null);
 
     // Act
     const { result } = renderHook(() => useLeaveGathering(), { wrapper });
@@ -124,7 +124,7 @@ describe('useLeaveGathering', () => {
   it('should handle already left event scenario', async () => {
     // Arrange - Leaving a gathering you're not attending should still succeed
     const gatheringId = 'test-event-id';
-    mockLeaveGathering.mockResolvedValue(); // API handles this gracefully
+    mockLeaveGathering.mockResolvedValue(null); // API handles this gracefully
 
     // Act
     const { result } = renderHook(() => useLeaveGathering(), { wrapper });
@@ -138,7 +138,7 @@ describe('useLeaveGathering', () => {
   it('should validate gatheringId parameter', async () => {
     // Arrange
     const gatheringId = 'valid-event-id';
-    mockLeaveGathering.mockResolvedValue();
+    mockLeaveGathering.mockResolvedValue(null);
 
     // Act
     const { result } = renderHook(() => useLeaveGathering(), { wrapper });

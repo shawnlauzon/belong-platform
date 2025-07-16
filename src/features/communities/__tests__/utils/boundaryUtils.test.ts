@@ -6,7 +6,7 @@ import {
   type BoundaryDbData,
 } from '../../utils/boundaryUtils';
 import { createFakeCommunityInput } from '../../__fakes__';
-import type { IsochroneBoundary } from '../../types/domain';
+import type { IsochroneBoundary } from '../../types/community';
 
 describe('boundaryUtils', () => {
   describe('validateBoundaryData', () => {

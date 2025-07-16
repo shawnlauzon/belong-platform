@@ -4,14 +4,14 @@ import { vi } from 'vitest';
 
 interface MockData {
   resources?: Database['public']['Tables']['resources']['Row'][];
-  users?: Database['public']['Tables']['users']['Row'][];
+  profiles?: Database['public']['Tables']['profiles']['Row'][];
   communities?: Database['public']['Tables']['communities']['Row'][];
-  events?: Database['public']['Tables']['events']['Row'][];
+  gatherings?: Database['public']['Tables']['gatherings']['Row'][];
   shoutouts?: Database['public']['Tables']['shoutouts']['Row'][];
-  messages?: Database['public']['Tables']['messages']['Row'][];
+  direct_messages?: Database['public']['Tables']['direct_messages']['Row'][];
   conversations?: Database['public']['Tables']['conversations']['Row'][];
-  community_members?: Database['public']['Tables']['community_members']['Row'][];
-  event_attendees?: Database['public']['Tables']['event_attendees']['Row'][];
+  community_memberships?: Database['public']['Tables']['community_memberships']['Row'][];
+  gathering_responses?: Database['public']['Tables']['gathering_responses']['Row'][];
 }
 
 interface MockQueryBuilder {
@@ -70,7 +70,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
   // Chain all methods to return the builder itself
   Object.keys(mockQueryBuilder).forEach((method) => {
     if (method !== 'eq' && method !== 'insert' && method !== 'upsert' && method !== 'select' && method !== 'single' && method !== 'maybeSingle') {
-      (mockQueryBuilder as Record<string, ReturnType<typeof vi.fn>>)[method].mockReturnValue(mockQueryBuilder);
+      (mockQueryBuilder as any)[method].mockReturnValue(mockQueryBuilder);
     }
   });
 
@@ -112,7 +112,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
     return data.filter(row => {
       return currentFilters.every(filter => {
         if (filter.type === 'eq') {
-          return row[filter.column] === filter.value;
+          return (row as any)[filter.column as string] === filter.value;
         }
         return true;
       });
@@ -146,8 +146,8 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
       insertedData = null; // Reset for next operation
       
       const selectBuilder = { ...mockQueryBuilder };
-      selectBuilder.single = vi.fn().mockResolvedValue({ data: result[0], error: null });
-      selectBuilder.then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
+      (selectBuilder as any).single = vi.fn().mockResolvedValue({ data: (result as any)[0], error: null });
+      (selectBuilder as any).then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
         return Promise.resolve({ data: result, error: null }).then(onFulfilled);
       };
       return selectBuilder;
@@ -159,8 +159,8 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
       upsertedData = null; // Reset for next operation
       
       const selectBuilder = { ...mockQueryBuilder };
-      selectBuilder.single = vi.fn().mockResolvedValue({ data: result[0], error: null });
-      selectBuilder.then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
+      (selectBuilder as any).single = vi.fn().mockResolvedValue({ data: (result as any)[0], error: null });
+      (selectBuilder as any).then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
         return Promise.resolve({ data: result, error: null }).then(onFulfilled);
       };
       return selectBuilder;
@@ -172,7 +172,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
     const selectBuilder = { ...mockQueryBuilder };
     
     // Override terminal methods for this select chain
-    selectBuilder.then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
+    (selectBuilder as any).then = (onFulfilled: (value: { data: unknown; error: null }) => unknown) => {
       const filtered = applyFilters(mockData);
       return Promise.resolve({ data: filtered, error: null }).then(onFulfilled);
     };
@@ -188,7 +188,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
     });
     
     // Make it thenable
-    (selectBuilder as Record<string, unknown>)[Symbol.for('nodejs.util.promisify.custom')] = () => 
+    (selectBuilder as any)[Symbol.for('nodejs.util.promisify.custom')] = () => 
       Promise.resolve({ data: applyFilters(mockData), error: null });
     
     return selectBuilder;

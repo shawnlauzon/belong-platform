@@ -194,6 +194,24 @@ export function createFakeCommunityMembership(
 }
 
 /**
+ * Creates a fake CommunitySummary
+ */
+export function createFakeCommunitySummary(
+  overrides: Partial<import('../types').CommunitySummary> = {},
+): import('../types').CommunitySummary {
+  return {
+    id: faker.string.uuid(),
+    name: faker.location.city(),
+    type: faker.helpers.arrayElement(['place', 'interest']),
+    icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
+    memberCount: faker.number.int({ min: 10, max: 140 }),
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
+    ...overrides,
+  };
+}
+
+/**
  * Creates a fake database Community row with organizer relation
  */
 export function createFakeDbCommunityWithOrganizer(
