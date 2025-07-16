@@ -250,7 +250,6 @@ export function createFakeResourceClaimInput(
 ): ResourceClaimInput {
   return {
     resourceId: faker.string.uuid(),
-    userId: faker.string.uuid(),
     timeslotId: faker.helpers.maybe(() => faker.string.uuid()),
     status: faker.helpers.arrayElement(['pending', 'approved', 'rejected', 'completed', 'cancelled'] as const),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),

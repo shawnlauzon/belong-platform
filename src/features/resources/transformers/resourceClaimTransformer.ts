@@ -1,11 +1,15 @@
 import type { ResourceClaim, ResourceClaimInput } from '../types';
-import type { ResourceClaimRow, ResourceClaimInsertDbData, ResourceClaimUpdateDbData } from '../types/resourceRow';
+import type {
+  ResourceClaimRow,
+  ResourceClaimInsertDbData,
+  ResourceClaimUpdateDbData,
+} from '../types/resourceRow';
 
 /**
  * Transform a domain claim object to a database claim record
  */
 export function toResourceClaimInsertRow(
-  claim: ResourceClaimInput,
+  claim: ResourceClaimInput & { userId: string },
 ): ResourceClaimInsertDbData {
   return {
     resource_id: claim.resourceId,
