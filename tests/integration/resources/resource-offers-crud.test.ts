@@ -425,7 +425,6 @@ describe('Resource Offers API - CRUD Operations', () => {
       await signIn(supabase, user2Email, 'TestPass123!');
       await resourcesApi.createResourceClaim(supabase, {
         resourceId: resource.id,
-        userId: user2.id,
         timeslotId: timeslot.id,
         status: 'pending',
       });

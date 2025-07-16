@@ -177,7 +177,6 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
     const createApprovedClaim = async (resourceId: string, timeslotId?: string) => {
       const claimInput = createFakeResourceClaimInput({
         resourceId,
-        userId: claimantUser.id,
         timeslotId,
         status: 'approved',
       });
@@ -372,7 +371,6 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       // Create a "maybe" claim for upcomingOffer2
       const maybeClaimInput = createFakeResourceClaimInput({
         resourceId: upcomingOffer2.id,
-        userId: claimantUser.id,
         timeslotId: upcomingOffer2Timeslot.id,
         status: 'pending', // "maybe" equivalent
       });
