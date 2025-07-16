@@ -14,6 +14,10 @@ export async function createResourceClaim(
 ): Promise<ResourceClaim> {
   const currentUserId = await getAuthIdOrThrow(supabase);
 
+  if (claimInput.status !== undefined && claimInput.status !== 'pending') {
+    throw new Error('If specified, claim status must be "pending"');
+  }
+
   // Transform to database format
   const insertData = toResourceClaimInsertRow({
     ...claimInput,

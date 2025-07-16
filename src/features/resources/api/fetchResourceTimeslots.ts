@@ -3,28 +3,24 @@ import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
 import { ResourceTimeslot } from '../types';
 import { toDomainResourceTimeslot } from '../transformers';
-import { ResourceTimeslotRow } from '../types/resourceRow';
+import {
+  ResourceTimeslotRowWithRelations,
+  SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS,
+} from '../types/resourceRow';
 
 export async function fetchResourceTimeslots(
   supabase: SupabaseClient<Database>,
   resourceId: string,
 ): Promise<ResourceTimeslot[]> {
-  // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to fetch resource timeslots', {
-      authError,
-      resourceId,
-    });
-    throw new Error('Authentication required');
-  }
-
   const { data, error } = (await supabase
     .from('resource_timeslots')
-    .select('*')
+    // select timeslots joined with claims
+    .select(SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS)
     .eq('resource_id', resourceId)
-    .order('start_time', { ascending: true })) as { data: ResourceTimeslotRow[] | null; error: QueryError | null };
+    .order('start_time', { ascending: true })) as {
+    data: ResourceTimeslotRowWithRelations[] | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to fetch resource timeslots', {

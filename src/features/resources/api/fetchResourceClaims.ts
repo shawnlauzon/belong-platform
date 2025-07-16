@@ -16,34 +16,21 @@ export async function fetchResourceClaims(
   supabase: SupabaseClient<Database>,
   filter: ResourceClaimFilter = {},
 ): Promise<ResourceClaim[]> {
-  // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to fetch resource claims', {
-      authError,
-      filter,
-    });
-    throw new Error('Authentication required');
-  }
-
-  let query = supabase
-    .from('resource_claims')
-    .select('*');
+  let query = supabase.from('resource_claims').select('*');
 
   // Apply filters
   if (filter.resourceId) {
     query = query.eq('resource_id', filter.resourceId);
   }
-  
+
   if (filter.userId) {
     query = query.eq('user_id', filter.userId);
   }
-  
+
   if (filter.status) {
     query = query.eq('status', filter.status);
   }
-  
+
   if (filter.timeslotId) {
     query = query.eq('timeslot_id', filter.timeslotId);
   }
@@ -51,7 +38,10 @@ export async function fetchResourceClaims(
   // Order by most recent first
   query = query.order('created_at', { ascending: false });
 
-  const { data, error } = (await query) as { data: ResourceClaimRow[] | null; error: QueryError | null };
+  const { data, error } = (await query) as {
+    data: ResourceClaimRow[] | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to fetch resource claims', {

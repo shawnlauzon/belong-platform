@@ -3,7 +3,10 @@ import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
 import { ResourceTimeslot, ResourceTimeslotInput } from '../types';
 import { forDbTimeslotUpdate, toDomainResourceTimeslot } from '../transformers';
-import { ResourceTimeslotRow } from '../types/resourceRow';
+import {
+  ResourceTimeslotRowWithRelations,
+  SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS,
+} from '../types/resourceRow';
 
 export async function updateResourceTimeslot(
   supabase: SupabaseClient<Database>,
@@ -11,18 +14,28 @@ export async function updateResourceTimeslot(
   timeslotInput: Partial<ResourceTimeslotInput>,
 ): Promise<ResourceTimeslot> {
   // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
   if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to update resource timeslot', {
-      authError,
-      id,
-    });
+    logger.error(
+      '🏘️ API: Authentication required to update resource timeslot',
+      {
+        authError,
+        id,
+      },
+    );
     throw new Error('Authentication required');
   }
 
   // Validate input if provided
-  if (timeslotInput.startTime && timeslotInput.endTime && timeslotInput.startTime >= timeslotInput.endTime) {
+  if (
+    timeslotInput.startTime &&
+    timeslotInput.endTime &&
+    timeslotInput.startTime >= timeslotInput.endTime
+  ) {
     logger.error('🏘️ API: Start time must be before end time', {
       timeslotInput,
       id,
@@ -45,8 +58,11 @@ export async function updateResourceTimeslot(
     .from('resource_timeslots')
     .update(updateData)
     .eq('id', id)
-    .select()
-    .single()) as { data: ResourceTimeslotRow | null; error: QueryError | null };
+    .select(SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS)
+    .single()) as {
+    data: ResourceTimeslotRowWithRelations | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to update resource timeslot', {

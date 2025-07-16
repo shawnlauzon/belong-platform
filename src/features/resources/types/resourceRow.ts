@@ -12,6 +12,14 @@ export type ResourceRowWithRelations = ResourceRow & {
   community: CommunityRow;
 };
 
+export const SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS = `
+    *,
+    resource_claims(*)
+  `;
+export type ResourceTimeslotRowWithRelations = ResourceTimeslotRow & {
+  resource_claims: ResourceClaimRow[];
+};
+
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ResourceInsertDbData =
   Database['public']['Tables']['resources']['Insert'];
