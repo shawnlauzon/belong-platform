@@ -197,7 +197,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
       it('requires authentication', async () => {
         const claimInput = createFakeResourceClaimInput({
           resourceId: testResourceOffer.id,
-          userId: testUser.id,
           timeslotId: testTimeslot.id,
           status: 'pending',
         });
@@ -256,7 +255,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
       // Create claim for the resource offer
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResourceOffer.id,
-        userId: secondUser.id,
         timeslotId: testTimeslot.id,
         status: 'pending',
       });
