@@ -36,6 +36,24 @@ export async function fetchResources(
         `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
       );
     }
+
+    // Apply time-based filtering at database level
+    // For resources without timeslots, classification is based on expires_at:
+    // - current/upcoming: expires_at IS NULL OR expires_at >= now()  
+    // - past/expired: expires_at < now()
+    
+    // Handle the most common case: exclude expired resources (default behavior)
+    if (filters.includeExpired === false) {
+      query = query.or('expires_at.is.null,expires_at.gte.now()');
+    }
+    
+    // Handle exclude past resources (like feed uses includePast: false)
+    if (filters.includePast === false) {
+      query = query.or('expires_at.is.null,expires_at.gte.now()');
+    }
+    
+    // TODO: Add more sophisticated timeslot-based filtering when resource_timeslots
+    // are included in the SELECT query and we can filter by actual timeslot times
   }
 
   const { data, error } = await query.order('created_at', {
