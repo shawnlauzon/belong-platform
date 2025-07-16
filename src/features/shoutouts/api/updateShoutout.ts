@@ -1,10 +1,7 @@
 import { logger } from '../../../shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
-import type {
-  ShoutoutResourceInput,
-  Shoutout,
-} from '../types';
+import type { ShoutoutInput, Shoutout } from '../types';
 import {
   toShoutoutUpdateRow,
   toShoutoutWithJoinedRelations,
@@ -18,7 +15,7 @@ import { getAuthIdOrThrow } from '../../../shared/utils';
 export async function updateShoutout(
   supabase: SupabaseClient<Database>,
   id: string,
-  updateData: Partial<ShoutoutResourceInput>,
+  updateData: Partial<ShoutoutInput>,
 ): Promise<Shoutout | null> {
   logger.debug('📢 API: Updating shoutout', {
     id,

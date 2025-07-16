@@ -41,7 +41,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
     testUser = await createTestUser(authenticatedClient);
 
     // Create a test shoutout (testUser sends shoutout to testUser2 about testUser2's resource)
-    testShoutout = await api.createResourceShoutout(authenticatedClient, {
+    testShoutout = await api.createShoutout(authenticatedClient, {
       resourceId: testResource.id,
       message: `${TEST_PREFIX}Test shoutout for auth tests`,
       toUserId: testUser2.id,
@@ -109,7 +109,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
         });
 
         await expect(
-          api.createResourceShoutout(unauthenticatedClient, {
+          api.createShoutout(unauthenticatedClient, {
             ...data,
             toUserId: testUser2.id,
             communityId: testCommunity.id,

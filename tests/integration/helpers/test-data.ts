@@ -6,11 +6,7 @@ import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
-import {
-  Shoutout,
-  createResourceShoutout,
-  ShoutoutResourceInput,
-} from '@/features';
+import { Shoutout, ShoutoutInput, createShoutout } from '@/features';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -25,7 +21,7 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
   });
 
   // Add 300ms pause before signUp to avoid rate limiting
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   const account = await signUp(
     supabase,
@@ -69,7 +65,6 @@ export async function createTestResource(
   return resource;
 }
 
-
 export async function createTestResourceShoutout({
   supabase,
   resourceId,
@@ -81,7 +76,7 @@ export async function createTestResourceShoutout({
   toUserId: string;
   communityId: string;
 }): Promise<Shoutout> {
-  const shoutoutData: ShoutoutResourceInput & {
+  const shoutoutData: ShoutoutInput & {
     toUserId: string;
     communityId: string;
   } = {
@@ -91,9 +86,8 @@ export async function createTestResourceShoutout({
     communityId,
   };
 
-  const shoutout = await createResourceShoutout(supabase, shoutoutData);
+  const shoutout = await createShoutout(supabase, shoutoutData);
   if (!shoutout) throw new Error('Failed to create shoutout');
 
   return shoutout;
 }
-

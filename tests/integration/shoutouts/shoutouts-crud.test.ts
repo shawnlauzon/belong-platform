@@ -9,7 +9,7 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
-  createResourceShoutout,
+  createShoutout,
   fetchShoutouts,
   fetchShoutoutById,
   updateShoutout,
@@ -57,7 +57,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         communityId: testCommunity.id,
       };
 
-      const shoutout = await createResourceShoutout(supabase, shoutoutInput);
+      const shoutout = await createShoutout(supabase, shoutoutInput);
 
       expect(shoutout).toBeTruthy();
       expect(shoutout.id).toBeTruthy();
@@ -93,7 +93,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
-      await expect(createResourceShoutout(supabase, shoutoutInput)).rejects.toThrow();
+      await expect(createShoutout(supabase, shoutoutInput)).rejects.toThrow();
     });
 
     it('TODO: should not allow shoutout about a resource you own (currently allows)', async () => {
@@ -106,10 +106,10 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       // Current behavior: allows users to send shoutouts about their own resources
       // This business rule is not implemented but was requested to be enforced
-      const result = await createResourceShoutout(supabase, shoutoutInput);
+      const result = await createShoutout(supabase, shoutoutInput);
       expect(result).toBeTruthy();
       expect(result.id).toBeTruthy();
-      
+
       // Cleanup
       await supabase.from('shoutouts').delete().eq('id', result.id);
     });
@@ -214,7 +214,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('fetchShoutoutById', () => {
     it('returns shoutout by id', async () => {
       // Create a shoutout to fetch
-      const createdShoutout = await createResourceShoutout(supabase, {
+      const createdShoutout = await createShoutout(supabase, {
         toUserId: testUser2.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
