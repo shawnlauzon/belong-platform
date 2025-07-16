@@ -1,27 +1,24 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { getAuthIdOrThrow, logger } from '@/shared';
 import { ResourceClaim, ResourceClaimInput } from '../types';
-import { toResourceClaimInsertRow, toDomainResourceClaim } from '../transformers';
+import {
+  toResourceClaimInsertRow,
+  toDomainResourceClaim,
+} from '../transformers';
 import { ResourceClaimRow } from '../types/resourceRow';
 
 export async function createResourceClaim(
   supabase: SupabaseClient<Database>,
   claimInput: ResourceClaimInput,
 ): Promise<ResourceClaim> {
-  // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to create resource claim', {
-      authError,
-      claimInput,
-    });
-    throw new Error('Authentication required');
-  }
+  const currentUserId = await getAuthIdOrThrow(supabase);
 
   // Transform to database format
-  const insertData = toResourceClaimInsertRow(claimInput);
+  const insertData = toResourceClaimInsertRow({
+    ...claimInput,
+    userId: currentUserId,
+  });
 
   const { data, error } = (await supabase
     .from('resource_claims')
@@ -34,12 +31,15 @@ export async function createResourceClaim(
       error,
       claimInput,
     });
-    
+
     // Handle duplicate claim constraint violation
-    if (error.code === '23505' && error.message.includes('resource_claims_unique_non_timeslot')) {
+    if (
+      error.code === '23505' &&
+      error.message.includes('resource_claims_unique_non_timeslot')
+    ) {
       throw new Error('You have already claimed this resource');
     }
-    
+
     throw new Error(error.message || 'Failed to create resource claim');
   }
 
