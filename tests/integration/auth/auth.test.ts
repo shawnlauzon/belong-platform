@@ -41,6 +41,9 @@ describe('Auth API - Integration Tests', () => {
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
 
+      // Add 200ms pause before signUp to avoid rate limiting
+      await delay(200);
+
       const account = await api.signUp(
         supabase,
         email,
@@ -73,6 +76,9 @@ describe('Auth API - Integration Tests', () => {
       const password = 'TestPass123!';
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
+
+      // Add 200ms pause before signUp to avoid rate limiting
+      await delay(200);
 
       const account = await api.signUp(
         supabase,
@@ -269,6 +275,9 @@ describe('Auth API - Integration Tests', () => {
       const lastName = faker.person.lastName(); // faker.person.lastName();
 
       // 1. Sign up new user
+      // Add 200ms pause before signUp to avoid rate limiting
+      await delay(200);
+      
       const signUpAccount = await api.signUp(
         supabase,
         email,
