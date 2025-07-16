@@ -516,7 +516,7 @@ export type Database = {
       }
       resources: {
         Row: {
-          category: string | null
+          category: Database["public"]["Enums"]["resource_category"] | null
           community_id: string
           coordinates: unknown | null
           created_at: string
@@ -534,7 +534,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category?: string | null
+          category?: Database["public"]["Enums"]["resource_category"] | null
           community_id: string
           coordinates?: unknown | null
           created_at?: string
@@ -552,7 +552,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: string | null
+          category?: Database["public"]["Enums"]["resource_category"] | null
           community_id?: string
           coordinates?: unknown | null
           created_at?: string
@@ -2526,6 +2526,13 @@ export type Database = {
       }
     }
     Enums: {
+      resource_category:
+        | "tools"
+        | "skills"
+        | "food"
+        | "supplies"
+        | "event"
+        | "other"
       resource_claim_status:
         | "pending"
         | "approved"
@@ -2668,6 +2675,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      resource_category: [
+        "tools",
+        "skills",
+        "food",
+        "supplies",
+        "event",
+        "other",
+      ],
       resource_claim_status: [
         "pending",
         "approved",
