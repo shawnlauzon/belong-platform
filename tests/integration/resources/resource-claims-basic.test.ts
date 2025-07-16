@@ -49,9 +49,8 @@ describe('Resource Claims - Basic Operations', () => {
     it('creates resource claim with default "pending" status', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
-        timeslotId: undefined,
-        status: undefined,
       });
+      delete claimInput.status;
 
       const claim = await resourcesApi.createResourceClaim(
         supabase,
@@ -74,7 +73,6 @@ describe('Resource Claims - Basic Operations', () => {
     it('creates resource claim with explictly set "pending" status', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
-        timeslotId: undefined,
         status: 'pending',
       });
 
