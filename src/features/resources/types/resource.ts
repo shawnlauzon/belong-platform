@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { Coordinates, IsPersisted } from '@/shared';
 import { UserSummary } from '../../users';
-import { ResourceStatus, ResourceCategory } from './resourceRow';
+import { ResourceStatus, ResourceCategory } from '../index';
 
 export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields>;
 export type ResourceSummary = IsPersisted<ResourceSummaryFields>;
@@ -29,4 +29,3 @@ type ResourceSummaryFields = {
   requiresApproval: boolean;
   expiresAt?: Date;
 };
-
