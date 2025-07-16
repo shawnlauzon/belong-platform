@@ -73,7 +73,9 @@ export async function fetchFavorsNeedingShoutout(
     }
 
     // Transform to domain objects
-    const domainResources = resourcesNeedingShoutout.map(toDomainResource);
+    const domainResources = resourcesNeedingShoutout.map(r => 
+      toDomainResource(r)
+    );
 
     logger.info('🙏 API: Successfully fetched favors needing shoutout', {
       count: domainResources.length,

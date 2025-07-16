@@ -5,7 +5,6 @@ import {
   toResourceInsertRow,
 } from '../../transformers/resourceTransformer';
 import { createFakeUser } from '../../../users/__fakes__';
-import { createFakeCommunity } from '../../../communities/__fakes__';
 import {
   createFakeResourceRow,
   createFakeResourceInput,
@@ -23,9 +22,9 @@ describe('Resource Transformer', () => {
         title: dbResource.title,
         description: dbResource.description,
         category: dbResource.category,
-        communityId: dbResource.community_id,
       });
       expect(resource.owner).toBeDefined();
+      expect(resource.communities).toHaveLength(1);
     });
 
     it('should include owner if provided', () => {
@@ -49,16 +48,14 @@ describe('Resource Transformer', () => {
           }
         )?.avatar_url,
       });
-      expect(resource.communityId).toEqual(dbResource.community_id);
+      expect(resource.communities).toHaveLength(1);
     });
 
     it('should not return any field names with underscores', () => {
       // Arrange
       const fakeOwner = createFakeUser();
-      const fakeCommunity = createFakeCommunity();
       const dbResource = createFakeResourceRow({
         owner_id: fakeOwner.id,
-        community_id: fakeCommunity.id,
       });
 
       // Act
@@ -85,7 +82,6 @@ describe('Resource Transformer', () => {
         title: resourceWithOwner.title,
         description: resourceWithOwner.description,
         owner_id: resourceWithOwner.ownerId,
-        community_id: resourceWithOwner.communityId,
         location_name: resourceWithOwner.locationName,
         coordinates: resourceWithOwner.coordinates
           ? expect.stringContaining('POINT')

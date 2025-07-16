@@ -1,4 +1,4 @@
-import { createCommunity } from '@/features/communities/api';
+import { createCommunity, joinCommunity } from '@/features/communities/api';
 import { signUp } from '@/features/auth/api';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import { createResource } from '@/features/resources/api';
@@ -55,9 +55,12 @@ export async function createTestResource(
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
     description: `${TEST_PREFIX} test resource`,
     type,
-    communityId,
+    communityIds: [communityId],
     category: 'tools', // Use a valid category
   });
+
+  // Add small delay to ensure community membership trigger has completed
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   const resource = await createResource(supabase, data);
   if (!resource) throw new Error('Failed to create resource');

@@ -7,6 +7,7 @@ import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
 import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
+import { fetchUserCommunities } from '@/features/communities/api/fetchUserCommunities';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
@@ -14,6 +15,23 @@ export async function createResource(
 ): Promise<Resource> {
   const currentUserId = await getAuthIdOrThrow(supabase);
 
+  // Validate user membership in all specified communities
+  const userCommunities = await fetchUserCommunities(supabase, currentUserId);
+  const userCommunityIds = userCommunities.map(
+    (membership) => membership.communityId,
+  );
+
+  const invalidCommunityIds = resourceData.communityIds.filter(
+    (communityId) => !userCommunityIds.includes(communityId),
+  );
+
+  if (invalidCommunityIds.length > 0) {
+    throw new Error(
+      `User is not a member of communities: ${invalidCommunityIds.join(', ')}`,
+    );
+  }
+
+  // Create resource with first community for database consistency
   const dbData = toResourceInsertRow({
     ...resourceData,
     ownerId: currentUserId,
@@ -27,6 +45,26 @@ export async function createResource(
 
   if (error || !data) {
     throw new Error(error?.message || 'Failed to create resource');
+  }
+
+  // Create resource-community associations
+  const resourceCommunityInserts = resourceData.communityIds.map(
+    (communityId) => ({
+      resource_id: data.id,
+      community_id: communityId,
+    }),
+  );
+
+  const { error: junctionError } = await supabase
+    .from('resource_communities')
+    .insert(resourceCommunityInserts);
+
+  if (junctionError) {
+    // Clean up the resource if junction table insertion fails
+    await supabase.from('resources').delete().eq('id', data.id);
+    throw new Error(
+      `Failed to associate resource with communities: ${junctionError.message}`,
+    );
   }
 
   // Auto-commit any temporary image URLs after resource creation

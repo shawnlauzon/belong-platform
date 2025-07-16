@@ -3,13 +3,18 @@ import type { Database } from '../../../shared/types/database';
 import { CommunityRow } from '@/features/communities';
 
 export const SELECT_RESOURCE_WITH_RELATIONS = `
-    *,
-    owner:profiles!owner_id(*),
-    community:communities!community_id(*)
-  `;
+*,
+owner:profiles!owner_id(*),
+resource_communities!inner(
+  community:communities(*)
+)
+`;
+
 export type ResourceRowWithRelations = ResourceRow & {
   owner: ProfileRow;
-  community: CommunityRow;
+  resource_communities: {
+    community: CommunityRow;
+  }[];
 };
 
 export const SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS = `

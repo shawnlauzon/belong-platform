@@ -54,7 +54,14 @@ export function createFakeResource(
     updatedAt: now,
     ownerId: owner.id,
     owner,
-    communityId: faker.string.uuid(),
+    communities: [
+      {
+        id: faker.string.uuid(),
+        name: faker.company.name(),
+        type: 'place',
+        memberCount: faker.number.int({ min: 10, max: 1000 }),
+      },
+    ],
     status: faker.helpers.arrayElement([
       'open',
       'completed',
@@ -104,7 +111,6 @@ export function createFakeResourceRowWithoutRelations(
         },
       ) ?? null,
     owner_id: faker.string.uuid(),
-    community_id: faker.string.uuid(),
     image_urls: [],
     location_name: faker.location.city(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
@@ -138,7 +144,7 @@ export function createFakeResourceInput(
       'supplies',
       'other',
     ] as const),
-    communityId: faker.string.uuid(),
+    communityIds: [faker.string.uuid()],
     imageUrls: [],
     locationName: faker.location.city(),
     coordinates: {
@@ -165,8 +171,11 @@ export function createFakeResourceRow(
   return {
     id: faker.string.uuid(),
     owner: createFakeProfileRow(),
-    community: createFakeCommunityRow(),
-    community_id: faker.string.uuid(),
+    resource_communities: [
+      {
+        community: createFakeCommunityRow(),
+      },
+    ],
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category:
