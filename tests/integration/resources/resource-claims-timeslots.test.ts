@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import {
   createTestUser,
@@ -22,11 +22,11 @@ describe('Resource Claims - Timeslot Operations', () => {
   let supabase: SupabaseClient<Database>;
   let resourceOwner: User;
   let claimant: User;
-  let secondUser: User;
   let testCommunity: Community;
   let testResource: Resource;
   let testTimeslot: ResourceTimeslot;
-  let createdTimeslots: ResourceTimeslot[] = [];
+  let secondTimeslot: ResourceTimeslot;
+  const createdTimeslots: ResourceTimeslot[] = [];
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -37,10 +37,6 @@ describe('Resource Claims - Timeslot Operations', () => {
 
     testCommunity = await createTestCommunity(supabase);
     testResource = await createTestResource(supabase, testCommunity.id);
-
-    // Create users who will make claims
-    claimant = await createTestUser(supabase);
-    secondUser = await createTestUser(supabase);
 
     // Create a test timeslot
     const timeslotInput = createFakeResourceTimeslotInput({
@@ -55,11 +51,23 @@ describe('Resource Claims - Timeslot Operations', () => {
       timeslotInput,
     );
     createdTimeslots.push(testTimeslot);
-  });
 
-  beforeEach(async () => {
-    // Start each test with claimant signed in
-    await signIn(supabase, claimant.email, 'TestPass123!');
+    // Create second timeslot
+    const secondTimeslotInput = createFakeResourceTimeslotInput({
+      resourceId: testResource.id,
+      startTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
+      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
+      maxClaims: 2,
+    });
+
+    secondTimeslot = await resourcesApi.createResourceTimeslot(
+      supabase,
+      secondTimeslotInput,
+    );
+    createdTimeslots.push(secondTimeslot);
+
+    // Create user who will make claims
+    claimant = await createTestUser(supabase);
   });
 
   afterEach(async () => {
@@ -69,11 +77,7 @@ describe('Resource Claims - Timeslot Operations', () => {
   afterAll(async () => {
     // Clean up created timeslots
     for (const timeslot of createdTimeslots) {
-      try {
-        await resourcesApi.deleteResourceTimeslot(supabase, timeslot.id);
-      } catch (error) {
-        // Ignore errors in cleanup
-      }
+      await resourcesApi.deleteResourceTimeslot(supabase, timeslot.id);
     }
     await cleanupAllTestData();
   });
@@ -113,45 +117,31 @@ describe('Resource Claims - Timeslot Operations', () => {
         firstClaimInput,
       );
 
-      // Switch to second user and make claim
-      await signIn(supabase, secondUser.email, 'TestPass123!');
+      const secondUser = await createTestUser(supabase);
 
-      const secondClaimInput = createFakeResourceClaimInput({
-        resourceId: testResource.id,
-        timeslotId: testTimeslot.id,
-        status: 'pending',
-      });
+      try {
+        const secondClaimInput = createFakeResourceClaimInput({
+          resourceId: testResource.id,
+          timeslotId: testTimeslot.id,
+          status: 'pending',
+        });
 
-      const secondClaim = await resourcesApi.createResourceClaim(
-        supabase,
-        secondClaimInput,
-      );
+        const secondClaim = await resourcesApi.createResourceClaim(
+          supabase,
+          secondClaimInput,
+        );
 
-      expect(firstClaim.timeslotId).toBe(testTimeslot.id);
-      expect(secondClaim.timeslotId).toBe(testTimeslot.id);
-      expect(firstClaim.userId).toBe(claimant.id);
-      expect(secondClaim.userId).toBe(secondUser.id);
-      expect(firstClaim.id).not.toBe(secondClaim.id);
+        expect(firstClaim.timeslotId).toBe(testTimeslot.id);
+        expect(secondClaim.timeslotId).toBe(testTimeslot.id);
+        expect(firstClaim.userId).toBe(claimant.id);
+        expect(secondClaim.userId).toBe(secondUser.id);
+        expect(firstClaim.id).not.toBe(secondClaim.id);
+      } finally {
+        await signIn(supabase, claimant.email, 'TestPass123!');
+      }
     });
 
     it('allows same user to claim multiple different timeslots', async () => {
-      // Create second timeslot
-      const secondTimeslotInput = createFakeResourceTimeslotInput({
-        resourceId: testResource.id,
-        startTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
-        endTime: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
-        maxClaims: 2,
-      });
-
-      const secondTimeslot = await resourcesApi.createResourceTimeslot(
-        supabase,
-        secondTimeslotInput,
-      );
-      createdTimeslots.push(secondTimeslot);
-
-      // Sign in as claimant for both claims
-      await signIn(supabase, claimant.email, 'TestPass123!');
-
       // First claim on first timeslot
       const firstClaimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
