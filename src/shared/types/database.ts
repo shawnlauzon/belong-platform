@@ -403,7 +403,7 @@ export type Database = {
           notes: string | null
           resource_id: string
           status: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id: string | null
+          timeslot_id: string
           updated_at: string
           user_id: string
         }
@@ -413,7 +413,7 @@ export type Database = {
           notes?: string | null
           resource_id: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id?: string | null
+          timeslot_id: string
           updated_at?: string
           user_id: string
         }
@@ -423,7 +423,7 @@ export type Database = {
           notes?: string | null
           resource_id?: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id?: string | null
+          timeslot_id?: string
           updated_at?: string
           user_id?: string
         }
@@ -516,7 +516,7 @@ export type Database = {
       }
       resources: {
         Row: {
-          category: Database["public"]["Enums"]["resource_category"] | null
+          category: string | null
           community_id: string
           coordinates: unknown | null
           created_at: string
@@ -534,7 +534,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category?: Database["public"]["Enums"]["resource_category"] | null
+          category?: string | null
           community_id: string
           coordinates?: unknown | null
           created_at?: string
@@ -552,7 +552,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: Database["public"]["Enums"]["resource_category"] | null
+          category?: string | null
           community_id?: string
           coordinates?: unknown | null
           created_at?: string
@@ -1218,6 +1218,10 @@ export type Database = {
       gidx_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      is_resource_owner: {
+        Args: { resource_uuid: string; user_uuid: string }
+        Returns: boolean
       }
       json: {
         Args: { "": unknown }
@@ -2522,7 +2526,6 @@ export type Database = {
       }
     }
     Enums: {
-      resource_category: "tools" | "skills" | "food" | "supplies" | "other"
       resource_claim_status:
         | "pending"
         | "approved"
@@ -2665,7 +2668,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      resource_category: ["tools", "skills", "food", "supplies", "other"],
       resource_claim_status: [
         "pending",
         "approved",
