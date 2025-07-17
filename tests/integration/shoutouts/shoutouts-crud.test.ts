@@ -22,6 +22,7 @@ import type { User } from '@/features/users/types';
 import type { Shoutout } from '@/features/shoutouts/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Shoutouts API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -29,19 +30,19 @@ describe('Shoutouts API - CRUD Operations', () => {
   let testUser2: User;
   let testCommunity: Community;
   let testResource: Resource;
+  let testResource2: Resource;
 
   beforeAll(async () => {
     supabase = createTestClient();
 
     // Create shared resources for tests
     testUser = await createTestUser(supabase);
-    testUser2 = await createTestUser(supabase);
-
-    // Sign in as testUser to ensure proper context
-    await signIn(supabase, testUser.email, 'TestPass123!');
-
     testCommunity = await createTestCommunity(supabase);
     testResource = await createTestResource(supabase, testCommunity.id);
+
+    testUser2 = await createTestUser(supabase);
+    await joinCommunity(supabase, testCommunity.id);
+    testResource2 = await createTestResource(supabase, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -53,7 +54,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       const shoutoutInput = {
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-        toUserId: testUser2.id,
+        toUserId: testUser.id,
         communityId: testCommunity.id,
       };
 
@@ -87,31 +88,24 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('cannot send shoutout to yourself', async () => {
       const shoutoutInput = {
-        toUserId: testUser.id, // Same user as signed in user
+        toUserId: testUser2.id, // Same user as signed in user
         communityId: testCommunity.id,
-        resourceId: testResource.id,
+        resourceId: testResource2.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
       await expect(createShoutout(supabase, shoutoutInput)).rejects.toThrow();
     });
 
-    it('TODO: should not allow shoutout about a resource you own (currently allows)', async () => {
+    it('should not allow shoutout about a resource you own', async () => {
       const shoutoutInput = {
-        toUserId: testUser2.id,
+        toUserId: testUser.id,
         communityId: testCommunity.id,
-        resourceId: testResource.id, // testResource is owned by testUser (signed in user)
+        resourceId: testResource2.id, // testResource is owned by testUser (signed in user)
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
-      // Current behavior: allows users to send shoutouts about their own resources
-      // This business rule is not implemented but was requested to be enforced
-      const result = await createShoutout(supabase, shoutoutInput);
-      expect(result).toBeTruthy();
-      expect(result.id).toBeTruthy();
-
-      // Cleanup
-      await supabase.from('shoutouts').delete().eq('id', result.id);
+      await expect(createShoutout(supabase, shoutoutInput)).rejects.toThrow();
     });
   });
 
@@ -120,21 +114,18 @@ describe('Shoutouts API - CRUD Operations', () => {
     let readOnlyShoutout2: Shoutout;
 
     beforeAll(async () => {
-      // Create test shoutouts for read-only operations
-      // Sign in as testUser to create first shoutout
-      await signIn(supabase, testUser.email, 'TestPass123!');
       readOnlyShoutout1 = await createTestShoutout({
         supabase,
-        toUserId: testUser2.id,
+        toUserId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });
 
       // Sign in as testUser2 to create second shoutout
-      await signIn(supabase, testUser2.email, 'TestPass123!');
+      await signIn(supabase, testUser.email, 'TestPass123!');
       readOnlyShoutout2 = await createTestShoutout({
         supabase,
-        toUserId: testUser.id,
+        toUserId: testUser2.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });

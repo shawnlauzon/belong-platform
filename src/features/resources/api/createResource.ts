@@ -7,7 +7,6 @@ import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
 import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
-import { fetchUserCommunities } from '@/features/communities/api/fetchUserCommunities';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
@@ -15,21 +14,21 @@ export async function createResource(
 ): Promise<Resource> {
   const currentUserId = await getAuthIdOrThrow(supabase);
 
-  // Validate user membership in all specified communities
-  const userCommunities = await fetchUserCommunities(supabase, currentUserId);
-  const userCommunityIds = userCommunities.map(
-    (membership) => membership.communityId,
-  );
+  // // Validate user membership in all specified communities
+  // const userCommunities = await fetchUserCommunities(supabase, currentUserId);
+  // const userCommunityIds = userCommunities.map(
+  //   (membership) => membership.communityId,
+  // );
 
-  const invalidCommunityIds = resourceData.communityIds.filter(
-    (communityId) => !userCommunityIds.includes(communityId),
-  );
+  // const invalidCommunityIds = resourceData.communityIds.filter(
+  //   (communityId) => !userCommunityIds.includes(communityId),
+  // );
 
-  if (invalidCommunityIds.length > 0) {
-    throw new Error(
-      `User is not a member of communities: ${invalidCommunityIds.join(', ')}`,
-    );
-  }
+  // if (invalidCommunityIds.length > 0) {
+  //   throw new Error(
+  //     `User is not a member of communities: ${invalidCommunityIds.join(', ')}`,
+  //   );
+  // }
 
   const withoutCommunityIds = {
     ...resourceData,
@@ -45,7 +44,7 @@ export async function createResource(
   const { data, error } = await supabase
     .from('resources')
     .insert(dbData)
-    .select('*, owner:profiles!owner_id(*)')
+    .select('id')
     .single();
 
   if (error || !data) {

@@ -15,6 +15,7 @@ import {
   createResource,
   createResourceTimeslot,
   createResourceClaim,
+  updateResourceClaim,
 } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
@@ -177,9 +178,11 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId,
         timeslotId,
-        status: 'approved',
+        status: 'pending',
       });
-      return await createResourceClaim(supabase, claimInput);
+      const claim = await createResourceClaim(supabase, claimInput);
+      // Update to approved status
+      return await updateResourceClaim(supabase, claim.id, { status: 'approved' });
     };
 
     await Promise.all([

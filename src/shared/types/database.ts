@@ -2555,6 +2555,7 @@ export type Database = {
         | "rejected"
         | "completed"
         | "cancelled"
+        | "interested"
       resource_status: "open" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -2705,6 +2706,7 @@ export const Constants = {
         "rejected",
         "completed",
         "cancelled",
+        "interested",
       ],
       resource_status: ["open", "completed", "cancelled"],
     },
