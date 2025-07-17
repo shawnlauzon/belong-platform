@@ -31,9 +31,14 @@ export async function createResource(
     );
   }
 
+  const withoutCommunityIds = {
+    ...resourceData,
+    communityIds: undefined,
+  };
+
   // Create resource with first community for database consistency
   const dbData = toResourceInsertRow({
-    ...resourceData,
+    ...withoutCommunityIds,
     ownerId: currentUserId,
   });
 
