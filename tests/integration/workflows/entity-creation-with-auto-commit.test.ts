@@ -10,11 +10,9 @@ import { signIn } from '@/features/auth/api';
 import { uploadImage } from '@/features/images/api';
 import { createResource } from '@/features/resources/api';
 import { createCommunity } from '@/features/communities/api';
-import { createGathering } from '@/features/gatherings/api';
 import { updateUser } from '@/features/users/api';
 import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
-import { createFakeGatheringInput } from '@/features/gatherings/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
@@ -74,7 +72,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
         title: `${TEST_PREFIX}Auto-Commit Resource ${Date.now()}`,
         description: 'Test resource with auto-commit images',
         imageUrls: [tempImage1, tempImage2],
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         category: 'tools',
         type: 'offer',
       });
@@ -106,7 +104,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
     it('creates resource without images successfully', async () => {
       const resourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}No Images Resource ${Date.now()}`,
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         category: 'skills',
         type: 'request',
         // No imageUrls
@@ -221,59 +219,6 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
     });
   });
 
-  describe('Gathering Creation with Images Auto-Commit', () => {
-    it('creates gathering with temporary images and auto-commits them', async () => {
-      // Upload temporary gathering images
-      const tempImage1 = await uploadImage({
-        supabase,
-        file: createTestImageFile({
-          name: `${TEST_PREFIX}gathering-img1-${Date.now()}.jpg`,
-        }),
-        folder: 'temp-upload',
-      });
-      const tempImage2 = await uploadImage({
-        supabase,
-        file: createTestImageFile({
-          name: `${TEST_PREFIX}gathering-img2-${Date.now()}.jpg`,
-        }),
-        folder: 'temp-upload',
-      });
-
-      // Create gathering with temp images
-      const gatheringData = createFakeGatheringInput({
-        title: `${TEST_PREFIX}Auto-Commit Gathering ${Date.now()}`,
-        description: 'Test gathering with auto-commit images',
-        imageUrls: [tempImage1, tempImage2],
-        communityId: testCommunity.id,
-        startDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-        endDateTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-      });
-
-      const gathering = await createGathering(supabase, gatheringData);
-
-      // Verify gathering was created with permanent URLs
-      expect(gathering).toBeTruthy();
-      if (!gathering) throw new Error('Gathering should exist');
-      expect(gathering.imageUrls).toHaveLength(2);
-      expect(gathering.imageUrls![0]).not.toContain('temp-upload-');
-      expect(gathering.imageUrls![0]).toContain(`gathering-${gathering.id}`);
-      expect(gathering.imageUrls![1]).not.toContain('temp-upload-');
-      expect(gathering.imageUrls![1]).toContain(`gathering-${gathering.id}`);
-
-      // Verify temp images were moved
-      const tempExists1 = await verifyImagesExist([tempImage1]);
-      const tempExists2 = await verifyImagesExist([tempImage2]);
-      expect(tempExists1).toBe(false);
-      expect(tempExists2).toBe(false);
-
-      // Verify permanent images exist
-      const permExists1 = await verifyImagesExist([gathering.imageUrls![0]]);
-      const permExists2 = await verifyImagesExist([gathering.imageUrls![1]]);
-      expect(permExists1).toBe(true);
-      expect(permExists2).toBe(true);
-    });
-  });
-
   describe('Mixed Temporary and Permanent URLs', () => {
     it('handles mixed temporary and permanent URLs correctly', async () => {
       // Upload one temp image
@@ -293,7 +238,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
       const resourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}Mixed URLs Resource ${Date.now()}`,
         imageUrls: [tempImage, permanentUrl],
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         category: 'other',
         type: 'offer',
       });
@@ -335,7 +280,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
           '', // Empty string
           'https://invalid-domain.com/image.jpg',
         ],
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         category: 'supplies',
         type: 'request',
       });
@@ -360,7 +305,7 @@ describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
       const resourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}Empty Images Resource ${Date.now()}`,
         imageUrls: [], // Empty array
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         category: 'food',
         type: 'offer',
       });

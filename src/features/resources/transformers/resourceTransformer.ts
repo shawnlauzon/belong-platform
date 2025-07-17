@@ -102,6 +102,9 @@ export function toDomainResource(
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
     owner: partialOwner,
+    communityIds: dbResource.resource_communities.map(
+      (community) => community.community.id,
+    ),
     communities: dbResource.resource_communities.map((community) =>
       toDomainCommunitySummary(community.community),
     ),

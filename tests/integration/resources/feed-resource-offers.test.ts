@@ -44,7 +44,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Past_Timed_${Date.now()}`,
         description: `${TEST_PREFIX} past timed resource offer`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 
@@ -66,7 +66,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Current_Timed_${Date.now()}`,
         description: `${TEST_PREFIX} current timed resource offer`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 
@@ -124,7 +124,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Active_Timed_${Date.now()}`,
         description: `${TEST_PREFIX} active timed resource offer`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 
@@ -151,7 +151,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Completed_Timed_${Date.now()}`,
         description: `${TEST_PREFIX} completed timed resource offer`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 
@@ -203,7 +203,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Future_${Date.now()}`,
         description: `${TEST_PREFIX} future resource offer`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 
@@ -227,7 +227,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         title: `${TEST_PREFIX}Past_Ended_${Date.now()}`,
         description: `${TEST_PREFIX} past resource offer that ended`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: [],
       });
 

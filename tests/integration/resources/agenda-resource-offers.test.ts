@@ -8,17 +8,25 @@ import { TEST_PREFIX } from '../helpers/test-data';
 import {
   createTestUser,
   createTestCommunity,
-  createTestResourceShoutout,
+  createTestShoutout,
 } from '../helpers/test-data';
 import { fetchAgenda } from '@/features/agenda/api';
-import { createResource, createResourceTimeslot, createResourceClaim } from '@/features/resources/api';
+import {
+  createResource,
+  createResourceTimeslot,
+  createResourceClaim,
+} from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
 import type { Agenda } from '@/features/agenda/types';
 import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource, ResourceTimeslot } from '@/features/resources/types';
-import { createFakeResourceInput, createFakeResourceTimeslotInput, createFakeResourceClaimInput } from '@/features/resources/__fakes__';
+import {
+  createFakeResourceInput,
+  createFakeResourceTimeslotInput,
+  createFakeResourceClaimInput,
+} from '@/features/resources/__fakes__';
 
 describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
   let supabase: SupabaseClient<Database>;
@@ -54,12 +62,9 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       description: `${TEST_PREFIX} test resource offer`,
       type: 'offer',
-      communityId: community.id,
+      communityIds: [community.id],
     });
-    upcomingOffer1 = await createResource(
-      supabase,
-      upcomingOfferInput1,
-    );
+    upcomingOffer1 = await createResource(supabase, upcomingOfferInput1);
     console.log('upcomingOffer1', upcomingOffer1);
 
     upcomingOffer1Timeslot = await createResourceTimeslot(
@@ -76,12 +81,9 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       description: `${TEST_PREFIX} test resource offer`,
       type: 'offer',
-      communityId: community.id,
+      communityIds: [community.id],
     });
-    upcomingOffer2 = await createResource(
-      supabase,
-      upcomingOfferInput2,
-    );
+    upcomingOffer2 = await createResource(supabase, upcomingOfferInput2);
     console.log('upcomingOffer2', upcomingOffer2);
 
     upcomingOffer2Timeslot = await createResourceTimeslot(
@@ -99,12 +101,9 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       description: `${TEST_PREFIX} test resource offer`,
       type: 'offer',
-      communityId: community.id,
+      communityIds: [community.id],
     });
-    finishedOffer1 = await createResource(
-      supabase,
-      finishedOfferInput1,
-    );
+    finishedOffer1 = await createResource(supabase, finishedOfferInput1);
     console.log('finishedOffer1', finishedOffer1);
 
     finishedOffer1Timeslot = await createResourceTimeslot(
@@ -121,12 +120,9 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       description: `${TEST_PREFIX} test resource offer`,
       type: 'offer',
-      communityId: community.id,
+      communityIds: [community.id],
     });
-    finishedOffer2 = await createResource(
-      supabase,
-      finishedOfferInput2,
-    );
+    finishedOffer2 = await createResource(supabase, finishedOfferInput2);
     console.log('finishedOffer2', finishedOffer2);
 
     finishedOffer2Timeslot = await createResourceTimeslot(
@@ -144,7 +140,7 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       type: 'request',
       description: `${TEST_PREFIX} test resource request`,
-      communityId: community.id,
+      communityIds: [community.id],
     });
     request1 = await createResource(supabase, requestInput1);
     console.log('request1', request1);
@@ -153,7 +149,7 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       type: 'request',
       description: `${TEST_PREFIX} test resource request`,
-      communityId: community.id,
+      communityIds: [community.id],
     });
     request2 = await createResource(supabase, requestInput2);
     console.log('request2', request2);
@@ -162,7 +158,7 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       title: `${TEST_PREFIX}Resource_${Date.now()}`,
       type: 'request',
       description: `${TEST_PREFIX} test resource request`,
-      communityId: community.id,
+      communityIds: [community.id],
     });
     request3 = await createResource(supabase, requestInput3);
     console.log('request3', request3);
@@ -174,7 +170,10 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
     await joinCommunity(supabase, community.id);
 
     // Helper function to create approved resource claims
-    const createApprovedClaim = async (resourceId: string, timeslotId?: string) => {
+    const createApprovedClaim = async (
+      resourceId: string,
+      timeslotId?: string,
+    ) => {
       const claimInput = createFakeResourceClaimInput({
         resourceId,
         timeslotId,
@@ -194,16 +193,16 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
 
     // Send a shoutout for finishedOffer1 but not finishedOffer2
     await Promise.all([
-      createTestResourceShoutout({
+      createTestShoutout({
         supabase,
         toUserId: providerUser.id,
-        communityId: community.id,
+        communityIds: [community.id],
         resourceId: finishedOffer1.id,
       }),
-      createTestResourceShoutout({
+      createTestShoutout({
         supabase,
         toUserId: providerUser.id,
-        communityId: community.id,
+        communityIds: [community.id],
         resourceId: request1.id,
       }),
     ]);
@@ -218,10 +217,10 @@ describe('Agenda Integration Tests - Resource Offers Core Aggregation', () => {
       // Ensure provider is signed in for all provider tests
       await signIn(supabase, providerUser.email, 'TestPass123!');
 
-      await createTestResourceShoutout({
+      await createTestShoutout({
         supabase,
         toUserId: claimantUser.id,
-        communityId: community.id,
+        communityIds: [community.id],
         resourceId: request1.id,
       });
     });

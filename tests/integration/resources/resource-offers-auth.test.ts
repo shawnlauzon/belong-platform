@@ -72,7 +72,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
           type: 'offer',
           searchTerm: 'test',
           ownerId: testUser.id,
-          communityId: testCommunity.id,
+          communityIds: [testCommunity.id],
         });
 
         expect(Array.isArray(resources)).toBe(true);
@@ -131,7 +131,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
         const data = createFakeResourceInput({
           title: `${TEST_PREFIX}Unauth_Create_Test`,
           type: 'offer',
-          communityId: testCommunity.id,
+          communityIds: [testCommunity.id],
           imageUrls: undefined,
         });
 
@@ -225,7 +225,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
       const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Auth_Create_Test_${Date.now()}`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: undefined,
       });
 
@@ -294,7 +294,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
       const deleteData = createFakeResourceInput({
         title: `${TEST_PREFIX}Auth_Delete_Test_${Date.now()}`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: undefined,
       });
 

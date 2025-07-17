@@ -47,7 +47,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Create_Test_${Date.now()}`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: undefined, // Don't generate random images
       });
 
@@ -60,7 +60,7 @@ describe('Resource Offers API - CRUD Operations', () => {
         expect(resource!.title).toBe(data.title);
         expect(resource!.type).toBe('offer');
         expect(resource!.ownerId).toBe(testUser.id);
-        expect(resource!.communityId).toBe(testCommunity.id);
+        expect(resource!.communities).toEqual([expect.objectContaining({id: testCommunity.id})]);
 
         // Verify database record exists with all expected fields
         const { data: dbRecord } = await supabase
@@ -75,7 +75,6 @@ describe('Resource Offers API - CRUD Operations', () => {
           description: data.description,
           type: 'offer',
           owner_id: testUser.id,
-          community_id: testCommunity.id,
           location_name: data.locationName,
         });
 
@@ -84,6 +83,15 @@ describe('Resource Offers API - CRUD Operations', () => {
         );
         expect(dbRecord!.created_at).toBeTruthy();
         expect(dbRecord!.updated_at).toBeTruthy();
+
+        // Verify resource_communities join table
+        const { data: resourceCommunities } = await supabase
+          .from('resource_communities')
+          .select('*')
+          .eq('resource_id', resource!.id);
+
+        expect(resourceCommunities).toHaveLength(1);
+        expect(resourceCommunities![0].community_id).toBe(testCommunity.id);
       } finally {
         await cleanupResource(resource);
       }
@@ -93,7 +101,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Timeslot_Test_${Date.now()}`,
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         imageUrls: undefined,
       });
 
@@ -164,7 +172,7 @@ describe('Resource Offers API - CRUD Operations', () => {
         const data = createFakeResourceInput({
           title: `${TEST_PREFIX}Image_Test_${Date.now()}`,
           type: 'offer',
-          communityId: testCommunity.id,
+          communityIds: [testCommunity.id],
           imageUrls: [tempImageResult],
         });
 
@@ -225,7 +233,7 @@ describe('Resource Offers API - CRUD Operations', () => {
           createFakeResourceInput({
             title: uniqueTitle,
             type: 'offer',
-            communityId: testCommunity.id,
+            communityIds: [testCommunity.id],
             imageUrls: undefined,
           }),
         );
@@ -252,14 +260,14 @@ describe('Resource Offers API - CRUD Operations', () => {
       expect(filtered.every((r) => r.type === 'offer')).toBe(true);
     });
 
-    it('filters by communityId', async () => {
+    it('filters by communityIds', async () => {
       const filtered = await resourcesApi.fetchResources(supabase, {
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
       });
 
       expect(filtered.length).toBeGreaterThanOrEqual(2);
-      expect(filtered.every((r) => r.communityId === testCommunity.id)).toBe(
+      expect(filtered.every((r) => r.communities.some(c => c.id === testCommunity.id))).toBe(
         true,
       );
       expect(filtered.every((r) => r.type === 'offer')).toBe(true);
@@ -326,7 +334,6 @@ describe('Resource Offers API - CRUD Operations', () => {
           description: newDescription,
           location_name: newLocation,
           owner_id: resource.ownerId,
-          community_id: resource.communityId,
         });
       } finally {
         await cleanupResource(resource);
@@ -364,7 +371,6 @@ describe('Resource Offers API - CRUD Operations', () => {
           description: originalDescription,
           location_name: originalLocation,
           owner_id: resource.ownerId,
-          community_id: resource.communityId,
         });
       } finally {
         await cleanupResource(resource);
@@ -477,7 +483,7 @@ describe('Resource Offers API - CRUD Operations', () => {
         const data = createFakeResourceInput({
           title: `${TEST_PREFIX}General_Create_Test_${Date.now()}`,
           type: 'request',
-          communityId: testCommunity.id,
+          communityIds: [testCommunity.id],
           category: 'tools',
           imageUrls: undefined,
         });
@@ -489,7 +495,7 @@ describe('Resource Offers API - CRUD Operations', () => {
             id: expect.any(String),
             title: data.title,
             ownerId: testUser.id,
-            communityId: testCommunity.id,
+            communityIds: [testCommunity.id],
             type: data.type,
             category: data.category,
           });
@@ -505,8 +511,7 @@ describe('Resource Offers API - CRUD Operations', () => {
             id: resource.id,
             title: data.title,
             owner_id: testUser.id,
-            community_id: testCommunity.id,
-            type: data.type,
+              type: data.type,
             category: data.category,
             description: data.description,
           });
@@ -527,7 +532,7 @@ describe('Resource Offers API - CRUD Operations', () => {
             createFakeResourceInput({
               title: `${TEST_PREFIX}Filter_Category_${Date.now()}`,
               type: 'request',
-              communityId: testCommunity.id,
+              communityIds: [testCommunity.id],
               category: 'tools',
               imageUrls: undefined,
             }),
@@ -551,7 +556,7 @@ describe('Resource Offers API - CRUD Operations', () => {
             supabase,
             createFakeResourceInput({
               title: `${TEST_PREFIX}Filter_Request_${Date.now()}`,
-              communityId: testCommunity.id,
+              communityIds: [testCommunity.id],
               type: 'request',
               category: 'tools',
               imageUrls: undefined,
@@ -579,7 +584,7 @@ describe('Resource Offers API - CRUD Operations', () => {
             createFakeResourceInput({
               title: uniqueTitle,
               type: 'request',
-              communityId: testCommunity.id,
+              communityIds: [testCommunity.id],
               category: 'tools',
               imageUrls: undefined,
             }),
@@ -614,6 +619,147 @@ describe('Resource Offers API - CRUD Operations', () => {
           await cleanupResource(resource);
         }
       });
+    });
+  });
+
+  // ====================================================================
+  // MULTI-COMMUNITY FUNCTIONALITY TESTS
+  // ====================================================================
+
+  describe('Multi-Community Resource Functionality', () => {
+    let secondCommunity: Community;
+
+    beforeAll(async () => {
+      // Create a second community for multi-community tests
+      secondCommunity = await createTestCommunity(supabase);
+    });
+
+    it('creates resource with multiple communities', async () => {
+      const data = createFakeResourceInput({
+        title: `${TEST_PREFIX}Multi_Community_Test_${Date.now()}`,
+        type: 'offer',
+        communityIds: [testCommunity.id, secondCommunity.id],
+        imageUrls: undefined,
+      });
+
+      let resource;
+      try {
+        resource = await resourcesApi.createResource(supabase, data);
+
+        expect(resource).toBeTruthy();
+        expect(resource!.communities).toHaveLength(2);
+        expect(resource!.communities.some(c => c.id === testCommunity.id)).toBe(true);
+        expect(resource!.communities.some(c => c.id === secondCommunity.id)).toBe(true);
+
+        // Verify resource_communities join table has both communities
+        const { data: resourceCommunities } = await supabase
+          .from('resource_communities')
+          .select('*')
+          .eq('resource_id', resource!.id);
+
+        expect(resourceCommunities).toHaveLength(2);
+        const communityIds = resourceCommunities!.map(rc => rc.community_id);
+        expect(communityIds).toContain(testCommunity.id);
+        expect(communityIds).toContain(secondCommunity.id);
+      } finally {
+        await cleanupResource(resource);
+      }
+    });
+
+    it('filters by multiple community IDs', async () => {
+      let resource1, resource2, resource3;
+      try {
+        // Create resource in first community only
+        resource1 = await resourcesApi.createResource(supabase, createFakeResourceInput({
+          title: `${TEST_PREFIX}Community1_Only_${Date.now()}`,
+          type: 'offer',
+          communityIds: [testCommunity.id],
+          imageUrls: undefined,
+        }));
+
+        // Create resource in second community only
+        resource2 = await resourcesApi.createResource(supabase, createFakeResourceInput({
+          title: `${TEST_PREFIX}Community2_Only_${Date.now()}`,
+          type: 'offer',
+          communityIds: [secondCommunity.id],
+          imageUrls: undefined,
+        }));
+
+        // Create resource in both communities
+        resource3 = await resourcesApi.createResource(supabase, createFakeResourceInput({
+          title: `${TEST_PREFIX}Both_Communities_${Date.now()}`,
+          type: 'offer',
+          communityIds: [testCommunity.id, secondCommunity.id],
+          imageUrls: undefined,
+        }));
+
+        // Filter by first community only
+        const firstCommunityResources = await resourcesApi.fetchResources(supabase, {
+          type: 'offer',
+          communityIds: [testCommunity.id],
+        });
+
+        expect(firstCommunityResources.some(r => r.id === resource1!.id)).toBe(true);
+        expect(firstCommunityResources.some(r => r.id === resource2!.id)).toBe(false);
+        expect(firstCommunityResources.some(r => r.id === resource3!.id)).toBe(true);
+
+        // Filter by second community only
+        const secondCommunityResources = await resourcesApi.fetchResources(supabase, {
+          type: 'offer',
+          communityIds: [secondCommunity.id],
+        });
+
+        expect(secondCommunityResources.some(r => r.id === resource1!.id)).toBe(false);
+        expect(secondCommunityResources.some(r => r.id === resource2!.id)).toBe(true);
+        expect(secondCommunityResources.some(r => r.id === resource3!.id)).toBe(true);
+
+        // Filter by both communities
+        const bothCommunitiesResources = await resourcesApi.fetchResources(supabase, {
+          type: 'offer',
+          communityIds: [testCommunity.id, secondCommunity.id],
+        });
+
+        expect(bothCommunitiesResources.some(r => r.id === resource1!.id)).toBe(true);
+        expect(bothCommunitiesResources.some(r => r.id === resource2!.id)).toBe(true);
+        expect(bothCommunitiesResources.some(r => r.id === resource3!.id)).toBe(true);
+      } finally {
+        await cleanupResource(resource1);
+        await cleanupResource(resource2);
+        await cleanupResource(resource3);
+      }
+    });
+
+    it('verifies community associations persist across updates', async () => {
+      let resource;
+      try {
+        // Create resource with multiple communities
+        resource = await resourcesApi.createResource(supabase, createFakeResourceInput({
+          title: `${TEST_PREFIX}Update_Multi_Community_${Date.now()}`,
+          type: 'offer',
+          communityIds: [testCommunity.id, secondCommunity.id],
+          imageUrls: undefined,
+        }));
+
+        // Update resource title (should preserve community associations)
+        const updated = await resourcesApi.updateResource(supabase, {
+          id: resource!.id,
+          title: `${TEST_PREFIX}Updated_Title_${Date.now()}`,
+        });
+
+        expect(updated!.communities).toHaveLength(2);
+        expect(updated!.communities.some(c => c.id === testCommunity.id)).toBe(true);
+        expect(updated!.communities.some(c => c.id === secondCommunity.id)).toBe(true);
+
+        // Verify join table still has both associations
+        const { data: resourceCommunities } = await supabase
+          .from('resource_communities')
+          .select('*')
+          .eq('resource_id', resource!.id);
+
+        expect(resourceCommunities).toHaveLength(2);
+      } finally {
+        await cleanupResource(resource);
+      }
     });
   });
 });

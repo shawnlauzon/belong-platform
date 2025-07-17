@@ -5,7 +5,7 @@ import {
   createTestCommunity,
   createTestResource,
   TEST_PREFIX,
-  createTestResourceShoutout,
+  createTestShoutout,
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -123,7 +123,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       // Create test shoutouts for read-only operations
       // Sign in as testUser to create first shoutout
       await signIn(supabase, testUser.email, 'TestPass123!');
-      readOnlyShoutout1 = await createTestResourceShoutout({
+      readOnlyShoutout1 = await createTestShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,
@@ -132,7 +132,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       // Sign in as testUser2 to create second shoutout
       await signIn(supabase, testUser2.email, 'TestPass123!');
-      readOnlyShoutout2 = await createTestResourceShoutout({
+      readOnlyShoutout2 = await createTestShoutout({
         supabase,
         toUserId: testUser.id,
         resourceId: testResource.id,
@@ -259,7 +259,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('updateShoutout', () => {
     it('updates shoutout message', async () => {
       // Create a shoutout to update
-      const createdShoutout = await createTestResourceShoutout({
+      const createdShoutout = await createTestShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,
@@ -307,7 +307,7 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('deleteShoutout', () => {
     it('deletes shoutout successfully', async () => {
       // Create a shoutout to delete
-      const createdShoutout = await createTestResourceShoutout({
+      const createdShoutout = await createTestShoutout({
         supabase,
         toUserId: testUser2.id,
         resourceId: testResource.id,

@@ -1,12 +1,23 @@
-import { createCommunity, joinCommunity } from '@/features/communities/api';
+import { createCommunity } from '@/features/communities/api';
 import { signUp } from '@/features/auth/api';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
-import { createResource } from '@/features/resources/api';
-import { createFakeResourceInput } from '@/features/resources/__fakes__';
+import {
+  createResource,
+  createResourceTimeslot,
+} from '@/features/resources/api';
+import {
+  createFakeResourceInput,
+  createFakeResourceTimeslotInput,
+} from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
-import { Shoutout, ShoutoutInput, createShoutout } from '@/features';
+import {
+  ResourceCategory,
+  Shoutout,
+  ShoutoutInput,
+  createShoutout,
+} from '@/features';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -49,14 +60,15 @@ export async function createTestCommunity(supabase: SupabaseClient<Database>) {
 export async function createTestResource(
   supabase: SupabaseClient<Database>,
   communityId: string,
-  type: 'offer' | 'request' = 'request',
+  type: 'offer' | 'request' = 'offer',
+  category: ResourceCategory = 'tools',
 ) {
   const data = createFakeResourceInput({
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
     description: `${TEST_PREFIX} test resource`,
     type,
     communityIds: [communityId],
-    category: 'tools', // Use a valid category
+    category,
   });
 
   // Add small delay to ensure community membership trigger has completed
@@ -68,7 +80,28 @@ export async function createTestResource(
   return resource;
 }
 
-export async function createTestResourceShoutout({
+export async function createTestResourceTimeslot(
+  supabase: SupabaseClient<Database>,
+  resourceId: string,
+) {
+  const startTime = faker.date.recent();
+  const endTime = new Date(
+    startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
+  );
+
+  const data = createFakeResourceTimeslotInput({
+    resourceId,
+    startTime,
+    endTime,
+  });
+
+  const timeslot = await createResourceTimeslot(supabase, data);
+  if (!timeslot) throw new Error('Failed to create resource timeslot');
+
+  return timeslot;
+}
+
+export async function createTestShoutout({
   supabase,
   resourceId,
   toUserId,

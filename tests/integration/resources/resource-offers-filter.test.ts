@@ -54,7 +54,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const pastCompletedData = createFakeResourceInput({
       title: `${TEST_PREFIX}Past_Completed_Yesterday`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     pastCompletedYesterday = await createResource(supabase, pastCompletedData);
@@ -79,7 +79,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const pastRegularData = createFakeResourceInput({
       title: `${TEST_PREFIX}Past_Regular_Yesterday`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     pastRegularYesterday = await createResource(supabase, pastRegularData);
@@ -102,7 +102,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const pastNoEndData = createFakeResourceInput({
       title: `${TEST_PREFIX}Past_NoEnd_Old`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     pastNoEndOld = await createResource(supabase, pastNoEndData);
@@ -126,7 +126,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const pastCompletedTodayData = createFakeResourceInput({
       title: `${TEST_PREFIX}Past_Completed_Today`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     pastCompletedToday = await createResource(
@@ -155,7 +155,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const currentActiveData = createFakeResourceInput({
       title: `${TEST_PREFIX}Current_Active`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     currentActive = await createResource(supabase, currentActiveData);
@@ -178,7 +178,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const currentRegularData = createFakeResourceInput({
       title: `${TEST_PREFIX}Current_Regular_Today`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     currentRegularToday = await createResource(supabase, currentRegularData);
@@ -201,7 +201,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const currentNoEndData = createFakeResourceInput({
       title: `${TEST_PREFIX}Current_NoEnd_Recent`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     currentNoEndRecent = await createResource(supabase, currentNoEndData);
@@ -227,7 +227,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const futureLaterTodayData = createFakeResourceInput({
       title: `${TEST_PREFIX}Future_Later_Today`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     futureLaterToday = await createResource(supabase, futureLaterTodayData);
@@ -250,7 +250,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const futureRegularLaterData = createFakeResourceInput({
       title: `${TEST_PREFIX}Future_Regular_Later_Today`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     futureRegularLaterToday = await createResource(
@@ -279,7 +279,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     const futureTomorrowData = createFakeResourceInput({
       title: `${TEST_PREFIX}Future_Tomorrow`,
       type: 'offer',
-      communityId: testCommunity.id,
+      communityIds: [testCommunity.id],
       imageUrls: [],
     });
     futureTomorrow = await createResource(supabase, futureTomorrowData);
@@ -305,7 +305,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     it('typical feed scenario - includes current and future, excludes past', async () => {
       const resources = await fetchResources(supabase, {
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         includePast: false,
         includeCurrent: true,
         includeUpcoming: true,
@@ -341,7 +341,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     it('past-only filter - includes only past resource offers', async () => {
       const resources = await fetchResources(supabase, {
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         includePast: true,
         includeCurrent: false,
         includeUpcoming: false,
@@ -377,7 +377,7 @@ describe('Resource Offers Filter - Temporal Flags Integration Tests', () => {
     it('current-only filter - validates complex current logic', async () => {
       const resources = await fetchResources(supabase, {
         type: 'offer',
-        communityId: testCommunity.id,
+        communityIds: [testCommunity.id],
         includePast: false,
         includeCurrent: true,
         includeUpcoming: false,

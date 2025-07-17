@@ -3,7 +3,7 @@ import { UserSummary } from '../../users';
 import { CommunitySummary } from '../../communities';
 import { ResourceStatus, ResourceCategory } from '../index';
 
-export type Resource = IsPersisted<ResourceSummaryFields> & {
+export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields> & {
   id: string;
   createdAt: Date;
   updatedAt: Date;
@@ -12,7 +12,10 @@ export type ResourceSummary = ResourceSummaryFields & {
   id: string;
 };
 
-export type ResourceInput = Omit<ResourceSummaryFields, 'ownerId' | 'owner' | 'communities'> & {
+export type ResourceInput = Omit<
+  ResourceSummaryFields,
+  'ownerId' | 'owner' | 'communities'
+> & {
   description: string;
   locationName: string;
   coordinates?: Coordinates;

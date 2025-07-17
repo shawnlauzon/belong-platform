@@ -4,6 +4,7 @@ import {
   createTestUser,
   createTestCommunity,
   createTestResource,
+  createTestResourceTimeslot,
 } from '../helpers/test-data';
 import { cleanupAllTestData, cleanupResourceClaims } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
@@ -13,7 +14,11 @@ import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import { createFakeResourceClaimInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';
-import { Resource, ResourceClaim } from '@/features/resources/types';
+import {
+  Resource,
+  ResourceClaim,
+  ResourceTimeslot,
+} from '@/features/resources/types';
 import { joinCommunity } from '@/features/communities/api';
 
 describe('Resource Claims - Basic Operations', () => {
@@ -22,6 +27,7 @@ describe('Resource Claims - Basic Operations', () => {
   let claimant: User;
   let testCommunity: Community;
   let testResource: Resource;
+  let testTimeslot: ResourceTimeslot;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -31,6 +37,7 @@ describe('Resource Claims - Basic Operations', () => {
 
     testCommunity = await createTestCommunity(supabase);
     testResource = await createTestResource(supabase, testCommunity.id);
+    testTimeslot = await createTestResourceTimeslot(supabase, testResource.id);
 
     // Create user who will make claims
     claimant = await createTestUser(supabase);
@@ -49,6 +56,7 @@ describe('Resource Claims - Basic Operations', () => {
     it('creates resource claim with default "pending" status', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
+        timeslotId: testTimeslot.id,
       });
       delete claimInput.status;
 
@@ -72,7 +80,7 @@ describe('Resource Claims - Basic Operations', () => {
     it('creates resource claim with explictly set "pending" status', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
-        timeslotId: undefined,
+        timeslotId: testTimeslot.id,
         status: 'pending',
       });
 
@@ -86,7 +94,7 @@ describe('Resource Claims - Basic Operations', () => {
         resourceId: testResource.id,
         userId: claimant.id,
         status: 'pending',
-        timeslotId: undefined,
+        timeslotId: testTimeslot.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -105,7 +113,7 @@ describe('Resource Claims - Basic Operations', () => {
       for (const status of invalidStatuses) {
         const claimInput = createFakeResourceClaimInput({
           resourceId: testResource.id,
-          timeslotId: undefined,
+          timeslotId: testTimeslot.id,
           status: status as 'approved' | 'rejected' | 'completed' | 'cancelled',
         });
 
@@ -121,7 +129,7 @@ describe('Resource Claims - Basic Operations', () => {
     beforeAll(async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
-        timeslotId: undefined,
+        timeslotId: testTimeslot.id,
       });
 
       claim = await resourcesApi.createResourceClaim(supabase, claimInput);
@@ -156,7 +164,7 @@ describe('Resource Claims - Basic Operations', () => {
       const invalidResourceId = 'invalid-resource-id';
       const claimInput = createFakeResourceClaimInput({
         resourceId: invalidResourceId,
-        timeslotId: undefined,
+        timeslotId: testTimeslot.id,
         status: 'pending',
       });
 
@@ -210,7 +218,7 @@ describe('Resource Claims - Basic Operations', () => {
         for (const status of invalidStatuses) {
           const claimInput = createFakeResourceClaimInput({
             resourceId: testResource.id,
-            timeslotId: undefined,
+            timeslotId: testTimeslot.id,
             status: status as
               | 'approved'
               | 'rejected'

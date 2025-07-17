@@ -2,13 +2,13 @@ import { faker } from '@faker-js/faker';
 import {
   Resource,
   ResourceInput,
-  ResourceCategory,
+  type ResourceCategory,
   ResourceTimeslot,
   ResourceTimeslotInput,
   ResourceClaim,
   ResourceClaimInput,
 } from '../types';
-import { ResourceRow, ResourceRowWithRelations } from '../types/resourceRow';
+import { ResourceRowWithRelations } from '../types/resourceRow';
 import {
   ResourceTimeslotRow,
   ResourceTimeslotUpdateDbData,
@@ -16,7 +16,10 @@ import {
 } from '../types/resourceRow';
 import { User } from '../../users';
 import { createFakeProfileRow, createFakeUser } from '../../users/__fakes__';
-import { createFakeCommunityRow } from '../../communities/__fakes__';
+import {
+  createFakeCommunityRow,
+  createFakeCommunitySummary,
+} from '../../communities/__fakes__';
 
 /**
  * Creates a fake domain Resource object with an owner
@@ -28,6 +31,8 @@ export function createFakeResource(
 
   const owner = createFakeUser();
 
+  const communities = [createFakeCommunitySummary()];
+
   return {
     id: faker.string.uuid(),
     type: faker.helpers.arrayElement(['offer', 'request'] as const),
@@ -38,6 +43,7 @@ export function createFakeResource(
           'skills',
           'food',
           'supplies',
+          'event',
           'other',
         ] as const),
       { probability: 0.8 },
@@ -54,14 +60,8 @@ export function createFakeResource(
     updatedAt: now,
     ownerId: owner.id,
     owner,
-    communities: [
-      {
-        id: faker.string.uuid(),
-        name: faker.company.name(),
-        type: 'place',
-        memberCount: faker.number.int({ min: 10, max: 1000 }),
-      },
-    ],
+    communityIds: communities.map((c) => c.id),
+    communities,
     status: faker.helpers.arrayElement([
       'open',
       'completed',
@@ -88,48 +88,6 @@ export function createFakeResourceWithOwner(
   };
 }
 
-export function createFakeResourceRowWithoutRelations(
-  overrides?: Partial<ResourceRow>,
-): ResourceRow {
-  return {
-    id: faker.string.uuid(),
-    title: faker.commerce.productName(),
-    description: faker.lorem.paragraph(),
-    type: faker.helpers.arrayElement(['offer', 'request'] as const),
-    category:
-      faker.helpers.maybe(
-        () =>
-          faker.helpers.arrayElement([
-            'tools',
-            'skills',
-            'food',
-            'supplies',
-            'other',
-          ] as const),
-        {
-          probability: 0.8,
-        },
-      ) ?? null,
-    owner_id: faker.string.uuid(),
-    image_urls: [],
-    location_name: faker.location.city(),
-    coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
-    created_at: faker.date.past().toISOString(),
-    updated_at: faker.date.recent().toISOString(),
-    status: faker.helpers.arrayElement([
-      'open',
-      'completed',
-      'cancelled',
-    ] as const),
-    max_claims:
-      faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
-    requires_approval: faker.datatype.boolean(),
-    expires_at:
-      faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
-    ...overrides,
-  };
-}
-
 export function createFakeResourceInput(
   overrides?: Partial<ResourceInput>,
 ): ResourceInput {
@@ -142,6 +100,7 @@ export function createFakeResourceInput(
       'skills',
       'food',
       'supplies',
+      'event',
       'other',
     ] as const),
     communityIds: [faker.string.uuid()],
