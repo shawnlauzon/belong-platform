@@ -45,7 +45,7 @@ export async function createResource(
   const { data, error } = await supabase
     .from('resources')
     .insert(dbData)
-    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .select('*, owner:profiles!owner_id(*)')
     .single();
 
   if (error || !data) {
@@ -101,5 +101,16 @@ export async function createResource(
     }
   }
 
-  return toDomainResource(data);
+  // Fetch the complete resource with all relations now that community associations exist
+  const { data: completeResource, error: fetchError } = await supabase
+    .from('resources')
+    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .eq('id', data.id)
+    .single();
+
+  if (fetchError || !completeResource) {
+    throw new Error(fetchError?.message || 'Failed to fetch complete resource');
+  }
+
+  return toDomainResource(completeResource);
 }
