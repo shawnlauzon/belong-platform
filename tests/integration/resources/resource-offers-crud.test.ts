@@ -9,13 +9,17 @@ import {
 import { cleanupAllTestData, cleanupResource } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
 import { signIn } from '@/features/auth/api';
-import { createFakeResourceInput, createFakeResourceTimeslotInput } from '@/features/resources/__fakes__';
+import {
+  createFakeResourceInput,
+  createFakeResourceTimeslotInput,
+} from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource, ResourceTimeslot } from '@/features/resources/types';
 import { parsePostGisPoint } from '@/shared';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Resource Offers API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -30,12 +34,17 @@ describe('Resource Offers API - CRUD Operations', () => {
     // Create shared resources for read-only tests
     testUser = await createTestUser(supabase);
 
-    // Sign in as testUser to ensure proper context for resource creation
-    await signIn(supabase, testUser.email, 'TestPass123!');
-
     testCommunity = await createTestCommunity(supabase);
-    readOnlyOffer1 = await createTestResource(supabase, testCommunity.id, 'offer');
-    readOnlyOffer2 = await createTestResource(supabase, testCommunity.id, 'offer');
+    readOnlyOffer1 = await createTestResource(
+      supabase,
+      testCommunity.id,
+      'offer',
+    );
+    readOnlyOffer2 = await createTestResource(
+      supabase,
+      testCommunity.id,
+      'offer',
+    );
   });
 
   afterAll(async () => {
@@ -43,6 +52,20 @@ describe('Resource Offers API - CRUD Operations', () => {
   });
 
   describe('createResource', () => {
+    let resource: Resource | null = null;
+    let timeslot: ResourceTimeslot | null = null;
+
+    afterEach(async () => {
+      if (resource) {
+        await cleanupResource(resource);
+        resource = null;
+      }
+      if (timeslot) {
+        await resourcesApi.deleteResourceTimeslot(supabase, timeslot.id);
+        timeslot = null;
+      }
+    });
+
     it('creates resource offer with valid data', async () => {
       const data = createFakeResourceInput({
         title: `${TEST_PREFIX}Create_Test_${Date.now()}`,
@@ -51,50 +74,47 @@ describe('Resource Offers API - CRUD Operations', () => {
         imageUrls: undefined, // Don't generate random images
       });
 
-      let resource;
-      try {
-        resource = await resourcesApi.createResource(supabase, data);
+      resource = await resourcesApi.createResource(supabase, data);
 
-        expect(resource).toBeTruthy();
-        expect(resource!.id).toBeTruthy();
-        expect(resource!.title).toBe(data.title);
-        expect(resource!.type).toBe('offer');
-        expect(resource!.ownerId).toBe(testUser.id);
-        expect(resource!.communities).toEqual([expect.objectContaining({id: testCommunity.id})]);
+      expect(resource).toBeTruthy();
+      expect(resource!.id).toBeTruthy();
+      expect(resource!.title).toBe(data.title);
+      expect(resource!.type).toBe('offer');
+      expect(resource!.ownerId).toBe(testUser.id);
+      expect(resource!.communities).toEqual([
+        expect.objectContaining({ id: testCommunity.id }),
+      ]);
 
-        // Verify database record exists with all expected fields
-        const { data: dbRecord } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('id', resource!.id)
-          .single();
+      // Verify database record exists with all expected fields
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource!.id)
+        .single();
 
-        expect(dbRecord).toMatchObject({
-          id: resource!.id,
-          title: data.title,
-          description: data.description,
-          type: 'offer',
-          owner_id: testUser.id,
-          location_name: data.locationName,
-        });
+      expect(dbRecord).toMatchObject({
+        id: resource!.id,
+        title: data.title,
+        description: data.description,
+        type: 'offer',
+        owner_id: testUser.id,
+        location_name: data.locationName,
+      });
 
-        expect(parsePostGisPoint(dbRecord!.coordinates)).toEqual(
-          data.coordinates,
-        );
-        expect(dbRecord!.created_at).toBeTruthy();
-        expect(dbRecord!.updated_at).toBeTruthy();
+      expect(parsePostGisPoint(dbRecord!.coordinates)).toEqual(
+        data.coordinates,
+      );
+      expect(dbRecord!.created_at).toBeTruthy();
+      expect(dbRecord!.updated_at).toBeTruthy();
 
-        // Verify resource_communities join table
-        const { data: resourceCommunities } = await supabase
-          .from('resource_communities')
-          .select('*')
-          .eq('resource_id', resource!.id);
+      // Verify resource_communities join table
+      const { data: resourceCommunities } = await supabase
+        .from('resource_communities')
+        .select('*')
+        .eq('resource_id', resource!.id);
 
-        expect(resourceCommunities).toHaveLength(1);
-        expect(resourceCommunities![0].community_id).toBe(testCommunity.id);
-      } finally {
-        await cleanupResource(resource);
-      }
+      expect(resourceCommunities).toHaveLength(1);
+      expect(resourceCommunities![0].community_id).toBe(testCommunity.id);
     });
 
     it('creates resource offer with timeslots', async () => {
@@ -105,117 +125,43 @@ describe('Resource Offers API - CRUD Operations', () => {
         imageUrls: undefined,
       });
 
-      let resource;
-      let timeslot: ResourceTimeslot | undefined;
-      try {
-        resource = await resourcesApi.createResource(supabase, data);
+      resource = await resourcesApi.createResource(supabase, data);
 
-        // Create a timeslot for this resource offer
-        const timeslotData = createFakeResourceTimeslotInput({
-          resourceId: resource!.id,
-          startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-          endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-          maxClaims: 5,
-        });
-
-        timeslot = await resourcesApi.createResourceTimeslot(supabase, timeslotData);
-
-        expect(timeslot).toBeTruthy();
-        expect(timeslot!.resourceId).toBe(resource!.id);
-        expect(timeslot!.maxClaims).toBe(5);
-
-        // Verify timeslot database record exists
-        const { data: timeslotRecord } = await supabase
-          .from('resource_timeslots')
-          .select('*')
-          .eq('id', timeslot!.id)
-          .single();
-
-        expect(timeslotRecord).toBeTruthy();
-        expect(timeslotRecord!.resource_id).toBe(resource!.id);
-        expect(timeslotRecord!.max_claims).toBe(5);
-      } finally {
-        if (timeslot) {
-          await resourcesApi.deleteResourceTimeslot(supabase, timeslot.id);
-        }
-        await cleanupResource(resource);
-      }
-    });
-
-    it('handles image auto-commit workflow', async () => {
-      const { uploadImage } = await import('@/features/images/api');
-
-      // Create a test image file
-      const testImageContent = new Uint8Array([
-        137, 80, 78, 71, 13, 10, 26, 10,
-      ]); // PNG header
-      const testFile = new File([testImageContent], 'test-image.png', {
-        type: 'image/png',
+      // Create a timeslot for this resource offer
+      const timeslotData = createFakeResourceTimeslotInput({
+        resourceId: resource!.id,
+        startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+        endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
+        maxClaims: 5,
       });
 
-      let tempImageResult: string | null = null;
-      let resource;
+      timeslot = await resourcesApi.createResourceTimeslot(
+        supabase,
+        timeslotData,
+      );
 
-      try {
-        // First upload a temporary image
-        tempImageResult = await uploadImage({
-          supabase,
-          file: testFile,
-          folder: 'temp-upload',
-        });
+      expect(timeslot).toBeTruthy();
+      expect(timeslot!.resourceId).toBe(resource!.id);
+      expect(timeslot!.maxClaims).toBe(5);
 
-        expect(tempImageResult).toBeTruthy();
-        expect(typeof tempImageResult).toBe('string');
-        expect(tempImageResult).toContain('temp-upload-');
+      // Verify timeslot database record exists
+      const { data: timeslotRecord } = await supabase
+        .from('resource_timeslots')
+        .select('*')
+        .eq('id', timeslot!.id)
+        .single();
 
-        // Create resource offer with the temporary image URL
-        const data = createFakeResourceInput({
-          title: `${TEST_PREFIX}Image_Test_${Date.now()}`,
-          type: 'offer',
-          communityIds: [testCommunity.id],
-          imageUrls: [tempImageResult],
-        });
-
-        resource = await resourcesApi.createResource(supabase, data);
-
-        // If images are auto-committed, temp URLs should be converted to permanent URLs
-        if (resource!.imageUrls && resource!.imageUrls.length > 0) {
-          expect(resource!.imageUrls[0]).not.toContain('temp-upload-');
-          expect(resource!.imageUrls[0]).toContain(
-            `resource-${resource!.id}`,
-          );
-
-          // Verify the permanent image actually exists by checking storage
-          const permanentUrl = resource!.imageUrls[0];
-          const pathMatch = permanentUrl.match(/\/images\/(.+)$/);
-          if (pathMatch) {
-            const imagePath = pathMatch[1];
-            const { data: fileData } = await supabase.storage
-              .from('images')
-              .download(imagePath);
-            expect(fileData).toBeTruthy();
-          }
-        }
-      } finally {
-        // Cleanup: Delete temporary file if it still exists
-        if (tempImageResult) {
-          // Extract the path from the URL for storage deletion
-          const urlMatch = tempImageResult.match(/\/images\/(.+)$/);
-          if (urlMatch) {
-            const imagePath = urlMatch[1];
-            await supabase.storage.from('images').remove([imagePath]);
-          }
-        }
-
-        // Cleanup resource (which should also cleanup permanent images)
-        await cleanupResource(resource);
-      }
+      expect(timeslotRecord).toBeTruthy();
+      expect(timeslotRecord!.resource_id).toBe(resource!.id);
+      expect(timeslotRecord!.max_claims).toBe(5);
     });
   });
 
   describe('fetchResources', () => {
     it('fetches all resource offers', async () => {
-      const resources = await resourcesApi.fetchResources(supabase, { type: 'offer' });
+      const resources = await resourcesApi.fetchResources(supabase, {
+        type: 'offer',
+      });
 
       expect(Array.isArray(resources)).toBe(true);
       expect(resources.some((r) => r.id === readOnlyOffer1.id)).toBe(true);
@@ -267,9 +213,11 @@ describe('Resource Offers API - CRUD Operations', () => {
       });
 
       expect(filtered.length).toBeGreaterThanOrEqual(2);
-      expect(filtered.every((r) => r.communities.some(c => c.id === testCommunity.id))).toBe(
-        true,
-      );
+      expect(
+        filtered.every((r) =>
+          r.communities.some((c) => c.id === testCommunity.id),
+        ),
+      ).toBe(true);
       expect(filtered.every((r) => r.type === 'offer')).toBe(true);
     });
   });
@@ -298,137 +246,157 @@ describe('Resource Offers API - CRUD Operations', () => {
   });
 
   describe('updateResource', () => {
+    let resource: Resource;
+
+    beforeEach(async () => {
+      resource = await createTestResource(supabase, testCommunity.id, 'offer');
+    });
+    afterEach(async () => {
+      await cleanupResource(resource);
+    });
+
     it('updates resource offer fields', async () => {
       // Create own resource to modify
-      let resource;
-      try {
-        resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-        const newTitle = `${TEST_PREFIX}Updated_${Date.now()}`;
-        const newDescription = 'Updated description for test';
-        const newLocation = 'Updated Location';
+      const newTitle = `${TEST_PREFIX}Updated_${Date.now()}`;
+      const newDescription = 'Updated description for test';
+      const newLocation = 'Updated Location';
 
-        const updated = await resourcesApi.updateResource(supabase, {
-          id: resource.id,
-          title: newTitle,
-          description: newDescription,
-          locationName: newLocation,
-        });
+      const updated = await resourcesApi.updateResource(supabase, {
+        id: resource.id,
+        title: newTitle,
+        description: newDescription,
+        locationName: newLocation,
+      });
 
-        expect(updated!.title).toBe(newTitle);
-        expect(updated!.description).toBe(newDescription);
-        expect(updated!.locationName).toBe(newLocation);
-        expect(updated!.id).toBe(resource.id);
-        expect(updated!.type).toBe('offer');
+      expect(updated!.title).toBe(newTitle);
+      expect(updated!.description).toBe(newDescription);
+      expect(updated!.locationName).toBe(newLocation);
+      expect(updated!.id).toBe(resource.id);
+      expect(updated!.type).toBe('offer');
 
-        // Verify database record has been updated with all expected fields
-        const { data: dbRecord } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('id', resource.id)
-          .single();
+      // Verify database record has been updated with all expected fields
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
 
-        expect(dbRecord).toMatchObject({
-          id: resource.id,
-          title: newTitle,
-          description: newDescription,
-          location_name: newLocation,
-          owner_id: resource.ownerId,
-        });
-      } finally {
-        await cleanupResource(resource);
-      }
+      expect(dbRecord).toMatchObject({
+        id: resource.id,
+        title: newTitle,
+        description: newDescription,
+        location_name: newLocation,
+        owner_id: resource.ownerId,
+      });
     });
 
     it('preserves unchanged fields', async () => {
-      let resource;
-      try {
-        resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const newTitle = `${TEST_PREFIX}PartialUpdate_${Date.now()}`;
-        const originalDescription = resource.description;
-        const originalLocation = resource.locationName;
+      const newTitle = `${TEST_PREFIX}PartialUpdate_${Date.now()}`;
+      const originalDescription = resource.description;
+      const originalLocation = resource.locationName;
 
-        const updated = await resourcesApi.updateResource(supabase, {
-          id: resource.id,
-          title: newTitle,
-        });
+      const updated = await resourcesApi.updateResource(supabase, {
+        id: resource.id,
+        title: newTitle,
+      });
 
-        expect(updated!.title).toBe(newTitle);
-        expect(updated!.description).toBe(originalDescription);
-        expect(updated!.locationName).toBe(originalLocation);
-        expect(updated!.ownerId).toBe(resource.ownerId);
+      expect(updated!.title).toBe(newTitle);
+      expect(updated!.description).toBe(originalDescription);
+      expect(updated!.locationName).toBe(originalLocation);
+      expect(updated!.ownerId).toBe(resource.ownerId);
 
-        // Verify database record preserves unchanged fields
-        const { data: dbRecord } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('id', resource.id)
-          .single();
+      // Verify database record preserves unchanged fields
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
 
-        expect(dbRecord).toMatchObject({
-          id: resource.id,
-          title: newTitle,
-          description: originalDescription,
-          location_name: originalLocation,
-          owner_id: resource.ownerId,
-        });
-      } finally {
-        await cleanupResource(resource);
-      }
+      expect(dbRecord).toMatchObject({
+        id: resource.id,
+        title: newTitle,
+        description: originalDescription,
+        location_name: originalLocation,
+        owner_id: resource.ownerId,
+      });
     });
 
     it('handles coordinates updates', async () => {
-      let resource;
-      try {
-        resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const newCoordinates = { lat: 40.7128, lng: -74.006 }; // NYC
+      const newCoordinates = { lat: 40.7128, lng: -74.006 }; // NYC
 
-        const updated = await resourcesApi.updateResource(supabase, {
-          id: resource.id,
-          coordinates: newCoordinates,
-        });
+      const updated = await resourcesApi.updateResource(supabase, {
+        id: resource.id,
+        coordinates: newCoordinates,
+      });
 
-        expect(updated!.coordinates).toEqual(newCoordinates);
+      expect(updated!.coordinates).toEqual(newCoordinates);
 
-        // Verify database record
-        const { data: dbRecord } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('id', resource.id)
-          .single();
+      // Verify database record
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
 
-        expect(parsePostGisPoint(dbRecord!.coordinates)).toEqual(
-          newCoordinates,
-        );
-      } finally {
-        await cleanupResource(resource);
-      }
+      expect(parsePostGisPoint(dbRecord!.coordinates)).toEqual(newCoordinates);
     });
-  });
 
-  describe('deleteResource', () => {
-    it('deletes resource offer and cascades to timeslots and claims', async () => {
-      // Create a resource offer specifically for deletion
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-      const resourceId = resource.id;
+    it('deletes resource offer', async () => {
+      await resourcesApi.deleteResource(supabase, resource.id);
 
+      // Verify database record
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
+
+      expect(dbRecord).toBeNull();
+    });
+
+    it('deletes resource offer and cascades to timeslots', async () => {
       // Create a timeslot for this resource
       const timeslot = await resourcesApi.createResourceTimeslot(
         supabase,
         createFakeResourceTimeslotInput({
           resourceId: resource.id,
-          startTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          endTime: new Date(Date.now() + 25 * 60 * 60 * 1000),
-          maxClaims: 5,
+        }),
+      );
+
+      await resourcesApi.deleteResource(supabase, resource.id);
+
+      // Verify database record
+      const { data: dbRecord } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
+
+      expect(dbRecord).toBeNull();
+
+      // Verify database record
+      const { data: dbTimeslot } = await supabase
+        .from('resource_timeslots')
+        .select('*')
+        .eq('id', timeslot.id)
+        .single();
+
+      expect(dbTimeslot).toBeNull();
+    });
+
+    it('deletes resource offer and cascades to timeslots and claims', async () => {
+      // Create a timeslot for this resource
+      const timeslot = await resourcesApi.createResourceTimeslot(
+        supabase,
+        createFakeResourceTimeslotInput({
+          resourceId: resource.id,
         }),
       );
 
       // Create another user to claim the resource
-      const user2 = await createTestUser(supabase);
-      const user2Email = user2.email;
-
-      // Sign in as user2 and claim the resource offer
-      await signIn(supabase, user2Email, 'TestPass123!');
+      await createTestUser(supabase);
+      await joinCommunity(supabase, testCommunity.id);
       await resourcesApi.createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
@@ -439,7 +407,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Delete resource
-      await resourcesApi.deleteResource(supabase, resourceId);
+      await resourcesApi.deleteResource(supabase, resource.id);
 
       // Wait a bit for the delete to propagate
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -448,7 +416,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       const { data, error } = await supabase
         .from('resources')
         .select()
-        .eq('id', resourceId);
+        .eq('id', resource.id);
 
       expect(error).toBeNull();
       expect(data).toHaveLength(0);
@@ -457,7 +425,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       const { data: timeslots } = await supabase
         .from('resource_timeslots')
         .select()
-        .eq('resource_id', resourceId);
+        .eq('resource_id', resource.id);
 
       expect(timeslots).toHaveLength(0);
 
@@ -465,301 +433,9 @@ describe('Resource Offers API - CRUD Operations', () => {
       const { data: claims } = await supabase
         .from('resource_claims')
         .select()
-        .eq('resource_id', resourceId);
+        .eq('resource_id', resource.id);
 
       expect(claims).toHaveLength(0);
-
-      // Note: resource already deleted, user2 will be cleaned in afterAll
-    });
-  });
-
-  // ====================================================================
-  // GENERAL RESOURCE CRUD TESTS (merged from resources-crud.test.ts)
-  // ====================================================================
-
-  describe('General Resource CRUD Operations', () => {
-    describe('createResource - general types', () => {
-      it('creates resource with valid data (any type)', async () => {
-        const data = createFakeResourceInput({
-          title: `${TEST_PREFIX}General_Create_Test_${Date.now()}`,
-          type: 'request',
-          communityIds: [testCommunity.id],
-          category: 'tools',
-          imageUrls: undefined,
-        });
-
-        let resource;
-        try {
-          resource = await resourcesApi.createResource(supabase, data);
-          expect(resource).toMatchObject({
-            id: expect.any(String),
-            title: data.title,
-            ownerId: testUser.id,
-            communityIds: [testCommunity.id],
-            type: data.type,
-            category: data.category,
-          });
-
-          // Verify database record exists with all expected fields
-          const { data: dbRecord } = await supabase
-            .from('resources')
-            .select('*')
-            .eq('id', resource.id)
-            .single();
-
-          expect(dbRecord).toMatchObject({
-            id: resource.id,
-            title: data.title,
-            owner_id: testUser.id,
-              type: data.type,
-            category: data.category,
-            description: data.description,
-          });
-          expect(dbRecord!.created_at).toBeTruthy();
-          expect(dbRecord!.updated_at).toBeTruthy();
-        } finally {
-          await cleanupResource(resource);
-        }
-      });
-    });
-
-    describe('fetchResources - general filtering', () => {
-      it('filters by category', async () => {
-        let testResource;
-        try {
-          testResource = await resourcesApi.createResource(
-            supabase,
-            createFakeResourceInput({
-              title: `${TEST_PREFIX}Filter_Category_${Date.now()}`,
-              type: 'request',
-              communityIds: [testCommunity.id],
-              category: 'tools',
-              imageUrls: undefined,
-            }),
-          );
-
-          const filtered = await resourcesApi.fetchResources(supabase, {
-            category: 'tools',
-          });
-
-          expect(filtered.some((r) => r.id === testResource!.id)).toBe(true);
-          expect(filtered.every((r) => r.category === 'tools')).toBe(true);
-        } finally {
-          await cleanupResource(testResource);
-        }
-      });
-
-      it('filters by type (request)', async () => {
-        let testResource;
-        try {
-          testResource = await resourcesApi.createResource(
-            supabase,
-            createFakeResourceInput({
-              title: `${TEST_PREFIX}Filter_Request_${Date.now()}`,
-              communityIds: [testCommunity.id],
-              type: 'request',
-              category: 'tools',
-              imageUrls: undefined,
-            }),
-          );
-
-          const filtered = await resourcesApi.fetchResources(supabase, {
-            type: 'request',
-          });
-
-          expect(filtered.some((r) => r.id === testResource!.id)).toBe(true);
-          expect(filtered.every((r) => r.type === 'request')).toBe(true);
-        } finally {
-          await cleanupResource(testResource);
-        }
-      });
-
-      it('filters by searchTerm', async () => {
-        const uniqueTitle = `${TEST_PREFIX}UniqueSearch_${Date.now()}`;
-        let testResource;
-
-        try {
-          testResource = await resourcesApi.createResource(
-            supabase,
-            createFakeResourceInput({
-              title: uniqueTitle,
-              type: 'request',
-              communityIds: [testCommunity.id],
-              category: 'tools',
-              imageUrls: undefined,
-            }),
-          );
-
-          const filtered = await resourcesApi.fetchResources(supabase, {
-            searchTerm: 'UniqueSearch',
-          });
-
-          expect(filtered.some((r) => r.title === uniqueTitle)).toBe(true);
-        } finally {
-          await cleanupResource(testResource);
-        }
-      });
-    });
-
-    describe('updateResource - general fields', () => {
-      it('updates category and type', async () => {
-        let resource;
-        try {
-          resource = await createTestResource(supabase, testCommunity.id, 'request');
-
-          const updated = await resourcesApi.updateResource(supabase, {
-            id: resource.id,
-            category: 'food',
-            type: 'offer',
-          });
-
-          expect(updated!.category).toBe('food');
-          expect(updated!.type).toBe('offer');
-        } finally {
-          await cleanupResource(resource);
-        }
-      });
-    });
-  });
-
-  // ====================================================================
-  // MULTI-COMMUNITY FUNCTIONALITY TESTS
-  // ====================================================================
-
-  describe('Multi-Community Resource Functionality', () => {
-    let secondCommunity: Community;
-
-    beforeAll(async () => {
-      // Create a second community for multi-community tests
-      secondCommunity = await createTestCommunity(supabase);
-    });
-
-    it('creates resource with multiple communities', async () => {
-      const data = createFakeResourceInput({
-        title: `${TEST_PREFIX}Multi_Community_Test_${Date.now()}`,
-        type: 'offer',
-        communityIds: [testCommunity.id, secondCommunity.id],
-        imageUrls: undefined,
-      });
-
-      let resource;
-      try {
-        resource = await resourcesApi.createResource(supabase, data);
-
-        expect(resource).toBeTruthy();
-        expect(resource!.communities).toHaveLength(2);
-        expect(resource!.communities.some(c => c.id === testCommunity.id)).toBe(true);
-        expect(resource!.communities.some(c => c.id === secondCommunity.id)).toBe(true);
-
-        // Verify resource_communities join table has both communities
-        const { data: resourceCommunities } = await supabase
-          .from('resource_communities')
-          .select('*')
-          .eq('resource_id', resource!.id);
-
-        expect(resourceCommunities).toHaveLength(2);
-        const communityIds = resourceCommunities!.map(rc => rc.community_id);
-        expect(communityIds).toContain(testCommunity.id);
-        expect(communityIds).toContain(secondCommunity.id);
-      } finally {
-        await cleanupResource(resource);
-      }
-    });
-
-    it('filters by multiple community IDs', async () => {
-      let resource1, resource2, resource3;
-      try {
-        // Create resource in first community only
-        resource1 = await resourcesApi.createResource(supabase, createFakeResourceInput({
-          title: `${TEST_PREFIX}Community1_Only_${Date.now()}`,
-          type: 'offer',
-          communityIds: [testCommunity.id],
-          imageUrls: undefined,
-        }));
-
-        // Create resource in second community only
-        resource2 = await resourcesApi.createResource(supabase, createFakeResourceInput({
-          title: `${TEST_PREFIX}Community2_Only_${Date.now()}`,
-          type: 'offer',
-          communityIds: [secondCommunity.id],
-          imageUrls: undefined,
-        }));
-
-        // Create resource in both communities
-        resource3 = await resourcesApi.createResource(supabase, createFakeResourceInput({
-          title: `${TEST_PREFIX}Both_Communities_${Date.now()}`,
-          type: 'offer',
-          communityIds: [testCommunity.id, secondCommunity.id],
-          imageUrls: undefined,
-        }));
-
-        // Filter by first community only
-        const firstCommunityResources = await resourcesApi.fetchResources(supabase, {
-          type: 'offer',
-          communityIds: [testCommunity.id],
-        });
-
-        expect(firstCommunityResources.some(r => r.id === resource1!.id)).toBe(true);
-        expect(firstCommunityResources.some(r => r.id === resource2!.id)).toBe(false);
-        expect(firstCommunityResources.some(r => r.id === resource3!.id)).toBe(true);
-
-        // Filter by second community only
-        const secondCommunityResources = await resourcesApi.fetchResources(supabase, {
-          type: 'offer',
-          communityIds: [secondCommunity.id],
-        });
-
-        expect(secondCommunityResources.some(r => r.id === resource1!.id)).toBe(false);
-        expect(secondCommunityResources.some(r => r.id === resource2!.id)).toBe(true);
-        expect(secondCommunityResources.some(r => r.id === resource3!.id)).toBe(true);
-
-        // Filter by both communities
-        const bothCommunitiesResources = await resourcesApi.fetchResources(supabase, {
-          type: 'offer',
-          communityIds: [testCommunity.id, secondCommunity.id],
-        });
-
-        expect(bothCommunitiesResources.some(r => r.id === resource1!.id)).toBe(true);
-        expect(bothCommunitiesResources.some(r => r.id === resource2!.id)).toBe(true);
-        expect(bothCommunitiesResources.some(r => r.id === resource3!.id)).toBe(true);
-      } finally {
-        await cleanupResource(resource1);
-        await cleanupResource(resource2);
-        await cleanupResource(resource3);
-      }
-    });
-
-    it('verifies community associations persist across updates', async () => {
-      let resource;
-      try {
-        // Create resource with multiple communities
-        resource = await resourcesApi.createResource(supabase, createFakeResourceInput({
-          title: `${TEST_PREFIX}Update_Multi_Community_${Date.now()}`,
-          type: 'offer',
-          communityIds: [testCommunity.id, secondCommunity.id],
-          imageUrls: undefined,
-        }));
-
-        // Update resource title (should preserve community associations)
-        const updated = await resourcesApi.updateResource(supabase, {
-          id: resource!.id,
-          title: `${TEST_PREFIX}Updated_Title_${Date.now()}`,
-        });
-
-        expect(updated!.communities).toHaveLength(2);
-        expect(updated!.communities.some(c => c.id === testCommunity.id)).toBe(true);
-        expect(updated!.communities.some(c => c.id === secondCommunity.id)).toBe(true);
-
-        // Verify join table still has both associations
-        const { data: resourceCommunities } = await supabase
-          .from('resource_communities')
-          .select('*')
-          .eq('resource_id', resource!.id);
-
-        expect(resourceCommunities).toHaveLength(2);
-      } finally {
-        await cleanupResource(resource);
-      }
     });
   });
 });

@@ -5,7 +5,7 @@ import {
   createTestCommunity,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupUser } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import { signIn, signOut } from '@/features/auth/api';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
@@ -77,32 +77,6 @@ describe('Communities API - Authentication Requirements', () => {
         );
 
         expect(result).toBeNull();
-      });
-    });
-
-    describe('fetchCommunityMembers', () => {
-      it('allows unauthenticated access to community members', async () => {
-        const members = await api.fetchCommunityMemberships(
-          unauthenticatedClient,
-          testCommunity.id,
-        );
-
-        expect(Array.isArray(members)).toBe(true);
-        expect(members.some((m) => m.userId === testUser.id)).toBe(true);
-      });
-    });
-
-    describe('fetchUserCommunities', () => {
-      it('allows unauthenticated access to user communities', async () => {
-        const communities = await api.fetchUserCommunities(
-          unauthenticatedClient,
-          testUser.id,
-        );
-
-        expect(Array.isArray(communities)).toBe(true);
-        expect(
-          communities.some((c) => c.communityId === testCommunity.id),
-        ).toBe(true);
       });
     });
   });
@@ -233,6 +207,28 @@ describe('Communities API - Authentication Requirements', () => {
         testCommunity.id,
       );
       expect(community).toBeTruthy();
+    });
+  });
+
+  describe('Lonely User Tests', () => {
+    let lonelyUser: User;
+
+    beforeAll(async () => {
+      // Create a new user who hasn't joined any communities
+      lonelyUser = await createTestUser(authenticatedClient);
+    });
+
+    afterAll(async () => {
+      await cleanupUser(lonelyUser.id);
+    });
+
+    it('returns empty array for user with no communities', async () => {
+      const communities = await api.fetchUserCommunities(
+        authenticatedClient,
+        lonelyUser.id,
+      );
+
+      expect(communities).toHaveLength(0);
     });
   });
 });

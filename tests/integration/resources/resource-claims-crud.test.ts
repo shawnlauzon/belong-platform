@@ -297,6 +297,23 @@ describe('Resource Claims - Basic Operations', () => {
         ).rejects.toThrow();
       });
     });
+
+    it('deletes resource claim', async () => {
+      // Delete claim
+      await resourcesApi.deleteResourceClaim(supabase, claim.id);
+
+      // Wait a bit for the delete to propagate
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify claim deleted
+      const { data, error } = await supabase
+        .from('resource_claims')
+        .select()
+        .eq('id', claim.id);
+
+      expect(error).toBeNull();
+      expect(data).toHaveLength(0);
+    });
   });
 });
 

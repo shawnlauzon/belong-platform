@@ -1,6 +1,6 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { getAuthIdOrThrow, logger } from '@/shared';
 import { ResourceTimeslot } from '../types';
 import { toDomainResourceTimeslot } from '../transformers';
 import {
@@ -12,6 +12,7 @@ export async function fetchResourceTimeslots(
   supabase: SupabaseClient<Database>,
   resourceId: string,
 ): Promise<ResourceTimeslot[]> {
+  await getAuthIdOrThrow(supabase);
   const { data, error } = (await supabase
     .from('resource_timeslots')
     // select timeslots joined with claims

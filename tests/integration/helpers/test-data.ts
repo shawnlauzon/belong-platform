@@ -31,8 +31,8 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
     provider: 'example.com',
   });
 
-  // Add 300ms pause before signUp to avoid rate limiting
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  // Add 500ms pause before signUp to avoid rate limiting
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const account = await signUp(
     supabase,

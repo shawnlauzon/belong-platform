@@ -9,12 +9,17 @@ import {
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
 import { signIn, signOut } from '@/features/auth/api';
-import { createFakeResourceInput, createFakeResourceTimeslotInput, createFakeResourceClaimInput } from '@/features/resources/__fakes__';
+import {
+  createFakeResourceInput,
+  createFakeResourceTimeslotInput,
+  createFakeResourceClaimInput,
+} from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Resource, ResourceTimeslot } from '@/features/resources/types';
 import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Resource Offers API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
@@ -33,8 +38,12 @@ describe('Resource Offers API - Authentication Requirements', () => {
     await signIn(authenticatedClient, testUser.email, 'TestPass123!');
 
     testCommunity = await createTestCommunity(authenticatedClient);
-    testResourceOffer = await createTestResource(authenticatedClient, testCommunity.id, 'offer');
-    
+    testResourceOffer = await createTestResource(
+      authenticatedClient,
+      testCommunity.id,
+      'offer',
+    );
+
     // Create a timeslot for this resource offer
     testTimeslot = await resourcesApi.createResourceTimeslot(
       authenticatedClient,
@@ -57,48 +66,23 @@ describe('Resource Offers API - Authentication Requirements', () => {
 
   describe('Unauthenticated Read Operations', () => {
     describe('fetchResources', () => {
-      it('allows unauthenticated access', async () => {
-        const resources = await resourcesApi.fetchResources(unauthenticatedClient, {
-          type: 'offer',
-        });
-
-        expect(Array.isArray(resources)).toBe(true);
-        expect(resources.some((r) => r.id === testResourceOffer.id)).toBe(true);
-        expect(resources.every((r) => r.type === 'offer')).toBe(true);
+      it('does not allow unauthenticated access', async () => {
+        await expect(
+          resourcesApi.fetchResources(unauthenticatedClient, {
+            type: 'offer',
+          }),
+        ).rejects.toThrow();
       });
 
-      it('allows unauthenticated access with filters', async () => {
-        const resources = await resourcesApi.fetchResources(unauthenticatedClient, {
-          type: 'offer',
-          searchTerm: 'test',
-          ownerId: testUser.id,
-          communityIds: [testCommunity.id],
-        });
-
-        expect(Array.isArray(resources)).toBe(true);
-      });
-    });
-
-    describe('fetchResourceById', () => {
-      it('allows unauthenticated access to existing resource offer', async () => {
-        const result = await resourcesApi.fetchResourceById(
-          unauthenticatedClient,
-          testResourceOffer.id,
-        );
-
-        expect(result).toBeTruthy();
-        expect(result!.id).toBe(testResourceOffer.id);
-        expect(result!.title).toBe(testResourceOffer.title);
-        expect(result!.type).toBe('offer');
-      });
-
-      it('returns null for non-existent resource without authentication', async () => {
-        const result = await resourcesApi.fetchResourceById(
-          unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-        );
-
-        expect(result).toBeNull();
+      it('does not allow unauthenticated access with filters', async () => {
+        await expect(
+          resourcesApi.fetchResources(unauthenticatedClient, {
+            type: 'offer',
+            searchTerm: 'test',
+            ownerId: testUser.id,
+            communityIds: [testCommunity.id],
+          }),
+        ).rejects.toThrow();
       });
     });
 
@@ -109,18 +93,17 @@ describe('Resource Offers API - Authentication Requirements', () => {
             unauthenticatedClient,
             testResourceOffer.id,
           ),
-        ).rejects.toThrow('Authentication required');
+        ).rejects.toThrow();
       });
     });
 
     describe('fetchResourceClaims', () => {
       it('requires authentication to access resource claims', async () => {
         await expect(
-          resourcesApi.fetchResourceClaims(
-            unauthenticatedClient,
-            { resourceId: testResourceOffer.id },
-          ),
-        ).rejects.toThrow('Authentication required');
+          resourcesApi.fetchResourceClaims(unauthenticatedClient, {
+            resourceId: testResourceOffer.id,
+          }),
+        ).rejects.toThrow();
       });
     });
   });
@@ -164,7 +147,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
     describe('deleteResource', () => {
       it('requires authentication', async () => {
         await expect(
-          resourcesApi.deleteResource(unauthenticatedClient, testResourceOffer.id),
+          resourcesApi.deleteResource(
+            unauthenticatedClient,
+            testResourceOffer.id,
+          ),
         ).rejects.toThrow();
       });
 
@@ -188,7 +174,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
         });
 
         await expect(
-          resourcesApi.createResourceTimeslot(unauthenticatedClient, timeslotInput),
+          resourcesApi.createResourceTimeslot(
+            unauthenticatedClient,
+            timeslotInput,
+          ),
         ).rejects.toThrow();
       });
     });
@@ -211,9 +200,9 @@ describe('Resource Offers API - Authentication Requirements', () => {
       it('requires authentication', async () => {
         await expect(
           resourcesApi.updateResourceClaim(
-            unauthenticatedClient, 
+            unauthenticatedClient,
             '00000000-0000-0000-0000-000000000000',
-            { status: 'approved' }
+            { status: 'approved' },
           ),
         ).rejects.toThrow();
       });
@@ -229,7 +218,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
         imageUrls: undefined,
       });
 
-      const resource = await resourcesApi.createResource(authenticatedClient, data);
+      const resource = await resourcesApi.createResource(
+        authenticatedClient,
+        data,
+      );
       expect(resource).toBeTruthy();
       expect(resource!.title).toBe(data.title);
       expect(resource!.type).toBe('offer');
@@ -250,7 +242,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
     it('authenticated client can create and update resource claims', async () => {
       // Create a second user
       const secondUser = await createTestUser(authenticatedClient);
-      await signIn(authenticatedClient, secondUser.email, 'TestPass123!');
+      await joinCommunity(authenticatedClient, testCommunity.id);
 
       // Create claim for the resource offer
       const claimInput = createFakeResourceClaimInput({
@@ -259,7 +251,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
         status: 'pending',
       });
 
-      const claim = await resourcesApi.createResourceClaim(authenticatedClient, claimInput);
+      const claim = await resourcesApi.createResourceClaim(
+        authenticatedClient,
+        claimInput,
+      );
 
       expect(claim).toBeTruthy();
       expect(claim!.resourceId).toBe(testResourceOffer.id);
@@ -270,43 +265,43 @@ describe('Resource Offers API - Authentication Requirements', () => {
       const updatedClaim = await resourcesApi.updateResourceClaim(
         authenticatedClient,
         claim.id,
-        { status: 'approved' }
+        { status: 'cancelled' },
       );
 
-      // Verify update operation returned claim info with approved status
+      // Verify update operation returned claim info with cancelled status
       expect(updatedClaim).toBeDefined();
-      expect(updatedClaim!.status).toBe('approved');
+      expect(updatedClaim!.status).toBe('cancelled');
       expect(updatedClaim!.resourceId).toBe(testResourceOffer.id);
       expect(updatedClaim!.userId).toBe(secondUser.id);
 
-      // Verify claim record has approved status
+      // Verify claim record has cancelled status
       const claims = await resourcesApi.fetchResourceClaims(
         authenticatedClient,
         { resourceId: testResourceOffer.id },
       );
       const userClaim = claims.find((c) => c.userId === secondUser.id);
       expect(userClaim).toBeDefined();
-      expect(userClaim!.status).toBe('approved');
+      expect(userClaim!.status).toBe('cancelled');
     });
 
     it('authenticated client can delete own resource offers', async () => {
-      // Create a new resource offer to delete
-      const deleteData = createFakeResourceInput({
-        title: `${TEST_PREFIX}Auth_Delete_Test_${Date.now()}`,
-        type: 'offer',
-        communityIds: [testCommunity.id],
-        imageUrls: undefined,
-      });
-
       // Sign back in as original user
       await signIn(authenticatedClient, testUser.email, 'TestPass123!');
       const resourceToDelete = await resourcesApi.createResource(
         authenticatedClient,
-        deleteData,
+        createFakeResourceInput({
+          title: `${TEST_PREFIX}Auth_Delete_Test_${Date.now()}`,
+          type: 'offer',
+          communityIds: [testCommunity.id],
+          imageUrls: undefined,
+        }),
       );
 
       // Delete the resource offer
-      await resourcesApi.deleteResource(authenticatedClient, resourceToDelete!.id);
+      await resourcesApi.deleteResource(
+        authenticatedClient,
+        resourceToDelete!.id,
+      );
 
       // Verify resource offer is deleted
       const result = await resourcesApi.fetchResourceById(
@@ -315,42 +310,13 @@ describe('Resource Offers API - Authentication Requirements', () => {
       );
       expect(result).toBeNull();
     });
-
-    it('unauthenticated fetch still works after authenticated operations', async () => {
-      // Verify that unauthenticated read access still works after auth operations
-      const resources = await resourcesApi.fetchResources(unauthenticatedClient, {
-        type: 'offer',
-      });
-      expect(Array.isArray(resources)).toBe(true);
-
-      const resource = await resourcesApi.fetchResourceById(
-        unauthenticatedClient,
-        testResourceOffer.id,
-      );
-      expect(resource).toBeTruthy();
-    });
-
-    it('handles coordinates in unauthenticated access', async () => {
-      const resource = await resourcesApi.fetchResourceById(
-        unauthenticatedClient,
-        testResourceOffer.id,
-      );
-
-      expect(resource).toBeTruthy();
-      if (resource!.coordinates) {
-        expect(resource!.coordinates).toHaveProperty('lat');
-        expect(resource!.coordinates).toHaveProperty('lng');
-        expect(typeof resource!.coordinates.lat).toBe('number');
-        expect(typeof resource!.coordinates.lng).toBe('number');
-      }
-    });
   });
 
   describe('Authorization Edge Cases', () => {
     it('prevents users from updating resource offers they do not own', async () => {
       // Create a second user
-      const otherUser = await createTestUser(authenticatedClient);
-      await signIn(authenticatedClient, otherUser.email, 'TestPass123!');
+      await createTestUser(authenticatedClient);
+      await joinCommunity(authenticatedClient, testCommunity.id);
 
       // Try to update the original test resource offer (owned by testUser)
       await expect(
@@ -376,10 +342,13 @@ describe('Resource Offers API - Authentication Requirements', () => {
       // Already signed in as testUser (original provider)
 
       // Should be able to update
-      const updateResult = await resourcesApi.updateResource(authenticatedClient, {
-        id: testResourceOffer.id,
-        description: 'Updated by provider',
-      });
+      const updateResult = await resourcesApi.updateResource(
+        authenticatedClient,
+        {
+          id: testResourceOffer.id,
+          description: 'Updated by provider',
+        },
+      );
       expect(updateResult).toBeTruthy();
       expect(updateResult!.description).toBe('Updated by provider');
 

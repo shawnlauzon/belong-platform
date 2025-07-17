@@ -8,25 +8,27 @@ import {
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchFeed } from '@/features/feed/api';
 import { getResourceItems } from '@/features/feed/types';
-import { signIn } from '@/features/auth/api';
-import { createResource, createResourceTimeslot } from '@/features/resources/api';
-import { createFakeResourceInput, createFakeResourceTimeslotInput } from '@/features/resources/__fakes__';
+import {
+  createResource,
+  createResourceTimeslot,
+} from '@/features/resources/api';
+import {
+  createFakeResourceInput,
+  createFakeResourceTimeslotInput,
+} from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 
 describe('Feed API - Resource Offers Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
   let testCommunity: Community;
 
   beforeAll(async () => {
     supabase = createTestClient();
 
     // Create test user and community
-    testUser = await createTestUser(supabase);
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await createTestUser(supabase);
     testCommunity = await createTestCommunity(supabase);
   });
 
@@ -36,9 +38,6 @@ describe('Feed API - Resource Offers Integration Tests', () => {
 
   describe('temporal filtering', () => {
     it('only returns current and upcoming resource offers, not past ones', async () => {
-      // Sign in as testUser
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
       // Create timed resource offers with different dates
       const pastResourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}Past_Timed_${Date.now()}`,
@@ -49,7 +48,8 @@ describe('Feed API - Resource Offers Integration Tests', () => {
       });
 
       const pastResource = await createResource(supabase, pastResourceData);
-      if (!pastResource) throw new Error('Failed to create past resource offer');
+      if (!pastResource)
+        throw new Error('Failed to create past resource offer');
 
       // Create timeslot that ended yesterday
       await createResourceTimeslot(
@@ -116,9 +116,6 @@ describe('Feed API - Resource Offers Integration Tests', () => {
     });
 
     it('shows currently active resource offers', async () => {
-      // Sign in as testUser
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
       // Create a currently active resource offer (started 30 minutes ago, ends in 30 minutes)
       const activeResourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}Active_Timed_${Date.now()}`,
@@ -128,10 +125,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         imageUrls: [],
       });
 
-      const activeResource = await createResource(
-        supabase,
-        activeResourceData,
-      );
+      const activeResource = await createResource(supabase, activeResourceData);
       if (!activeResource)
         throw new Error('Failed to create active resource offer');
 
@@ -155,8 +149,12 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         imageUrls: [],
       });
 
-      const completedResource = await createResource(supabase, completedResourceData);
-      if (!completedResource) throw new Error('Failed to create completed resource offer');
+      const completedResource = await createResource(
+        supabase,
+        completedResourceData,
+      );
+      if (!completedResource)
+        throw new Error('Failed to create completed resource offer');
 
       // Create timeslot that ended 30 minutes ago
       await createResourceTimeslot(
@@ -195,9 +193,6 @@ describe('Feed API - Resource Offers Integration Tests', () => {
     });
 
     it('shows future resource offers', async () => {
-      // Sign in as testUser
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
       // Create a resource offer that starts in 1 hour (future)
       const futureResourceData = createFakeResourceInput({
         title: `${TEST_PREFIX}Future_${Date.now()}`,
@@ -231,10 +226,7 @@ describe('Feed API - Resource Offers Integration Tests', () => {
         imageUrls: [],
       });
 
-      const pastResource = await createResource(
-        supabase,
-        pastResourceData,
-      );
+      const pastResource = await createResource(supabase, pastResourceData);
       if (!pastResource)
         throw new Error('Failed to create past resource offer');
 

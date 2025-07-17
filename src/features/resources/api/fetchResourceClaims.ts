@@ -1,6 +1,6 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { getAuthIdOrThrow, logger } from '@/shared';
 import { ResourceClaim, ResourceClaimStatus } from '../types';
 import { toDomainResourceClaim } from '../transformers';
 import { ResourceClaimRow } from '../types/resourceRow';
@@ -16,6 +16,7 @@ export async function fetchResourceClaims(
   supabase: SupabaseClient<Database>,
   filter: ResourceClaimFilter = {},
 ): Promise<ResourceClaim[]> {
+  await getAuthIdOrThrow(supabase);
   let query = supabase.from('resource_claims').select('*');
 
   // Apply filters

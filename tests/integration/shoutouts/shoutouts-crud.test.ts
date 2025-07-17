@@ -50,6 +50,10 @@ describe('Shoutouts API - CRUD Operations', () => {
   });
 
   describe('createShoutout', () => {
+    beforeEach(async () => {
+      await cleanupAllTestData();
+    });
+
     it('creates shoutout with valid data', async () => {
       const shoutoutInput = {
         resourceId: testResource.id,
@@ -61,13 +65,30 @@ describe('Shoutouts API - CRUD Operations', () => {
       const shoutout = await createShoutout(supabase, shoutoutInput);
 
       expect(shoutout).toBeTruthy();
-      expect(shoutout.id).toBeTruthy();
-      expect(shoutout.message).toBe(shoutoutInput.message);
-      expect(shoutout.fromUserId).toBe(testUser.id);
-      expect(shoutout.toUserId).toBe(testUser2.id);
-      expect(shoutout.resource?.id).toBe(testResource.id);
-      expect(shoutout.createdAt).toBeTruthy();
-      expect(shoutout.updatedAt).toBeTruthy();
+      expect(shoutout).toMatchObject({
+        id: expect.any(String),
+        resourceId: testResource.id,
+        resource: expect.objectContaining({
+          id: testResource.id,
+          title: testResource.title,
+          description: testResource.description,
+        }),
+        message: shoutoutInput.message,
+        toUser: expect.objectContaining({
+          id: testUser.id,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+        }),
+        communityId: testCommunity.id,
+        fromUserId: testUser2.id,
+        fromUser: expect.objectContaining({
+          id: testUser2.id,
+          firstName: testUser2.firstName,
+          lastName: testUser2.lastName,
+        }),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
 
       // Verify database record exists
       const { data: dbRecord } = await supabase
@@ -77,13 +98,14 @@ describe('Shoutouts API - CRUD Operations', () => {
         .single();
 
       expect(dbRecord).toBeTruthy();
-      expect(dbRecord!.message).toBe(shoutoutInput.message);
-      expect(dbRecord!.from_user_id).toBe(testUser.id);
-      expect(dbRecord!.to_user_id).toBe(testUser2.id);
-      expect(dbRecord!.resource_id).toBe(testResource.id);
-
-      // Cleanup
-      await supabase.from('shoutouts').delete().eq('id', shoutout.id);
+      expect(dbRecord).toMatchObject({
+        id: expect.any(String),
+        resourceId: testResource.id,
+        communityId: testCommunity.id,
+        fromUserId: testUser2.id,
+        toUserId: testUser.id,
+        message: shoutoutInput.message,
+      });
     });
 
     it('cannot send shoutout to yourself', async () => {
@@ -114,6 +136,7 @@ describe('Shoutouts API - CRUD Operations', () => {
     let readOnlyShoutout2: Shoutout;
 
     beforeAll(async () => {
+      // signed in as testUser2
       readOnlyShoutout1 = await createTestShoutout({
         supabase,
         toUserId: testUser.id,
@@ -130,8 +153,8 @@ describe('Shoutouts API - CRUD Operations', () => {
         communityId: testCommunity.id,
       });
 
-      // Sign back in as testUser for other tests
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      // Sign back in as testUser2 for other tests
+      await signIn(supabase, testUser2.email, 'TestPass123!');
     });
 
     afterAll(async () => {
@@ -200,42 +223,27 @@ describe('Shoutouts API - CRUD Operations', () => {
         true,
       );
     });
-  });
 
-  describe('fetchShoutoutById', () => {
     it('returns shoutout by id', async () => {
-      // Create a shoutout to fetch
-      const createdShoutout = await createShoutout(supabase, {
+      const fetchedShoutout = await fetchShoutoutById(
+        supabase,
+        readOnlyShoutout1.id,
+      );
+
+      expect(fetchedShoutout).toMatchObject({
+        id: readOnlyShoutout1.id,
+        message: readOnlyShoutout1.message,
+        fromUserId: testUser.id,
+        fromUser: expect.objectContaining({
+          id: testUser.id,
+        }),
         toUserId: testUser2.id,
+        toUser: expect.objectContaining({
+          id: testUser2.id,
+        }),
         resourceId: testResource.id,
         communityId: testCommunity.id,
-        message: `${TEST_PREFIX}Fetch_By_Id_Test`,
       });
-
-      try {
-        const fetchedShoutout = await fetchShoutoutById(
-          supabase,
-          createdShoutout.id,
-        );
-
-        expect(fetchedShoutout).toMatchObject({
-          id: createdShoutout.id,
-          message: createdShoutout.message,
-          fromUserId: testUser.id,
-          fromUser: expect.objectContaining({
-            id: testUser.id,
-          }),
-          toUserId: testUser2.id,
-          toUser: expect.objectContaining({
-            id: testUser2.id,
-          }),
-          resourceId: testResource.id,
-          communityId: testCommunity.id,
-        });
-      } finally {
-        // Cleanup
-        await supabase.from('shoutouts').delete().eq('id', createdShoutout.id);
-      }
     });
 
     it('returns null for non-existent id', async () => {
@@ -248,63 +256,54 @@ describe('Shoutouts API - CRUD Operations', () => {
   });
 
   describe('updateShoutout', () => {
-    it('updates shoutout message', async () => {
-      // Create a shoutout to update
-      const createdShoutout = await createTestShoutout({
+    let createdShoutout: Shoutout;
+    beforeEach(async () => {
+      createdShoutout = await createTestShoutout({
         supabase,
-        toUserId: testUser2.id,
+        toUserId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });
-
-      try {
-        const newMessage = `${TEST_PREFIX}Updated_Message`;
-        const updatedShoutout = await updateShoutout(
-          supabase,
-          createdShoutout.id,
-          { message: newMessage },
-        );
-
-        expect(updatedShoutout).toBeTruthy();
-        expect(updatedShoutout!.id).toBe(createdShoutout.id);
-        expect(updatedShoutout!.message).toBe(newMessage);
-        expect(updatedShoutout!.fromUserId).toBe(testUser.id);
-        expect(updatedShoutout!.toUserId).toBe(testUser2.id);
-        expect(updatedShoutout!.resource?.id).toBe(testResource.id);
-
-        // Verify database record has been updated with all expected fields
-        const { data: dbRecord } = await supabase
-          .from('shoutouts')
-          .select('*')
-          .eq('id', createdShoutout.id)
-          .single();
-
-        expect(dbRecord).toMatchObject({
-          id: createdShoutout.id,
-          message: newMessage,
-          from_user_id: testUser.id,
-          to_user_id: testUser2.id,
-          resource_id: testResource.id,
-          community_id: testCommunity.id,
-        });
-        expect(dbRecord!.updated_at).toBeTruthy();
-      } finally {
-        // Cleanup
-        await supabase.from('shoutouts').delete().eq('id', createdShoutout.id);
-      }
     });
-  });
 
-  describe('deleteShoutout', () => {
-    it('deletes shoutout successfully', async () => {
-      // Create a shoutout to delete
-      const createdShoutout = await createTestShoutout({
+    afterEach(async () => {
+      await cleanupAllTestData();
+    });
+
+    it('updates shoutout message', async () => {
+      const newMessage = `${TEST_PREFIX}Updated_Message`;
+      const updatedShoutout = await updateShoutout(
         supabase,
-        toUserId: testUser2.id,
-        resourceId: testResource.id,
-        communityId: testCommunity.id,
-      });
+        createdShoutout.id,
+        { message: newMessage },
+      );
 
+      expect(updatedShoutout).toBeTruthy();
+      expect(updatedShoutout!.id).toBe(createdShoutout.id);
+      expect(updatedShoutout!.message).toBe(newMessage);
+      expect(updatedShoutout!.fromUserId).toBe(testUser.id);
+      expect(updatedShoutout!.toUserId).toBe(testUser2.id);
+      expect(updatedShoutout!.resource?.id).toBe(testResource.id);
+
+      // Verify database record has been updated with all expected fields
+      const { data: dbRecord } = await supabase
+        .from('shoutouts')
+        .select('*')
+        .eq('id', createdShoutout.id)
+        .single();
+
+      expect(dbRecord).toMatchObject({
+        id: createdShoutout.id,
+        message: newMessage,
+        from_user_id: testUser2.id,
+        to_user_id: testUser.id,
+        resource_id: testResource.id,
+        community_id: testCommunity.id,
+      });
+      expect(dbRecord!.updated_at).toBeTruthy();
+    });
+
+    it('deletes shoutout successfully', async () => {
       // Delete the shoutout
       await deleteShoutout(supabase, createdShoutout.id);
 
