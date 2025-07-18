@@ -25,6 +25,27 @@ export type ResourceTimeslotRowWithRelations = ResourceTimeslotRow & {
   resource_claims: ResourceClaimRow[];
 };
 
+export const SELECT_RESOURCE_CLAIMS_WITH_RELATIONS = `
+    *,
+    resources!inner(
+      *,
+      owner:profiles!owner_id(*),
+      resource_communities!inner(
+        community:communities(*)
+      )
+    ),
+    user:profiles!user_id(*),
+    resource_timeslots!inner(
+      *,
+      resource_claims(*)
+    )
+  `;
+export type ResourceClaimRowWithRelations = ResourceClaimRow & {
+  resources: ResourceRowWithRelations;
+  user: ProfileRow;
+  resource_timeslots: ResourceTimeslotRowWithRelations;
+};
+
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ResourceInsertDbData =
   Database['public']['Tables']['resources']['Insert'];

@@ -11,6 +11,11 @@ export async function fetchResources(
 ): Promise<Resource[]> {
   await getAuthIdOrThrow(supabase);
 
+  // If filtering by claimUserId, we need to join with resource_claims table
+  if (filters?.claimUserId) {
+    return await fetchResourcesWithClaims(supabase, filters);
+  }
+
   // If filtering by communities, use junction table to get resources from multiple communities
   const needsCommunityFilter =
     filters?.communityId ||
@@ -66,6 +71,10 @@ export async function fetchResources(
       query = query.eq('owner_id', filters.ownerId);
     }
 
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
     if (filters.searchTerm) {
       query = query.or(
         `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
@@ -118,6 +127,10 @@ export async function fetchResources(
         query = query.eq('owner_id', filters.ownerId);
       }
 
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+
       if (filters.searchTerm) {
         query = query.or(
           `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
@@ -150,4 +163,106 @@ export async function fetchResources(
 
     return data.map((row) => toDomainResource(row));
   }
+}
+
+async function fetchResourcesWithClaims(
+  supabase: SupabaseClient<Database>,
+  filters: ResourceFilter,
+): Promise<Resource[]> {
+  // First, get resource IDs that have claims from the specified user
+  const { data: claimData, error: claimError } = await supabase
+    .from('resource_claims')
+    .select('resource_id')
+    .eq('user_id', filters.claimUserId!);
+
+  if (claimError) {
+    throw claimError;
+  }
+
+  if (!claimData || claimData.length === 0) {
+    return [];
+  }
+
+  // Get unique resource IDs
+  const resourceIds = [...new Set(claimData.map((claim) => claim.resource_id))];
+
+  // Now fetch the resources with these IDs
+  let query = supabase
+    .from('resources')
+    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .in('id', resourceIds);
+
+  // Apply other filters
+  if (filters.category && filters.category !== 'all') {
+    query = query.eq('category', filters.category);
+  }
+
+  if (filters.type && filters.type !== 'all') {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.ownerId) {
+    query = query.eq('owner_id', filters.ownerId);
+  }
+
+  if (filters.status) {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.searchTerm) {
+    query = query.or(
+      `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
+    );
+  }
+
+  // Apply time-based filtering at database level
+  if (filters.includeExpired === false) {
+    query = query.or('expires_at.is.null,expires_at.gte.now()');
+  }
+
+  if (filters.includePast === false) {
+    query = query.or('expires_at.is.null,expires_at.gte.now()');
+  }
+
+  // Apply community filtering if specified
+  if (filters.communityId || (filters.communityIds && filters.communityIds.length > 0)) {
+    const communityIds =
+      filters.communityIds && filters.communityIds.length > 0
+        ? filters.communityIds
+        : filters.communityId
+          ? [filters.communityId]
+          : [];
+
+    if (communityIds.length > 0) {
+      // Get resources that are visible in specified communities
+      const { data: junctionData, error: junctionError } = await supabase
+        .from('resource_communities')
+        .select('resource_id')
+        .in('community_id', communityIds)
+        .in('resource_id', resourceIds);
+
+      if (junctionError) {
+        throw junctionError;
+      }
+
+      if (!junctionData || junctionData.length === 0) {
+        return [];
+      }
+
+      const filteredResourceIds = [...new Set(junctionData.map((rc) => rc.resource_id))];
+      query = query.in('id', filteredResourceIds);
+    }
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return data.map((row) => toDomainResource(row));
 }

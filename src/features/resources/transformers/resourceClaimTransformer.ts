@@ -1,9 +1,16 @@
-import type { ResourceClaim, ResourceClaimInput } from '../types';
 import type {
-  ResourceClaimRow,
+  ResourceClaim,
+  ResourceClaimInput,
+  ResourceClaimSummary,
+} from '../types';
+import type {
   ResourceClaimInsertDbData,
   ResourceClaimUpdateDbData,
+  ResourceClaimRowWithRelations,
 } from '../types/resourceRow';
+import { toResourceSummary } from './resourceTransformer';
+import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
+import { toUserSummary } from '@/features/users/transformers/userTransformer';
 
 /**
  * Transform a domain claim object to a database claim record
@@ -36,8 +43,50 @@ export function forDbClaimUpdate(
  * Transform a database claim record to a ResourceClaim object
  */
 export function toDomainResourceClaim(
-  dbClaim: ResourceClaimRow,
+  dbClaim: ResourceClaimRowWithRelations,
 ): ResourceClaim {
+  return {
+    id: dbClaim.id,
+    resourceId: dbClaim.resource_id,
+    resource: toResourceSummary(dbClaim.resources),
+    userId: dbClaim.user_id,
+    user: toUserSummary(dbClaim.user),
+    timeslotId: dbClaim.timeslot_id,
+    timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
+    status: dbClaim.status,
+    notes: dbClaim.notes ?? undefined,
+    createdAt: new Date(dbClaim.created_at),
+    updatedAt: new Date(dbClaim.updated_at),
+  };
+}
+
+/**
+ * Transform a database claim record with relations to a ResourceClaim object
+ */
+export function toDomainResourceClaimWithRelations(
+  dbClaim: ResourceClaimRowWithRelations,
+): ResourceClaim {
+  // Handle potential array results from Supabase joins
+  const resource = Array.isArray(dbClaim.resources)
+    ? dbClaim.resources[0]
+    : dbClaim.resources;
+
+  const timeslot = Array.isArray(dbClaim.resource_timeslots)
+    ? dbClaim.resource_timeslots[0]
+    : dbClaim.resource_timeslots;
+
+  // Validate required joined data
+  if (!resource) {
+    throw new Error(
+      `ResourceClaim ${dbClaim.id} missing required resource data`,
+    );
+  }
+  if (!timeslot) {
+    throw new Error(
+      `ResourceClaim ${dbClaim.id} missing required timeslot data`,
+    );
+  }
+
   return {
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
@@ -47,5 +96,27 @@ export function toDomainResourceClaim(
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
     updatedAt: new Date(dbClaim.updated_at),
+    user: toUserSummary(dbClaim.user),
+    resource: toResourceSummary(resource),
+    timeslot: toDomainResourceTimeslot(timeslot),
+  };
+}
+
+/**
+ * Transform a basic database claim record to a ResourceClaimSummary object
+ * Used for claims within timeslots to avoid circular dependencies
+ */
+export function toDomainResourceClaimSummary(
+  dbClaim: ResourceClaimRowWithRelations,
+): ResourceClaimSummary {
+  return {
+    id: dbClaim.id,
+    resourceId: dbClaim.resource_id,
+    userId: dbClaim.user_id,
+    timeslotId: dbClaim.timeslot_id,
+    status: dbClaim.status,
+    notes: dbClaim.notes ?? undefined,
+    user: toUserSummary(dbClaim.user),
+    resource: toResourceSummary(dbClaim.resources),
   };
 }

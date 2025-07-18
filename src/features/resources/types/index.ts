@@ -2,6 +2,7 @@ export * from './resource';
 export * from './resourceFilter';
 export * from './resourceTimeslot';
 export * from './resourceClaim';
+export * from './resourceClaimFilter';
 
 export type {
   ResourceClaimStatus,

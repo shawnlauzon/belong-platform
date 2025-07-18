@@ -6,7 +6,11 @@ import {
   toResourceClaimInsertRow,
   toDomainResourceClaim,
 } from '../transformers';
-import { ResourceClaimRow } from '../types/resourceRow';
+import {
+  ResourceClaimRow,
+  ResourceClaimRowWithRelations,
+  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+} from '../types/resourceRow';
 
 export async function createResourceClaim(
   supabase: SupabaseClient<Database>,
@@ -56,7 +60,25 @@ export async function createResourceClaim(
     throw new Error('No data returned from claim creation');
   }
 
-  const claim = toDomainResourceClaim(data);
+  // Fetch the created claim with relations
+  const { data: claimWithRelations, error: fetchError } = (await supabase
+    .from('resource_claims')
+    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+    .eq('id', data.id)
+    .single()) as {
+    data: ResourceClaimRowWithRelations | null;
+    error: QueryError | null;
+  };
+
+  if (fetchError || !claimWithRelations) {
+    logger.error('🏘️ API: Failed to fetch created claim with relations', {
+      error: fetchError,
+      claimId: data.id,
+    });
+    throw new Error('Failed to fetch created claim');
+  }
+
+  const claim = toDomainResourceClaim(claimWithRelations);
 
   logger.debug('🏘️ API: Successfully created resource claim', {
     claimId: claim.id,

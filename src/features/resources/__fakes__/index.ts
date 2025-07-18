@@ -287,10 +287,16 @@ export function createFakeResourceClaim(
       'rejected',
       'completed',
       'cancelled',
+      'interested',
+      'given',
+      'received',
     ] as const),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     createdAt: now,
     updatedAt: now,
+    user: createFakeUser(),
+    resource: createFakeResource(),
+    timeslot: createFakeResourceTimeslot(),
     ...overrides,
   };
 }

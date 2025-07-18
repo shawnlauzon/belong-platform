@@ -1,11 +1,10 @@
-import type { ResourceTimeslot, ResourceTimeslotInput } from '../types';
+import type { ResourceTimeslot, ResourceTimeslotInput, ResourceClaimSummary } from '../types';
 import type {
   ResourceTimeslotRowWithRelations,
   ResourceTimeslotInsertDbData,
   ResourceTimeslotUpdateDbData,
   ResourceClaimRow,
 } from '../types/resourceRow';
-import { toDomainResourceClaim } from './resourceClaimTransformer';
 
 /**
  * Transform a domain timeslot object to a database timeslot record
@@ -47,7 +46,7 @@ export function toDomainResourceTimeslot(
     endTime: new Date(dbTimeslot.end_time),
     maxClaims: dbTimeslot.max_claims,
     claims: dbTimeslot.resource_claims
-      ? dbTimeslot.resource_claims.map(toDomainResourceClaim)
+      ? dbTimeslot.resource_claims.map(toResourceClaimSummaryBasic)
       : [],
     status: calculateTimeslotStatus(
       dbTimeslot.resource_claims,
@@ -55,6 +54,46 @@ export function toDomainResourceTimeslot(
     ),
     createdAt: new Date(dbTimeslot.created_at),
     updatedAt: new Date(dbTimeslot.updated_at),
+  };
+}
+
+/**
+ * Transform a basic ResourceClaimRow to a ResourceClaimSummary with minimal data
+ * Used for claims within timeslots to avoid circular dependencies
+ */
+function toResourceClaimSummaryBasic(
+  dbClaim: ResourceClaimRow,
+): ResourceClaimSummary {
+  return {
+    id: dbClaim.id,
+    resourceId: dbClaim.resource_id,
+    userId: dbClaim.user_id,
+    timeslotId: dbClaim.timeslot_id,
+    status: dbClaim.status,
+    notes: dbClaim.notes ?? undefined,
+    // Create minimal placeholders for required fields
+    user: { 
+      id: dbClaim.user_id, 
+      firstName: '', 
+      avatarUrl: undefined 
+    },
+    resource: { 
+      id: dbClaim.resource_id, 
+      type: 'offer' as const,
+      title: '', 
+      description: '', 
+      locationName: '',
+      category: 'other' as const,
+      status: 'open' as const,
+      ownerId: '',
+      owner: { 
+        id: '', 
+        firstName: '', 
+        avatarUrl: undefined 
+      },
+      communities: [],
+      requiresApproval: false
+    },
   };
 }
 

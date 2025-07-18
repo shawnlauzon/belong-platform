@@ -26,3 +26,6 @@ export * from './fetchResourceClaims';
 export * from './fetchResourceClaimById';
 export * from './updateResourceClaim';
 export * from './deleteResourceClaim';
+
+// Resource claim types
+export type { ResourceClaimFilter } from '../types/resourceClaimFilter';

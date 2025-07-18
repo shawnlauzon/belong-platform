@@ -1,23 +1,29 @@
-import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { getAuthIdOrThrow, logger } from '@/shared';
-import { ResourceClaim, ResourceClaimStatus } from '../types';
+import { ResourceClaim } from '../types';
 import { toDomainResourceClaim } from '../transformers';
-import { ResourceClaimRow } from '../types/resourceRow';
-
-export interface ResourceClaimFilter {
-  resourceId?: string;
-  userId?: string;
-  status?: ResourceClaimStatus;
-  timeslotId?: string;
-}
+import { ResourceClaimFilter } from '../types';
+import {
+  ResourceClaimRowWithRelations,
+  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+} from '../types/resourceRow';
 
 export async function fetchResourceClaims(
   supabase: SupabaseClient<Database>,
   filter: ResourceClaimFilter = {},
 ): Promise<ResourceClaim[]> {
   await getAuthIdOrThrow(supabase);
-  let query = supabase.from('resource_claims').select('*');
+
+  // Always use the query with relations to get complete ResourceClaim objects
+  let query = supabase
+    .from('resource_claims')
+    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS);
+
+  // Apply resource owner filter if needed
+  if (filter.resourceOwnerId) {
+    query = query.eq('resources.owner_id', filter.resourceOwnerId);
+  }
 
   // Apply filters
   if (filter.resourceId) {
@@ -29,7 +35,13 @@ export async function fetchResourceClaims(
   }
 
   if (filter.status) {
-    query = query.eq('status', filter.status);
+    if (Array.isArray(filter.status)) {
+      // Multiple statuses - use OR logic with .in()
+      query = query.in('status', filter.status);
+    } else {
+      // Single status - use equality
+      query = query.eq('status', filter.status);
+    }
   }
 
   if (filter.timeslotId) {
@@ -40,8 +52,8 @@ export async function fetchResourceClaims(
   query = query.order('created_at', { ascending: false });
 
   const { data, error } = (await query) as {
-    data: ResourceClaimRow[] | null;
-    error: QueryError | null;
+    data: ResourceClaimRowWithRelations[] | null;
+    error: Error | null;
   };
 
   if (error) {
@@ -59,7 +71,10 @@ export async function fetchResourceClaims(
     return [];
   }
 
-  const claims = data.map(toDomainResourceClaim);
+  // Transform the joined results to ResourceClaim objects with relations
+  const claims = (data as ResourceClaimRowWithRelations[]).map(
+    toDomainResourceClaim,
+  );
 
   logger.debug('🏘️ API: Successfully fetched resource claims', {
     filter,

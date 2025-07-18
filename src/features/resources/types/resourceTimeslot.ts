@@ -1,8 +1,14 @@
 import { IsPersisted } from '@/shared';
-import { ResourceClaim } from './resourceClaim';
+import { ResourceClaimSummary } from './resourceClaim';
 
 export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {
-  claims: ResourceClaim[];
+  claims: ResourceClaimSummary[];
+  status: 'available' | 'maybeAvailable' | 'unavailable';
+};
+
+export type ResourceTimeslotSummary = ResourceTimeslotInput & {
+  id: string;
+  claims: string[];
   status: 'available' | 'maybeAvailable' | 'unavailable';
 };
 
