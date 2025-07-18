@@ -4,15 +4,6 @@ export * from './fetchResourceCommunities';
 export * from './createResource';
 export * from './updateResource';
 export * from './deleteResource';
-export * from './fetchOffersNeedingShoutout';
-export * from './fetchFavorsNeedingShoutout';
-export * from './fetchMyResourcesWithPendingClaims';
-export * from './fetchMyResourcesWithAcceptedClaims';
-export * from './fetchMyAcceptedClaims';
-export * from './fetchMyActiveResources';
-export * from './fetchMyResourcesImInterestedIn';
-export * from './fetchMyResourcesImConfirmedFor';
-export * from './fetchMyResourcesImOrganizing';
 
 // Resource timeslot management
 export * from './createResourceTimeslot';

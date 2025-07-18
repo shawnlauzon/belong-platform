@@ -65,9 +65,4 @@ export const queryKeys = {
   feed: {
     all: ['feed'] as const,
   },
-
-  // Agenda - current user aggregated data  
-  agenda: {
-    current: ['agenda'] as const,
-  },
 } as const;
