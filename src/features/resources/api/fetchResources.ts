@@ -81,19 +81,6 @@ export async function fetchResources(
       );
     }
 
-    // Apply time-based filtering at database level
-
-    // Handle the most common case: exclude expired resources (default behavior)
-    if (filters.includeExpired === false) {
-      query = query.or('expires_at.is.null,expires_at.gte.now()');
-    }
-
-    // Handle exclude past resources (like feed uses includePast: false)
-    // FIXME past is not about expires_at, but about timeslots
-    if (filters.includePast === false) {
-      query = query.or('expires_at.is.null,expires_at.gte.now()');
-    }
-
     // Execute the query
     const { data, error } = await query.order('created_at', {
       ascending: false,
@@ -135,17 +122,6 @@ export async function fetchResources(
         query = query.or(
           `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
         );
-      }
-
-      // Apply time-based filtering at database level
-      // Handle the most common case: exclude expired resources (default behavior)
-      if (filters.includeExpired === false) {
-        query = query.or('expires_at.is.null,expires_at.gte.now()');
-      }
-
-      // Handle exclude past resources (like feed uses includePast: false)
-      if (filters.includePast === false) {
-        query = query.or('expires_at.is.null,expires_at.gte.now()');
       }
     }
 
@@ -215,17 +191,11 @@ async function fetchResourcesWithClaims(
     );
   }
 
-  // Apply time-based filtering at database level
-  if (filters.includeExpired === false) {
-    query = query.or('expires_at.is.null,expires_at.gte.now()');
-  }
-
-  if (filters.includePast === false) {
-    query = query.or('expires_at.is.null,expires_at.gte.now()');
-  }
-
   // Apply community filtering if specified
-  if (filters.communityId || (filters.communityIds && filters.communityIds.length > 0)) {
+  if (
+    filters.communityId ||
+    (filters.communityIds && filters.communityIds.length > 0)
+  ) {
     const communityIds =
       filters.communityIds && filters.communityIds.length > 0
         ? filters.communityIds
@@ -249,7 +219,9 @@ async function fetchResourcesWithClaims(
         return [];
       }
 
-      const filteredResourceIds = [...new Set(junctionData.map((rc) => rc.resource_id))];
+      const filteredResourceIds = [
+        ...new Set(junctionData.map((rc) => rc.resource_id)),
+      ];
       query = query.in('id', filteredResourceIds);
     }
   }

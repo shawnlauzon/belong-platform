@@ -10,8 +10,4 @@ export type ResourceFilter = {
   claimUserId?: string;
   maxDriveMinutes?: number;
   searchTerm?: string;
-  includeCurrent?: boolean; // default true
-  includeUpcoming?: boolean; // default true
-  includePast?: boolean; // default true
-  includeExpired?: boolean; // default false
 };
