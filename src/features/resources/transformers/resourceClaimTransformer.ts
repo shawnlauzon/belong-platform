@@ -48,11 +48,11 @@ export function toDomainResourceClaim(
   return {
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
-    resource: toResourceSummary(dbClaim.resources),
+    resource: toResourceSummary(dbClaim.resource),
     userId: dbClaim.user_id,
     user: toUserSummary(dbClaim.user),
     timeslotId: dbClaim.timeslot_id,
-    timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
+    timeslot: toDomainResourceTimeslot(dbClaim.timeslot),
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
@@ -67,13 +67,13 @@ export function toDomainResourceClaimWithRelations(
   dbClaim: ResourceClaimRowWithRelations,
 ): ResourceClaim {
   // Handle potential array results from Supabase joins
-  const resource = Array.isArray(dbClaim.resources)
-    ? dbClaim.resources[0]
-    : dbClaim.resources;
+  const resource = Array.isArray(dbClaim.resource)
+    ? dbClaim.resource[0]
+    : dbClaim.resource;
 
-  const timeslot = Array.isArray(dbClaim.resource_timeslots)
-    ? dbClaim.resource_timeslots[0]
-    : dbClaim.resource_timeslots;
+  const timeslot = Array.isArray(dbClaim.timeslot)
+    ? dbClaim.timeslot[0]
+    : dbClaim.timeslot;
 
   // Validate required joined data
   if (!resource) {
@@ -117,6 +117,6 @@ export function toDomainResourceClaimSummary(
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     user: toUserSummary(dbClaim.user),
-    resource: toResourceSummary(dbClaim.resources),
+    resource: toResourceSummary(dbClaim.resource),
   };
 }

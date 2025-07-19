@@ -16,11 +16,12 @@ import type { User } from '@/features/users/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 import type { Shoutout } from '@/features/shoutouts/types';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Shoutouts API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser2: User;
+  let testUser: User;
   let testCommunity: Community;
   let testResource: Resource;
   let testShoutout: Shoutout;
@@ -29,7 +30,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
     // Set up authenticated client and test data
     authenticatedClient = createTestClient();
 
-    await createTestUser(authenticatedClient);
+    testUser = await createTestUser(authenticatedClient);
     testCommunity = await createTestCommunity(authenticatedClient);
     testResource = await createTestResource(
       authenticatedClient,
@@ -37,13 +38,14 @@ describe('Shoutouts API - Authentication Requirements', () => {
     );
 
     // Create test data with authenticated client
-    testUser2 = await createTestUser(authenticatedClient);
+    await createTestUser(authenticatedClient);
+    await joinCommunity(authenticatedClient, testCommunity.id);
 
     // Create a test shoutout (testUser sends shoutout to testUser2 about testUser2's resource)
     testShoutout = await api.createShoutout(authenticatedClient, {
       resourceId: testResource.id,
       message: `${TEST_PREFIX}Test shoutout for auth tests`,
-      toUserId: testUser2.id,
+      toUserId: testUser.id,
       communityId: testCommunity.id,
     });
 
@@ -67,7 +69,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
         await expect(
           api.createShoutout(unauthenticatedClient, {
             ...data,
-            toUserId: testUser2.id,
+            toUserId: testUser.id,
             communityId: testCommunity.id,
           }),
         ).rejects.toThrow();
