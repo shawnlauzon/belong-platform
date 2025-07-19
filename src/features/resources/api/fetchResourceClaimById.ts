@@ -20,7 +20,11 @@ export async function fetchResourceClaimById(
     error: Error | null;
   };
 
-  if (error || !data) {
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
     return null;
   }
 
