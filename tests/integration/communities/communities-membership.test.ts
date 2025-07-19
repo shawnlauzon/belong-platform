@@ -31,7 +31,7 @@ describe('Communities API - Membership Operations', () => {
   });
 
   describe('joinCommunity', () => {
-    beforeEach(async () => {
+    afterEach(async () => {
       await cleanupMembership(membershipTestCommunity.id, testUser2.id);
     });
 
@@ -75,7 +75,7 @@ describe('Communities API - Membership Operations', () => {
     });
   });
 
-  describe('leave community tests ', () => {
+  describe('community membership tests ', () => {
     beforeEach(async () => {
       // First join
       await api.joinCommunity(supabase, membershipTestCommunity.id);
@@ -100,17 +100,6 @@ describe('Communities API - Membership Operations', () => {
       } finally {
         await api.joinCommunity(supabase, membershipTestCommunity.id);
       }
-    });
-  });
-
-  describe('community membership tests', () => {
-    beforeAll(async () => {
-      // First join
-      await api.joinCommunity(supabase, membershipTestCommunity.id);
-    });
-
-    afterAll(async () => {
-      await api.leaveCommunity(supabase, membershipTestCommunity.id);
     });
 
     it('returns members with user data', async () => {

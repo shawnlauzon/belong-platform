@@ -102,12 +102,12 @@ export function toShoutoutWithJoinedRelations(
   dbShoutout: ShoutoutRowWithRelations,
 ): Shoutout {
   // Handle potential array results from Supabase joins
-  const fromUser = Array.isArray(dbShoutout.fromUser)
-    ? dbShoutout.fromUser[0]
-    : dbShoutout.fromUser;
-  const toUser = Array.isArray(dbShoutout.toUser)
-    ? dbShoutout.toUser[0]
-    : dbShoutout.toUser;
+  const fromUser = Array.isArray(dbShoutout.from_user)
+    ? dbShoutout.from_user[0]
+    : dbShoutout.from_user;
+  const toUser = Array.isArray(dbShoutout.to_user)
+    ? dbShoutout.to_user[0]
+    : dbShoutout.to_user;
   const resource = Array.isArray(dbShoutout.resource)
     ? dbShoutout.resource[0]
     : dbShoutout.resource;

@@ -111,6 +111,8 @@ export function toUserSummary(profile: ProfileRow): UserSummary {
   return {
     id: profile.id,
     firstName: metadata.first_name || '',
+    lastName: metadata.last_name || '',
+    fullName: metadata.full_name || '',
     avatarUrl: metadata.avatar_url,
   };
 }
