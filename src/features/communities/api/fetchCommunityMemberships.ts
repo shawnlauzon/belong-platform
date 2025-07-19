@@ -36,6 +36,7 @@ export async function fetchCommunityMemberships(
     logger.debug('🏘️ API: Successfully fetched community members', {
       communityId,
       count: memberships.length,
+      memberships,
     });
     return memberships;
   } catch (error) {
