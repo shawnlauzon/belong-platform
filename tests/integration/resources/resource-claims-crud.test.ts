@@ -49,8 +49,12 @@ describe('Resource Claims - Basic Operations', () => {
   });
 
   describe('Basic Claim Creation', () => {
+    let testClaim: ResourceClaim | null = null;
+
     afterEach(async () => {
-      await cleanupResourceClaims(testResource.id);
+      if (testClaim) {
+        await cleanupResourceClaims(testClaim.id);
+      }
     });
 
     it('creates resource claim with default "pending" status', async () => {
@@ -60,13 +64,10 @@ describe('Resource Claims - Basic Operations', () => {
       });
       delete claimInput.status;
 
-      const claim = await resourcesApi.createResourceClaim(
-        supabase,
-        claimInput,
-      );
+      testClaim = await resourcesApi.createResourceClaim(supabase, claimInput);
 
-      expect(claim).toBeTruthy();
-      expect(claim).toMatchObject({
+      expect(testClaim).toBeTruthy();
+      expect(testClaim).toMatchObject({
         resourceId: testResource.id,
         userId: claimant.id,
         status: 'pending',
@@ -74,7 +75,7 @@ describe('Resource Claims - Basic Operations', () => {
         updatedAt: expect.any(Date),
       });
 
-      await verifyClaimInDatabase(supabase, claim);
+      await verifyClaimInDatabase(supabase, testClaim);
     });
 
     it('creates resource claim with explictly set "pending" status', async () => {
@@ -84,13 +85,10 @@ describe('Resource Claims - Basic Operations', () => {
         status: 'pending',
       });
 
-      const claim = await resourcesApi.createResourceClaim(
-        supabase,
-        claimInput,
-      );
+      testClaim = await resourcesApi.createResourceClaim(supabase, claimInput);
 
-      expect(claim).toBeTruthy();
-      expect(claim).toMatchObject({
+      expect(testClaim).toBeTruthy();
+      expect(testClaim).toMatchObject({
         resourceId: testResource.id,
         userId: claimant.id,
         status: 'pending',
@@ -99,7 +97,7 @@ describe('Resource Claims - Basic Operations', () => {
         updatedAt: expect.any(Date),
       });
 
-      await verifyClaimInDatabase(supabase, claim);
+      await verifyClaimInDatabase(supabase, testClaim);
     });
 
     it('fails if attempting to create resource claim status other than "pending"', async () => {
@@ -122,30 +120,36 @@ describe('Resource Claims - Basic Operations', () => {
         ).rejects.toThrow();
       }
     });
-  });
-
-  describe('A claim is already created', () => {
-    let claim: ResourceClaim;
-    beforeAll(async () => {
-      const claimInput = createFakeResourceClaimInput({
-        resourceId: testResource.id,
-        timeslotId: testTimeslot.id,
-      });
-
-      claim = await resourcesApi.createResourceClaim(supabase, claimInput);
-    });
 
     describe('Fetches a claim', () => {
+      let readOnlyClaim: ResourceClaim;
+
+      beforeAll(async () => {
+        readOnlyClaim = await resourcesApi.createResourceClaim(
+          supabase,
+          createFakeResourceClaimInput({
+            resourceId: testResource.id,
+            timeslotId: testTimeslot.id,
+          }),
+        );
+      });
+
+      afterAll(async () => {
+        if (readOnlyClaim) {
+          await cleanupResourceClaims(readOnlyClaim.id);
+        }
+      });
+
       it('fetches a single claim', async () => {
         // Fetch all claims for this resource
         const fetchedClaim = await resourcesApi.fetchResourceClaimById(
           supabase,
-          claim.id,
+          readOnlyClaim.id,
         );
 
         expect(fetchedClaim).toBeTruthy();
         expect(fetchedClaim?.userId).toBe(claimant.id);
-        expect(fetchedClaim?.id).toBe(claim.id);
+        expect(fetchedClaim?.id).toBe(readOnlyClaim.id);
       });
 
       it('fetches all claims (only one) for a resource', async () => {
@@ -156,7 +160,7 @@ describe('Resource Claims - Basic Operations', () => {
 
         expect(allClaims).toHaveLength(1);
         expect(allClaims[0].userId).toBe(claimant.id);
-        expect(allClaims[0].id).toBe(claim.id);
+        expect(allClaims[0].id).toBe(readOnlyClaim.id);
       });
     });
 
@@ -174,10 +178,28 @@ describe('Resource Claims - Basic Operations', () => {
     });
 
     describe('Updating Claims by claim creator', () => {
+      let testClaim: ResourceClaim;
+
+      beforeEach(async () => {
+        testClaim = await resourcesApi.createResourceClaim(
+          supabase,
+          createFakeResourceClaimInput({
+            resourceId: testResource.id,
+            timeslotId: testTimeslot.id,
+          }),
+        );
+      });
+
+      afterAll(async () => {
+        if (testClaim) {
+          await cleanupResourceClaims(testClaim.id);
+        }
+      });
+
       it('updates claim status to cancelled', async () => {
         const updatedClaim = await resourcesApi.updateResourceClaim(
           supabase,
-          claim.id,
+          testClaim.id,
           {
             status: 'cancelled',
           },
@@ -191,17 +213,17 @@ describe('Resource Claims - Basic Operations', () => {
       it('updates claim status from "cancelled" to pending', async () => {
         const curClaim = await resourcesApi.fetchResourceClaimById(
           supabase,
-          claim.id,
+          testClaim.id,
         );
         if (curClaim?.status !== 'cancelled') {
-          await resourcesApi.updateResourceClaim(supabase, claim.id, {
+          await resourcesApi.updateResourceClaim(supabase, testClaim.id, {
             status: 'cancelled',
           });
         }
 
         const updatedClaim = await resourcesApi.updateResourceClaim(
           supabase,
-          claim.id,
+          testClaim.id,
           {
             status: 'pending',
           },
@@ -227,92 +249,122 @@ describe('Resource Claims - Basic Operations', () => {
           });
 
           await expect(
-            resourcesApi.updateResourceClaim(supabase, claim.id, claimInput),
+            resourcesApi.updateResourceClaim(
+              supabase,
+              testClaim.id,
+              claimInput,
+            ),
           ).rejects.toThrow();
         }
       });
-    });
 
-    describe('Claim actions by resource owner', () => {
-      beforeAll(async () => {
-        await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      it('deletes resource claim', async () => {
+        // Delete claim
+        await resourcesApi.deleteResourceClaim(supabase, testClaim.id);
+
+        // Wait a bit for the delete to propagate
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Verify claim deleted
+        const { data, error } = await supabase
+          .from('resource_claims')
+          .select()
+          .eq('id', testClaim.id);
+
+        expect(error).toBeNull();
+        expect(data).toHaveLength(0);
       });
 
-      afterAll(async () => {
-        await signIn(supabase, claimant.email, 'TestPass123!');
-      });
-
-      describe('Fetches a claim', () => {
-        it('fetches a single claim', async () => {
-          // Fetch all claims for this resource
-          const fetchedClaim = await resourcesApi.fetchResourceClaimById(
-            supabase,
-            claim.id,
-          );
-
-          expect(fetchedClaim).toBeTruthy();
-          expect(fetchedClaim?.userId).toBe(claimant.id);
-          expect(fetchedClaim?.id).toBe(claim.id);
+      describe('Claim actions by resource owner', () => {
+        beforeAll(async () => {
+          await signIn(supabase, resourceOwner.email, 'TestPass123!');
         });
 
-        it('fetches all claims (only one) for a resource', async () => {
-          // Fetch all claims for this resource
-          const allClaims = await resourcesApi.fetchResourceClaims(supabase, {
-            resourceId: testResource.id,
+        afterAll(async () => {
+          await signIn(supabase, claimant.email, 'TestPass123!');
+        });
+
+        describe('Fetches a claim', () => {
+          it('fetches a single claim', async () => {
+            // Fetch all claims for this resource
+            const fetchedClaim = await resourcesApi.fetchResourceClaimById(
+              supabase,
+              testClaim.id,
+            );
+
+            expect(fetchedClaim).toBeTruthy();
+            expect(fetchedClaim?.userId).toBe(claimant.id);
+            expect(fetchedClaim?.id).toBe(testClaim.id);
           });
 
-          expect(allClaims).toHaveLength(1);
-          expect(allClaims[0].userId).toBe(claimant.id);
-          expect(allClaims[0].id).toBe(claim.id);
+          it('fetches all claims (only one) for a resource', async () => {
+            // Fetch all claims for this resource
+            const allClaims = await resourcesApi.fetchResourceClaims(supabase, {
+              resourceId: testResource.id,
+            });
+
+            expect(allClaims).toHaveLength(1);
+            expect(allClaims[0].userId).toBe(claimant.id);
+            expect(allClaims[0].id).toBe(testClaim.id);
+          });
+        });
+
+        it('resource owner can update claim status', async () => {
+          const validStatuses = [
+            'approved',
+            'rejected',
+            'completed',
+            'pending',
+          ];
+
+          for (const status of validStatuses) {
+            const updatedClaim = await resourcesApi.updateResourceClaim(
+              supabase,
+              testClaim.id,
+              {
+                status: status as 'approved' | 'rejected' | 'completed',
+              },
+            );
+
+            expect(updatedClaim.status).toBe(status);
+            // Verify record exists in database
+            await verifyClaimInDatabase(supabase, updatedClaim);
+          }
+        });
+
+        it('fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
+          const claimInput = createFakeResourceClaimInput({
+            resourceId: testResource.id,
+            timeslotId: undefined,
+            status: 'cancelled',
+          });
+
+          await expect(
+            resourcesApi.updateResourceClaim(
+              supabase,
+              testClaim.id,
+              claimInput,
+            ),
+          ).rejects.toThrow();
         });
       });
 
-      it('resource owner can update claim status', async () => {
-        const validStatuses = ['approved', 'rejected', 'completed', 'pending'];
+      it('cannot delete resource claim', async () => {
+        // Delete claim
+        await resourcesApi.deleteResourceClaim(supabase, testClaim.id);
 
-        for (const status of validStatuses) {
-          const updatedClaim = await resourcesApi.updateResourceClaim(
-            supabase,
-            claim.id,
-            {
-              status: status as 'approved' | 'rejected' | 'completed',
-            },
-          );
+        // Wait a bit for the delete to propagate
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-          expect(updatedClaim.status).toBe(status);
-          // Verify record exists in database
-          await verifyClaimInDatabase(supabase, updatedClaim);
-        }
+        // Verify claim deleted
+        const { data, error } = await supabase
+          .from('resource_claims')
+          .select()
+          .eq('id', testClaim.id);
+
+        expect(error).toBeNull();
+        expect(data).toHaveLength(0);
       });
-
-      it('fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
-        const claimInput = createFakeResourceClaimInput({
-          resourceId: testResource.id,
-          timeslotId: undefined,
-          status: 'cancelled',
-        });
-
-        await expect(
-          resourcesApi.updateResourceClaim(supabase, claim.id, claimInput),
-        ).rejects.toThrow();
-      });
-    });
-
-    it('deletes resource claim', async () => {
-      // Delete claim
-      await resourcesApi.deleteResourceClaim(supabase, claim.id);
-
-      // Wait a bit for the delete to propagate
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Verify claim deleted
-      const { data, error } = await supabase
-        .from('resource_claims')
-        .select()
-        .eq('id', claim.id);
-
-      expect(error).toBeNull();
-      expect(data).toHaveLength(0);
     });
   });
 });

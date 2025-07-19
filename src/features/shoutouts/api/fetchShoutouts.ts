@@ -14,12 +14,7 @@ export async function fetchShoutouts(
 ): Promise<Shoutout[]> {
   logger.debug('📢 API: Fetching shoutouts', { filters });
 
-  let query = supabase
-    .from('shoutouts')
-    .select(SELECT_SHOUTOUT_WITH_RELATIONS)
-    .order('created_at', {
-      ascending: false,
-    });
+  let query = supabase.from('shoutouts').select(SELECT_SHOUTOUT_WITH_RELATIONS);
 
   if (filters) {
     if (filters.communityId) {
@@ -42,13 +37,13 @@ export async function fetchShoutouts(
   }
 
   const { data, error } = await query.order('created_at', {
-    ascending: true,
+    ascending: false,
   });
 
   if (error) {
     throw error;
   }
-  
+
   if (!data) {
     return [];
   }

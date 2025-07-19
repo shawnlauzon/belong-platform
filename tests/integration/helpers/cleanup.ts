@@ -131,6 +131,20 @@ export async function cleanupUser(userId: string) {
   }
 }
 
+export async function cleanupShoutout(shoutoutId: string) {
+  // Use service key client for cleanup to bypass RLS policies
+  const serviceClient = createServiceClient();
+
+  // Delete user from auth using Admin API
+  const { error } = await serviceClient
+    .from('shoutouts')
+    .delete()
+    .eq('id', shoutoutId);
+
+  if (error) {
+    console.warn(`Failed to delete shoutout ${shoutoutId}:`, error.message);
+  }
+}
 
 // Cleanup specific resource response
 export async function cleanupResourceResponse(
@@ -174,8 +188,5 @@ export async function cleanupResourceClaim(claimId: string) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
-  await serviceClient
-    .from('resource_claims')
-    .delete()
-    .eq('id', claimId);
+  await serviceClient.from('resource_claims').delete().eq('id', claimId);
 }

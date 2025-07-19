@@ -7,7 +7,6 @@ import {
   toDomainResourceClaim,
 } from '../transformers';
 import {
-  ResourceClaimRow,
   ResourceClaimRowWithRelations,
   SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
 } from '../types/resourceRow';
@@ -18,10 +17,14 @@ export async function createResourceClaim(
 ): Promise<ResourceClaim> {
   const currentUserId = await getAuthIdOrThrow(supabase);
 
-  if (claimInput.status !== undefined && 
-      claimInput.status !== 'pending' && 
-      claimInput.status !== 'interested') {
-    throw new Error('If specified, claim status must be "pending" or "interested"');
+  if (
+    claimInput.status !== undefined &&
+    claimInput.status !== 'pending' &&
+    claimInput.status !== 'interested'
+  ) {
+    throw new Error(
+      'If specified, claim status must be "pending" or "interested"',
+    );
   }
 
   // Transform to database format
@@ -33,8 +36,11 @@ export async function createResourceClaim(
   const { data, error } = (await supabase
     .from('resource_claims')
     .insert(insertData)
-    .select()
-    .single()) as { data: ResourceClaimRow | null; error: QueryError | null };
+    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+    .single()) as {
+    data: ResourceClaimRowWithRelations | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to create resource claim', {
@@ -60,25 +66,25 @@ export async function createResourceClaim(
     throw new Error('No data returned from claim creation');
   }
 
-  // Fetch the created claim with relations
-  const { data: claimWithRelations, error: fetchError } = (await supabase
-    .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
-    .eq('id', data.id)
-    .single()) as {
-    data: ResourceClaimRowWithRelations | null;
-    error: QueryError | null;
-  };
+  // // Fetch the created claim with relations
+  // const { data: claimWithRelations, error: fetchError } = (await supabase
+  //   .from('resource_claims')
+  //   .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+  //   .eq('id', data.id)
+  //   .single()) as {
+  //   data: ResourceClaimRowWithRelations | null;
+  //   error: QueryError | null;
+  // };
 
-  if (fetchError || !claimWithRelations) {
-    logger.error('🏘️ API: Failed to fetch created claim with relations', {
-      error: fetchError,
-      claimId: data.id,
-    });
-    throw new Error('Failed to fetch created claim');
-  }
+  // if (fetchError || !claimWithRelations) {
+  //   logger.error('🏘️ API: Failed to fetch created claim with relations', {
+  //     error: fetchError,
+  //     claimId: data.id,
+  //   });
+  //   throw new Error('Failed to fetch created claim');
+  // }
 
-  const claim = toDomainResourceClaim(claimWithRelations);
+  const claim = toDomainResourceClaim(data);
 
   logger.debug('🏘️ API: Successfully created resource claim', {
     claimId: claim.id,

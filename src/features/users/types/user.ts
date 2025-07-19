@@ -4,8 +4,6 @@ export type User = IsPersisted<UserData & UserSummaryFields>;
 export type UserSummary = UserSummaryFields & { id: string };
 
 export type UserData = UserSummaryFields & {
-  lastName?: string;
-  fullName?: string;
   email: string;
   bio?: string;
   location?: Coordinates;
@@ -13,6 +11,8 @@ export type UserData = UserSummaryFields & {
 
 type UserSummaryFields = {
   firstName: string;
+  lastName?: string;
+  fullName?: string;
   avatarUrl?: string;
 
   // TODO: Trust score
