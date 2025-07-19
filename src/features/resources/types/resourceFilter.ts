@@ -10,4 +10,5 @@ export type ResourceFilter = {
   claimUserId?: string;
   maxDriveMinutes?: number;
   searchTerm?: string;
+  hasAvailableSlots?: boolean;
 };

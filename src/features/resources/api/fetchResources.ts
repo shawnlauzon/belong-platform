@@ -16,6 +16,11 @@ export async function fetchResources(
     return await fetchResourcesWithClaims(supabase, filters);
   }
 
+  // If filtering by hasAvailableSlots, use specialized query
+  if (filters?.hasAvailableSlots) {
+    return await fetchResourcesWithAvailableSlots(supabase, filters);
+  }
+
   // If filtering by communities, use junction table to get resources from multiple communities
   const needsCommunityFilter =
     filters?.communityId ||
@@ -210,6 +215,120 @@ async function fetchResourcesWithClaims(
         .select('resource_id')
         .in('community_id', communityIds)
         .in('resource_id', resourceIds);
+
+      if (junctionError) {
+        throw junctionError;
+      }
+
+      if (!junctionData || junctionData.length === 0) {
+        return [];
+      }
+
+      const filteredResourceIds = [
+        ...new Set(junctionData.map((rc) => rc.resource_id)),
+      ];
+      query = query.in('id', filteredResourceIds);
+    }
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return data.map((row) => toDomainResource(row));
+}
+
+async function fetchResourcesWithAvailableSlots(
+  supabase: SupabaseClient<Database>,
+  filters: ResourceFilter,
+): Promise<Resource[]> {
+  // First, find resources that have available timeslots
+  const now = new Date().toISOString();
+  
+  // Query to find resource IDs with available timeslots
+  const { data: timeslots, error: slotsError } = await supabase
+    .from('resource_timeslots')
+    .select(`
+      resource_id,
+      max_claims,
+      claims:resource_claims(id)
+    `)
+    .gte('end_time', now); // Only future or current timeslots
+
+  if (slotsError) {
+    throw slotsError;
+  }
+
+  if (!timeslots || timeslots.length === 0) {
+    return [];
+  }
+
+  // Filter timeslots that have available capacity
+  const availableSlots = timeslots.filter((slot) => {
+    const claimCount = Array.isArray(slot.claims) ? slot.claims.length : 0;
+    return claimCount < slot.max_claims;
+  });
+
+  if (availableSlots.length === 0) {
+    return [];
+  }
+
+  const availableResourceIds = [...new Set(availableSlots.map(slot => slot.resource_id))];
+
+  // Now fetch the full resource data for these IDs
+  let query = supabase
+    .from('resources')
+    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .in('id', availableResourceIds);
+
+  // Apply other filters
+  if (filters.category && filters.category !== 'all') {
+    query = query.eq('category', filters.category);
+  }
+
+  if (filters.type && filters.type !== 'all') {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.ownerId) {
+    query = query.eq('owner_id', filters.ownerId);
+  }
+
+  if (filters.status) {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.searchTerm) {
+    query = query.or(
+      `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`,
+    );
+  }
+
+  // Apply community filtering if specified
+  if (
+    filters.communityId ||
+    (filters.communityIds && filters.communityIds.length > 0)
+  ) {
+    const communityIds =
+      filters.communityIds && filters.communityIds.length > 0
+        ? filters.communityIds
+        : filters.communityId
+          ? [filters.communityId]
+          : [];
+
+    if (communityIds.length > 0) {
+      // Get resources that are visible in specified communities
+      const { data: junctionData, error: junctionError } = await supabase
+        .from('resource_communities')
+        .select('resource_id')
+        .in('community_id', communityIds)
+        .in('resource_id', availableResourceIds);
 
       if (junctionError) {
         throw junctionError;
