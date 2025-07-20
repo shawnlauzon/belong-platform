@@ -403,6 +403,7 @@ export type Database = {
           notes: string | null
           resource_id: string
           status: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id: string | null
           updated_at: string
           user_id: string
         }
@@ -412,6 +413,7 @@ export type Database = {
           notes?: string | null
           resource_id: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -421,6 +423,7 @@ export type Database = {
           notes?: string | null
           resource_id?: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
+          timeslot_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -430,6 +433,13 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_claims_timeslot_id_fkey"
+            columns: ["timeslot_id"]
+            isOneToOne: false
+            referencedRelation: "resource_timeslots"
             referencedColumns: ["id"]
           },
           {

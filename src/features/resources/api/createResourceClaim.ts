@@ -50,7 +50,7 @@ export async function createResourceClaim(
 
     // Handle duplicate claim constraint violation
     if (error.code === '23505') {
-      throw new Error('You have already claimed this resource');
+      throw new Error('You have already claimed this timeslot');
     }
 
     throw new Error(error.message || 'Failed to create resource claim');

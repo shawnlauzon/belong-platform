@@ -6,7 +6,6 @@ export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {
 
 export type ResourceTimeslotSummary = ResourceTimeslotInput & {
   id: string;
-  claims: string[];
   status: 'available' | 'maybeAvailable' | 'unavailable';
 };
 

@@ -1,6 +1,6 @@
 import type { ResourceTimeslot, ResourceTimeslotInput } from '../types';
 import type {
-  ResourceTimeslotRow,
+  ResourceTimeslotRowWithRelations,
   ResourceTimeslotInsertDbData,
   ResourceTimeslotUpdateDbData,
 } from '../types/resourceRow';
@@ -36,7 +36,7 @@ export function forDbTimeslotUpdate(
  * Transform a database timeslot record to a ResourceTimeslot object
  */
 export function toDomainResourceTimeslot(
-  dbTimeslot: ResourceTimeslotRow,
+  dbTimeslot: ResourceTimeslotRowWithRelations,
 ): ResourceTimeslot {
   return {
     id: dbTimeslot.id,
@@ -44,7 +44,7 @@ export function toDomainResourceTimeslot(
     startTime: new Date(dbTimeslot.start_time),
     endTime: new Date(dbTimeslot.end_time),
     maxClaims: dbTimeslot.max_claims,
-    status: 'available', // Simplified - all timeslots are now available since claims don't reference them
+    status: 'available', // All timeslots are available since we don't return claims data from timeslots
     createdAt: new Date(dbTimeslot.created_at),
     updatedAt: new Date(dbTimeslot.updated_at),
   };

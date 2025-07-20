@@ -29,11 +29,13 @@ export const SELECT_RESOURCE_CLAIMS_WITH_RELATIONS = `
         community:communities(*)
       )
     ),
-    user:profiles!user_id(*)
+    user:profiles!user_id(*),
+    timeslot:resource_timeslots!inner(*)
   `;
 export type ResourceClaimRowWithRelations = ResourceClaimRow & {
   resource: ResourceRowWithRelations;
   user: ProfileRow;
+  timeslot: ResourceTimeslotRow;
 };
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
