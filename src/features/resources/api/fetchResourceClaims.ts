@@ -1,17 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { getAuthIdOrThrow, logger } from '@/shared';
-import { ResourceClaim } from '../types';
+import {
+  ResourceClaim,
+  ResourceClaimByUserFilter,
+  ResourceClaimByResourceFilter,
+} from '../types';
 import { toDomainResourceClaim } from '../transformers';
-import { ResourceClaimFilter } from '../types';
 import {
   ResourceClaimRowWithRelations,
   SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
 } from '../types/resourceRow';
+import {
+  isResourceClaimByResourceFilter,
+  isResourceClaimByUserFilter,
+} from '../types/resourceClaimFilter';
 
 export async function fetchResourceClaims(
   supabase: SupabaseClient<Database>,
-  filter: ResourceClaimFilter = {},
+  filter: ResourceClaimByUserFilter | ResourceClaimByResourceFilter = {},
 ): Promise<ResourceClaim[]> {
   await getAuthIdOrThrow(supabase);
 
@@ -20,18 +27,22 @@ export async function fetchResourceClaims(
     .from('resource_claims')
     .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS);
 
-  // Apply resource owner filter if needed
-  if (filter.resourceOwnerId) {
-    query = query.eq('resources.owner_id', filter.resourceOwnerId);
+  if (isResourceClaimByResourceFilter(filter)) {
+    if (filter.userId) {
+      query = query.eq('user_id', filter.userId);
+    }
   }
 
-  // Apply filters
-  if (filter.resourceId) {
-    query = query.eq('resource_id', filter.resourceId);
-  }
+  if (isResourceClaimByUserFilter(filter)) {
+    // Apply filters
+    if (filter.resourceId) {
+      query = query.eq('resource_id', filter.resourceId);
+    }
 
-  if (filter.userId) {
-    query = query.eq('user_id', filter.userId);
+    // Apply resource owner filter if needed
+    if (filter.resourceOwnerId) {
+      query = query.eq('resources.owner_id', filter.resourceOwnerId);
+    }
   }
 
   if (filter.status) {

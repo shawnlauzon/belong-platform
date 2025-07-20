@@ -1,34 +1,34 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import { fetchResourceClaims, ResourceClaimFilter } from '../api';
-import { ResourceClaim } from '../types';
+import { fetchResourceClaims } from '../api';
+import { ResourceClaim, ResourceClaimByResourceFilter } from '../types';
 
 /**
  * Hook for fetching all claims for a specific resource.
- * 
+ *
  * @param resourceId - The ID of the resource to fetch claims for
  * @param filter - Optional additional filters (excluding resourceId)
  * @returns Query state for resource claims
- * 
+ *
  * @example
  * ```tsx
  * // Get all claims for a resource
  * const { data: claims } = useResourceClaimsByResource('resource-123');
- * 
+ *
  * // Get only pending claims for a resource
- * const { data: pendingClaims } = useResourceClaimsByResource('resource-123', { 
- *   status: 'pending' 
+ * const { data: pendingClaims } = useResourceClaimsByResource('resource-123', {
+ *   status: 'pending'
  * });
- * 
+ *
  * // Get claims by a specific user on this resource
- * const { data: userClaims } = useResourceClaimsByResource('resource-123', { 
- *   userId: 'user-456' 
+ * const { data: userClaims } = useResourceClaimsByResource('resource-123', {
+ *   userId: 'user-456'
  * });
  * ```
  */
 export function useResourceClaimsByResource(
   resourceId: string,
-  filter?: Omit<ResourceClaimFilter, 'resourceId'>
+  filter?: Omit<ResourceClaimByResourceFilter, 'resourceId'>,
 ) {
   const supabase = useSupabase();
 

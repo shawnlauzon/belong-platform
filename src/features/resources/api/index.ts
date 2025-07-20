@@ -19,4 +19,7 @@ export * from './updateResourceClaim';
 export * from './deleteResourceClaim';
 
 // Resource claim types
-export type { ResourceClaimFilter } from '../types/resourceClaimFilter';
+export type {
+  ResourceClaimByUserFilter,
+  ResourceClaimByResourceFilter,
+} from '../types/resourceClaimFilter';
