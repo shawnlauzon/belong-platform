@@ -11,9 +11,9 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
     setupFiles: [path.resolve(__dirname, './setup.ts')],
-    include: ['tests/integration/**/*.test.ts'],
+    include: ['tests/integration/**/*.test.ts', 'tests/integration/**/*.test.tsx'],
     testTimeout: 30000,
     hookTimeout: 30000,
     // Suppress console output by default
