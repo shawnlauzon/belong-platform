@@ -3,11 +3,13 @@ import { UserSummary } from '../../users';
 import { CommunitySummary } from '../../communities';
 import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
 
-export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields> & {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields>;
+
+export enum ResourceTypeEnum {
+  OFFER = 'offer',
+  REQUEST = 'request',
+}
+
 export type ResourceSummary = ResourceSummaryFields & {
   id: string;
 };

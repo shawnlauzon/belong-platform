@@ -30,12 +30,15 @@ export default tseslint.config(
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
-      'no-unused-vars': [
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
         'error',
         {
           vars: 'all',
           args: 'after-used',
           varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
         },
       ],
     },

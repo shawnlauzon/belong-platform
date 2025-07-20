@@ -26,7 +26,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function transformKeysDeep(
   obj: unknown,
-  // eslint-disable-next-line no-unused-vars
   transformer: (_key: string) => string,
 ): unknown {
   if (Array.isArray(obj)) {

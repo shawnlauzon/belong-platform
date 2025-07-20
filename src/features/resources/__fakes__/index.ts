@@ -3,11 +3,11 @@ import {
   Resource,
   ResourceInput,
   type ResourceCategory,
-  ResourceType,
   ResourceTimeslot,
   ResourceTimeslotInput,
   ResourceClaim,
   ResourceClaimInput,
+  ResourceTypeEnum,
 } from '../types';
 import { ResourceRowWithRelations } from '../types/resourceRow';
 import {
@@ -36,7 +36,10 @@ export function createFakeResource(
 
   return {
     id: faker.string.uuid(),
-    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
+    type: faker.helpers.arrayElement([
+      ResourceTypeEnum.OFFER,
+      ResourceTypeEnum.REQUEST,
+    ]),
     category: faker.helpers.maybe(
       () =>
         faker.helpers.arrayElement([
@@ -95,7 +98,10 @@ export function createFakeResourceInput(
   return {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
+    type: faker.helpers.arrayElement([
+      ResourceTypeEnum.OFFER,
+      ResourceTypeEnum.REQUEST,
+    ]),
     category: faker.helpers.arrayElement([
       'tools',
       'skills',
@@ -152,7 +158,10 @@ export function createFakeResourceRow(
           probability: 0.8,
         },
       ) ?? null,
-    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
+    type: faker.helpers.arrayElement([
+      ResourceTypeEnum.OFFER,
+      ResourceTypeEnum.REQUEST,
+    ]),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),
@@ -196,7 +205,6 @@ export function createFakeResourceTimeslot(
     maxClaims: faker.number.int({ min: 1, max: 10 }),
     createdAt: now,
     updatedAt: now,
-    claims: [],
     status: faker.helpers.arrayElement([
       'available',
       'maybeAvailable',
@@ -281,7 +289,6 @@ export function createFakeResourceClaim(
     id: faker.string.uuid(),
     resourceId: faker.string.uuid(),
     userId: faker.string.uuid(),
-    timeslotId: faker.string.uuid(),
     status: faker.helpers.arrayElement([
       'pending',
       'approved',
@@ -297,7 +304,6 @@ export function createFakeResourceClaim(
     updatedAt: now,
     user: createFakeUser(),
     resource: createFakeResource(),
-    timeslot: createFakeResourceTimeslot(),
     ...overrides,
   };
 }
@@ -310,7 +316,6 @@ export function createFakeResourceClaimInput(
 ): ResourceClaimInput {
   return {
     resourceId: faker.string.uuid(),
-    timeslotId: faker.string.uuid(),
     status: 'pending',
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     ...overrides,
@@ -329,7 +334,6 @@ export function createFakeResourceClaimRow(
     id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
     user_id: faker.string.uuid(),
-    timeslot_id: faker.string.uuid(),
     status: faker.helpers.arrayElement([
       'pending',
       'approved',
