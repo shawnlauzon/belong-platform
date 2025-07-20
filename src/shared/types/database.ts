@@ -406,7 +406,7 @@ export type Database = {
           notes: string | null
           resource_id: string
           status: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id: string | null
+          timeslot_id: string
           updated_at: string
           user_id: string
         }
@@ -416,7 +416,7 @@ export type Database = {
           notes?: string | null
           resource_id: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id?: string | null
+          timeslot_id: string
           updated_at?: string
           user_id?: string
         }
@@ -426,7 +426,7 @@ export type Database = {
           notes?: string | null
           resource_id?: string
           status?: Database["public"]["Enums"]["resource_claim_status"]
-          timeslot_id?: string | null
+          timeslot_id?: string
           updated_at?: string
           user_id?: string
         }
