@@ -11,9 +11,14 @@ export function useCreateResourceClaim() {
     mutationFn: (claimInput: ResourceClaimInput) =>
       createResourceClaim(supabase, claimInput),
     onSuccess: (claim) => {
-      // Invalidate the claims query for this resource
+      // Invalidate all queries for this resource (regardless of additional filters)
       queryClient.invalidateQueries({
-        queryKey: ['resource-claims', claim.resourceId],
+        queryKey: ['resource-claims', 'by-resource', claim.resourceId],
+      });
+      
+      // Invalidate all queries for this user (regardless of additional filters)
+      queryClient.invalidateQueries({
+        queryKey: ['resource-claims', 'by-user', claim.userId],
       });
     },
   });
