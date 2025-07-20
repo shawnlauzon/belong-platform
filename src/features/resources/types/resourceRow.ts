@@ -1,42 +1,14 @@
-import { ProfileRow } from '@/features/users/types/profileRow';
 import type { Database } from '../../../shared/types/database';
-import { CommunityRow } from '@/features/communities';
 
-export const SELECT_RESOURCE_WITH_RELATIONS = `
-*,
-owner:profiles!owner_id(*),
-resource_communities!inner(
-  community:communities(*)
-)
-`;
+export const SELECT_RESOURCE_BASIC = `*`;
 
-export type ResourceRowWithRelations = ResourceRow & {
-  owner: ProfileRow;
-  resource_communities: {
-    community: CommunityRow;
-  }[];
-};
+export type ResourceRowBasic = ResourceRow;
 
-export const SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS = `*`;
-export type ResourceTimeslotRowWithRelations = ResourceTimeslotRow;
+export const SELECT_RESOURCE_TIMESLOT_BASIC = `*`;
+export type ResourceTimeslotRowBasic = ResourceTimeslotRow;
 
-export const SELECT_RESOURCE_CLAIMS_WITH_RELATIONS = `
-    *,
-    resource:resources!inner(
-      *,
-      owner:profiles!owner_id(*),
-      resource_communities!inner(
-        community:communities(*)
-      )
-    ),
-    user:profiles!user_id(*),
-    timeslot:resource_timeslots!inner(*)
-  `;
-export type ResourceClaimRowWithRelations = ResourceClaimRow & {
-  resource: ResourceRowWithRelations;
-  user: ProfileRow;
-  timeslot: ResourceTimeslotRow;
-};
+export const SELECT_RESOURCE_CLAIMS_BASIC = `*`;
+export type ResourceClaimRowBasic = ResourceClaimRow;
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ResourceInsertDbData =

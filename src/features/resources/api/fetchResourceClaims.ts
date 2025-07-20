@@ -8,8 +8,8 @@ import {
 } from '../types';
 import { toDomainResourceClaim } from '../transformers';
 import {
-  ResourceClaimRowWithRelations,
-  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+  ResourceClaimRowBasic,
+  SELECT_RESOURCE_CLAIMS_BASIC,
 } from '../types/resourceRow';
 import {
   isResourceClaimByResourceFilter,
@@ -25,7 +25,7 @@ export async function fetchResourceClaims(
   // Always use the query with relations to get complete ResourceClaim objects
   let query = supabase
     .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS);
+    .select(SELECT_RESOURCE_CLAIMS_BASIC);
 
   if (isResourceClaimByResourceFilter(filter)) {
     if (filter.userId) {
@@ -63,7 +63,7 @@ export async function fetchResourceClaims(
   query = query.order('created_at', { ascending: false });
 
   const { data, error } = (await query) as {
-    data: ResourceClaimRowWithRelations[] | null;
+    data: ResourceClaimRowBasic[] | null;
     error: Error | null;
   };
 
@@ -83,7 +83,7 @@ export async function fetchResourceClaims(
   }
 
   // Transform the joined results to ResourceClaim objects with relations
-  const claims = (data as ResourceClaimRowWithRelations[]).map(
+  const claims = (data as ResourceClaimRowBasic[]).map(
     toDomainResourceClaim,
   );
 

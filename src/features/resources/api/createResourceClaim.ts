@@ -7,8 +7,8 @@ import {
   toDomainResourceClaim,
 } from '../transformers';
 import {
-  ResourceClaimRowWithRelations,
-  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+  ResourceClaimRowBasic,
+  SELECT_RESOURCE_CLAIMS_BASIC,
 } from '../types/resourceRow';
 
 export async function createResourceClaim(
@@ -36,9 +36,9 @@ export async function createResourceClaim(
   const { data, error } = (await supabase
     .from('resource_claims')
     .insert(insertData)
-    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_CLAIMS_BASIC)
     .single()) as {
-    data: ResourceClaimRowWithRelations | null;
+    data: ResourceClaimRowBasic | null;
     error: QueryError | null;
   };
 
@@ -66,10 +66,10 @@ export async function createResourceClaim(
   // // Fetch the created claim with relations
   // const { data: claimWithRelations, error: fetchError } = (await supabase
   //   .from('resource_claims')
-  //   .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+  //   .select(SELECT_RESOURCE_CLAIMS_BASIC)
   //   .eq('id', data.id)
   //   .single()) as {
-  //   data: ResourceClaimRowWithRelations | null;
+  //   data: ResourceClaimRowBasic | null;
   //   error: QueryError | null;
   // };
 

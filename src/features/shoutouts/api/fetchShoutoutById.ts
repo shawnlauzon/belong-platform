@@ -2,8 +2,8 @@ import { logger } from '@/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Shoutout } from '../types';
-import { toShoutoutWithJoinedRelations } from '../transformers/shoutoutsTransformer';
-import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
+import { toDomainShoutout } from '../transformers/shoutoutsTransformer';
+import { SELECT_SHOUTOUT_BASIC } from '../types/shoutoutRow';
 
 /**
  * Fetches a single shoutout by ID with all relations
@@ -16,7 +16,7 @@ export async function fetchShoutoutById(
 
   const { data, error } = await supabase
     .from('shoutouts')
-    .select(SELECT_SHOUTOUT_WITH_RELATIONS)
+    .select(SELECT_SHOUTOUT_BASIC)
     .eq('id', id)
     .single();
 
@@ -25,5 +25,5 @@ export async function fetchShoutoutById(
     return null;
   }
 
-  return toShoutoutWithJoinedRelations(data);
+  return toDomainShoutout(data);
 }

@@ -60,6 +60,7 @@ export function createFakeCommunityInput(
     },
     centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
+    memberCount: faker.number.int({ min: 10, max: 140 }),
     boundary: {
       type: 'isochrone',
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
@@ -193,21 +194,6 @@ export function createFakeCommunityMembership(
   };
 }
 
-/**
- * Creates a fake CommunitySummary
- */
-export function createFakeCommunitySummary(
-  overrides: Partial<import('../types').CommunitySummary> = {},
-): import('../types').CommunitySummary {
-  return {
-    id: faker.string.uuid(),
-    name: faker.location.city(),
-    type: faker.helpers.arrayElement(['place', 'interest']),
-    icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
-    memberCount: faker.number.int({ min: 10, max: 140 }),
-    ...overrides,
-  };
-}
 
 /**
  * Creates a fake database Community row with organizer relation

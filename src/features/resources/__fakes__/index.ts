@@ -9,17 +9,16 @@ import {
   ResourceClaimInput,
   ResourceTypeEnum,
 } from '../types';
-import { ResourceRowWithRelations } from '../types/resourceRow';
 import {
   ResourceTimeslotRow,
   ResourceTimeslotUpdateDbData,
   ResourceClaimRow,
+  ResourceRow,
 } from '../types/resourceRow';
 import { User } from '../../users';
 import { createFakeProfileRow, createFakeUser } from '../../users/__fakes__';
 import {
   createFakeCommunityRow,
-  createFakeCommunitySummary,
 } from '../../communities/__fakes__';
 
 /**
@@ -31,8 +30,6 @@ export function createFakeResource(
   const now = new Date();
 
   const owner = createFakeUser();
-
-  const communities = [createFakeCommunitySummary()];
 
   return {
     id: faker.string.uuid(),
@@ -63,9 +60,7 @@ export function createFakeResource(
     createdAt: now,
     updatedAt: now,
     ownerId: owner.id,
-    owner,
-    communityIds: communities.map((c) => c.id),
-    communities,
+    communityIds: [faker.string.uuid()],
     status: faker.helpers.arrayElement([
       'open',
       'completed',
@@ -88,7 +83,7 @@ export function createFakeResourceWithOwner(
   const resource = createFakeResource({ ...overrides, ownerId: owner.id });
   return {
     ...resource,
-    owner,
+    ownerId: owner.id,
   };
 }
 
@@ -110,6 +105,7 @@ export function createFakeResourceInput(
       'event',
       'other',
     ] as const),
+    ownerId: faker.string.uuid(),
     communityIds: [faker.string.uuid()],
     imageUrls: [],
     locationName: faker.location.city(),
@@ -130,18 +126,12 @@ export function createFakeResourceInput(
 }
 
 export function createFakeResourceRow(
-  overrides: Partial<ResourceRowWithRelations> = {},
-): ResourceRowWithRelations {
+  overrides: Partial<ResourceRow> = {},
+): ResourceRow {
   const now = new Date().toISOString();
 
   return {
     id: faker.string.uuid(),
-    owner: createFakeProfileRow(),
-    resource_communities: [
-      {
-        community: createFakeCommunityRow(),
-      },
-    ],
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     category:
@@ -303,9 +293,6 @@ export function createFakeResourceClaim(
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     createdAt: now,
     updatedAt: now,
-    user: createFakeUser(),
-    resource: createFakeResource(),
-    timeslot: createFakeResourceTimeslot(),
     ...overrides,
   };
 }

@@ -5,7 +5,7 @@ import { forDbUpdate } from '@/features/resources/transformers/resourceTransform
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
-import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
+import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
 
 export async function updateResource(
   supabase: SupabaseClient<Database>,
@@ -26,7 +26,7 @@ export async function updateResource(
       .from('resources')
       .update(dbData)
       .eq('id', id)
-      .select(SELECT_RESOURCE_WITH_RELATIONS)
+      .select(SELECT_RESOURCE_BASIC)
       .single();
 
     if (error) {

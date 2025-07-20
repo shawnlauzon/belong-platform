@@ -3,8 +3,8 @@ import type { Database } from '@/shared/types/database';
 import type { ResourceClaim } from '@/features/resources';
 import { toDomainResourceClaim } from '../transformers/resourceClaimTransformer';
 import {
-  ResourceClaimRowWithRelations,
-  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+  ResourceClaimRowBasic,
+  SELECT_RESOURCE_CLAIMS_BASIC,
 } from '../types/resourceRow';
 
 export async function fetchResourceClaimById(
@@ -13,10 +13,10 @@ export async function fetchResourceClaimById(
 ): Promise<ResourceClaim | null> {
   const { data, error } = (await supabase
     .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_CLAIMS_BASIC)
     .eq('id', id)
     .single()) as {
-    data: ResourceClaimRowWithRelations | null;
+    data: ResourceClaimRowBasic | null;
     error: Error | null;
   };
 

@@ -4,8 +4,8 @@ import { logger } from '@/shared';
 import { ResourceTimeslot, ResourceTimeslotInput } from '../types';
 import { forDbTimeslotUpdate, toDomainResourceTimeslot } from '../transformers';
 import {
-  ResourceTimeslotRowWithRelations,
-  SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS,
+  ResourceTimeslotRowBasic,
+  SELECT_RESOURCE_TIMESLOT_BASIC,
 } from '../types/resourceRow';
 
 export async function updateResourceTimeslot(
@@ -58,9 +58,9 @@ export async function updateResourceTimeslot(
     .from('resource_timeslots')
     .update(updateData)
     .eq('id', id)
-    .select(SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_TIMESLOT_BASIC)
     .single()) as {
-    data: ResourceTimeslotRowWithRelations | null;
+    data: ResourceTimeslotRowBasic | null;
     error: QueryError | null;
   };
 

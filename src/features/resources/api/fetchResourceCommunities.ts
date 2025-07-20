@@ -1,21 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { CommunitySummary } from '@/features/communities';
-import { toDomainCommunitySummary } from '@/features/communities/transformers/communityTransformer';
 
 /**
- * Fetch all communities associated with a resource through the junction table
+ * Fetch all community IDs associated with a resource through the junction table
  */
 export async function fetchResourceCommunities(
   supabase: SupabaseClient<Database>,
   resourceId: string,
-): Promise<CommunitySummary[]> {
+): Promise<string[]> {
   const { data, error } = await supabase
     .from('resource_communities')
-    .select(`
-      community_id,
-      communities!inner(*)
-    `)
+    .select('community_id')
     .eq('resource_id', resourceId);
 
   if (error) {
@@ -26,37 +21,23 @@ export async function fetchResourceCommunities(
     return [];
   }
 
-  return data.map((item) => {
-    const community = Array.isArray(item.communities) 
-      ? item.communities[0] 
-      : item.communities;
-    
-    if (!community) {
-      throw new Error(`Community data missing for resource ${resourceId}`);
-    }
-    
-    return toDomainCommunitySummary(community);
-  });
+  return data.map((item) => item.community_id);
 }
 
 /**
- * Fetch communities for multiple resources efficiently
+ * Fetch community IDs for multiple resources efficiently
  */
 export async function fetchResourceCommunitiesBatch(
   supabase: SupabaseClient<Database>,
   resourceIds: string[],
-): Promise<Record<string, CommunitySummary[]>> {
+): Promise<Record<string, string[]>> {
   if (resourceIds.length === 0) {
     return {};
   }
 
   const { data, error } = await supabase
     .from('resource_communities')
-    .select(`
-      resource_id,
-      community_id,
-      communities!inner(*)
-    `)
+    .select('resource_id, community_id')
     .in('resource_id', resourceIds);
 
   if (error) {
@@ -67,24 +48,14 @@ export async function fetchResourceCommunitiesBatch(
     return {};
   }
 
-  const result: Record<string, CommunitySummary[]> = {};
+  const result: Record<string, string[]> = {};
   
   for (const item of data) {
-    const community = Array.isArray(item.communities) 
-      ? item.communities[0] 
-      : item.communities;
-    
-    if (!community) {
-      continue;
-    }
-    
-    const communitySummary = toDomainCommunitySummary(community);
-    
     if (!result[item.resource_id]) {
       result[item.resource_id] = [];
     }
     
-    result[item.resource_id].push(communitySummary);
+    result[item.resource_id].push(item.community_id);
   }
 
   return result;

@@ -72,7 +72,7 @@ export function useCreateShoutout() {
       return createShoutout(supabase, {
         ...input,
         ...resource,
-        communityId: resource.communities[0]?.id || '',
+        communityId: resource.communityIds[0] || '',
         toUserId: resource.ownerId,
       });
     },

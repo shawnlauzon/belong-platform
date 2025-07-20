@@ -4,13 +4,13 @@ import type { Database } from '../../../shared/types/database';
 import { type Shoutout, ShoutoutInput } from '../types';
 import {
   toShoutoutInsertRow,
-  toShoutoutWithJoinedRelations,
+  toDomainShoutout,
 } from '../transformers/shoutoutsTransformer';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
 import {
-  SELECT_SHOUTOUT_WITH_RELATIONS,
+  SELECT_SHOUTOUT_BASIC,
   ShoutoutInsertRow,
 } from '../types/shoutoutRow';
 
@@ -55,7 +55,7 @@ async function insertShoutout(
     const { data: createdShoutout, error } = await supabase
       .from('shoutouts')
       .insert(dbShoutout)
-      .select(SELECT_SHOUTOUT_WITH_RELATIONS)
+      .select(SELECT_SHOUTOUT_BASIC)
       .single();
 
     if (error) {
@@ -64,7 +64,7 @@ async function insertShoutout(
     }
 
     // Transform to domain object using the transformer
-    const domainShoutout = toShoutoutWithJoinedRelations(createdShoutout);
+    const domainShoutout = toDomainShoutout(createdShoutout);
 
     // Auto-commit any temporary image URLs after shoutout creation
     if (domainShoutout.imageUrls && domainShoutout.imageUrls.length > 0) {

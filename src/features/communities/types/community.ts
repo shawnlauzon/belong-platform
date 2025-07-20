@@ -1,13 +1,13 @@
 import { Polygon } from './geojson';
 import { Coordinates, IsPersisted } from '@/shared';
 
-export type Community = IsPersisted<CommunityInput & CommunitySummaryFields>;
-export type CommunitySummary = CommunitySummaryFields & {
-  id: string;
-};
+export type Community = IsPersisted<CommunityInput>;
 
 // For creating / updating Community
-export type CommunityInput = Omit<CommunitySummaryFields, 'memberCount'> & {
+export type CommunityInput = {
+  name: string;
+  type: CommunityType;
+  icon?: string; // Visual icon for the community
   organizerId: string;
 
   description?: string;
@@ -22,14 +22,6 @@ export type CommunityInput = Omit<CommunitySummaryFields, 'memberCount'> & {
 
   // Status & Metadata
   timeZone: string;
-};
-
-// Summary information about a Community, useful for lists;
-type CommunitySummaryFields = {
-  name: string;
-  type: CommunityType;
-  icon?: string; // Visual icon for the community
-
   memberCount: number;
 
   // TODO Color

@@ -100,6 +100,9 @@ export function createFakeShoutoutInput(
     message: faker.lorem.sentence(),
     resourceId: faker.string.uuid(),
     imageUrls: [],
+    fromUserId: faker.string.uuid(),
+    toUserId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
     ...overrides,
   };
 }

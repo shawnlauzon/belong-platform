@@ -2,17 +2,13 @@ import type {
   ResourceCategory,
   Resource,
   ResourceInput,
-  ResourceSummary,
 } from '../types';
-import type { CommunitySummary } from '../../communities';
 import type {
-  ResourceRowWithRelations,
+  ResourceRowBasic,
   ResourceInsertDbData,
   ResourceUpdateDbData,
 } from '../types/resourceRow';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
-import { toUserSummary } from '../../users/transformers/userTransformer';
-import { toDomainCommunitySummary } from '@/features/communities/transformers/communityTransformer';
 
 /**
  * Transform a domain resource object to a database resource record
@@ -69,24 +65,11 @@ export function forDbUpdate(
 }
 
 /**
- * Transform a database resource record with joined relations to a Resource object
+ * Transform a database resource record to a Resource object
  */
 export function toDomainResource(
-  dbResource: ResourceRowWithRelations,
+  dbResource: ResourceRowBasic,
 ): Resource {
-  // Handle potential array results from Supabase joins
-  const owner = Array.isArray(dbResource.owner)
-    ? dbResource.owner[0]
-    : dbResource.owner;
-
-  // Validate required joined data
-  if (!owner) {
-    throw new Error(`Resource ${dbResource.id} missing required owner data`);
-  }
-
-  // Transform owner to UserSummary
-  const partialOwner = toUserSummary(owner);
-
   return {
     id: dbResource.id,
     type: dbResource.type,
@@ -101,13 +84,7 @@ export function toDomainResource(
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
-    owner: partialOwner,
-    communityIds: dbResource.resource_communities.map(
-      (community) => community.community.id,
-    ),
-    communities: dbResource.resource_communities.map((community) =>
-      toDomainCommunitySummary(community.community),
-    ),
+    communityIds: [], // Will be populated separately via resource_communities table
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
@@ -117,42 +94,3 @@ export function toDomainResource(
   };
 }
 
-/**
- * Transform a database resource record with joined relations to a ResourceSummary object
- */
-export function toResourceSummary(
-  dbResource: ResourceRowWithRelations,
-  communities: CommunitySummary[] = [],
-): ResourceSummary {
-  // Handle potential array results from Supabase joins
-  const owner = Array.isArray(dbResource.owner)
-    ? dbResource.owner[0]
-    : dbResource.owner;
-
-  // Validate required joined data
-  if (!owner) {
-    throw new Error(`Resource ${dbResource.id} missing required owner data`);
-  }
-
-  return {
-    id: dbResource.id,
-    type: dbResource.type,
-    category: dbResource.category as ResourceCategory,
-    title: dbResource.title,
-    description: dbResource.description,
-    locationName: dbResource.location_name || '',
-    coordinates: dbResource.coordinates
-      ? parsePostGisPoint(dbResource.coordinates)
-      : undefined,
-    ownerId: dbResource.owner_id,
-    owner: toUserSummary(owner),
-    communities,
-    imageUrls: dbResource.image_urls || [],
-    status: dbResource.status,
-    maxClaims: dbResource.max_claims ?? undefined,
-    requiresApproval: dbResource.requires_approval || false,
-    expiresAt: dbResource.expires_at
-      ? new Date(dbResource.expires_at)
-      : undefined,
-  };
-}

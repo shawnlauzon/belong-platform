@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Resource, ResourceFilter } from '@/features/resources';
 import { toDomainResource } from '../transformers/resourceTransformer';
-import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
+import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
 import { getAuthIdOrThrow } from '@/shared';
 
 export async function fetchResources(
@@ -60,7 +60,7 @@ export async function fetchResources(
     // Build the query to fetch resources with these IDs (not executed until the await below)
     let query = supabase
       .from('resources')
-      .select(SELECT_RESOURCE_WITH_RELATIONS)
+      .select(SELECT_RESOURCE_BASIC)
       .in('id', filteredResourceIds);
 
     // Apply other filters
@@ -104,7 +104,7 @@ export async function fetchResources(
     // No community filtering - query resources directly
     let query = supabase
       .from('resources')
-      .select(SELECT_RESOURCE_WITH_RELATIONS);
+      .select(SELECT_RESOURCE_BASIC);
 
     if (filters) {
       if (filters.category && filters.category !== 'all') {
@@ -170,7 +170,7 @@ async function fetchResourcesWithClaims(
   // Now fetch the resources with these IDs
   let query = supabase
     .from('resources')
-    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_BASIC)
     .in('id', resourceIds);
 
   // Apply other filters
@@ -284,7 +284,7 @@ async function fetchResourcesWithAvailableSlots(
   // Now fetch the full resource data for these IDs
   let query = supabase
     .from('resources')
-    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_BASIC)
     .in('id', availableResourceIds);
 
   // Apply other filters

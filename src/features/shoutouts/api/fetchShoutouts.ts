@@ -2,8 +2,8 @@ import { logger } from '@/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Shoutout, ShoutoutFilter } from '../types';
-import { toShoutoutWithJoinedRelations } from '../transformers/shoutoutsTransformer';
-import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
+import { toDomainShoutout } from '../transformers/shoutoutsTransformer';
+import { SELECT_SHOUTOUT_BASIC } from '../types/shoutoutRow';
 
 /**
  * Fetches shoutouts with optional filtering
@@ -14,7 +14,7 @@ export async function fetchShoutouts(
 ): Promise<Shoutout[]> {
   logger.debug('📢 API: Fetching shoutouts', { filters });
 
-  let query = supabase.from('shoutouts').select(SELECT_SHOUTOUT_WITH_RELATIONS);
+  let query = supabase.from('shoutouts').select(SELECT_SHOUTOUT_BASIC);
 
   if (filters) {
     if (filters.communityId) {
@@ -48,5 +48,5 @@ export async function fetchShoutouts(
     return [];
   }
 
-  return data.map((row) => toShoutoutWithJoinedRelations(row));
+  return data.map((row) => toDomainShoutout(row));
 }

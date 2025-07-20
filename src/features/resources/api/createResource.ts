@@ -5,7 +5,7 @@ import { toResourceInsertRow } from '@/features/resources/transformers/resourceT
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
-import { SELECT_RESOURCE_WITH_RELATIONS } from '../types/resourceRow';
+import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 
 export async function createResource(
@@ -103,7 +103,7 @@ export async function createResource(
   // Fetch the complete resource with all relations now that community associations exist
   const { data: completeResource, error: fetchError } = await supabase
     .from('resources')
-    .select(SELECT_RESOURCE_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_BASIC)
     .eq('id', data.id)
     .single();
 

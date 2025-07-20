@@ -1,6 +1,5 @@
 import type {
   Community,
-  CommunitySummary,
   CommunityInput,
   CommunityMembershipInput,
   CommunityBoundary,
@@ -68,20 +67,6 @@ export function toDomainCommunity(
   };
 }
 
-/**
- * Transform a database community record to a domain community summary object
- */
-export function toDomainCommunitySummary(
-  dbCommunity: CommunityRow,
-): CommunitySummary {
-  return {
-    id: dbCommunity.id,
-    name: dbCommunity.name,
-    type: dbCommunity.type as CommunityType,
-    icon: dbCommunity.icon ?? undefined,
-    memberCount: dbCommunity.member_count,
-  };
-}
 
 /**
  * Transform a domain community object to a database community record

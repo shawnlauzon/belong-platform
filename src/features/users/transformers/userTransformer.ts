@@ -1,4 +1,4 @@
-import type { User, UserData, UserSummary } from '..';
+import type { User, UserData } from '..';
 import type {
   ProfileRow,
   ProfileInsertRow,
@@ -103,19 +103,6 @@ export function toUserUpdateRow(
   };
 }
 
-/**
- * Transform a database profile record to a UserSummary object
- */
-export function toUserSummary(profile: ProfileRow): UserSummary {
-  const metadata = (profile.user_metadata || {}) as UserMetadata;
-  return {
-    id: profile.id,
-    firstName: metadata.first_name || '',
-    lastName: metadata.last_name || '',
-    fullName: metadata.full_name || '',
-    avatarUrl: metadata.avatar_url,
-  };
-}
 
 // Export types for testing
 export type {

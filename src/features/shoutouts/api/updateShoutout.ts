@@ -4,9 +4,9 @@ import type { Database } from '../../../shared/types/database';
 import type { ShoutoutInput, Shoutout } from '../types';
 import {
   toShoutoutUpdateRow,
-  toShoutoutWithJoinedRelations,
+  toDomainShoutout,
 } from '../transformers/shoutoutsTransformer';
-import { SELECT_SHOUTOUT_WITH_RELATIONS } from '../types/shoutoutRow';
+import { SELECT_SHOUTOUT_BASIC } from '../types/shoutoutRow';
 import { getAuthIdOrThrow } from '../../../shared/utils';
 
 /**
@@ -30,7 +30,7 @@ export async function updateShoutout(
       .from('shoutouts')
       .update(dbData)
       .eq('id', id)
-      .select(SELECT_SHOUTOUT_WITH_RELATIONS)
+      .select(SELECT_SHOUTOUT_BASIC)
       .single();
 
     if (error) {
@@ -48,7 +48,7 @@ export async function updateShoutout(
     }
 
     // Transform to domain object using the transformer
-    const shoutout = toShoutoutWithJoinedRelations(data);
+    const shoutout = toDomainShoutout(data);
 
     logger.debug('📢 API: Successfully updated shoutout', {
       id: shoutout.id,

@@ -1,9 +1,6 @@
-import { ProfileRow } from '@/features/users/types/profileRow';
-import { CommunityRow } from '@/features/communities/types/communityRow';
-import { ResourceRow } from '@/features/resources/types/resourceRow';
 import type { Database } from '../../../shared/types/database';
 
-// export const SELECT_SHOUTOUT_WITH_RELATIONS = `
+// export const SELECT_SHOUTOUT_BASIC = `
 //     id,
 //     message,
 //     image_urls,
@@ -19,20 +16,9 @@ import type { Database } from '../../../shared/types/database';
 //     community:communities!community_id(id, name)
 //   ` as const;
 
-export const SELECT_SHOUTOUT_WITH_RELATIONS = `
-    *,
-    from_user:profiles!from_user_id(*),
-    to_user:profiles!to_user_id(*),
-    resource:resources!resource_id(*,owner:profiles!owner_id(*)),
-    community:communities!community_id(*)
-  `;
+export const SELECT_SHOUTOUT_BASIC = `*`;
 
-export type ShoutoutRowWithRelations = ShoutoutRow & {
-  from_user: ProfileRow;
-  to_user: ProfileRow;
-  resource: ResourceRow & { owner: ProfileRow };
-  community: CommunityRow;
-};
+export type ShoutoutRowBasic = ShoutoutRow;
 
 export type ShoutoutRow = Database['public']['Tables']['shoutouts']['Row'];
 export type ShoutoutInsertRow =

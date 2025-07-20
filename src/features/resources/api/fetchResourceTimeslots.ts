@@ -4,8 +4,8 @@ import { getAuthIdOrThrow, logger } from '@/shared';
 import { ResourceTimeslot } from '../types';
 import { toDomainResourceTimeslot } from '../transformers';
 import {
-  ResourceTimeslotRowWithRelations,
-  SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS,
+  ResourceTimeslotRowBasic,
+  SELECT_RESOURCE_TIMESLOT_BASIC,
 } from '../types/resourceRow';
 
 export async function fetchResourceTimeslots(
@@ -16,10 +16,10 @@ export async function fetchResourceTimeslots(
   const { data, error } = (await supabase
     .from('resource_timeslots')
     // select timeslots joined with claims
-    .select(SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_TIMESLOT_BASIC)
     .eq('resource_id', resourceId)
     .order('start_time', { ascending: true })) as {
-    data: ResourceTimeslotRowWithRelations[] | null;
+    data: ResourceTimeslotRowBasic[] | null;
     error: QueryError | null;
   };
 

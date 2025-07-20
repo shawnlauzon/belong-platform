@@ -5,8 +5,8 @@ import { ResourceClaim, ResourceClaimInput } from '../types';
 import { forDbClaimUpdate, toDomainResourceClaim } from '../transformers';
 import {
   ResourceClaimRow,
-  ResourceClaimRowWithRelations,
-  SELECT_RESOURCE_CLAIMS_WITH_RELATIONS,
+  ResourceClaimRowBasic,
+  SELECT_RESOURCE_CLAIMS_BASIC,
 } from '../types/resourceRow';
 
 export async function updateResourceClaim(
@@ -44,10 +44,10 @@ export async function updateResourceClaim(
   // Fetch the updated claim with relations
   const { data: claimWithRelations, error: fetchError } = (await supabase
     .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_WITH_RELATIONS)
+    .select(SELECT_RESOURCE_CLAIMS_BASIC)
     .eq('id', data.id)
     .single()) as {
-    data: ResourceClaimRowWithRelations | null;
+    data: ResourceClaimRowBasic | null;
     error: QueryError | null;
   };
 
