@@ -78,7 +78,9 @@ export type ResourceClaimStatus =
   Database['public']['Enums']['resource_claim_status'];
 export type ResourceCategory = Database['public']['Enums']['resource_category'];
 
-export enum ResourceType {
+// Type and enum for ResourceType
+export type ResourceType = Database['public']['Enums']['resource_type'];
+export enum ResourceTypeEnum {
   OFFER = 'offer',
   REQUEST = 'request',
 }

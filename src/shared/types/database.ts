@@ -44,7 +44,7 @@ export type Database = {
           id?: string
           member_count?: number
           name: string
-          organizer_id: string
+          organizer_id?: string
           time_zone: string
           type?: string
           updated_at?: string
@@ -415,7 +415,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -440,6 +440,13 @@ export type Database = {
             columns: ["timeslot_id"]
             isOneToOne: false
             referencedRelation: "resource_timeslots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -565,7 +572,7 @@ export type Database = {
           requires_approval: boolean | null
           status: Database["public"]["Enums"]["resource_status"]
           title: string
-          type: string
+          type: Database["public"]["Enums"]["resource_type"]
           updated_at: string
         }
         Insert: {
@@ -578,11 +585,11 @@ export type Database = {
           image_urls?: string[]
           location_name?: string | null
           max_claims?: number | null
-          owner_id: string
+          owner_id?: string
           requires_approval?: boolean | null
           status?: Database["public"]["Enums"]["resource_status"]
           title: string
-          type: string
+          type: Database["public"]["Enums"]["resource_type"]
           updated_at?: string
         }
         Update: {
@@ -599,7 +606,7 @@ export type Database = {
           requires_approval?: boolean | null
           status?: Database["public"]["Enums"]["resource_status"]
           title?: string
-          type?: string
+          type?: Database["public"]["Enums"]["resource_type"]
           updated_at?: string
         }
         Relationships: [
@@ -2559,6 +2566,7 @@ export type Database = {
         | "given"
         | "received"
       resource_status: "open" | "completed" | "cancelled"
+      resource_type: "offer" | "request"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2713,6 +2721,7 @@ export const Constants = {
         "received",
       ],
       resource_status: ["open", "completed", "cancelled"],
+      resource_type: ["offer", "request"],
     },
   },
 } as const
