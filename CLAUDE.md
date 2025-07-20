@@ -121,11 +121,11 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - Use generated database types from `src/shared/types/database.ts`
 - Prefer type-safe patterns over casting or type assertions
 
-### TDD
+### Testing Approach
 
-- Do not write a new test case if you are fixing a unit test failure
-- If you are not fixing a unit test failure, write a test before writing the code
-- Use the test file to guide the implementation
+- Write comprehensive unit tests for all new functionality
+- Test edge cases and error conditions
+- Use the test file to guide and validate the implementation
 - See [UNIT_TESTING.md](./UNIT_TESTING.md) for detailed testing patterns
 
 ### Testing
@@ -157,7 +157,7 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ### QA
 
-- Before any commit, run `pnpm tdd` and fix any warnings and errors
+- Before any commit, run `pnpm test` and fix any warnings and errors
 
 ## Code Safety Guidelines
 
@@ -193,11 +193,11 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ### Problem-Solving Methodology
 
-1. **Write a Failing Test First**: Always create a unit test that reproduces the exact problem before attempting any fixes
+1. **Understand the Problem**: Create a unit test that reproduces the exact problem to validate your understanding
 
    - Unit tests should demonstrate the bug in isolation
    - Use proper mocking strategy: only mock external dependencies (like Supabase), never mock platform code
-   - The test should fail for the right reason - demonstrating the actual bug
+   - The test should validate the expected behavior
 
 2. **Understand the Real Problem Space**:
 
@@ -224,20 +224,19 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
    - **Both test types**: Should demonstrate the same correct behavior
    - **If integration tests still fail**: There may be additional root causes
 
-6. **Test-Driven Development (TDD) Process**:
+6. **Development Process**:
 
-   - Red: Write a failing test that demonstrates the problem
-   - Green: Fix the minimum code needed to make the test pass
-   - Refactor: Clean up the implementation while keeping tests green
-
-   Follow this when you are adding new features or fixing bugs. If a test case already reproduces the problem, you can skip the red step.
+   - Write tests to validate expected behavior
+   - Implement the feature or fix
+   - Ensure all tests pass
+   - Refactor if needed while keeping tests green
 
 ### Common Anti-Patterns to Avoid
 
 - **Mocking platform code**: Never mock our own functions - only mock external dependencies
 - **Hiding problems with cleanup**: Don't add manual cache clearing, database cleanup, or other workarounds that mask the real issue
 - **Fixing symptoms instead of causes**: If something should work automatically but doesn't, fix the automation, don't work around it
-- **Skipping the failing test step**: Always prove you can reproduce the problem in a test before fixing it
+- **Not testing thoroughly**: Always ensure comprehensive test coverage for new functionality and bug fixes
 - **Writing tests that expect bugs**: Don't write assertions that expect broken behavior (e.g., `expect(cache).toEqual(oldData)` when cache should be cleared). Instead, write tests that expect correct behavior - they will fail and demonstrate the bug, then pass after the fix
 - **Assuming mocked behavior matches real behavior**: Unit tests with mocks may pass while integration tests fail because mocks don't perfectly simulate real external dependencies
 - **Stopping investigation after first hypothesis**: If your fix works for unit tests but integration tests still fail, there may be multiple root causes or your understanding is incomplete
