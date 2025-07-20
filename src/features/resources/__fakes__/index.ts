@@ -3,6 +3,7 @@ import {
   Resource,
   ResourceInput,
   type ResourceCategory,
+  ResourceType,
   ResourceTimeslot,
   ResourceTimeslotInput,
   ResourceClaim,
@@ -35,7 +36,7 @@ export function createFakeResource(
 
   return {
     id: faker.string.uuid(),
-    type: faker.helpers.arrayElement(['offer', 'request'] as const),
+    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
     category: faker.helpers.maybe(
       () =>
         faker.helpers.arrayElement([
@@ -94,7 +95,7 @@ export function createFakeResourceInput(
   return {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    type: faker.helpers.arrayElement(['offer', 'request'] as const),
+    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
     category: faker.helpers.arrayElement([
       'tools',
       'skills',
@@ -151,7 +152,7 @@ export function createFakeResourceRow(
           probability: 0.8,
         },
       ) ?? null,
-    type: faker.helpers.arrayElement(['offer', 'request']),
+    type: faker.helpers.arrayElement([ResourceType.OFFER, ResourceType.REQUEST]),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),

@@ -3,6 +3,7 @@ import type {
   Resource,
   ResourceInput,
   ResourceSummary,
+  ResourceType,
 } from '../types';
 import type { CommunitySummary } from '../../communities';
 import type {
@@ -89,7 +90,7 @@ export function toDomainResource(
 
   return {
     id: dbResource.id,
-    type: dbResource.type as 'offer' | 'request',
+    type: dbResource.type as ResourceType,
     title: dbResource.title,
     description: dbResource.description,
     category: dbResource.category as ResourceCategory,
@@ -136,7 +137,7 @@ export function toResourceSummary(
 
   return {
     id: dbResource.id,
-    type: dbResource.type as 'offer' | 'request',
+    type: dbResource.type as ResourceType,
     category: dbResource.category as ResourceCategory,
     title: dbResource.title,
     description: dbResource.description,

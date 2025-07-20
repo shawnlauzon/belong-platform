@@ -1,8 +1,8 @@
-import { ResourceStatus } from '..';
+import { ResourceStatus, ResourceType } from '..';
 
 export type ResourceFilter = {
   category?: 'tools' | 'skills' | 'food' | 'supplies' | 'other' | 'all';
-  type?: 'offer' | 'request' | 'all';
+  type?: ResourceType | 'all';
   communityId?: string;
   communityIds?: string[];
   ownerId?: string;

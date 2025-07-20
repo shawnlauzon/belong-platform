@@ -1,4 +1,5 @@
 import type { ResourceTimeslot, ResourceTimeslotInput, ResourceClaimSummary } from '../types';
+import { ResourceType } from '../types';
 import type {
   ResourceTimeslotRowWithRelations,
   ResourceTimeslotInsertDbData,
@@ -79,7 +80,7 @@ function toResourceClaimSummaryBasic(
     },
     resource: { 
       id: dbClaim.resource_id, 
-      type: 'offer' as const,
+      type: ResourceType.OFFER,
       title: '', 
       description: '', 
       locationName: '',

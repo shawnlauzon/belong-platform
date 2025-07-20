@@ -1,7 +1,7 @@
 import { Coordinates, IsPersisted } from '@/shared';
 import { UserSummary } from '../../users';
 import { CommunitySummary } from '../../communities';
-import { ResourceStatus, ResourceCategory } from '../index';
+import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
 
 export type Resource = IsPersisted<ResourceInput & ResourceSummaryFields> & {
   id: string;
@@ -27,7 +27,7 @@ export type ResourceInput = Omit<
 };
 
 type ResourceSummaryFields = {
-  type: 'offer' | 'request';
+  type: ResourceType;
   category?: ResourceCategory;
   title: string;
   description: string;
