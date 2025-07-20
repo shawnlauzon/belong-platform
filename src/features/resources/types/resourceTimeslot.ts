@@ -1,8 +1,6 @@
 import { IsPersisted } from '@/shared';
-import { ResourceClaimSummary } from './resourceClaim';
 
 export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {
-  claims: ResourceClaimSummary[];
   status: 'available' | 'maybeAvailable' | 'unavailable';
 };
 

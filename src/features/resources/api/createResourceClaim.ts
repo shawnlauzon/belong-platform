@@ -49,10 +49,7 @@ export async function createResourceClaim(
     });
 
     // Handle duplicate claim constraint violation
-    if (
-      error.code === '23505' &&
-      error.message.includes('resource_claims_unique_non_timeslot')
-    ) {
+    if (error.code === '23505') {
       throw new Error('You have already claimed this resource');
     }
 

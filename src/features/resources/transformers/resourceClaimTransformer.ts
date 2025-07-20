@@ -9,7 +9,6 @@ import type {
   ResourceClaimRowWithRelations,
 } from '../types/resourceRow';
 import { toResourceSummary } from './resourceTransformer';
-import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
 import { toUserSummary } from '@/features/users/transformers/userTransformer';
 
 /**
@@ -21,7 +20,6 @@ export function toResourceClaimInsertRow(
   return {
     resource_id: claim.resourceId,
     user_id: claim.userId,
-    timeslot_id: claim.timeslotId,
     status: claim.status,
     notes: claim.notes,
   };
@@ -51,8 +49,6 @@ export function toDomainResourceClaim(
     resource: toResourceSummary(dbClaim.resource),
     userId: dbClaim.user_id,
     user: toUserSummary(dbClaim.user),
-    timeslotId: dbClaim.timeslot_id,
-    timeslot: toDomainResourceTimeslot(dbClaim.timeslot),
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
@@ -71,19 +67,10 @@ export function toDomainResourceClaimWithRelations(
     ? dbClaim.resource[0]
     : dbClaim.resource;
 
-  const timeslot = Array.isArray(dbClaim.timeslot)
-    ? dbClaim.timeslot[0]
-    : dbClaim.timeslot;
-
   // Validate required joined data
   if (!resource) {
     throw new Error(
       `ResourceClaim ${dbClaim.id} missing required resource data`,
-    );
-  }
-  if (!timeslot) {
-    throw new Error(
-      `ResourceClaim ${dbClaim.id} missing required timeslot data`,
     );
   }
 
@@ -91,20 +78,17 @@ export function toDomainResourceClaimWithRelations(
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
     userId: dbClaim.user_id,
-    timeslotId: dbClaim.timeslot_id,
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
     updatedAt: new Date(dbClaim.updated_at),
     user: toUserSummary(dbClaim.user),
     resource: toResourceSummary(resource),
-    timeslot: toDomainResourceTimeslot(timeslot),
   };
 }
 
 /**
  * Transform a basic database claim record to a ResourceClaimSummary object
- * Used for claims within timeslots to avoid circular dependencies
  */
 export function toDomainResourceClaimSummary(
   dbClaim: ResourceClaimRowWithRelations,
@@ -113,7 +97,6 @@ export function toDomainResourceClaimSummary(
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
     userId: dbClaim.user_id,
-    timeslotId: dbClaim.timeslot_id,
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     user: toUserSummary(dbClaim.user),

@@ -17,13 +17,8 @@ export type ResourceRowWithRelations = ResourceRow & {
   }[];
 };
 
-export const SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS = `
-    *,
-    resource_claims(*)
-  `;
-export type ResourceTimeslotRowWithRelations = ResourceTimeslotRow & {
-  resource_claims: ResourceClaimRow[];
-};
+export const SELECT_RESOURCE_TIMESLOT_WITH_RELATIONS = `*`;
+export type ResourceTimeslotRowWithRelations = ResourceTimeslotRow;
 
 export const SELECT_RESOURCE_CLAIMS_WITH_RELATIONS = `
     *,
@@ -34,16 +29,11 @@ export const SELECT_RESOURCE_CLAIMS_WITH_RELATIONS = `
         community:communities(*)
       )
     ),
-    user:profiles!user_id(*),
-    timeslot:resource_timeslots!inner(
-      *,
-      resource_claims(*)
-    )
+    user:profiles!user_id(*)
   `;
 export type ResourceClaimRowWithRelations = ResourceClaimRow & {
   resource: ResourceRowWithRelations;
   user: ProfileRow;
-  timeslot: ResourceTimeslotRowWithRelations;
 };
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
@@ -80,7 +70,3 @@ export type ResourceCategory = Database['public']['Enums']['resource_category'];
 
 // Type and enum for ResourceType
 export type ResourceType = Database['public']['Enums']['resource_type'];
-export enum ResourceTypeEnum {
-  OFFER = 'offer',
-  REQUEST = 'request',
-}

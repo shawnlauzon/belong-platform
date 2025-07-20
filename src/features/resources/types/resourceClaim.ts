@@ -1,7 +1,6 @@
 import {
   ResourceClaimStatus,
   ResourceSummary,
-  ResourceTimeslot,
   UserSummary,
 } from '@/index';
 import { IsPersisted } from '@/shared';
@@ -10,7 +9,6 @@ export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
   userId: string;
   user: UserSummary;
   resource: ResourceSummary;
-  timeslot: ResourceTimeslot;
   status: ResourceClaimStatus;
 };
 
@@ -47,7 +45,6 @@ export type ResourceClaimSummary = ResourceClaimInput & {
 
 export type ResourceClaimInput = {
   resourceId: string;
-  timeslotId: string;
   status?: ResourceClaimStatus;
   notes?: string;
 };
