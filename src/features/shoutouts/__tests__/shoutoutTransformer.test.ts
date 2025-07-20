@@ -7,7 +7,6 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeResource } from '../../resources/__fakes__';
-import { createFakeCommunity } from '../../communities/__fakes__';
 import { createFakeDbShoutout } from '../__fakes__';
 
 describe('Shoutout Transformer', () => {
@@ -74,9 +73,7 @@ describe('Shoutout Transformer', () => {
 
       // Assert - Should NOT have snake_case properties
       const resultKeys = Object.keys(result);
-      const snakeCaseKeys = resultKeys.filter((key) =>
-        key.includes('_')
-      );
+      const snakeCaseKeys = resultKeys.filter((key) => key.includes('_'));
 
       expect(snakeCaseKeys).toHaveLength(0);
     });
