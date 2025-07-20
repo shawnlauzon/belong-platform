@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger } from '@/shared';
+import { logger, queryKeys } from '@/shared';
 import { useSupabase } from '@/shared';
 import { deleteResource } from '@/features/resources/api';
 
@@ -64,6 +64,9 @@ export function useDeleteResource() {
           return key[0] === 'resources' || key[0] === 'resource';
         },
       });
+
+      // Invalidate feed to remove deleted resource
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
 
       logger.info('📚 API: Successfully deleted resource', {
         id: resourceId,

@@ -91,12 +91,10 @@ export function useCreateResource() {
     },
     onSuccess: (newResource: Resource) => {
       // Invalidate all resources queries
-      queryClient.invalidateQueries({ queryKey: ['resources'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
 
-      // Invalidate the specific resource to force fresh fetch with nested objects
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byId(newResource.id),
-      });
+      // Invalidate feed to show new resource
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
 
       logger.info('📚 API: Successfully created resource', {
         id: newResource.id,
