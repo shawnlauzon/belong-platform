@@ -25,7 +25,7 @@ import type { Feed } from '../types';
  *     <div>
  *       <h2>Your Feed</h2>
  *       {feed?.items.map(item => (
- *         <FeedItem key={`${item.type}-${item.data.id}`} item={item} />
+ *         <FeedItem key={`${item.type}-${item.id}`} item={item} />
  *       ))}
  *     </div>
  *   );

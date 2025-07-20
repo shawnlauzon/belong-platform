@@ -1,8 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserCommunities } from '../../communities/api';
-import { fetchResources } from '../../resources/api';
-import { fetchShoutouts } from '../../shoutouts/api';
 import { getCurrentUser } from '../../auth/api';
 import { Feed, FeedItem } from '../types';
 import { logger } from '@/shared';
@@ -34,39 +32,46 @@ export async function fetchFeed(
       (membership) => membership.communityId,
     );
 
-    // Fetch resources and shoutouts using single queries with communityIds arrays
-    const [resources, shoutouts] = await Promise.all([
-      fetchResources(supabase, {
-        communityIds,
-      }),
-      fetchShoutouts(supabase, { communityIds }),
-    ]);
+    // Fetch resource IDs and creation dates for sorting
+    const { data: resourceData, error: resourceError } = await supabase
+      .from('resources')
+      .select('id, created_at')
+      .in('community_id', communityIds);
 
-    // Transform to FeedItem format
-    const resourceItems: FeedItem[] = resources.map((resource) => ({
-      id: resource.id,
-      type: 'resource',
-      data: resource,
-    }));
+    if (resourceError) {
+      throw resourceError;
+    }
 
-    const shoutoutItems: FeedItem[] = shoutouts.map((shoutout) => ({
-      id: shoutout.id,
-      type: 'shoutout',
-      data: shoutout,
-    }));
+    // Fetch shoutout IDs and creation dates for sorting
+    const { data: shoutoutData, error: shoutoutError } = await supabase
+      .from('shoutouts')
+      .select('id, created_at')
+      .in('community_id', communityIds);
 
-    // Combine and sort by created_at (newest first)
-    const allItems = [...resourceItems, ...shoutoutItems];
-    allItems.sort((a, b) => {
-      const aDate = new Date(a.data.createdAt);
-      const bDate = new Date(b.data.createdAt);
+    if (shoutoutError) {
+      throw shoutoutError;
+    }
+
+    // Combine items with their creation dates for sorting
+    const itemsWithDates = [
+      ...(resourceData || []).map(r => ({ id: r.id, type: 'resource' as const, createdAt: r.created_at })),
+      ...(shoutoutData || []).map(s => ({ id: s.id, type: 'shoutout' as const, createdAt: s.created_at }))
+    ];
+
+    // Sort by created_at (newest first)
+    itemsWithDates.sort((a, b) => {
+      const aDate = new Date(a.createdAt);
+      const bDate = new Date(b.createdAt);
       return bDate.getTime() - aDate.getTime();
     });
 
+    // Convert to final FeedItem format (without createdAt)
+    const allItems: FeedItem[] = itemsWithDates.map(({ id, type }) => ({ id, type }));
+
     logger.debug('📰 API: Successfully fetched feed data', {
       totalItems: allItems.length,
-      resourceCount: resourceItems.length,
-      shoutoutCount: shoutoutItems.length,
+      resourceCount: resourceData?.length || 0,
+      shoutoutCount: shoutoutData?.length || 0,
     });
 
     return {
