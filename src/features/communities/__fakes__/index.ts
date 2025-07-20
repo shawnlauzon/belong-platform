@@ -26,6 +26,7 @@ export function createFakeCommunity(
     centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
+    color: faker.helpers.arrayElement([faker.internet.color(), undefined]),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
     boundary: {
@@ -61,6 +62,7 @@ export function createFakeCommunityInput(
     centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
     memberCount: faker.number.int({ min: 10, max: 140 }),
+    color: faker.helpers.arrayElement([faker.internet.color(), undefined]),
     boundary: {
       type: 'isochrone',
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),
@@ -105,6 +107,7 @@ export function createFakeCommunityRow(
     created_at: now,
     updated_at: now,
     time_zone: faker.location.timeZone(),
+    color: faker.helpers.arrayElement([faker.internet.color(), null]),
     boundary: {
       type: 'isochrone',
       travelMode: faker.helpers.arrayElement(['walking', 'cycling', 'driving']),

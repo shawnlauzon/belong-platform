@@ -23,8 +23,8 @@ describe('Resource Transformer', () => {
         description: dbResource.description,
         category: dbResource.category,
       });
-      expect(resource.owner).toBeDefined();
-      expect(resource.communities).toHaveLength(1);
+      expect(resource.ownerId).toBeDefined();
+      expect(resource.communityIds).toHaveLength(0); // Empty array by default
     });
 
     it('should include owner if provided', () => {
@@ -32,23 +32,7 @@ describe('Resource Transformer', () => {
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.owner).toMatchObject({
-        id: dbResource.owner.id,
-        firstName:
-          (
-            dbResource.owner.user_metadata as {
-              first_name?: string;
-              avatar_url?: string;
-            }
-          )?.first_name || '',
-        avatarUrl: (
-          dbResource.owner.user_metadata as {
-            first_name?: string;
-            avatar_url?: string;
-          }
-        )?.avatar_url,
-      });
-      expect(resource.communities).toHaveLength(1);
+      expect(resource.ownerId).toBe(dbResource.owner_id);
     });
 
     it('should not return any field names with underscores', () => {

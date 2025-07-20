@@ -7,7 +7,7 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { createFakeUser } from '../../users/__fakes__';
 import { createFakeResource } from '../../resources/__fakes__';
-import { createFakeCommunitySummary } from '../../communities/__fakes__';
+import { createFakeCommunity } from '../../communities/__fakes__';
 import { createFakeDbShoutout } from '../__fakes__';
 
 describe('Shoutout Transformer', () => {
@@ -22,28 +22,22 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
-      const mockCommunity = createFakeCommunitySummary();
-      const shoutout = toDomainShoutout(dbShoutout, {
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
-        community: mockCommunity,
-      });
+      const shoutout = toDomainShoutout(dbShoutout);
 
       expect(shoutout).toMatchObject({
         id: dbShoutout.id,
         message: dbShoutout.message,
         imageUrls: dbShoutout.image_urls,
         communityId: dbShoutout.community_id,
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
+        fromUserId: mockFromUser.id,
+        toUserId: mockToUser.id,
+        resourceId: mockResource.id,
       });
       expect(shoutout.createdAt).toBeInstanceOf(Date);
       expect(shoutout.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should include users and resource if provided', () => {
+    it('should include all required ID fields', () => {
       const mockFromUser = createFakeUser();
       const mockToUser = createFakeUser();
       const mockResource = createFakeResource();
@@ -53,220 +47,78 @@ describe('Shoutout Transformer', () => {
         resource_id: mockResource.id,
       });
 
-      const mockCommunity = createFakeCommunitySummary();
-      const shoutout = toDomainShoutout(dbShoutout, {
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
-        community: mockCommunity,
-      });
+      const shoutout = toDomainShoutout(dbShoutout);
 
-      expect(shoutout.fromUser).toEqual(mockFromUser);
-      expect(shoutout.toUser).toEqual(mockToUser);
-      expect(shoutout.resource).toEqual(mockResource);
+      expect(shoutout.fromUserId).toBe(mockFromUser.id);
+      expect(shoutout.toUserId).toBe(mockToUser.id);
+      expect(shoutout.resourceId).toBe(mockResource.id);
+      expect(shoutout.communityId).toBe(dbShoutout.community_id);
     });
 
     it('should handle empty image_urls array', () => {
-      const mockFromUser = createFakeUser();
-      const mockToUser = createFakeUser();
-      const mockResource = createFakeResource();
       const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
-        resource_id: mockResource.id,
         image_urls: [],
       });
 
-      const mockCommunity = createFakeCommunitySummary();
-      const shoutout = toDomainShoutout(dbShoutout, {
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
-        community: mockCommunity,
-      });
+      const shoutout = toDomainShoutout(dbShoutout);
 
       expect(shoutout.imageUrls).toEqual([]);
     });
 
-    it('should throw an error if from user ID does not match', () => {
-      const mockFromUser = createFakeUser();
-      const mockToUser = createFakeUser();
-      const mockResource = createFakeResource();
-      const dbShoutout = createFakeDbShoutout({
-        from_user_id: 'different-id',
-        to_user_id: mockToUser.id,
-        resource_id: mockResource.id,
-      });
-
-      const mockCommunity = createFakeCommunitySummary();
-      expect(() =>
-        toDomainShoutout(dbShoutout, {
-          fromUser: mockFromUser,
-          toUser: mockToUser,
-          resource: mockResource,
-          community: mockCommunity,
-        }),
-      ).toThrow('From user ID does not match');
-    });
-
-    it('should throw an error if to user ID does not match', () => {
-      const mockFromUser = createFakeUser();
-      const mockToUser = createFakeUser();
-      const mockResource = createFakeResource();
-      const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: 'different-id',
-        resource_id: mockResource.id,
-      });
-
-      const mockCommunity = createFakeCommunitySummary();
-      expect(() =>
-        toDomainShoutout(dbShoutout, {
-          fromUser: mockFromUser,
-          toUser: mockToUser,
-          resource: mockResource,
-          community: mockCommunity,
-        }),
-      ).toThrow('To user ID does not match');
-    });
-
-    it('should throw an error if resource ID does not match', () => {
-      const mockFromUser = createFakeUser();
-      const mockToUser = createFakeUser();
-      const mockResource = createFakeResource();
-      const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
-        resource_id: 'different-id',
-      });
-
-      const mockCommunity = createFakeCommunitySummary();
-      expect(() =>
-        toDomainShoutout(dbShoutout, {
-          fromUser: mockFromUser,
-          toUser: mockToUser,
-          resource: mockResource,
-          community: mockCommunity,
-        }),
-      ).toThrow('Resource ID does not match');
-    });
-
     it('should not return any field names with underscores', () => {
       // Arrange
-      const mockFromUser = createFakeUser();
-      const mockToUser = createFakeUser();
-      const mockResource = createFakeResource();
-      const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
-        resource_id: mockResource.id,
-      });
+      const dbShoutout = createFakeDbShoutout();
 
       // Act
-      const mockCommunity = createFakeCommunitySummary();
-      const result = toDomainShoutout(dbShoutout, {
-        fromUser: mockFromUser,
-        toUser: mockToUser,
-        resource: mockResource,
-        community: mockCommunity,
-      });
+      const result = toDomainShoutout(dbShoutout);
 
-      // Assert
-      const fieldNames = Object.keys(result);
-      const underscoreFields = fieldNames.filter((name) => name.includes('_'));
-      expect(underscoreFields).toEqual([]);
+      // Assert - Should NOT have snake_case properties
+      const resultKeys = Object.keys(result);
+      const snakeCaseKeys = resultKeys.filter((key) =>
+        key.includes('_')
+      );
+
+      expect(snakeCaseKeys).toHaveLength(0);
     });
   });
 
   describe('toShoutoutInsertRow', () => {
-    it('should transform domain resource shoutout data to database insert format', () => {
-      const fromUserId = faker.string.uuid();
-      const toUserId = faker.string.uuid();
-      const communityId = faker.string.uuid();
-      const resourceId = faker.string.uuid();
-
-      const shoutoutData = {
-        message: faker.lorem.paragraph(),
-        imageUrls: [faker.image.url()],
-        resourceId,
-        fromUserId,
-        toUserId,
-        communityId,
-      };
-
-      const dbShoutout = toShoutoutInsertRow(shoutoutData);
-
-      expect(dbShoutout).toMatchObject({
-        message: shoutoutData.message,
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        resource_id: resourceId,
-        community_id: communityId,
-        image_urls: shoutoutData.imageUrls,
-      });
-    });
-
-    it('should handle undefined imageUrls', () => {
-      const fromUserId = faker.string.uuid();
-      const toUserId = faker.string.uuid();
-      const communityId = faker.string.uuid();
-      const resourceId = faker.string.uuid();
-
-      const shoutoutData = {
-        message: faker.lorem.paragraph(),
-        imageUrls: undefined,
-        resourceId,
-        fromUserId,
-        toUserId,
-        communityId,
-      };
-
-      const dbShoutout = toShoutoutInsertRow(shoutoutData);
-
-      expect(dbShoutout.image_urls).toEqual([]);
-    });
-  });
-
-  describe('toShoutoutUpdateRow', () => {
-    it('should transform domain shoutout data to database update format', () => {
-      const shoutoutData = {
-        message: faker.lorem.paragraph(),
+    it('should transform shoutout input to database insert format', () => {
+      const shoutoutInput = {
+        message: faker.lorem.sentence(),
+        fromUserId: faker.string.uuid(),
+        toUserId: faker.string.uuid(),
+        communityId: faker.string.uuid(),
+        resourceId: faker.string.uuid(),
         imageUrls: [faker.image.url()],
       };
-      const dbShoutout = toShoutoutUpdateRow(shoutoutData);
 
-      expect(dbShoutout).toMatchObject({
-        message: shoutoutData.message,
-        image_urls: shoutoutData.imageUrls,
+      const result = toShoutoutInsertRow(shoutoutInput);
+
+      expect(result).toMatchObject({
+        message: shoutoutInput.message,
+        from_user_id: shoutoutInput.fromUserId,
+        to_user_id: shoutoutInput.toUserId,
+        community_id: shoutoutInput.communityId,
+        resource_id: shoutoutInput.resourceId,
+        image_urls: shoutoutInput.imageUrls,
       });
     });
   });
 
   describe('toShoutoutUpdateRow', () => {
-    it('should transform partial domain shoutout data to database update format', () => {
-      const partialShoutoutInput = {
-        message: faker.lorem.paragraph(),
+    it('should transform shoutout updates to database format', () => {
+      const shoutoutUpdate = {
+        id: faker.string.uuid(),
+        message: faker.lorem.sentence(),
         imageUrls: [faker.image.url()],
       };
 
-      const dbShoutout = toShoutoutUpdateRow(partialShoutoutInput);
+      const result = toShoutoutUpdateRow(shoutoutUpdate);
 
-      expect(dbShoutout).toMatchObject({
-        message: partialShoutoutInput.message,
-        image_urls: partialShoutoutInput.imageUrls,
-      });
-    });
-
-    it('should handle undefined values', () => {
-      const partialShoutoutInput = {
-        message: faker.lorem.paragraph(),
-      };
-
-      const dbShoutout = toShoutoutUpdateRow(partialShoutoutInput);
-
-      expect(dbShoutout).toMatchObject({
-        message: partialShoutoutInput.message,
-        image_urls: undefined,
+      expect(result).toMatchObject({
+        message: shoutoutUpdate.message,
+        image_urls: shoutoutUpdate.imageUrls,
       });
     });
   });

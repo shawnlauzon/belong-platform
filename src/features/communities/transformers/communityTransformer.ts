@@ -61,6 +61,7 @@ export function toDomainCommunity(
     createdAt: new Date(dbCommunity.created_at),
     updatedAt: new Date(dbCommunity.updated_at),
     timeZone: dbCommunity.time_zone,
+    color: dbCommunity.color ?? undefined,
     boundary: dbCommunity.boundary
       ? JSON.parse(JSON.stringify(dbCommunity.boundary))
       : undefined,
@@ -118,6 +119,7 @@ export function toCommunityUpdateRow(
     time_zone: community.timeZone,
     center: community.center ? toPostGisPoint(community.center) : undefined,
     center_name: community.centerName,
+    color: community.color,
     boundary: community.boundary
       ? boundaryForDatabase(community.boundary)
       : undefined,

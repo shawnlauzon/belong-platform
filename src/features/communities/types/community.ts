@@ -24,8 +24,8 @@ export type CommunityInput = {
   timeZone: string;
   memberCount: number;
 
-  // TODO Color
-  // color?: string;
+  // Color customization
+  color?: string;
 };
 
 // Community types

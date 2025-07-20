@@ -16,10 +16,7 @@ import {
   ResourceRow,
 } from '../types/resourceRow';
 import { User } from '../../users';
-import { createFakeProfileRow, createFakeUser } from '../../users/__fakes__';
-import {
-  createFakeCommunityRow,
-} from '../../communities/__fakes__';
+import { createFakeUser } from '../../users/__fakes__';
 
 /**
  * Creates a fake domain Resource object with an owner

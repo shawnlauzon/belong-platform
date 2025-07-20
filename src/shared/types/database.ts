@@ -21,6 +21,7 @@ export type Database = {
           boundary_geometry: unknown | null
           center: unknown
           center_name: string | null
+          color: string | null
           created_at: string
           description: string | null
           icon: string | null
@@ -38,6 +39,7 @@ export type Database = {
           boundary_geometry?: unknown | null
           center: unknown
           center_name?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -55,6 +57,7 @@ export type Database = {
           boundary_geometry?: unknown | null
           center?: unknown
           center_name?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
