@@ -61,7 +61,7 @@ export function createFakeCommunityInput(
     },
     centerName: faker.location.streetAddress(),
     timeZone: faker.location.timeZone(),
-    memberCount: faker.number.int({ min: 10, max: 140 }),
+    // memberCount is computed by the database and not provided in input
     color: faker.helpers.arrayElement([faker.internet.color(), undefined]),
     boundary: {
       type: 'isochrone',

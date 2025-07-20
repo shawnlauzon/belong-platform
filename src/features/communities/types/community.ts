@@ -22,7 +22,7 @@ export type CommunityInput = {
 
   // Status & Metadata
   timeZone: string;
-  memberCount: number;
+  // memberCount is computed by the database and not provided in input
 
   // Color customization
   color?: string;

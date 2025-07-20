@@ -35,8 +35,8 @@ export async function fetchFeed(
     // Fetch resource IDs and creation dates for sorting
     const { data: resourceData, error: resourceError } = await supabase
       .from('resources')
-      .select('id, created_at')
-      .in('community_id', communityIds);
+      .select('id, created_at, resource_communities!inner(community_id)')
+      .in('resource_communities.community_id', communityIds);
 
     if (resourceError) {
       throw resourceError;
