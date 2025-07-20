@@ -197,7 +197,6 @@ export function createFakeCommunityMembership(
   };
 }
 
-
 /**
  * Creates a fake database Community row with organizer relation
  */
