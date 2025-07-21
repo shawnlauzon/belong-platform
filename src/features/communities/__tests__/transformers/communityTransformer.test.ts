@@ -16,7 +16,6 @@ describe('communityTransformer', () => {
   describe('toCommunityInsertRow', () => {
     it('should transform community data with boundary but not include center in boundary JSON', () => {
       const communityData = createFakeCommunityInput();
-      const organizerId = faker.string.uuid();
 
       const result = toCommunityInsertRow(communityData);
 
@@ -45,7 +44,6 @@ describe('communityTransformer', () => {
       const communityData = createFakeCommunityInput({
         boundary: undefined,
       });
-      const organizerId = faker.string.uuid();
 
       const result = toCommunityInsertRow(communityData);
 
@@ -58,7 +56,6 @@ describe('communityTransformer', () => {
     it('should transform bannerImageUrl to banner_image_url', () => {
       const bannerImageUrl = faker.image.url();
       const communityData = createFakeCommunityInput({ bannerImageUrl });
-      const organizerId = faker.string.uuid();
 
       const result = toCommunityInsertRow(communityData);
 
@@ -69,7 +66,6 @@ describe('communityTransformer', () => {
       const communityData = createFakeCommunityInput({
         bannerImageUrl: undefined,
       });
-      const organizerId = faker.string.uuid();
 
       const result = toCommunityInsertRow(communityData);
 
