@@ -6,13 +6,9 @@ import {
   toShoutoutInsertRow,
   toDomainShoutout,
 } from '../transformers/shoutoutsTransformer';
-import { getAuthIdOrThrow } from '../../../shared/utils';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
-import {
-  SELECT_SHOUTOUT_BASIC,
-  ShoutoutInsertRow,
-} from '../types/shoutoutRow';
+import { SELECT_SHOUTOUT_BASIC, ShoutoutInsertRow } from '../types/shoutoutRow';
 
 /**
  * Creates a new shoutout with the current user as the sender
@@ -26,21 +22,7 @@ export async function createShoutout(
 ): Promise<Shoutout> {
   logger.debug('📢 API: Creating shoutout', { shoutoutData });
 
-  // Get current user
-  const currentUserId = await getAuthIdOrThrow(supabase, 'create shoutout');
-
-  // Validate business rules before database operation
-  if (shoutoutData.toUserId === currentUserId) {
-    throw new Error('Cannot send shoutout to yourself');
-  }
-
-  // Transform to database format with auto-assigned fromUserId
-  const shoutoutRow = toShoutoutInsertRow({
-    ...shoutoutData,
-    fromUserId: currentUserId,
-  });
-
-  return insertShoutout(supabase, shoutoutRow);
+  return insertShoutout(supabase, toShoutoutInsertRow(shoutoutData));
 }
 
 /**
@@ -102,8 +84,8 @@ async function insertShoutout(
 
     logger.info('📢 API: Successfully created shoutout', {
       id: domainShoutout.id,
-      fromUserId: domainShoutout.fromUserId,
-      toUserId: domainShoutout.toUserId,
+      senderId: domainShoutout.senderId,
+      receiverId: domainShoutout.receiverId,
       resourceId: domainShoutout.resourceId,
     });
 

@@ -94,8 +94,8 @@ export function useCreateShoutout() {
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
         id: newShoutout.id,
         message: newShoutout.message,
-        fromUserId: newShoutout.fromUserId,
-        toUserId: newShoutout.toUserId,
+        senderId: newShoutout.senderId,
+        receiverId: newShoutout.receiverId,
       });
     },
     onError: (error) => {

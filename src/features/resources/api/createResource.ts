@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceInput, Resource } from '@/features/resources';
 import { toResourceInsertRow } from '@/features/resources/transformers/resourceTransformer';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
 import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
@@ -12,8 +11,6 @@ export async function createResource(
   supabase: SupabaseClient<Database>,
   resourceData: ResourceInput,
 ): Promise<Resource> {
-  const currentUserId = await getAuthIdOrThrow(supabase);
-
   // // Validate user membership in all specified communities
   // const userCommunities = await fetchUserCommunities(supabase, currentUserId);
   // const userCommunityIds = userCommunities.map(
@@ -35,15 +32,9 @@ export async function createResource(
     communityIds: undefined,
   };
 
-  // Create resource with first community for database consistency
-  const dbData = toResourceInsertRow({
-    ...withoutCommunityIds,
-    ownerId: currentUserId,
-  });
-
   const { data, error } = await supabase
     .from('resources')
-    .insert(dbData)
+    .insert(toResourceInsertRow(withoutCommunityIds))
     .select('id')
     .single();
 

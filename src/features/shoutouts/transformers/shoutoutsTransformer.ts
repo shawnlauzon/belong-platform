@@ -1,4 +1,4 @@
-import type { Shoutout, ShoutoutInput, ShoutoutInputRefs } from '../types';
+import type { Shoutout, ShoutoutInput } from '../types';
 
 import {
   ShoutoutInsertRow,
@@ -9,12 +9,10 @@ import {
 /**
  * Transform a database shoutout record to a domain shoutout object
  */
-export function toDomainShoutout(
-  dbShoutout: ShoutoutRow,
-): Shoutout {
+export function toDomainShoutout(dbShoutout: ShoutoutRow): Shoutout {
   const {
-    from_user_id,
-    to_user_id,
+    sender_id,
+    receiver_id,
     resource_id,
     community_id,
     image_urls,
@@ -26,8 +24,8 @@ export function toDomainShoutout(
 
   return {
     id,
-    fromUserId: from_user_id,
-    toUserId: to_user_id,
+    senderId: sender_id,
+    receiverId: receiver_id,
     resourceId: resource_id,
     communityId: community_id,
     message,
@@ -38,14 +36,13 @@ export function toDomainShoutout(
 }
 
 export function toShoutoutInsertRow(
-  shoutoutData: ShoutoutInput & ShoutoutInputRefs,
+  shoutoutData: ShoutoutInput,
 ): ShoutoutInsertRow {
   const { imageUrls, message } = shoutoutData;
 
   return {
     message,
-    from_user_id: shoutoutData.fromUserId,
-    to_user_id: shoutoutData.toUserId,
+    receiver_id: shoutoutData.receiverId,
     community_id: shoutoutData.communityId,
     image_urls: imageUrls || [],
     resource_id: shoutoutData.resourceId,
@@ -65,4 +62,3 @@ export function toShoutoutUpdateRow(
     image_urls: imageUrls,
   };
 }
-

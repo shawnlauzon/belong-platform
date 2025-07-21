@@ -68,19 +68,17 @@ export function toDomainCommunity(
   };
 }
 
-
 /**
  * Transform a domain community object to a database community record
  */
 export function toCommunityInsertRow(
-  community: CommunityInput & { organizerId: string },
+  community: CommunityInput,
 ): CommunityInsertRow {
   const {
     timeZone,
     boundary,
     center,
     centerName,
-    organizerId,
     bannerImageUrl,
     type,
     ...rest
@@ -91,7 +89,6 @@ export function toCommunityInsertRow(
   return {
     ...rest,
     type,
-    organizer_id: organizerId,
     banner_image_url: bannerImageUrl,
     time_zone: timeZone,
     member_count: 0, // Default for new communities

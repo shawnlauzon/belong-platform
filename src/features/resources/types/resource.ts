@@ -1,7 +1,9 @@
 import { Coordinates, IsPersisted } from '@/shared';
 import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
 
-export type Resource = IsPersisted<ResourceInput>;
+export type Resource = IsPersisted<ResourceInput> & {
+  ownerId: string;
+};
 
 export enum ResourceTypeEnum {
   OFFER = 'offer',
@@ -15,7 +17,6 @@ export type ResourceInput = {
   description: string;
   locationName: string;
   coordinates?: Coordinates;
-  ownerId: string;
   communityIds: string[];
   imageUrls?: string[];
   status: ResourceStatus;

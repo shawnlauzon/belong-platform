@@ -3,6 +3,7 @@ import { Coordinates, IsPersisted } from '@/shared';
 
 export type Community = IsPersisted<CommunityInput> & {
   memberCount: number;
+  organizerId: string;
 };
 
 // For creating / updating Community
@@ -10,7 +11,6 @@ export type CommunityInput = {
   name: string;
   type: CommunityType;
   icon?: string; // Visual icon for the community
-  organizerId: string;
 
   description?: string;
   bannerImageUrl?: string; // Banner image for the community
@@ -24,7 +24,6 @@ export type CommunityInput = {
 
   // Status & Metadata
   timeZone: string;
-  // memberCount is computed by the database and not provided in input
 
   // Color customization
   color?: string;

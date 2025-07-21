@@ -1,8 +1,4 @@
-import type {
-  ResourceCategory,
-  Resource,
-  ResourceInput,
-} from '../types';
+import type { ResourceCategory, Resource, ResourceInput } from '../types';
 import type {
   ResourceRowBasic,
   ResourceInsertDbData,
@@ -14,11 +10,10 @@ import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
  * Transform a domain resource object to a database resource record
  */
 export function toResourceInsertRow(
-  resource: Omit<ResourceInput, 'communityIds'> & { ownerId: string },
+  resource: Omit<ResourceInput, 'communityIds'>,
 ): ResourceInsertDbData {
   const {
     imageUrls,
-    ownerId,
     locationName,
     coordinates,
     maxClaims,
@@ -29,7 +24,6 @@ export function toResourceInsertRow(
 
   return {
     ...rest,
-    owner_id: ownerId,
     image_urls: imageUrls,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
@@ -67,9 +61,7 @@ export function forDbUpdate(
 /**
  * Transform a database resource record to a Resource object
  */
-export function toDomainResource(
-  dbResource: ResourceRowBasic,
-): Resource {
+export function toDomainResource(dbResource: ResourceRowBasic): Resource {
   return {
     id: dbResource.id,
     type: dbResource.type,
@@ -84,7 +76,8 @@ export function toDomainResource(
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
-    communityIds: dbResource.resource_communities?.map(rc => rc.community_id) || [],
+    communityIds:
+      dbResource.resource_communities?.map((rc) => rc.community_id) || [],
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
@@ -93,4 +86,3 @@ export function toDomainResource(
       : undefined,
   };
 }
-

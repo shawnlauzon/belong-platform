@@ -626,34 +626,34 @@ export type Database = {
         Row: {
           community_id: string
           created_at: string
-          from_user_id: string
           id: string
           image_urls: string[]
           message: string
+          receiver_id: string
           resource_id: string
-          to_user_id: string
+          sender_id: string
           updated_at: string
         }
         Insert: {
           community_id: string
           created_at?: string
-          from_user_id: string
           id?: string
           image_urls?: string[]
           message: string
+          receiver_id: string
           resource_id: string
-          to_user_id: string
+          sender_id?: string
           updated_at?: string
         }
         Update: {
           community_id?: string
           created_at?: string
-          from_user_id?: string
           id?: string
           image_urls?: string[]
           message?: string
+          receiver_id?: string
           resource_id?: string
-          to_user_id?: string
+          sender_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -666,7 +666,7 @@ export type Database = {
           },
           {
             foreignKeyName: "shoutouts_from_user_id_fkey"
-            columns: ["from_user_id"]
+            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -680,7 +680,7 @@ export type Database = {
           },
           {
             foreignKeyName: "shoutouts_to_user_id_fkey"
-            columns: ["to_user_id"]
+            columns: ["receiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

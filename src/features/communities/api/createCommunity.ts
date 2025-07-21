@@ -6,7 +6,6 @@ import {
   toDomainCommunity,
 } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateCommunity } from './updateCommunity';
 
@@ -17,16 +16,9 @@ export async function createCommunity(
   logger.debug('🏘️ API: Creating community', { name: communityData.name });
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase);
-
-    const dbData = toCommunityInsertRow({
-      ...communityData,
-      organizerId: currentUserId,
-    });
-
     const { data, error } = await supabase
       .from('communities')
-      .insert(dbData)
+      .insert(toCommunityInsertRow(communityData))
       .select()
       .single();
 
