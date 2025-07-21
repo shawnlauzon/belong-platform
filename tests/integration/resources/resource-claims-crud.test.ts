@@ -114,8 +114,8 @@ describe('Resource Claims - Basic Operations', () => {
       await verifyClaimInDatabase(supabase, testClaim);
     });
 
-    // it fails to create duplicate claim
-    it('fails to create duplicate claim', async () => {
+    // it expect.fails to create duplicate claim
+    it('expect.fails to create duplicate claim', async () => {
       try {
         testClaim = await resourcesApi.createResourceClaim(
           supabase,
@@ -124,13 +124,13 @@ describe('Resource Claims - Basic Operations', () => {
             timeslotId: testTimeslot.id,
           }),
         );
-        fail('Should have thrown');
+        expect.fail('Should have thrown');
       } catch (error) {
         expect(error).toBeTruthy();
       }
     });
 
-    it('fails if attempting to create resource claim status other than "pending"', async () => {
+    it('expect.fails if attempting to create resource claim status other than "pending"', async () => {
       const invalidStatuses = [
         'approved',
         'rejected',
@@ -150,7 +150,7 @@ describe('Resource Claims - Basic Operations', () => {
             supabase,
             claimInput,
           );
-          fail('Should have thrown');
+          expect.fail('Should have thrown');
         } catch (error) {
           expect(error).toBeTruthy();
         }
@@ -201,7 +201,7 @@ describe('Resource Claims - Basic Operations', () => {
       });
     });
 
-    it('fails with invalid resource id', async () => {
+    it('expect.fails with invalid resource id', async () => {
       const invalidResourceId = 'invalid-resource-id';
       const claimInput = createFakeResourceClaimInput({
         resourceId: invalidResourceId,
@@ -285,7 +285,7 @@ describe('Resource Claims - Basic Operations', () => {
         await verifyClaimInDatabase(supabase, updatedClaim);
       });
 
-      it('fails if attempting to update resource claim status other than "cancelled or pending"', async () => {
+      it('expect.fails if attempting to update resource claim status other than "cancelled or pending"', async () => {
         const invalidStatuses = ['approved', 'rejected', 'completed'];
 
         for (const status of invalidStatuses) {
@@ -305,7 +305,7 @@ describe('Resource Claims - Basic Operations', () => {
               testClaim2.id,
               claimInput,
             );
-            fail('Should have thrown');
+            expect.fail('Should have thrown');
           } catch (error) {
             expect(error).toBeTruthy();
           }
@@ -410,7 +410,7 @@ describe('Resource Claims - Basic Operations', () => {
         }
       });
 
-      it('fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
+      it('expect.fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
         const claimInput = createFakeResourceClaimInput({
           resourceId: testResource.id,
           timeslotId: undefined,
@@ -423,7 +423,7 @@ describe('Resource Claims - Basic Operations', () => {
             testClaim2.id,
             claimInput,
           );
-          fail('Should have thrown');
+          expect.fail('Should have thrown');
         } catch (error) {
           expect(error).toBeTruthy();
         }

@@ -45,7 +45,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
     testShoutout = await api.createShoutout(authenticatedClient, {
       resourceId: testResource.id,
       message: `${TEST_PREFIX}Test shoutout for auth tests`,
-      toUserId: testUser.id,
+      receiverId: testUser.id,
       communityId: testCommunity.id,
     });
 
@@ -69,7 +69,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
         await expect(
           api.createShoutout(unauthenticatedClient, {
             ...data,
-            toUserId: testUser.id,
+            receiverId: testUser.id,
             communityId: testCommunity.id,
           }),
         ).rejects.toThrow();

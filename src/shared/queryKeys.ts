@@ -38,6 +38,18 @@ export const queryKeys = {
       ['resources', 'filtered', filter] as const,
   },
 
+  resourceClaims: {
+    all: ['resource-claims'] as const,
+    byId: (id: string) => ['resource-claim', id] as const,
+    byCommunity: (communityId: string) =>
+      ['resource-claims', 'community', communityId] as const,
+    byClaimant: (claimantId: string) =>
+      ['resource-claims', 'claimant', claimantId] as const,
+    byResource: (resourceId: string) =>
+      ['resource-claims', 'resource', resourceId] as const,
+    filtered: (filter: Record<string, unknown>) =>
+      ['resource-claims', 'filtered', filter] as const,
+  },
 
   // Shoutouts
   shoutouts: {

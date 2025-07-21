@@ -1,8 +1,17 @@
 import { ResourceClaimStatus } from './resourceRow';
 
-export type ResourceClaimByResourceFilter = {
-  userId?: string;
+export type ResourceClaimFilter = {
   status?: ResourceClaimStatus | ResourceClaimStatus[];
+  resourceId?: string | string[];
+  resourceOwnerId?: string;
+  claimantId?: string;
+  timeslotId?: string;
+  hasShoutout?: boolean;
+};
+
+export type ResourceClaimByResourceFilter = {
+  status?: ResourceClaimStatus | ResourceClaimStatus[];
+  userId?: string;
   timeslotId?: string;
 };
 

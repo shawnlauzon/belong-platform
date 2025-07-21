@@ -16,7 +16,7 @@ import { SELECT_SHOUTOUT_BASIC, ShoutoutInsertRow } from '../types/shoutoutRow';
 export async function createShoutout(
   supabase: SupabaseClient<Database>,
   shoutoutData: ShoutoutInput & {
-    toUserId: string;
+    receiverId: string;
     communityId: string;
   },
 ): Promise<Shoutout> {
@@ -84,8 +84,8 @@ async function insertShoutout(
 
     logger.info('📢 API: Successfully created shoutout', {
       id: domainShoutout.id,
-      senderId: domainShoutout.senderId,
       receiverId: domainShoutout.receiverId,
+      senderId: domainShoutout.senderId,
       resourceId: domainShoutout.resourceId,
     });
 

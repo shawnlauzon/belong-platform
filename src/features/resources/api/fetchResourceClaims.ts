@@ -1,51 +1,46 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { getAuthIdOrThrow, logger } from '@/shared';
-import {
-  ResourceClaim,
-  ResourceClaimByUserFilter,
-  ResourceClaimByResourceFilter,
-} from '../types';
+import { ResourceClaim, ResourceClaimFilter } from '../types';
 import { toDomainResourceClaim } from '../transformers';
 import {
   ResourceClaimRowBasic,
   SELECT_RESOURCE_CLAIMS_BASIC,
+  SELECT_RESOURCE_CLAIMS_WITH_SHOUTOUTS,
 } from '../types/resourceRow';
-import {
-  isResourceClaimByResourceFilter,
-  isResourceClaimByUserFilter,
-} from '../types/resourceClaimFilter';
 
 export async function fetchResourceClaims(
   supabase: SupabaseClient<Database>,
-  filter: ResourceClaimByUserFilter | ResourceClaimByResourceFilter = {},
+  filter?: ResourceClaimFilter,
 ): Promise<ResourceClaim[]> {
   await getAuthIdOrThrow(supabase);
 
   // Always use the query with relations to get complete ResourceClaim objects
   let query = supabase
     .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_BASIC);
+    .select(
+      filter?.hasShoutout !== undefined
+        ? SELECT_RESOURCE_CLAIMS_WITH_SHOUTOUTS
+        : SELECT_RESOURCE_CLAIMS_BASIC,
+    );
 
-  if (isResourceClaimByResourceFilter(filter)) {
-    if (filter.userId) {
-      query = query.eq('user_id', filter.userId);
-    }
+  if (filter?.claimantId) {
+    query = query.eq('user_id', filter.claimantId);
   }
 
-  if (isResourceClaimByUserFilter(filter)) {
-    // Apply filters
-    if (filter.resourceId) {
+  if (filter?.resourceId) {
+    if (Array.isArray(filter.resourceId)) {
+      query = query.in('resource_id', filter.resourceId);
+    } else {
       query = query.eq('resource_id', filter.resourceId);
     }
-
-    // Apply resource owner filter if needed
-    if (filter.resourceOwnerId) {
-      query = query.eq('resources.owner_id', filter.resourceOwnerId);
-    }
   }
 
-  if (filter.status) {
+  if (filter?.resourceOwnerId) {
+    query = query.eq('resources.owner_id', filter.resourceOwnerId);
+  }
+
+  if (filter?.status) {
     if (Array.isArray(filter.status)) {
       // Multiple statuses - use OR logic with .in()
       query = query.in('status', filter.status);
@@ -55,8 +50,14 @@ export async function fetchResourceClaims(
     }
   }
 
-  if (filter.timeslotId) {
+  if (filter?.timeslotId) {
     query = query.eq('timeslot_id', filter.timeslotId);
+  }
+
+  if (filter?.hasShoutout !== undefined) {
+    // the shoutouts relation is already included in the SELECT statement
+    // FIXME I don't think this is right, it needs to do some sort of join and if it exists
+    query = query.eq('shoutouts', filter.hasShoutout);
   }
 
   // Order by most recent first
@@ -83,9 +84,7 @@ export async function fetchResourceClaims(
   }
 
   // Transform the joined results to ResourceClaim objects with relations
-  const claims = (data as ResourceClaimRowBasic[]).map(
-    toDomainResourceClaim,
-  );
+  const claims = (data as ResourceClaimRowBasic[]).map(toDomainResourceClaim);
 
   logger.debug('🏘️ API: Successfully fetched resource claims', {
     filter,

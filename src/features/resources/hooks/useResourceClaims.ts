@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSupabase } from '@/shared';
+import { queryKeys, toRecords, useSupabase } from '@/shared';
 import { fetchResourceClaims } from '../api';
-import { ResourceClaim, ResourceClaimByResourceFilter } from '../types';
+import { ResourceClaim, ResourceClaimFilter } from '../types';
 
 /**
  * Hook for fetching all claims for a specific resource.
@@ -26,16 +26,12 @@ import { ResourceClaim, ResourceClaimByResourceFilter } from '../types';
  * });
  * ```
  */
-export function useResourceClaimsByResource(
-  resourceId: string,
-  filter?: Omit<ResourceClaimByResourceFilter, 'resourceId'>,
-) {
+export function useResourceClaims(filter?: ResourceClaimFilter) {
   const supabase = useSupabase();
 
   return useQuery<ResourceClaim[], Error>({
-    queryKey: ['resource-claims', 'by-resource', resourceId, filter] as const,
-    queryFn: () => fetchResourceClaims(supabase, { ...filter, resourceId }),
-    enabled: !!resourceId,
+    queryKey: queryKeys.resourceClaims.filtered(toRecords(filter)),
+    queryFn: () => fetchResourceClaims(supabase, filter),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

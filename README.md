@@ -127,7 +127,9 @@ function CommunityDashboard() {
           <div key={todo.id}>
             <h3>{todo.title}</h3>
             <p>{todo.description}</p>
-            {todo.dueDate && <small>Due: {todo.dueDate.toLocaleDateString()}</small>}
+            {todo.dueDate && (
+              <small>Due: {todo.dueDate.toLocaleDateString()}</small>
+            )}
           </div>
         ))}
       </section>
@@ -291,7 +293,6 @@ await createResource.mutateAsync({
 });
 ```
 
-
 ### Direct Messaging
 
 ```tsx
@@ -328,7 +329,7 @@ const { data: agenda } = useAgenda();
 agenda?.items.forEach((todo) => {
   console.log(`${todo.type}: ${todo.title}`);
   // Types: 'shoutout-offer', 'shoutout-favor'
-  
+
   if (todo.resource) {
     // Access resource details for resource-related todos
     console.log('Resource:', todo.resource.title);
@@ -347,7 +348,7 @@ const { data: shoutouts } = useShoutouts({ resourceId });
 // Send shoutout
 const createShoutout = useCreateShoutout();
 await createShoutout.mutateAsync({
-  toUserId: 'user-456',
+  receiverId: 'user-456',
   resourceId: 'resource-123',
   message: 'Thank you for sharing this!',
 });

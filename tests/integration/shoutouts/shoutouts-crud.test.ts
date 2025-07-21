@@ -49,7 +49,7 @@ describe('Shoutouts API - CRUD Operations', () => {
     // signed in as testUser2
     readOnlyShoutout1 = await createTestShoutout({
       supabase,
-      toUserId: testUser.id,
+      receiverId: testUser.id,
       resourceId: testResource.id,
       communityId: testCommunity.id,
     });
@@ -58,7 +58,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     readOnlyShoutout2 = await createTestShoutout({
       supabase,
-      toUserId: testUser2.id,
+      receiverId: testUser2.id,
       resourceId: testResource2.id,
       communityId: testCommunity.id,
     });
@@ -85,7 +85,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       const shoutoutInput = {
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-        toUserId: testUser.id,
+        receiverId: testUser.id,
         communityId: testCommunity.id,
       };
 
@@ -107,7 +107,7 @@ describe('Shoutouts API - CRUD Operations', () => {
           lastName: testUser.lastName,
         }),
         communityId: testCommunity.id,
-        fromUserId: testUser2.id,
+        senderId: testUser2.id,
         fromUser: expect.objectContaining({
           id: testUser2.id,
           firstName: testUser2.firstName,
@@ -137,15 +137,15 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('cannot send shoutout to yourself', async () => {
       const shoutoutInput = {
-        toUserId: testUser2.id, // Same user as signed in user
         communityId: testCommunity.id,
         resourceId: testResource.id,
+        receiverId: testUser.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
       try {
         createdShoutout = await createShoutout(supabase, shoutoutInput);
-        fail('Should not have created shoutout');
+        expect.fail('Should not have created shoutout');
       } catch (error) {
         expect(error).toBeTruthy();
       }
@@ -153,7 +153,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('should not allow shoutout about a resource you own', async () => {
       const shoutoutInput = {
-        toUserId: testUser.id,
+        receiverId: testUser.id,
         communityId: testCommunity.id,
         resourceId: testResource2.id, // testResource is owned by testUser (signed in user)
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
@@ -161,7 +161,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
       try {
         createdShoutout = await createShoutout(supabase, shoutoutInput);
-        fail('Should not have created shoutout');
+        expect.fail('Should not have created shoutout');
       } catch (error) {
         expect(error).toBeTruthy();
       }
@@ -223,7 +223,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(fetchedShoutout).toMatchObject({
         id: readOnlyShoutout1.id,
         message: readOnlyShoutout1.message,
-        fromUserId: testUser2.id,
+        senderId: testUser2.id,
         fromUser: expect.objectContaining({
           id: testUser2.id,
         }),
@@ -250,7 +250,7 @@ describe('Shoutouts API - CRUD Operations', () => {
     beforeEach(async () => {
       createdShoutout = await createTestShoutout({
         supabase,
-        toUserId: testUser.id,
+        receiverId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });
@@ -272,7 +272,7 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(updatedShoutout).toMatchObject({
         id: createdShoutout.id,
         message: newMessage,
-        fromUserId: testUser2.id,
+        senderId: testUser2.id,
         fromUser: expect.objectContaining({
           id: testUser2.id,
         }),

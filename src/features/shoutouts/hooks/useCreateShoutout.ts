@@ -38,12 +38,12 @@ import { createShoutout } from '../api/createShoutout';
  *       const formData = new FormData(e.currentTarget);
  *       handleSubmit({
  *         message: formData.get('message') as string,
- *         toUserId: formData.get('toUserId') as string,
+ *         receiverId: formData.get('receiverId') as string,
  *         resourceId: formData.get('resourceId') as string,
  *       });
  *     }}>
  *       <textarea name="message" placeholder="Your appreciation message..." required />
- *       <input name="toUserId" placeholder="Recipient user ID" required />
+ *       <input name="receiverId" placeholder="Recipient user ID" required />
  *       <input name="resourceId" placeholder="Related resource ID" required />
  *       <button type="submit" disabled={createShoutout.isPending}>
  *         {createShoutout.isPending ? 'Creating...' : 'Create Shoutout'}
@@ -73,7 +73,7 @@ export function useCreateShoutout() {
         ...input,
         ...resource,
         communityId: resource.communityIds[0] || '',
-        toUserId: resource.ownerId,
+        receiverId: resource.ownerId,
       });
     },
     onSuccess: (newShoutout: Shoutout) => {
@@ -94,8 +94,10 @@ export function useCreateShoutout() {
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
         id: newShoutout.id,
         message: newShoutout.message,
-        senderId: newShoutout.senderId,
         receiverId: newShoutout.receiverId,
+        senderId: newShoutout.senderId,
+        resourceId: newShoutout.resourceId,
+        communityId: newShoutout.communityId,
       });
     },
     onError: (error) => {

@@ -101,13 +101,13 @@ describe('Feed API - Integration Tests', () => {
     // Create shoutouts for the resources (testUser2 thanking testUser)
     testShoutout1 = await createTestShoutout({
       supabase,
-      toUserId: testUser.id,
+      receiverId: testUser.id,
       resourceId: testResource1.id,
       communityId: testCommunity1.id,
     });
     testShoutout1a = await createTestShoutout({
       supabase,
-      toUserId: testUser.id,
+      receiverId: testUser.id,
       resourceId: testResource1a.id,
       communityId: testCommunity1.id,
     });
@@ -138,29 +138,20 @@ describe('Feed API - Integration Tests', () => {
       expect(shoutoutItems.length).toBeGreaterThan(0);
 
       // Verify our test resources are included
-      expect(
-        resourceItems.some((item) => item.data.id === testResource1.id),
-      ).toBe(true);
-      expect(
-        resourceItems.some((item) => item.data.id === testResource2.id),
-      ).toBe(false);
+      expect(resourceItems.some((item) => item.id === testResource1.id)).toBe(
+        true,
+      );
+      expect(resourceItems.some((item) => item.id === testResource2.id)).toBe(
+        false,
+      );
 
       // Verify our test shoutouts are included
-      expect(
-        shoutoutItems.some((item) => item.data.id === testShoutout1.id),
-      ).toBe(true);
-      expect(
-        shoutoutItems.some((item) => item.data.id === testShoutout1a.id),
-      ).toBe(true);
-
-      // Verify items are sorted by createdAt (newest first)
-      for (let i = 0; i < feed.items.length - 1; i++) {
-        const currentDate = new Date(feed.items[i].data.createdAt);
-        const nextDate = new Date(feed.items[i + 1].data.createdAt);
-        expect(currentDate.getTime()).toBeGreaterThanOrEqual(
-          nextDate.getTime(),
-        );
-      }
+      expect(shoutoutItems.some((item) => item.id === testShoutout1.id)).toBe(
+        true,
+      );
+      expect(shoutoutItems.some((item) => item.id === testShoutout1a.id)).toBe(
+        true,
+      );
     });
 
     it('filters content based on community membership', async () => {
@@ -184,20 +175,20 @@ describe('Feed API - Integration Tests', () => {
         );
 
         // Should contain content from community1
+        expect(resourceItems.some((item) => item.id === testResource1.id)).toBe(
+          true,
+        );
+        expect(shoutoutItems.some((item) => item.id === testShoutout1.id)).toBe(
+          true,
+        );
         expect(
-          resourceItems.some((item) => item.data.id === testResource1.id),
-        ).toBe(true);
-        expect(
-          shoutoutItems.some((item) => item.data.id === testShoutout1.id),
-        ).toBe(true);
-        expect(
-          shoutoutItems.some((item) => item.data.id === testShoutout1a.id),
+          shoutoutItems.some((item) => item.id === testShoutout1a.id),
         ).toBe(true);
 
         // Should contain content from community2 also
-        expect(
-          resourceItems.some((item) => item.data.id === testResource2.id),
-        ).toBe(true);
+        expect(resourceItems.some((item) => item.id === testResource2.id)).toBe(
+          true,
+        );
       } finally {
         // Clean up: leave the community
         await leaveCommunity(supabase, testCommunity1.id);

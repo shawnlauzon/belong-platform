@@ -9,6 +9,6 @@ export type ShoutoutInput = {
   message: string;
   receiverId: string;
   resourceId: string;
-  imageUrls: string[];
+  imageUrls?: string[];
   communityId: string;
 };

@@ -81,9 +81,7 @@ describe('Resource Offers API - CRUD Operations', () => {
       expect(resource!.title).toBe(data.title);
       expect(resource!.type).toBe('offer');
       expect(resource!.ownerId).toBe(testUser.id);
-      expect(resource!.communities).toEqual([
-        expect.objectContaining({ id: testCommunity.id }),
-      ]);
+      expect(resource!.communityIds).toEqual([testCommunity.id]);
 
       // Verify database record exists with all expected fields
       const { data: dbRecord } = await supabase
@@ -214,9 +212,7 @@ describe('Resource Offers API - CRUD Operations', () => {
 
       expect(filtered.length).toBeGreaterThanOrEqual(2);
       expect(
-        filtered.every((r) =>
-          r.communities.some((c) => c.id === testCommunity.id),
-        ),
+        filtered.every((r) => r.communityIds.includes(testCommunity.id)),
       ).toBe(true);
       expect(filtered.every((r) => r.type === 'offer')).toBe(true);
     });

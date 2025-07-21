@@ -106,7 +106,7 @@ describe.skip('Images API - Commit Operations', () => {
       }
 
       // Commit all to permanent storage
-      const entityType = 'gathering';
+      const entityType = 'resource';
       const entityId = `${TEST_PREFIX}multi-commit-${Date.now()}`;
       const committedUrls = await commitImageUrls({
         supabase,
@@ -136,7 +136,6 @@ describe.skip('Images API - Commit Operations', () => {
     it('supports all entity types for commit', async () => {
       const entityTypes = [
         'resource',
-        'gathering',
         'community',
         'user',
         'shoutout',
@@ -292,7 +291,7 @@ describe.skip('Images API - Commit Operations', () => {
       const committedUrls = await commitImageUrls({
         supabase,
         imageUrls: [permanentUrl],
-        entityType: 'gathering',
+        entityType: 'resource',
         entityId: `${TEST_PREFIX}already-permanent-${Date.now()}`,
       });
 
@@ -343,7 +342,10 @@ describe.skip('Images API - Commit Operations', () => {
       expect(committedUrls2[0]).toContain(entityId2);
 
       // Both should exist
-      const existsResults = await verifyImagesExist([committedUrls1[0], committedUrls2[0]]);
+      const existsResults = await verifyImagesExist([
+        committedUrls1[0],
+        committedUrls2[0],
+      ]);
       const exists1 = existsResults[committedUrls1[0]];
       const exists2 = existsResults[committedUrls2[0]];
       expect(exists1).toBe(true);

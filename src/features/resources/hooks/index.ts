@@ -1,8 +1,7 @@
 // Query hooks
 export * from './useResources';
 export * from './useResource';
-export * from './useResourceClaimsByResource';
-export * from './useResourceClaimsByUser';
+export * from './useResourceClaims';
 export * from './useResourceTimeslots';
 
 // Mutation hooks

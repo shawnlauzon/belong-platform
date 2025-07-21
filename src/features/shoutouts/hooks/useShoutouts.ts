@@ -37,7 +37,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
  *       {allShoutouts?.map(shoutout => (
  *         <div key={shoutout.id}>
  *           <p>{shoutout.message}</p>
- *           <p>From: {shoutout.fromUserId} To: {shoutout.toUserId}</p>
+ *           <p>From: {shoutout.senderId} To: {shoutout.receiverId}</p>
  *         </div>
  *       ))}
  *     </div>
@@ -47,7 +47,9 @@ import type { UseQueryResult } from '@tanstack/react-query';
  *
  * @category React Hooks
  */
-export function useShoutouts(filters?: ShoutoutFilter): UseQueryResult<Shoutout[], Error> {
+export function useShoutouts(
+  filters?: ShoutoutFilter,
+): UseQueryResult<Shoutout[], Error> {
   const supabase = useSupabase();
 
   const query = useQuery<Shoutout[], Error>({

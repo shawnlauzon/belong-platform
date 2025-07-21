@@ -102,10 +102,7 @@ describe('Coordinate Transformation Pipeline', () => {
         center: { lat: 40.7128, lng: -74.006 },
       });
 
-      const dbData = toCommunityInsertRow({
-        ...communityData,
-        organizerId: 'test-user-id',
-      });
+      const dbData = toCommunityInsertRow(communityData);
 
       // Should convert domain coordinates to PostGIS string
       expect(dbData.center).toBe('POINT(-74.006 40.7128)');
@@ -134,10 +131,9 @@ describe('Coordinate Transformation Pipeline', () => {
       const originalCenter: Coordinates = { lat: 51.5074, lng: -0.1278 }; // London
 
       // 1. Transform to database format (for insertion)
-      const dbInsertData = toCommunityInsertRow({
-        ...createFakeCommunityInput({ center: originalCenter }),
-        organizerId: 'test-user',
-      });
+      const dbInsertData = toCommunityInsertRow(
+        createFakeCommunityInput({ center: originalCenter }),
+      );
       expect(dbInsertData.center).toBe('POINT(-0.1278 51.5074)');
 
       // 2. Simulate database response (what PostGIS returns)

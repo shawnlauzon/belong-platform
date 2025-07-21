@@ -72,10 +72,7 @@ describe('Resource Transformer', () => {
     it('should handle partial updates', () => {
       const resourceData = createFakeResourceInput();
 
-      const dbResource = toResourceInsertRow({
-        ...resourceData,
-        ownerId: 'user-1',
-      });
+      const dbResource = toResourceInsertRow(resourceData);
 
       expect(dbResource).toMatchObject({
         title: resourceData.title,

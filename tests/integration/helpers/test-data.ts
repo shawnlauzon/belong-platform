@@ -104,21 +104,21 @@ export async function createTestResourceTimeslot(
 export async function createTestShoutout({
   supabase,
   resourceId,
-  toUserId,
+  receiverId,
   communityId,
 }: {
   supabase: SupabaseClient<Database>;
   resourceId: string;
-  toUserId: string;
+  receiverId: string;
   communityId: string;
 }): Promise<Shoutout> {
   const shoutoutData: ShoutoutInput & {
-    toUserId: string;
+    receiverId: string;
     communityId: string;
   } = {
     resourceId,
     message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-    toUserId,
+    receiverId,
     communityId,
   };
 
