@@ -55,19 +55,16 @@ describe('Resource Transformer', () => {
   describe('forDbInsert', () => {
     it('should transform a domain resource to a database resource', () => {
       const resourceData = createFakeResourceInput();
-      const ownerId = faker.string.uuid();
-      const resourceWithOwner = { ...resourceData, ownerId };
 
-      const dbResource = toResourceInsertRow(resourceWithOwner);
+      const dbResource = toResourceInsertRow(resourceData);
 
       expect(dbResource).toMatchObject({
-        type: resourceWithOwner.type,
-        category: resourceWithOwner.category,
-        title: resourceWithOwner.title,
-        description: resourceWithOwner.description,
-        owner_id: resourceWithOwner.ownerId,
-        location_name: resourceWithOwner.locationName,
-        coordinates: resourceWithOwner.coordinates
+        type: resourceData.type,
+        category: resourceData.category,
+        title: resourceData.title,
+        description: resourceData.description,
+        location_name: resourceData.locationName,
+        coordinates: resourceData.coordinates
           ? expect.stringContaining('POINT')
           : undefined,
       });

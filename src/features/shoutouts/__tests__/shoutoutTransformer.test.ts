@@ -16,8 +16,8 @@ describe('Shoutout Transformer', () => {
       const mockToUser = createFakeUser();
       const mockResource = createFakeResource();
       const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
+        sender_id: mockFromUser.id,
+        receiver_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
@@ -28,8 +28,8 @@ describe('Shoutout Transformer', () => {
         message: dbShoutout.message,
         imageUrls: dbShoutout.image_urls,
         communityId: dbShoutout.community_id,
-        fromUserId: mockFromUser.id,
-        toUserId: mockToUser.id,
+        senderId: mockFromUser.id,
+        receiverId: mockToUser.id,
         resourceId: mockResource.id,
       });
       expect(shoutout.createdAt).toBeInstanceOf(Date);
@@ -41,15 +41,15 @@ describe('Shoutout Transformer', () => {
       const mockToUser = createFakeUser();
       const mockResource = createFakeResource();
       const dbShoutout = createFakeDbShoutout({
-        from_user_id: mockFromUser.id,
-        to_user_id: mockToUser.id,
+        sender_id: mockFromUser.id,
+        receiver_id: mockToUser.id,
         resource_id: mockResource.id,
       });
 
       const shoutout = toDomainShoutout(dbShoutout);
 
-      expect(shoutout.fromUserId).toBe(mockFromUser.id);
-      expect(shoutout.toUserId).toBe(mockToUser.id);
+      expect(shoutout.senderId).toBe(mockFromUser.id);
+      expect(shoutout.receiverId).toBe(mockToUser.id);
       expect(shoutout.resourceId).toBe(mockResource.id);
       expect(shoutout.communityId).toBe(dbShoutout.community_id);
     });
@@ -83,8 +83,7 @@ describe('Shoutout Transformer', () => {
     it('should transform shoutout input to database insert format', () => {
       const shoutoutInput = {
         message: faker.lorem.sentence(),
-        fromUserId: faker.string.uuid(),
-        toUserId: faker.string.uuid(),
+        receiverId: faker.string.uuid(),
         communityId: faker.string.uuid(),
         resourceId: faker.string.uuid(),
         imageUrls: [faker.image.url()],
@@ -94,8 +93,7 @@ describe('Shoutout Transformer', () => {
 
       expect(result).toMatchObject({
         message: shoutoutInput.message,
-        from_user_id: shoutoutInput.fromUserId,
-        to_user_id: shoutoutInput.toUserId,
+        receiver_id: shoutoutInput.receiverId,
         community_id: shoutoutInput.communityId,
         resource_id: shoutoutInput.resourceId,
         image_urls: shoutoutInput.imageUrls,

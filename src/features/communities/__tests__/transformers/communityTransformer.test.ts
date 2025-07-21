@@ -18,7 +18,7 @@ describe('communityTransformer', () => {
       const communityData = createFakeCommunityInput();
       const organizerId = faker.string.uuid();
 
-      const result = toCommunityInsertRow({ ...communityData, organizerId });
+      const result = toCommunityInsertRow(communityData);
 
       // Should have boundary JSON without center
       expect(result.boundary).toEqual({
@@ -47,29 +47,20 @@ describe('communityTransformer', () => {
       });
       const organizerId = faker.string.uuid();
 
-      const result = toCommunityInsertRow({ ...communityData, organizerId });
+      const result = toCommunityInsertRow(communityData);
 
       expect(result.boundary).toBeUndefined();
       expect(result.boundary_geometry).toBeUndefined();
       expect(result.center).toBeDefined();
     });
 
-    it('should properly transform organizer ID to snake_case', () => {
-      const communityData = createFakeCommunityInput();
-      const organizerId = faker.string.uuid();
-
-      const result = toCommunityInsertRow({ ...communityData, organizerId });
-
-      expect(result.organizer_id).toBe(organizerId);
-      expect(result).not.toHaveProperty('organizerId');
-    });
 
     it('should transform bannerImageUrl to banner_image_url', () => {
       const bannerImageUrl = faker.image.url();
       const communityData = createFakeCommunityInput({ bannerImageUrl });
       const organizerId = faker.string.uuid();
 
-      const result = toCommunityInsertRow({ ...communityData, organizerId });
+      const result = toCommunityInsertRow(communityData);
 
       expect(result.banner_image_url).toBe(bannerImageUrl);
     });
@@ -80,7 +71,7 @@ describe('communityTransformer', () => {
       });
       const organizerId = faker.string.uuid();
 
-      const result = toCommunityInsertRow({ ...communityData, organizerId });
+      const result = toCommunityInsertRow(communityData);
 
       expect(result.banner_image_url).toBeUndefined();
     });
