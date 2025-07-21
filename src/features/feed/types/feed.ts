@@ -1,6 +1,6 @@
 export interface FeedItem {
   id: string;
-  type: 'resource' | 'shoutout';
+  type: 'resource' | 'event' | 'shoutout';
 }
 
 export interface Feed {

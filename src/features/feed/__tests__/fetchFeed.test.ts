@@ -62,8 +62,8 @@ describe('fetchFeed', () => {
     // Mock resources query
     const mockResourcesQuery = {
       data: [
-        { id: 'resource1', created_at: '2024-01-01T10:00:00Z' },
-        { id: 'resource2', created_at: '2024-01-01T12:00:00Z' },
+        { id: 'resource1', created_at: '2024-01-01T10:00:00Z', type: 'offer' },
+        { id: 'resource2', created_at: '2024-01-01T12:00:00Z', type: 'request' },
       ],
       error: null,
     };
