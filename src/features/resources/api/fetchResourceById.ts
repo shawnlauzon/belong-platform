@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Resource } from '@/features/resources';
-import { toDomainResource } from '../transformers/resourceTransformer';
 import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
+import { toDomainResource } from '../transformers';
 
 export async function fetchResourceById(
   supabase: SupabaseClient<Database>,

@@ -1,8 +1,8 @@
 import type { Database } from '../../../shared/types/database';
 
-export const SELECT_RESOURCE_BASIC = `*`;
+export const SELECT_RESOURCE_BASIC = `*, resource_communities(community_id)`;
 
-export type ResourceRowBasic = ResourceRow;
+export type ResourceRowBasic = ResourceRow & { resource_communities?: { community_id: string }[] };
 
 export const SELECT_RESOURCE_TIMESLOT_BASIC = `*`;
 export type ResourceTimeslotRowBasic = ResourceTimeslotRow;
