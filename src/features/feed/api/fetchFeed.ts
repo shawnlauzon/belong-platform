@@ -32,10 +32,10 @@ export async function fetchFeed(
       (membership) => membership.communityId,
     );
 
-    // Fetch resource IDs, creation dates, and type for sorting and categorization
+    // Fetch resource IDs, creation dates, and category for sorting and categorization
     const { data: resourceData, error: resourceError } = await supabase
       .from('resources')
-      .select('id, created_at, type, resource_communities!inner(community_id)')
+      .select('id, created_at, category, resource_communities!inner(community_id)')
       .in('resource_communities.community_id', communityIds);
 
     if (resourceError) {
@@ -56,7 +56,7 @@ export async function fetchFeed(
     const itemsWithDates = [
       ...(resourceData || []).map(r => ({ 
         id: r.id, 
-        type: r.type === 'event' ? 'event' as const : 'resource' as const, 
+        type: r.category === 'event' ? 'event' as const : 'resource' as const, 
         createdAt: r.created_at 
       })),
       ...(shoutoutData || []).map(s => ({ id: s.id, type: 'shoutout' as const, createdAt: s.created_at }))
@@ -74,8 +74,8 @@ export async function fetchFeed(
 
     logger.debug('📰 API: Successfully fetched feed data', {
       totalItems: allItems.length,
-      resourceCount: resourceData?.filter(r => r.type !== 'event').length || 0,
-      eventCount: resourceData?.filter(r => r.type === 'event').length || 0,
+      resourceCount: resourceData?.filter(r => r.category !== 'event').length || 0,
+      eventCount: resourceData?.filter(r => r.category === 'event').length || 0,
       shoutoutCount: shoutoutData?.length || 0,
     });
 

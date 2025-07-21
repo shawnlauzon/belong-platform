@@ -62,8 +62,8 @@ describe('fetchFeed', () => {
     // Mock resources query
     const mockResourcesQuery = {
       data: [
-        { id: 'resource1', created_at: '2024-01-01T10:00:00Z', type: 'offer' },
-        { id: 'resource2', created_at: '2024-01-01T12:00:00Z', type: 'request' },
+        { id: 'resource1', created_at: '2024-01-01T10:00:00Z', category: 'goods' },
+        { id: 'resource2', created_at: '2024-01-01T12:00:00Z', category: 'services' },
       ],
       error: null,
     };
@@ -177,6 +177,55 @@ describe('fetchFeed', () => {
     const result = await fetchFeed(mockSupabase);
 
     expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+  });
+
+  it('should correctly categorize resources, events, and shoutouts', async () => {
+    const mockUser = { id: 'user1' };
+    const mockCommunities = [{ communityId: 'community1' }];
+
+    mockGetCurrentUser.mockResolvedValue(mockUser as { id: string });
+    mockFetchUserCommunities.mockResolvedValue(mockCommunities as { communityId: string }[]);
+
+    // Mock resources query with mixed categories including events
+    const mockResourcesQuery = {
+      data: [
+        { id: 'resource1', created_at: '2024-01-01T10:00:00Z', category: 'goods' },
+        { id: 'event1', created_at: '2024-01-01T14:00:00Z', category: 'event' },
+        { id: 'resource2', created_at: '2024-01-01T12:00:00Z', category: 'services' },
+      ],
+      error: null,
+    };
+
+    // Mock shoutouts query  
+    const mockShoutoutsQuery = {
+      data: [
+        { id: 'shoutout1', created_at: '2024-01-01T11:00:00Z' },
+      ],
+      error: null,
+    };
+
+    mockSupabase.from
+      .mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue(mockResourcesQuery),
+        }),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue(mockShoutoutsQuery),
+        }),
+      });
+
+    const result = await fetchFeed(mockSupabase);
+
+    expect(result.items).toHaveLength(4);
+    expect(result.items).toEqual([
+      { id: 'event1', type: 'event' }, // Event (newest)
+      { id: 'resource2', type: 'resource' }, // Resource
+      { id: 'shoutout1', type: 'shoutout' }, // Shoutout
+      { id: 'resource1', type: 'resource' }, // Resource (oldest)
+    ]);
     expect(result.hasMore).toBe(false);
   });
 });
