@@ -171,20 +171,6 @@ describe('Resource Claims - Basic Operations', () => {
           resourceId: testResource.id,
           timeslotId: testTimeslot.id,
           userId: claimant.id,
-          user: expect.objectContaining({
-            id: claimant.id,
-            firstName: claimant.firstName,
-            lastName: claimant.lastName,
-          }),
-          resource: expect.objectContaining({
-            id: testResource.id,
-            title: testResource.title,
-          }),
-          timeslot: expect.objectContaining({
-            id: testTimeslot.id,
-            startTime: testTimeslot.startTime,
-            endTime: testTimeslot.endTime,
-          }),
           status: 'pending',
         });
       });

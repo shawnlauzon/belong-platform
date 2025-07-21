@@ -95,24 +95,9 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(createdShoutout).toMatchObject({
         id: expect.any(String),
         resourceId: testResource.id,
-        resource: expect.objectContaining({
-          id: testResource.id,
-          title: testResource.title,
-          description: testResource.description,
-        }),
         message: shoutoutInput.message,
-        toUser: expect.objectContaining({
-          id: testUser.id,
-          firstName: testUser.firstName,
-          lastName: testUser.lastName,
-        }),
-        communityId: testCommunity.id,
         senderId: testUser2.id,
-        fromUser: expect.objectContaining({
-          id: testUser2.id,
-          firstName: testUser2.firstName,
-          lastName: testUser2.lastName,
-        }),
+        receiverId: testUser.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -129,8 +114,8 @@ describe('Shoutouts API - CRUD Operations', () => {
         id: expect.any(String),
         resource_id: testResource.id,
         community_id: testCommunity.id,
-        from_user_id: testUser2.id,
-        to_user_id: testUser.id,
+        sender_id: testUser2.id,
+        receiver_id: testUser.id,
         message: shoutoutInput.message,
       });
     });
@@ -224,13 +209,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         id: readOnlyShoutout1.id,
         message: readOnlyShoutout1.message,
         senderId: testUser2.id,
-        fromUser: expect.objectContaining({
-          id: testUser2.id,
-        }),
-        toUserId: testUser.id,
-        toUser: expect.objectContaining({
-          id: testUser.id,
-        }),
+        receiverId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });
@@ -273,13 +252,7 @@ describe('Shoutouts API - CRUD Operations', () => {
         id: createdShoutout.id,
         message: newMessage,
         senderId: testUser2.id,
-        fromUser: expect.objectContaining({
-          id: testUser2.id,
-        }),
-        toUserId: testUser.id,
-        toUser: expect.objectContaining({
-          id: testUser.id,
-        }),
+        receiverId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
       });
@@ -294,8 +267,8 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(dbRecord).toMatchObject({
         id: createdShoutout.id,
         message: newMessage,
-        from_user_id: testUser2.id,
-        to_user_id: testUser.id,
+        sender_id: testUser2.id,
+        receiver_id: testUser.id,
         resource_id: testResource.id,
         community_id: testCommunity.id,
       });

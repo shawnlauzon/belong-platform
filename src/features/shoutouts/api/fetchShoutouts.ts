@@ -26,10 +26,10 @@ export async function fetchShoutouts(
     }
 
     if (filters.sentBy) {
-      query = query.eq('from_user_id', filters.sentBy);
+      query = query.eq('sender_id', filters.sentBy);
     }
     if (filters.receivedBy) {
-      query = query.eq('to_user_id', filters.receivedBy);
+      query = query.eq('receiver_id', filters.receivedBy);
     }
     if (filters.resourceId) {
       query = query.eq('resource_id', filters.resourceId);
