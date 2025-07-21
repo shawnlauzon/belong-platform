@@ -16,8 +16,8 @@ export function createFakeDbShoutout(
   return {
     id: faker.string.uuid(),
     message: faker.lorem.sentence(),
-    from_user_id: faker.string.uuid(),
-    to_user_id: faker.string.uuid(),
+    sender_id: faker.string.uuid(),
+    receiver_id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
     image_urls: Array.from(
@@ -44,9 +44,9 @@ export function createFakeShoutout(
   return {
     id: faker.string.uuid(),
     message: faker.lorem.sentence(),
-    fromUserId: fromUser.id,
+    senderId: fromUser.id,
     fromUser,
-    toUserId: toUser.id,
+    receiverId: toUser.id,
     toUser,
     resourceId: resource.id,
     resource,
@@ -71,8 +71,8 @@ export function createFakeShoutoutWithoutRelations(
   return {
     id: faker.string.uuid(),
     message: faker.lorem.sentence(),
-    fromUserId: faker.string.uuid(),
-    toUserId: faker.string.uuid(),
+    senderId: faker.string.uuid(),
+    receiverId: faker.string.uuid(),
     resourceId: faker.string.uuid(),
     communityId: faker.string.uuid(),
     imageUrls: Array.from(
@@ -100,8 +100,7 @@ export function createFakeShoutoutInput(
     message: faker.lorem.sentence(),
     resourceId: faker.string.uuid(),
     imageUrls: [],
-    fromUserId: faker.string.uuid(),
-    toUserId: faker.string.uuid(),
+    receiverId: faker.string.uuid(),
     communityId: faker.string.uuid(),
     ...overrides,
   };

@@ -102,7 +102,6 @@ export function createFakeResourceInput(
       'event',
       'other',
     ] as const),
-    ownerId: faker.string.uuid(),
     communityIds: [faker.string.uuid()],
     imageUrls: [],
     locationName: faker.location.city(),

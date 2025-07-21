@@ -50,7 +50,6 @@ export function createFakeCommunityInput(
 ): CommunityInput {
   return {
     name: faker.location.city(),
-    organizerId: faker.string.uuid(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
