@@ -1245,6 +1245,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      is_community_member_of_resource: {
+        Args: { resource_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       is_resource_owner: {
         Args: { resource_uuid: string; user_uuid: string }
         Returns: boolean
