@@ -49,6 +49,40 @@ describe('Resource Transformer', () => {
       const underscoreFields = fieldNames.filter((name) => name.includes('_'));
       expect(underscoreFields).toEqual([]);
     });
+
+    it('should use existing image URLs when available', () => {
+      const customImageUrls = ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'];
+      const dbResource = createFakeResourceRow({
+        image_urls: customImageUrls,
+        category: 'tools'
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageUrls).toEqual(customImageUrls);
+    });
+
+    it('should return empty array when no images provided', () => {
+      const dbResource = createFakeResourceRow({
+        image_urls: null,
+        category: 'tools'
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageUrls).toEqual([]);
+    });
+
+    it('should return empty array when empty array provided', () => {
+      const dbResource = createFakeResourceRow({
+        image_urls: [],
+        category: 'food'
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageUrls).toEqual([]);
+    });
   });
 
   describe('forDbInsert', () => {

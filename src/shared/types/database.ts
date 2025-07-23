@@ -2568,6 +2568,7 @@ export type Database = {
         | "other"
         | "ride"
         | "housing"
+        | "drinks"
       resource_claim_status:
         | "pending"
         | "approved"
@@ -2723,6 +2724,7 @@ export const Constants = {
         "other",
         "ride",
         "housing",
+        "drinks",
       ],
       resource_claim_status: [
         "pending",
