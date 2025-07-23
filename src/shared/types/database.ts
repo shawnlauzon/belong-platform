@@ -572,7 +572,7 @@ export type Database = {
           location_name: string | null
           max_claims: number | null
           owner_id: string
-          requires_approval: boolean | null
+          requires_approval: boolean
           status: Database["public"]["Enums"]["resource_status"]
           title: string
           type: Database["public"]["Enums"]["resource_type"]
@@ -589,7 +589,7 @@ export type Database = {
           location_name?: string | null
           max_claims?: number | null
           owner_id?: string
-          requires_approval?: boolean | null
+          requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
           title: string
           type: Database["public"]["Enums"]["resource_type"]
@@ -606,7 +606,7 @@ export type Database = {
           location_name?: string | null
           max_claims?: number | null
           owner_id?: string
-          requires_approval?: boolean | null
+          requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
           title?: string
           type?: Database["public"]["Enums"]["resource_type"]
