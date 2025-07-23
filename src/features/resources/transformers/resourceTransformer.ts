@@ -18,17 +18,21 @@ export function toResourceInsertRow(
     coordinates,
     maxClaims,
     requiresApproval,
+    areTimeslotsFlexible,
     expiresAt,
+    category,
     ...rest
   } = resource;
 
   return {
     ...rest,
+    category: category || 'other',
     image_urls: imageUrls,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
     max_claims: maxClaims,
     requires_approval: requiresApproval,
+    timeslots_flexible: areTimeslotsFlexible ?? true,
     expires_at: expiresAt?.toISOString(),
   };
 }
@@ -54,6 +58,7 @@ export function forDbUpdate(
     status: resource.status,
     max_claims: resource.maxClaims,
     requires_approval: resource.requiresApproval,
+    timeslots_flexible: resource.areTimeslotsFlexible,
     expires_at: resource.expiresAt?.toISOString(),
   };
 }
@@ -81,6 +86,7 @@ export function toDomainResource(dbResource: ResourceRowBasic): Resource {
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
+    areTimeslotsFlexible: dbResource.timeslots_flexible ?? true,
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,

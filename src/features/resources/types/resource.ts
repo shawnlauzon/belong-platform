@@ -3,6 +3,7 @@ import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
 
 export type Resource = IsPersisted<ResourceInput> & {
   ownerId: string;
+  areTimeslotsFlexible: boolean;
 };
 
 export enum ResourceTypeEnum {
@@ -22,5 +23,6 @@ export type ResourceInput = {
   status: ResourceStatus;
   maxClaims?: number;
   requiresApproval: boolean;
+  areTimeslotsFlexible?: boolean;
   expiresAt?: Date;
 };

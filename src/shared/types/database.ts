@@ -562,7 +562,7 @@ export type Database = {
       }
       resources: {
         Row: {
-          category: Database["public"]["Enums"]["resource_category"] | null
+          category: Database["public"]["Enums"]["resource_category"]
           coordinates: unknown | null
           created_at: string
           description: string
@@ -574,12 +574,13 @@ export type Database = {
           owner_id: string
           requires_approval: boolean
           status: Database["public"]["Enums"]["resource_status"]
+          timeslots_flexible: boolean
           title: string
           type: Database["public"]["Enums"]["resource_type"]
           updated_at: string
         }
         Insert: {
-          category?: Database["public"]["Enums"]["resource_category"] | null
+          category: Database["public"]["Enums"]["resource_category"]
           coordinates?: unknown | null
           created_at?: string
           description: string
@@ -591,12 +592,13 @@ export type Database = {
           owner_id?: string
           requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
+          timeslots_flexible?: boolean
           title: string
           type: Database["public"]["Enums"]["resource_type"]
           updated_at?: string
         }
         Update: {
-          category?: Database["public"]["Enums"]["resource_category"] | null
+          category?: Database["public"]["Enums"]["resource_category"]
           coordinates?: unknown | null
           created_at?: string
           description?: string
@@ -608,6 +610,7 @@ export type Database = {
           owner_id?: string
           requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
+          timeslots_flexible?: boolean
           title?: string
           type?: Database["public"]["Enums"]["resource_type"]
           updated_at?: string
@@ -2563,6 +2566,8 @@ export type Database = {
         | "supplies"
         | "event"
         | "other"
+        | "ride"
+        | "housing"
       resource_claim_status:
         | "pending"
         | "approved"
@@ -2716,6 +2721,8 @@ export const Constants = {
         "supplies",
         "event",
         "other",
+        "ride",
+        "housing",
       ],
       resource_claim_status: [
         "pending",

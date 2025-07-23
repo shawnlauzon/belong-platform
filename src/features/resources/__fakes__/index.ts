@@ -34,6 +34,7 @@ export function createFakeResource(
       ResourceTypeEnum.OFFER,
       ResourceTypeEnum.REQUEST,
     ]),
+    areTimeslotsFlexible: true,
     category: faker.helpers.maybe(
       () =>
         faker.helpers.arrayElement([
@@ -130,20 +131,16 @@ export function createFakeResourceRow(
     id: faker.string.uuid(),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    category:
-      faker.helpers.maybe(
-        () =>
-          faker.helpers.arrayElement([
-            'tools',
-            'skills',
-            'food',
-            'supplies',
-            'other',
-          ] as const),
-        {
-          probability: 0.8,
-        },
-      ) ?? null,
+    category: faker.helpers.arrayElement([
+      'tools',
+      'skills',
+      'food',
+      'supplies',
+      'event',
+      'other',
+      'ride',
+      'housing',
+    ] as const),
     type: faker.helpers.arrayElement([
       ResourceTypeEnum.OFFER,
       ResourceTypeEnum.REQUEST,
@@ -165,6 +162,7 @@ export function createFakeResourceRow(
     max_claims:
       faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
     requires_approval: faker.datatype.boolean(),
+    timeslots_flexible: true,
     expires_at:
       faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     ...overrides,
