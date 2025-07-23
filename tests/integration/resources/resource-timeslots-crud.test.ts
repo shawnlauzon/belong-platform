@@ -15,6 +15,7 @@ import type { User } from '@/features/users/types';
 import { createFakeResourceTimeslotInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';
 import { Resource } from '@/features/resources/types';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Resources API - Resource Timeslots Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -149,6 +150,68 @@ describe('Resources API - Resource Timeslots Operations', () => {
       await expect(
         resourcesApi.createResourceTimeslot(supabase, timeslotInput),
       ).rejects.toThrow();
+    });
+
+    it('allows community member to create timeslot for resource they do not own', async () => {
+      // Create a new user who is not the resource owner
+      const communityMember = await createTestUser(supabase);
+      
+      // Sign in as the community member
+      await signIn(supabase, communityMember.email, 'TestPass123!');
+      
+      // Join the community that contains the resource
+      await joinCommunity(supabase, testCommunity.id);
+      
+      // Create timeslot for resource owned by someone else
+      const startTime = new Date(Date.now() + 86400000); // Tomorrow
+      const endTime = new Date(startTime.getTime() + 3600000); // 1 hour later
+
+      const timeslotInput = createFakeResourceTimeslotInput({
+        resourceId: testResource.id,
+        startTime,
+        endTime,
+        maxClaims: 3,
+      });
+
+      const timeslot = await resourcesApi.createResourceTimeslot(
+        supabase,
+        timeslotInput,
+      );
+
+      createdTimeslots.push(timeslot);
+
+      expect(timeslot).toBeTruthy();
+      expect(timeslot).toMatchObject({
+        resourceId: testResource.id,
+        startTime,
+        endTime,
+        maxClaims: 3,
+        status: 'available',
+      });
+
+      // Verify database record exists
+      const { data: dbRecord } = await supabase
+        .from('resource_timeslots')
+        .select('*')
+        .eq('id', timeslot.id)
+        .single();
+
+      expect(dbRecord).toBeTruthy();
+      expect(dbRecord!.resource_id).toBe(testResource.id);
+      expect(dbRecord!.max_claims).toBe(3);
+      
+      // Verify the resource is owned by someone else (not the community member)
+      const { data: resource } = await supabase
+        .from('resources')
+        .select('owner_id')
+        .eq('id', testResource.id)
+        .single();
+        
+      expect(resource!.owner_id).not.toBe(communityMember.id);
+      expect(resource!.owner_id).toBe(resourceOwner.id);
+
+      // Sign back in as resource owner for cleanup
+      await signIn(supabase, resourceOwner.email, 'TestPass123!');
     });
   });
 

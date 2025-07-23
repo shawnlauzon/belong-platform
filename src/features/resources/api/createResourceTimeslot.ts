@@ -15,12 +15,13 @@ export async function createResourceTimeslot(
   supabase: SupabaseClient<Database>,
   timeslotInput: ResourceTimeslotInput,
 ): Promise<ResourceTimeslot> {
-  const currentUserId = await getAuthIdOrThrow(supabase);
+  // Ensure user is authenticated (will throw if not)
+  await getAuthIdOrThrow(supabase);
 
-  // Verify resource exists and check access
+  // Verify resource exists
   const { data: resource, error: resourceError } = await supabase
     .from('resources')
-    .select('owner_id')
+    .select('id')
     .eq('id', timeslotInput.resourceId)
     .single();
 
@@ -30,34 +31,6 @@ export async function createResourceTimeslot(
       resourceId: timeslotInput.resourceId,
     });
     throw new Error('Resource not found');
-  }
-
-  // Check if user is resource owner
-  const isOwner = resource.owner_id === currentUserId;
-
-  // Check if user is a member of a community that contains this resource
-  const { data: communityMembership } = await supabase
-    .from('resource_communities')
-    .select(`
-      community_id,
-      community_memberships!inner(user_id)
-    `)
-    .eq('resource_id', timeslotInput.resourceId)
-    .eq('community_memberships.user_id', currentUserId)
-    .limit(1)
-    .single();
-
-  const isCommunityMember = !!communityMembership;
-
-  if (!isOwner && !isCommunityMember) {
-    logger.error('🏘️ API: User cannot create timeslots for this resource', {
-      userId: currentUserId,
-      resourceId: timeslotInput.resourceId,
-      resourceOwnerId: resource.owner_id,
-      isOwner,
-      isCommunityMember,
-    });
-    throw new Error('You must be the resource owner or a member of a community containing this resource to create timeslots');
   }
 
   // Validate input
