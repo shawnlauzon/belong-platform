@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase } from '@/shared';
+import { useSupabase, queryKeys } from '@/shared';
 import { deleteResourceClaim, fetchResourceClaimById } from '../api';
 import { ResourceClaim } from '../types';
 
@@ -19,14 +19,24 @@ export function useDeleteResourceClaim() {
       return claim;
     },
     onSuccess: (claim) => {
-      // Invalidate all queries for this resource (regardless of additional filters)
+      // Invalidate all resource claims - ensures any cached lists are refreshed
       queryClient.invalidateQueries({
-        queryKey: ['resource-claims', 'by-resource', claim.resourceId],
+        queryKey: queryKeys.resourceClaims.all,
       });
       
-      // Invalidate all queries for this user (regardless of additional filters)
+      // Invalidate specific queries for this resource
       queryClient.invalidateQueries({
-        queryKey: ['resource-claims', 'by-user', claim.userId],
+        queryKey: queryKeys.resourceClaims.byResource(claim.resourceId),
+      });
+      
+      // Invalidate specific queries for this claimant
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.resourceClaims.byClaimant(claim.userId),
+      });
+      
+      // Invalidate filtered queries that might include this claim
+      queryClient.invalidateQueries({
+        queryKey: ['resource-claims', 'filtered'],
       });
     },
   });
