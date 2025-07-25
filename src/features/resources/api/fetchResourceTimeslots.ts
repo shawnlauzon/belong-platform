@@ -13,7 +13,9 @@ export async function fetchResourceTimeslots(
   supabase: SupabaseClient<Database>,
   filter?: ResourceTimeslotFilter,
 ): Promise<ResourceTimeslot[]> {
-  let query = supabase.from('resources').select(SELECT_RESOURCE_TIMESLOT_BASIC);
+  let query = supabase
+    .from('resource_timeslots')
+    .select(SELECT_RESOURCE_TIMESLOT_BASIC);
 
   if (filter) {
     query = appendQueries(query, {
