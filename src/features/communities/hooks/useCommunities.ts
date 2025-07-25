@@ -54,7 +54,7 @@ import type { Community, CommunityFilter } from '@/features/communities/types';
  */
 export function useCommunities(
   filter?: CommunityFilter,
-  options?: UseQueryOptions<Community[], Error>,
+  options?: Partial<UseQueryOptions<Community[], Error>>,
 ) {
   const supabase = useSupabase();
 

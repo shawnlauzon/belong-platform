@@ -66,7 +66,7 @@ import { userKeys } from '../queries';
  */
 export function useUser(
   userId: string,
-  options?: UseQueryOptions<User | null, Error>,
+  options?: Partial<UseQueryOptions<User | null, Error>>,
 ): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
 

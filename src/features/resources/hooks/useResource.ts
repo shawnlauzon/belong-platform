@@ -3,6 +3,7 @@ import { useSupabase } from '@/shared';
 import type { Resource } from '@/features/resources/types';
 import { fetchResourceById } from '../api/fetchResourceById';
 import { resourceKeys } from '../queries';
+import { STANDARD_CACHE_TIME } from '@/config';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -40,13 +41,14 @@ import { resourceKeys } from '../queries';
  */
 export function useResource(
   id: string,
-  options?: UseQueryOptions<Resource | null, Error>,
+  options?: Partial<UseQueryOptions<Resource | null, Error>>,
 ) {
   const supabase = useSupabase();
 
   return useQuery<Resource | null, Error>({
     queryKey: resourceKeys.detail(id),
     queryFn: () => fetchResourceById(supabase, id),
+    staleTime: STANDARD_CACHE_TIME,
     ...options,
   });
 }

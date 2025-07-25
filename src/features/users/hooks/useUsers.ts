@@ -50,7 +50,7 @@ import { userKeys } from '../queries';
  */
 export function useUsers(
   filter?: UserFilter,
-  options?: UseQueryOptions<User[], Error>,
+  options?: Partial<UseQueryOptions<User[], Error>>,
 ): UseQueryResult<User[], Error> {
   const supabase = useSupabase();
 

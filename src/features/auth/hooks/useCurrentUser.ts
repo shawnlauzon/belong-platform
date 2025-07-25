@@ -27,7 +27,7 @@ import type { User } from '@/features/users/types';
  * ```
  */
 export function useCurrentUser(
-  options?: UseQueryOptions<User | null, Error>
+  options?: Partial<UseQueryOptions<User | null, Error>>
 ) {
   const supabase = useSupabase();
 

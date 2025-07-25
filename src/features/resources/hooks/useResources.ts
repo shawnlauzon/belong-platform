@@ -60,7 +60,7 @@ import { resourceKeys } from '../queries';
  */
 export function useResources(
   filter?: ResourceFilter,
-  options?: UseQueryOptions<ResourceSummary[], Error>,
+  options?: Partial<UseQueryOptions<ResourceSummary[], Error>>,
 ) {
   const supabase = useSupabase();
 

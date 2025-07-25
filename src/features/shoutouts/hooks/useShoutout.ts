@@ -44,7 +44,7 @@ import { shoutoutKeys } from '../queries';
  */
 export function useShoutout(
   shoutoutId: string,
-  options?: UseQueryOptions<Shoutout | null, Error>,
+  options?: Partial<UseQueryOptions<Shoutout | null, Error>>,
 ): UseQueryResult<Shoutout | null, Error> {
   const supabase = useSupabase();
 

@@ -32,7 +32,7 @@ import type { Feed } from '../types';
  * }
  * ```
  */
-export function useFeed(options?: UseQueryOptions<Feed, Error>) {
+export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
 
   const query = useQuery<Feed, Error>({

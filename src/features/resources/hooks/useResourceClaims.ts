@@ -30,7 +30,7 @@ import { resourceClaimsKeys } from '../queries';
  */
 export function useResourceClaims(
   filter?: ResourceClaimFilter,
-  options?: UseQueryOptions<ResourceClaim[], Error>,
+  options?: Partial<UseQueryOptions<ResourceClaim[], Error>>,
 ) {
   // Only allow zero or one of these to be set
   if (

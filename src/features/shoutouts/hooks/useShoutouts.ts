@@ -49,7 +49,7 @@ import { shoutoutKeys } from '../queries';
  */
 export function useShoutouts(
   filter?: ShoutoutFilter,
-  options?: UseQueryOptions<Shoutout[], Error>,
+  options?: Partial<UseQueryOptions<Shoutout[], Error>>,
 ): UseQueryResult<Shoutout[], Error> {
   if (filter?.resourceId && filter?.communityId) {
     throw new Error('Cannot filter by both resourceId and communityId');

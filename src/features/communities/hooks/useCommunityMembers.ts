@@ -39,7 +39,7 @@ import { communityMembersKeys } from '../queries';
  */
 export function useCommunityMembers(
   communityId: string,
-  options?: UseQueryOptions<CommunityMembership[], Error>,
+  options?: Partial<UseQueryOptions<CommunityMembership[], Error>>,
 ) {
   const supabase = useSupabase();
 

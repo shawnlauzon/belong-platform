@@ -59,7 +59,7 @@ import { userCommunitiesKeys } from '../queries';
  */
 export function useUserCommunities(
   userId?: string,
-  options?: UseQueryOptions<CommunityMembership[], Error>,
+  options?: Partial<UseQueryOptions<CommunityMembership[], Error>>,
 ) {
   const supabase = useSupabase();
 

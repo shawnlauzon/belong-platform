@@ -9,7 +9,7 @@ import { resourceTimeslotKeys } from '../queries';
 
 export function useResourceTimeslots(
   filter?: ResourceTimeslotFilter,
-  options?: UseQueryOptions<ResourceTimeslot[], Error>,
+  options?: Partial<UseQueryOptions<ResourceTimeslot[], Error>>,
 ) {
   const supabase = useSupabase();
 
