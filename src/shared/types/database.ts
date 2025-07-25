@@ -527,7 +527,7 @@ export type Database = {
           created_at: string
           end_time: string
           id: string
-          max_claims: number
+          max_claims: number | null
           resource_id: string
           start_time: string
           updated_at: string
@@ -536,7 +536,7 @@ export type Database = {
           created_at?: string
           end_time: string
           id?: string
-          max_claims?: number
+          max_claims?: number | null
           resource_id: string
           start_time: string
           updated_at?: string
@@ -545,7 +545,7 @@ export type Database = {
           created_at?: string
           end_time?: string
           id?: string
-          max_claims?: number
+          max_claims?: number | null
           resource_id?: string
           start_time?: string
           updated_at?: string
