@@ -8,10 +8,10 @@ export type ResourceRowJoinCommunities = ResourceRow & {
 
 export const SELECT_RESOURCE_CLAIMS_BASIC = `*`;
 
-export const SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT = `*, resource:resources(owner_id), timeslot:resource_timeslots(*)`;
+export const SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT = `*, resources!inner(owner_id), resource_timeslots(*)`;
 export type ResourceClaimRowJoinResourceJoinTimeslot = ResourceClaimRow & {
-  resource: { owner_id: string };
-  timeslot: ResourceTimeslotRow;
+  resources: { owner_id: string };
+  resource_timeslots: ResourceTimeslotRow;
 };
 
 export const SELECT_RESOURCE_TIMESLOT_BASIC = `*`;

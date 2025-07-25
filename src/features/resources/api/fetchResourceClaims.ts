@@ -20,7 +20,7 @@ export async function fetchResourceClaims(
     query = appendQueries(query, {
       resource_id: filter.resourceId,
       claimant_id: filter.claimantId,
-      'resource.owner_id': filter.resourceOwnerId,
+      'resources.owner_id': filter.resourceOwnerId,
     });
   }
 
@@ -43,6 +43,8 @@ export async function fetchResourceClaims(
     });
     return [];
   }
+
+  console.log('*** data', data);
 
   // Transform the joined results to ResourceClaim objects with relations
   const claims = data.map(toDomainResourceClaim);

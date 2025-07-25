@@ -5,10 +5,7 @@ import {
   createResource,
   createResourceTimeslot,
 } from '@/features/resources/api';
-import {
-  createFakeResourceInput,
-  createFakeResourceTimeslotInput,
-} from '@/features/resources/__fakes__';
+import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
@@ -89,13 +86,12 @@ export async function createTestResourceTimeslot(
     startTime.getTime() + faker.number.int({ min: 30, max: 180 }) * 60 * 1000,
   );
 
-  const data = createFakeResourceTimeslotInput({
+  const timeslot = await createResourceTimeslot(supabase, {
     resourceId,
     startTime,
     endTime,
+    maxClaims: 1,
   });
-
-  const timeslot = await createResourceTimeslot(supabase, data);
   if (!timeslot) throw new Error('Failed to create resource timeslot');
 
   return timeslot;

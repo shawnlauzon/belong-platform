@@ -9,6 +9,7 @@ import {
   SELECT_RESOURCES_JOIN_COMMUNITIES,
 } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
+import { logger } from '@/shared';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
@@ -108,5 +109,12 @@ export async function createResource(
     throw new Error(fetchError?.message || 'Failed to fetch complete resource');
   }
 
-  return toDomainResource(completeResource);
+  const resource = toDomainResource(completeResource);
+
+  logger.debug('🏘️ API: Successfully created resource', {
+    resourceId: resource.id,
+    communityIds: resource.communityIds,
+  });
+
+  return resource;
 }

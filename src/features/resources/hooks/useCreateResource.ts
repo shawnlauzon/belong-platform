@@ -93,11 +93,6 @@ export function useCreateResource() {
       // Invalidate feed to show new resource
       // TODO Should be able to insert it into the appropriate place
       queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
-
-      logger.info('📚 API: Successfully created resource', {
-        id: newResource.id,
-        title: newResource.title,
-      });
     },
     onError: (error) => {
       logger.error('📚 API: Failed to create resource', { error });

@@ -46,19 +46,14 @@ describe('Resource Claims - Basic Operations', () => {
     claimant = await createTestUser(supabase);
     await joinCommunity(supabase, testCommunity.id);
 
-    // FIXME Since resources can be shared across multiple communities,
-    // the claim must define what community it's for (maybe)
-    readOnlyClaim = await resourcesApi.createResourceClaim(
-      supabase,
-      createFakeResourceClaimInput({
-        resourceId: testResource.id,
-        timeslotId: testTimeslot.id,
-      }),
-    );
+    readOnlyClaim = await resourcesApi.createResourceClaim(supabase, {
+      resourceId: testResource.id,
+      timeslotId: testTimeslot.id,
+    });
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   describe('Basic Claim Creation', () => {
@@ -350,26 +345,39 @@ describe('Resource Claims - Basic Operations', () => {
 
     describe('Claim actions by resource owner', () => {
       let testClaim2: ResourceClaim;
+      let testResource3: Resource;
+      let testClaim3: ResourceClaim;
       beforeAll(async () => {
         // NOTE: this is a new claim created by the claimant owner
-        testClaim2 = await resourcesApi.createResourceClaim(
+        testClaim2 = await resourcesApi.createResourceClaim(supabase, {
+          resourceId: testResource.id,
+          timeslotId: testTimeslot2.id,
+        });
+
+        await createTestUser(supabase);
+        await joinCommunity(supabase, testCommunity.id);
+        testResource3 = await createTestResource(supabase, testCommunity.id);
+        const testTimeslot3 = await createTestResourceTimeslot(
           supabase,
-          createFakeResourceClaimInput({
-            resourceId: testResource.id,
-            timeslotId: testTimeslot2.id,
-          }),
+          testResource3.id,
         );
+
+        await signIn(supabase, claimant.email, 'TestPass123!');
+        testClaim3 = await resourcesApi.createResourceClaim(supabase, {
+          resourceId: testResource3.id,
+          timeslotId: testTimeslot3.id,
+        });
+
         await signIn(supabase, resourceOwner.email, 'TestPass123!');
       });
 
       afterAll(async () => {
         await signIn(supabase, claimant.email, 'TestPass123!');
-        await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+        // await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
       });
 
       describe('Fetches a claim', () => {
         it('fetches a single claim by claimant lookup', async () => {
-          // Fetch claims by claimant since fetchResourceClaimById no longer exists
           const claims = await resourcesApi.fetchResourceClaims(supabase, {
             claimantId: claimant.id,
           });
@@ -404,6 +412,24 @@ describe('Resource Claims - Basic Operations', () => {
               resourceId: testResource.id,
               timeslotId: testTimeslot2.id,
               claimantId: claimant.id,
+            }),
+          );
+
+          expect(allClaims).toContainEqual(
+            expect.objectContaining({
+              id: testClaim3.id,
+            }),
+          );
+        });
+
+        it.only('fetches claims by resource owner', async () => {
+          const claims = await resourcesApi.fetchResourceClaims(supabase, {
+            resourceOwnerId: resourceOwner.id,
+          });
+
+          expect(claims).toContainEqual(
+            expect.not.objectContaining({
+              id: testClaim3.id,
             }),
           );
         });

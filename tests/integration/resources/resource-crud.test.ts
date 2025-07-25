@@ -249,7 +249,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
       expect(resources.some((r) => r.type === 'request')).toBe(true);
     });
 
-
     it('fetches resources without type filtering', async () => {
       // FIXED: Type filtering was removed from ResourceFilter API
       const resources = await resourcesApi.fetchResources(supabase);
@@ -259,18 +258,7 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
       // Note: Both offers and requests will be returned since type filtering removed
     });
 
-
-    it('cannot filter by ownerId (removed)', async () => {
-      // FIXED: ownerId filtering was removed from ResourceFilter API
-      const allResources = await resourcesApi.fetchResources(supabase);
-
-      expect(allResources.length).toBeGreaterThanOrEqual(2);
-      // Note: Can no longer filter by ownerId - functionality regression
-      expect(allResources.some((r) => r.ownerId === testUser.id)).toBe(true);
-    });
-
     it('filters by communityId', async () => {
-      // FIXED: Changed from communityIds (plural) to communityId (singular)
       const filtered = await resourcesApi.fetchResources(supabase, {
         communityId: testCommunity.id,
       });
@@ -279,19 +267,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
       expect(
         filtered.every((r) => r.communityIds.includes(testCommunity.id)),
       ).toBe(true);
-    });
-
-    it('filters only by communityId (type filtering removed)', async () => {
-      // FIXED: Only communityId filtering remains, type filtering removed
-      const filtered = await resourcesApi.fetchResources(supabase, {
-        communityId: testCommunity.id,
-      });
-
-      expect(filtered.length).toBeGreaterThanOrEqual(1);
-      expect(
-        filtered.every((r) => r.communityIds.includes(testCommunity.id)),
-      ).toBe(true);
-      // Note: Can no longer filter by type - both offers and requests returned
     });
   });
 

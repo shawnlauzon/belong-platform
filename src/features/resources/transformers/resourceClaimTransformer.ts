@@ -46,10 +46,10 @@ export function toDomainResourceClaim(
   return {
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
-    resourceOwnerId: dbClaim.resource.owner_id,
+    resourceOwnerId: dbClaim.resources.owner_id,
     claimantId: dbClaim.claimant_id,
     timeslotId: dbClaim.timeslot_id,
-    timeslot: toDomainResourceTimeslot(dbClaim.timeslot),
+    timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
