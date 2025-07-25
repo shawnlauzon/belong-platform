@@ -122,8 +122,8 @@ describe('Resource Claims - Timeslot Operations', () => {
 
     expect(firstClaim.timeslotId).toBe(testTimeslot.id);
     expect(secondClaim.timeslotId).toBe(testTimeslot.id);
-    expect(firstClaim.userId).toBe(claimant.id);
-    expect(secondClaim.userId).toBe(secondClaimUser.id);
+    expect(firstClaim.claimantId).toBe(claimant.id);
+    expect(secondClaim.claimantId).toBe(secondClaimUser.id);
     expect(firstClaim.id).not.toBe(secondClaim.id);
   });
 
@@ -145,8 +145,8 @@ describe('Resource Claims - Timeslot Operations', () => {
       }),
     );
 
-    expect(firstClaim.userId).toBe(claimant.id);
-    expect(secondClaim.userId).toBe(claimant.id);
+    expect(firstClaim.claimantId).toBe(claimant.id);
+    expect(secondClaim.claimantId).toBe(claimant.id);
     expect(firstClaim.timeslotId).toBe(testTimeslot.id);
     expect(secondClaim.timeslotId).toBe(secondTimeslot.id);
     expect(firstClaim.id).not.toBe(secondClaim.id);
