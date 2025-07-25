@@ -83,7 +83,7 @@ export function useUpdateResource() {
       });
 
       // These are part of the ResourceSummary, so if they change, invalidate the lists.
-      if (variables.title || variables.status) {
+      if (variables.title || variables.status || variables.type) {
         queryClient.invalidateQueries({
           queryKey: resourceKeys.lists(),
         });
