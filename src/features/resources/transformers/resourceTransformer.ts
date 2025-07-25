@@ -88,7 +88,8 @@ export function toDomainResource(
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
-    communityIds: dbResource.communities?.map((rc) => rc.community_id) || [],
+    communityIds:
+      dbResource.resource_communities?.map((rc) => rc.community_id) || [],
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
