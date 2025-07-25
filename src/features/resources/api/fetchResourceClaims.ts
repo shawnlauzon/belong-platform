@@ -18,6 +18,7 @@ export async function fetchResourceClaims(
 
   if (filter) {
     query = appendQueries(query, {
+      resource_id: filter.resourceId,
       claimant_id: filter.claimantId,
       'resource.owner_id': filter.resourceOwnerId,
     });

@@ -13,6 +13,12 @@ export function useCreateResourceClaim() {
       createResourceClaim(supabase, claimInput),
     onSuccess: (claim) => {
       queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
+      queryClient.invalidateQueries({
+        queryKey: resourceClaimsKeys.listByResource(claim.resourceId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: resourceClaimsKeys.listByClaimant(claim.claimantId),
+      });
 
       const resource = queryClient.getQueryData<Resource>(
         resourceKeys.detail(claim.resourceId),
@@ -27,10 +33,6 @@ export function useCreateResourceClaim() {
           queryKey: resourceClaimsKeys.listsByResourceOwner(),
         });
       }
-
-      queryClient.invalidateQueries({
-        queryKey: resourceClaimsKeys.listByClaimant(claim.claimantId),
-      });
     },
   });
 }

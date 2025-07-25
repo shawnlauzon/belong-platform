@@ -20,6 +20,9 @@ export function useUpdateResourceClaim() {
       queryClient.invalidateQueries({
         queryKey: resourceClaimsKeys.listByClaimant(claim.claimantId),
       });
+      queryClient.invalidateQueries({
+        queryKey: resourceClaimsKeys.listByResource(claim.resourceId),
+      });
 
       const resource = queryClient.getQueryData<Resource>(
         resourceKeys.detail(claim.resourceId),

@@ -32,8 +32,14 @@ export function useResourceClaims(
   filter?: ResourceClaimFilter,
   options?: UseQueryOptions<ResourceClaim[], Error>,
 ) {
-  if (filter?.claimantId && filter?.resourceOwnerId) {
-    throw new Error('Cannot filter by both claimantId and resourceOwnerId');
+  // Only allow zero or one of these to be set
+  if (
+    (filter?.claimantId && (filter?.resourceOwnerId || filter?.resourceId)) ||
+    (filter?.resourceOwnerId && filter?.resourceId)
+  ) {
+    throw new Error(
+      'Can only filter by one of claimantId, resourceOwnerId, or resourceId',
+    );
   }
   const supabase = useSupabase();
 
@@ -42,7 +48,9 @@ export function useResourceClaims(
       ? resourceClaimsKeys.listByClaimant(filter.claimantId)
       : filter?.resourceOwnerId
         ? resourceClaimsKeys.listByResourceOwner(filter.resourceOwnerId)
-        : resourceClaimsKeys.all,
+        : filter?.resourceId
+          ? resourceClaimsKeys.listByResource(filter.resourceId)
+          : resourceClaimsKeys.all,
     queryFn: () => fetchResourceClaims(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
