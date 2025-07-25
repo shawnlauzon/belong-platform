@@ -9,7 +9,7 @@ import {
 } from '../../transformers/communityTransformer';
 import {
   createFakeCommunityInput,
-  createFakeDbCommunityWithOrganizer,
+  createFakeCommunityRow,
 } from '../../__fakes__';
 
 describe('communityTransformer', () => {
@@ -51,7 +51,6 @@ describe('communityTransformer', () => {
       expect(result.boundary_geometry).toBeUndefined();
       expect(result.center).toBeDefined();
     });
-
 
     it('should transform bannerImageUrl to banner_image_url', () => {
       const bannerImageUrl = faker.image.url();
@@ -121,21 +120,21 @@ describe('communityTransformer', () => {
   describe('toDomainCommunity', () => {
     it('should transform banner_image_url to bannerImageUrl', () => {
       const bannerImageUrl = faker.image.url();
-      const dbCommunityWithOrganizer = createFakeDbCommunityWithOrganizer({
+      const dbCommunity = createFakeCommunityRow({
         banner_image_url: bannerImageUrl,
       });
 
-      const result = toDomainCommunity(dbCommunityWithOrganizer);
+      const result = toDomainCommunity(dbCommunity);
 
       expect(result.bannerImageUrl).toBe(bannerImageUrl);
     });
 
     it('should handle null banner_image_url', () => {
-      const dbCommunityWithOrganizer = createFakeDbCommunityWithOrganizer({
+      const dbCommunity = createFakeCommunityRow({
         banner_image_url: null,
       });
 
-      const result = toDomainCommunity(dbCommunityWithOrganizer);
+      const result = toDomainCommunity(dbCommunity);
 
       expect(result.bannerImageUrl).toBeUndefined();
     });
