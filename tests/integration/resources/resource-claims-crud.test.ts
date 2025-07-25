@@ -53,7 +53,7 @@ describe('Resource Claims - Basic Operations', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   describe('Basic Claim Creation', () => {
@@ -373,7 +373,8 @@ describe('Resource Claims - Basic Operations', () => {
 
       afterAll(async () => {
         await signIn(supabase, claimant.email, 'TestPass123!');
-        // await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+        await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+        await resourcesApi.deleteResourceClaim(supabase, testClaim3.id);
       });
 
       describe('Fetches a claim', () => {
@@ -422,7 +423,7 @@ describe('Resource Claims - Basic Operations', () => {
           );
         });
 
-        it.only('fetches claims by resource owner', async () => {
+        it('fetches claims by resource owner', async () => {
           const claims = await resourcesApi.fetchResourceClaims(supabase, {
             resourceOwnerId: resourceOwner.id,
           });
