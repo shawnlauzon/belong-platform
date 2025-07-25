@@ -5,8 +5,7 @@ import {
   CommunityMembership,
   CommunityMembershipInput,
 } from '../types';
-import { CommunityRow, CommunityRowWithRelations } from '../types/communityRow';
-import { createFakeProfileRow } from '../../users/__fakes__';
+import { CommunityRow } from '../types/communityRow';
 
 export function createFakeCommunity(
   overrides: Partial<Community> = {},
@@ -193,20 +192,5 @@ export function createFakeCommunityMembership(
     createdAt: joinedAt,
     updatedAt: joinedAt,
     ...overrides,
-  };
-}
-
-/**
- * Creates a fake database Community row with organizer relation
- */
-export function createFakeDbCommunityWithOrganizer(
-  overrides: Partial<CommunityRow> = {},
-): CommunityRowWithRelations {
-  const communityRow = createFakeCommunityRow(overrides);
-  const organizer = createFakeProfileRow();
-
-  return {
-    ...communityRow,
-    organizer,
   };
 }
