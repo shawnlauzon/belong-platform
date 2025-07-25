@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys, toRecords } from '@/shared';
-import { useSupabase } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger, useSupabase } from '@/shared';
 import { fetchCommunities } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
+import { communityKeys } from '../queries';
 
 import type { Community, CommunityFilter } from '@/features/communities/types';
 
@@ -52,21 +52,23 @@ import type { Community, CommunityFilter } from '@/features/communities/types';
  * }
  * ```
  */
-export function useCommunities(filters?: CommunityFilter) {
+export function useCommunities(
+  filter?: CommunityFilter,
+  options?: UseQueryOptions<Community[], Error>,
+) {
   const supabase = useSupabase();
 
   const query = useQuery<Community[], Error>({
-    queryKey: filters
-      ? queryKeys.communities.filtered(toRecords(filters))
-      : queryKeys.communities.all,
-    queryFn: () => fetchCommunities(supabase, filters),
+    queryKey: filter ? communityKeys.list(filter) : communityKeys.all,
+    queryFn: () => fetchCommunities(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 
   if (query.error) {
     logger.error('🏘️ API: Error fetching communities', {
       error: query.error,
-      filters,
+      filter,
     });
   }
 

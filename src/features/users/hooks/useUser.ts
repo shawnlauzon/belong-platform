@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUserById } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
 import type { User } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
+import { userKeys } from '../queries';
 
 /**
  * Hook for fetching a single user by ID.
@@ -64,18 +65,19 @@ import type { UseQueryResult } from '@tanstack/react-query';
  * @category React Hooks
  */
 export function useUser(
-  userId: string | null,
+  userId: string,
+  options?: UseQueryOptions<User | null, Error>,
 ): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
 
   const query = useQuery<User | null, Error>({
-    queryKey: queryKeys.users.byId(userId),
+    queryKey: userKeys.detail(userId),
     queryFn: () => {
       logger.debug('👤 useUser: Fetching user by ID', { userId });
-      return userId ? fetchUserById(supabase, userId) : null;
+      return fetchUserById(supabase, userId);
     },
     staleTime: STANDARD_CACHE_TIME,
-    enabled: Boolean(userId?.trim()),
+    ...options,
   });
 
   if (query.error) {

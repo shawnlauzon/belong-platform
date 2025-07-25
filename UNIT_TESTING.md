@@ -64,7 +64,7 @@ src/features/{feature}/
 The project uses comprehensive global mocks to eliminate repetitive setup:
 
 ```typescript
-// Shared module mocks (useSupabase, logger, queryKeys)
+// Shared module mocks (useSupabase, logger)
 vi.mock('./src/shared', () => ({
   /* comprehensive mock */
 }));
@@ -633,7 +633,7 @@ describe('userTransformer', () => {
     };
     // More custom mocks...
   });
-  
+
   // 15+ more tests with similar custom mock creation...
 });
 
@@ -645,7 +645,7 @@ describe('User Transformer', () => {
     const email = faker.internet.email();
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
-    
+
     const dbProfile = createFakeDbProfile({
       id: userId,
       email: email,
@@ -654,7 +654,10 @@ describe('User Transformer', () => {
         last_name: lastName,
         full_name: `${firstName} ${lastName}`,
         avatar_url: faker.internet.url(),
-        location: { lat: faker.location.latitude(), lng: faker.location.longitude() },
+        location: {
+          lat: faker.location.latitude(),
+          lng: faker.location.longitude(),
+        },
       },
     });
 
@@ -709,6 +712,7 @@ describe('User Transformer', () => {
 ```
 
 **Benefits of Using Standard Mock Factories:**
+
 - **Consistency**: All tests use the same data generation patterns
 - **Maintainability**: Changes to data structure only require updating factory functions
 - **Realism**: `faker.*` generates realistic test data that catches edge cases

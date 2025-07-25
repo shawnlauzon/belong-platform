@@ -138,8 +138,9 @@ export function createFakeResourceRow(
       'supplies',
       'event',
       'other',
-      'ride',
+      'rides',
       'housing',
+      'drinks',
     ] as const),
     type: faker.helpers.arrayElement([
       ResourceTypeEnum.OFFER,
@@ -272,7 +273,7 @@ export function createFakeResourceClaim(
   return {
     id: faker.string.uuid(),
     resourceId: faker.string.uuid(),
-    userId: faker.string.uuid(),
+    claimantId: faker.string.uuid(),
     timeslotId: faker.string.uuid(),
     status: faker.helpers.arrayElement([
       'pending',
@@ -317,7 +318,7 @@ export function createFakeResourceClaimRow(
   return {
     id: faker.string.uuid(),
     resource_id: faker.string.uuid(),
-    user_id: faker.string.uuid(),
+    claimant_id: faker.string.uuid(),
     timeslot_id: faker.string.uuid(),
     status: faker.helpers.arrayElement([
       'pending',

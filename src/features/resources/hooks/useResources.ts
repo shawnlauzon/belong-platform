@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys, toRecords } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
-import { fetchResources } from '@/features/resources/api';
-
-import type { Resource, ResourceFilter } from '@/features/resources/types';
+import { fetchResources } from '../api';
+import type { ResourceFilter, ResourceSummary } from '../types';
+import { resourceKeys } from '../queries';
 
 /**
  * Hook for fetching resources list.
@@ -58,21 +58,23 @@ import type { Resource, ResourceFilter } from '@/features/resources/types';
  * }
  * ```
  */
-export function useResources(filters?: ResourceFilter) {
+export function useResources(
+  filter?: ResourceFilter,
+  options?: UseQueryOptions<ResourceSummary[], Error>,
+) {
   const supabase = useSupabase();
 
-  const query = useQuery<Resource[], Error>({
-    queryKey: filters
-      ? queryKeys.resources.filtered(toRecords(filters))
-      : queryKeys.resources.all,
-    queryFn: () => fetchResources(supabase, filters),
+  const query = useQuery<ResourceSummary[], Error>({
+    queryKey: filter ? resourceKeys.list(filter) : resourceKeys.all,
+    queryFn: () => fetchResources(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 
   if (query.error) {
     logger.error('📚 API: Error fetching resources', {
       error: query.error,
-      filters,
+      filter,
     });
   }
 

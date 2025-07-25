@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { deleteResource } from '@/features/resources/api';
+import { resourceKeys } from '../queries';
 
 /**
  * Hook for deleting a resource.
@@ -48,29 +49,22 @@ export function useDeleteResource() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => deleteResource(supabase, id),
-    onSuccess: async (_, resourceId) => {
-      // Remove ALL resources-related cache data synchronously first
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return key[0] === 'resources' || key[0] === 'resource';
-        },
-      });
+    onSuccess: async (resource) => {
+      if (resource) {
+        // Remove ALL resources-related cache data synchronously first
+        queryClient.removeQueries({
+          queryKey: resourceKeys.detail(resource?.id),
+        });
 
-      // Then invalidate to trigger fresh fetches
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return key[0] === 'resources' || key[0] === 'resource';
-        },
-      });
+        // TODO Only remove affected lists
+        queryClient.invalidateQueries({
+          queryKey: resourceKeys.lists(),
+        });
 
-      // Invalidate feed to remove deleted resource
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-
-      logger.info('📚 API: Successfully deleted resource', {
-        id: resourceId,
-      });
+        logger.info('📚 API: Successfully deleted resource', {
+          id: resource.id,
+        });
+      }
     },
     onError: (error) => {
       logger.error('📚 API: Failed to delete resource', { error });

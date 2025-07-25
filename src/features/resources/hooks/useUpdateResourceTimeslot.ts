@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { updateResourceTimeslot } from '../api';
 import { ResourceTimeslot, ResourceTimeslotInput } from '../types';
+import { resourceTimeslotKeys } from '../queries';
 
 export function useUpdateResourceTimeslot() {
   const supabase = useSupabase();
@@ -15,9 +16,12 @@ export function useUpdateResourceTimeslot() {
     mutationFn: ({ id, update }) =>
       updateResourceTimeslot(supabase, id, update),
     onSuccess: (timeslot) => {
-      // Invalidate the timeslots query for this resource
+      // We don't store resourceTimeslots by ID (because no one needs it), but
+      // we do need to invalidate the entry that is for this resource
       queryClient.invalidateQueries({
-        queryKey: ['resource-timeslots', timeslot.resourceId],
+        queryKey: resourceTimeslotKeys.list({
+          resourceId: timeslot.resourceId,
+        }),
       });
     },
   });

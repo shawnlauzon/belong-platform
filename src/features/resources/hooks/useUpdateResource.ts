@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
-import { updateResource } from '@/features/resources/api';
-
-import type { ResourceInput, Resource } from '@/features/resources/types';
+import { updateResource } from '../api';
+import type { ResourceInput, Resource } from '../types';
+import { resourceKeys } from '../queries';
 
 /**
  * Hook for updating an existing resource.
@@ -69,7 +69,7 @@ export function useUpdateResource() {
 
   const mutation = useMutation({
     mutationFn: async (
-      updateData: Partial<ResourceInput> & { id: string }
+      updateData: Partial<ResourceInput> & { id: string },
     ): Promise<Resource> => {
       const result = await updateResource(supabase, updateData);
       if (!result) {
@@ -77,14 +77,17 @@ export function useUpdateResource() {
       }
       return result;
     },
-    onSuccess: (updatedResource: Resource) => {
-      // Invalidate all resources queries
-      queryClient.invalidateQueries({ queryKey: ['resources'] });
-
-      // Invalidate the specific resource to force fresh fetch with nested objects
+    onSuccess: (updatedResource, variables) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.resources.byId(updatedResource.id),
+        queryKey: resourceKeys.detail(updatedResource.id),
       });
+
+      // These are part of the ResourceSummary, so if they change, invalidate the lists.
+      if (variables.title || variables.status) {
+        queryClient.invalidateQueries({
+          queryKey: resourceKeys.lists(),
+        });
+      }
 
       logger.info('📚 API: Successfully updated resource', {
         id: updatedResource.id,

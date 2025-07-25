@@ -3,12 +3,13 @@ import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser } from '../transformers/userTransformer';
 import { User, UserFilter } from '../types';
+import { appendQueries } from '@/shared';
 
 export async function fetchUsers(
   supabase: SupabaseClient<Database>,
-  options?: UserFilter,
+  filters?: UserFilter,
 ): Promise<User[]> {
-  logger.debug('👤 API: Fetching users', { options });
+  logger.debug('👤 API: Fetching users', { filters });
 
   try {
     let query = supabase
@@ -16,19 +17,10 @@ export async function fetchUsers(
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Apply search filter if provided
-    if (options?.searchTerm) {
-      const searchPattern = `%${options.searchTerm}%`;
-      query = query.or(
-        `email.ilike.${searchPattern},user_metadata->>'first_name'.ilike.${searchPattern},user_metadata->>'last_name'.ilike.${searchPattern}`,
-      );
-    }
-
-    // Apply pagination
-    if (options?.page && options?.pageSize) {
-      const from = (options.page - 1) * options.pageSize;
-      const to = from + options.pageSize - 1;
-      query = query.range(from, to);
+    if (filters) {
+      query = appendQueries(query, {
+        community_id: filters.communityId,
+      });
     }
 
     const { data, error } = await query;

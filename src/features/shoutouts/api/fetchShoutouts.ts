@@ -1,40 +1,26 @@
-import { logger } from '@/shared';
+import { appendQueries, logger } from '@/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { Shoutout, ShoutoutFilter } from '../types';
+import type { Shoutout } from '../types';
 import { toDomainShoutout } from '../transformers/shoutoutsTransformer';
 import { SELECT_SHOUTOUT_BASIC } from '../types/shoutoutRow';
+import type { ShoutoutFilter } from '../types/shoutoutFilter';
 
 /**
  * Fetches shoutouts with optional filtering
  */
 export async function fetchShoutouts(
   supabase: SupabaseClient<Database>,
-  filters?: ShoutoutFilter,
+  filter?: ShoutoutFilter,
 ): Promise<Shoutout[]> {
-  logger.debug('📢 API: Fetching shoutouts', { filters });
+  logger.debug('📢 API: Fetching shoutouts', filter);
 
   let query = supabase.from('shoutouts').select(SELECT_SHOUTOUT_BASIC);
 
-  if (filters) {
-    if (filters.communityId) {
-      query = query.eq('community_id', filters.communityId);
-    }
-
-    if (filters.communityIds && filters.communityIds.length > 0) {
-      query = query.in('community_id', filters.communityIds);
-    }
-
-    if (filters.sentBy) {
-      query = query.eq('sender_id', filters.sentBy);
-    }
-    if (filters.receivedBy) {
-      query = query.eq('receiver_id', filters.receivedBy);
-    }
-    if (filters.resourceId) {
-      query = query.eq('resource_id', filters.resourceId);
-    }
-  }
+  query = appendQueries(query, {
+    resource_id: filter?.resourceId,
+    community_id: filter?.communityId,
+  });
 
   const { data, error } = await query.order('created_at', {
     ascending: false,

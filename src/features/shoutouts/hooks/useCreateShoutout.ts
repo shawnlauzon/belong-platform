@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { useCurrentUser } from '../../auth';
 import type { Shoutout, ShoutoutInput } from '../types';
 import { Resource } from '@/features/resources';
 import { createShoutout } from '../api/createShoutout';
+import { shoutoutKeys } from '../queries';
+import { resourceKeys } from '@/features/resources/queries';
 
 /**
  * Hook for creating new shoutouts.
@@ -64,7 +66,7 @@ export function useCreateShoutout() {
     mutationFn: (input: ShoutoutInput) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
       const resource = queryClient.getQueryData<Resource>(
-        queryKeys.resources.byId(input.resourceId),
+        resourceKeys.detail(input.resourceId),
       );
       if (!resource) {
         throw new Error('Resource not found');
@@ -82,9 +84,17 @@ export function useCreateShoutout() {
 
       // Set the new shoutout in cache for immediate access
       queryClient.setQueryData(
-        queryKeys.shoutouts.byId(newShoutout.id),
+        shoutoutKeys.detail(newShoutout.id),
         newShoutout,
       );
+
+      queryClient.invalidateQueries({
+        queryKey: shoutoutKeys.listByResource(newShoutout.resourceId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: shoutoutKeys.listByCommunity(newShoutout.communityId),
+      });
 
       // Invalidate all user data (including activities) using hierarchical invalidation
       if (currentUser?.id) {

@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { queryKeys, toRecords, useSupabase } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useSupabase } from '@/shared';
 import { fetchResourceClaims } from '../api';
 import { ResourceClaim, ResourceClaimFilter } from '../types';
+import { STANDARD_CACHE_TIME } from '@/config';
+import { resourceClaimsKeys } from '../queries';
 
 /**
  * Hook for fetching all claims for a specific resource.
@@ -26,13 +28,23 @@ import { ResourceClaim, ResourceClaimFilter } from '../types';
  * });
  * ```
  */
-export function useResourceClaims(filter?: ResourceClaimFilter) {
+export function useResourceClaims(
+  filter?: ResourceClaimFilter,
+  options?: UseQueryOptions<ResourceClaim[], Error>,
+) {
+  if (filter?.claimantId && filter?.resourceOwnerId) {
+    throw new Error('Cannot filter by both claimantId and resourceOwnerId');
+  }
   const supabase = useSupabase();
 
   return useQuery<ResourceClaim[], Error>({
-    queryKey: queryKeys.resourceClaims.filtered(toRecords(filter)),
+    queryKey: filter?.claimantId
+      ? resourceClaimsKeys.listByClaimant(filter.claimantId)
+      : filter?.resourceOwnerId
+        ? resourceClaimsKeys.listByResourceOwner(filter.resourceOwnerId)
+        : resourceClaimsKeys.all,
     queryFn: () => fetchResourceClaims(supabase, filter),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 }

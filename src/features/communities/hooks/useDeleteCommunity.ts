@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { deleteCommunity } from '@/features/communities/api';
+import { communityKeys } from '../queries';
 
 /**
  * Hook for deleting a community.
@@ -47,10 +48,12 @@ export function useDeleteCommunity() {
   return useMutation({
     mutationFn: (id: string) => deleteCommunity(supabase, id),
     onSuccess: (_, communityId) => {
-      // Invalidate all communities queries
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
+      // Invalidate all lists of communities
+      queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+
+      // And remove this one specifically
       queryClient.removeQueries({
-        queryKey: queryKeys.communities.byId(communityId),
+        queryKey: communityKeys.detail(communityId),
       });
 
       logger.info('🏘️ API: Successfully deleted community', {

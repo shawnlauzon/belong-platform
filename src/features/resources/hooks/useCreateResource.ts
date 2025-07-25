@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createResource } from '@/features/resources/api';
-import { useCurrentUser } from '@/features/auth';
 
 import type { Resource, ResourceInput } from '@/features/resources/types';
+import { resourceKeys } from '../queries';
 
 /**
  * Hook for creating a new resource.
@@ -73,14 +73,9 @@ import type { Resource, ResourceInput } from '@/features/resources/types';
 export function useCreateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const currentUser = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: async (data: ResourceInput): Promise<Resource> => {
-      if (!currentUser?.data?.id) {
-        throw new Error('User must be authenticated to create resources');
-      }
-
       // Create the resource (auto-commits images internally)
       const result = await createResource(supabase, data);
       if (!result) {
@@ -90,11 +85,14 @@ export function useCreateResource() {
       return result;
     },
     onSuccess: (newResource: Resource) => {
-      // Invalidate all resources queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
+      queryClient.setQueryData(
+        resourceKeys.detail(newResource.id),
+        newResource,
+      );
 
       // Invalidate feed to show new resource
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+      // TODO Should be able to insert it into the appropriate place
+      queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
 
       logger.info('📚 API: Successfully created resource', {
         id: newResource.id,

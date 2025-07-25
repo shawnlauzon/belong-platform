@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import type { Resource } from '@/features/resources/types';
 import { fetchResourceById } from '../api/fetchResourceById';
+import { resourceKeys } from '../queries';
 
 /**
  * Hook for fetching a single resource by ID.
@@ -38,12 +38,15 @@ import { fetchResourceById } from '../api/fetchResourceById';
  * }
  * ```
  */
-export function useResource(id: string) {
+export function useResource(
+  id: string,
+  options?: UseQueryOptions<Resource | null, Error>,
+) {
   const supabase = useSupabase();
 
   return useQuery<Resource | null, Error>({
-    queryKey: queryKeys.resources.byId(id),
+    queryKey: resourceKeys.detail(id),
     queryFn: () => fetchResourceById(supabase, id),
-    enabled: !!id,
+    ...options,
   });
 }

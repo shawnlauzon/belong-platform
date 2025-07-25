@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { joinCommunity } from '@/features/communities/api';
-
+import { communityMembersKeys } from '../queries';
 
 /**
  * Hook for joining a community.
@@ -43,29 +43,16 @@ export function useJoinCommunity() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: (communityId: string) =>
-      joinCommunity(supabase, communityId),
+    mutationFn: (communityId: string) => joinCommunity(supabase, communityId),
     onSuccess: (newMembership) => {
-      if (newMembership) {
-        // Invalidate all communities queries
-        queryClient.invalidateQueries({ queryKey: ['communities'] });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.byId(newMembership.communityId),
-        });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.memberships(
-            newMembership.communityId,
-          ),
-        });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.userMemberships(newMembership.userId),
-        });
+      queryClient.invalidateQueries({
+        queryKey: communityMembersKeys.list(newMembership.communityId),
+      });
 
-        logger.info('🏘️ API: Successfully joined community', {
-          communityId: newMembership.communityId,
-          userId: newMembership.userId,
-        });
-      }
+      logger.info('🏘️ API: Successfully joined community', {
+        communityId: newMembership.communityId,
+        userId: newMembership.userId,
+      });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to join community', { error });

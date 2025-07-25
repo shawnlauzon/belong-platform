@@ -1,22 +1,18 @@
-import type {
-  ResourceClaim,
-  ResourceClaimInput,
-} from '../types';
+import type { ResourceClaim, ResourceClaimInput } from '../types';
 import type {
   ResourceClaimInsertDbData,
   ResourceClaimUpdateDbData,
-  ResourceClaimRowBasic,
+  ResourceClaimRow,
 } from '../types/resourceRow';
 
 /**
  * Transform a domain claim object to a database claim record
  */
 export function toResourceClaimInsertRow(
-  claim: ResourceClaimInput & { userId: string },
+  claim: ResourceClaimInput,
 ): ResourceClaimInsertDbData {
   return {
     resource_id: claim.resourceId,
-    user_id: claim.userId,
     timeslot_id: claim.timeslotId,
     status: claim.status,
     notes: claim.notes,
@@ -39,12 +35,12 @@ export function forDbClaimUpdate(
  * Transform a database claim record to a ResourceClaim object
  */
 export function toDomainResourceClaim(
-  dbClaim: ResourceClaimRowBasic,
+  dbClaim: ResourceClaimRow,
 ): ResourceClaim {
   return {
     id: dbClaim.id,
     resourceId: dbClaim.resource_id,
-    userId: dbClaim.user_id,
+    claimantId: dbClaim.claimant_id,
     timeslotId: dbClaim.timeslot_id!,
     status: dbClaim.status,
     notes: dbClaim.notes ?? undefined,
@@ -52,4 +48,3 @@ export function toDomainResourceClaim(
     updatedAt: new Date(dbClaim.updated_at),
   };
 }
-

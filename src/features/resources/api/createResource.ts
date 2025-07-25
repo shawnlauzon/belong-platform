@@ -1,10 +1,13 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceInput, Resource } from '@/features/resources';
 import { toResourceInsertRow } from '@/features/resources/transformers/resourceTransformer';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
-import { SELECT_RESOURCE_BASIC } from '../types/resourceRow';
+import {
+  ResourceRowJoinCommunities,
+  SELECT_RESOURCES_JOIN_COMMUNITIES,
+} from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 
 export async function createResource(
@@ -92,11 +95,14 @@ export async function createResource(
   }
 
   // Fetch the complete resource with all relations now that community associations exist
-  const { data: completeResource, error: fetchError } = await supabase
+  const { data: completeResource, error: fetchError } = (await supabase
     .from('resources')
-    .select(SELECT_RESOURCE_BASIC)
+    .select(SELECT_RESOURCES_JOIN_COMMUNITIES)
     .eq('id', data.id)
-    .single();
+    .single()) as {
+    data: ResourceRowJoinCommunities;
+    error: QueryError | null;
+  };
 
   if (fetchError || !completeResource) {
     throw new Error(fetchError?.message || 'Failed to fetch complete resource');

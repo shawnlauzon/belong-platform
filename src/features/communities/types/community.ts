@@ -6,6 +6,19 @@ export type Community = IsPersisted<CommunityInput> & {
   organizerId: string;
 };
 
+// Just enough to display in the list / map of communities
+export type CommunitySummary = Pick<
+  Community,
+  | 'id'
+  | 'name'
+  | 'type'
+  | 'icon'
+  | 'center'
+  | 'boundary'
+  | 'color'
+  | 'memberCount'
+>;
+
 // For creating / updating Community
 export type CommunityInput = {
   name: string;

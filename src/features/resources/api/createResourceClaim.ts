@@ -1,13 +1,13 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { getAuthIdOrThrow, logger } from '@/shared';
+import { logger } from '@/shared';
 import { ResourceClaim, ResourceClaimInput } from '../types';
 import {
   toResourceClaimInsertRow,
   toDomainResourceClaim,
 } from '../transformers';
 import {
-  ResourceClaimRowBasic,
+  ResourceClaimRow,
   SELECT_RESOURCE_CLAIMS_BASIC,
 } from '../types/resourceRow';
 
@@ -15,20 +15,15 @@ export async function createResourceClaim(
   supabase: SupabaseClient<Database>,
   claimInput: ResourceClaimInput,
 ): Promise<ResourceClaim> {
-  const currentUserId = await getAuthIdOrThrow(supabase);
-
   // Transform to database format
-  const insertData = toResourceClaimInsertRow({
-    ...claimInput,
-    userId: currentUserId,
-  });
+  const insertData = toResourceClaimInsertRow(claimInput);
 
   const { data, error } = (await supabase
     .from('resource_claims')
     .insert(insertData)
     .select(SELECT_RESOURCE_CLAIMS_BASIC)
     .single()) as {
-    data: ResourceClaimRowBasic | null;
+    data: ResourceClaimRow;
     error: QueryError | null;
   };
 
@@ -76,7 +71,7 @@ export async function createResourceClaim(
   logger.debug('🏘️ API: Successfully created resource claim', {
     claimId: claim.id,
     resourceId: claim.resourceId,
-    userId: claim.userId,
+    claimantId: claim.claimantId,
   });
 
   return claim;

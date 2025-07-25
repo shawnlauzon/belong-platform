@@ -1,8 +1,8 @@
 import type { ResourceCategory, Resource, ResourceInput } from '../types';
 import type {
-  ResourceRowBasic,
   ResourceInsertDbData,
   ResourceUpdateDbData,
+  ResourceRowJoinCommunities,
 } from '../types/resourceRow';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 
@@ -66,7 +66,9 @@ export function forDbUpdate(
 /**
  * Transform a database resource record to a Resource object
  */
-export function toDomainResource(dbResource: ResourceRowBasic): Resource {
+export function toDomainResource(
+  dbResource: ResourceRowJoinCommunities,
+): Resource {
   return {
     id: dbResource.id,
     type: dbResource.type,
@@ -81,8 +83,7 @@ export function toDomainResource(dbResource: ResourceRowBasic): Resource {
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,
-    communityIds:
-      dbResource.resource_communities?.map((rc) => rc.community_id) || [],
+    communityIds: dbResource.communities?.map((rc) => rc.community_id) || [],
     status: dbResource.status,
     maxClaims: dbResource.max_claims ?? undefined,
     requiresApproval: dbResource.requires_approval || false,

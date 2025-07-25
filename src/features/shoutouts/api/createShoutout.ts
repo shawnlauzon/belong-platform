@@ -1,5 +1,5 @@
 import { logger } from '../../../shared';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import { type Shoutout, ShoutoutInput } from '../types';
 import {
@@ -8,7 +8,11 @@ import {
 } from '../transformers/shoutoutsTransformer';
 import { commitImageUrls } from '../../images/api/imageCommit';
 import { updateShoutout } from './updateShoutout';
-import { SELECT_SHOUTOUT_BASIC, ShoutoutInsertRow } from '../types/shoutoutRow';
+import {
+  SELECT_SHOUTOUT_BASIC,
+  ShoutoutInsertRow,
+  ShoutoutRow,
+} from '../types/shoutoutRow';
 
 /**
  * Creates a new shoutout with the current user as the sender
@@ -34,11 +38,11 @@ async function insertShoutout(
 ): Promise<Shoutout> {
   try {
     // Insert into database with joined relations
-    const { data: createdShoutout, error } = await supabase
+    const { data: createdShoutout, error } = (await supabase
       .from('shoutouts')
       .insert(dbShoutout)
       .select(SELECT_SHOUTOUT_BASIC)
-      .single();
+      .single()) as { data: ShoutoutRow; error: QueryError | null };
 
     if (error) {
       logger.error('📢 API: Failed to create shoutout', { error });
@@ -63,13 +67,10 @@ async function insertShoutout(
           JSON.stringify(permanentUrls) !==
           JSON.stringify(domainShoutout.imageUrls)
         ) {
-          const updatedShoutout = await updateShoutout(
-            supabase,
-            createdShoutout.id,
-            {
-              imageUrls: permanentUrls,
-            },
-          );
+          const updatedShoutout = await updateShoutout(supabase, {
+            id: createdShoutout.id,
+            imageUrls: permanentUrls,
+          });
           if (updatedShoutout) {
             return updatedShoutout;
           }

@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase, queryKeys } from '@/shared';
+import { useSupabase } from '@/shared';
 import { updateResourceClaim } from '../api';
-import { ResourceClaim, ResourceClaimInput } from '../types';
+import { Resource, ResourceClaim, ResourceClaimInput } from '../types';
+import { resourceClaimsKeys, resourceKeys } from '../queries';
 
 export function useUpdateResourceClaim() {
   const supabase = useSupabase();
@@ -10,30 +11,29 @@ export function useUpdateResourceClaim() {
   return useMutation<
     ResourceClaim,
     Error,
-    { id: string; update: Partial<ResourceClaimInput> }
+    Pick<ResourceClaimInput, 'status' | 'notes'> & { id: string }
   >({
-    mutationFn: ({ id, update }) =>
-      updateResourceClaim(supabase, id, update),
+    mutationFn: (update) => updateResourceClaim(supabase, update),
     onSuccess: (claim) => {
-      // Invalidate all resource claims - ensures any cached lists are refreshed
+      queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
+
       queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.all,
+        queryKey: resourceClaimsKeys.listByClaimant(claim.claimantId),
       });
-      
-      // Invalidate specific queries for this resource
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.byResource(claim.resourceId),
-      });
-      
-      // Invalidate specific queries for this claimant
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.byClaimant(claim.userId),
-      });
-      
-      // Invalidate filtered queries that might include this claim
-      queryClient.invalidateQueries({
-        queryKey: ['resource-claims', 'filtered'],
-      });
+
+      const resource = queryClient.getQueryData<Resource>(
+        resourceKeys.detail(claim.resourceId),
+      );
+      if (resource) {
+        queryClient.invalidateQueries({
+          queryKey: resourceClaimsKeys.listByResourceOwner(resource.ownerId),
+        });
+      } else {
+        // We don't know who the resource owner is, so invalidate all
+        queryClient.invalidateQueries({
+          queryKey: resourceClaimsKeys.listsByResourceOwner(),
+        });
+      }
     },
   });
 }

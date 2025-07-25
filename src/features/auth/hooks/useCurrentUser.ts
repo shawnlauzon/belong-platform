@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { getCurrentUser } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
+import type { User } from '@/features/users/types';
 
 /**
  * Hook for fetching the current authenticated user.
@@ -25,7 +26,9 @@ import { logger } from '@/shared';
  * }
  * ```
  */
-export function useCurrentUser() {
+export function useCurrentUser(
+  options?: UseQueryOptions<User | null, Error>
+) {
   const supabase = useSupabase();
 
   const query = useQuery({
@@ -43,6 +46,7 @@ export function useCurrentUser() {
       }
       return failureCount < 2;
     },
+    ...options,
   });
 
   if (query.error) {

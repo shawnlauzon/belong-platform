@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys, toRecords } from '../../../shared';
-import { useSupabase } from '../../../shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger, useSupabase } from '@/shared';
 import { fetchShoutouts } from '../api';
-import { STANDARD_CACHE_TIME } from '../../../config';
+import { STANDARD_CACHE_TIME } from '@/config';
 import type { Shoutout, ShoutoutFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
+import { shoutoutKeys } from '../queries';
 
 /**
  * Hook for fetching a list of shoutouts with optional filtering.
@@ -48,19 +48,27 @@ import type { UseQueryResult } from '@tanstack/react-query';
  * @category React Hooks
  */
 export function useShoutouts(
-  filters?: ShoutoutFilter,
+  filter?: ShoutoutFilter,
+  options?: UseQueryOptions<Shoutout[], Error>,
 ): UseQueryResult<Shoutout[], Error> {
+  if (filter?.resourceId && filter?.communityId) {
+    throw new Error('Cannot filter by both resourceId and communityId');
+  }
+
   const supabase = useSupabase();
 
   const query = useQuery<Shoutout[], Error>({
-    queryKey: filters
-      ? queryKeys.shoutouts.filtered(toRecords(filters))
-      : queryKeys.shoutouts.all,
+    queryKey: filter?.resourceId
+      ? shoutoutKeys.listByResource(filter.resourceId)
+      : filter?.communityId
+        ? shoutoutKeys.listByCommunity(filter.communityId)
+        : shoutoutKeys.all,
     queryFn: () => {
-      logger.debug('📢 useShoutouts: Fetching shoutouts', { filters });
-      return fetchShoutouts(supabase, filters);
+      logger.debug('📢 useShoutouts: Fetching shoutouts', filter);
+      return fetchShoutouts(supabase, filter);
     },
     staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 
   if (query.error) {

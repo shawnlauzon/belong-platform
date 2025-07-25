@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { updateShoutout } from '../api';
 import type { ShoutoutInput, Shoutout } from '../types';
+import { shoutoutKeys } from '../queries';
 
 /**
  * Hook for updating existing shoutouts.
@@ -68,26 +69,22 @@ export function useUpdateShoutout() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<ShoutoutInput>;
-    }) => {
-      logger.debug('📢 useUpdateShoutout: Updating shoutout', { id, data });
-      return updateShoutout(supabase, id, data);
+    mutationFn: (data: Partial<ShoutoutInput> & { id: string }) => {
+      logger.debug('📢 useUpdateShoutout: Updating shoutout', data);
+      return updateShoutout(supabase, data);
     },
     onSuccess: (updatedShoutout: Shoutout | null) => {
-      // Invalidate all shoutout queries to refetch lists
-      queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
-
       // Update the specific shoutout in cache
       if (updatedShoutout) {
         queryClient.setQueryData(
-          queryKeys.shoutouts.byId(updatedShoutout.id),
+          shoutoutKeys.detail(updatedShoutout.id),
           updatedShoutout,
         );
+
+        // TODO Invalidate only the affected lists
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.lists(),
+        });
 
         logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
           id: updatedShoutout.id,

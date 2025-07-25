@@ -1,26 +1,22 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
+import { ResourceTimeslot } from '../types';
+import { ResourceTimeslotRow } from '../types/resourceRow';
+import { toDomainResourceTimeslot } from '../transformers';
 
 export async function deleteResourceTimeslot(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<void> {
-  // Check authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    logger.error('🏘️ API: Authentication required to delete resource timeslot', {
-      authError,
-      id,
-    });
-    throw new Error('Authentication required');
-  }
-
-  const { error } = (await supabase
+): Promise<ResourceTimeslot | null> {
+  const { data, error } = (await supabase
     .from('resource_timeslots')
     .delete()
-    .eq('id', id)) as { error: QueryError | null };
+    .eq('id', id)
+    .select()) as {
+    data: ResourceTimeslotRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to delete resource timeslot', {
@@ -33,4 +29,6 @@ export async function deleteResourceTimeslot(
   logger.debug('🏘️ API: Successfully deleted resource timeslot', {
     id,
   });
+
+  return data ? toDomainResourceTimeslot(data) : null;
 }

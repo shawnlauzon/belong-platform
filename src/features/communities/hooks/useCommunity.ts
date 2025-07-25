@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import type { Community } from '@/features/communities/types';
 import { fetchCommunityById } from '../api/fetchCommunityById';
+import { STANDARD_CACHE_TIME } from '@/config';
+import { communityKeys } from '../queries';
 
 /**
  * Hook for fetching a single community by ID.
@@ -34,12 +35,16 @@ import { fetchCommunityById } from '../api/fetchCommunityById';
  * }
  * ```
  */
-export function useCommunity(id: string) {
+export function useCommunity(
+  id: string,
+  options?: UseQueryOptions<Community | null, Error>,
+) {
   const supabase = useSupabase();
 
   return useQuery<Community | null, Error>({
-    queryKey: queryKeys.communities.byId(id),
+    queryKey: communityKeys.detail(id),
     queryFn: () => fetchCommunityById(supabase, id),
-    enabled: !!id,
+    staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 }

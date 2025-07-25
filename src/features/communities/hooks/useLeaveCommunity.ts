@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveCommunity } from '@/features/communities/api';
+import { communityMembersKeys } from '../queries';
 
 /**
  * Hook for leaving a community.
@@ -47,17 +48,8 @@ export function useLeaveCommunity() {
   return useMutation<void, Error, string>({
     mutationFn: (communityId: string) => leaveCommunity(supabase, communityId),
     onSuccess: (_, communityId) => {
-      // Invalidate all communities queries
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.communities.byId(communityId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.communities.memberships(communityId),
-      });
-      // Invalidate all user memberships since we don't have the userId here
-      queryClient.invalidateQueries({
-        queryKey: ['communities', 'userMemberships'],
+        queryKey: communityMembersKeys.list(communityId),
       });
 
       logger.info('🏘️ API: Successfully left community', {

@@ -3,6 +3,7 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateUser } from '../api';
 import type { User } from '../types';
+import { userKeys } from '../queries';
 
 /**
  * Hook for updating existing user profiles.
@@ -109,9 +110,7 @@ export function useUpdateUser() {
       return updateUser(supabase, userData);
     },
     onSuccess: (updatedUser: User) => {
-      // Clear entire cache since user data (name, avatar) is embedded in many entities
-      queryClient.invalidateQueries();
-
+      queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
       logger.info('👤 useUpdateUser: Successfully updated user', {
         id: updatedUser.id,
         email: updatedUser.email,

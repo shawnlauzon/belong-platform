@@ -1,48 +1,35 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils';
+import { Resource } from '../types';
+import { ResourceRow } from '../types/resourceRow';
+import { toDomainResource } from '../transformers';
 
 export async function deleteResource(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<void> {
-  const currentUserId = await getAuthIdOrThrow(supabase);
-
-  // Verify user owns the resource
-  const { data: resource } = await supabase
+): Promise<Resource | null> {
+  const { data, error } = (await supabase
     .from('resources')
-    .select('owner_id')
+    .delete()
     .eq('id', id)
-    .single();
-
-  if (!resource) {
-    logger.error('🏘️ API: Resource not found for deletion', {
-      resourceId: id,
-    });
-    throw new Error('Resource not found');
-  }
-
-  if (resource.owner_id !== currentUserId) {
-    logger.error('🏘️ API: User does not own resource for deletion', {
-      userId: currentUserId,
-      resourceId: id,
-      resourceOwnerId: resource.owner_id,
-    });
-    throw new Error('Only resource owners can delete resources');
-  }
-
-  const { error } = await supabase.from('resources').delete().eq('id', id);
+    .select()
+    .single()) as {
+    data: ResourceRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to delete resource', {
       error,
       id,
     });
-    throw new Error(error.message || 'Failed to delete resource');
+    throw error;
   }
 
   logger.debug('🏘️ API: Successfully deleted resource', {
     id,
   });
+
+  return data ? toDomainResource(data) : null;
 }

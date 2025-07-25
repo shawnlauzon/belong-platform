@@ -11,7 +11,7 @@ import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 export async function joinCommunity(
   supabase: SupabaseClient<Database>,
   communityId: string,
-): Promise<CommunityMembership | null> {
+): Promise<CommunityMembership> {
   logger.debug('🏘️ API: Joining community', { communityId });
 
   try {
@@ -64,7 +64,7 @@ export async function joinCommunity(
 
     if (!data) {
       logger.error('🏘️ API: No data returned after joining community');
-      return null;
+      throw new Error('No data returned after joining community');
     }
 
     const membership = toDomainMembershipInfo(data);

@@ -4,7 +4,7 @@ import { logger } from '@/shared';
 import { ResourceTimeslot, ResourceTimeslotInput } from '../types';
 import { forDbTimeslotUpdate, toDomainResourceTimeslot } from '../transformers';
 import {
-  ResourceTimeslotRowBasic,
+  ResourceTimeslotRow,
   SELECT_RESOURCE_TIMESLOT_BASIC,
 } from '../types/resourceRow';
 
@@ -60,7 +60,7 @@ export async function updateResourceTimeslot(
     .eq('id', id)
     .select(SELECT_RESOURCE_TIMESLOT_BASIC)
     .single()) as {
-    data: ResourceTimeslotRowBasic | null;
+    data: ResourceTimeslotRow | null;
     error: QueryError | null;
   };
 

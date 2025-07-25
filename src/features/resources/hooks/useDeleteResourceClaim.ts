@@ -1,43 +1,29 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase, queryKeys } from '@/shared';
-import { deleteResourceClaim, fetchResourceClaimById } from '../api';
+import { useSupabase } from '@/shared';
+import { deleteResourceClaim } from '../api';
 import { ResourceClaim } from '../types';
+import { resourceClaimsKeys } from '../queries';
 
 export function useDeleteResourceClaim() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
 
-  return useMutation<ResourceClaim, Error, string>({
+  return useMutation<ResourceClaim | null, Error, string>({
     mutationFn: async (id: string) => {
-      // Fetch the claim first to get resourceId and userId for cache invalidation
-      const claim = await fetchResourceClaimById(supabase, id);
-      if (!claim) {
-        throw new Error(`Claim with id ${id} not found`);
-      }
-      
-      await deleteResourceClaim(supabase, id);
-      return claim;
+      return deleteResourceClaim(supabase, id);
     },
     onSuccess: (claim) => {
-      // Invalidate all resource claims - ensures any cached lists are refreshed
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.all,
-      });
-      
-      // Invalidate specific queries for this resource
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.byResource(claim.resourceId),
-      });
-      
-      // Invalidate specific queries for this claimant
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resourceClaims.byClaimant(claim.userId),
-      });
-      
-      // Invalidate filtered queries that might include this claim
-      queryClient.invalidateQueries({
-        queryKey: ['resource-claims', 'filtered'],
-      });
+      if (claim) {
+        queryClient.removeQueries({
+          queryKey: resourceClaimsKeys.detail(claim.id),
+        });
+
+        // TODO Invalidate only the queries which are affected; removing all
+        // isn't a big deal however because we almost never remove a claim
+        queryClient.invalidateQueries({
+          queryKey: resourceClaimsKeys.all,
+        });
+      }
     },
   });
 }

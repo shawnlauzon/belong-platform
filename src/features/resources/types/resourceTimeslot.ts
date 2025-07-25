@@ -4,7 +4,6 @@ export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {
   status: 'available' | 'maybeAvailable' | 'unavailable';
 };
 
-
 export type ResourceTimeslotInput = {
   resourceId: string;
   startTime: Date;

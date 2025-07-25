@@ -3,9 +3,8 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateCommunity } from '@/features/communities/api';
 
-import type {
-  CommunityInput,
-} from '@/features/communities/types';
+import type { CommunityInput } from '@/features/communities/types';
+import { communityKeys } from '../queries';
 
 /**
  * Hook for updating an existing community.
@@ -61,15 +60,14 @@ export function useUpdateCommunity() {
     mutationFn: (updateData: Partial<CommunityInput> & { id: string }) =>
       updateCommunity(supabase, updateData),
     onSuccess: (updatedCommunity) => {
-      // Clear entire cache since community data (name, etc) is embedded in many entities
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.detail(updatedCommunity.id),
+      });
 
-      if (updatedCommunity) {
-        logger.info('🏘️ API: Successfully updated community', {
-          id: updatedCommunity.id,
-          name: updatedCommunity.name,
-        });
-      }
+      logger.info('🏘️ API: Successfully updated community', {
+        id: updatedCommunity.id,
+        name: updatedCommunity.name,
+      });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to update community', { error });

@@ -1,22 +1,19 @@
-import { ShoutoutRow } from '@/features/shoutouts/types/shoutoutRow';
 import type { Database } from '../../../shared/types/database';
 
-export const SELECT_RESOURCE_BASIC = `*, resource_communities(community_id)`;
+export const SELECT_RESOURCES_JOIN_COMMUNITIES = `*, communities:resource_communities(community_id)`;
 
-export type ResourceRowBasic = ResourceRow & {
-  resource_communities?: { community_id: string }[];
+export type ResourceRowJoinCommunities = ResourceRow & {
+  communities?: { community_id: string }[];
+};
+
+export const SELECT_RESOURCE_CLAIMS_BASIC = `*`;
+
+export const SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE = `*, resource:resources(owner_id)`;
+export type ResourceClaimRowJoinResource = ResourceClaimRow & {
+  resource?: { owner_id: string };
 };
 
 export const SELECT_RESOURCE_TIMESLOT_BASIC = `*`;
-export type ResourceTimeslotRowBasic = ResourceTimeslotRow;
-
-export const SELECT_RESOURCE_CLAIMS_BASIC = `*`;
-export type ResourceClaimRowBasic = ResourceClaimRow;
-
-export const SELECT_RESOURCE_CLAIMS_WITH_SHOUTOUTS = `*, shoutouts(*)`;
-export type ResourceClaimRowWithShoutouts = ResourceClaimRow & {
-  shoutouts?: ShoutoutRow[];
-};
 
 export type ResourceRow = Database['public']['Tables']['resources']['Row'];
 export type ResourceInsertDbData =

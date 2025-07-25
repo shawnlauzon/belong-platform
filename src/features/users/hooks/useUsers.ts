@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUsers } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
 import type { User, UserFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { toRecords } from '@/shared';
+import { userKeys } from '../queries';
 
 /**
  * Hook for fetching a list of users with optional filtering.
@@ -48,18 +48,20 @@ import { toRecords } from '@/shared';
  *
  * @category React Hooks
  */
-export function useUsers(filters?: UserFilter): UseQueryResult<User[], Error> {
+export function useUsers(
+  filter?: UserFilter,
+  options?: UseQueryOptions<User[], Error>,
+): UseQueryResult<User[], Error> {
   const supabase = useSupabase();
 
   const query = useQuery<User[], Error>({
-    queryKey: filters
-      ? queryKeys.users.filtered(toRecords(filters))
-      : queryKeys.users.all,
+    queryKey: filter ? userKeys.list(filter) : userKeys.all,
     queryFn: () => {
-      logger.debug('👤 useUsers: Fetching users', { filters });
-      return fetchUsers(supabase, filters);
+      logger.debug('👤 useUsers: Fetching users', { filter });
+      return fetchUsers(supabase, filter);
     },
     staleTime: STANDARD_CACHE_TIME,
+    ...options,
   });
 
   if (query.error) {

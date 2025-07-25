@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createCommunity } from '@/features/communities/api';
 
-import type {
-  CommunityInput,
-} from '@/features/communities/types';
+import type { CommunityInput } from '@/features/communities/types';
+import { communityKeys } from '../queries';
 
 /**
  * Hook for creating a new community.
@@ -71,28 +70,13 @@ export function useCreateCommunity() {
       return result;
     },
     onSuccess: (newCommunity) => {
-      // Invalidate all communities queries
-      queryClient.invalidateQueries({ queryKey: ['communities'] });
+      // Invalidate all lists of communities
+      queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
 
-      // Also invalidate membership queries since organizer is auto-added as member
-      if (newCommunity) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.communities.memberships(newCommunity.id),
-        });
-        // Get current user and invalidate their memberships
-        supabase.auth.getUser().then(({ data: { user } }) => {
-          if (user) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.communities.userMemberships(user.id),
-            });
-          }
-        });
-
-        logger.info('🏘️ API: Successfully created community', {
-          id: newCommunity.id,
-          name: newCommunity.name,
-        });
-      }
+      logger.info('🏘️ API: Successfully created community', {
+        id: newCommunity.id,
+        name: newCommunity.name,
+      });
     },
     onError: (error) => {
       logger.error('🏘️ API: Failed to create community', { error });

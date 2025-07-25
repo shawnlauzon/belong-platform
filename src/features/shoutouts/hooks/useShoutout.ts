@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { fetchShoutoutById } from '../api';
 import { STANDARD_CACHE_TIME } from '../../../config';
 import type { Shoutout } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
+import { shoutoutKeys } from '../queries';
 
 /**
  * Hook for fetching a single shoutout by ID.
@@ -43,17 +44,18 @@ import type { UseQueryResult } from '@tanstack/react-query';
  */
 export function useShoutout(
   shoutoutId: string,
+  options?: UseQueryOptions<Shoutout | null, Error>,
 ): UseQueryResult<Shoutout | null, Error> {
   const supabase = useSupabase();
 
   const query = useQuery<Shoutout | null, Error>({
-    queryKey: queryKeys.shoutouts.byId(shoutoutId),
+    queryKey: shoutoutKeys.detail(shoutoutId),
     queryFn: () => {
       logger.debug('📢 useShoutout: Fetching shoutout by ID', { shoutoutId });
       return fetchShoutoutById(supabase, shoutoutId);
     },
     staleTime: STANDARD_CACHE_TIME,
-    enabled: Boolean(shoutoutId?.trim()),
+    ...options,
   });
 
   if (query.error) {

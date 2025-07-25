@@ -1,9 +1,5 @@
+// Be aware that only one of these is allowed to be set
 export interface ShoutoutFilter {
-  communityId?: string;
-  communityIds?: string[];
-  sentBy?: string;
-  receivedBy?: string;
+  communityId?: string | string[];
   resourceId?: string;
-  page?: number;
-  pageSize?: number;
 }

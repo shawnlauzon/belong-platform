@@ -401,6 +401,7 @@ export type Database = {
       }
       resource_claims: {
         Row: {
+          claimant_id: string
           created_at: string
           id: string
           notes: string | null
@@ -408,9 +409,9 @@ export type Database = {
           status: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id: string
           updated_at: string
-          user_id: string
         }
         Insert: {
+          claimant_id?: string
           created_at?: string
           id?: string
           notes?: string | null
@@ -418,9 +419,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id: string
           updated_at?: string
-          user_id?: string
         }
         Update: {
+          claimant_id?: string
           created_at?: string
           id?: string
           notes?: string | null
@@ -428,9 +429,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resource_claims_claimant_id_fkey"
+            columns: ["claimant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resource_claims_resource_id_fkey"
             columns: ["resource_id"]
@@ -443,13 +450,6 @@ export type Database = {
             columns: ["timeslot_id"]
             isOneToOne: false
             referencedRelation: "resource_timeslots"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resource_claims_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2566,7 +2566,7 @@ export type Database = {
         | "supplies"
         | "event"
         | "other"
-        | "ride"
+        | "rides"
         | "housing"
         | "drinks"
       resource_claim_status:
@@ -2722,7 +2722,7 @@ export const Constants = {
         "supplies",
         "event",
         "other",
-        "ride",
+        "rides",
         "housing",
         "drinks",
       ],

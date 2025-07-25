@@ -4,7 +4,7 @@ import {
 import { IsPersisted } from '@/shared';
 
 export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
-  userId: string;
+  claimantId: string;
   resourceId: string;
   status: ResourceClaimStatus;
 };

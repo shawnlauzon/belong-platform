@@ -1,49 +1,47 @@
 import { logger } from '../../../shared';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../shared/types/database';
 import type { ShoutoutInput, Shoutout } from '../types';
 import {
   toShoutoutUpdateRow,
   toDomainShoutout,
 } from '../transformers/shoutoutsTransformer';
-import { SELECT_SHOUTOUT_BASIC } from '../types/shoutoutRow';
-import { getAuthIdOrThrow } from '../../../shared/utils';
+import { SELECT_SHOUTOUT_BASIC, ShoutoutRow } from '../types/shoutoutRow';
 
 /**
  * Updates an existing shoutout
  */
 export async function updateShoutout(
   supabase: SupabaseClient<Database>,
-  id: string,
-  updateData: Partial<ShoutoutInput>,
+  updateData: Partial<ShoutoutInput> & { id: string },
 ): Promise<Shoutout | null> {
   logger.debug('📢 API: Updating shoutout', {
-    id,
+    id: updateData.id,
     message: updateData.message,
   });
 
   try {
-    await getAuthIdOrThrow(supabase, 'update shoutout');
     const dbData = toShoutoutUpdateRow(updateData);
 
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('shoutouts')
       .update(dbData)
-      .eq('id', id)
+      .eq('id', updateData.id)
       .select(SELECT_SHOUTOUT_BASIC)
-      .single();
+      .single()) as { data: ShoutoutRow | null; error: QueryError | null };
 
     if (error) {
       logger.error('📢 API: Failed to update shoutout', {
         error,
-        id,
         updateData,
       });
       throw error;
     }
 
     if (!data) {
-      logger.debug('📢 API: Shoutout not found for update', { id });
+      logger.debug('📢 API: Shoutout not found for update', {
+        id: updateData.id,
+      });
       return null;
     }
 
@@ -56,7 +54,7 @@ export async function updateShoutout(
     });
     return shoutout;
   } catch (error) {
-    logger.error('📢 API: Error updating shoutout', { error, id, updateData });
+    logger.error('📢 API: Error updating shoutout', { error, updateData });
     throw error;
   }
 }

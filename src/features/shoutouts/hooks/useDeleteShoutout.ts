@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, queryKeys } from '../../../shared';
+import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { deleteShoutout } from '../api';
+import { shoutoutKeys } from '../queries';
 
 /**
  * Hook for deleting shoutouts.
@@ -16,12 +17,12 @@ import { deleteShoutout } from '../api';
  * ```tsx
  * function ShoutoutActions({ shoutout }: { shoutout: Shoutout }) {
  *   const deleteShoutout = useDeleteShoutout();
- *   
+ *
  *   const handleDelete = useCallback(async () => {
  *     if (!confirm('Are you sure you want to delete this shoutout?')) {
  *       return;
  *     }
- *     
+ *
  *     try {
  *       await deleteShoutout.mutateAsync(shoutout.id);
  *       console.log('Deleted shoutout:', shoutout.id);
@@ -34,7 +35,7 @@ import { deleteShoutout } from '../api';
  *
  *   return (
  *     <div>
- *       <button 
+ *       <button
  *         onClick={handleDelete}
  *         disabled={deleteShoutout.isPending}
  *         className="danger-button"
@@ -51,7 +52,7 @@ import { deleteShoutout } from '../api';
  * // With confirmation dialog and error handling
  * function DeleteShoutoutButton({ shoutoutId }: { shoutoutId: string }) {
  *   const deleteShoutout = useDeleteShoutout();
- *   
+ *
  *   const handleDelete = async () => {
  *     try {
  *       await deleteShoutout.mutateAsync(shoutoutId);
@@ -85,18 +86,24 @@ export function useDeleteShoutout() {
       logger.debug('📢 useDeleteShoutout: Deleting shoutout', { shoutoutId });
       return deleteShoutout(supabase, shoutoutId);
     },
-    onSuccess: (_, shoutoutId) => {
-      // Invalidate all shoutout queries to refetch lists
-      queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
+    onSuccess: (shoutout) => {
+      if (shoutout) {
+        // Remove the specific shoutout from cache
+        queryClient.removeQueries({
+          queryKey: shoutoutKeys.detail(shoutout.id),
+        });
 
-      // Remove the specific shoutout from cache
-      queryClient.removeQueries({
-        queryKey: queryKeys.shoutouts.byId(shoutoutId),
-      });
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.listByCommunity(shoutout.communityId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.listByResource(shoutout.resourceId),
+        });
 
-      logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {
-        id: shoutoutId,
-      });
+        logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {
+          id: shoutout.id,
+        });
+      }
     },
     onError: (error) => {
       logger.error('📢 useDeleteShoutout: Failed to delete shoutout', {

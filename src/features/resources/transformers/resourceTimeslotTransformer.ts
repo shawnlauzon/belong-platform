@@ -1,6 +1,6 @@
 import type { ResourceTimeslot, ResourceTimeslotInput } from '../types';
 import type {
-  ResourceTimeslotRowBasic,
+  ResourceTimeslotRow,
   ResourceTimeslotInsertDbData,
   ResourceTimeslotUpdateDbData,
 } from '../types/resourceRow';
@@ -36,7 +36,7 @@ export function forDbTimeslotUpdate(
  * Transform a database timeslot record to a ResourceTimeslot object
  */
 export function toDomainResourceTimeslot(
-  dbTimeslot: ResourceTimeslotRowBasic,
+  dbTimeslot: ResourceTimeslotRow,
 ): ResourceTimeslot {
   return {
     id: dbTimeslot.id,
@@ -49,4 +49,3 @@ export function toDomainResourceTimeslot(
     updatedAt: new Date(dbTimeslot.updated_at),
   };
 }
-
