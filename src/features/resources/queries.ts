@@ -32,6 +32,10 @@ export const resourceClaimsKeys = {
     [...resourceClaimsKeys.lists(), 'by-resource-owner'] as const,
   listByResourceOwner: (id: string) =>
     [...resourceClaimsKeys.listsByResourceOwner(), id] as const,
+  listsByResource: () =>
+    [...resourceClaimsKeys.lists(), 'by-resource'] as const,
+  listByResource: (id: string) =>
+    [...resourceClaimsKeys.listsByResource(), id] as const,
   details: () => [...resourceClaimsKeys.all, 'detail'] as const,
   detail: (id: string) => [...resourceClaimsKeys.details(), id] as const,
 };

@@ -9,6 +9,7 @@
 
 // Can only query by one of these
 export type ResourceClaimFilter = {
+  resourceId?: string;
   claimantId?: string;
   resourceOwnerId?: string;
 };

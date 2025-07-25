@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { deleteResourceClaim } from '../api';
-import { ResourceClaim } from '../types';
-import { resourceClaimsKeys } from '../queries';
+import { Resource, ResourceClaim } from '../types';
+import { resourceClaimsKeys, resourceKeys } from '../queries';
 
 export function useDeleteResourceClaim() {
   const supabase = useSupabase();
@@ -18,11 +18,26 @@ export function useDeleteResourceClaim() {
           queryKey: resourceClaimsKeys.detail(claim.id),
         });
 
-        // TODO Invalidate only the queries which are affected; removing all
-        // isn't a big deal however because we almost never remove a claim
         queryClient.invalidateQueries({
-          queryKey: resourceClaimsKeys.all,
+          queryKey: resourceClaimsKeys.listByResource(claim.resourceId),
         });
+        queryClient.invalidateQueries({
+          queryKey: resourceClaimsKeys.listByClaimant(claim.claimantId),
+        });
+
+        const resource = queryClient.getQueryData<Resource>(
+          resourceKeys.detail(claim.resourceId),
+        );
+        if (resource) {
+          queryClient.invalidateQueries({
+            queryKey: resourceClaimsKeys.listByResourceOwner(resource.ownerId),
+          });
+        } else {
+          // We don't know who the resource owner is, so invalidate all
+          queryClient.invalidateQueries({
+            queryKey: resourceClaimsKeys.listsByResourceOwner(),
+          });
+        }
       }
     },
   });
