@@ -13,7 +13,8 @@ export async function deleteResourceTimeslot(
     .from('resource_timeslots')
     .delete()
     .eq('id', id)
-    .select()) as {
+    .select()
+    .maybeSingle()) as {
     data: ResourceTimeslotRow | null;
     error: QueryError | null;
   };

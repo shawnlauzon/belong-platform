@@ -14,7 +14,7 @@ export async function deleteResource(
     .delete()
     .eq('id', id)
     .select()
-    .single()) as {
+    .maybeSingle()) as {
     data: ResourceRow | null;
     error: QueryError | null;
   };

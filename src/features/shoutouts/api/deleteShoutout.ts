@@ -25,7 +25,7 @@ export async function deleteShoutout(
       .delete()
       .eq('id', shoutoutId)
       .select()
-      .single()) as { data: ShoutoutRow | null; error: QueryError | null };
+      .maybeSingle()) as { data: ShoutoutRow | null; error: QueryError | null };
 
     if (error) {
       logger.error('📢 API: Error deleting shoutout', { error, shoutoutId });

@@ -51,9 +51,8 @@ export function useDeleteResource() {
     mutationFn: (id: string) => deleteResource(supabase, id),
     onSuccess: async (resource) => {
       if (resource) {
-        // Remove ALL resources-related cache data synchronously first
         queryClient.removeQueries({
-          queryKey: resourceKeys.detail(resource?.id),
+          queryKey: resourceKeys.detail(resource.id),
         });
 
         // TODO Only remove affected lists

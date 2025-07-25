@@ -20,6 +20,7 @@ export async function fetchResources(
     query = appendQueries(query, {
       community_id: filters.communityId,
       status: filters.status,
+      owner_id: filters.ownerId,
     });
   }
 

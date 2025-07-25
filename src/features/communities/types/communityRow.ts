@@ -1,13 +1,8 @@
-import { ProfileRow } from '@/features/users/types/profileRow';
 import type { Database } from '../../../shared/types/database';
 
-export const SELECT_COMMUNITY_WITH_RELATIONS = `
-    *,
-    organizer:profiles!organizer_id(*)
+export const SELECT_COMMUNITY_BASIC = `
+    *
   `;
-export type CommunityRowWithRelations = CommunityRow & {
-  organizer: ProfileRow;
-};
 
 export type CommunityRow = Database['public']['Tables']['communities']['Row'];
 export type CommunityInsertRow =

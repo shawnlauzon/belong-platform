@@ -1,51 +1,30 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
+import { Community, CommunityRow } from '../types';
+import { toDomainCommunity } from '../transformers/communityTransformer';
 
 export async function deleteCommunity(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<void> {
+): Promise<Community | null> {
   logger.debug('🏘️ API: Deleting community', { id });
 
-  try {
-    // First verify the community exists and user has permission
-    const { data, error: fetchError } = await supabase
-      .from('communities')
-      .select('id, organizer_id')
-      .eq('id', id)
-      .single();
+  const { data, error: deleteError } = (await supabase
+    .from('communities')
+    .delete()
+    .eq('id', id)
+    .select()
+    .maybeSingle()) as { data: CommunityRow | null; error: QueryError | null };
 
-    if (fetchError) {
-      logger.error('🏘️ API: Failed to fetch community for deletion', {
-        error: fetchError,
-        id,
-      });
-      throw fetchError;
-    }
-
-    if (!data) {
-      const error = new Error('Community not found');
-      logger.error('🏘️ API: Community not found', { id });
-      throw error;
-    }
-
-    // Now perform the community delete
-    const { error: deleteError } = await supabase
-      .from('communities')
-      .delete()
-      .eq('id', id);
-
-    if (deleteError) {
-      logger.error('🏘️ API: Failed to delete community', {
-        error: deleteError,
-        id,
-      });
-      throw deleteError;
-    }
-    logger.debug('🏘️ API: Successfully deleted community', { id });
-  } catch (error) {
-    logger.error('🏘️ API: Error deleting community', { error, id });
-    throw error;
+  if (deleteError) {
+    logger.error('🏘️ API: Failed to delete community', {
+      error: deleteError,
+      id,
+    });
+    throw deleteError;
   }
+  logger.debug('🏘️ API: Successfully deleted community', { id });
+
+  return data ? toDomainCommunity(data) : null;
 }

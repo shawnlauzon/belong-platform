@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { CommunityFilter, Community } from '../types';
 import { toDomainCommunity } from '../transformers/communityTransformer';
-import { SELECT_COMMUNITY_WITH_RELATIONS } from '../types/communityRow';
+import { SELECT_COMMUNITY_BASIC } from '../types/communityRow';
 import { logger } from '@/shared';
 
 export async function fetchCommunities(
@@ -14,7 +14,7 @@ export async function fetchCommunities(
   try {
     let query = supabase
       .from('communities')
-      .select(SELECT_COMMUNITY_WITH_RELATIONS)
+      .select(SELECT_COMMUNITY_BASIC)
       .order('created_at', { ascending: false });
 
     // Apply filters if provided

@@ -1,8 +1,8 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { Community } from '../types';
+import type { Community, CommunityRow } from '../types';
 import { toDomainCommunity } from '../transformers/communityTransformer';
-import { SELECT_COMMUNITY_WITH_RELATIONS } from '../types/communityRow';
+import { SELECT_COMMUNITY_BASIC } from '../types/communityRow';
 import { logger } from '@/shared';
 
 export async function fetchCommunityById(
@@ -12,11 +12,14 @@ export async function fetchCommunityById(
   logger.debug('🏘️ API: Fetching community by ID', { id });
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('communities')
-      .select(SELECT_COMMUNITY_WITH_RELATIONS)
+      .select(SELECT_COMMUNITY_BASIC)
       .eq('id', id)
-      .single();
+      .single()) as {
+      data: CommunityRow | null;
+      error: QueryError | null;
+    };
 
     if (error) {
       if (error.code === 'PGRST116') {

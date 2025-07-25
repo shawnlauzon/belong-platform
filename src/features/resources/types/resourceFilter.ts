@@ -16,4 +16,5 @@ import { ResourceStatus } from '..';
 export type ResourceFilter = {
   communityId?: string | string[];
   status?: ResourceStatus | ResourceStatus[];
+  ownerId?: string;
 };

@@ -12,7 +12,6 @@ import {
   CommunityMembershipInsertRow,
   CommunityMembershipRow,
   CommunityRow,
-  CommunityRowWithRelations,
   CommunityUpdateRow,
 } from '../types/communityRow';
 import {
@@ -42,9 +41,7 @@ function boundaryForDatabase(boundary: CommunityBoundary): any {
 /**
  * Transform a database community record to a domain community object
  */
-export function toDomainCommunity(
-  dbCommunity: CommunityRowWithRelations | CommunityRow,
-): Community {
+export function toDomainCommunity(dbCommunity: CommunityRow): Community {
   // Explicitly extract only the fields we need to avoid leaking database properties
 
   return {

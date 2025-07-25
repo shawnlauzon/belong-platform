@@ -14,7 +14,8 @@ export async function deleteResourceClaim(
     .from('resource_claims')
     .delete()
     .eq('id', id)
-    .select()) as {
+    .select()
+    .maybeSingle()) as {
     data: ResourceClaimRow | null;
     error: QueryError | null;
   };
