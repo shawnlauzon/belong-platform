@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceFilter, ResourceSummary } from '@/features/resources';
-import { toDomainResourceSummary } from '../transformers/resourceTransformer';
+import { toDomainResourceSummary } from '../transformers';
 import {
   ResourceRowJoinCommunities,
   SELECT_RESOURCES_JOIN_COMMUNITIES,
@@ -18,9 +18,9 @@ export async function fetchResources(
 
   if (filters) {
     query = appendQueries(query, {
-      community_id: filters.communityId,
       status: filters.status,
       owner_id: filters.ownerId,
+      'resource_communities.community_id': filters.communityId,
     });
   }
 

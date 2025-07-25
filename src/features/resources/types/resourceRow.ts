@@ -1,9 +1,9 @@
 import type { Database } from '../../../shared/types/database';
 
-export const SELECT_RESOURCES_JOIN_COMMUNITIES = `*, communities:resource_communities(community_id)`;
+export const SELECT_RESOURCES_JOIN_COMMUNITIES = `*, resource_communities!inner(community_id)`;
 
 export type ResourceRowJoinCommunities = ResourceRow & {
-  communities?: { community_id: string }[];
+  resource_communities?: { community_id: string }[];
 };
 
 export const SELECT_RESOURCE_CLAIMS_BASIC = `*`;

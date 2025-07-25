@@ -27,6 +27,8 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
   let testCommunity: Community;
   let readOnlyOffer: Resource;
   let readOnlyRequest: Resource;
+  let testCommunity2: Community;
+  let readOnlyOffer2: Resource;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -44,6 +46,13 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
       supabase,
       testCommunity.id,
       'request',
+    );
+
+    testCommunity2 = await createTestCommunity(supabase);
+    readOnlyOffer2 = await createTestResource(
+      supabase,
+      testCommunity2.id,
+      'offer',
     );
   });
 
@@ -263,10 +272,21 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         communityId: testCommunity.id,
       });
 
-      expect(filtered.length).toBeGreaterThanOrEqual(2);
-      expect(
-        filtered.every((r) => r.communityIds.includes(testCommunity.id)),
-      ).toBe(true);
+      expect(filtered).toContainEqual(
+        expect.objectContaining({
+          id: readOnlyOffer.id,
+        }),
+      );
+      expect(filtered).toContainEqual(
+        expect.objectContaining({
+          id: readOnlyRequest.id,
+        }),
+      );
+      expect(filtered).not.toContainEqual(
+        expect.objectContaining({
+          id: readOnlyOffer2.id,
+        }),
+      );
     });
   });
 
