@@ -155,13 +155,13 @@ describe('Resources API - Resource Timeslots Operations', () => {
     it('allows community member to create timeslot for resource they do not own', async () => {
       // Create a new user who is not the resource owner
       const communityMember = await createTestUser(supabase);
-      
+
       // Sign in as the community member
       await signIn(supabase, communityMember.email, 'TestPass123!');
-      
+
       // Join the community that contains the resource
       await joinCommunity(supabase, testCommunity.id);
-      
+
       // Create timeslot for resource owned by someone else
       const startTime = new Date(Date.now() + 86400000); // Tomorrow
       const endTime = new Date(startTime.getTime() + 3600000); // 1 hour later
@@ -199,14 +199,14 @@ describe('Resources API - Resource Timeslots Operations', () => {
       expect(dbRecord).toBeTruthy();
       expect(dbRecord!.resource_id).toBe(testResource.id);
       expect(dbRecord!.max_claims).toBe(3);
-      
+
       // Verify the resource is owned by someone else (not the community member)
       const { data: resource } = await supabase
         .from('resources')
         .select('owner_id')
         .eq('id', testResource.id)
         .single();
-        
+
       expect(resource!.owner_id).not.toBe(communityMember.id);
       expect(resource!.owner_id).toBe(resourceOwner.id);
 
@@ -241,10 +241,9 @@ describe('Resources API - Resource Timeslots Operations', () => {
     });
 
     it('fetches timeslots for a resource', async () => {
-      const timeslots = await resourcesApi.fetchResourceTimeslots(
-        supabase,
-        testResource.id,
-      );
+      const timeslots = await resourcesApi.fetchResourceTimeslots(supabase, {
+        resourceId: testResource.id,
+      });
       console.log('TIMESLOTS', timeslots);
 
       expect(timeslots).toHaveLength(1);
@@ -266,19 +265,17 @@ describe('Resources API - Resource Timeslots Operations', () => {
         testCommunity.id,
       );
 
-      const timeslots = await resourcesApi.fetchResourceTimeslots(
-        supabase,
-        anotherResource.id,
-      );
+      const timeslots = await resourcesApi.fetchResourceTimeslots(supabase, {
+        resourceId: anotherResource.id,
+      });
 
       expect(timeslots).toHaveLength(0);
     });
 
     it('returns empty array for non-existent resource', async () => {
-      const timeslots = await resourcesApi.fetchResourceTimeslots(
-        supabase,
-        '00000000-0000-0000-0000-000000000000',
-      );
+      const timeslots = await resourcesApi.fetchResourceTimeslots(supabase, {
+        resourceId: '00000000-0000-0000-0000-000000000000',
+      });
 
       expect(timeslots).toHaveLength(0);
     });
@@ -345,20 +342,18 @@ describe('Resources API - Resource Timeslots Operations', () => {
       const timeslotId = timeslot.id;
 
       // Verify timeslot exists before deletion
-      const beforeDelete = await resourcesApi.fetchResourceTimeslots(
-        supabase,
-        testResource.id,
-      );
+      const beforeDelete = await resourcesApi.fetchResourceTimeslots(supabase, {
+        resourceId: testResource.id,
+      });
       expect(beforeDelete.some((t) => t.id === timeslotId)).toBe(true);
 
       // Delete timeslot
       await resourcesApi.deleteResourceTimeslot(supabase, timeslotId);
 
       // Verify timeslot is deleted
-      const afterDelete = await resourcesApi.fetchResourceTimeslots(
-        supabase,
-        testResource.id,
-      );
+      const afterDelete = await resourcesApi.fetchResourceTimeslots(supabase, {
+        resourceId: testResource.id,
+      });
       expect(afterDelete.some((t) => t.id === timeslotId)).toBe(false);
 
       // Verify database record is deleted
