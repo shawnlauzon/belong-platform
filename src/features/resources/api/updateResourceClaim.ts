@@ -17,7 +17,10 @@ export async function updateResourceClaim(
     .update(updateData)
     .eq('id', claimInput.id)
     .select()
-    .single()) as { data: ResourceClaimRow | null; error: QueryError | null };
+    .maybeSingle()) as {
+    data: ResourceClaimRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to update resource claim', {

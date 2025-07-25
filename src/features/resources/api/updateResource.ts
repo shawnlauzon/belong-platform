@@ -4,7 +4,11 @@ import type { ResourceInput, Resource } from '@/features/resources';
 import { forDbUpdate } from '@/features/resources/transformers/resourceTransformer';
 import { logger } from '@/shared';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
-import { SELECT_RESOURCE_CLAIMS_BASIC } from '../types/resourceRow';
+import {
+  ResourceRow,
+  SELECT_RESOURCE_CLAIMS_BASIC,
+} from '../types/resourceRow';
+import { QueryError } from '@supabase/supabase-js';
 
 export async function updateResource(
   supabase: SupabaseClient<Database>,
@@ -18,12 +22,15 @@ export async function updateResource(
   const { id, ...updates } = updateData;
   const dbData = forDbUpdate(updates);
 
-  const { data, error } = await supabase
+  const { data, error } = (await supabase
     .from('resources')
     .update(dbData)
     .eq('id', id)
     .select(SELECT_RESOURCE_CLAIMS_BASIC)
-    .single();
+    .maybeSingle()) as {
+    data: ResourceRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('📚 API: Failed to update resource', { error, updateData });

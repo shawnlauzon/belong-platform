@@ -59,7 +59,7 @@ export async function updateResourceTimeslot(
     .update(updateData)
     .eq('id', id)
     .select(SELECT_RESOURCE_TIMESLOT_BASIC)
-    .single()) as {
+    .maybeSingle()) as {
     data: ResourceTimeslotRow | null;
     error: QueryError | null;
   };

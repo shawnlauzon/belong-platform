@@ -28,7 +28,7 @@ export async function updateShoutout(
       .update(dbData)
       .eq('id', updateData.id)
       .select(SELECT_SHOUTOUT_BASIC)
-      .single()) as { data: ShoutoutRow | null; error: QueryError | null };
+      .maybeSingle()) as { data: ShoutoutRow | null; error: QueryError | null };
 
     if (error) {
       logger.error('📢 API: Failed to update shoutout', {

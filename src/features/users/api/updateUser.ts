@@ -4,6 +4,8 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { toDomainUser, toUserUpdateRow } from '../transformers/userTransformer';
 import { User } from '../types';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
+import { ProfileRow } from '../types/profileRow';
+import { QueryError } from '@supabase/supabase-js';
 
 export async function updateUser(
   supabase: SupabaseClient<Database>,
@@ -13,11 +15,14 @@ export async function updateUser(
 
   try {
     // First, fetch the current profile to merge with partial updates
-    const { data: currentProfile, error: fetchError } = await supabase
+    const { data: currentProfile, error: fetchError } = (await supabase
       .from('profiles')
       .select()
       .eq('id', userData.id)
-      .single();
+      .maybeSingle()) as {
+      data: ProfileRow | null;
+      error: QueryError | null;
+    };
 
     if (fetchError) {
       logger.error('👤 API: Failed to fetch current profile', {
@@ -25,6 +30,13 @@ export async function updateUser(
         error: fetchError,
       });
       throw fetchError;
+    }
+
+    if (!currentProfile) {
+      logger.error('👤 API: Profile not found for update', {
+        id: userData.id,
+      });
+      throw new Error('Profile not found for update');
     }
 
     // Auto-commit avatar image if present and is temporary

@@ -1,6 +1,10 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { CommunityInput, Community } from '@/features/communities/types';
+import type {
+  CommunityInput,
+  Community,
+  CommunityRow,
+} from '@/features/communities/types';
 import {
   toCommunityUpdateRow,
   toDomainCommunity,
@@ -18,12 +22,15 @@ export async function updateCommunity(
 
   const dbData = toCommunityUpdateRow(updateData);
 
-  const { data, error } = await supabase
+  const { data, error } = (await supabase
     .from('communities')
     .update(dbData)
     .eq('id', updateData.id)
     .select()
-    .single();
+    .maybeSingle()) as {
+    data: CommunityRow | null;
+    error: QueryError | null;
+  };
 
   if (error) {
     logger.error('🏘️ API: Failed to update community', { error, updateData });
