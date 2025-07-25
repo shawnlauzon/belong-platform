@@ -7,8 +7,8 @@ import {
   toDomainResourceClaim,
 } from '../transformers';
 import {
-  ResourceClaimRow,
-  SELECT_RESOURCE_CLAIMS_BASIC,
+  ResourceClaimRowJoinResourceJoinTimeslot,
+  SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT,
 } from '../types/resourceRow';
 
 export async function createResourceClaim(
@@ -21,9 +21,9 @@ export async function createResourceClaim(
   const { data, error } = (await supabase
     .from('resource_claims')
     .insert(insertData)
-    .select(SELECT_RESOURCE_CLAIMS_BASIC)
+    .select(SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT)
     .single()) as {
-    data: ResourceClaimRow;
+    data: ResourceClaimRowJoinResourceJoinTimeslot;
     error: QueryError | null;
   };
 

@@ -1,13 +1,17 @@
-import {
-  ResourceClaimStatus,
-} from '@/index';
+import { ResourceClaimStatus, ResourceTimeslot } from '@/index';
 import { IsPersisted } from '@/shared';
 
 export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
   claimantId: string;
-  resourceId: string;
+  resourceOwnerId: string;
+  timeslot: ResourceTimeslot;
   status: ResourceClaimStatus;
 };
+
+export type ResourceClaimSummary = Pick<
+  ResourceClaim,
+  'id' | 'resourceId' | 'timeslotId' | 'claimantId' | 'status'
+>;
 
 // The status of a resource claim
 // 1. Pending - Claim owner requests a resource

@@ -4,8 +4,8 @@ import { appendQueries, logger } from '@/shared';
 import { ResourceClaim, ResourceClaimFilter } from '../types';
 import { toDomainResourceClaim } from '../transformers';
 import {
-  ResourceClaimRowJoinResource,
-  SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE,
+  ResourceClaimRowJoinResourceJoinTimeslot,
+  SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT,
 } from '../types/resourceRow';
 
 export async function fetchResourceClaims(
@@ -14,7 +14,7 @@ export async function fetchResourceClaims(
 ): Promise<ResourceClaim[]> {
   let query = supabase
     .from('resource_claims')
-    .select(SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE);
+    .select(SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT);
 
   if (filter) {
     query = appendQueries(query, {
@@ -25,7 +25,7 @@ export async function fetchResourceClaims(
   }
 
   const { data, error } = (await query) as {
-    data: ResourceClaimRowJoinResource[] | null;
+    data: ResourceClaimRowJoinResourceJoinTimeslot[] | null;
     error: Error | null;
   };
 

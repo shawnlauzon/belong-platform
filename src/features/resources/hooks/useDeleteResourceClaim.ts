@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { deleteResourceClaim } from '../api';
-import { Resource, ResourceClaim } from '../types';
+import { Resource, ResourceClaimSummary } from '../types';
 import { resourceClaimsKeys, resourceKeys } from '../queries';
 
 export function useDeleteResourceClaim() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
 
-  return useMutation<ResourceClaim | null, Error, string>({
+  return useMutation<ResourceClaimSummary | null, Error, string>({
     mutationFn: async (id: string) => {
       return deleteResourceClaim(supabase, id);
     },

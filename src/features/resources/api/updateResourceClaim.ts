@@ -3,7 +3,10 @@ import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
 import { ResourceClaim, ResourceClaimInput } from '../types';
 import { forDbClaimUpdate, toDomainResourceClaim } from '../transformers';
-import { ResourceClaimRow } from '../types/resourceRow';
+import {
+  ResourceClaimRowJoinResourceJoinTimeslot,
+  SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT,
+} from '../types/resourceRow';
 
 export async function updateResourceClaim(
   supabase: SupabaseClient<Database>,
@@ -16,9 +19,9 @@ export async function updateResourceClaim(
     .from('resource_claims')
     .update(updateData)
     .eq('id', claimInput.id)
-    .select()
+    .select(SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT)
     .maybeSingle()) as {
-    data: ResourceClaimRow | null;
+    data: ResourceClaimRowJoinResourceJoinTimeslot | null;
     error: QueryError | null;
   };
 

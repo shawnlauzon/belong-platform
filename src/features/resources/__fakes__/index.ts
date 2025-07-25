@@ -274,6 +274,8 @@ export function createFakeResourceClaim(
     id: faker.string.uuid(),
     resourceId: faker.string.uuid(),
     claimantId: faker.string.uuid(),
+    resourceOwnerId: faker.string.uuid(),
+    timeslot: createFakeResourceTimeslot(),
     timeslotId: faker.string.uuid(),
     status: faker.helpers.arrayElement([
       'pending',
