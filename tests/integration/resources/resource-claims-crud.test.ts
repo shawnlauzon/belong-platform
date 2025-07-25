@@ -160,15 +160,20 @@ describe('Resource Claims - Basic Operations', () => {
     describe('Fetches a claim', () => {
       it('fetches claims by claimant', async () => {
         // Fetch claims by claimant ID since fetchResourceClaimById no longer exists
-        const claimsByClaimant = await resourcesApi.fetchResourceClaims(supabase, {
-          claimantId: claimant.id,
-        });
+        const claimsByClaimant = await resourcesApi.fetchResourceClaims(
+          supabase,
+          {
+            claimantId: claimant.id,
+          },
+        );
 
         expect(claimsByClaimant).toBeTruthy();
         expect(claimsByClaimant.length).toBeGreaterThanOrEqual(1);
-        
+
         // Find our specific claim in the results
-        const ourClaim = claimsByClaimant.find(claim => claim.id === readOnlyClaim.id);
+        const ourClaim = claimsByClaimant.find(
+          (claim) => claim.id === readOnlyClaim.id,
+        );
         expect(ourClaim).toBeTruthy();
         expect(ourClaim).toMatchObject({
           id: readOnlyClaim.id,
@@ -185,9 +190,35 @@ describe('Resource Claims - Basic Operations', () => {
         });
 
         expect(allClaims.length).toBeGreaterThanOrEqual(1);
-        const ourClaim = allClaims.find(claim => claim.id === readOnlyClaim.id);
+        const ourClaim = allClaims.find(
+          (claim) => claim.id === readOnlyClaim.id,
+        );
         expect(ourClaim?.claimantId).toBe(claimant.id);
         expect(ourClaim?.id).toBe(readOnlyClaim.id);
+      });
+
+      it('filters resource claims by resource ID', async () => {
+        // This test validates that resource claims can be filtered by specific resource ID
+        const claimsForResource = await resourcesApi.fetchResourceClaims(
+          supabase,
+          {
+            resourceId: testResource.id,
+          },
+        );
+
+        expect(claimsForResource.length).toBeGreaterThanOrEqual(1);
+        expect(
+          claimsForResource.every(
+            (claim) => claim.resourceId === testResource.id,
+          ),
+        ).toBe(true);
+
+        // Verify our read-only claim is included
+        const ourClaim = claimsForResource.find(
+          (claim) => claim.id === readOnlyClaim.id,
+        );
+        expect(ourClaim).toBeTruthy();
+        expect(ourClaim?.resourceId).toBe(testResource.id);
       });
     });
 
@@ -227,7 +258,7 @@ describe('Resource Claims - Basic Operations', () => {
           claimantId: claimant.id,
         });
 
-        const claim = claims.find(c => c.id === testClaim2.id);
+        const claim = claims.find((c) => c.id === testClaim2.id);
         expect(claim).toBeTruthy();
         expect(claim).toMatchObject({
           id: testClaim2.id,
@@ -239,13 +270,10 @@ describe('Resource Claims - Basic Operations', () => {
       });
 
       it('updates claim status to cancelled', async () => {
-        const updatedClaim = await resourcesApi.updateResourceClaim(
-          supabase,
-          testClaim2.id,
-          {
-            status: 'cancelled',
-          },
-        );
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          status: 'cancelled',
+        });
 
         expect(updatedClaim.status).toBe('cancelled');
         // Verify record exists in database
@@ -257,21 +285,19 @@ describe('Resource Claims - Basic Operations', () => {
         const claims = await resourcesApi.fetchResourceClaims(supabase, {
           claimantId: claimant.id,
         });
-        const curClaim = claims.find(c => c.id === testClaim2.id);
-        
+        const curClaim = claims.find((c) => c.id === testClaim2.id);
+
         if (curClaim?.status !== 'cancelled') {
-          await resourcesApi.updateResourceClaim(supabase, testClaim2.id, {
+          await resourcesApi.updateResourceClaim(supabase, {
+            id: testClaim2.id,
             status: 'cancelled',
           });
         }
 
-        const updatedClaim = await resourcesApi.updateResourceClaim(
-          supabase,
-          testClaim2.id,
-          {
-            status: 'pending',
-          },
-        );
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          status: 'pending',
+        });
 
         expect(updatedClaim.status).toBe('pending');
         // Verify record exists in database
@@ -293,11 +319,10 @@ describe('Resource Claims - Basic Operations', () => {
           });
 
           try {
-            testClaim2 = await resourcesApi.updateResourceClaim(
-              supabase,
-              testClaim2.id,
-              claimInput,
-            );
+            await resourcesApi.updateResourceClaim(supabase, {
+              id: testClaim2.id,
+              ...claimInput,
+            });
             expect.fail('Should have thrown');
           } catch (error) {
             expect(error).toBeTruthy();
@@ -349,7 +374,7 @@ describe('Resource Claims - Basic Operations', () => {
             claimantId: claimant.id,
           });
 
-          const fetchedClaim = claims.find(c => c.id === testClaim2.id);
+          const fetchedClaim = claims.find((c) => c.id === testClaim2.id);
           expect(fetchedClaim).toBeTruthy();
           expect(fetchedClaim).toMatchObject({
             id: testClaim2.id,
@@ -390,8 +415,8 @@ describe('Resource Claims - Basic Operations', () => {
         for (const status of validStatuses) {
           const updatedClaim = await resourcesApi.updateResourceClaim(
             supabase,
-            testClaim2.id,
             {
+              id: testClaim2.id,
               status: status as 'approved' | 'rejected' | 'completed',
             },
           );
@@ -410,11 +435,10 @@ describe('Resource Claims - Basic Operations', () => {
         });
 
         try {
-          await resourcesApi.updateResourceClaim(
-            supabase,
-            testClaim2.id,
-            claimInput,
-          );
+          await resourcesApi.updateResourceClaim(supabase, {
+            id: testClaim2.id,
+            ...claimInput,
+          });
           expect.fail('Should have thrown');
         } catch (error) {
           expect(error).toBeTruthy();
@@ -457,7 +481,7 @@ async function verifyClaimInDatabase(
   expect(dbRecord).toMatchObject({
     resource_id: claim.resourceId,
     status: claim.status,
-    user_id: claim.claimantId,
+    claimant_id: claim.claimantId,
     timeslot_id: claim.timeslotId ?? null,
   });
 }
