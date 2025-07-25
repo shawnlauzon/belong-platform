@@ -423,7 +423,7 @@ describe('Resource Claims - Basic Operations', () => {
           );
         });
 
-        it.only('fetches claims by resource owner', async () => {
+        it('fetches claims by resource owner', async () => {
           const claims = await resourcesApi.fetchResourceClaims(supabase, {
             resourceOwnerId: resourceOwner.id,
           });
