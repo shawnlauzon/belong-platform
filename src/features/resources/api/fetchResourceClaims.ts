@@ -13,7 +13,7 @@ export async function fetchResourceClaims(
   filter?: ResourceClaimFilter,
 ): Promise<ResourceClaim[]> {
   let query = supabase
-    .from('resources')
+    .from('resource_claims')
     .select(SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE);
 
   if (filter) {
