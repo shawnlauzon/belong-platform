@@ -10,7 +10,10 @@ export type Resource = IsPersisted<ResourceInput> & {
   areTimeslotsFlexible: boolean;
 };
 
-export type ResourceSummary = Pick<Resource, 'id' | 'title' | 'status'>;
+export type ResourceSummary = Pick<
+  Resource,
+  'id' | 'title' | 'status' | 'type'
+>;
 
 export enum ResourceTypeEnum {
   OFFER = 'offer',

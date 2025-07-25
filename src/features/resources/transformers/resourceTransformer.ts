@@ -1,4 +1,9 @@
-import type { ResourceCategory, Resource, ResourceInput } from '../types';
+import type {
+  ResourceCategory,
+  Resource,
+  ResourceInput,
+  ResourceSummary,
+} from '../types';
 import type {
   ResourceInsertDbData,
   ResourceUpdateDbData,
@@ -91,5 +96,16 @@ export function toDomainResource(
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,
+  };
+}
+
+export function toDomainResourceSummary(
+  dbResource: ResourceRowJoinCommunities,
+): ResourceSummary {
+  return {
+    id: dbResource.id,
+    type: dbResource.type,
+    title: dbResource.title,
+    status: dbResource.status,
   };
 }

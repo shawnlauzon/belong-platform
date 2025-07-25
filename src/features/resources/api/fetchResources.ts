@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { Resource, ResourceFilter } from '@/features/resources';
-import { toDomainResource } from '../transformers/resourceTransformer';
+import type { ResourceFilter, ResourceSummary } from '@/features/resources';
+import { toDomainResourceSummary } from '../transformers/resourceTransformer';
 import {
   ResourceRowJoinCommunities,
   SELECT_RESOURCES_JOIN_COMMUNITIES,
@@ -11,7 +11,7 @@ import { appendQueries } from '@/shared';
 export async function fetchResources(
   supabase: SupabaseClient<Database>,
   filters?: ResourceFilter,
-): Promise<Resource[]> {
+): Promise<ResourceSummary[]> {
   let query = supabase
     .from('resources')
     .select(SELECT_RESOURCES_JOIN_COMMUNITIES);
@@ -40,5 +40,5 @@ export async function fetchResources(
     return [];
   }
 
-  return data.map((row) => toDomainResource(row));
+  return data.map((row) => toDomainResourceSummary(row));
 }
