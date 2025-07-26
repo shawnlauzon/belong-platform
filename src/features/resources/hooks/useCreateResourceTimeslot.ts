@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { createResourceTimeslot } from '../api';
 import { ResourceTimeslot, ResourceTimeslotInput } from '../types';
+import { resourceTimeslotKeys } from '../queries';
 
 export function useCreateResourceTimeslot() {
   const supabase = useSupabase();
@@ -11,9 +12,8 @@ export function useCreateResourceTimeslot() {
     mutationFn: (timeslotInput: ResourceTimeslotInput) =>
       createResourceTimeslot(supabase, timeslotInput),
     onSuccess: (timeslot) => {
-      // Invalidate the timeslots query for this resource
       queryClient.invalidateQueries({
-        queryKey: ['resource-timeslots', timeslot.resourceId],
+        queryKey: resourceTimeslotKeys.listByResource(timeslot.resourceId),
       });
     },
   });

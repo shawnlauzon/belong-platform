@@ -1,5 +1,4 @@
 import { ResourceFilter } from './types';
-import { ResourceTimeslotFilter } from './types/resourceTimeslotFilter';
 
 // Resources
 export const resourceKeys = {
@@ -17,8 +16,10 @@ export const resourceKeys = {
 export const resourceTimeslotKeys = {
   all: ['resource-timeslots'] as const,
   lists: () => [...resourceTimeslotKeys.all, 'list'] as const,
-  list: (filter: ResourceTimeslotFilter) =>
-    [...resourceTimeslotKeys.lists(), filter] as const,
+  listsByResource: () =>
+    [...resourceTimeslotKeys.lists(), 'by-resource'] as const,
+  listByResource: (resourceId: string) =>
+    [...resourceTimeslotKeys.listsByResource(), resourceId] as const,
 };
 
 export const resourceClaimsKeys = {
