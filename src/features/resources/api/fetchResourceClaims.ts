@@ -44,8 +44,6 @@ export async function fetchResourceClaims(
     return [];
   }
 
-  console.log('*** data', data);
-
   // Transform the joined results to ResourceClaim objects with relations
   const claims = data.map(toDomainResourceClaim);
 

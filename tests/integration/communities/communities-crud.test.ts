@@ -60,8 +60,6 @@ describe('Communities API - CRUD Operations', () => {
           .eq('id', community!.id)
           .single();
 
-        console.log('*** dbRecord', JSON.stringify(dbRecord, null, 2));
-
         expect(dbRecord).toMatchObject({
           id: community!.id,
           name: data.name,

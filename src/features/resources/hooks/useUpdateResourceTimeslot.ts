@@ -16,13 +16,11 @@ export function useUpdateResourceTimeslot() {
     mutationFn: ({ id, update }) =>
       updateResourceTimeslot(supabase, id, update),
     onSuccess: (timeslot) => {
-      // We don't store resourceTimeslots by ID (because no one needs it), but
-      // we do need to invalidate the entry that is for this resource
-      queryClient.invalidateQueries({
-        queryKey: resourceTimeslotKeys.list({
-          resourceId: timeslot.resourceId,
-        }),
-      });
+      if (timeslot) {
+        queryClient.invalidateQueries({
+          queryKey: resourceTimeslotKeys.listByResource(timeslot.resourceId),
+        });
+      }
     },
   });
 }
