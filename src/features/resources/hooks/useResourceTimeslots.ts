@@ -15,7 +15,7 @@ export function useResourceTimeslots(
 
   return useQuery<ResourceTimeslot[], Error>({
     queryKey: filter
-      ? resourceTimeslotKeys.list(filter)
+      ? resourceTimeslotKeys.listByResource(filter.resourceId)
       : resourceTimeslotKeys.all,
     queryFn: () => fetchResourceTimeslots(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
