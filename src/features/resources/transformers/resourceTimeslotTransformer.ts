@@ -15,7 +15,6 @@ export function toResourceTimeslotInsertRow(
     resource_id: timeslot.resourceId,
     start_time: timeslot.startTime.toISOString(),
     end_time: timeslot.endTime.toISOString(),
-    max_claims: timeslot.maxClaims,
   };
 }
 
@@ -28,7 +27,6 @@ export function forDbTimeslotUpdate(
   return {
     start_time: timeslot.startTime?.toISOString(),
     end_time: timeslot.endTime?.toISOString(),
-    max_claims: timeslot.maxClaims,
   };
 }
 
@@ -43,7 +41,6 @@ export function toDomainResourceTimeslot(
     resourceId: dbTimeslot.resource_id,
     startTime: new Date(dbTimeslot.start_time),
     endTime: new Date(dbTimeslot.end_time),
-    maxClaims: dbTimeslot.max_claims ?? undefined,
     status: 'available', // All timeslots are available since we don't return claims data from timeslots
     createdAt: new Date(dbTimeslot.created_at),
     updatedAt: new Date(dbTimeslot.updated_at),

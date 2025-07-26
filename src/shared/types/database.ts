@@ -527,7 +527,6 @@ export type Database = {
           created_at: string
           end_time: string
           id: string
-          max_claims: number | null
           resource_id: string
           start_time: string
           updated_at: string
@@ -536,7 +535,6 @@ export type Database = {
           created_at?: string
           end_time: string
           id?: string
-          max_claims?: number | null
           resource_id: string
           start_time: string
           updated_at?: string
@@ -545,7 +543,6 @@ export type Database = {
           created_at?: string
           end_time?: string
           id?: string
-          max_claims?: number | null
           resource_id?: string
           start_time?: string
           updated_at?: string
@@ -563,6 +560,8 @@ export type Database = {
       resources: {
         Row: {
           category: Database["public"]["Enums"]["resource_category"]
+          claim_limit: number | null
+          claim_limit_per: Database["public"]["Enums"]["resource_claim_limit_per"]
           coordinates: unknown | null
           created_at: string
           description: string
@@ -570,7 +569,6 @@ export type Database = {
           id: string
           image_urls: string[]
           location_name: string | null
-          max_claims: number | null
           owner_id: string
           requires_approval: boolean
           status: Database["public"]["Enums"]["resource_status"]
@@ -581,6 +579,8 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["resource_category"]
+          claim_limit?: number | null
+          claim_limit_per?: Database["public"]["Enums"]["resource_claim_limit_per"]
           coordinates?: unknown | null
           created_at?: string
           description: string
@@ -588,7 +588,6 @@ export type Database = {
           id?: string
           image_urls?: string[]
           location_name?: string | null
-          max_claims?: number | null
           owner_id?: string
           requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
@@ -599,6 +598,8 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["resource_category"]
+          claim_limit?: number | null
+          claim_limit_per?: Database["public"]["Enums"]["resource_claim_limit_per"]
           coordinates?: unknown | null
           created_at?: string
           description?: string
@@ -606,7 +607,6 @@ export type Database = {
           id?: string
           image_urls?: string[]
           location_name?: string | null
-          max_claims?: number | null
           owner_id?: string
           requires_approval?: boolean
           status?: Database["public"]["Enums"]["resource_status"]
@@ -2569,6 +2569,7 @@ export type Database = {
         | "rides"
         | "housing"
         | "drinks"
+      resource_claim_limit_per: "total" | "timeslot"
       resource_claim_status:
         | "pending"
         | "approved"
@@ -2726,6 +2727,7 @@ export const Constants = {
         "housing",
         "drinks",
       ],
+      resource_claim_limit_per: ["total", "timeslot"],
       resource_claim_status: [
         "pending",
         "approved",

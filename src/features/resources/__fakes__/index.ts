@@ -64,7 +64,12 @@ export function createFakeResource(
       'completed',
       'cancelled',
     ] as const),
-    maxClaims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })),
+    claimLimit: faker.helpers.maybe(() =>
+      faker.number.int({ min: 1, max: 10 }),
+    ),
+    claimLimitPer: faker.helpers.maybe(() =>
+      faker.helpers.arrayElement(['total', 'timeslot'] as const),
+    ),
     requiresApproval: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
     ...overrides,
@@ -115,7 +120,12 @@ export function createFakeResourceInput(
       'completed',
       'cancelled',
     ] as const),
-    maxClaims: faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })),
+    claimLimit: faker.helpers.maybe(() =>
+      faker.number.int({ min: 1, max: 10 }),
+    ),
+    claimLimitPer: faker.helpers.maybe(() =>
+      faker.helpers.arrayElement(['total', 'timeslot'] as const),
+    ),
     requiresApproval: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
     ...overrides,
@@ -160,8 +170,9 @@ export function createFakeResourceRow(
       'completed',
       'cancelled',
     ] as const),
-    max_claims:
+    claim_limit:
       faker.helpers.maybe(() => faker.number.int({ min: 1, max: 10 })) ?? null,
+    claim_limit_per: faker.helpers.arrayElement(['total', 'timeslot'] as const),
     requires_approval: faker.datatype.boolean(),
     timeslots_flexible: true,
     expires_at:
@@ -187,7 +198,6 @@ export function createFakeResourceTimeslot(
     resourceId: faker.string.uuid(),
     startTime,
     endTime,
-    maxClaims: faker.number.int({ min: 1, max: 10 }),
     createdAt: now,
     updatedAt: now,
     status: faker.helpers.arrayElement([
@@ -214,7 +224,6 @@ export function createFakeResourceTimeslotInput(
     resourceId: faker.string.uuid(),
     startTime,
     endTime,
-    maxClaims: faker.number.int({ min: 1, max: 10 }),
     ...overrides,
   };
 }
@@ -233,7 +242,6 @@ export function createFakeResourceTimeslotUpdate(
   return {
     start_time: startTime.toISOString(),
     end_time: endTime.toISOString(),
-    max_claims: faker.number.int({ min: 1, max: 10 }),
     ...overrides,
   };
 }
@@ -255,7 +263,6 @@ export function createFakeResourceTimeslotRow(
     resource_id: faker.string.uuid(),
     start_time: startTime.toISOString(),
     end_time: endTime.toISOString(),
-    max_claims: faker.number.int({ min: 1, max: 10 }),
     created_at: now,
     updated_at: now,
     ...overrides,

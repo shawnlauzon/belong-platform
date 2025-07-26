@@ -43,13 +43,6 @@ export async function updateResourceTimeslot(
     throw new Error('Start time must be before end time');
   }
 
-  if (timeslotInput.maxClaims !== undefined && timeslotInput.maxClaims <= 0) {
-    logger.error('🏘️ API: Max claims must be positive', {
-      timeslotInput,
-      id,
-    });
-    throw new Error('Max claims must be positive');
-  }
 
   // Transform to database format
   const updateData = forDbTimeslotUpdate(timeslotInput);

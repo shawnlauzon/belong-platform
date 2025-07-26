@@ -20,6 +20,8 @@ export enum ResourceTypeEnum {
   REQUEST = 'request',
 }
 
+export type ClaimLimitPer = 'total' | 'timeslot';
+
 export type ResourceInput = {
   type: ResourceType;
   category?: ResourceCategory;
@@ -30,7 +32,8 @@ export type ResourceInput = {
   communityIds: string[];
   imageUrls?: string[];
   status: ResourceStatus;
-  maxClaims?: number;
+  claimLimit?: number;
+  claimLimitPer?: ClaimLimitPer;
   requiresApproval: boolean;
   areTimeslotsFlexible?: boolean;
   expiresAt?: Date;

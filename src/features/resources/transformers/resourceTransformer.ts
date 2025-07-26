@@ -21,7 +21,8 @@ export function toResourceInsertRow(
     imageUrls,
     locationName,
     coordinates,
-    maxClaims,
+    claimLimit,
+    claimLimitPer,
     requiresApproval,
     areTimeslotsFlexible,
     expiresAt,
@@ -35,7 +36,8 @@ export function toResourceInsertRow(
     image_urls: imageUrls,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
-    max_claims: maxClaims,
+    claim_limit: claimLimit,
+    claim_limit_per: claimLimitPer,
     requires_approval: requiresApproval,
     timeslots_flexible: areTimeslotsFlexible ?? true,
     expires_at: expiresAt?.toISOString(),
@@ -61,7 +63,8 @@ export function forDbUpdate(
     // Note: ownerId is not part of ResourceData and should be handled by the calling function
     // Note: communityIds changes should be handled separately via resource_communities table
     status: resource.status,
-    max_claims: resource.maxClaims,
+    claim_limit: resource.claimLimit,
+    claim_limit_per: resource.claimLimitPer,
     requires_approval: resource.requiresApproval,
     timeslots_flexible: resource.areTimeslotsFlexible,
     expires_at: resource.expiresAt?.toISOString(),
@@ -91,7 +94,8 @@ export function toDomainResource(
     communityIds:
       dbResource.resource_communities?.map((rc) => rc.community_id) || [],
     status: dbResource.status,
-    maxClaims: dbResource.max_claims ?? undefined,
+    claimLimit: dbResource.claim_limit ?? undefined,
+    claimLimitPer: (dbResource.claim_limit_per as 'total' | 'timeslot') ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
     areTimeslotsFlexible: dbResource.timeslots_flexible ?? true,
     expiresAt: dbResource.expires_at

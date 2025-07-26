@@ -8,5 +8,4 @@ export type ResourceTimeslotInput = {
   resourceId: string;
   startTime: Date;
   endTime: Date;
-  maxClaims?: number;
 };
