@@ -1,4 +1,4 @@
-import { useQuery, QueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { fetchFeed } from '../api';
@@ -32,7 +32,7 @@ import type { Feed } from '../types';
  * }
  * ```
  */
-export function useFeed(options?: Partial<QueryOptions<Feed, Error>>) {
+export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
 
   const query = useQuery<Feed, Error>({

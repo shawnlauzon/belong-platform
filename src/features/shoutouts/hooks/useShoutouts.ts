@@ -1,4 +1,4 @@
-import { useQuery, QueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { logger, useSupabase } from '@/shared';
 import { fetchShoutouts } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
@@ -49,7 +49,7 @@ import { shoutoutKeys } from '../queries';
  */
 export function useShoutouts(
   filter?: ShoutoutFilter,
-  options?: Partial<QueryOptions<Shoutout[], Error>>,
+  options?: Partial<UseQueryOptions<Shoutout[], Error>>,
 ): UseQueryResult<Shoutout[], Error> {
   if (filter?.resourceId && filter?.communityId) {
     throw new Error('Cannot filter by both resourceId and communityId');

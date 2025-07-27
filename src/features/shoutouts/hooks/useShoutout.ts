@@ -1,4 +1,4 @@
-import { useQuery, QueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { fetchShoutoutById } from '../api';
@@ -44,7 +44,7 @@ import { shoutoutKeys } from '../queries';
  */
 export function useShoutout(
   shoutoutId: string,
-  options?: Partial<QueryOptions<Shoutout | null, Error>>,
+  options?: Partial<UseQueryOptions<Shoutout | null, Error>>,
 ): UseQueryResult<Shoutout | null, Error> {
   const supabase = useSupabase();
 

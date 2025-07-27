@@ -3,13 +3,13 @@ import { useSupabase } from '@/shared';
 import { fetchResourceTimeslots } from '../api';
 import { ResourceTimeslot } from '../types';
 import { ResourceTimeslotFilter } from '../types/resourceTimeslotFilter';
-import { QueryOptions } from '@tanstack/react-query';
+import { UseQueryOptions } from '@tanstack/react-query';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { resourceTimeslotKeys } from '../queries';
 
 export function useResourceTimeslots(
   filter?: ResourceTimeslotFilter,
-  options?: Partial<QueryOptions<ResourceTimeslot[], Error>>,
+  options?: Partial<UseQueryOptions<ResourceTimeslot[], Error>>,
 ) {
   const supabase = useSupabase();
 

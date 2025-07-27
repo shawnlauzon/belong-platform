@@ -1,4 +1,4 @@
-import { useQuery, QueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUserCommunities } from '@/features/communities/api';
@@ -59,7 +59,7 @@ import { userCommunitiesKeys } from '../queries';
  */
 export function useUserCommunities(
   userId?: string,
-  options?: Partial<QueryOptions<CommunityMembership[], Error>>,
+  options?: Partial<UseQueryOptions<CommunityMembership[], Error>>,
 ) {
   const supabase = useSupabase();
 

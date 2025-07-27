@@ -1,4 +1,4 @@
-import { useQuery, QueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { getCurrentUser } from '../api';
 import { useSupabase } from '@/shared';
@@ -27,7 +27,7 @@ import type { User } from '@/features/users/types';
  * ```
  */
 export function useCurrentUser(
-  options?: Partial<QueryOptions<User | null, Error>>,
+  options?: Partial<UseQueryOptions<User | null, Error>>,
 ) {
   const supabase = useSupabase();
 

@@ -1,4 +1,4 @@
-import { QueryOptions, useQuery } from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { STANDARD_CACHE_TIME } from '@/config';
@@ -60,7 +60,7 @@ import { resourceKeys } from '../queries';
  */
 export function useResources(
   filter?: ResourceFilter,
-  options?: Partial<QueryOptions<ResourceSummary[], Error>>,
+  options?: Partial<UseQueryOptions<ResourceSummary[], Error>>,
 ) {
   const supabase = useSupabase();
 
