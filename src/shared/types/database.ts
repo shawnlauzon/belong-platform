@@ -2580,7 +2580,7 @@ export type Database = {
         | "given"
         | "received"
       resource_status: "open" | "completed" | "cancelled"
-      resource_type: "offer" | "request"
+      resource_type: "offer" | "request" | "event"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2739,7 +2739,7 @@ export const Constants = {
         "received",
       ],
       resource_status: ["open", "completed", "cancelled"],
-      resource_type: ["offer", "request"],
+      resource_type: ["offer", "request", "event"],
     },
   },
 } as const

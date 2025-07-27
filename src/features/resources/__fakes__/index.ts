@@ -33,6 +33,7 @@ export function createFakeResource(
     type: faker.helpers.arrayElement([
       ResourceTypeEnum.OFFER,
       ResourceTypeEnum.REQUEST,
+      ResourceTypeEnum.EVENT,
     ]),
     areTimeslotsFlexible: true,
     category: faker.helpers.maybe(
@@ -99,6 +100,7 @@ export function createFakeResourceInput(
     type: faker.helpers.arrayElement([
       ResourceTypeEnum.OFFER,
       ResourceTypeEnum.REQUEST,
+      ResourceTypeEnum.EVENT,
     ]),
     category: faker.helpers.arrayElement([
       'tools',
@@ -155,6 +157,7 @@ export function createFakeResourceRow(
     type: faker.helpers.arrayElement([
       ResourceTypeEnum.OFFER,
       ResourceTypeEnum.REQUEST,
+      ResourceTypeEnum.EVENT,
     ]),
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },

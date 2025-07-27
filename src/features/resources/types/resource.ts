@@ -18,6 +18,7 @@ export type ResourceSummary = Pick<
 export enum ResourceTypeEnum {
   OFFER = 'offer',
   REQUEST = 'request',
+  EVENT = 'event',
 }
 
 export type ClaimLimitPer = 'total' | 'timeslot';

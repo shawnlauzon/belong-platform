@@ -57,7 +57,7 @@ export async function createTestCommunity(supabase: SupabaseClient<Database>) {
 export async function createTestResource(
   supabase: SupabaseClient<Database>,
   communityId: string,
-  type: 'offer' | 'request' = 'offer',
+  type: 'offer' | 'request' | 'event' = 'offer',
   category: ResourceCategory = 'tools',
 ) {
   const data = createFakeResourceInput({
