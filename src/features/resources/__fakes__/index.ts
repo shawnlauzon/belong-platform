@@ -28,26 +28,32 @@ export function createFakeResource(
 
   const owner = createFakeUser();
 
+  const type = faker.helpers.arrayElement([
+    ResourceTypeEnum.OFFER,
+    ResourceTypeEnum.REQUEST,
+    ResourceTypeEnum.EVENT,
+  ]);
+
+  const category = type === ResourceTypeEnum.EVENT 
+    ? 'drinks' as ResourceCategory
+    : faker.helpers.maybe(
+        () =>
+          faker.helpers.arrayElement([
+            'tools',
+            'skills',
+            'food',
+            'supplies',
+            'other',
+            'drinks',
+          ] as const),
+        { probability: 0.8 },
+      ) as ResourceCategory | undefined;
+
   return {
     id: faker.string.uuid(),
-    type: faker.helpers.arrayElement([
-      ResourceTypeEnum.OFFER,
-      ResourceTypeEnum.REQUEST,
-      ResourceTypeEnum.EVENT,
-    ]),
+    type,
     areTimeslotsFlexible: true,
-    category: faker.helpers.maybe(
-      () =>
-        faker.helpers.arrayElement([
-          'tools',
-          'skills',
-          'food',
-          'supplies',
-          'event',
-          'other',
-        ] as const),
-      { probability: 0.8 },
-    ) as ResourceCategory | undefined,
+    category,
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     imageUrls: [],
@@ -94,22 +100,28 @@ export function createFakeResourceWithOwner(
 export function createFakeResourceInput(
   overrides?: Partial<ResourceInput>,
 ): ResourceInput {
+  const type = faker.helpers.arrayElement([
+    ResourceTypeEnum.OFFER,
+    ResourceTypeEnum.REQUEST,
+    ResourceTypeEnum.EVENT,
+  ]);
+
+  const category = type === ResourceTypeEnum.EVENT 
+    ? 'drinks' as ResourceCategory
+    : faker.helpers.arrayElement([
+        'tools',
+        'skills',
+        'food',
+        'supplies',
+        'other',
+        'drinks',
+      ] as const);
+
   return {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    type: faker.helpers.arrayElement([
-      ResourceTypeEnum.OFFER,
-      ResourceTypeEnum.REQUEST,
-      ResourceTypeEnum.EVENT,
-    ]),
-    category: faker.helpers.arrayElement([
-      'tools',
-      'skills',
-      'food',
-      'supplies',
-      'event',
-      'other',
-    ] as const),
+    type,
+    category,
     communityIds: [faker.string.uuid()],
     imageUrls: [],
     locationName: faker.location.city(),
@@ -139,26 +151,31 @@ export function createFakeResourceRow(
 ): ResourceRow {
   const now = new Date().toISOString();
 
+  const type = faker.helpers.arrayElement([
+    ResourceTypeEnum.OFFER,
+    ResourceTypeEnum.REQUEST,
+    ResourceTypeEnum.EVENT,
+  ]);
+
+  const category = type === ResourceTypeEnum.EVENT 
+    ? 'drinks'
+    : faker.helpers.arrayElement([
+        'tools',
+        'skills',
+        'food',
+        'supplies',
+        'other',
+        'rides',
+        'housing',
+        'drinks',
+      ] as const);
+
   return {
     id: faker.string.uuid(),
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
-    category: faker.helpers.arrayElement([
-      'tools',
-      'skills',
-      'food',
-      'supplies',
-      'event',
-      'other',
-      'rides',
-      'housing',
-      'drinks',
-    ] as const),
-    type: faker.helpers.arrayElement([
-      ResourceTypeEnum.OFFER,
-      ResourceTypeEnum.REQUEST,
-      ResourceTypeEnum.EVENT,
-    ]),
+    category,
+    type,
     image_urls: Array.from(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),

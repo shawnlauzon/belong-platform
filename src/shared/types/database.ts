@@ -2564,7 +2564,6 @@ export type Database = {
         | "skills"
         | "food"
         | "supplies"
-        | "event"
         | "other"
         | "rides"
         | "housing"
@@ -2721,7 +2720,6 @@ export const Constants = {
         "skills",
         "food",
         "supplies",
-        "event",
         "other",
         "rides",
         "housing",
