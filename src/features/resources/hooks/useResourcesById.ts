@@ -16,11 +16,20 @@ export function useResourcesById(
       queryFn: () => fetchResourceById(supabase, id),
       ...options,
     })),
+    combine: (results) => {
+      return {
+        data: results.map((result) => result.data),
+        isPending: results.some((result) => result.isPending),
+        isError: results.some((result) => result.isError),
+        error: results.some((result) => result.error),
+      };
+    },
   });
 
-  if (query.some((q) => q.error)) {
+  if (query.error) {
     logger.error('📚 API: Error fetching resources', {
-      error: query.some((q) => q.error),
+      error: query.error,
+      resourceIds,
     });
   }
 
