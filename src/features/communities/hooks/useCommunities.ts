@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, QueryOptions } from '@tanstack/react-query';
 import { logger, useSupabase } from '@/shared';
 import { fetchCommunities } from '@/features/communities/api';
 import { STANDARD_CACHE_TIME } from '@/config';
@@ -54,7 +54,7 @@ import type { Community, CommunityFilter } from '@/features/communities/types';
  */
 export function useCommunities(
   filter?: CommunityFilter,
-  options?: Partial<UseQueryOptions<Community[], Error>>,
+  options?: Partial<QueryOptions<Community[], Error>>,
 ) {
   const supabase = useSupabase();
 

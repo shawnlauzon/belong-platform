@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, QueryOptions } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUserById } from '../api';
@@ -66,7 +66,7 @@ import { userKeys } from '../queries';
  */
 export function useUser(
   userId: string,
-  options?: Partial<UseQueryOptions<User | null, Error>>,
+  options?: Partial<QueryOptions<User | null, Error>>,
 ): UseQueryResult<User | null, Error> {
   const supabase = useSupabase();
 

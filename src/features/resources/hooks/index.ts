@@ -1,6 +1,7 @@
 // Query hooks
 export * from './useResources';
 export * from './useResource';
+export * from './useResourcesById';
 export * from './useResourceClaims';
 export * from './useResourceTimeslots';
 
