@@ -72,10 +72,7 @@ export function useUser(
 
   const query = useQuery<User | null, Error>({
     queryKey: userKeys.detail(userId),
-    queryFn: () => {
-      logger.debug('👤 useUser: Fetching user by ID', { userId });
-      return fetchUserById(supabase, userId);
-    },
+    queryFn: () => fetchUserById(supabase, userId),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });

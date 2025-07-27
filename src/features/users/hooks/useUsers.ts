@@ -56,10 +56,7 @@ export function useUsers(
 
   const query = useQuery<User[], Error>({
     queryKey: filter ? userKeys.list(filter) : userKeys.all,
-    queryFn: () => {
-      logger.debug('👤 useUsers: Fetching users', { filter });
-      return fetchUsers(supabase, filter);
-    },
+    queryFn: () => fetchUsers(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });

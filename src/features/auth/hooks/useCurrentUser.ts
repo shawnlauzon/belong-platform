@@ -4,6 +4,7 @@ import { getCurrentUser } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
 import type { User } from '@/features/users/types';
+import { authKeys } from '../queries';
 
 /**
  * Hook for fetching the current authenticated user.
@@ -32,7 +33,7 @@ export function useCurrentUser(
   const supabase = useSupabase();
 
   const query = useQuery({
-    queryKey: ['auth'],
+    queryKey: authKeys.currentUser(),
     queryFn: () => getCurrentUser(supabase),
     staleTime: STANDARD_CACHE_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes

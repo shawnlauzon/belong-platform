@@ -37,7 +37,7 @@ export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
 
   const query = useQuery<Feed, Error>({
-    queryKey: feedKeys.all,
+    queryKey: feedKeys.feed(),
     queryFn: () => fetchFeed(supabase),
     staleTime: SHORT_CACHE_TIME,
     ...options,
