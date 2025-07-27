@@ -3,6 +3,7 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { deleteResource } from '@/features/resources/api';
 import { resourceKeys } from '../queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for deleting a resource.
@@ -58,6 +59,10 @@ export function useDeleteResource() {
         // TODO Only remove affected lists
         queryClient.invalidateQueries({
           queryKey: resourceKeys.lists(),
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: feedKeys.all,
         });
 
         logger.info('📚 API: Successfully deleted resource', {

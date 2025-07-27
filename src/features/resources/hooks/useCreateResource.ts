@@ -5,6 +5,7 @@ import { createResource } from '@/features/resources/api';
 
 import type { Resource, ResourceInput } from '@/features/resources/types';
 import { resourceKeys } from '../queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for creating a new resource.
@@ -90,9 +91,12 @@ export function useCreateResource() {
         newResource,
       );
 
-      // Invalidate feed to show new resource
       // TODO Should be able to insert it into the appropriate place
       queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
+
+      queryClient.invalidateQueries({
+        queryKey: feedKeys.all,
+      });
     },
     onError: (error) => {
       logger.error('📚 API: Failed to create resource', { error });

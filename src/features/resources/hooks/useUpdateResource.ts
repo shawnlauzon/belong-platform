@@ -4,6 +4,7 @@ import { useSupabase } from '@/shared';
 import { updateResource } from '../api';
 import type { ResourceInput, Resource } from '../types';
 import { resourceKeys } from '../queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for updating an existing resource.
@@ -86,6 +87,9 @@ export function useUpdateResource() {
       if (variables.title || variables.status || variables.type) {
         queryClient.invalidateQueries({
           queryKey: resourceKeys.lists(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: feedKeys.all,
         });
       }
 
