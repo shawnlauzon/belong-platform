@@ -15,22 +15,6 @@ export async function createResource(
   supabase: SupabaseClient<Database>,
   resourceData: ResourceInput,
 ): Promise<Resource> {
-  // // Validate user membership in all specified communities
-  // const userCommunities = await fetchUserCommunities(supabase, currentUserId);
-  // const userCommunityIds = userCommunities.map(
-  //   (membership) => membership.communityId,
-  // );
-
-  // const invalidCommunityIds = resourceData.communityIds.filter(
-  //   (communityId) => !userCommunityIds.includes(communityId),
-  // );
-
-  // if (invalidCommunityIds.length > 0) {
-  //   throw new Error(
-  //     `User is not a member of communities: ${invalidCommunityIds.join(', ')}`,
-  //   );
-  // }
-
   const withoutCommunityIds = {
     ...resourceData,
     communityIds: undefined,

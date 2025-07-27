@@ -44,11 +44,89 @@ export async function updateResource(
     return null;
   }
 
+  // Handle community associations if communityIds is provided
+  if (updates.communityIds !== undefined) {
+    // Delete existing community associations
+    const { error: deleteError } = await supabase
+      .from('resource_communities')
+      .delete()
+      .eq('resource_id', id);
+
+    if (deleteError) {
+      logger.error('📚 API: Failed to delete existing community associations', {
+        error: deleteError,
+        resourceId: id,
+      });
+      throw deleteError;
+    }
+
+    // Insert new community associations if any
+    if (updates.communityIds.length > 0) {
+      const resourceCommunityInserts = updates.communityIds.map(
+        (communityId) => ({
+          resource_id: id,
+          community_id: communityId,
+        }),
+      );
+
+      const { error: insertError } = await supabase
+        .from('resource_communities')
+        .insert(resourceCommunityInserts);
+
+      if (insertError) {
+        logger.error('📚 API: Failed to insert new community associations', {
+          error: insertError,
+          resourceId: id,
+          communityIds: updates.communityIds,
+        });
+        throw insertError;
+      }
+    }
+
+    // Re-fetch the resource with updated community associations
+    const { data: updatedData, error: refetchError } = (await supabase
+      .from('resources')
+      .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS)
+      .eq('id', id)
+      .maybeSingle()) as {
+      data: ResourceRowJoinCommunitiesJoinTimeslots | null;
+      error: QueryError | null;
+    };
+
+    if (refetchError) {
+      logger.error('📚 API: Failed to refetch updated resource', {
+        error: refetchError,
+        resourceId: id,
+      });
+      throw refetchError;
+    }
+
+    if (!updatedData) {
+      logger.debug('📚 API: Resource not found after community update', {
+        id: updateData.id,
+      });
+      return null;
+    }
+
+    // Use the updated data with fresh community associations
+    const resource = toDomainResource(updatedData);
+
+    logger.debug('📚 API: Successfully updated resource', {
+      id: resource.id,
+      title: resource.title,
+      communityIds: resource.communityIds,
+    });
+
+    return resource;
+  }
+
+  // Use the original data if no community changes
   const resource = toDomainResource(data);
 
   logger.debug('📚 API: Successfully updated resource', {
     id: resource.id,
     title: resource.title,
+    communityIds: resource.communityIds,
   });
 
   return resource;
