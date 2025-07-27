@@ -1,5 +1,10 @@
 import { Coordinates, IsPersisted } from '@/shared';
-import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
+import {
+  ResourceStatus,
+  ResourceCategory,
+  ResourceType,
+  ResourceTimeslot,
+} from '../index';
 
 // I considered having a ResouceSummary, but nearly everything here is needed on the list view
 // However, they are only needed for the VISIBLE items.
@@ -8,6 +13,7 @@ import { ResourceStatus, ResourceCategory, ResourceType } from '../index';
 export type Resource = IsPersisted<ResourceInput> & {
   ownerId: string;
   areTimeslotsFlexible: boolean;
+  timeslots: ResourceTimeslot[];
 };
 
 export type ResourceSummary = Pick<

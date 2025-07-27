@@ -5,8 +5,8 @@ import { toResourceInsertRow } from '@/features/resources/transformers/resourceT
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateResource } from './updateResource';
 import {
-  ResourceRowJoinCommunities,
-  SELECT_RESOURCES_JOIN_COMMUNITIES,
+  ResourceRowJoinCommunitiesJoinTimeslots,
+  SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS,
 } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 import { logger } from '@/shared';
@@ -98,10 +98,10 @@ export async function createResource(
   // Fetch the complete resource with all relations now that community associations exist
   const { data: completeResource, error: fetchError } = (await supabase
     .from('resources')
-    .select(SELECT_RESOURCES_JOIN_COMMUNITIES)
+    .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS)
     .eq('id', data.id)
     .single()) as {
-    data: ResourceRowJoinCommunities;
+    data: ResourceRowJoinCommunitiesJoinTimeslots;
     error: QueryError | null;
   };
 

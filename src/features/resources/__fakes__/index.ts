@@ -34,20 +34,21 @@ export function createFakeResource(
     ResourceTypeEnum.EVENT,
   ]);
 
-  const category = type === ResourceTypeEnum.EVENT 
-    ? 'drinks' as ResourceCategory
-    : faker.helpers.maybe(
-        () =>
-          faker.helpers.arrayElement([
-            'tools',
-            'skills',
-            'food',
-            'supplies',
-            'other',
-            'drinks',
-          ] as const),
-        { probability: 0.8 },
-      ) as ResourceCategory | undefined;
+  const category =
+    type === ResourceTypeEnum.EVENT
+      ? ('drinks' as ResourceCategory)
+      : (faker.helpers.maybe(
+          () =>
+            faker.helpers.arrayElement([
+              'tools',
+              'skills',
+              'food',
+              'supplies',
+              'other',
+              'drinks',
+            ] as const),
+          { probability: 0.8 },
+        ) as ResourceCategory | undefined);
 
   return {
     id: faker.string.uuid(),
@@ -79,6 +80,7 @@ export function createFakeResource(
     ),
     requiresApproval: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
+    timeslots: [],
     ...overrides,
   };
 }
@@ -106,16 +108,17 @@ export function createFakeResourceInput(
     ResourceTypeEnum.EVENT,
   ]);
 
-  const category = type === ResourceTypeEnum.EVENT 
-    ? 'drinks' as ResourceCategory
-    : faker.helpers.arrayElement([
-        'tools',
-        'skills',
-        'food',
-        'supplies',
-        'other',
-        'drinks',
-      ] as const);
+  const category =
+    type === ResourceTypeEnum.EVENT
+      ? ('drinks' as ResourceCategory)
+      : faker.helpers.arrayElement([
+          'tools',
+          'skills',
+          'food',
+          'supplies',
+          'other',
+          'drinks',
+        ] as const);
 
   return {
     title: faker.commerce.productName(),
@@ -157,18 +160,19 @@ export function createFakeResourceRow(
     ResourceTypeEnum.EVENT,
   ]);
 
-  const category = type === ResourceTypeEnum.EVENT 
-    ? 'drinks'
-    : faker.helpers.arrayElement([
-        'tools',
-        'skills',
-        'food',
-        'supplies',
-        'other',
-        'rides',
-        'housing',
-        'drinks',
-      ] as const);
+  const category =
+    type === ResourceTypeEnum.EVENT
+      ? 'drinks'
+      : faker.helpers.arrayElement([
+          'tools',
+          'skills',
+          'food',
+          'supplies',
+          'other',
+          'rides',
+          'housing',
+          'drinks',
+        ] as const);
 
   return {
     id: faker.string.uuid(),

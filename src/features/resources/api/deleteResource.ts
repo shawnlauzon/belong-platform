@@ -1,14 +1,14 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
-import { Resource } from '../types';
 import { ResourceRow } from '../types/resourceRow';
-import { toDomainResource } from '../transformers';
+import { toDomainResourceSummary } from '../transformers';
+import { ResourceSummary } from '../types';
 
 export async function deleteResource(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<Resource | null> {
+): Promise<ResourceSummary | null> {
   const { data, error } = (await supabase
     .from('resources')
     .delete()
@@ -31,5 +31,5 @@ export async function deleteResource(
     id,
   });
 
-  return data ? toDomainResource(data) : null;
+  return data ? toDomainResourceSummary(data) : null;
 }

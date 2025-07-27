@@ -5,8 +5,8 @@ import { forDbUpdate } from '@/features/resources/transformers/resourceTransform
 import { logger } from '@/shared';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 import {
-  ResourceRow,
-  SELECT_RESOURCE_CLAIMS_BASIC,
+  ResourceRowJoinCommunitiesJoinTimeslots,
+  SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS,
 } from '../types/resourceRow';
 import { QueryError } from '@supabase/supabase-js';
 
@@ -26,9 +26,9 @@ export async function updateResource(
     .from('resources')
     .update(dbData)
     .eq('id', id)
-    .select(SELECT_RESOURCE_CLAIMS_BASIC)
+    .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS)
     .maybeSingle()) as {
-    data: ResourceRow | null;
+    data: ResourceRowJoinCommunitiesJoinTimeslots | null;
     error: QueryError | null;
   };
 
@@ -50,5 +50,6 @@ export async function updateResource(
     id: resource.id,
     title: resource.title,
   });
+
   return resource;
 }

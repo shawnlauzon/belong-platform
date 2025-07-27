@@ -7,9 +7,10 @@ import type {
 import type {
   ResourceInsertDbData,
   ResourceUpdateDbData,
-  ResourceRowJoinCommunities,
+  ResourceRowJoinCommunitiesJoinTimeslots,
 } from '../types/resourceRow';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
+import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
 
 /**
  * Transform a domain resource object to a database resource record
@@ -75,7 +76,7 @@ export function forDbUpdate(
  * Transform a database resource record to a Resource object
  */
 export function toDomainResource(
-  dbResource: ResourceRowJoinCommunities,
+  dbResource: ResourceRowJoinCommunitiesJoinTimeslots,
 ): Resource {
   return {
     id: dbResource.id,
@@ -95,17 +96,20 @@ export function toDomainResource(
       dbResource.resource_communities?.map((rc) => rc.community_id) || [],
     status: dbResource.status,
     claimLimit: dbResource.claim_limit ?? undefined,
-    claimLimitPer: (dbResource.claim_limit_per as 'total' | 'timeslot') ?? undefined,
+    claimLimitPer:
+      (dbResource.claim_limit_per as 'total' | 'timeslot') ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
     areTimeslotsFlexible: dbResource.timeslots_flexible ?? true,
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,
+    timeslots:
+      dbResource.resource_timeslots?.map(toDomainResourceTimeslot) || [],
   };
 }
 
 export function toDomainResourceSummary(
-  dbResource: ResourceRowJoinCommunities,
+  dbResource: ResourceRowJoinCommunitiesJoinTimeslots,
 ): ResourceSummary {
   return {
     id: dbResource.id,

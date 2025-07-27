@@ -2,11 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { ResourceFilter, ResourceSummary } from '@/features/resources';
 import { toDomainResourceSummary } from '../transformers';
-import {
-  ResourceRowJoinCommunities,
-  SELECT_RESOURCES_JOIN_COMMUNITIES,
-} from '../types/resourceRow';
 import { appendQueries } from '@/shared';
+import {
+  ResourceRowJoinCommunitiesJoinTimeslots,
+  SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS,
+} from '../types/resourceRow';
 
 export async function fetchResources(
   supabase: SupabaseClient<Database>,
@@ -14,7 +14,7 @@ export async function fetchResources(
 ): Promise<ResourceSummary[]> {
   let query = supabase
     .from('resources')
-    .select(SELECT_RESOURCES_JOIN_COMMUNITIES);
+    .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS);
 
   if (filters) {
     query = appendQueries(query, {
@@ -28,7 +28,7 @@ export async function fetchResources(
   const { data, error } = (await query.order('created_at', {
     ascending: false,
   })) as {
-    data: ResourceRowJoinCommunities[] | null;
+    data: ResourceRowJoinCommunitiesJoinTimeslots[] | null;
     error: Error | null;
   };
 
