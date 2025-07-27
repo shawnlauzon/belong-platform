@@ -1,9 +1,10 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import { STANDARD_CACHE_TIME } from '@/config';
+import { SHORT_CACHE_TIME } from '@/config';
 import { fetchFeed } from '../api';
 
 import type { Feed } from '../types';
+import { feedKeys } from '../queries';
 
 /**
  * Hook for fetching the user's feed.
@@ -36,9 +37,9 @@ export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
 
   const query = useQuery<Feed, Error>({
-    queryKey: ['feed'] as const,
+    queryKey: feedKeys.all,
     queryFn: () => fetchFeed(supabase),
-    staleTime: STANDARD_CACHE_TIME,
+    staleTime: SHORT_CACHE_TIME,
     ...options,
   });
 

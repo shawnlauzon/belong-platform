@@ -2,8 +2,8 @@ import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { fetchResourceClaims } from '../api';
 import { ResourceClaim, ResourceClaimFilter } from '../types';
-import { STANDARD_CACHE_TIME } from '@/config';
 import { resourceClaimsKeys } from '../queries';
+import { VERY_SHORT_CACHE_TIME } from '@/config';
 
 /**
  * Hook for fetching all claims for a specific resource.
@@ -52,7 +52,7 @@ export function useResourceClaims(
           ? resourceClaimsKeys.listByResource(filter.resourceId)
           : resourceClaimsKeys.all,
     queryFn: () => fetchResourceClaims(supabase, filter),
-    staleTime: STANDARD_CACHE_TIME,
+    staleTime: VERY_SHORT_CACHE_TIME,
     ...options,
   });
 }
