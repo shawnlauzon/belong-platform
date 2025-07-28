@@ -116,5 +116,6 @@ export function toDomainResourceSummary(
     type: dbResource.type,
     title: dbResource.title,
     status: dbResource.status,
+    category: dbResource.category,
   };
 }
