@@ -21,6 +21,7 @@ export async function fetchShoutouts(
     resource_id: filter?.resourceId,
     community_id: filter?.communityId,
     sender_id: filter?.senderId,
+    receiver_id: filter?.receiverId,
   });
 
   const { data, error } = await query.order('created_at', {
