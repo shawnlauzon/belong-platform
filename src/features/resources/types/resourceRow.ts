@@ -51,3 +51,6 @@ export type ResourceCategory = Database['public']['Enums']['resource_category'];
 
 // Type and enum for ResourceType
 export type ResourceType = Database['public']['Enums']['resource_type'];
+
+export type ResourceTimeslotStatus =
+  Database['public']['Enums']['resource_timeslot_status'];

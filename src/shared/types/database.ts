@@ -305,6 +305,7 @@ export type Database = {
           id: string
           resource_id: string
           start_time: string
+          status: Database["public"]["Enums"]["resource_timeslot_status"]
           updated_at: string
         }
         Insert: {
@@ -313,6 +314,7 @@ export type Database = {
           id?: string
           resource_id: string
           start_time: string
+          status?: Database["public"]["Enums"]["resource_timeslot_status"]
           updated_at?: string
         }
         Update: {
@@ -321,6 +323,7 @@ export type Database = {
           id?: string
           resource_id?: string
           start_time?: string
+          status?: Database["public"]["Enums"]["resource_timeslot_status"]
           updated_at?: string
         }
         Relationships: [
@@ -2477,7 +2480,9 @@ export type Database = {
         | "interested"
         | "given"
         | "received"
+        | "flaked"
       resource_status: "open" | "completed" | "cancelled"
+      resource_timeslot_status: "active" | "completed" | "cancelled"
       resource_type: "offer" | "request" | "event"
       trust_score_action_type:
         | "community_creation"
@@ -2642,8 +2647,10 @@ export const Constants = {
         "interested",
         "given",
         "received",
+        "flaked",
       ],
       resource_status: ["open", "completed", "cancelled"],
+      resource_timeslot_status: ["active", "completed", "cancelled"],
       resource_type: ["offer", "request", "event"],
       trust_score_action_type: [
         "community_creation",
