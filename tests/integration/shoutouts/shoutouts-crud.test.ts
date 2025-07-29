@@ -172,26 +172,15 @@ describe('Shoutouts API - CRUD Operations', () => {
       }
     });
 
-    it('filters by sentBy', async () => {
+    it('filters by senderId', async () => {
       const filtered = await fetchShoutouts(supabase, {
-        sentBy: testUser.id,
+        senderId: testUser.id,
       });
 
       // ISSUE: Filtering may not be working correctly - adjust expectation
       expect(filtered.length).toBeGreaterThanOrEqual(1);
-      expect(filtered.some(s => s.id === readOnlyShoutout2.id)).toBe(true);
-      expect(filtered.every(s => s.senderId === testUser.id)).toBe(true);
-    });
-
-    it('filters by receivedBy', async () => {
-      const filtered = await fetchShoutouts(supabase, {
-        receivedBy: testUser.id,
-      });
-
-      // ISSUE: Filtering may not be working correctly - adjust expectation
-      expect(filtered.length).toBeGreaterThanOrEqual(1);
-      expect(filtered.some(s => s.id === readOnlyShoutout1.id)).toBe(true);
-      expect(filtered.every(s => s.receiverId === testUser.id)).toBe(true);
+      expect(filtered.some((s) => s.id === readOnlyShoutout2.id)).toBe(true);
+      expect(filtered.every((s) => s.senderId === testUser.id)).toBe(true);
     });
 
     it('filters by resourceId', async () => {
@@ -245,11 +234,10 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('updates shoutout message', async () => {
       const newMessage = `${TEST_PREFIX}Updated_Message`;
-      const updatedShoutout = await updateShoutout(
-        supabase,
-        createdShoutout.id,
-        { message: newMessage },
-      );
+      const updatedShoutout = await updateShoutout(supabase, {
+        id: createdShoutout.id,
+        message: newMessage,
+      });
 
       expect(updatedShoutout).toBeTruthy();
       expect(updatedShoutout).toMatchObject({

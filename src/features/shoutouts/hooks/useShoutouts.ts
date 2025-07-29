@@ -51,8 +51,13 @@ export function useShoutouts(
   filter?: ShoutoutFilter,
   options?: Partial<UseQueryOptions<Shoutout[], Error>>,
 ): UseQueryResult<Shoutout[], Error> {
-  if (filter?.resourceId && filter?.communityId) {
-    throw new Error('Cannot filter by both resourceId and communityId');
+  if (
+    (filter?.resourceId && (filter?.communityId || filter?.senderId)) ||
+    (filter?.communityId && filter?.senderId)
+  ) {
+    throw new Error(
+      'Can only filter by one of resourceId, communityId, or senderId',
+    );
   }
 
   const supabase = useSupabase();
@@ -62,7 +67,9 @@ export function useShoutouts(
       ? shoutoutKeys.listByResource(filter.resourceId)
       : filter?.communityId
         ? shoutoutKeys.listByCommunity(filter.communityId)
-        : shoutoutKeys.all,
+        : filter?.senderId
+          ? shoutoutKeys.listBySender(filter.senderId)
+          : shoutoutKeys.all,
     queryFn: () => {
       logger.debug('📢 useShoutouts: Fetching shoutouts', filter);
       return fetchShoutouts(supabase, filter);
