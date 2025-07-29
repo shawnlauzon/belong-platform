@@ -52,10 +52,7 @@ export function useJoinCommunity() {
 
       // Invalidate trust score for the new member (they get +50 points)
       queryClient.invalidateQueries({
-        queryKey: trustScoreKeys.detail({ 
-          userId: newMembership.userId, 
-          communityId: newMembership.communityId 
-        }),
+        queryKey: trustScoreKeys.listByUser(newMembership.userId),
       });
 
       logger.info('🏘️ API: Successfully joined community', {

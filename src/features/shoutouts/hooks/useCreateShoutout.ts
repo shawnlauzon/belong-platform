@@ -99,16 +99,10 @@ export function useCreateShoutout() {
 
       // Invalidate trust scores for sender and receiver
       queryClient.invalidateQueries({
-        queryKey: trustScoreKeys.detail({ 
-          userId: newShoutout.senderId, 
-          communityId: newShoutout.communityId 
-        }),
+        queryKey: trustScoreKeys.listByUser(newShoutout.senderId),
       });
       queryClient.invalidateQueries({
-        queryKey: trustScoreKeys.detail({ 
-          userId: newShoutout.receiverId, 
-          communityId: newShoutout.communityId 
-        }),
+        queryKey: trustScoreKeys.listByUser(newShoutout.receiverId),
       });
 
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {

@@ -109,16 +109,10 @@ export function useDeleteShoutout() {
 
         // Invalidate trust scores for sender and receiver
         queryClient.invalidateQueries({
-          queryKey: trustScoreKeys.detail({ 
-            userId: shoutout.senderId, 
-            communityId: shoutout.communityId 
-          }),
+          queryKey: trustScoreKeys.listByUser(shoutout.senderId),
         });
         queryClient.invalidateQueries({
-          queryKey: trustScoreKeys.detail({ 
-            userId: shoutout.receiverId, 
-            communityId: shoutout.communityId 
-          }),
+          queryKey: trustScoreKeys.listByUser(shoutout.receiverId),
         });
 
         logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {

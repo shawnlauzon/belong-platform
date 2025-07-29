@@ -101,13 +101,8 @@ export function useCreateResource() {
 
       // Invalidate trust score for resource owner (they get +50 points for offers)
       if (newResource.type === 'offer') {
-        newResource.communityIds.forEach((communityId) => {
-          queryClient.invalidateQueries({
-            queryKey: trustScoreKeys.detail({ 
-              userId: newResource.ownerId, 
-              communityId 
-            }),
-          });
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.listByUser(newResource.ownerId),
         });
       }
     },

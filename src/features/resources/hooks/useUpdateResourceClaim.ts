@@ -41,13 +41,8 @@ export function useUpdateResourceClaim() {
 
       // Invalidate trust score for claimant (status changes affect scores)
       if (resource) {
-        resource.communityIds.forEach((communityId) => {
-          queryClient.invalidateQueries({
-            queryKey: trustScoreKeys.detail({ 
-              userId: claim.claimantId, 
-              communityId 
-            }),
-          });
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.listByUser(claim.claimantId),
         });
       }
     },

@@ -73,11 +73,11 @@ export function useUpdateShoutout() {
       logger.debug('📢 useUpdateShoutout: Updating shoutout', data);
       return updateShoutout(supabase, data);
     },
-    onSuccess: (updatedShoutout: Shoutout | null) => {
+    onSuccess: (updatedShoutout: Shoutout | null, variables) => {
       // Update the specific shoutout in cache
       if (updatedShoutout) {
         queryClient.setQueryData(
-          shoutoutKeys.detail(updatedShoutout.id),
+          shoutoutKeys.detail(variables.id),
           updatedShoutout,
         );
 
@@ -93,6 +93,12 @@ export function useUpdateShoutout() {
         queryClient.invalidateQueries({
           queryKey: shoutoutKeys.listBySender(updatedShoutout.senderId),
         });
+
+        if (variables.receiverId) {
+          queryClient.invalidateQueries({
+            queryKey: shoutoutKeys.listByReceiver(variables.receiverId),
+          });
+        }
       }
     },
     onError: (error) => {
