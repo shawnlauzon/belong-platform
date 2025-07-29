@@ -1,11 +1,10 @@
 import { IsPersisted } from '@/shared';
 
-export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {
-  status: 'available' | 'maybeAvailable' | 'unavailable';
-};
+export type ResourceTimeslot = IsPersisted<ResourceTimeslotInput> & {};
 
 export type ResourceTimeslotInput = {
   resourceId: string;
   startTime: Date;
   endTime: Date;
+  status: 'available' | 'unavailable';
 };
