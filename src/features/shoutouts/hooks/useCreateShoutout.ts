@@ -6,6 +6,7 @@ import { Resource } from '@/features/resources';
 import { createShoutout } from '../api/createShoutout';
 import { shoutoutKeys } from '../queries';
 import { resourceKeys } from '@/features/resources/queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
  * Hook for creating new shoutouts.
@@ -94,6 +95,20 @@ export function useCreateShoutout() {
 
       queryClient.invalidateQueries({
         queryKey: shoutoutKeys.listBySender(newShoutout.senderId),
+      });
+
+      // Invalidate trust scores for sender and receiver
+      queryClient.invalidateQueries({
+        queryKey: trustScoreKeys.detail({ 
+          userId: newShoutout.senderId, 
+          communityId: newShoutout.communityId 
+        }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trustScoreKeys.detail({ 
+          userId: newShoutout.receiverId, 
+          communityId: newShoutout.communityId 
+        }),
       });
 
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {

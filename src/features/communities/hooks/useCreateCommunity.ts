@@ -5,6 +5,7 @@ import { createCommunity } from '@/features/communities/api';
 
 import type { CommunityInput } from '@/features/communities/types';
 import { communityKeys } from '../queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
  * Hook for creating a new community.
@@ -72,6 +73,11 @@ export function useCreateCommunity() {
     onSuccess: (newCommunity) => {
       // Invalidate all lists of communities
       queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+
+      // Invalidate trust score for the community creator (they get +1000 points)
+      queryClient.invalidateQueries({
+        queryKey: trustScoreKeys.listByUser(newCommunity.organizerId),
+      });
 
       logger.info('🏘️ API: Successfully created community', {
         id: newCommunity.id,

@@ -3,6 +3,7 @@ import { useSupabase } from '@/shared';
 import { updateResourceClaim } from '../api';
 import { Resource, ResourceClaim, ResourceClaimInput } from '../types';
 import { resourceClaimsKeys, resourceKeys } from '../queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 export function useUpdateResourceClaim() {
   const supabase = useSupabase();
@@ -35,6 +36,18 @@ export function useUpdateResourceClaim() {
         // We don't know who the resource owner is, so invalidate all
         queryClient.invalidateQueries({
           queryKey: resourceClaimsKeys.listsByResourceOwner(),
+        });
+      }
+
+      // Invalidate trust score for claimant (status changes affect scores)
+      if (resource) {
+        resource.communityIds.forEach((communityId) => {
+          queryClient.invalidateQueries({
+            queryKey: trustScoreKeys.detail({ 
+              userId: claim.claimantId, 
+              communityId 
+            }),
+          });
         });
       }
     },

@@ -6,6 +6,7 @@ import { createResource } from '@/features/resources/api';
 import type { Resource, ResourceInput } from '@/features/resources/types';
 import { resourceKeys } from '../queries';
 import { feedKeys } from '@/features/feed/queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
  * Hook for creating a new resource.
@@ -97,6 +98,18 @@ export function useCreateResource() {
       queryClient.invalidateQueries({
         queryKey: feedKeys.all,
       });
+
+      // Invalidate trust score for resource owner (they get +50 points for offers)
+      if (newResource.type === 'offer') {
+        newResource.communityIds.forEach((communityId) => {
+          queryClient.invalidateQueries({
+            queryKey: trustScoreKeys.detail({ 
+              userId: newResource.ownerId, 
+              communityId 
+            }),
+          });
+        });
+      }
     },
     onError: (error) => {
       logger.error('📚 API: Failed to create resource', { error });

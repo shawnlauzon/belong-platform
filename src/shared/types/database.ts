@@ -496,7 +496,7 @@ export type Database = {
       trust_score_logs: {
         Row: {
           action_id: string | null
-          action_type: string
+          action_type: Database["public"]["Enums"]["trust_score_action_type"]
           community_id: string | null
           created_at: string | null
           id: string
@@ -508,7 +508,7 @@ export type Database = {
         }
         Insert: {
           action_id?: string | null
-          action_type: string
+          action_type: Database["public"]["Enums"]["trust_score_action_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -520,7 +520,7 @@ export type Database = {
         }
         Update: {
           action_id?: string | null
-          action_type?: string
+          action_type?: Database["public"]["Enums"]["trust_score_action_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -2427,14 +2427,23 @@ export type Database = {
         Returns: number
       }
       update_trust_score: {
-        Args: {
-          p_user_id: string
-          p_community_id: string
-          p_action_type: string
-          p_action_id: string
-          p_points_change: number
-          p_metadata?: Json
-        }
+        Args:
+          | {
+              p_user_id: string
+              p_community_id: string
+              p_action_type: Database["public"]["Enums"]["trust_score_action_type"]
+              p_action_id: string
+              p_points_change: number
+              p_metadata?: Json
+            }
+          | {
+              p_user_id: string
+              p_community_id: string
+              p_action_type: string
+              p_action_id: string
+              p_points_change: number
+              p_metadata?: Json
+            }
         Returns: undefined
       }
       updategeometrysrid: {
@@ -2470,6 +2479,14 @@ export type Database = {
         | "received"
       resource_status: "open" | "completed" | "cancelled"
       resource_type: "offer" | "request" | "event"
+      trust_score_action_type:
+        | "community_creation"
+        | "community_join"
+        | "resource_offer"
+        | "resource_claim"
+        | "resource_completion"
+        | "shoutout_sent"
+        | "shoutout_received"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2628,6 +2645,15 @@ export const Constants = {
       ],
       resource_status: ["open", "completed", "cancelled"],
       resource_type: ["offer", "request", "event"],
+      trust_score_action_type: [
+        "community_creation",
+        "community_join",
+        "resource_offer",
+        "resource_claim",
+        "resource_completion",
+        "shoutout_sent",
+        "shoutout_received",
+      ],
     },
   },
 } as const

@@ -4,4 +4,5 @@ export * from './feed';
 export * from './images';
 export * from './resources';
 export * from './shoutouts';
+export * from './trust-scores';
 export * from './users';

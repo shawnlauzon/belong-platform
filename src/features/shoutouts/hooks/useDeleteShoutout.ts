@@ -3,6 +3,7 @@ import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import { deleteShoutout } from '../api';
 import { shoutoutKeys } from '../queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
  * Hook for deleting shoutouts.
@@ -104,6 +105,20 @@ export function useDeleteShoutout() {
 
         queryClient.invalidateQueries({
           queryKey: shoutoutKeys.listBySender(shoutout.senderId),
+        });
+
+        // Invalidate trust scores for sender and receiver
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.detail({ 
+            userId: shoutout.senderId, 
+            communityId: shoutout.communityId 
+          }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.detail({ 
+            userId: shoutout.receiverId, 
+            communityId: shoutout.communityId 
+          }),
         });
 
         logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {
