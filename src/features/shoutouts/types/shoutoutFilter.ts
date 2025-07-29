@@ -3,4 +3,5 @@ export interface ShoutoutFilter {
   communityId?: string | string[];
   resourceId?: string;
   senderId?: string;
+  receiverId?: string;
 }

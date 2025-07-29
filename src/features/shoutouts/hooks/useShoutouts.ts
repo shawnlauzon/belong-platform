@@ -51,12 +51,18 @@ export function useShoutouts(
   filter?: ShoutoutFilter,
   options?: Partial<UseQueryOptions<Shoutout[], Error>>,
 ): UseQueryResult<Shoutout[], Error> {
+  // Ensure that only 0 or one of the fields is set
+
   if (
-    (filter?.resourceId && (filter?.communityId || filter?.senderId)) ||
-    (filter?.communityId && filter?.senderId)
+    (filter?.resourceId &&
+      (filter?.communityId || filter?.senderId || filter?.receiverId)) ||
+    (filter?.communityId &&
+      (filter?.senderId || filter?.receiverId || filter?.resourceId)) ||
+    (filter?.senderId &&
+      (filter?.receiverId || filter?.resourceId || filter?.communityId))
   ) {
     throw new Error(
-      'Can only filter by one of resourceId, communityId, or senderId',
+      'Can only filter by one of resourceId, communityId, senderId, or receiverId',
     );
   }
 
@@ -69,7 +75,9 @@ export function useShoutouts(
         ? shoutoutKeys.listByCommunity(filter.communityId)
         : filter?.senderId
           ? shoutoutKeys.listBySender(filter.senderId)
-          : shoutoutKeys.all,
+          : filter?.receiverId
+            ? shoutoutKeys.listByReceiver(filter.receiverId)
+            : shoutoutKeys.all,
     queryFn: () => {
       logger.debug('📢 useShoutouts: Fetching shoutouts', filter);
       return fetchShoutouts(supabase, filter);

@@ -13,6 +13,10 @@ export const shoutoutKeys = {
   listsBySender: () => [...shoutoutKeys.lists(), 'by-sender'] as const,
   listBySender: (id: string) => [...shoutoutKeys.listsBySender(), id] as const,
 
+  listsByReceiver: () => [...shoutoutKeys.lists(), 'by-receiver'] as const,
+  listByReceiver: (id: string) =>
+    [...shoutoutKeys.listsByReceiver(), id] as const,
+
   details: () => [...shoutoutKeys.all, 'detail'] as const,
   detail: (id: string) => [...shoutoutKeys.details(), id] as const,
 };

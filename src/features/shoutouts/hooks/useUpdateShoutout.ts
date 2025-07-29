@@ -81,14 +81,17 @@ export function useUpdateShoutout() {
           updatedShoutout,
         );
 
-        // TODO Invalidate only the affected lists
+        // TODO Only invalidate the affected community
         queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.lists(),
+          queryKey: shoutoutKeys.listsByCommunity(),
         });
 
-        logger.info('📢 useUpdateShoutout: Successfully updated shoutout', {
-          id: updatedShoutout.id,
-          message: updatedShoutout.message,
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.listByResource(updatedShoutout.resourceId),
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.listBySender(updatedShoutout.senderId),
         });
       }
     },

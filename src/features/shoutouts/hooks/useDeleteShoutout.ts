@@ -93,11 +93,17 @@ export function useDeleteShoutout() {
           queryKey: shoutoutKeys.detail(shoutout.id),
         });
 
+        // TODO Only invalidate the affected community
         queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listByCommunity(shoutout.communityId),
+          queryKey: shoutoutKeys.listsByCommunity(),
         });
+
         queryClient.invalidateQueries({
           queryKey: shoutoutKeys.listByResource(shoutout.resourceId),
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: shoutoutKeys.listBySender(shoutout.senderId),
         });
 
         logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {

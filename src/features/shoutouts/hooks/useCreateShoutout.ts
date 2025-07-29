@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
-import { useCurrentUser } from '../../auth';
 import type { Shoutout, ShoutoutInput } from '../types';
 import { Resource } from '@/features/resources';
 import { createShoutout } from '../api/createShoutout';
@@ -60,7 +59,6 @@ import { resourceKeys } from '@/features/resources/queries';
 export function useCreateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
-  const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (input: ShoutoutInput) => {
@@ -79,27 +77,24 @@ export function useCreateShoutout() {
       });
     },
     onSuccess: (newShoutout: Shoutout) => {
-      // Invalidate all shoutout queries to refetch lists
-      queryClient.invalidateQueries({ queryKey: ['shoutouts'] });
-
       // Set the new shoutout in cache for immediate access
       queryClient.setQueryData(
         shoutoutKeys.detail(newShoutout.id),
         newShoutout,
       );
 
+      // TODO Only invalidate the affected community
+      queryClient.invalidateQueries({
+        queryKey: shoutoutKeys.listsByCommunity(),
+      });
+
       queryClient.invalidateQueries({
         queryKey: shoutoutKeys.listByResource(newShoutout.resourceId),
       });
 
       queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listByCommunity(newShoutout.communityId),
+        queryKey: shoutoutKeys.listBySender(newShoutout.senderId),
       });
-
-      // Invalidate all user data (including activities) using hierarchical invalidation
-      if (currentUser?.id) {
-        queryClient.invalidateQueries({ queryKey: ['user', currentUser.id] });
-      }
 
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
         id: newShoutout.id,
