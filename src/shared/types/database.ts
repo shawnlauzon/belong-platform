@@ -115,230 +115,6 @@ export type Database = {
           },
         ]
       }
-      conversations: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          last_activity_at: string
-          last_message_id: string | null
-          participant_1_id: string
-          participant_2_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          last_activity_at?: string
-          last_message_id?: string | null
-          participant_1_id: string
-          participant_2_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          last_activity_at?: string
-          last_message_id?: string | null
-          participant_1_id?: string
-          participant_2_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_last_message_id_fkey"
-            columns: ["last_message_id"]
-            isOneToOne: false
-            referencedRelation: "direct_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_participant_1_id_fkey"
-            columns: ["participant_1_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_participant_2_id_fkey"
-            columns: ["participant_2_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      direct_messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          from_user_id: string
-          id: string
-          read_at: string | null
-          to_user_id: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          from_user_id: string
-          id?: string
-          read_at?: string | null
-          to_user_id: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          from_user_id?: string
-          id?: string
-          read_at?: string | null
-          to_user_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "direct_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "direct_messages_from_user_id_fkey"
-            columns: ["from_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "direct_messages_to_user_id_fkey"
-            columns: ["to_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gathering_responses: {
-        Row: {
-          created_at: string
-          gathering_id: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          gathering_id: string
-          status: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          gathering_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gathering_responses_gathering_id_fkey"
-            columns: ["gathering_id"]
-            isOneToOne: false
-            referencedRelation: "gatherings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gathering_responses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gatherings: {
-        Row: {
-          attendee_count: number
-          community_id: string
-          coordinates: unknown
-          created_at: string
-          description: string
-          end_date_time: string | null
-          id: string
-          image_urls: string[]
-          location_name: string
-          max_attendees: number | null
-          organizer_id: string
-          start_date_time: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          attendee_count?: number
-          community_id: string
-          coordinates: unknown
-          created_at?: string
-          description: string
-          end_date_time?: string | null
-          id?: string
-          image_urls?: string[]
-          location_name: string
-          max_attendees?: number | null
-          organizer_id: string
-          start_date_time: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          attendee_count?: number
-          community_id?: string
-          coordinates?: unknown
-          created_at?: string
-          description?: string
-          end_date_time?: string | null
-          id?: string
-          image_urls?: string[]
-          location_name?: string
-          max_attendees?: number | null
-          organizer_id?: string
-          start_date_time?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gatherings_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gatherings_organizer_id_fkey"
-            columns: ["organizer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           content: string | null
@@ -568,6 +344,7 @@ export type Database = {
           expires_at: string | null
           id: string
           image_urls: string[]
+          is_recurring: boolean
           location_name: string | null
           owner_id: string
           requires_approval: boolean
@@ -587,6 +364,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           image_urls?: string[]
+          is_recurring?: boolean
           location_name?: string | null
           owner_id?: string
           requires_approval?: boolean
@@ -606,6 +384,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           image_urls?: string[]
+          is_recurring?: boolean
           location_name?: string | null
           owner_id?: string
           requires_approval?: boolean

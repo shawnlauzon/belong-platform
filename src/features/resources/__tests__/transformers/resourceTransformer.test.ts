@@ -83,6 +83,26 @@ describe('Resource Transformer', () => {
 
       expect(resource.imageUrls).toEqual([]);
     });
+
+    it('should transform isRecurring field from database to domain', () => {
+      const dbResource = createFakeResourceRow({
+        is_recurring: true,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.isRecurring).toBe(true);
+    });
+
+    it('should default isRecurring to false when not provided', () => {
+      const dbResource = createFakeResourceRow({
+        is_recurring: false,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.isRecurring).toBe(false);
+    });
   });
 
   describe('forDbInsert', () => {
@@ -111,6 +131,26 @@ describe('Resource Transformer', () => {
       expect(dbResource).toMatchObject({
         title: resourceData.title,
       });
+    });
+
+    it('should transform isRecurring field from domain to database', () => {
+      const resourceData = createFakeResourceInput({
+        isRecurring: true,
+      });
+
+      const dbResource = toResourceInsertRow(resourceData);
+
+      expect(dbResource.is_recurring).toBe(true);
+    });
+
+    it('should transform isRecurring field from domain to database when false', () => {
+      const resourceData = createFakeResourceInput({
+        isRecurring: false,
+      });
+
+      const dbResource = toResourceInsertRow(resourceData);
+
+      expect(dbResource.is_recurring).toBe(false);
     });
   });
 });

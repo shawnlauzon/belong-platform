@@ -26,6 +26,7 @@ export function toResourceInsertRow(
     claimLimitPer,
     requiresApproval,
     areTimeslotsFlexible,
+    isRecurring,
     expiresAt,
     category,
     ...rest
@@ -41,6 +42,7 @@ export function toResourceInsertRow(
     claim_limit_per: claimLimitPer,
     requires_approval: requiresApproval,
     timeslots_flexible: areTimeslotsFlexible ?? true,
+    is_recurring: isRecurring ?? false,
     expires_at: expiresAt?.toISOString(),
   };
 }
@@ -68,6 +70,7 @@ export function forDbUpdate(
     claim_limit_per: resource.claimLimitPer,
     requires_approval: resource.requiresApproval,
     timeslots_flexible: resource.areTimeslotsFlexible,
+    is_recurring: resource.isRecurring ?? false,
     expires_at: resource.expiresAt?.toISOString(),
   };
 }
@@ -100,6 +103,7 @@ export function toDomainResource(
       (dbResource.claim_limit_per as 'total' | 'timeslot') ?? undefined,
     requiresApproval: dbResource.requires_approval || false,
     areTimeslotsFlexible: dbResource.timeslots_flexible ?? true,
+    isRecurring: dbResource.is_recurring ?? false,
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,

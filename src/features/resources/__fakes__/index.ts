@@ -79,6 +79,7 @@ export function createFakeResource(
       faker.helpers.arrayElement(['total', 'timeslot'] as const),
     ),
     requiresApproval: faker.datatype.boolean(),
+    isRecurring: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
     timeslots: [],
     ...overrides,
@@ -144,6 +145,7 @@ export function createFakeResourceInput(
       faker.helpers.arrayElement(['total', 'timeslot'] as const),
     ),
     requiresApproval: faker.datatype.boolean(),
+    isRecurring: faker.datatype.boolean(),
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
     ...overrides,
   };
@@ -199,6 +201,7 @@ export function createFakeResourceRow(
     claim_limit_per: faker.helpers.arrayElement(['total', 'timeslot'] as const),
     requires_approval: faker.datatype.boolean(),
     timeslots_flexible: true,
+    is_recurring: faker.datatype.boolean(),
     expires_at:
       faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     ...overrides,

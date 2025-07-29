@@ -43,5 +43,6 @@ export type ResourceInput = {
   claimLimitPer?: ClaimLimitPer;
   requiresApproval: boolean;
   areTimeslotsFlexible?: boolean;
+  isRecurring?: boolean;
   expiresAt?: Date;
 };
