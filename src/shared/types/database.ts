@@ -493,6 +493,102 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_score_logs: {
+        Row: {
+          action_id: string | null
+          action_type: string
+          community_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          points_change: number
+          score_after: number
+          score_before: number
+          user_id: string | null
+        }
+        Insert: {
+          action_id?: string | null
+          action_type: string
+          community_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_change: number
+          score_after: number
+          score_before: number
+          user_id?: string | null
+        }
+        Update: {
+          action_id?: string | null
+          action_type?: string
+          community_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_change?: number
+          score_after?: number
+          score_before?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_score_logs_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_score_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_scores: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          last_calculated_at: string | null
+          score: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          last_calculated_at?: string | null
+          score?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          last_calculated_at?: string | null
+          score?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_scores_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -734,6 +830,10 @@ export type Database = {
       }
       calculate_community_area: {
         Args: { community_id: string }
+        Returns: number
+      }
+      calculate_event_cancellation_penalty: {
+        Args: { p_timeslot_id: string; p_cancelled_at?: string }
         Returns: number
       }
       communities_containing_point: {
@@ -2325,6 +2425,17 @@ export type Database = {
       unlockrows: {
         Args: { "": string }
         Returns: number
+      }
+      update_trust_score: {
+        Args: {
+          p_user_id: string
+          p_community_id: string
+          p_action_type: string
+          p_action_id: string
+          p_points_change: number
+          p_metadata?: Json
+        }
+        Returns: undefined
       }
       updategeometrysrid: {
         Args: {
