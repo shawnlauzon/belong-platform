@@ -227,7 +227,11 @@ export function createFakeResourceTimeslot(
     endTime,
     createdAt: now,
     updatedAt: now,
-    status: faker.helpers.arrayElement(['available', 'unavailable'] as const),
+    status: faker.helpers.arrayElement([
+      'active',
+      'completed',
+      'cancelled',
+    ] as const),
     ...overrides,
   };
 }
@@ -247,7 +251,11 @@ export function createFakeResourceTimeslotInput(
     resourceId: faker.string.uuid(),
     startTime,
     endTime,
-    status: faker.helpers.arrayElement(['available', 'unavailable'] as const),
+    status: faker.helpers.arrayElement([
+      'active',
+      'completed',
+      'cancelled',
+    ] as const),
     ...overrides,
   };
 }
@@ -289,6 +297,11 @@ export function createFakeResourceTimeslotRow(
     end_time: endTime.toISOString(),
     created_at: now,
     updated_at: now,
+    status: faker.helpers.arrayElement([
+      'active',
+      'completed',
+      'cancelled',
+    ] as const),
     ...overrides,
   };
 }
