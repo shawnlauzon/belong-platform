@@ -10,47 +10,15 @@ import {
 
 export async function updateResourceTimeslot(
   supabase: SupabaseClient<Database>,
-  id: string,
-  timeslotInput: Partial<ResourceTimeslotInput>,
+  update: Partial<ResourceTimeslotInput> & { id: string },
 ): Promise<ResourceTimeslot> {
-  // Check authentication first
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    logger.error(
-      '🏘️ API: Authentication required to update resource timeslot',
-      {
-        authError,
-        id,
-      },
-    );
-    throw new Error('Authentication required');
-  }
-
-  // Validate input if provided
-  if (
-    timeslotInput.startTime &&
-    timeslotInput.endTime &&
-    timeslotInput.startTime >= timeslotInput.endTime
-  ) {
-    logger.error('🏘️ API: Start time must be before end time', {
-      timeslotInput,
-      id,
-    });
-    throw new Error('Start time must be before end time');
-  }
-
-
   // Transform to database format
-  const updateData = forDbTimeslotUpdate(timeslotInput);
+  const updateData = forDbTimeslotUpdate(update);
 
   const { data, error } = (await supabase
     .from('resource_timeslots')
     .update(updateData)
-    .eq('id', id)
+    .eq('id', update.id)
     .select(SELECT_RESOURCE_TIMESLOT_BASIC)
     .maybeSingle()) as {
     data: ResourceTimeslotRow | null;
@@ -60,16 +28,14 @@ export async function updateResourceTimeslot(
   if (error) {
     logger.error('🏘️ API: Failed to update resource timeslot', {
       error,
-      id,
-      timeslotInput,
+      update,
     });
     throw new Error(error.message || 'Failed to update resource timeslot');
   }
 
   if (!data) {
     logger.error('🏘️ API: No data returned from timeslot update', {
-      id,
-      timeslotInput,
+      update,
     });
     throw new Error('No data returned from timeslot update');
   }
