@@ -38,18 +38,20 @@ export function BelongProvider({ children, config }: BelongProviderProps) {
 
 ```
 src/features/
-├── agenda/            # Personal todo/task aggregation
+├── auth/              # Authentication and user sessions
 │   ├── api/           # API functions
 │   ├── hooks/         # React Query hooks
 │   └── types/         # Type definitions
-├── auth/
-│   ├── api/           # API functions
-│   ├── hooks/         # React Query hooks
-│   ├── transformers/  # Data transformation
-│   └── types/         # Type definitions
-├── communities/
-├── resources/
-└── users/
+├── communities/       # Community management
+├── feed/              # Feed aggregation
+├── images/            # Image upload and management  
+├── resources/         # Resources (offers, requests, events)
+├── shoutouts/         # Recognition and appreciation
+├── trust-scores/      # Trust scoring system
+└── users/             # User profiles and management
+
+Note: The agenda page aggregates data from these features
+but is not a standalone platform feature.
 ```
 
 #### Access Patterns
@@ -330,6 +332,29 @@ export function useEntities(filters?: EntityFilter) {
   });
 }
 ```
+
+## Current Platform Features
+
+### Core Features
+
+- **Auth**: User authentication, registration, and session management
+- **Communities**: Hyper-local community creation and membership management with spatial boundaries
+- **Users**: User profiles and management
+- **Resources**: Multi-purpose resource system with three types:
+  - `offer` - sharing resources with the community
+  - `request` - asking for help from the community  
+  - `event` - community gatherings (formerly a separate events feature)
+- **Shoutouts**: Recognition and appreciation system between community members
+- **Trust Scores**: Community trust scoring based on user actions (creation, participation, etc.)
+
+### Utility Features
+
+- **Feed**: Aggregates items (resources, events, shoutouts) for display in feeds and timelines
+- **Images**: Handles image upload, commit, and cleanup workflows for user-generated content
+
+### UI Composition
+
+- **Agenda Page**: A UI page that aggregates data from multiple platform features (resources, shoutouts, etc.) to provide a personalized view of relevant community activities
 
 ## Key Architecture Decisions
 

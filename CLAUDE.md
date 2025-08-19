@@ -90,6 +90,12 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 # Run integration tests
 pnpm test:integration
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Run tests in watch mode
+pnpm test:watch
 ```
 
 ## Architecture Overview
@@ -98,7 +104,7 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ### Package Structure
 
-- **@belongnetwork/platform** - Single package containing the complete data layer with React Query hooks, services, and utilities for auth, communities, resources, events, conversations, shoutouts, and users
+- **@belongnetwork/platform** - Single package containing the complete data layer with React Query hooks, services, and utilities for auth, communities, resources (including events), feed, images, shoutouts, trust-scores, and users
 
 ### Tech Stack
 
