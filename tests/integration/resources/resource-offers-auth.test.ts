@@ -138,22 +138,22 @@ describe('Resource Offers API - Authentication Requirements', () => {
     });
 
     describe('deleteResource', () => {
-      it('returns undefined for unauthenticated delete attempt', async () => {
-        // Changed from expect rejection to expect NO-OP (undefined)
+      it('returns null for unauthenticated delete attempt', async () => {
+        // Changed from expect rejection to expect NO-OP (null)
         const result = await resourcesApi.deleteResource(
           unauthenticatedClient,
           testResourceOffer.id,
         );
-        expect(result).toBeUndefined();
+        expect(result).toBeNull();
       });
 
-      it('returns undefined for unauthenticated delete even for non-existent resource', async () => {
-        // Changed from expect rejection to expect NO-OP (undefined)
+      it('returns null for unauthenticated delete even for non-existent resource', async () => {
+        // Changed from expect rejection to expect NO-OP (null)
         const result = await resourcesApi.deleteResource(
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
         );
-        expect(result).toBeUndefined();
+        expect(result).toBeNull();
       });
     });
 
@@ -322,9 +322,9 @@ describe('Resource Offers API - Authentication Requirements', () => {
     it('prevents users from deleting resource offers they do not own', async () => {
       // Still signed in as otherUser from previous test
       // Try to delete the original test resource offer (owned by testUser)
-      // Changed from expect rejection to expect NO-OP (undefined)
+      // Changed from expect rejection to expect NO-OP (null)
       const result = await resourcesApi.deleteResource(authenticatedClient, testResourceOffer.id);
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
 
       // Sign back in as original user for cleanup
       await signIn(authenticatedClient, testUser.email, 'TestPass123!');

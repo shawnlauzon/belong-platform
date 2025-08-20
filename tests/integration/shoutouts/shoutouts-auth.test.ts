@@ -77,39 +77,35 @@ describe('Shoutouts API - Authentication Requirements', () => {
     });
 
     describe('updateShoutout', () => {
-      it('requires authentication', async () => {
-        await expect(
-          api.updateShoutout(unauthenticatedClient, testShoutout.id, {
-            message: 'Unauthorized Update Attempt',
-          }),
-        ).rejects.toThrow();
+      it('should expect null for unauthenticated update', async () => {
+        const result = await api.updateShoutout(unauthenticatedClient, testShoutout.id, {
+          message: 'Unauthorized Update Attempt',
+        });
+        expect(result).toBeNull();
       });
 
-      it('requires authentication even for non-existent shoutout', async () => {
-        await expect(
-          api.updateShoutout(
-            unauthenticatedClient,
-            '00000000-0000-0000-0000-000000000000',
-            { message: 'Test' },
-          ),
-        ).rejects.toThrow();
+      it('should expect null for unauthenticated update of non-existent shoutout', async () => {
+        const result = await api.updateShoutout(
+          unauthenticatedClient,
+          '00000000-0000-0000-0000-000000000000',
+          { message: 'Test' },
+        );
+        expect(result).toBeNull();
       });
     });
 
     describe('deleteShoutout', () => {
-      it('requires authentication', async () => {
-        await expect(
-          api.deleteShoutout(unauthenticatedClient, testShoutout.id),
-        ).resolves.not.toThrow();
+      it('should expect null for unauthenticated delete', async () => {
+        const result = await api.deleteShoutout(unauthenticatedClient, testShoutout.id);
+        expect(result).toBeNull();
       });
 
-      it('requires authentication for non-existent shoutout', async () => {
-        await expect(
-          api.deleteShoutout(
-            unauthenticatedClient,
-            '00000000-0000-0000-0000-000000000000',
-          ),
-        ).resolves.not.toThrow();
+      it('should expect null for unauthenticated delete of non-existent shoutout', async () => {
+        const result = await api.deleteShoutout(
+          unauthenticatedClient,
+          '00000000-0000-0000-0000-000000000000',
+        );
+        expect(result).toBeNull();
       });
     });
   });

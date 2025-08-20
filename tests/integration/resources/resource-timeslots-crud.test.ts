@@ -69,7 +69,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        status: 'available',
+        status: 'active',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -99,8 +99,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourcesApi.createResourceTimeslot(supabase, timeslotInput),
       ).rejects.toThrow();
     });
-
-
 
     it('fails with invalid resource id', async () => {
       const startTime = new Date(Date.now() + 86400000); // Tomorrow
@@ -149,7 +147,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        status: 'available',
+        status: 'active',
       });
 
       // Verify database record exists
@@ -213,7 +211,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime: timeslot.startTime,
         endTime: timeslot.endTime,
-        status: 'available',
+        status: 'active',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -246,8 +244,8 @@ describe('Resources API - Resource Timeslots Operations', () => {
 
       const updatedTimeslot = await resourcesApi.updateResourceTimeslot(
         supabase,
-        timeslot.id,
         {
+          id: timeslot.id,
           startTime: newStartTime,
           endTime: newEndTime,
         },
@@ -259,7 +257,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime: newStartTime,
         endTime: newEndTime,
-        status: 'available',
+        status: 'active',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -276,7 +274,8 @@ describe('Resources API - Resource Timeslots Operations', () => {
 
     it('fails with invalid timeslot id', async () => {
       await expect(
-        resourcesApi.updateResourceTimeslot(supabase, 'invalid-timeslot-id', {
+        resourcesApi.updateResourceTimeslot(supabase, {
+          id: 'invalid-timeslot-id',
           startTime: new Date(),
         }),
       ).rejects.toThrow();

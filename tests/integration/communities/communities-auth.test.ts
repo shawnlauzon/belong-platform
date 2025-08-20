@@ -95,39 +95,39 @@ describe('Communities API - Authentication Requirements', () => {
     });
 
     describe('updateCommunity', () => {
-      it('requires authentication', async () => {
+      it('should throw error for unauthenticated update', async () => {
         await expect(
           api.updateCommunity(unauthenticatedClient, {
             id: testCommunity.id,
             name: 'Unauthorized Update Attempt',
           }),
-        ).rejects.toThrow();
+        ).rejects.toThrow('Community not found for update');
       });
 
-      it('requires authentication even for non-existent community', async () => {
+      it('should throw error for unauthenticated update of non-existent community', async () => {
         await expect(
           api.updateCommunity(unauthenticatedClient, {
             id: '00000000-0000-0000-0000-000000000000',
             name: 'Test',
           }),
-        ).rejects.toThrow();
+        ).rejects.toThrow('Community not found for update');
       });
     });
 
     describe('deleteCommunity', () => {
-      it('returns undefined for unauthenticated delete attempt', async () => {
-        // Changed from expect rejection to expect NO-OP (undefined)
+      it('returns null for unauthenticated delete attempt', async () => {
+        // Changed from expect rejection to expect NO-OP (null)
         const result = await api.deleteCommunity(unauthenticatedClient, testCommunity.id);
-        expect(result).toBeUndefined();
+        expect(result).toBeNull();
       });
 
-      it('returns undefined for unauthenticated delete even for non-existent community', async () => {
-        // Changed from expect rejection to expect NO-OP (undefined)
+      it('returns null for unauthenticated delete even for non-existent community', async () => {
+        // Changed from expect rejection to expect NO-OP (null)
         const result = await api.deleteCommunity(
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
         );
-        expect(result).toBeUndefined();
+        expect(result).toBeNull();
       });
     });
 

@@ -538,7 +538,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
     });
 
     it('deletes resource offer', async () => {
-      await resourcesApi.deleteResource(supabase, offerResource.id);
+      const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+
+      // Verify return value
+      expect(deletedResource).toBeTruthy();
+      expect(deletedResource!.id).toBe(offerResource.id);
+      expect(deletedResource!.type).toBe('offer');
 
       // Verify database record
       const { data: dbRecord } = await supabase
@@ -551,7 +556,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
     });
 
     it('deletes resource request', async () => {
-      await resourcesApi.deleteResource(supabase, requestResource.id);
+      const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+
+      // Verify return value
+      expect(deletedResource).toBeTruthy();
+      expect(deletedResource!.id).toBe(requestResource.id);
+      expect(deletedResource!.type).toBe('request');
 
       // Verify database record
       const { data: dbRecord } = await supabase
@@ -563,13 +573,15 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
       expect(dbRecord).toBeNull();
     });
 
-    it('throws on attempting to delete not my resource', async () => {
+    it('returns null when attempting to delete not my resource', async () => {
       await createTestUser(supabase);
 
       try {
-        await expect(
-          resourcesApi.deleteResource(supabase, requestResource.id),
-        ).rejects.toThrow();
+        const result = await resourcesApi.deleteResource(
+          supabase,
+          requestResource.id,
+        );
+        expect(result).toBeNull();
       } finally {
         await signIn(supabase, testUser.email, 'TestPass123!');
       }
@@ -584,7 +596,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         }),
       );
 
-      await resourcesApi.deleteResource(supabase, offerResource.id);
+      const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+
+      // Verify return value
+      expect(deletedResource).toBeTruthy();
+      expect(deletedResource!.id).toBe(offerResource.id);
+      expect(deletedResource!.type).toBe('offer');
 
       // Verify database record
       const { data: dbRecord } = await supabase
@@ -614,7 +631,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         }),
       );
 
-      await resourcesApi.deleteResource(supabase, requestResource.id);
+      const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+
+      // Verify return value
+      expect(deletedResource).toBeTruthy();
+      expect(deletedResource!.id).toBe(requestResource.id);
+      expect(deletedResource!.type).toBe('request');
 
       // Verify database record
       const { data: dbRecord } = await supabase
@@ -663,7 +685,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         await signIn(supabase, testUser.email, 'TestPass123!');
 
         // Delete resource
-        await resourcesApi.deleteResource(supabase, offerResource.id);
+        const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+
+        // Verify return value
+        expect(deletedResource).toBeTruthy();
+        expect(deletedResource!.id).toBe(offerResource.id);
+        expect(deletedResource!.type).toBe('offer');
 
         // Wait a bit for the delete to propagate
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -716,7 +743,12 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         await signIn(supabase, testUser.email, 'TestPass123!');
 
         // Delete resource
-        await resourcesApi.deleteResource(supabase, requestResource.id);
+        const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+
+        // Verify return value
+        expect(deletedResource).toBeTruthy();
+        expect(deletedResource!.id).toBe(requestResource.id);
+        expect(deletedResource!.type).toBe('request');
 
         // Wait a bit for the delete to propagate
         await new Promise((resolve) => setTimeout(resolve, 100));
