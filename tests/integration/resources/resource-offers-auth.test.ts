@@ -73,9 +73,12 @@ describe('Resource Offers API - Authentication Requirements', () => {
 
       it('returns empty array for unauthenticated access with filters', async () => {
         // Use only supported filters and expect NO-OP behavior
-        const result = await resourcesApi.fetchResources(unauthenticatedClient, {
-          communityId: testCommunity.id,
-        });
+        const result = await resourcesApi.fetchResources(
+          unauthenticatedClient,
+          {
+            communityId: testCommunity.id,
+          },
+        );
         expect(result).toEqual([]);
       });
     });
@@ -85,7 +88,9 @@ describe('Resource Offers API - Authentication Requirements', () => {
         // Changed from expect rejection to expect NO-OP (empty array)
         const result = await resourcesApi.fetchResourceTimeslots(
           unauthenticatedClient,
-          testResourceOffer.id,
+          {
+            resourceId: testResourceOffer.id,
+          },
         );
         expect(result).toEqual([]);
       });
@@ -94,9 +99,12 @@ describe('Resource Offers API - Authentication Requirements', () => {
     describe('fetchResourceClaims', () => {
       it('returns empty array for unauthenticated access to resource claims', async () => {
         // Changed from expect rejection to expect NO-OP and use supported filter
-        const result = await resourcesApi.fetchResourceClaims(unauthenticatedClient, {
-          claimantId: testUser.id,
-        });
+        const result = await resourcesApi.fetchResourceClaims(
+          unauthenticatedClient,
+          {
+            claimantId: testUser.id,
+          },
+        );
         expect(result).toEqual([]);
       });
     });
@@ -112,7 +120,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
         });
 
         // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.createResource(unauthenticatedClient, data);
+        const result = await resourcesApi.createResource(
+          unauthenticatedClient,
+          data,
+        );
         expect(result).toBeNull();
       });
     });
@@ -120,19 +131,25 @@ describe('Resource Offers API - Authentication Requirements', () => {
     describe('updateResource', () => {
       it('returns null for unauthenticated update attempt', async () => {
         // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.updateResource(unauthenticatedClient, {
-          id: testResourceOffer.id,
-          title: 'Unauthorized Update Attempt',
-        });
+        const result = await resourcesApi.updateResource(
+          unauthenticatedClient,
+          {
+            id: testResourceOffer.id,
+            title: 'Unauthorized Update Attempt',
+          },
+        );
         expect(result).toBeNull();
       });
 
       it('returns null for unauthenticated update even for non-existent resource', async () => {
         // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.updateResource(unauthenticatedClient, {
-          id: '00000000-0000-0000-0000-000000000000',
-          title: 'Test',
-        });
+        const result = await resourcesApi.updateResource(
+          unauthenticatedClient,
+          {
+            id: '00000000-0000-0000-0000-000000000000',
+            title: 'Test',
+          },
+        );
         expect(result).toBeNull();
       });
     });
@@ -183,7 +200,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
         });
 
         // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.createResourceClaim(unauthenticatedClient, claimInput);
+        const result = await resourcesApi.createResourceClaim(
+          unauthenticatedClient,
+          claimInput,
+        );
         expect(result).toBeNull();
       });
     });
@@ -193,8 +213,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
         // Changed from expect rejection to expect NO-OP (null)
         const result = await resourcesApi.updateResourceClaim(
           unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-          { status: 'approved' },
+          { id: '00000000-0000-0000-0000-000000000000', status: 'approved' },
         );
         expect(result).toBeNull();
       });
@@ -250,28 +269,27 @@ describe('Resource Offers API - Authentication Requirements', () => {
 
       expect(claim).toBeTruthy();
       expect(claim!.resourceId).toBe(testResourceOffer.id);
-      expect(claim!.userId).toBe(secondUser.id);
+      expect(claim!.claimantId).toBe(secondUser.id);
       expect(claim!.status).toBe('pending');
 
       // Update claim status
       const updatedClaim = await resourcesApi.updateResourceClaim(
         authenticatedClient,
-        claim.id,
-        { status: 'cancelled' },
+        { id: claim.id, status: 'cancelled' },
       );
 
       // Verify update operation returned claim info with cancelled status
       expect(updatedClaim).toBeDefined();
       expect(updatedClaim!.status).toBe('cancelled');
       expect(updatedClaim!.resourceId).toBe(testResourceOffer.id);
-      expect(updatedClaim!.userId).toBe(secondUser.id);
+      expect(updatedClaim!.claimantId).toBe(secondUser.id);
 
       // Verify claim record has cancelled status
       const claims = await resourcesApi.fetchResourceClaims(
         authenticatedClient,
         { resourceId: testResourceOffer.id },
       );
-      const userClaim = claims.find((c) => c.userId === secondUser.id);
+      const userClaim = claims.find((c) => c.claimantId === secondUser.id);
       expect(userClaim).toBeDefined();
       expect(userClaim!.status).toBe('cancelled');
     });
@@ -323,7 +341,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
       // Still signed in as otherUser from previous test
       // Try to delete the original test resource offer (owned by testUser)
       // Changed from expect rejection to expect NO-OP (null)
-      const result = await resourcesApi.deleteResource(authenticatedClient, testResourceOffer.id);
+      const result = await resourcesApi.deleteResource(
+        authenticatedClient,
+        testResourceOffer.id,
+      );
       expect(result).toBeNull();
 
       // Sign back in as original user for cleanup

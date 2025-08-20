@@ -153,46 +153,16 @@ describe('Resource Offers API - CRUD Operations', () => {
   });
 
   describe('fetchResources', () => {
-    it('fetches all resource offers', async () => {
-      const resources = await resourcesApi.fetchResources(supabase, {
-        type: 'offer',
-      });
+    it('fetches all resources', async () => {
+      const resources = await resourcesApi.fetchResources(supabase);
 
       expect(Array.isArray(resources)).toBe(true);
       expect(resources.some((r) => r.id === readOnlyOffer1.id)).toBe(true);
       expect(resources.some((r) => r.id === readOnlyOffer2.id)).toBe(true);
-      expect(resources.every((r) => r.type === 'offer')).toBe(true);
-    });
-
-    it('filters by title', async () => {
-      const uniqueTitle = `${TEST_PREFIX}UniqueFilter_${Date.now()}`;
-      let filteredResource;
-
-      try {
-        filteredResource = await resourcesApi.createResource(
-          supabase,
-          createFakeResourceInput({
-            title: uniqueTitle,
-            type: 'offer',
-            communityIds: [testCommunity.id],
-            imageUrls: undefined,
-          }),
-        );
-
-        const filtered = await resourcesApi.fetchResources(supabase, {
-          type: 'offer',
-          searchTerm: 'UniqueFilter',
-        });
-
-        expect(filtered.some((r) => r.title === uniqueTitle)).toBe(true);
-      } finally {
-        await cleanupResource(filteredResource);
-      }
     });
 
     it('filters by ownerId', async () => {
       const filtered = await resourcesApi.fetchResources(supabase, {
-        type: 'offer',
         ownerId: testUser.id,
       });
 
@@ -203,8 +173,7 @@ describe('Resource Offers API - CRUD Operations', () => {
 
     it('filters by communityIds', async () => {
       const filtered = await resourcesApi.fetchResources(supabase, {
-        type: 'offer',
-        communityIds: [testCommunity.id],
+        communityId: testCommunity.id,
       });
 
       expect(filtered.length).toBeGreaterThanOrEqual(2);
