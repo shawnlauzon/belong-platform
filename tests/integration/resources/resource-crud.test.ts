@@ -183,7 +183,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         resourceId: resource!.id,
         startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-        maxClaims: 5,
       });
 
       const timeslot = await resourcesApi.createResourceTimeslot(
@@ -193,7 +192,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
 
       expect(timeslot).toBeTruthy();
       expect(timeslot!.resourceId).toBe(resource!.id);
-      expect(timeslot!.maxClaims).toBe(5);
 
       // Verify timeslot database record exists
       const { data: timeslotRecord } = await supabase
@@ -204,7 +202,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
 
       expect(timeslotRecord).toBeTruthy();
       expect(timeslotRecord!.resource_id).toBe(resource!.id);
-      expect(timeslotRecord!.max_claims).toBe(5);
     });
 
     it('creates resource request with timeslots', async () => {
@@ -222,7 +219,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         resourceId: resource!.id,
         startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-        maxClaims: 3,
       });
 
       const timeslot = await resourcesApi.createResourceTimeslot(
@@ -232,7 +228,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
 
       expect(timeslot).toBeTruthy();
       expect(timeslot!.resourceId).toBe(resource!.id);
-      expect(timeslot!.maxClaims).toBe(3);
 
       // Verify timeslot database record exists
       const { data: timeslotRecord } = await supabase
@@ -243,7 +238,6 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
 
       expect(timeslotRecord).toBeTruthy();
       expect(timeslotRecord!.resource_id).toBe(resource!.id);
-      expect(timeslotRecord!.max_claims).toBe(3);
     });
   });
 

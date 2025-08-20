@@ -55,7 +55,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        maxClaims: 5,
       });
 
       const timeslot = await resourcesApi.createResourceTimeslot(
@@ -70,7 +69,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        maxClaims: 5,
         status: 'available',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -85,7 +83,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
 
       expect(dbRecord).toBeTruthy();
       expect(dbRecord!.resource_id).toBe(testResource.id);
-      expect(dbRecord!.max_claims).toBe(5);
     });
 
     it('fails with invalid time range (start after end)', async () => {
@@ -96,7 +93,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        maxClaims: 5,
       });
 
       await expect(
@@ -104,37 +100,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
       ).rejects.toThrow();
     });
 
-    it('fails with zero max claims', async () => {
-      const startTime = new Date(Date.now() + 86400000); // Tomorrow
-      const endTime = new Date(startTime.getTime() + 3600000); // 1 hour later
 
-      const timeslotInput = createFakeResourceTimeslotInput({
-        resourceId: testResource.id,
-        startTime,
-        endTime,
-        maxClaims: 0,
-      });
-
-      await expect(
-        resourcesApi.createResourceTimeslot(supabase, timeslotInput),
-      ).rejects.toThrow();
-    });
-
-    it('fails with negative max claims', async () => {
-      const startTime = new Date(Date.now() + 86400000); // Tomorrow
-      const endTime = new Date(startTime.getTime() + 3600000); // 1 hour later
-
-      const timeslotInput = createFakeResourceTimeslotInput({
-        resourceId: testResource.id,
-        startTime,
-        endTime,
-        maxClaims: -1,
-      });
-
-      await expect(
-        resourcesApi.createResourceTimeslot(supabase, timeslotInput),
-      ).rejects.toThrow();
-    });
 
     it('fails with invalid resource id', async () => {
       const startTime = new Date(Date.now() + 86400000); // Tomorrow
@@ -144,7 +110,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: 'invalid-resource-id',
         startTime,
         endTime,
-        maxClaims: 5,
       });
 
       await expect(
@@ -170,7 +135,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        maxClaims: 3,
       });
 
       const timeslot = await resourcesApi.createResourceTimeslot(
@@ -185,7 +149,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime,
         endTime,
-        maxClaims: 3,
         status: 'available',
       });
 
@@ -198,7 +161,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
 
       expect(dbRecord).toBeTruthy();
       expect(dbRecord!.resource_id).toBe(testResource.id);
-      expect(dbRecord!.max_claims).toBe(3);
 
       // Verify the resource is owned by someone else (not the community member)
       const { data: resource } = await supabase
@@ -229,7 +191,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
           resourceId: testResource.id,
           startTime: startTime1,
           endTime: endTime1,
-          maxClaims: 5,
         }),
       );
     });
@@ -252,7 +213,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime: timeslot.startTime,
         endTime: timeslot.endTime,
-        maxClaims: timeslot.maxClaims,
         status: 'available',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -290,7 +250,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         {
           startTime: newStartTime,
           endTime: newEndTime,
-          maxClaims: 10,
         },
       );
 
@@ -300,7 +259,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
         resourceId: testResource.id,
         startTime: newStartTime,
         endTime: newEndTime,
-        maxClaims: 10,
         status: 'available',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -314,13 +272,12 @@ describe('Resources API - Resource Timeslots Operations', () => {
         .single();
 
       expect(dbRecord).toBeTruthy();
-      expect(dbRecord!.max_claims).toBe(10);
     });
 
     it('fails with invalid timeslot id', async () => {
       await expect(
         resourcesApi.updateResourceTimeslot(supabase, 'invalid-timeslot-id', {
-          maxClaims: 10,
+          startTime: new Date(),
         }),
       ).rejects.toThrow();
     });
@@ -335,7 +292,6 @@ describe('Resources API - Resource Timeslots Operations', () => {
           resourceId: testResource.id,
           startTime,
           endTime,
-          maxClaims: 5,
         }),
       );
 

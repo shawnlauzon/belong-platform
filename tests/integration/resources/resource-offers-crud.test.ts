@@ -130,7 +130,6 @@ describe('Resource Offers API - CRUD Operations', () => {
         resourceId: resource!.id,
         startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-        maxClaims: 5,
       });
 
       timeslot = await resourcesApi.createResourceTimeslot(
@@ -140,7 +139,6 @@ describe('Resource Offers API - CRUD Operations', () => {
 
       expect(timeslot).toBeTruthy();
       expect(timeslot!.resourceId).toBe(resource!.id);
-      expect(timeslot!.maxClaims).toBe(5);
 
       // Verify timeslot database record exists
       const { data: timeslotRecord } = await supabase
@@ -151,7 +149,6 @@ describe('Resource Offers API - CRUD Operations', () => {
 
       expect(timeslotRecord).toBeTruthy();
       expect(timeslotRecord!.resource_id).toBe(resource!.id);
-      expect(timeslotRecord!.max_claims).toBe(5);
     });
   });
 

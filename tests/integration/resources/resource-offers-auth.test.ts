@@ -51,7 +51,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
         resourceId: testResourceOffer.id,
         startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         endTime: new Date(Date.now() + 25 * 60 * 60 * 1000), // Tomorrow + 1 hour
-        maxClaims: 5,
       }),
     );
 
@@ -164,7 +163,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
           resourceId: testResourceOffer.id,
           startTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
           endTime: new Date(Date.now() + 49 * 60 * 60 * 1000),
-          maxClaims: 3,
         });
 
         // Changed from expect rejection to expect NO-OP (null)

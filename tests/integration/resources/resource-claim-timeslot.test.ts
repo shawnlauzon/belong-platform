@@ -53,7 +53,6 @@ describe('Resource Claims - Timeslot Operations', () => {
         resourceId: testResource.id,
         startTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
         endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-        maxClaims: 2,
       }),
     );
 
@@ -63,7 +62,6 @@ describe('Resource Claims - Timeslot Operations', () => {
         resourceId: testResource.id,
         startTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
         endTime: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
-        maxClaims: 2,
       }),
     );
 
