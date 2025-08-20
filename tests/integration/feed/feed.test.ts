@@ -44,7 +44,7 @@ describe('Feed API - Integration Tests', () => {
       supabase,
       testCommunity1.id,
       'offer',
-      'event',
+      'tools',
     );
 
     testResource1a = await createTestResource(
@@ -58,7 +58,7 @@ describe('Feed API - Integration Tests', () => {
       supabase,
       testCommunity2.id,
       'offer',
-      'event',
+      'tools',
     );
 
     testUser2 = await createTestUser(supabase);
