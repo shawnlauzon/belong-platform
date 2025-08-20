@@ -96,7 +96,7 @@ describe('Feed API - Integration Tests', () => {
 
       expect(feed.items).toContainEqual({
         id: testResource1.id,
-        type: 'event',
+        type: 'resource',
       });
       expect(feed.items).toContainEqual({
         id: testResource1a.id,
@@ -104,7 +104,7 @@ describe('Feed API - Integration Tests', () => {
       });
       expect(feed.items).not.toContainEqual({
         id: testResource2.id,
-        type: 'event',
+        type: 'resource',
       });
       expect(feed.items).toContainEqual({
         id: testShoutout1.id,
@@ -134,7 +134,7 @@ describe('Feed API - Integration Tests', () => {
 
       expect(feed.items).toContainEqual({
         id: testResource1.id,
-        type: 'event',
+        type: 'resource',
       });
       expect(feed.items).toContainEqual({
         id: testResource1a.id,
@@ -142,7 +142,7 @@ describe('Feed API - Integration Tests', () => {
       });
       expect(feed.items).toContainEqual({
         id: testResource2.id,
-        type: 'event',
+        type: 'resource',
       });
       expect(feed.items).toContainEqual({
         id: testShoutout1.id,
