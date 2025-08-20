@@ -281,11 +281,9 @@ describe('Shoutouts API - CRUD Operations', () => {
       expect(data).toHaveLength(0);
     });
 
-    it('throws error for non-existent shoutout deletion', async () => {
-      // FIXED: Now throws error instead of graceful handling
-      await expect(
-        deleteShoutout(supabase, '00000000-0000-0000-0000-000000000000'),
-      ).rejects.toThrow();
+    it('returns null for non-existent shoutout deletion', async () => {
+      const result = await deleteShoutout(supabase, '00000000-0000-0000-0000-000000000000');
+      expect(result).toBeNull();
     });
   });
 });

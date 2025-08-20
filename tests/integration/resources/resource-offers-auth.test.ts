@@ -112,51 +112,41 @@ describe('Resource Offers API - Authentication Requirements', () => {
 
   describe('Unauthenticated Write Operations', () => {
     describe('createResource', () => {
-      it('returns null for unauthenticated create attempt', async () => {
+      it('throws error for unauthenticated create attempt', async () => {
         const data = createFakeResourceInput({
           title: `${TEST_PREFIX}Unauth_Create_Test`,
           communityIds: [testCommunity.id],
           imageUrls: undefined,
         });
 
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.createResource(
-          unauthenticatedClient,
-          data,
-        );
-        expect(result).toBeNull();
+        await expect(
+          resourcesApi.createResource(unauthenticatedClient, data),
+        ).rejects.toThrow();
       });
     });
 
     describe('updateResource', () => {
-      it('returns null for unauthenticated update attempt', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.updateResource(
-          unauthenticatedClient,
-          {
+      it('throws error for unauthenticated update attempt', async () => {
+        await expect(
+          resourcesApi.updateResource(unauthenticatedClient, {
             id: testResourceOffer.id,
             title: 'Unauthorized Update Attempt',
-          },
-        );
-        expect(result).toBeNull();
+          }),
+        ).rejects.toThrow();
       });
 
-      it('returns null for unauthenticated update even for non-existent resource', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.updateResource(
-          unauthenticatedClient,
-          {
+      it('throws error for unauthenticated update even for non-existent resource', async () => {
+        await expect(
+          resourcesApi.updateResource(unauthenticatedClient, {
             id: '00000000-0000-0000-0000-000000000000',
             title: 'Test',
-          },
-        );
-        expect(result).toBeNull();
+          }),
+        ).rejects.toThrow();
       });
     });
 
     describe('deleteResource', () => {
       it('returns null for unauthenticated delete attempt', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
         const result = await resourcesApi.deleteResource(
           unauthenticatedClient,
           testResourceOffer.id,
@@ -165,7 +155,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
       });
 
       it('returns null for unauthenticated delete even for non-existent resource', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
         const result = await resourcesApi.deleteResource(
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',
@@ -175,47 +164,44 @@ describe('Resource Offers API - Authentication Requirements', () => {
     });
 
     describe('createResourceTimeslot', () => {
-      it('returns null for unauthenticated timeslot creation', async () => {
+      it('throws error for unauthenticated timeslot creation', async () => {
         const timeslotInput = createFakeResourceTimeslotInput({
           resourceId: testResourceOffer.id,
           startTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
           endTime: new Date(Date.now() + 49 * 60 * 60 * 1000),
         });
 
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.createResourceTimeslot(
-          unauthenticatedClient,
-          timeslotInput,
-        );
-        expect(result).toBeNull();
+        await expect(
+          resourcesApi.createResourceTimeslot(
+            unauthenticatedClient,
+            timeslotInput,
+          ),
+        ).rejects.toThrow();
       });
     });
 
     describe('createResourceClaim', () => {
-      it('returns null for unauthenticated claim creation', async () => {
+      it('throws error for unauthenticated claim creation', async () => {
         const claimInput = createFakeResourceClaimInput({
           resourceId: testResourceOffer.id,
           timeslotId: testTimeslot.id,
           status: 'pending',
         });
 
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.createResourceClaim(
-          unauthenticatedClient,
-          claimInput,
-        );
-        expect(result).toBeNull();
+        await expect(
+          resourcesApi.createResourceClaim(unauthenticatedClient, claimInput),
+        ).rejects.toThrow();
       });
     });
 
     describe('updateResourceClaim', () => {
-      it('returns null for unauthenticated claim update', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
-        const result = await resourcesApi.updateResourceClaim(
-          unauthenticatedClient,
-          { id: '00000000-0000-0000-0000-000000000000', status: 'approved' },
-        );
-        expect(result).toBeNull();
+      it('throws error for unauthenticated claim update', async () => {
+        await expect(
+          resourcesApi.updateResourceClaim(unauthenticatedClient, {
+            id: '00000000-0000-0000-0000-000000000000',
+            status: 'approved',
+          }),
+        ).rejects.toThrow();
       });
     });
   });
@@ -329,12 +315,12 @@ describe('Resource Offers API - Authentication Requirements', () => {
       await joinCommunity(authenticatedClient, testCommunity.id);
 
       // Try to update the original test resource offer (owned by testUser)
-      // Changed from expect rejection to expect NO-OP (null)
-      const result = await resourcesApi.updateResource(authenticatedClient, {
-        id: testResourceOffer.id,
-        title: 'Unauthorized Update by Other User',
-      });
-      expect(result).toBeNull();
+      await expect(
+        resourcesApi.updateResource(authenticatedClient, {
+          id: testResourceOffer.id,
+          title: 'Unauthorized Update by Other User',
+        }),
+      ).rejects.toThrow('Resource not found for update');
     });
 
     it('prevents users from deleting resource offers they do not own', async () => {

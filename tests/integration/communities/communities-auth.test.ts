@@ -116,13 +116,11 @@ describe('Communities API - Authentication Requirements', () => {
 
     describe('deleteCommunity', () => {
       it('returns null for unauthenticated delete attempt', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
         const result = await api.deleteCommunity(unauthenticatedClient, testCommunity.id);
         expect(result).toBeNull();
       });
 
       it('returns null for unauthenticated delete even for non-existent community', async () => {
-        // Changed from expect rejection to expect NO-OP (null)
         const result = await api.deleteCommunity(
           unauthenticatedClient,
           '00000000-0000-0000-0000-000000000000',

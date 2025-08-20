@@ -41,7 +41,7 @@ export async function updateResource(
     logger.debug('📚 API: Resource not found for update', {
       id: updateData.id,
     });
-    return null;
+    throw new Error('Resource not found for update');
   }
 
   // Handle community associations if communityIds is provided
