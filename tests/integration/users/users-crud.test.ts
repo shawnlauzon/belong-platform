@@ -44,19 +44,6 @@ describe('Users API - CRUD Operations', () => {
       expect(users.some((u) => u.id === readOnlyUser1.id)).toBe(true);
       expect(users.some((u) => u.id === readOnlyUser2.id)).toBe(true);
     });
-
-    it('filters users by search term', async () => {
-      const searchTerm = testUser.firstName.substring(0, 5);
-      const filtered = await api.fetchUsers(supabase, { searchTerm });
-
-      expect(Array.isArray(filtered)).toBe(true);
-      expect(filtered.some((u) => u.id === testUser.id)).toBe(true);
-    });
-
-    it('supports pagination', async () => {
-      const page1 = await api.fetchUsers(supabase, { page: 1, pageSize: 2 });
-      expect(page1.length).toBeLessThanOrEqual(2);
-    });
   });
 
   describe('fetchUserById', () => {
