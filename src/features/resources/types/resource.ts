@@ -18,7 +18,7 @@ export type Resource = IsPersisted<ResourceInput> & {
 
 export type ResourceSummary = Pick<
   Resource,
-  'id' | 'title' | 'status' | 'type' | 'category'
+  'id' | 'title' | 'status' | 'type' | 'category' | 'ownerId' | 'communityIds'
 >;
 
 export enum ResourceTypeEnum {

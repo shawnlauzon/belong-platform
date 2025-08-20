@@ -121,5 +121,8 @@ export function toDomainResourceSummary(
     title: dbResource.title,
     status: dbResource.status,
     category: dbResource.category,
+    ownerId: dbResource.owner_id,
+    communityIds:
+      dbResource.resource_communities?.map((rc) => rc.community_id) || [],
   };
 }
