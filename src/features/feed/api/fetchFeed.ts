@@ -33,14 +33,45 @@ export async function fetchFeed(
     );
 
     // Fetch resource IDs, creation dates, and category for sorting and categorization
+    // Also fetch timeslots for events to filter out past events
     const { data: resourceData, error: resourceError } = await supabase
       .from('resources')
-      .select('id, type, created_at, resource_communities!inner(community_id)')
+      .select(`
+        id, 
+        type, 
+        created_at, 
+        resource_communities!inner(community_id),
+        resource_timeslots(start_time, end_time)
+      `)
+      .eq('status', 'open')
       .in('resource_communities.community_id', communityIds);
 
     if (resourceError) {
       throw resourceError;
     }
+
+    // Filter out past events (events where all timeslots have ended)
+    const now = new Date();
+    const filteredResources = resourceData?.filter((resource) => {
+      // Keep all non-event resources
+      if (resource.type !== 'event') {
+        return true;
+      }
+
+      // For events, check if any timeslot is current or future
+      const timeslots = resource.resource_timeslots || [];
+      
+      // If no timeslots, include the event (shouldn't happen but be safe)
+      if (timeslots.length === 0) {
+        return true;
+      }
+
+      // Keep event if at least one timeslot hasn't ended yet
+      return timeslots.some((slot) => {
+        const endTime = new Date(slot.end_time);
+        return endTime >= now;
+      });
+    }) || [];
 
     // Fetch shoutout IDs and creation dates for sorting
     const { data: shoutoutData, error: shoutoutError } = await supabase
@@ -54,7 +85,7 @@ export async function fetchFeed(
 
     // Combine items with their creation dates for sorting
     const itemsWithDates = [
-      ...(resourceData || []).map((r) => ({
+      ...(filteredResources || []).map((r) => ({
         id: r.id,
         type: r.type === 'event' ? ('event' as const) : ('resource' as const),
         createdAt: r.created_at,
@@ -82,8 +113,8 @@ export async function fetchFeed(
     logger.debug('📰 API: Successfully fetched feed data', {
       totalItems: allItems.length,
       resourceCount:
-        resourceData?.filter((r) => r.type !== 'event').length || 0,
-      eventCount: resourceData?.filter((r) => r.type === 'event').length || 0,
+        filteredResources?.filter((r) => r.type !== 'event').length || 0,
+      eventCount: filteredResources?.filter((r) => r.type === 'event').length || 0,
       shoutoutCount: shoutoutData?.length || 0,
     });
 
