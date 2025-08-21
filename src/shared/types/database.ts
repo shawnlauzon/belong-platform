@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -1210,7 +1210,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: string
+        Returns: number
       }
       postgis_addbbox: {
         Args: { "": unknown }
@@ -2430,23 +2430,14 @@ export type Database = {
         Returns: number
       }
       update_trust_score: {
-        Args:
-          | {
-              p_action_id: string
-              p_action_type: Database["public"]["Enums"]["trust_score_action_type"]
-              p_community_id: string
-              p_metadata?: Json
-              p_points_change: number
-              p_user_id: string
-            }
-          | {
-              p_action_id: string
-              p_action_type: string
-              p_community_id: string
-              p_metadata?: Json
-              p_points_change: number
-              p_user_id: string
-            }
+        Args: {
+          p_action_id: string
+          p_action_type: Database["public"]["Enums"]["trust_score_action_type"]
+          p_community_id: string
+          p_metadata?: Json
+          p_points_change: number
+          p_user_id: string
+        }
         Returns: undefined
       }
       updategeometrysrid: {
@@ -2470,6 +2461,7 @@ export type Database = {
         | "rides"
         | "housing"
         | "drinks"
+        | "games"
       resource_claim_limit_per: "total" | "timeslot"
       resource_claim_status:
         | "pending"
@@ -2636,6 +2628,7 @@ export const Constants = {
         "rides",
         "housing",
         "drinks",
+        "games",
       ],
       resource_claim_limit_per: ["total", "timeslot"],
       resource_claim_status: [
