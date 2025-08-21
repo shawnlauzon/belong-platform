@@ -66,6 +66,7 @@ export async function createTestResource(
     type,
     communityIds: [communityId],
     category,
+    status: 'open', // Ensure resources are open for feed tests
   });
 
   // Add small delay to ensure community membership trigger has completed
