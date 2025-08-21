@@ -10,6 +10,7 @@ import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchFeed } from '@/features/feed/api';
 import { signIn, signOut } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
+import { createResourceTimeslot } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
@@ -165,6 +166,66 @@ describe('Feed API - Integration Tests', () => {
     it('throws for unauthenticated user', async () => {
       // Should throw for unauthenticated user
       await expect(fetchFeed(supabase)).rejects.toThrowError();
+    });
+  });
+
+  describe('event filtering', () => {
+    beforeAll(async () => {
+      // Ensure we're signed in as testUser
+      await signIn(supabase, testUser.email, 'TestPass123!');
+    });
+
+    it('should not return events that have already occurred', async () => {
+      // Create an event with a timeslot in the past
+      const pastEvent = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'event',
+        'drinks',
+      );
+
+      // Create past timeslot (24 hours ago)
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const pastEndDate = new Date(pastDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+      await createResourceTimeslot(supabase, {
+        resourceId: pastEvent.id,
+        startTime: pastDate,
+        endTime: pastEndDate,
+        status: 'active',
+      });
+
+      // Create an event with a timeslot in the future
+      const futureEvent = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'event',
+        'drinks',
+      );
+
+      // Create future timeslot (24 hours from now)
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const futureEndDate = new Date(futureDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+      await createResourceTimeslot(supabase, {
+        resourceId: futureEvent.id,
+        startTime: futureDate,
+        endTime: futureEndDate,
+        status: 'active',
+      });
+
+      // Fetch the feed
+      const feed = await fetchFeed(supabase);
+
+      // Assert that future event is returned
+      expect(feed.items).toContainEqual({
+        id: futureEvent.id,
+        type: 'event',
+      });
+
+      // Assert that past event is NOT returned
+      expect(feed.items).not.toContainEqual({
+        id: pastEvent.id,
+        type: 'event',
+      });
     });
   });
 });

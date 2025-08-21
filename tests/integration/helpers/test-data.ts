@@ -90,6 +90,7 @@ export async function createTestResourceTimeslot(
     resourceId,
     startTime,
     endTime,
+    status: 'active',
   });
   if (!timeslot) throw new Error('Failed to create resource timeslot');
 
