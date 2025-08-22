@@ -14,6 +14,7 @@ export type Resource = IsPersisted<ResourceInput> & {
   ownerId: string;
   areTimeslotsFlexible: boolean;
   timeslots: ResourceTimeslot[];
+  lastRenewedAt?: Date;
 };
 
 export type ResourceSummary = Pick<

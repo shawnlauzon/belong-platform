@@ -204,6 +204,7 @@ export function createFakeResourceRow(
     is_recurring: faker.datatype.boolean(),
     expires_at:
       faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? null,
     ...overrides,
   };
 }
