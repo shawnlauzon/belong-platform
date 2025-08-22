@@ -12,7 +12,7 @@ export function useDeleteResourceClaim() {
     mutationFn: async (id: string) => {
       return deleteResourceClaim(supabase, id);
     },
-    onSuccess: (claim) => {
+    onSuccess: (claim: ResourceClaimSummary | null) => {
       if (claim) {
         queryClient.removeQueries({
           queryKey: resourceClaimsKeys.detail(claim.id),

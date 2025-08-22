@@ -1,4 +1,4 @@
-import { QueriesOptions, useQueries } from '@tanstack/react-query';
+import { QueriesOptions, QueriesResults, useQueries } from '@tanstack/react-query';
 import { logger, useSupabase } from '@/shared';
 import { fetchResourceById } from '../api';
 import type { Resource } from '../types';
@@ -16,12 +16,12 @@ export function useResourcesById(
       queryFn: () => fetchResourceById(supabase, id),
       ...options,
     })),
-    combine: (results) => {
+    combine: (results: QueriesResults<Resource[]>) => {
       return {
-        data: results.map((result) => result.data),
-        isPending: results.some((result) => result.isPending),
-        isError: results.some((result) => result.isError),
-        error: results.some((result) => result.error),
+        data: results.map((result: QueriesResults<Resource>) => result.data),
+        isPending: results.some((result: QueriesResults<Resource>) => result.isPending),
+        isError: results.some((result: QueriesResults<Resource>) => result.isError),
+        error: results.some((result: QueriesResults<Resource>) => result.error),
       };
     },
   });

@@ -78,7 +78,7 @@ export function useUpdateResource() {
       }
       return result;
     },
-    onSuccess: (updatedResource, variables) => {
+    onSuccess: (updatedResource: Resource, variables: ResourceInput) => {
       queryClient.invalidateQueries({
         queryKey: resourceKeys.detail(updatedResource.id),
       });
@@ -103,7 +103,7 @@ export function useUpdateResource() {
         title: updatedResource.title,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       logger.error('📚 API: Failed to update resource', { error });
     },
   });

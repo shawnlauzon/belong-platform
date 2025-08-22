@@ -106,7 +106,7 @@ export function useCreateResource() {
         });
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       logger.error('📚 API: Failed to create resource', { error });
     },
   });

@@ -1,17 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/shared/types/database';
 import { renewResource } from '../api/renewResource';
+import { logger, useSupabase } from '@/shared';
+import { Resource } from '../types';
 
-export function useRenewResource(supabase: SupabaseClient<Database>) {
+export function useRenewResource() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (resourceId: string) => renewResource(supabase, resourceId),
-    onSuccess: (_, resourceId) => {
+    onSuccess: (resource: Resource) => {
       // Invalidate resource queries to trigger refetch with updated expiration
       queryClient.invalidateQueries({ queryKey: ['resources'] });
-      queryClient.invalidateQueries({ queryKey: ['resource', resourceId] });
+      queryClient.invalidateQueries({ queryKey: ['resource', resource.id] });
+    },
+    onError: (error: Error) => {
+      logger.error('📚 API: Failed to renew resource', { error });
     },
   });
 }

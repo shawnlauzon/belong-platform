@@ -4,6 +4,7 @@ import { useSupabase } from '@/shared';
 import { deleteResource } from '@/features/resources/api';
 import { resourceKeys } from '../queries';
 import { feedKeys } from '@/features/feed/queries';
+import { Resource } from '../types';
 
 /**
  * Hook for deleting a resource.
@@ -50,7 +51,7 @@ export function useDeleteResource() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => deleteResource(supabase, id),
-    onSuccess: async (resource) => {
+    onSuccess: async (resource: Resource) => {
       if (resource) {
         queryClient.removeQueries({
           queryKey: resourceKeys.detail(resource.id),
@@ -70,7 +71,7 @@ export function useDeleteResource() {
         });
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       logger.error('📚 API: Failed to delete resource', { error });
     },
   });

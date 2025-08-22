@@ -11,7 +11,7 @@ export function useCreateResourceTimeslot() {
   return useMutation<ResourceTimeslot, Error, ResourceTimeslotInput>({
     mutationFn: (timeslotInput: ResourceTimeslotInput) =>
       createResourceTimeslot(supabase, timeslotInput),
-    onSuccess: (timeslot) => {
+    onSuccess: (timeslot: ResourceTimeslot) => {
       queryClient.invalidateQueries({
         queryKey: resourceTimeslotKeys.listByResource(timeslot.resourceId),
       });
