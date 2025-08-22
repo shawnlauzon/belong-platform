@@ -15,12 +15,15 @@ export type Resource = IsPersisted<ResourceInput> & {
   areTimeslotsFlexible: boolean;
   timeslots: ResourceTimeslot[];
   lastRenewedAt?: Date;
+  commentCount: number;
 };
 
 export type ResourceSummary = Pick<
   Resource,
   'id' | 'title' | 'status' | 'type' | 'category' | 'ownerId' | 'communityIds'
->;
+> & {
+  commentCount: number;
+};
 
 export enum ResourceTypeEnum {
   OFFER = 'offer',

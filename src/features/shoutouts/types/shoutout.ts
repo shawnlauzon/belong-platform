@@ -2,6 +2,7 @@ import { IsPersisted } from '@/shared';
 
 export type Shoutout = IsPersisted<ShoutoutInput> & {
   senderId: string;
+  commentCount: number;
 };
 
 // For creating / updating Shoutout

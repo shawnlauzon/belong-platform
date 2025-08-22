@@ -112,6 +112,7 @@ export function toDomainResource(
       : undefined,
     timeslots:
       dbResource.resource_timeslots?.map(toDomainResourceTimeslot) || [],
+    commentCount: dbResource.comment_count ?? 0,
   };
 }
 
@@ -127,5 +128,6 @@ export function toDomainResourceSummary(
     ownerId: dbResource.owner_id,
     communityIds:
       dbResource.resource_communities?.map((rc) => rc.community_id) || [],
+    commentCount: dbResource.comment_count ?? 0,
   };
 }
