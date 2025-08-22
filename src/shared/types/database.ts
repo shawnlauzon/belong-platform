@@ -408,7 +408,6 @@ export type Database = {
           coordinates: unknown | null
           created_at: string
           description: string
-          expires_at: string | null
           id: string
           image_urls: string[]
           is_recurring: boolean
@@ -430,7 +429,6 @@ export type Database = {
           coordinates?: unknown | null
           created_at?: string
           description: string
-          expires_at?: string | null
           id?: string
           image_urls?: string[]
           is_recurring?: boolean
@@ -452,7 +450,6 @@ export type Database = {
           coordinates?: unknown | null
           created_at?: string
           description?: string
-          expires_at?: string | null
           id?: string
           image_urls?: string[]
           is_recurring?: boolean

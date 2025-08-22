@@ -48,5 +48,4 @@ export type ResourceInput = {
   requiresApproval: boolean;
   areTimeslotsFlexible?: boolean;
   isRecurring?: boolean;
-  expiresAt?: Date;
 };

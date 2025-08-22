@@ -80,7 +80,6 @@ export function createFakeResource(
     ),
     requiresApproval: faker.datatype.boolean(),
     isRecurring: faker.datatype.boolean(),
-    expiresAt: faker.helpers.maybe(() => faker.date.future()),
     timeslots: [],
     commentCount: 0,
     ...overrides,
@@ -147,7 +146,6 @@ export function createFakeResourceInput(
     ),
     requiresApproval: faker.datatype.boolean(),
     isRecurring: faker.datatype.boolean(),
-    expiresAt: faker.helpers.maybe(() => faker.date.future()),
     ...overrides,
   };
 }
@@ -203,8 +201,6 @@ export function createFakeResourceRow(
     requires_approval: faker.datatype.boolean(),
     timeslots_flexible: true,
     is_recurring: faker.datatype.boolean(),
-    expires_at:
-      faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? null,
     comment_count: 0,
     ...overrides,

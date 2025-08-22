@@ -1,12 +1,12 @@
-import { QueriesOptions, QueriesResults, useQueries } from '@tanstack/react-query';
+import { QueryObserverResult, useQueries } from '@tanstack/react-query';
 import { logger, useSupabase } from '@/shared';
 import { fetchResourceById } from '../api';
-import type { Resource } from '../types';
 import { resourceKeys } from '../queries';
 
 export function useResourcesById(
   resourceIds: string[],
-  options?: Partial<QueriesOptions<Resource[]>>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options?: { [x: string]: any },
 ) {
   const supabase = useSupabase();
 
@@ -16,12 +16,12 @@ export function useResourcesById(
       queryFn: () => fetchResourceById(supabase, id),
       ...options,
     })),
-    combine: (results: QueriesResults<Resource[]>) => {
+    combine: (results: QueryObserverResult[]) => {
       return {
-        data: results.map((result: QueriesResults<Resource>) => result.data),
-        isPending: results.some((result: QueriesResults<Resource>) => result.isPending),
-        isError: results.some((result: QueriesResults<Resource>) => result.isError),
-        error: results.some((result: QueriesResults<Resource>) => result.error),
+        data: results.map((result: QueryObserverResult) => result.data),
+        isPending: results.some((result: QueryObserverResult) => result.isPending),
+        isError: results.some((result: QueryObserverResult) => result.isError),
+        error: results.find((result: QueryObserverResult) => result.error)?.error || null,
       };
     },
   });
