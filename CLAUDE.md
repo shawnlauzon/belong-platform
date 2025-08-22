@@ -175,6 +175,144 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - A task is only complete when build, typecheck, unit tests, and integration tests are all successful
 - Use the supabase MCP to interact with the database
 
+## Database Change Workflow
+
+**CRITICAL**: Database changes MUST follow this exact workflow to prevent production issues:
+
+### Phase 1: Always Start by Syncing with Production
+
+**NEVER make database changes without first syncing local with production**
+
+```bash
+# 1. Pull latest production schema
+supabase db pull
+
+# 2. Apply to local database  
+supabase db reset
+```
+
+**If migration history conflicts occur:**
+```bash
+# Repair migration history as instructed by the error message
+supabase migration repair --status reverted <migration-id>
+supabase migration repair --status applied <migration-id>
+
+# Then retry the pull
+supabase db pull
+supabase db reset
+```
+
+### Phase 2: Make Changes Locally ONLY
+
+Choose one of these approaches:
+
+**Option A: Direct SQL via Supabase Studio (Recommended for iteration)**
+- Access Studio: `http://localhost:54323`
+- Use SQL Editor for direct schema changes
+- Perfect for rapid iteration and testing
+
+**Option B: Migration File Approach**
+```bash
+supabase migration new <descriptive_name>
+# Edit the created migration file with your SQL
+```
+
+**NEVER use `mcp__supabase__apply_migration` during development - this affects production!**
+
+### Phase 3: Test Locally Until Perfect
+
+```bash
+# Apply your changes
+supabase db reset
+
+# Run ALL integration tests (not just the feature you're working on)
+pnpm test:integration
+
+# If tests fail:
+# - Option A users: Modify SQL in Studio, then reset and test again
+# - Option B users: Edit the migration file, then reset and test again
+# Repeat until ALL tests pass
+```
+
+### Phase 4: Generate Production Migration (If Using Studio)
+
+If you made changes via Studio instead of migration files:
+```bash
+supabase db diff -f <descriptive_name>
+```
+
+This creates a clean migration file based on your tested changes.
+
+### Phase 5: Final Verification Before Production
+
+```bash
+# Final test run to ensure everything works
+pnpm test:integration
+
+# Review the migration file for any issues
+# - No duplicate policies
+# - No syntax errors  
+# - Descriptive name and comments
+```
+
+### Phase 6: Push to Production (Only When Ready)
+
+```bash
+supabase db push
+```
+
+Or use MCP tool if CLI push fails, but prefer the CLI approach.
+
+## Critical Rules
+
+### ❌ What NOT to Do
+- Create migrations without checking production first
+- Apply untested migrations to production
+- Create duplicate RLS policies or constraints
+- Skip running integration tests before pushing
+- Make direct changes to production during development
+- Create multiple "fix" migrations for the same issue
+
+### ✅ What TO Do  
+- Always start by syncing with production
+- Test changes locally with real integration tests
+- Create one clean migration per logical change
+- Use descriptive migration names
+- Verify all tests pass before pushing to production
+
+### Rollback Strategy
+
+If something goes wrong in production:
+1. **Don't panic** - Supabase tracks migration history
+2. Create a rollback migration locally that undoes the changes
+3. Test the rollback migration locally first
+4. Apply the rollback to production
+5. Investigate and fix the issue properly before re-attempting
+
+### Example Workflow
+
+```bash
+# 1. Sync with production
+supabase db pull && supabase db reset
+
+# 2. Make changes in Studio (localhost:54323)
+# ... modify schema, test manually ...
+
+# 3. Test thoroughly  
+supabase db reset && pnpm test:integration
+
+# 4. Generate clean migration
+supabase db diff -f "add_user_preferences_table"
+
+# 5. Final verification
+pnpm test:integration
+
+# 6. Push to production
+supabase db push
+```
+
+This workflow prevents the dangerous situation where local and production schemas diverge, causing migration conflicts and potential data issues.
+
 ## Code Style and Best Practices
 
 - Follow established code patterns and conventions within the platform
@@ -254,3 +392,5 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - **Integration tests**: No mocking, test real end-to-end behavior with live database, validate real constraints and triggers
 - **When integration tests fail but unit tests pass**: Look for environmental differences (shared state, different setup, real vs mocked dependencies)
   For detailed debugging examples, test patterns, and troubleshooting guidance, see the documentation files linked at the top of this document.
+
+- Use supabase MCP to connect to remote database and supabase-local MCP to connect to local database. All development is done against local database

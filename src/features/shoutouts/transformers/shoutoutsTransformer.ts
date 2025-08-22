@@ -20,6 +20,7 @@ export function toDomainShoutout(dbShoutout: ShoutoutRow): Shoutout {
     updated_at,
     id,
     message,
+    comment_count,
   } = dbShoutout;
 
   return {
@@ -32,6 +33,7 @@ export function toDomainShoutout(dbShoutout: ShoutoutRow): Shoutout {
     imageUrls: image_urls || [],
     createdAt: new Date(created_at),
     updatedAt: new Date(updated_at),
+    commentCount: comment_count ?? 0,
   };
 }
 
