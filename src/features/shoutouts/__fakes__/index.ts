@@ -26,6 +26,7 @@ export function createFakeDbShoutout(
     ),
     created_at: now,
     updated_at: now,
+    comment_count: 0,
     ...overrides,
   };
 }
