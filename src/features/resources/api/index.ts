@@ -3,6 +3,7 @@ export * from './fetchResourceById';
 export * from './createResource';
 export * from './updateResource';
 export * from './deleteResource';
+export * from './renewResource';
 
 // Resource timeslot management
 export * from './createResourceTimeslot';

@@ -790,7 +790,7 @@ See the following files for complete examples:
 
 - `src/features/resources/__tests__/hooks/useResource.test.ts`
 - `src/features/resources/__tests__/hooks/useCreateResource.test.ts`
-- `src/features/resources/__tests__/api/fetchResourceById.test.ts`
+- ~~`src/features/resources/__tests__/api/fetchResourceById.test.ts`~~ (removed - was brittle)
 - `src/features/resources/__fakes__/index.ts` - Mock factories and utilities
 - `src/features/users/__tests__/transformers/userTransformer.test.ts` - Proper transformer testing
 - `src/features/users/__tests__/hooks/useUsers.test.ts` - Clean hook testing patterns
@@ -860,6 +860,156 @@ When refactoring tests, align them with the most established patterns:
 2. **Remove excessive tests**: Delete tests that test more paths than the reference feature
 3. **Use standard patterns**: Copy successful test structures exactly
 4. **Focus on core behavior**: Test success + error cases only, avoid edge case explosion
+
+## Avoiding Supabase Mocking Brittleness
+
+### Problem: Complex Supabase Mocking Creates Brittle Tests
+
+**❌ Avoid Complex Supabase Query Chain Mocking**:
+
+```typescript
+// BRITTLE: Testing implementation details
+expect(mockSupabase.from).toHaveBeenCalledWith('resources');
+expect(mockQuery.or).toHaveBeenCalledWith('expires_at.is.null,expires_at.gt.now()');
+expect(mockQuery.select).toHaveBeenCalledWith('*');
+```
+
+**Problems with this approach**:
+- Tests break when query structure changes
+- 200+ line mock utilities that don't match real Supabase behavior
+- Type casting to `any` due to mock limitations
+- Focuses on HOW code works instead of WHAT it accomplishes
+- Cascade failures when one query change affects multiple test files
+
+### Solution: Layered Architecture with Minimal Mocking
+
+#### 1. Extract Business Logic into Pure Functions
+
+```typescript
+// ✅ GOOD: Pure business logic functions
+export function isResourceActive(resource: { expires_at: string | null }): boolean {
+  if (!resource.expires_at) return true;
+  return new Date(resource.expires_at) > new Date();
+}
+
+export function filterActiveResources<T extends { expires_at: string | null }>(
+  resources: T[]
+): T[] {
+  return resources.filter(isResourceActive);
+}
+
+// Test with zero mocking
+it('should filter out expired resources', () => {
+  const resources = [
+    createFakeResourceRow({ expires_at: null }), // Active
+    createFakeResourceRow({ expires_at: '2020-01-01' }), // Expired
+    createFakeResourceRow({ expires_at: '2030-01-01' }), // Active
+  ];
+
+  const result = filterActiveResources(resources);
+  expect(result).toHaveLength(2);
+});
+```
+
+#### 2. Repository Pattern for Data Access
+
+```typescript
+// ✅ GOOD: Abstract data access with simple interface
+export interface ResourceRepository {
+  findActive(filters?: ResourceFilter): Promise<ResourceRow[]>;
+}
+
+export class SupabaseResourceRepository implements ResourceRepository {
+  constructor(private supabase: SupabaseClient<Database>) {}
+  
+  async findActive(filters?: ResourceFilter): Promise<ResourceRow[]> {
+    // Complex Supabase logic here - tested only with integration tests
+    const { data, error } = await this.supabase.from('resources')...
+    if (error) throw error;
+    return data || [];
+  }
+}
+```
+
+#### 3. Service Layer with Simple Interface Mocking
+
+```typescript
+// ✅ GOOD: Test business logic with simple mocks
+export class ResourceService {
+  constructor(private repository: ResourceRepository) {}
+  
+  async getActiveResources(filters?: ResourceFilter): Promise<Resource[]> {
+    const rows = await this.repository.findActive(filters);
+    const activeRows = filterActiveResources(rows); // Pure function
+    return activeRows.map(toDomainResource); // Pure function
+  }
+}
+
+// Simple, stable test
+it('should return active resources', async () => {
+  const mockRepository = { findActive: vi.fn() };
+  const service = new ResourceService(mockRepository);
+  
+  mockRepository.findActive.mockResolvedValue([
+    createFakeResourceRow({ expires_at: null }),
+    createFakeResourceRow({ expires_at: '2020-01-01' })
+  ]);
+
+  const result = await service.getActiveResources();
+  expect(result).toHaveLength(1); // Only non-expired
+});
+```
+
+#### 4. Contract Testing for Repository Layer
+
+```typescript
+// ✅ GOOD: Minimal mocking for repository contracts
+describe('SupabaseResourceRepository', () => {
+  it('should return resources when query succeeds', async () => {
+    const mockData = [createFakeResourceRow()];
+    
+    // Minimal mock - just the final result
+    mockSupabase.from.mockReturnValue({
+      select: () => Promise.resolve({ data: mockData, error: null })
+    });
+
+    const result = await repository.findActive();
+    expect(result).toEqual(mockData);
+  });
+});
+```
+
+### Benefits of Layered Architecture
+
+#### **Eliminated Brittleness**
+- **Pure functions**: Zero mocking = zero maintenance
+- **Simple interfaces**: Easy to mock and understand
+- **Focused tests**: Each layer tests one concern
+
+#### **Better Coverage**
+- **Business logic**: Thoroughly tested in isolation
+- **Edge cases**: Easy to test with pure functions
+- **Contract validation**: Clear API boundaries
+
+#### **Development Speed**
+- **Fast tests**: Pure functions run instantly
+- **Stable tests**: Business logic tests survive refactoring
+- **Clear failures**: Test failures point to exact issues
+
+### Migration Strategy
+
+1. **Identify brittle API tests** (those with complex Supabase mocking)
+2. **Extract business logic** into pure functions and test them
+3. **Create repository interfaces** for data access patterns
+4. **Build service layer** that combines repository + business logic
+5. **Replace brittle tests** with service tests + simple repository contracts
+6. **Keep integration tests** for end-to-end database validation
+
+### Files to Reference
+
+- `REFACTORING_EXAMPLE.md` - Complete before/after refactoring example
+- `src/features/users/__tests__/transformers/userTransformer.test.ts` - Pure function testing
+- `src/features/users/__tests__/hooks/useCreateUser.test.ts` - API function mocking
 
 ---
 

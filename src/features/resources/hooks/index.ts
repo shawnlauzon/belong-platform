@@ -9,6 +9,7 @@ export * from './useResourceTimeslots';
 export * from './useCreateResource';
 export * from './useUpdateResource';
 export * from './useDeleteResource';
+export * from './useRenewResource';
 export * from './useCreateResourceClaim';
 export * from './useUpdateResourceClaim';
 export * from './useDeleteResourceClaim';

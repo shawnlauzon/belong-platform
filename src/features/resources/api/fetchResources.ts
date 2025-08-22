@@ -14,7 +14,8 @@ export async function fetchResources(
 ): Promise<ResourceSummary[]> {
   let query = supabase
     .from('resources')
-    .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS);
+    .select(SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS)
+    .or('expires_at.is.null,expires_at.gt.now()');
 
   if (filters) {
     query = appendQueries(query, {

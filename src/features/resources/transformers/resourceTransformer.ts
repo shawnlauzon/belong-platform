@@ -107,6 +107,9 @@ export function toDomainResource(
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,
+    lastRenewedAt: dbResource.last_renewed_at
+      ? new Date(dbResource.last_renewed_at)
+      : undefined,
     timeslots:
       dbResource.resource_timeslots?.map(toDomainResourceTimeslot) || [],
   };
