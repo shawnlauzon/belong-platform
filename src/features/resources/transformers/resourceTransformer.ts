@@ -27,7 +27,6 @@ export function toResourceInsertRow(
     requiresApproval,
     areTimeslotsFlexible,
     isRecurring,
-    expiresAt,
     category,
     ...rest
   } = resource;
@@ -43,7 +42,6 @@ export function toResourceInsertRow(
     requires_approval: requiresApproval,
     timeslots_flexible: areTimeslotsFlexible ?? true,
     is_recurring: isRecurring ?? false,
-    expires_at: expiresAt?.toISOString(),
   };
 }
 
@@ -71,7 +69,6 @@ export function forDbUpdate(
     requires_approval: resource.requiresApproval,
     timeslots_flexible: resource.areTimeslotsFlexible,
     is_recurring: resource.isRecurring ?? false,
-    expires_at: resource.expiresAt?.toISOString(),
   };
 }
 
@@ -104,9 +101,6 @@ export function toDomainResource(
     requiresApproval: dbResource.requires_approval || false,
     areTimeslotsFlexible: dbResource.timeslots_flexible ?? true,
     isRecurring: dbResource.is_recurring ?? false,
-    expiresAt: dbResource.expires_at
-      ? new Date(dbResource.expires_at)
-      : undefined,
     lastRenewedAt: dbResource.last_renewed_at
       ? new Date(dbResource.last_renewed_at)
       : undefined,

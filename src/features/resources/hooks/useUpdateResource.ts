@@ -68,7 +68,7 @@ export function useUpdateResource() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
 
-  const mutation = useMutation({
+  const mutation = useMutation<Resource, Error, Partial<ResourceInput> & { id: string }>({
     mutationFn: async (
       updateData: Partial<ResourceInput> & { id: string },
     ): Promise<Resource> => {
@@ -78,7 +78,7 @@ export function useUpdateResource() {
       }
       return result;
     },
-    onSuccess: (updatedResource: Resource, variables: ResourceInput) => {
+    onSuccess: (updatedResource: Resource, variables: Partial<ResourceInput> & { id: string }) => {
       queryClient.invalidateQueries({
         queryKey: resourceKeys.detail(updatedResource.id),
       });
