@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase } from '@/shared';
+import { logger, useSupabase } from '@/shared';
 import { createResourceClaim } from '../api';
 import { Resource, ResourceClaim, ResourceClaimInput } from '../types';
 import { resourceClaimsKeys, resourceKeys } from '../queries';
@@ -12,7 +12,7 @@ export function useCreateResourceClaim() {
   return useMutation<ResourceClaim, Error, ResourceClaimInput>({
     mutationFn: (claimInput: ResourceClaimInput) =>
       createResourceClaim(supabase, claimInput),
-    onSuccess: (claim) => {
+    onSuccess: (claim: ResourceClaim) => {
       queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
       queryClient.invalidateQueries({
         queryKey: resourceClaimsKeys.listByResource(claim.resourceId),
@@ -41,6 +41,9 @@ export function useCreateResourceClaim() {
           queryKey: trustScoreKeys.listByUser(claim.claimantId),
         });
       }
+    },
+    onError: (error: Error) => {
+      logger.error('📚 API: Failed to create resource claim', { error });
     },
   });
 }

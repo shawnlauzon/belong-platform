@@ -9,8 +9,8 @@ export function useDeleteResourceTimeslot() {
   const queryClient = useQueryClient();
 
   return useMutation<ResourceTimeslot | null, Error, string>({
-    mutationFn: (id) => deleteResourceTimeslot(supabase, id),
-    onSuccess: (timeslot) => {
+    mutationFn: (id: string) => deleteResourceTimeslot(supabase, id),
+    onSuccess: (timeslot: ResourceTimeslot | null) => {
       if (timeslot) {
         queryClient.invalidateQueries({
           queryKey: resourceTimeslotKeys.listByResource(timeslot.resourceId),

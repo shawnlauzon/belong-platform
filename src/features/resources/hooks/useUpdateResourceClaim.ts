@@ -14,8 +14,8 @@ export function useUpdateResourceClaim() {
     Error,
     Pick<ResourceClaimInput, 'status' | 'notes'> & { id: string }
   >({
-    mutationFn: (update) => updateResourceClaim(supabase, update),
-    onSuccess: (claim) => {
+    mutationFn: (update: Pick<ResourceClaimInput, 'status' | 'notes'> & { id: string }) => updateResourceClaim(supabase, update),
+    onSuccess: (claim: ResourceClaim) => {
       queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
 
       queryClient.invalidateQueries({

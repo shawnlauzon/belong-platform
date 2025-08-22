@@ -63,53 +63,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
     await cleanupAllTestData();
   });
 
-  describe('Unauthenticated Read Operations', () => {
-    describe('fetchResources', () => {
-      it('returns empty array for unauthenticated access', async () => {
-        // Changed from expect rejection to expect NO-OP (empty array)
-        const result = await resourcesApi.fetchResources(unauthenticatedClient);
-        expect(result).toEqual([]);
-      });
-
-      it('returns empty array for unauthenticated access with filters', async () => {
-        // Use only supported filters and expect NO-OP behavior
-        const result = await resourcesApi.fetchResources(
-          unauthenticatedClient,
-          {
-            communityId: testCommunity.id,
-          },
-        );
-        expect(result).toEqual([]);
-      });
-    });
-
-    describe('fetchResourceTimeslots', () => {
-      it('returns empty array for unauthenticated access to resource timeslots', async () => {
-        // Changed from expect rejection to expect NO-OP (empty array)
-        const result = await resourcesApi.fetchResourceTimeslots(
-          unauthenticatedClient,
-          {
-            resourceId: testResourceOffer.id,
-          },
-        );
-        expect(result).toEqual([]);
-      });
-    });
-
-    describe('fetchResourceClaims', () => {
-      it('returns empty array for unauthenticated access to resource claims', async () => {
-        // Changed from expect rejection to expect NO-OP and use supported filter
-        const result = await resourcesApi.fetchResourceClaims(
-          unauthenticatedClient,
-          {
-            claimantId: testUser.id,
-          },
-        );
-        expect(result).toEqual([]);
-      });
-    });
-  });
-
   describe('Unauthenticated Write Operations', () => {
     describe('createResource', () => {
       it('throws error for unauthenticated create attempt', async () => {

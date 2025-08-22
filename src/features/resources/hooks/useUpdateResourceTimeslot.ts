@@ -13,8 +13,8 @@ export function useUpdateResourceTimeslot() {
     Error,
     Partial<ResourceTimeslotInput> & { id: string }
   >({
-    mutationFn: (update) => updateResourceTimeslot(supabase, update),
-    onSuccess: (timeslot) => {
+    mutationFn: (update: Partial<ResourceTimeslotInput> & { id: string }) => updateResourceTimeslot(supabase, update),
+    onSuccess: (timeslot: ResourceTimeslot) => {
       if (timeslot) {
         queryClient.invalidateQueries({
           queryKey: resourceTimeslotKeys.listByResource(timeslot.resourceId),
