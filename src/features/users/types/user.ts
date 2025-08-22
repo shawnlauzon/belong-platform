@@ -10,7 +10,6 @@ export type UserData = {
   email: string;
   bio?: string;
   location?: Coordinates;
-
-  // TODO: Trust score
-  // trustScore: number;
 };
+
+export type UserSummary = Pick<User, 'id' | 'firstName' | 'lastName' | 'fullName' | 'avatarUrl'>;

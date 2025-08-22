@@ -1,9 +1,9 @@
 import { IsPersisted } from '@/shared';
-import { PartialUser } from '@/features/users';
+import { UserSummary } from '@/features/users';
 
 export type Comment = IsPersisted<CommentInput> & {
   authorId: string;
-  author: PartialUser;
+  author: UserSummary;
   isEdited: boolean;
   isDeleted: boolean;
   replies?: Comment[];
@@ -21,7 +21,7 @@ export type CommentInput = {
 type CommentSummary = {
   content: string;
   authorId: string;
-  author: PartialUser;
+  author: UserSummary;
   isEdited: boolean;
   isDeleted: boolean;
   parentId?: string;
