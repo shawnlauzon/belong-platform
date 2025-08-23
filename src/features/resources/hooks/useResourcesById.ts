@@ -2,6 +2,7 @@ import { QueryObserverResult, useQueries } from '@tanstack/react-query';
 import { logger, useSupabase } from '@/shared';
 import { fetchResourceById } from '../api';
 import { resourceKeys } from '../queries';
+import { Resource } from '../types';
 
 export function useResourcesById(
   resourceIds: string[],
@@ -14,14 +15,14 @@ export function useResourcesById(
     queries: resourceIds.map((id) => ({
       queryKey: resourceKeys.detail(id),
       queryFn: () => fetchResourceById(supabase, id),
-      ...options,
+      ...options, 
     })),
-    combine: (results: QueryObserverResult[]) => {
+    combine: (results: QueryObserverResult<Resource|null>[]) => {
       return {
-        data: results.map((result: QueryObserverResult) => result.data),
-        isPending: results.some((result: QueryObserverResult) => result.isPending),
-        isError: results.some((result: QueryObserverResult) => result.isError),
-        error: results.find((result: QueryObserverResult) => result.error)?.error || null,
+        data: results.map((result) => result.data),
+        isPending: results.some((result) => result.isPending),
+        isError: results.some((result) => result.isError),
+        error: results.find((result) => result.error)?.error || null,
       };
     },
   });
