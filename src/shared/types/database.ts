@@ -420,6 +420,8 @@ export type Database = {
           title: string
           type: Database["public"]["Enums"]["resource_type"]
           updated_at: string
+          expires_at: string | null
+          is_active: boolean | null
         }
         Insert: {
           category: Database["public"]["Enums"]["resource_category"]
@@ -909,7 +911,12 @@ export type Database = {
         Returns: number
       }
       calculate_resource_expiration: {
-        Args: { last_renewed_at: string; resource_type: string }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: string
       }
       communities_containing_point: {
@@ -958,6 +965,10 @@ export type Database = {
       estimate_population: {
         Args: { lat: number; lng: number; radius_km: number }
         Returns: number
+      }
+      expires_at: {
+        Args: { "": Database["public"]["Tables"]["resources"]["Row"] }
+        Returns: string
       }
       geography: {
         Args: { "": string } | { "": unknown }
@@ -1192,7 +1203,9 @@ export type Database = {
         Returns: string
       }
       get_resource_renewal_days: {
-        Args: { resource_type: string }
+        Args:
+          | { resource_type: Database["public"]["Enums"]["resource_type"] }
+          | { resource_type: string }
         Returns: number
       }
       gettransactionid: {
@@ -1207,16 +1220,30 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      is_active: {
+        Args: { "": Database["public"]["Tables"]["resources"]["Row"] }
+        Returns: boolean
+      }
       is_community_member_of_resource: {
         Args: { resource_uuid: string; user_uuid: string }
         Returns: boolean
       }
       is_resource_active: {
-        Args: { last_renewed_at: string; resource_type: string }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: boolean
       }
       is_resource_expired: {
-        Args: { last_renewed_at: string; resource_type: string }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: boolean
       }
       is_resource_owner: {

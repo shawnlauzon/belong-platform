@@ -13,7 +13,6 @@ import {
   ResourceTimeslotRow,
   ResourceTimeslotUpdateDbData,
   ResourceClaimRow,
-  ResourceRow,
   ResourceRowJoinCommunitiesJoinTimeslots,
 } from '../types/resourceRow';
 import { User } from '../../users';
@@ -206,6 +205,7 @@ export function createFakeResourceRow(
     last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? null,
     comment_count: 0,
     expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    is_active: faker.datatype.boolean(),
     resource_communities: [],
     resource_timeslots: [],
     ...overrides,
