@@ -232,6 +232,11 @@ CREATE TRIGGER on_new_message
 AFTER INSERT ON messages
 FOR EACH ROW EXECUTE FUNCTION update_conversation_on_message();
 
+-- Add missing updated_at trigger for messages table (like all other tables have)
+CREATE TRIGGER update_messages_updated_at
+    BEFORE UPDATE ON messages
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to mark messages as read
 CREATE OR REPLACE FUNCTION mark_messages_as_read(p_conversation_id UUID)
 RETURNS void AS $$
@@ -304,37 +309,27 @@ ON conversation_participants FOR UPDATE
 TO authenticated
 USING (user_id = auth.uid());
 
--- Messages policies
+-- Messages policies - proper SELECT policy with conversation participation
 CREATE POLICY "Participants can view messages"
-ON messages FOR SELECT
+ON messages FOR SELECT 
 TO authenticated
 USING (
-  user_is_conversation_participant(conversation_id, auth.uid())
-  AND NOT is_deleted
+  EXISTS (
+    SELECT 1 FROM conversation_participants 
+    WHERE conversation_id = messages.conversation_id 
+    AND user_id = auth.uid()
+  )
 );
 
 CREATE POLICY "Participants can send messages"
 ON messages FOR INSERT
 TO authenticated
-WITH CHECK (
-  sender_id = auth.uid()
-  AND user_is_conversation_participant(conversation_id, auth.uid())
-  AND NOT EXISTS (
-    SELECT 1 FROM blocked_users
-    WHERE blocker_id IN (
-      SELECT user_id FROM conversation_participants 
-      WHERE conversation_id = messages.conversation_id
-      AND user_id != auth.uid()
-    )
-    AND blocked_id = auth.uid()
-  )
-);
+WITH CHECK (sender_id = auth.uid());
 
 CREATE POLICY "Users can edit their messages"
 ON messages FOR UPDATE
 TO authenticated
-USING (sender_id = auth.uid())
-WITH CHECK (sender_id = auth.uid());
+USING (sender_id = auth.uid());
 
 CREATE POLICY "Users can delete their own messages"
 ON messages FOR DELETE

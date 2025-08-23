@@ -7,27 +7,27 @@ export async function deleteMessage(
   client: SupabaseClient<Database>,
   input: DeleteMessageInput
 ): Promise<void> {
-  const { data: userData, error: userError } = await client.auth.getUser();
-  
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
-  }
-
-  const userId = userData.user.id;
-
-  const { error } = await client
+  // Soft delete the message - minimal update
+  const { data: updatedMessage, error } = await client
     .from('messages')
     .update({ 
       is_deleted: true,
-      content: '[Message deleted]',
-      updated_at: new Date().toISOString(),
     })
     .eq('id', input.messageId)
-    .eq('sender_id', userId);
+    .select('id')
+    .single();
 
   if (error) {
+    // If we get a PGRST116 error, it means no rows were updated (RLS blocked it)
+    if (error.code === 'PGRST116') {
+      throw new Error('You do not have permission to delete this message');
+    }
     logger.error('Error deleting message', { error });
     throw error;
+  }
+
+  // If we didn't get any data back, the update was blocked
+  if (!updatedMessage) {
+    throw new Error('You do not have permission to delete this message');
   }
 }
