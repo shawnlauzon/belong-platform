@@ -217,10 +217,7 @@ describe('Messages Read Status & Receipts', () => {
       });
       
       await signInAsUser(supabase, userB);
-      await api.markAsRead(supabase, {
-        conversationId: freshConversation.id,
-        messageId: messages.messages[0].id
-      });
+      await api.markAsRead(supabase, freshConversation.id);
 
       // Unread count should still be based on last_read_at, not individual message reads
       // This depends on implementation - typically it's messages after last_read_at
@@ -295,10 +292,7 @@ describe('Messages Read Status & Receipts', () => {
 
       // Mark as read
       await signInAsUser(supabase, userB);
-      await api.markAsRead(supabase, {
-        conversationId: conversation.id,
-        messageId: message.id
-      });
+      await api.markAsRead(supabase, conversation.id);
 
       // Simulate new session by fetching fresh data
       const conversationAfter = await api.fetchConversation(supabase, conversation.id);
@@ -344,10 +338,16 @@ describe('Messages Read Status & Receipts', () => {
       await signInAsUser(supabase, userA);
       const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Will be deleted`);
 
-      // Delete the message
-      await api.deleteMessage(supabase, {
-        messageId: message.id
-      });
+      // Delete the message (userA should be able to delete their own message)
+      try {
+        await api.deleteMessage(supabase, {
+          messageId: message.id
+        });
+      } catch (error) {
+        // TODO: IMPLEMENTATION ISSUE - RLS policy preventing message deletion
+        // User should be able to delete their own messages
+        throw new Error(`Failed to delete own message: ${error}`);
+      }
 
       // UserB should still be able to mark as read (message still exists, just flagged)
       await signInAsUser(supabase, userB);
