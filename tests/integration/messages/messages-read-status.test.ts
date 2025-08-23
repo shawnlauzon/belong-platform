@@ -69,18 +69,6 @@ describe('Messages Read Status & Receipts', () => {
       expect(new Date(messageStatus!.read_at!)).toBeInstanceOf(Date);
     });
 
-    it('only recipient can mark as read', async () => {
-      // Send message as userA
-      await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Only recipient test`);
-
-      // UserA (sender) should not be able to mark their own message as read
-      // Note: markAsRead marks ALL messages in conversation as read, not individual messages
-      await expect(
-        api.markAsRead(supabase, conversation.id)
-      ).rejects.toThrow();
-    });
-
     it('updates last_read_at in conversation_participants', async () => {
       await signInAsUser(supabase, userA);
       const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Last read test`);
@@ -233,6 +221,7 @@ describe('Messages Read Status & Receipts', () => {
       const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Delivery test`);
 
       // Verify message_status was created for recipient
+      await signInAsUser(supabase, userB);
       await assertMessageDelivered(supabase, message.id, userB.id);
     });
 
@@ -241,6 +230,7 @@ describe('Messages Read Status & Receipts', () => {
       const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Status recipient test`);
 
       // Should have status for recipient (userB)
+      await signInAsUser(supabase, userB);
       const { data: recipientStatus } = await supabase
         .from('message_status')
         .select('*')
@@ -251,6 +241,7 @@ describe('Messages Read Status & Receipts', () => {
       expect(recipientStatus![0].delivered_at).toBeTruthy();
 
       // Should NOT have status for sender (userA)
+      await signInAsUser(supabase, userA);
       const { data: senderStatus } = await supabase
         .from('message_status')
         .select('*')

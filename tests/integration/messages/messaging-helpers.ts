@@ -171,7 +171,7 @@ export async function assertMessageDelivered(
     .select('*')
     .eq('message_id', messageId)
     .eq('user_id', recipientUserId)
-    .single();
+    .maybeSingle();
     
   if (error || !messageStatus) {
     throw new Error(`Message status not found for message ${messageId} and user ${recipientUserId}: ${error?.message}`);
