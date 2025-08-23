@@ -22,7 +22,7 @@ describe('Resource Computed Fields', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   describe('Platform API returns expiresAt field', () => {
