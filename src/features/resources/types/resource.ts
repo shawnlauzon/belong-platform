@@ -15,6 +15,7 @@ export type Resource = IsPersisted<ResourceInput> & {
   areTimeslotsFlexible: boolean;
   timeslots: ResourceTimeslot[];
   lastRenewedAt?: Date;
+  expiresAt?: Date;
   commentCount: number;
 };
 

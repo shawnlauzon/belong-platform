@@ -228,4 +228,121 @@ describe('Feed API - Integration Tests', () => {
       });
     });
   });
+
+  describe('expired resource filtering', () => {
+    beforeAll(async () => {
+      // Ensure we're signed in as testUser
+      await signIn(supabase, testUser.email, 'TestPass123!');
+    });
+
+    it('should not return expired offers (30+ days old)', async () => {
+      // Create an offer
+      const expiredOffer = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'offer',
+        'tools',
+      );
+
+      // Create a current offer for comparison
+      const currentOffer = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'offer',
+        'tools',
+      );
+
+      // Set last_renewed_at to 31 days ago for the expired offer
+      const thirtyOneDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      const { error: updateError } = await supabase
+        .from('resources')
+        .update({ last_renewed_at: thirtyOneDaysAgo.toISOString() })
+        .eq('id', expiredOffer.id);
+
+      if (updateError) {
+        throw new Error(`Failed to update expired offer: ${updateError.message}`);
+      }
+
+      // Set last_renewed_at to 1 day ago for the current offer (should still be active)
+      const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+      const { error: updateError2 } = await supabase
+        .from('resources')
+        .update({ last_renewed_at: oneDayAgo.toISOString() })
+        .eq('id', currentOffer.id);
+
+      if (updateError2) {
+        throw new Error(`Failed to update current offer: ${updateError2.message}`);
+      }
+
+      // Fetch the feed
+      const feed = await fetchFeed(supabase);
+
+      // Assert that current offer is returned
+      expect(feed.items).toContainEqual({
+        id: currentOffer.id,
+        type: 'resource',
+      });
+
+      // Assert that expired offer is NOT returned
+      expect(feed.items).not.toContainEqual({
+        id: expiredOffer.id,
+        type: 'resource',
+      });
+    });
+
+    it('should not return expired requests (14+ days old)', async () => {
+      // Create a request
+      const expiredRequest = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'request',
+        'skills',
+      );
+
+      // Create a current request for comparison
+      const currentRequest = await createTestResource(
+        supabase,
+        testCommunity1.id,
+        'request',
+        'skills',
+      );
+
+      // Set last_renewed_at to 15 days ago for the expired request
+      const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+      const { error: updateError } = await supabase
+        .from('resources')
+        .update({ last_renewed_at: fifteenDaysAgo.toISOString() })
+        .eq('id', expiredRequest.id);
+
+      if (updateError) {
+        throw new Error(`Failed to update expired request: ${updateError.message}`);
+      }
+
+      // Set last_renewed_at to 1 day ago for the current request (should still be active)
+      const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+      const { error: updateError2 } = await supabase
+        .from('resources')
+        .update({ last_renewed_at: oneDayAgo.toISOString() })
+        .eq('id', currentRequest.id);
+
+      if (updateError2) {
+        throw new Error(`Failed to update current request: ${updateError2.message}`);
+      }
+
+      // Fetch the feed
+      const feed = await fetchFeed(supabase);
+
+      // Assert that current request is returned
+      expect(feed.items).toContainEqual({
+        id: currentRequest.id,
+        type: 'resource',
+      });
+
+      // Assert that expired request is NOT returned
+      expect(feed.items).not.toContainEqual({
+        id: expiredRequest.id,
+        type: 'resource',
+      });
+    });
+  });
 });

@@ -14,6 +14,7 @@ import {
   ResourceTimeslotUpdateDbData,
   ResourceClaimRow,
   ResourceRow,
+  ResourceRowJoinCommunitiesJoinTimeslots,
 } from '../types/resourceRow';
 import { User } from '../../users';
 import { createFakeUser } from '../../users/__fakes__';
@@ -82,6 +83,7 @@ export function createFakeResource(
     isRecurring: faker.datatype.boolean(),
     timeslots: [],
     commentCount: 0,
+    expiresAt: faker.helpers.maybe(() => faker.date.future()),
     ...overrides,
   };
 }
@@ -151,8 +153,8 @@ export function createFakeResourceInput(
 }
 
 export function createFakeResourceRow(
-  overrides: Partial<ResourceRow> = {},
-): ResourceRow {
+  overrides: Partial<ResourceRowJoinCommunitiesJoinTimeslots> = {},
+): ResourceRowJoinCommunitiesJoinTimeslots {
   const now = new Date().toISOString();
 
   const type = faker.helpers.arrayElement([
@@ -203,6 +205,9 @@ export function createFakeResourceRow(
     is_recurring: faker.datatype.boolean(),
     last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? null,
     comment_count: 0,
+    expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    resource_communities: [],
+    resource_timeslots: [],
     ...overrides,
   };
 }
