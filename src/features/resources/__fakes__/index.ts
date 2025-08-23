@@ -83,6 +83,7 @@ export function createFakeResource(
     timeslots: [],
     commentCount: 0,
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
+    lastRenewedAt: faker.helpers.maybe(() => faker.date.recent()) ?? now,
     ...overrides,
   };
 }
@@ -202,7 +203,7 @@ export function createFakeResourceRow(
     requires_approval: faker.datatype.boolean(),
     timeslots_flexible: true,
     is_recurring: faker.datatype.boolean(),
-    last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? null,
+    last_renewed_at: faker.helpers.maybe(() => faker.date.recent().toISOString()) ?? now,
     comment_count: 0,
     expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     is_active: faker.datatype.boolean(),
