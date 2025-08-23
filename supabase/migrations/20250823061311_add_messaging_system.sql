@@ -27,7 +27,7 @@ CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
   sender_id UUID REFERENCES profiles(id) NOT NULL,
-  content TEXT NOT NULL,
+  content TEXT NOT NULL CHECK (length(trim(content)) > 0 OR content = '[Message deleted]'),
   message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'system')) NOT NULL,
   is_edited BOOLEAN DEFAULT FALSE NOT NULL,
   is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
@@ -112,6 +112,17 @@ BEGIN
     JOIN community_memberships cm2 ON cm1.community_id = cm2.community_id
     WHERE cm1.user_id = user1_id 
     AND cm2.user_id = user2_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user is participant in conversation (avoids RLS recursion)
+CREATE OR REPLACE FUNCTION user_is_conversation_participant(conv_id UUID, check_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM conversation_participants
+    WHERE conversation_id = conv_id AND user_id = check_user_id
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -265,13 +276,7 @@ ALTER TABLE message_reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their conversations"
 ON conversations FOR SELECT
 TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM conversation_participants
-    WHERE conversation_id = conversations.id
-    AND user_id = auth.uid()
-  )
-);
+USING (user_is_conversation_participant(id, auth.uid()));
 
 CREATE POLICY "Users can create conversations"
 ON conversations FOR INSERT
@@ -281,33 +286,18 @@ WITH CHECK (true);
 CREATE POLICY "Users can update their conversations"
 ON conversations FOR UPDATE
 TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM conversation_participants
-    WHERE conversation_id = conversations.id
-    AND user_id = auth.uid()
-  )
-);
+USING (user_is_conversation_participant(id, auth.uid()));
 
 -- Conversation participants policies
 CREATE POLICY "Users can view conversation participants"
 ON conversation_participants FOR SELECT
 TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM conversation_participants cp
-    WHERE cp.conversation_id = conversation_participants.conversation_id
-    AND cp.user_id = auth.uid()
-  )
-);
+USING (user_is_conversation_participant(conversation_id, auth.uid()));
 
 CREATE POLICY "Users can add participants"
 ON conversation_participants FOR INSERT
 TO authenticated
-WITH CHECK (user_id = auth.uid() OR auth.uid() IN (
-  SELECT user_id FROM conversation_participants 
-  WHERE conversation_id = conversation_participants.conversation_id
-));
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update their participation"
 ON conversation_participants FOR UPDATE
@@ -319,11 +309,7 @@ CREATE POLICY "Participants can view messages"
 ON messages FOR SELECT
 TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 FROM conversation_participants
-    WHERE conversation_id = messages.conversation_id
-    AND user_id = auth.uid()
-  )
+  user_is_conversation_participant(conversation_id, auth.uid())
   AND NOT is_deleted
 );
 
@@ -332,11 +318,7 @@ ON messages FOR INSERT
 TO authenticated
 WITH CHECK (
   sender_id = auth.uid()
-  AND EXISTS (
-    SELECT 1 FROM conversation_participants
-    WHERE conversation_id = messages.conversation_id
-    AND user_id = auth.uid()
-  )
+  AND user_is_conversation_participant(conversation_id, auth.uid())
   AND NOT EXISTS (
     SELECT 1 FROM blocked_users
     WHERE blocker_id IN (
@@ -353,6 +335,11 @@ ON messages FOR UPDATE
 TO authenticated
 USING (sender_id = auth.uid())
 WITH CHECK (sender_id = auth.uid());
+
+CREATE POLICY "Users can delete their own messages"
+ON messages FOR DELETE
+TO authenticated
+USING (sender_id = auth.uid());
 
 -- Message status policies
 CREATE POLICY "Users can view their message status"
@@ -397,6 +384,8 @@ WITH CHECK (
     JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id
     WHERE m.id = message_reports.message_id
     AND cp.user_id = auth.uid()
+    -- Prevent self-reporting
+    AND m.sender_id != auth.uid()
   )
 );
 
@@ -404,6 +393,13 @@ CREATE POLICY "Users can view their reports"
 ON message_reports FOR SELECT
 TO authenticated
 USING (reporter_id = auth.uid());
+
+-- Allow users to update report status (for moderators/testing)
+CREATE POLICY "Users can update reports"
+ON message_reports FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
 
 -- ============================================
 -- REALTIME PUBLICATION

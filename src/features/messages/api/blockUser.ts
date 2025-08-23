@@ -28,10 +28,6 @@ export async function blockUser(
     });
 
   if (error) {
-    if (error.code === '23505') { // Unique constraint violation
-      // User is already blocked, which is fine
-      return;
-    }
     logger.error('Error blocking user', { error });
     throw error;
   }

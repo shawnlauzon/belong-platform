@@ -2825,6 +2825,10 @@ export type Database = {
         }
         Returns: string
       }
+      user_is_conversation_participant: {
+        Args: { check_user_id: string; conv_id: string }
+        Returns: boolean
+      }
       users_share_community: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
