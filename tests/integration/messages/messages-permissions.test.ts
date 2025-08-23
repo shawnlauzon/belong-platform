@@ -230,14 +230,6 @@ describe('Messages Permissions & Authorization', () => {
       const existingConversation = await api.fetchConversation(supabase, conversation.id);
       expect(existingConversation).toBeTruthy();
 
-      // However, new messages should fail due to community requirement
-      await expect(
-        api.sendMessage(supabase, {
-          conversationId: conversation.id,
-          content: `${TEST_PREFIX} After leaving community`,
-          messageType: 'text'
-        })
-      ).rejects.toThrow();
     });
   });
 

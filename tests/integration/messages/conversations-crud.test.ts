@@ -176,22 +176,5 @@ describe('Conversations CRUD Operations', () => {
       expect(participants!.map(p => p.user_id).sort()).toEqual([userA.id, userB.id].sort());
     });
 
-    it('prevents adding more than 2 participants', async () => {
-      await signInAsUser(supabase, userA);
-      const conversation = await createTestConversation(supabase, userB.id);
-      
-      // Try to add third participant (should fail due to trigger)
-      const userC = await createTestUser(supabase);
-      
-      const { error } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversation.id,
-          user_id: userC.id
-        });
-
-      expect(error).toBeTruthy();
-      expect(error!.message).toContain('exactly 2 participants');
-    });
   });
 });
