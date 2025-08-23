@@ -112,8 +112,6 @@ BEGIN
     JOIN community_memberships cm2 ON cm1.community_id = cm2.community_id
     WHERE cm1.user_id = user1_id 
     AND cm2.user_id = user2_id
-    AND cm1.status = 'active'
-    AND cm2.status = 'active'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
