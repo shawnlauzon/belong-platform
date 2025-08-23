@@ -8,6 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
 import type { Community } from '@/features/communities';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Conversations CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -31,16 +32,10 @@ describe('Conversations CRUD Operations', () => {
     it('creates conversation between two users in same community', async () => {
       // Create fresh users to ensure we're testing a truly new conversation
       const freshUserA = await createTestUser(supabase);
+      await joinCommunity(supabase, community.id);
       const freshUserB = await createTestUser(supabase);
-      
-      // Add both users to the existing community
-      await supabase
-        .from('community_memberships')
-        .insert([
-          { community_id: community.id, user_id: freshUserA.id },
-          { community_id: community.id, user_id: freshUserB.id }
-        ]);
-      
+      await joinCommunity(supabase, community.id);
+            
       // Sign in as fresh userA to start conversation with fresh userB
       await signInAsUser(supabase, freshUserA);
       
