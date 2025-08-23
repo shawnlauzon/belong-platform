@@ -171,5 +171,22 @@ describe('Conversations CRUD Operations', () => {
       expect(participants!.map(p => p.user_id).sort()).toEqual([userA.id, userB.id].sort());
     });
 
+    it.only('prevents a third user from joining', async () => {
+      await signInAsUser(supabase, userA);
+      const conversation = await createTestConversation(supabase, userB.id);
+
+      // UserC tries to directly join conversation
+      const userC = await createTestUser(supabase);
+      await joinCommunity(supabase, community.id);
+      const { error } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversation.id,
+          user_id: userC.id
+        });
+
+      expect(error).toBeTruthy();
+    });
+
   });
 });

@@ -286,10 +286,12 @@ ON conversation_participants FOR SELECT
 TO authenticated
 USING (user_is_conversation_participant(conversation_id, auth.uid()));
 
-CREATE POLICY "Users can add participants"
+-- Prevent users from adding themselves to conversations (only system/RPC can add)
+-- This ensures conversations stay as 2-person direct messages
+CREATE POLICY "Users cannot directly add participants"
 ON conversation_participants FOR INSERT
 TO authenticated
-WITH CHECK (user_id = auth.uid());
+WITH CHECK (false);
 
 CREATE POLICY "Users can update their participation"
 ON conversation_participants FOR UPDATE
@@ -311,7 +313,10 @@ USING (
 CREATE POLICY "Participants can send messages"
 ON messages FOR INSERT
 TO authenticated
-WITH CHECK (sender_id = auth.uid());
+WITH CHECK (
+  sender_id = auth.uid() 
+  AND user_is_conversation_participant(conversation_id, auth.uid())
+);
 
 CREATE POLICY "Users can edit their messages"
 ON messages FOR UPDATE
