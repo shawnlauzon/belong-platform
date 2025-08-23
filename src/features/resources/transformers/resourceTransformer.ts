@@ -126,6 +126,9 @@ export function toDomainResourceSummary(
     ownerId: dbResource.owner_id,
     communityIds:
       dbResource.resource_communities?.map((rc) => rc.community_id) || [],
+    expiresAt: dbResource.expires_at
+      ? new Date(dbResource.expires_at)
+      : undefined,
     commentCount: dbResource.comment_count ?? 0,
   };
 }

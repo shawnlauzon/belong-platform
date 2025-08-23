@@ -21,7 +21,7 @@ export type Resource = IsPersisted<ResourceInput> & {
 
 export type ResourceSummary = Pick<
   Resource,
-  'id' | 'title' | 'status' | 'type' | 'category' | 'ownerId' | 'communityIds'
+  'id' | 'title' | 'status' | 'type' | 'category' | 'ownerId' | 'communityIds' | 'expiresAt'
 > & {
   commentCount: number;
 };

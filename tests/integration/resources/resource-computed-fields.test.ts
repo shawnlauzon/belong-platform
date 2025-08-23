@@ -36,7 +36,7 @@ describe('Resource Computed Fields', () => {
       });
     });
 
-    it.skip('fetchResources includes expiresAt on all resources', async () => {
+    it('fetchResources includes expiresAt on all resources', async () => {
       await createTestResource(supabase, testCommunity.id, 'offer');
       await createTestResource(supabase, testCommunity.id, 'request');
       
@@ -51,7 +51,7 @@ describe('Resource Computed Fields', () => {
       });
     });
 
-    it.skip('fetchResourcesByUser includes expiresAt', async () => {
+    it('fetchResourcesByUser includes expiresAt', async () => {
       await createTestResource(supabase, testCommunity.id, 'offer');
       
       const resources = await resourcesApi.fetchResources(
