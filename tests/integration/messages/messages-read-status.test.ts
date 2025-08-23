@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { TEST_PREFIX } from '../helpers/test-data';
+import { createTestUser, TEST_PREFIX } from '../helpers/test-data';
 import { 
   setupMessagingUsers, 
   createTestConversation, 
@@ -16,6 +16,7 @@ import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
 import type { Community } from '@/features/communities';
 import type { Conversation, Message } from '@/features/messages/types';
+import { joinCommunity } from '@/features/communities/api';
 
 describe('Messages Read Status & Receipts', () => {
   let supabase: SupabaseClient<Database>;
@@ -198,8 +199,8 @@ describe('Messages Read Status & Receipts', () => {
     });
 
     it('handles multiple unread messages correctly', async () => {
-      // Create fresh conversation
-      await signInAsUser(supabase, userA);
+      const freshUser = await createTestUser(supabase);
+      await joinCommunity(supabase, community.id);
       const freshConversation = await createTestConversation(supabase, userB.id);
 
       // Send 3 messages
