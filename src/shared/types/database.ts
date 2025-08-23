@@ -411,7 +411,7 @@ export type Database = {
           id: string
           image_urls: string[]
           is_recurring: boolean
-          last_renewed_at: string | null
+          last_renewed_at: string
           location_name: string | null
           owner_id: string
           requires_approval: boolean
@@ -434,7 +434,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_recurring?: boolean
-          last_renewed_at?: string | null
+          last_renewed_at?: string
           location_name?: string | null
           owner_id?: string
           requires_approval?: boolean
@@ -455,7 +455,7 @@ export type Database = {
           id?: string
           image_urls?: string[]
           is_recurring?: boolean
-          last_renewed_at?: string | null
+          last_renewed_at?: string
           location_name?: string | null
           owner_id?: string
           requires_approval?: boolean

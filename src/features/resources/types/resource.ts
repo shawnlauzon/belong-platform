@@ -14,7 +14,7 @@ export type Resource = IsPersisted<ResourceInput> & {
   ownerId: string;
   areTimeslotsFlexible: boolean;
   timeslots: ResourceTimeslot[];
-  lastRenewedAt?: Date;
+  lastRenewedAt: Date;
   expiresAt?: Date;
   commentCount: number;
 };
@@ -49,4 +49,5 @@ export type ResourceInput = {
   requiresApproval: boolean;
   areTimeslotsFlexible?: boolean;
   isRecurring?: boolean;
+  lastRenewedAt?: Date;
 };

@@ -67,6 +67,7 @@ export async function createTestResource(
     communityIds: [communityId],
     category,
     status: 'open', // Ensure resources are open for feed tests
+    lastRenewedAt: new Date()
   });
 
   // Add small delay to ensure community membership trigger has completed
