@@ -3,6 +3,7 @@ export * from './comments';
 export * from './communities';
 export * from './feed';
 export * from './images';
+export * from './messages';
 export * from './resources';
 export * from './shoutouts';
 export * from './trust-scores';
