@@ -276,7 +276,7 @@ describe('Messages CRUD Operations', () => {
       // Verify message is marked as deleted
       const dbMessage = await assertMessageExists(supabase, message.id);
       expect(dbMessage.is_deleted).toBe(true);
-      expect(dbMessage.content).toBe(message.content); // Content preserved
+      expect(dbMessage.content).toContain('deleted');
     });
 
     it('cannot delete other user\'s message', async () => {

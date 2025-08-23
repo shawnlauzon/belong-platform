@@ -389,6 +389,7 @@ export type Database = {
           is_deleted: boolean
           is_edited: boolean
           message_type: string
+          previous_content: string | null
           sender_id: string
           updated_at: string
         }
@@ -401,6 +402,7 @@ export type Database = {
           is_deleted?: boolean
           is_edited?: boolean
           message_type?: string
+          previous_content?: string | null
           sender_id: string
           updated_at?: string
         }
@@ -413,6 +415,7 @@ export type Database = {
           is_deleted?: boolean
           is_edited?: boolean
           message_type?: string
+          previous_content?: string | null
           sender_id?: string
           updated_at?: string
         }

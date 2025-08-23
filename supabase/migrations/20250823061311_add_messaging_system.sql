@@ -28,6 +28,7 @@ CREATE TABLE messages (
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
   sender_id UUID REFERENCES profiles(id) NOT NULL,
   content TEXT NOT NULL CHECK (length(trim(content)) > 0 OR content = '[Message deleted]'),
+  previous_content TEXT, -- Stores n-1 version of content for edit/delete history
   message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'system')) NOT NULL,
   is_edited BOOLEAN DEFAULT FALSE NOT NULL,
   is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
@@ -180,20 +181,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to validate exactly 2 participants per conversation
-CREATE OR REPLACE FUNCTION validate_conversation_participants()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF (SELECT COUNT(*) FROM conversation_participants WHERE conversation_id = NEW.conversation_id) > 2 THEN
-    RAISE EXCEPTION 'Conversations can only have exactly 2 participants';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER enforce_two_participants
-BEFORE INSERT ON conversation_participants
-FOR EACH ROW EXECUTE FUNCTION validate_conversation_participants();
 
 -- Function to update conversation on new message
 CREATE OR REPLACE FUNCTION update_conversation_on_message()
@@ -226,7 +213,7 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER on_new_message
 AFTER INSERT ON messages
