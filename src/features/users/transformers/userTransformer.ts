@@ -5,18 +5,7 @@ import type {
   ProfileUpdateRow,
 } from '../types/profileRow';
 
-// Type for the user_metadata JSONB column
-type UserMetadata = {
-  first_name?: string;
-  last_name?: string;
-  full_name?: string;
-  avatar_url?: string;
-  bio?: string;
-  location?: {
-    lat: number;
-    lng: number;
-  };
-};
+import type { UserMetadata } from '../types/user';
 
 /**
  * Transforms a database profile record to a domain user object
