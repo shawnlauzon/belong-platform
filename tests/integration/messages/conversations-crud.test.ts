@@ -29,23 +29,35 @@ describe('Conversations CRUD Operations', () => {
 
   describe('startConversation', () => {
     it('creates conversation between two users in same community', async () => {
-      // Sign in as userA to start conversation with userB
-      await signInAsUser(supabase, userA);
+      // Create fresh users to ensure we're testing a truly new conversation
+      const freshUserA = await createTestUser(supabase);
+      const freshUserB = await createTestUser(supabase);
+      
+      // Add both users to the existing community
+      await supabase
+        .from('community_memberships')
+        .insert([
+          { community_id: community.id, user_id: freshUserA.id },
+          { community_id: community.id, user_id: freshUserB.id }
+        ]);
+      
+      // Sign in as fresh userA to start conversation with fresh userB
+      await signInAsUser(supabase, freshUserA);
       
       const conversation = await api.startConversation(supabase, {
-        otherUserId: userB.id
+        otherUserId: freshUserB.id
       });
 
-      // Verify conversation object
+      // Verify conversation object for a truly new conversation
       expect(conversation).toBeTruthy();
       expect(conversation.id).toBeTruthy();
       expect(conversation.otherParticipant).toBeTruthy();
-      expect(conversation.otherParticipant.id).toBe(userB.id);
+      expect(conversation.otherParticipant.id).toBe(freshUserB.id);
       expect(conversation.unreadCount).toBe(0);
       expect(conversation.lastMessageAt).toBe(null);
 
       // Verify database record and participants
-      await assertConversationExists(supabase, conversation.id, [userA.id, userB.id]);
+      await assertConversationExists(supabase, conversation.id, [freshUserA.id, freshUserB.id]);
     });
 
     it('returns existing conversation (idempotent operation)', async () => {
