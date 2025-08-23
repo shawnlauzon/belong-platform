@@ -226,28 +226,18 @@ describe('Messages CRUD Operations', () => {
     });
 
     it('returns empty array for conversation with no messages', async () => {
-      await signInAsUser(supabase, userA);
+      // Create fresh users to ensure we get a truly empty conversation
+      const { userA: freshUserA, userB: freshUserB } = await setupMessagingUsers(supabase);
       
-      // Create a new conversation without messages
-      const emptyConversation = await createTestConversation(supabase, userB.id);
-      console.log('Empty conversation ID:', emptyConversation.id);
-
-      // Check what messages exist in this conversation directly in the database
-      const { data: dbMessages } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', emptyConversation.id);
+      await signInAsUser(supabase, freshUserA);
       
-      console.log('Messages found in DB for this conversation:', dbMessages?.length);
-      console.log('First few messages:', dbMessages?.slice(0, 3));
+      // Create a new conversation without messages using fresh users
+      const emptyConversation = await createTestConversation(supabase, freshUserB.id);
 
       const result = await api.fetchMessages(supabase, {
         conversationId: emptyConversation.id,
         limit: 50
       });
-
-      console.log('Messages returned by API:', result.messages.length);
-      console.log('First few API messages:', result.messages.slice(0, 3).map(m => ({ id: m.id, conversationId: m.conversationId })));
 
       expect(result.messages).toHaveLength(0);
       expect(result.hasMore).toBe(false);
