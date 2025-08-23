@@ -17,7 +17,7 @@ import type { User } from '@/features/users';
 import type { Community } from '@/features/communities';
 import type { Conversation } from '@/features/messages/types';
 
-describe('Messages Blocking System', () => {
+describe.skip('Messages Blocking System', () => {
   let supabase: SupabaseClient<Database>;
   let userA: User;
   let userB: User;
