@@ -34,14 +34,17 @@ export async function fetchFeed(
 
     // Fetch resource IDs, creation dates, and category for sorting and categorization
     // Also fetch timeslots for events to filter out past events
+    // Include fields needed for expiration checking
     const { data: resourceData, error: resourceError } = await supabase
       .from('resources')
       .select(`
         id, 
         type, 
-        created_at, 
+        created_at,
+        last_renewed_at,
         resource_communities!inner(community_id),
-        resource_timeslots(start_time, end_time)
+        resource_timeslots(start_time, end_time),
+        is_active
       `)
       .eq('status', 'open')
       .in('resource_communities.community_id', communityIds);
@@ -50,27 +53,32 @@ export async function fetchFeed(
       throw resourceError;
     }
 
-    // Filter out past events (events where all timeslots have ended)
+    // Filter out expired resources and past events
     const now = new Date();
     const filteredResources = resourceData?.filter((resource) => {
-      // Keep all non-event resources
-      if (resource.type !== 'event') {
-        return true;
+      // First check: Filter out expired resources (inactive according to renewal rules)
+      if (!resource.is_active) {
+        return false;
       }
 
-      // For events, check if any timeslot is current or future
-      const timeslots = resource.resource_timeslots || [];
-      
-      // If no timeslots, include the event (shouldn't happen but be safe)
-      if (timeslots.length === 0) {
-        return true;
+      // Second check: For events, filter out past events (events where all timeslots have ended)
+      if (resource.type === 'event') {
+        const timeslots = resource.resource_timeslots || [];
+        
+        // If no timeslots, include the event (shouldn't happen but be safe)
+        if (timeslots.length === 0) {
+          return true;
+        }
+
+        // Keep event if at least one timeslot hasn't ended yet
+        return timeslots.some((slot) => {
+          const endTime = new Date(slot.end_time);
+          return endTime >= now;
+        });
       }
 
-      // Keep event if at least one timeslot hasn't ended yet
-      return timeslots.some((slot) => {
-        const endTime = new Date(slot.end_time);
-        return endTime >= now;
-      });
+      // Non-event resources that are active pass through
+      return true;
     }) || [];
 
     // Fetch shoutout IDs and creation dates for sorting

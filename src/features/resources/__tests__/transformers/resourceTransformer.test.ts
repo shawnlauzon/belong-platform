@@ -103,6 +103,37 @@ describe('Resource Transformer', () => {
 
       expect(resource.isRecurring).toBe(false);
     });
+
+    it('should transform expiresAt field from database to domain', () => {
+      const expirationDate = '2024-12-31T23:59:59.000Z';
+      const dbResource = createFakeResourceRow({
+        expires_at: expirationDate,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.expiresAt).toEqual(new Date(expirationDate));
+    });
+
+    it('should handle null expiresAt field', () => {
+      const dbResource = createFakeResourceRow({
+        expires_at: null,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.expiresAt).toBeUndefined();
+    });
+
+    it('should handle undefined expiresAt field', () => {
+      const dbResource = createFakeResourceRow({
+        expires_at: undefined,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.expiresAt).toBeUndefined();
+    });
   });
 
   describe('forDbInsert', () => {
