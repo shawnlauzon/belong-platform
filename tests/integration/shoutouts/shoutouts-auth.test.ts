@@ -95,17 +95,19 @@ describe('Shoutouts API - Authentication Requirements', () => {
     });
 
     describe('deleteShoutout', () => {
-      it('should expect null for unauthenticated delete', async () => {
-        const result = await api.deleteShoutout(unauthenticatedClient, testShoutout.id);
-        expect(result).toBeNull();
+      it('should throw error for unauthenticated delete', async () => {
+        await expect(
+          api.deleteShoutout(unauthenticatedClient, testShoutout.id)
+        ).rejects.toThrow();
       });
 
-      it('should expect null for unauthenticated delete of non-existent shoutout', async () => {
-        const result = await api.deleteShoutout(
-          unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-        );
-        expect(result).toBeNull();
+      it('should throw error for unauthenticated delete of non-existent shoutout', async () => {
+        await expect(
+          api.deleteShoutout(
+            unauthenticatedClient,
+            '00000000-0000-0000-0000-000000000000',
+          )
+        ).rejects.toThrow();
       });
     });
   });

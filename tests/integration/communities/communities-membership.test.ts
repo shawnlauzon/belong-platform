@@ -83,7 +83,11 @@ describe('Communities API - Membership Operations', () => {
     });
 
     afterAll(async () => {
-      await api.leaveCommunity(supabase, membershipTestCommunity.id);
+      try {
+        await api.leaveCommunity(supabase, membershipTestCommunity.id);
+      } catch {
+        // ignore
+      }
     });
 
     it('community members can see other members', async () => {

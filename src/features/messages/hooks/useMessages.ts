@@ -9,39 +9,12 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 interface UseMessagesResult {
   data: Message[];
   isLoading: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
-  isLoadingMore: boolean;
 }
 
 export function useMessages(conversationId: string): UseMessagesResult {
   const client = useSupabase();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [cursor, setCursor] = useState<string | undefined>();
-
-  const loadMore = async () => {
-    if (!client || isLoadingMore || !hasMore) return;
-    
-    setIsLoadingMore(true);
-    try {
-      const result = await fetchMessages(client, { 
-        conversationId, 
-        cursor,
-        limit: 50 
-      });
-      
-      setMessages(prev => [...prev, ...result.messages]);
-      setHasMore(result.hasMore);
-      setCursor(result.cursor);
-    } catch (error) {
-      console.error('Failed to load more messages:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
 
   useEffect(() => {
     if (!client || !conversationId) return;
@@ -59,15 +32,13 @@ export function useMessages(conversationId: string): UseMessagesResult {
         }
         userId = userData.user.id;
 
-        // Load initial messages
+        // Load initial messages (load all messages, no pagination)
         const initialData = await fetchMessages(client, { 
           conversationId, 
-          limit: 50 
+          limit: 1000  // Large limit to get all messages
         });
         
         setMessages(initialData.messages);
-        setHasMore(initialData.hasMore);
-        setCursor(initialData.cursor);
 
         // Set up realtime subscription
         channel = client
@@ -151,8 +122,5 @@ export function useMessages(conversationId: string): UseMessagesResult {
   return {
     data: messages,
     isLoading,
-    hasMore,
-    loadMore,
-    isLoadingMore,
   };
 }

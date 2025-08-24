@@ -99,20 +99,22 @@ describe('Resource Offers API - Authentication Requirements', () => {
     });
 
     describe('deleteResource', () => {
-      it('returns null for unauthenticated delete attempt', async () => {
-        const result = await resourcesApi.deleteResource(
-          unauthenticatedClient,
-          testResourceOffer.id,
-        );
-        expect(result).toBeNull();
+      it('throws error for unauthenticated delete attempt', async () => {
+        await expect(
+          resourcesApi.deleteResource(
+            unauthenticatedClient,
+            testResourceOffer.id,
+          )
+        ).rejects.toThrow();
       });
 
-      it('returns null for unauthenticated delete even for non-existent resource', async () => {
-        const result = await resourcesApi.deleteResource(
-          unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-        );
-        expect(result).toBeNull();
+      it('throws error for unauthenticated delete even for non-existent resource', async () => {
+        await expect(
+          resourcesApi.deleteResource(
+            unauthenticatedClient,
+            '00000000-0000-0000-0000-000000000000',
+          )
+        ).rejects.toThrow();
       });
     });
 

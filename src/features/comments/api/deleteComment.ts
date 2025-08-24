@@ -1,26 +1,23 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Comment } from '../types';
-import { CommentUpdateDbData, SELECT_COMMENTS_JOIN_AUTHOR, CommentRowJoinAuthor } from '../types';
+import {
+  CommentUpdateDbData,
+  SELECT_COMMENTS_JOIN_AUTHOR,
+  CommentRowJoinAuthor,
+} from '../types';
 import { toDomainComment } from '../transformers';
 
 export async function deleteComment(
   supabase: SupabaseClient<Database>,
   id: string,
 ): Promise<Comment> {
-  // Soft delete the comment
-  const updateDate = new Date().toISOString();
-  const updateData: CommentUpdateDbData = {
-    is_deleted: true,
-    updated_at: updateDate,
-  };
-
   // First, get the comment data before deleting it
-  const { data: commentBeforeDelete, error: fetchError } = await supabase
+  const { data: commentBeforeDelete, error: fetchError } = (await supabase
     .from('comments')
     .select(SELECT_COMMENTS_JOIN_AUTHOR)
     .eq('id', id)
-    .single() as {
+    .single()) as {
     data: CommentRowJoinAuthor | null;
     error: Error | null;
   };
@@ -28,6 +25,13 @@ export async function deleteComment(
   if (fetchError || !commentBeforeDelete) {
     throw fetchError || new Error('Comment not found');
   }
+
+  // Soft delete the comment
+  const updateDate = new Date().toISOString();
+  const updateData: CommentUpdateDbData = {
+    is_deleted: true,
+    updated_at: updateDate,
+  };
 
   // Now perform the update and select to verify it worked
   const { data: updatedComment, error } = await supabase

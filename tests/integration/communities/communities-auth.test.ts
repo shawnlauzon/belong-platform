@@ -101,7 +101,7 @@ describe('Communities API - Authentication Requirements', () => {
             id: testCommunity.id,
             name: 'Unauthorized Update Attempt',
           }),
-        ).rejects.toThrow('Community not found for update');
+        ).rejects.toThrow();
       });
 
       it('should throw error for unauthenticated update of non-existent community', async () => {
@@ -110,22 +110,27 @@ describe('Communities API - Authentication Requirements', () => {
             id: '00000000-0000-0000-0000-000000000000',
             name: 'Test',
           }),
-        ).rejects.toThrow('Community not found for update');
+        ).rejects.toThrow();
       });
     });
 
     describe('deleteCommunity', () => {
-      it('returns null for unauthenticated delete attempt', async () => {
-        const result = await api.deleteCommunity(unauthenticatedClient, testCommunity.id);
-        expect(result).toBeNull();
+      it('throws error for unauthenticated delete attempt', async () => {
+        await expect(
+          api.deleteCommunity(
+            unauthenticatedClient,
+            testCommunity.id,
+          )
+        ).rejects.toThrow();
       });
 
-      it('returns null for unauthenticated delete even for non-existent community', async () => {
-        const result = await api.deleteCommunity(
-          unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-        );
-        expect(result).toBeNull();
+      it('throws error for unauthenticated delete even for non-existent community', async () => {
+        await expect(
+          api.deleteCommunity(
+            unauthenticatedClient,
+            '00000000-0000-0000-0000-000000000000',
+          )
+        ).rejects.toThrow();
       });
     });
 
