@@ -293,7 +293,9 @@ await createResource.mutateAsync({
 });
 ```
 
-### Direct Messaging
+### Direct Messaging (Fully Realtime)
+
+The messaging system is built entirely on realtime subscriptions - messages appear instantly without polling or manual refreshing.
 
 ```tsx
 import {
@@ -301,21 +303,56 @@ import {
   useMessages,
   useSendMessage,
   useMarkAsRead,
+  useTypingIndicator,
+  useUnreadCount,
 } from '@belongnetwork/platform';
 
-// List conversations
-const { data: conversations } = useConversations();
+// List conversations with realtime updates
+const { data: conversations, isLoading } = useConversations();
 
-// Get messages in conversation
-const { data: messages } = useMessages(conversationId);
+// Get messages with realtime subscription
+const { 
+  data: messages, 
+  isLoading: messagesLoading,
+  hasMore,
+  loadMore 
+} = useMessages(conversationId);
 
-// Send message
+// Send message (triggers realtime updates for recipients)
 const sendMessage = useSendMessage();
 await sendMessage.mutateAsync({
   conversationId,
   content: 'Hello!',
+  messageType: 'text',
 });
+
+// Mark messages as read
+const markAsRead = useMarkAsRead();
+await markAsRead.mutateAsync({
+  conversationId,
+  messageId: 'message-id'
+});
+
+// Typing indicators (realtime)
+const { sendTyping, typingUsers, isAnyoneTyping } = useTypingIndicator({
+  conversationId
+});
+
+// Send typing indicator
+sendTyping(true); // user is typing
+sendTyping(false); // user stopped typing
+
+// Get total unread count across all conversations
+const { data: totalUnread } = useUnreadCount();
 ```
+
+**Key Features:**
+- ✅ **Zero polling** - All updates via Supabase Realtime
+- ✅ **Instant delivery** - Messages appear immediately in recipient's UI
+- ✅ **Live typing indicators** - See when others are typing
+- ✅ **Real-time conversation list** - Last message preview updates instantly
+- ✅ **Automatic reconnection** - Handles network interruptions gracefully
+- ✅ **Optimistic updates** - Smooth UX with immediate feedback
 
 ### Agenda
 

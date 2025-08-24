@@ -10,4 +10,3 @@ export * from './useUnblockUser';
 export * from './useReportMessage';
 export * from './useTypingIndicator';
 export * from './useUnreadCount';
-export * from './useRealtimeMessages';
