@@ -14,8 +14,9 @@ export async function cleanupAllTestData() {
     .select('id')
     .like('name', `${TEST_PREFIX}%`);
 
+  let communityIds: string[] = [];
   if (testCommunities?.length) {
-    const communityIds = testCommunities.map((c) => c.id);
+    communityIds = testCommunities.map((c) => c.id);
     await serviceClient
       .from('community_memberships')
       .delete()
@@ -27,6 +28,22 @@ export async function cleanupAllTestData() {
     .from('resources')
     .delete()
     .like('title', `${TEST_PREFIX}%`);
+
+  // Delete test connection data
+  if (communityIds.length) {
+    await serviceClient
+      .from('user_connections')
+      .delete()
+      .in('community_id', communityIds);
+
+    await serviceClient
+      .from('connection_requests')
+      .delete()
+      .in('community_id', communityIds);
+  }
+
+  // NOTE: Member codes will be automatically deleted when communities are deleted
+  // due to CASCADE constraint, so we don't need to delete them explicitly
 
   // Delete test communities
   await serviceClient
@@ -189,4 +206,56 @@ export async function cleanupResourceClaim(claimId: string) {
   const serviceClient = createServiceClient();
 
   await serviceClient.from('resource_claims').delete().eq('id', claimId);
+}
+
+// Cleanup connection data for a specific community (preserves member codes)
+export async function cleanupCommunityConnections(communityId: string) {
+  const serviceClient = createServiceClient();
+
+  // Delete user connections for this community
+  await serviceClient
+    .from('user_connections')
+    .delete()
+    .eq('community_id', communityId);
+
+  // Delete connection requests for this community
+  await serviceClient
+    .from('connection_requests')
+    .delete()
+    .eq('community_id', communityId);
+
+  // NOTE: We don't delete member codes as they are auto-generated when users join
+  // communities and are needed for connection functionality to work
+}
+
+// Cleanup specific connection request
+export async function cleanupConnectionRequest(requestId: string) {
+  const serviceClient = createServiceClient();
+  
+  await serviceClient
+    .from('connection_requests')
+    .delete()
+    .eq('id', requestId);
+}
+
+// Cleanup specific user connection
+export async function cleanupUserConnection(connectionId: string) {
+  const serviceClient = createServiceClient();
+  
+  await serviceClient
+    .from('user_connections')
+    .delete()
+    .eq('id', connectionId);
+}
+
+// Cleanup member code for specific user and community
+// WARNING: This removes auto-generated codes and may break connection functionality
+export async function cleanupMemberCode(userId: string, communityId: string) {
+  const serviceClient = createServiceClient();
+  
+  await serviceClient
+    .from('community_member_codes')
+    .delete()
+    .eq('user_id', userId)
+    .eq('community_id', communityId);
 }

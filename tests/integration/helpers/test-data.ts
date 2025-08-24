@@ -15,6 +15,16 @@ import {
   ShoutoutInput,
   createShoutout,
 } from '@/features';
+import {
+  getMemberConnectionCode,
+  processConnectionLink,
+  approveConnection,
+} from '@/features/connections/api';
+import type {
+  MemberConnectionCode,
+  ConnectionRequest,
+  UserConnection,
+} from '@/features/connections/types';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -124,4 +134,66 @@ export async function createTestShoutout({
   if (!shoutout) throw new Error('Failed to create shoutout');
 
   return shoutout;
+}
+
+/**
+ * Gets or creates a member connection code for the current user in a community
+ */
+export async function createTestMemberConnectionCode(
+  supabase: SupabaseClient<Database>,
+  communityId: string,
+): Promise<MemberConnectionCode> {
+  const memberCode = await getMemberConnectionCode(supabase, communityId);
+  return memberCode;
+}
+
+/**
+ * Creates a connection request by processing a connection link
+ * @param initiatorSupabase - Supabase client for the code owner
+ * @param requesterSupabase - Supabase client for the user scanning the code
+ * @param communityId - Community ID where connection is being made
+ */
+export async function createTestConnectionRequest(
+  initiatorSupabase: SupabaseClient<Database>,
+  requesterSupabase: SupabaseClient<Database>,
+  communityId: string,
+): Promise<{ connectionCode: string; requestId: string }> {
+  // Get the initiator's connection code
+  const memberCode = await getMemberConnectionCode(initiatorSupabase, communityId);
+  
+  // Process the connection link as the requester
+  const response = await processConnectionLink(requesterSupabase, memberCode.code);
+  
+  if (!response.success || !response.connectionRequestId) {
+    throw new Error(`Failed to create connection request: ${response.message}`);
+  }
+  
+  return {
+    connectionCode: memberCode.code,
+    requestId: response.connectionRequestId,
+  };
+}
+
+/**
+ * Creates an approved connection between two users
+ * @param initiatorSupabase - Supabase client for the code owner
+ * @param requesterSupabase - Supabase client for the user scanning the code
+ * @param communityId - Community ID where connection is being made
+ */
+export async function createTestConnection(
+  initiatorSupabase: SupabaseClient<Database>,
+  requesterSupabase: SupabaseClient<Database>,
+  communityId: string,
+): Promise<UserConnection> {
+  // First create a connection request
+  const { requestId } = await createTestConnectionRequest(
+    initiatorSupabase,
+    requesterSupabase,
+    communityId,
+  );
+  
+  // Then approve it as the initiator
+  const connection = await approveConnection(initiatorSupabase, requestId);
+  
+  return connection;
 }
