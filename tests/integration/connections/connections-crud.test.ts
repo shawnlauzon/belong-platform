@@ -3,7 +3,6 @@ import { createTestClient } from '../helpers/test-client';
 import {
   createTestUser,
   createTestCommunity,
-  createTestMemberConnectionCode,
   createTestConnectionRequest,
   createTestConnection,
 } from '../helpers/test-data';
@@ -163,10 +162,15 @@ describe('Connections API - CRUD Operations', () => {
 
   describe('Connection Request Processing', () => {
     it('creates connection request when processing valid code', async () => {
-      const memberCodeA = await createTestMemberConnectionCode(
-        supabaseUserA,
-        testCommunity.id,
-      );
+      // Get userA's existing member code (created when they joined the community)
+      const { data: memberCodeA } = await supabaseUserA
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!memberCodeA) throw new Error('UserA should have a member code');
 
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
@@ -216,10 +220,15 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('prevents self-connection attempts', async () => {
-      const memberCode = await createTestMemberConnectionCode(
-        supabaseUserA,
-        testCommunity.id,
-      );
+      // Get userA's existing member code
+      const { data: memberCode } = await supabaseUserA
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!memberCode) throw new Error('UserA should have a member code');
 
       const response = await connectionsApi.processConnectionLink(
         supabaseUserA,
@@ -233,10 +242,15 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('handles duplicate connection requests', async () => {
-      const memberCodeA = await createTestMemberConnectionCode(
-        supabaseUserA,
-        testCommunity.id,
-      );
+      // Get userA's existing member code
+      const { data: memberCodeA } = await supabaseUserA
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!memberCodeA) throw new Error('UserA should have a member code');
 
       // First request
       const response1 = await connectionsApi.processConnectionLink(
@@ -262,10 +276,15 @@ describe('Connections API - CRUD Operations', () => {
       const userC = await createTestUser(supabaseUserC);
       await signIn(supabaseUserC, userC.email, 'TestPass123!');
 
-      const memberCodeA = await createTestMemberConnectionCode(
-        supabaseUserA,
-        testCommunity.id,
-      );
+      // Get userA's existing member code
+      const { data: memberCodeA } = await supabaseUserA
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!memberCodeA) throw new Error('UserA should have a member code');
 
       const response = await connectionsApi.processConnectionLink(
         supabaseUserC,
@@ -370,23 +389,44 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('prevents duplicate connections', async () => {
+      // Create dedicated test users to avoid interfering with global users
+      const supabaseTestUserA = createTestClient();
+      const testUserA = await createTestUser(supabaseTestUserA);
+      await signIn(supabaseTestUserA, testUserA.email, 'TestPass123!');
+      
+      const supabaseTestUserB = createTestClient();
+      const testUserB = await createTestUser(supabaseTestUserB);
+      await signIn(supabaseTestUserB, testUserB.email, 'TestPass123!');
+      
+      // Both users join the community (this creates member codes automatically)
+      await joinCommunity(supabaseTestUserA, testCommunity.id);
+      await joinCommunity(supabaseTestUserB, testCommunity.id);
+      
+      // Wait for triggers to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Create and approve first connection
       const connection = await createTestConnection(
-        supabaseUserA,
-        supabaseUserB,
+        supabaseTestUserA,
+        supabaseTestUserB,
         testCommunity.id,
       );
 
       expect(connection).toBeTruthy();
 
       // Try to create another connection request between same users
-      const memberCodeB = await createTestMemberConnectionCode(
-        supabaseUserB,
-        testCommunity.id,
-      );
+      // Get testUserB's existing member code
+      const { data: memberCodeB } = await supabaseTestUserB
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', testUserB.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!memberCodeB) throw new Error('TestUserB should have a member code');
 
       const response = await connectionsApi.processConnectionLink(
-        supabaseUserA,
+        supabaseTestUserA,
         memberCodeB.code,
       );
 

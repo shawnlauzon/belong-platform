@@ -136,16 +136,6 @@ export async function createTestShoutout({
   return shoutout;
 }
 
-/**
- * Gets or creates a member connection code for the current user in a community
- */
-export async function createTestMemberConnectionCode(
-  supabase: SupabaseClient<Database>,
-  communityId: string,
-): Promise<MemberConnectionCode> {
-  const memberCode = await getMemberConnectionCode(supabase, communityId);
-  return memberCode;
-}
 
 /**
  * Creates a connection request by processing a connection link

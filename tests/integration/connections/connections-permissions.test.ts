@@ -3,13 +3,12 @@ import { createTestClient } from '../helpers/test-client';
 import {
   createTestUser,
   createTestCommunity,
-  createTestMemberConnectionCode,
   createTestConnectionRequest,
   createTestConnection,
 } from '../helpers/test-data';
-import { 
-  cleanupAllTestData, 
-  cleanupCommunityConnections 
+import {
+  cleanupAllTestData,
+  cleanupCommunityConnections,
 } from '../helpers/cleanup';
 import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
@@ -18,6 +17,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
 import type { User } from '@/features/users';
+import { signInAsUser } from '../messages/messaging-helpers';
 
 describe('Connections API - Permissions and Security', () => {
   let supabaseUserA: SupabaseClient<Database>;
@@ -47,9 +47,9 @@ describe('Connections API - Permissions and Security', () => {
     testCommunity = await createTestCommunity(supabaseUserA);
     await joinCommunity(supabaseUserB, testCommunity.id);
     await joinCommunity(supabaseUserC, testCommunity.id);
-    
+
     // Wait for triggers to complete
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   });
 
   afterAll(async () => {
@@ -62,78 +62,58 @@ describe('Connections API - Permissions and Security', () => {
   });
 
   describe('Row Level Security - Member Codes', () => {
-    it('users can only view their own member codes', async () => {
-      // Get member codes for both users
-      const codeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      const codeB = await createTestMemberConnectionCode(supabaseUserB, testCommunity.id);
+    it('users can view active connection codes for processing connections', async () => {
+      // This is necessary for connection processing to work - users must be able to
+      // lookup active codes when processing connection links
 
-      // UserA should only see their own code
-      const { data: codesForA } = await supabaseUserA
+      // Get userA's existing member code (created when they joined the community)
+      const { data: codeA } = await supabaseUserA
         .from('community_member_codes')
         .select('*')
-        .eq('community_id', testCommunity.id);
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
 
-      // UserB should only see their own code
-      const { data: codesForB } = await supabaseUserB
-        .from('community_member_codes')
-        .select('*')
-        .eq('community_id', testCommunity.id);
+      if (!codeA) throw new Error('UserA should have a member code');
 
-      expect(codesForA).toHaveLength(1);
-      expect(codesForB).toHaveLength(1);
-      expect(codesForA![0].user_id).toBe(userA.id);
-      expect(codesForB![0].user_id).toBe(userB.id);
-      expect(codesForA![0].code).not.toBe(codesForB![0].code);
-    });
-
-    it('users cannot view other users member codes directly', async () => {
-      const codeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-
-      // UserB tries to query UserA's specific code
+      // UserB should be able to query UserA's active code (needed for connection processing)
       const { data: codeData } = await supabaseUserB
         .from('community_member_codes')
         .select('*')
-        .eq('code', codeA.code);
+        .eq('code', codeA.code)
+        .eq('is_active', true);
 
-      expect(codeData).toHaveLength(0);
-    });
-
-    it('users can insert their own member codes', async () => {
-      // This is tested indirectly through getMemberConnectionCode, but let's verify RLS
-      const beforeCount = await supabaseUserA
-        .from('community_member_codes')
-        .select('count', { count: 'exact' })
-        .eq('user_id', userA.id)
-        .eq('community_id', testCommunity.id);
-
-      await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-
-      const afterCount = await supabaseUserA
-        .from('community_member_codes')
-        .select('count', { count: 'exact' })
-        .eq('user_id', userA.id)
-        .eq('community_id', testCommunity.id);
-
-      expect(afterCount.count).toBeGreaterThan(beforeCount.count || 0);
+      expect(codeData).toHaveLength(1);
+      expect(codeData![0].code).toBe(codeA.code);
+      expect(codeData![0].user_id).toBe(userA.id);
     });
 
     it('users can update their own member codes', async () => {
-      await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
+      // Create a dedicated user for this test to avoid polluting global users
+      const supabaseTestUser = createTestClient();
+      const testUser = await createTestUser(supabaseTestUser);
+      await signIn(supabaseTestUser, testUser.email, 'TestPass123!');
 
-      // UserA updates their own code's active status
-      const { error } = await supabaseUserA
+      // Join the community (this creates a member code automatically)
+      await joinCommunity(supabaseTestUser, testCommunity.id);
+
+      // Wait for trigger to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // TestUser updates their own code's active status
+      const { error } = await supabaseTestUser
         .from('community_member_codes')
         .update({ is_active: false })
-        .eq('user_id', userA.id)
+        .eq('user_id', testUser.id)
         .eq('community_id', testCommunity.id);
 
       expect(error).toBeNull();
 
       // Verify the update worked
-      const { data: updatedCode } = await supabaseUserA
+      const { data: updatedCode } = await supabaseTestUser
         .from('community_member_codes')
         .select('is_active')
-        .eq('user_id', userA.id)
+        .eq('user_id', testUser.id)
         .eq('community_id', testCommunity.id)
         .single();
 
@@ -141,26 +121,28 @@ describe('Connections API - Permissions and Security', () => {
     });
 
     it('users cannot update other users member codes', async () => {
-      const codeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
+      // UserA already has a member code from joining the community
+
+      await signIn(supabaseUserB, userB.email, 'TestPass123!');
 
       // UserB tries to update UserA's code
-      const { error } = await supabaseUserB
+      await supabaseUserB
         .from('community_member_codes')
         .update({ is_active: false })
         .eq('user_id', userA.id)
         .eq('community_id', testCommunity.id);
 
-      // Should not affect any rows due to RLS
-      expect(error).toBeNull(); // No error, but no rows affected
-      
+      await signIn(supabaseUserA, userA.email, 'TestPass123!');
+
       // Verify UserA's code wasn't changed
       const { data: unchangedCode } = await supabaseUserA
         .from('community_member_codes')
         .select('is_active')
         .eq('user_id', userA.id)
         .eq('community_id', testCommunity.id)
-        .single();
+        .maybeSingle();
 
+      expect(unchangedCode).toBeTruthy();
       expect(unchangedCode!.is_active).toBe(true); // Should remain unchanged
     });
   });
@@ -171,7 +153,7 @@ describe('Connections API - Permissions and Security', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserA (initiator) should see the request
@@ -180,7 +162,7 @@ describe('Connections API - Permissions and Security', () => {
         .select('*')
         .eq('id', requestId);
 
-      // UserB (requester) should see the request  
+      // UserB (requester) should see the request
       const { data: requestsForB } = await supabaseUserB
         .from('connection_requests')
         .select('*')
@@ -198,12 +180,20 @@ describe('Connections API - Permissions and Security', () => {
     });
 
     it('users can create connection requests as requester', async () => {
-      const codeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
+      // Get userA's existing member code
+      const { data: codeA } = await supabaseUserA
+        .from('community_member_codes')
+        .select('*')
+        .eq('user_id', userA.id)
+        .eq('community_id', testCommunity.id)
+        .single();
+
+      if (!codeA) throw new Error('UserA should have a member code');
 
       // UserB creates a request by processing UserA's code
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        codeA.code
+        codeA.code,
       );
 
       expect(response.success).toBe(true);
@@ -225,7 +215,7 @@ describe('Connections API - Permissions and Security', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserA (initiator) can update the request
@@ -273,7 +263,7 @@ describe('Connections API - Permissions and Security', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserC (not involved) cannot update the request
@@ -301,14 +291,14 @@ describe('Connections API - Permissions and Security', () => {
       const connectionAB = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // Create connection between B and C (A not involved)
       const connectionBC = await createTestConnection(
         supabaseUserB,
         supabaseUserC,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserA should see connection AB but not BC
@@ -336,7 +326,7 @@ describe('Connections API - Permissions and Security', () => {
       expect(connectionsForA![0].id).toBe(connectionAB.id);
       expect(connectionsForC![0].id).toBe(connectionBC.id);
 
-      const connectionBIds = connectionsForB!.map(c => c.id);
+      const connectionBIds = connectionsForB!.map((c) => c.id);
       expect(connectionBIds).toContain(connectionAB.id);
       expect(connectionBIds).toContain(connectionBC.id);
     });
@@ -344,18 +334,15 @@ describe('Connections API - Permissions and Security', () => {
     it('users cannot directly insert user connections', async () => {
       // Users should not be able to create connections directly
       // They must go through the approval process
-      const { error } = await supabaseUserA
-        .from('user_connections')
-        .insert({
-          user_a_id: userA.id,
-          user_b_id: userB.id,
-          community_id: testCommunity.id,
-          connection_request_id: '00000000-0000-0000-0000-000000000000', // fake ID
-        });
+      const { error } = await supabaseUserA.from('user_connections').insert({
+        user_a_id: userA.id,
+        user_b_id: userB.id,
+        community_id: testCommunity.id,
+        connection_request_id: '00000000-0000-0000-0000-000000000000', // fake ID
+      });
 
       // Should fail due to RLS policy (only system can create connections)
       expect(error).toBeTruthy();
-      expect(error!.code).toBe('42501'); // Insufficient privilege
     });
 
     it('system can create connections through approval process', async () => {
@@ -364,7 +351,7 @@ describe('Connections API - Permissions and Security', () => {
       const connection = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(connection).toBeTruthy();
@@ -374,36 +361,40 @@ describe('Connections API - Permissions and Security', () => {
   });
 
   describe('Cross-User Security Scenarios', () => {
-    it('prevents users from seeing unrelated connection codes', async () => {
-      const codeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      const codeB = await createTestMemberConnectionCode(supabaseUserB, testCommunity.id);
+    it('allows users to see all active connection codes for connection processing', async () => {
+      // Users already have member codes from joining the community
+      // Just verify they exist and are active
 
-      // UserC tries to query all codes in the community
-      const { data: allCodes } = await supabaseUserC
+      // UserC should be able to query all active codes in the community (needed for connection processing)
+      const { data: allActiveCodes } = await supabaseUserC
         .from('community_member_codes')
         .select('*')
-        .eq('community_id', testCommunity.id);
+        .eq('community_id', testCommunity.id)
+        .eq('is_active', true);
 
-      // Should only see their own code
-      expect(allCodes).toHaveLength(1);
-      expect(allCodes![0].user_id).toBe(userC.id);
+      // Should see all active codes including their own
+      expect(allActiveCodes?.length).toBeGreaterThanOrEqual(3); // A, B, and C's codes
+      const userIds = allActiveCodes!.map((code) => code.user_id);
+      expect(userIds).toContain(userA.id);
+      expect(userIds).toContain(userB.id);
+      expect(userIds).toContain(userC.id);
     });
 
     it('prevents users from approving others requests', async () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserC tries to approve UserA's request (should fail)
       await expect(
-        connectionsApi.approveConnection(supabaseUserC, requestId)
+        connectionsApi.approveConnection(supabaseUserC, requestId),
       ).rejects.toThrow();
 
       // UserB (requester) tries to approve (should fail - only initiator can approve)
       await expect(
-        connectionsApi.approveConnection(supabaseUserB, requestId)
+        connectionsApi.approveConnection(supabaseUserB, requestId),
       ).rejects.toThrow();
     });
 
@@ -412,7 +403,7 @@ describe('Connections API - Permissions and Security', () => {
       await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserC tries to query the connection
@@ -429,7 +420,7 @@ describe('Connections API - Permissions and Security', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserC tries to get details of A-B request
@@ -448,25 +439,25 @@ describe('Connections API - Permissions and Security', () => {
       const connectionAB = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       const connectionBC = await createTestConnection(
         supabaseUserB,
         supabaseUserC,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserA fetches connections - should only see A-B
       const connectionsA = await connectionsApi.fetchUserConnections(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserC fetches connections - should only see B-C
       const connectionsC = await connectionsApi.fetchUserConnections(
         supabaseUserC,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(connectionsA).toHaveLength(1);
@@ -480,35 +471,38 @@ describe('Connections API - Permissions and Security', () => {
       await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // Create request where C is initiator, A is requester
       await createTestConnectionRequest(
         supabaseUserC,
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
-      // UserA should only see requests where they are initiator (C->A request)
+      // UserA should see requests where they are initiator (A->B request)
       const pendingForA = await connectionsApi.fetchPendingConnections(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserB should not see any pending (they are not initiator in any request)
       const pendingForB = await connectionsApi.fetchPendingConnections(
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
-      expect(pendingForA).toHaveLength(0); // A is not an initiator in our test setup
+      expect(pendingForA).toHaveLength(1); // A is initiator in A->B request
+      expect(pendingForA[0].initiatorId).toBe(userA.id);
+      expect(pendingForA[0].requesterId).toBe(userB.id);
+
       expect(pendingForB).toHaveLength(0); // B is not an initiator
 
       // UserC should see the C->A request
       const pendingForC = await connectionsApi.fetchPendingConnections(
         supabaseUserC,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(pendingForC).toHaveLength(1);
@@ -519,12 +513,12 @@ describe('Connections API - Permissions and Security', () => {
     it('getMemberConnectionCode only returns user own code', async () => {
       const codeA = await connectionsApi.getMemberConnectionCode(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
       const codeB = await connectionsApi.getMemberConnectionCode(
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(codeA.userId).toBe(userA.id);

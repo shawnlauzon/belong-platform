@@ -81,40 +81,40 @@ ALTER TABLE community_member_codes ENABLE ROW LEVEL SECURITY;
 -- - processConnectionLink validates community membership before processing
 -- - Codes are 8-character random values, hard to guess
 CREATE POLICY "Allow lookup of active codes" ON community_member_codes
-  FOR SELECT USING (is_active = true);
+  FOR SELECT TO authenticated USING (is_active = true);
 
 CREATE POLICY "Users can view their own member codes" ON community_member_codes
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert their own member codes" ON community_member_codes
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own member codes" ON community_member_codes
-  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own member codes" ON community_member_codes
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Connection requests: users can see requests they're involved in
 ALTER TABLE connection_requests ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their connection requests" ON connection_requests
-  FOR SELECT USING (auth.uid() = initiator_id OR auth.uid() = requester_id);
+  FOR SELECT TO authenticated USING (auth.uid() = initiator_id OR auth.uid() = requester_id);
 
 CREATE POLICY "Users can create connection requests" ON connection_requests
-  FOR INSERT WITH CHECK (auth.uid() = requester_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = requester_id);
 
 CREATE POLICY "Initiators can update connection requests" ON connection_requests
-  FOR UPDATE USING (auth.uid() = initiator_id);
+  FOR UPDATE TO authenticated USING (auth.uid() = initiator_id);
 
 -- User connections: users can see their own connections
 ALTER TABLE user_connections ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their connections" ON user_connections
-  FOR SELECT USING (auth.uid() = user_a_id OR auth.uid() = user_b_id);
+  FOR SELECT TO authenticated USING (auth.uid() = user_a_id OR auth.uid() = user_b_id);
 
 CREATE POLICY "System can create connections" ON user_connections
-  FOR INSERT WITH CHECK (true); -- Will be inserted by backend functions
+  FOR INSERT TO authenticated WITH CHECK (true); -- Will be inserted by backend functions
 
 -- Function to auto-generate connection code when user joins community
 CREATE OR REPLACE FUNCTION generate_member_connection_code()
@@ -136,7 +136,7 @@ BEGIN
     new_code := '';
     FOR i IN 1..8 LOOP
       new_code := new_code || substring('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 
-        (random() * 30)::integer + 1, 1);
+        floor(random() * 30)::integer + 1, 1);
     END LOOP;
     
     -- Try to insert the code
@@ -249,7 +249,7 @@ BEGIN
     new_code := '';
     FOR i IN 1..8 LOOP
       new_code := new_code || substring('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 
-        (random() * 30)::integer + 1, 1);
+        floor(random() * 30)::integer + 1, 1);
     END LOOP;
     
     -- Try to insert the new code
