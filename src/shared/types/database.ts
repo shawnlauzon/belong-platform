@@ -922,6 +922,132 @@ export type Database = {
         }
         Relationships: []
       }
+      test_authenticated_rls: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_individual_policies: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_no_rls: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_participants_helper: {
+        Row: {
+          joined_at: string | null
+          test_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string | null
+          test_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string | null
+          test_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_public_rls: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_subquery_rls: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          sender_id: string
+          test_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          sender_id: string
+          test_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string
+          test_id?: string
+        }
+        Relationships: []
+      }
       trust_score_logs: {
         Row: {
           action_id: string | null
@@ -1322,10 +1448,12 @@ export type Database = {
         Returns: number
       }
       calculate_resource_expiration: {
-        Args: {
-          last_renewed_at: string
-          resource_type: Database["public"]["Enums"]["resource_type"]
-        }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: string
       }
       cleanup_expired_connection_requests: {
@@ -1624,7 +1752,9 @@ export type Database = {
         Returns: string
       }
       get_resource_renewal_days: {
-        Args: { resource_type: Database["public"]["Enums"]["resource_type"] }
+        Args:
+          | { resource_type: Database["public"]["Enums"]["resource_type"] }
+          | { resource_type: string }
         Returns: number
       }
       gettransactionid: {
@@ -1648,17 +1778,21 @@ export type Database = {
         Returns: boolean
       }
       is_resource_active: {
-        Args: {
-          last_renewed_at: string
-          resource_type: Database["public"]["Enums"]["resource_type"]
-        }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: boolean
       }
       is_resource_expired: {
-        Args: {
-          last_renewed_at: string
-          resource_type: Database["public"]["Enums"]["resource_type"]
-        }
+        Args:
+          | {
+              last_renewed_at: string
+              resource_type: Database["public"]["Enums"]["resource_type"]
+            }
+          | { last_renewed_at: string; resource_type: string }
         Returns: boolean
       }
       is_resource_owner: {
@@ -1869,6 +2003,10 @@ export type Database = {
       }
       postgis_wagyu_version: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      regenerate_member_connection_code: {
+        Args: { p_community_id: string; p_user_id: string }
         Returns: string
       }
       spheroid_in: {
