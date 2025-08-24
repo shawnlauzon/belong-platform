@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './comments';
 export * from './communities';
+export * from './connections';
 export * from './feed';
 export * from './images';
 export * from './messages';

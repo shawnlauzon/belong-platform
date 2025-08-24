@@ -198,6 +198,7 @@ export function createMockSupabase(data: MockData = {}): SupabaseClient<Database
       currentFilters = [];
       return mockQueryBuilder;
     }),
+    rpc: vi.fn(),
     auth: {
       getUser: vi.fn().mockResolvedValue({
         data: {

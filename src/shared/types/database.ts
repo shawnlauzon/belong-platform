@@ -175,6 +175,48 @@ export type Database = {
           },
         ]
       }
+      community_member_codes: {
+        Row: {
+          code: string
+          community_id: string
+          created_at: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          community_id: string
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          community_id?: string
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_member_codes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_member_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_memberships: {
         Row: {
           community_id: string
@@ -205,6 +247,61 @@ export type Database = {
           {
             foreignKeyName: "community_memberships_user_id_fkey1"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connection_requests: {
+        Row: {
+          community_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          initiator_id: string
+          requester_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["connection_request_status"]
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          initiator_id: string
+          requester_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["connection_request_status"]
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          initiator_id?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["connection_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_requests_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connection_requests_initiator_id_fkey"
+            columns: ["initiator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connection_requests_requester_id_fkey"
+            columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -921,6 +1018,62 @@ export type Database = {
           },
         ]
       }
+      user_connections: {
+        Row: {
+          community_id: string
+          connection_request_id: string
+          created_at: string
+          id: string
+          user_a_id: string
+          user_b_id: string
+        }
+        Insert: {
+          community_id: string
+          connection_request_id: string
+          created_at?: string
+          id?: string
+          user_a_id: string
+          user_b_id: string
+        }
+        Update: {
+          community_id?: string
+          connection_request_id?: string
+          created_at?: string
+          id?: string
+          user_a_id?: string
+          user_b_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_connections_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_connection_request_id_fkey"
+            columns: ["connection_request_id"]
+            isOneToOne: false
+            referencedRelation: "connection_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_user_a_id_fkey"
+            columns: ["user_a_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_user_b_id_fkey"
+            columns: ["user_b_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -1169,13 +1322,15 @@ export type Database = {
         Returns: number
       }
       calculate_resource_expiration: {
-        Args:
-          | {
-              last_renewed_at: string
-              resource_type: Database["public"]["Enums"]["resource_type"]
-            }
-          | { last_renewed_at: string; resource_type: string }
+        Args: {
+          last_renewed_at: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+        }
         Returns: string
+      }
+      cleanup_expired_connection_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       communities_containing_point: {
         Args: { lat: number; lng: number }
@@ -1188,6 +1343,10 @@ export type Database = {
           member_count: number
           name: string
         }[]
+      }
+      create_user_connection: {
+        Args: { request_id: string }
+        Returns: string
       }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
@@ -1465,9 +1624,7 @@ export type Database = {
         Returns: string
       }
       get_resource_renewal_days: {
-        Args:
-          | { resource_type: Database["public"]["Enums"]["resource_type"] }
-          | { resource_type: string }
+        Args: { resource_type: Database["public"]["Enums"]["resource_type"] }
         Returns: number
       }
       gettransactionid: {
@@ -1491,21 +1648,17 @@ export type Database = {
         Returns: boolean
       }
       is_resource_active: {
-        Args:
-          | {
-              last_renewed_at: string
-              resource_type: Database["public"]["Enums"]["resource_type"]
-            }
-          | { last_renewed_at: string; resource_type: string }
+        Args: {
+          last_renewed_at: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+        }
         Returns: boolean
       }
       is_resource_expired: {
-        Args:
-          | {
-              last_renewed_at: string
-              resource_type: Database["public"]["Enums"]["resource_type"]
-            }
-          | { last_renewed_at: string; resource_type: string }
+        Args: {
+          last_renewed_at: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+        }
         Returns: boolean
       }
       is_resource_owner: {
@@ -2838,6 +2991,7 @@ export type Database = {
       }
     }
     Enums: {
+      connection_request_status: "pending" | "accepted" | "rejected" | "expired"
       resource_category:
         | "tools"
         | "skills"
@@ -3005,6 +3159,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      connection_request_status: ["pending", "accepted", "rejected", "expired"],
       resource_category: [
         "tools",
         "skills",
