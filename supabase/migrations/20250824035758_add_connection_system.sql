@@ -16,10 +16,9 @@ CREATE TABLE community_member_codes (
   community_id UUID NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE
   
-  -- Ensure one code per user per community
-  CONSTRAINT unique_member_code_user_community UNIQUE (user_id, community_id)
+  -- Note: Unique constraint for active codes only is defined as an index below
 );
 
 -- Table for tracking connection requests (created when codes are scanned/clicked)
@@ -54,6 +53,12 @@ CREATE TABLE user_connections (
 );
 
 -- Indexes for performance
+-- Partial unique index: ensures only one active code per user per community
+-- but allows multiple inactive codes for audit trail
+CREATE UNIQUE INDEX unique_active_member_code_user_community 
+ON community_member_codes (user_id, community_id) 
+WHERE is_active = true;
+
 CREATE INDEX idx_community_member_codes_user_community ON community_member_codes(user_id, community_id);
 CREATE INDEX idx_community_member_codes_community ON community_member_codes(community_id);
 CREATE INDEX idx_connection_requests_initiator ON connection_requests(initiator_id);
@@ -67,8 +72,16 @@ CREATE INDEX idx_user_connections_community ON user_connections(community_id);
 
 -- RLS Policies
 
--- Community member codes: users can see their own codes
+-- Community member codes: Enable RLS and allow cross-user lookup for connection processing
 ALTER TABLE community_member_codes ENABLE ROW LEVEL SECURITY;
+
+-- Allow lookup of active codes for connection processing
+-- This enables cross-user code scanning while maintaining security:
+-- - Only active codes can be looked up
+-- - processConnectionLink validates community membership before processing
+-- - Codes are 8-character random values, hard to guess
+CREATE POLICY "Allow lookup of active codes" ON community_member_codes
+  FOR SELECT USING (is_active = true);
 
 CREATE POLICY "Users can view their own member codes" ON community_member_codes
   FOR SELECT USING (auth.uid() = user_id);
@@ -77,7 +90,10 @@ CREATE POLICY "Users can insert their own member codes" ON community_member_code
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own member codes" ON community_member_codes
-  FOR UPDATE USING (auth.uid() = user_id);
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own member codes" ON community_member_codes
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- Connection requests: users can see requests they're involved in
 ALTER TABLE connection_requests ENABLE ROW LEVEL SECURITY;
@@ -115,16 +131,13 @@ BEGIN
   
   -- Generate unique code with retry logic
   LOOP
-    -- Generate 8-character uppercase code (excluding ambiguous chars)
-    new_code := upper(
-      substring(
-        encode(gen_random_bytes(6), 'base64')
-        from '[A-Z2-9]+'
-      )
-    );
-    
-    -- Ensure it's exactly 8 characters by padding or truncating
-    new_code := lpad(substring(new_code, 1, 8), 8, '2');
+    -- Generate 8-character uppercase code matching JavaScript implementation
+    -- Use same character set: '23456789ABCDEFGHJKLMNPQRSTUVWXYZ' (excludes 0,1,I,O)
+    new_code := '';
+    FOR i IN 1..8 LOOP
+      new_code := new_code || substring('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 
+        (random() * 30)::integer + 1, 1);
+    END LOOP;
     
     -- Try to insert the code
     BEGIN
@@ -211,5 +224,48 @@ BEGIN
   
   GET DIAGNOSTICS expired_count = ROW_COUNT;
   RETURN expired_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to regenerate member connection code with elevated privileges
+CREATE OR REPLACE FUNCTION regenerate_member_connection_code(p_user_id UUID, p_community_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+  new_code TEXT;
+  max_attempts INTEGER := 10;
+  attempt_count INTEGER := 0;
+  old_code_record RECORD;
+BEGIN
+  -- First, deactivate existing code
+  UPDATE community_member_codes
+  SET is_active = false
+  WHERE user_id = p_user_id AND community_id = p_community_id AND is_active = true
+  RETURNING code INTO old_code_record;
+  
+  -- Generate new unique code with retry logic
+  LOOP
+    -- Generate 8-character uppercase code matching JavaScript implementation
+    -- Use same character set: '23456789ABCDEFGHJKLMNPQRSTUVWXYZ' (excludes 0,1,I,O)
+    new_code := '';
+    FOR i IN 1..8 LOOP
+      new_code := new_code || substring('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 
+        (random() * 30)::integer + 1, 1);
+    END LOOP;
+    
+    -- Try to insert the new code
+    BEGIN
+      INSERT INTO community_member_codes (code, user_id, community_id, is_active)
+      VALUES (new_code, p_user_id, p_community_id, true);
+      EXIT; -- Success, exit loop
+    EXCEPTION WHEN unique_violation THEN
+      -- Code already exists, try again
+      attempt_count := attempt_count + 1;
+      IF attempt_count >= max_attempts THEN
+        RAISE EXCEPTION 'Failed to generate unique connection code after % attempts', max_attempts;
+      END IF;
+    END;
+  END LOOP;
+  
+  RETURN new_code;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

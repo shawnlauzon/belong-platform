@@ -15,83 +15,49 @@ export async function regenerateMemberCode(
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
 
-    // Delete existing code
-    const { error: deleteError } = await supabase
+    // Use the database function to handle regeneration with elevated privileges
+    const { data: newCodeData, error: functionError } = await supabase
+      .rpc('regenerate_member_connection_code', {
+        p_user_id: currentUserId,
+        p_community_id: communityId,
+      });
+
+    if (functionError) {
+      logger.error('🔗 API: Failed to regenerate member connection code via function', {
+        error: functionError,
+        communityId,
+      });
+      throw functionError;
+    }
+
+    const newCode = newCodeData as string;
+
+    // Fetch the complete record to return proper domain object
+    const { data: codeRecord, error: fetchError } = await supabase
       .from('community_member_codes')
-      .delete()
+      .select()
+      .eq('code', newCode)
       .eq('user_id', currentUserId)
-      .eq('community_id', communityId);
+      .eq('community_id', communityId)
+      .eq('is_active', true)
+      .single();
 
-    if (deleteError) {
-      logger.error('🔗 API: Error deleting existing member code', {
-        error: deleteError,
+    if (fetchError || !codeRecord) {
+      logger.error('🔗 API: Failed to fetch regenerated code record', {
+        error: fetchError,
+        newCode,
         communityId,
       });
-      throw deleteError;
+      throw fetchError || new Error('Failed to fetch regenerated code record');
     }
 
-    // Generate new code with retry logic
-    let newCode: string;
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    while (attempts < maxAttempts) {
-      newCode = generateConnectionCode();
-
-      const insertData = {
-        code: newCode,
-        userId: currentUserId,
-        communityId,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const insertRow = toCommunityMemberCodeInsertRow(insertData);
-
-      const { data, error } = await supabase
-        .from('community_member_codes')
-        .insert(insertRow)
-        .select()
-        .single();
-
-      if (!error && data) {
-        const memberCode = toDomainMemberCode(data);
-        logger.info('🔗 API: Successfully regenerated member connection code', {
-          communityId,
-          oldCode: 'deleted',
-          newCode: memberCode.code,
-        });
-        return memberCode;
-      }
-
-      // If unique violation, try again with new code
-      if (error.code === '23505') {
-        attempts++;
-        logger.debug('🔗 API: Code collision during regeneration, retrying', {
-          code: newCode,
-          attempts,
-        });
-        continue;
-      }
-
-      // Other error, throw it
-      logger.error('🔗 API: Failed to regenerate member connection code', {
-        error,
-        communityId,
-      });
-      throw error;
-    }
-
-    // Max attempts reached
-    const maxAttemptsError = new Error(
-      `Failed to generate unique connection code after ${maxAttempts} attempts`,
-    );
-    logger.error('🔗 API: Max attempts reached during code regeneration', {
+    const memberCode = toDomainMemberCode(codeRecord);
+    logger.info('🔗 API: Successfully regenerated member connection code', {
       communityId,
-      maxAttempts,
+      newCode: memberCode.code,
     });
-    throw maxAttemptsError;
+
+    return memberCode;
   } catch (error) {
     logger.error('🔗 API: Error regenerating member connection code', {
       error,

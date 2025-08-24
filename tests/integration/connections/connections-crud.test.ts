@@ -7,14 +7,17 @@ import {
   createTestConnectionRequest,
   createTestConnection,
 } from '../helpers/test-data';
-import { 
-  cleanupAllTestData, 
-  cleanupCommunityConnections 
+import {
+  cleanupAllTestData,
+  cleanupCommunityConnections,
 } from '../helpers/cleanup';
 import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import * as connectionsApi from '@/features/connections/api';
-import { generateConnectionCode, isValidConnectionCode } from '@/features/connections/utils/codeGenerator';
+import {
+  generateConnectionCode,
+  isValidConnectionCode,
+} from '@/features/connections/utils/codeGenerator';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
@@ -43,9 +46,9 @@ describe('Connections API - CRUD Operations', () => {
 
     // UserB joins the community
     await joinCommunity(supabaseUserB, testCommunity.id);
-    
+
     // Wait for triggers to complete
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
   });
 
   afterAll(async () => {
@@ -86,7 +89,7 @@ describe('Connections API - CRUD Operations', () => {
     it('retrieves existing member connection code', async () => {
       const memberCode = await connectionsApi.getMemberConnectionCode(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(memberCode).toBeTruthy();
@@ -102,12 +105,12 @@ describe('Connections API - CRUD Operations', () => {
     it('returns same code on subsequent calls', async () => {
       const code1 = await connectionsApi.getMemberConnectionCode(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
-      
+
       const code2 = await connectionsApi.getMemberConnectionCode(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(code1.code).toBe(code2.code);
@@ -117,12 +120,12 @@ describe('Connections API - CRUD Operations', () => {
     it('generates unique codes for different users', async () => {
       const codeA = await connectionsApi.getMemberConnectionCode(
         supabaseUserA,
-        testCommunity.id
+        testCommunity.id,
       );
-      
+
       const codeB = await connectionsApi.getMemberConnectionCode(
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(codeA.code).not.toBe(codeB.code);
@@ -132,52 +135,55 @@ describe('Connections API - CRUD Operations', () => {
 
     it('regenerates member connection code', async () => {
       const originalCode = await connectionsApi.getMemberConnectionCode(
-        supabaseUserA,
-        testCommunity.id
+        supabaseUserB,
+        testCommunity.id,
       );
 
       const newCode = await connectionsApi.regenerateMemberCode(
-        supabaseUserA,
-        testCommunity.id
+        supabaseUserB,
+        testCommunity.id,
       );
 
       expect(newCode.code).not.toBe(originalCode.code);
-      expect(newCode.userId).toBe(userA.id);
+      expect(newCode.userId).toBe(userB.id);
       expect(newCode.communityId).toBe(testCommunity.id);
       expect(newCode.isActive).toBe(true);
       expect(isValidConnectionCode(newCode.code)).toBe(true);
-      
+
       // Original code should be inactive
-      const { data: oldCodeData } = await supabaseUserA
+      const { data: oldCodeData } = await supabaseUserB
         .from('community_member_codes')
         .select('is_active')
         .eq('code', originalCode.code)
         .single();
-      
+
       expect(oldCodeData?.is_active).toBe(false);
     });
   });
 
   describe('Connection Request Processing', () => {
     it('creates connection request when processing valid code', async () => {
-      const memberCodeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      
+      const memberCodeA = await createTestMemberConnectionCode(
+        supabaseUserA,
+        testCommunity.id,
+      );
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        memberCodeA.code
+        memberCodeA.code,
       );
 
       expect(response.success).toBe(true);
       expect(response.connectionRequestId).toBeTruthy();
       expect(response.message).toContain('successfully');
-      
+
       // Verify request was created in database
       const { data: request } = await supabaseUserA
         .from('connection_requests')
         .select('*')
         .eq('id', response.connectionRequestId!)
         .single();
-        
+
       expect(request).toBeTruthy();
       expect(request!.initiator_id).toBe(userA.id);
       expect(request!.requester_id).toBe(userB.id);
@@ -187,10 +193,10 @@ describe('Connections API - CRUD Operations', () => {
 
     it('rejects invalid connection code', async () => {
       const invalidCode = 'INVALID1';
-      
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        invalidCode
+        invalidCode,
       );
 
       expect(response.success).toBe(false);
@@ -199,10 +205,10 @@ describe('Connections API - CRUD Operations', () => {
 
     it('rejects non-existent connection code', async () => {
       const nonExistentCode = generateConnectionCode();
-      
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        nonExistentCode
+        nonExistentCode,
       );
 
       expect(response.success).toBe(false);
@@ -210,30 +216,38 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('prevents self-connection attempts', async () => {
-      const memberCode = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      
+      const memberCode = await createTestMemberConnectionCode(
+        supabaseUserA,
+        testCommunity.id,
+      );
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserA,
-        memberCode.code
+        memberCode.code,
       );
 
       expect(response.success).toBe(false);
-      expect(response.message).toContain('Cannot create connection with yourself');
+      expect(response.message).toContain(
+        'Cannot create connection with yourself',
+      );
     });
 
     it('handles duplicate connection requests', async () => {
-      const memberCodeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      
+      const memberCodeA = await createTestMemberConnectionCode(
+        supabaseUserA,
+        testCommunity.id,
+      );
+
       // First request
       const response1 = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        memberCodeA.code
+        memberCodeA.code,
       );
-      
+
       // Second request with same code
       const response2 = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        memberCodeA.code
+        memberCodeA.code,
       );
 
       expect(response1.success).toBe(true);
@@ -248,11 +262,14 @@ describe('Connections API - CRUD Operations', () => {
       const userC = await createTestUser(supabaseUserC);
       await signIn(supabaseUserC, userC.email, 'TestPass123!');
 
-      const memberCodeA = await createTestMemberConnectionCode(supabaseUserA, testCommunity.id);
-      
+      const memberCodeA = await createTestMemberConnectionCode(
+        supabaseUserA,
+        testCommunity.id,
+      );
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserC,
-        memberCodeA.code
+        memberCodeA.code,
       );
 
       expect(response.success).toBe(false);
@@ -268,19 +285,19 @@ describe('Connections API - CRUD Operations', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       const connection = await connectionsApi.approveConnection(
         supabaseUserA,
-        requestId
+        requestId,
       );
 
       expect(connection).toBeTruthy();
       expect(connection.id).toBeTruthy();
       expect(connection.communityId).toBe(testCommunity.id);
       expect(connection.connectionRequestId).toBe(requestId);
-      
+
       // Check that users are properly ordered (smaller ID first)
       const expectedUserA = userA.id < userB.id ? userA.id : userB.id;
       const expectedUserB = userA.id < userB.id ? userB.id : userA.id;
@@ -293,7 +310,7 @@ describe('Connections API - CRUD Operations', () => {
         .select('status, responded_at')
         .eq('id', requestId)
         .single();
-        
+
       expect(request!.status).toBe('accepted');
       expect(request!.responded_at).toBeTruthy();
     });
@@ -302,7 +319,7 @@ describe('Connections API - CRUD Operations', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       await connectionsApi.rejectConnection(supabaseUserA, requestId);
@@ -313,7 +330,7 @@ describe('Connections API - CRUD Operations', () => {
         .select('status, responded_at')
         .eq('id', requestId)
         .single();
-        
+
       expect(request!.status).toBe('rejected');
       expect(request!.responded_at).toBeTruthy();
 
@@ -322,7 +339,7 @@ describe('Connections API - CRUD Operations', () => {
         .from('user_connections')
         .select('*')
         .eq('connection_request_id', requestId);
-        
+
       expect(connections).toHaveLength(0);
     });
 
@@ -330,12 +347,12 @@ describe('Connections API - CRUD Operations', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserB tries to approve (but they're the requester, not initiator)
       await expect(
-        connectionsApi.approveConnection(supabaseUserB, requestId)
+        connectionsApi.approveConnection(supabaseUserB, requestId),
       ).rejects.toThrow();
     });
 
@@ -343,12 +360,12 @@ describe('Connections API - CRUD Operations', () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // UserB tries to reject (but they're the requester, not initiator)
       await expect(
-        connectionsApi.rejectConnection(supabaseUserB, requestId)
+        connectionsApi.rejectConnection(supabaseUserB, requestId),
       ).rejects.toThrow();
     });
 
@@ -357,17 +374,20 @@ describe('Connections API - CRUD Operations', () => {
       const connection = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       expect(connection).toBeTruthy();
 
       // Try to create another connection request between same users
-      const memberCodeB = await createTestMemberConnectionCode(supabaseUserB, testCommunity.id);
-      
+      const memberCodeB = await createTestMemberConnectionCode(
+        supabaseUserB,
+        testCommunity.id,
+      );
+
       const response = await connectionsApi.processConnectionLink(
         supabaseUserA,
-        memberCodeB.code
+        memberCodeB.code,
       );
 
       expect(response.success).toBe(true);
@@ -380,48 +400,52 @@ describe('Connections API - CRUD Operations', () => {
       const connection = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       // Verify user_a_id < user_b_id constraint is maintained
       expect(connection.userAId < connection.userBId).toBe(true);
-      
+
       // Direct database check
       const { data: dbConnection } = await supabaseUserA
         .from('user_connections')
         .select('*')
         .eq('id', connection.id)
         .single();
-        
+
       expect(dbConnection!.user_a_id < dbConnection!.user_b_id).toBe(true);
     });
 
     it('creates connections with proper timestamps', async () => {
       const beforeTime = new Date();
-      
+
       const connection = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
-      
+
       const afterTime = new Date();
 
       expect(connection.createdAt).toBeInstanceOf(Date);
-      expect(connection.createdAt.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-      expect(connection.createdAt.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+      expect(connection.createdAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime(),
+      );
+      expect(connection.createdAt.getTime()).toBeLessThanOrEqual(
+        afterTime.getTime(),
+      );
     });
 
     it('maintains referential integrity', async () => {
       const { requestId } = await createTestConnectionRequest(
         supabaseUserA,
         supabaseUserB,
-        testCommunity.id
+        testCommunity.id,
       );
 
       const connection = await connectionsApi.approveConnection(
         supabaseUserA,
-        requestId
+        requestId,
       );
 
       // Verify all foreign keys are properly set
@@ -436,19 +460,19 @@ describe('Connections API - CRUD Operations', () => {
         .select('id')
         .eq('id', connection.userAId)
         .single();
-        
+
       const { data: userBProfile } = await supabaseUserA
         .from('profiles')
         .select('id')
         .eq('id', connection.userBId)
         .single();
-        
+
       const { data: community } = await supabaseUserA
         .from('communities')
         .select('id')
         .eq('id', connection.communityId)
         .single();
-        
+
       expect(userAProfile).toBeTruthy();
       expect(userBProfile).toBeTruthy();
       expect(community).toBeTruthy();

@@ -21,6 +21,7 @@ export async function getMemberConnectionCode(
       .select('*')
       .eq('user_id', currentUserId)
       .eq('community_id', communityId)
+      .eq('is_active', true)
       .maybeSingle();
 
     if (fetchError) {
