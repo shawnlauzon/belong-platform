@@ -158,6 +158,28 @@ export function createFakeMessageReportRow(overrides: Partial<Database['public']
 }
 
 /**
+ * Creates a fake basic message row (minimal fields only)
+ */
+export function createFakeMessageBasic(overrides: Partial<{
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}> = {}) {
+  const now = faker.date.recent().toISOString();
+
+  return {
+    id: faker.string.uuid(),
+    sender_id: faker.string.uuid(),
+    content: faker.lorem.sentence(),
+    created_at: now,
+    updated_at: now,
+    ...overrides,
+  };
+}
+
+/**
  * Creates a fake conversation participant row
  */
 export function createFakeConversationParticipantRow(overrides: Partial<Database['public']['Tables']['conversation_participants']['Row']> = {}): Database['public']['Tables']['conversation_participants']['Row'] {

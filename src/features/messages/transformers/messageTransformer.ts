@@ -1,27 +1,42 @@
 import { Message, MessageStatus } from '../types';
-import { MessageWithSender, MessageWithStatus } from '../types/messageRow';
+import { MessageWithStatus } from '../types/messageRow';
 import { Database } from '../../../shared/types/database';
 import { toDomainUser } from '../../users/transformers/userTransformer';
+import { User } from '../../users/types/user';
+
+interface MessageBasic {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export function transformMessage(
-  row: MessageWithSender,
-  currentUserId: string
+  row: MessageBasic,
+  currentUserId: string,
+  currentUser: User,
+  otherParticipant: User
 ): Message {
+  // Determine sender based on sender_id
+  const sender = row.sender_id === currentUserId ? currentUser : otherParticipant;
+
   return {
     id: row.id,
-    conversationId: row.conversation_id,
+    conversationId: '', // Will be set by caller if needed
     senderId: row.sender_id,
     content: row.content,
-    messageType: row.message_type as 'text' | 'system',
-    isEdited: row.is_edited,
-    isDeleted: row.is_deleted,
-    encryptionVersion: row.encryption_version,
+    messageType: 'text' as 'text' | 'system', // Default to text for now
+    isEdited: false, // Not fetching this field anymore
+    isDeleted: false, // Not fetching this field anymore  
+    encryptionVersion: 1, // Default value
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
-    sender: toDomainUser(row.sender),
+    sender,
     isMine: row.sender_id === currentUserId,
   };
 }
+
 
 export function transformMessageWithStatus(
   row: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] },

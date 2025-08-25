@@ -1,30 +1,39 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { MessageListResponse, MessageListFilters } from '../types';
-import { MessageWithSender } from '../types/messageRow';
-import { transformMessage } from '../transformers';
+import { MessageListFilters } from '../types';
 import { logger } from '../../../shared';
+
+interface MessageBasic {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RawMessageListResponse {
+  messages: MessageBasic[];
+  hasMore: boolean;
+  cursor?: string;
+}
 
 export async function fetchMessages(
   client: SupabaseClient<Database>,
   filters: MessageListFilters
-): Promise<MessageListResponse> {
-  const { data: userData, error: userError } = await client.auth.getUser();
+): Promise<RawMessageListResponse> {
+  const { error: userError } = await client.auth.getUser();
   
   if (userError) {
     logger.error('Error fetching user', { error: userError });
     throw userError;
   }
 
-  const userId = userData.user.id;
+  // Authentication verified, proceed with message fetch
   const limit = filters.limit || 50;
 
   let query = client
     .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(*)
-    `)
+    .select('id, sender_id, content, created_at, updated_at')
     .eq('conversation_id', filters.conversationId)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
@@ -46,17 +55,15 @@ export async function fetchMessages(
   }
 
   const hasMore = data.length > limit;
-  const messages = data
-    .slice(0, limit)
-    .map(msg => transformMessage(msg as MessageWithSender, userId))
-    .reverse(); // Reverse to get chronological order
+  const rawMessages = data.slice(0, limit);
 
-  const nextCursor = hasMore && messages.length > 0
-    ? messages[0].createdAt.toISOString()
+  // Note: Messages will be transformed in useMessages with participant data
+  const nextCursor = hasMore && rawMessages.length > 0
+    ? new Date(rawMessages[0].created_at).toISOString()
     : undefined;
 
   return {
-    messages,
+    messages: rawMessages.reverse(), // Reverse to get chronological order
     hasMore,
     cursor: nextCursor,
   };

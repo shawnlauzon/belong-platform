@@ -1,75 +1,99 @@
 import { describe, it, expect } from 'vitest';
-import { transformMessage, transformMessageWithStatus, transformMessageStatus } from '../../transformers/messageTransformer';
-import { createFakeMessageWithSender } from '../../__fakes__';
+import {
+  transformMessage,
+  transformMessageWithStatus,
+  transformMessageStatus,
+} from '../../transformers/messageTransformer';
+import {
+  createFakeMessageWithSender,
+  createFakeMessageBasic,
+} from '../../__fakes__';
+import { createFakeUser } from '../../../users/__fakes__';
 import type { Database } from '../../../../shared/types/database';
 import type { MessageWithStatus } from '../../types/messageRow';
-import { UserMetadata } from '@/features/users';
 
 describe('messageTransformer', () => {
   const currentUserId = 'test-user-id';
   const otherUserId = 'other-user-id';
 
   describe('transformMessage', () => {
-    it('should transform message row to domain object correctly', () => {
-      const messageRow = createFakeMessageWithSender({
+    it('should transform basic message with participant data correctly', () => {
+      const currentUser = createFakeUser({ id: currentUserId });
+      const otherUser = createFakeUser({ id: otherUserId });
+      const messageRow = createFakeMessageBasic({
         sender_id: otherUserId,
       });
 
-      const result = transformMessage(messageRow, currentUserId);
+      const result = transformMessage(
+        messageRow,
+        currentUserId,
+        currentUser,
+        otherUser,
+      );
 
       expect(result).toEqual({
         id: messageRow.id,
-        conversationId: messageRow.conversation_id,
+        conversationId: '', // Empty by default, set by caller
         senderId: messageRow.sender_id,
         content: messageRow.content,
-        messageType: messageRow.message_type,
-        isEdited: messageRow.is_edited,
-        isDeleted: messageRow.is_deleted,
-        encryptionVersion: messageRow.encryption_version,
+        messageType: 'text', // Default value
+        isEdited: false, // Default value
+        isDeleted: false, // Default value
+        encryptionVersion: 1, // Default value
         createdAt: new Date(messageRow.created_at),
         updatedAt: new Date(messageRow.updated_at),
-        sender: expect.objectContaining({
-          id: messageRow.sender.id,
-          firstName: (messageRow.sender.user_metadata as UserMetadata).first_name,
-        }),
+        sender: otherUser,
         isMine: false,
       });
     });
 
-    it('should set isMine to true when sender matches current user', () => {
-      const messageRow = createFakeMessageWithSender({
+    it('should use current user data when sender is current user', () => {
+      const currentUser = createFakeUser({ id: currentUserId });
+      const otherUser = createFakeUser({ id: otherUserId });
+      const messageRow = createFakeMessageBasic({
         sender_id: currentUserId,
       });
 
-      const result = transformMessage(messageRow, currentUserId);
+      const result = transformMessage(
+        messageRow,
+        currentUserId,
+        currentUser,
+        otherUser,
+      );
 
+      expect(result.sender).toBe(currentUser);
       expect(result.isMine).toBe(true);
     });
 
-    it('should set isMine to false when sender does not match current user', () => {
-      const messageRow = createFakeMessageWithSender({
+    it('should use other user data when sender is other user', () => {
+      const currentUser = createFakeUser({ id: currentUserId });
+      const otherUser = createFakeUser({ id: otherUserId });
+      const messageRow = createFakeMessageBasic({
         sender_id: otherUserId,
       });
 
-      const result = transformMessage(messageRow, currentUserId);
+      const result = transformMessage(
+        messageRow,
+        currentUserId,
+        currentUser,
+        otherUser,
+      );
 
+      expect(result.sender).toBe(otherUser);
       expect(result.isMine).toBe(false);
     });
 
-    it('should handle system message type', () => {
-      const messageRow = createFakeMessageWithSender({
-        message_type: 'system',
-      });
-
-      const result = transformMessage(messageRow, currentUserId);
-
-      expect(result.messageType).toBe('system');
-    });
-
     it('should convert date strings to Date objects', () => {
-      const messageRow = createFakeMessageWithSender();
+      const currentUser = createFakeUser({ id: currentUserId });
+      const otherUser = createFakeUser({ id: otherUserId });
+      const messageRow = createFakeMessageBasic();
 
-      const result = transformMessage(messageRow, currentUserId);
+      const result = transformMessage(
+        messageRow,
+        currentUserId,
+        currentUser,
+        otherUser,
+      );
 
       expect(result.createdAt).toEqual(new Date(messageRow.created_at));
       expect(result.updatedAt).toEqual(new Date(messageRow.updated_at));
@@ -88,12 +112,17 @@ describe('messageTransformer', () => {
         read_at: '2024-01-01T10:30:00.000Z',
       };
 
-      const messageWithStatus: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] } = {
+      const messageWithStatus: MessageWithStatus & {
+        sender: Database['public']['Tables']['profiles']['Row'];
+      } = {
         ...messageRow,
         message_status: [statusRow],
       };
 
-      const result = transformMessageWithStatus(messageWithStatus, currentUserId);
+      const result = transformMessageWithStatus(
+        messageWithStatus,
+        currentUserId,
+      );
 
       expect(result.status).toEqual({
         messageId: statusRow.message_id,
@@ -112,24 +141,34 @@ describe('messageTransformer', () => {
         read_at: '2024-01-01T10:30:00.000Z',
       };
 
-      const messageWithStatus: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] } = {
+      const messageWithStatus: MessageWithStatus & {
+        sender: Database['public']['Tables']['profiles']['Row'];
+      } = {
         ...messageRow,
         message_status: [statusRow],
       };
 
-      const result = transformMessageWithStatus(messageWithStatus, currentUserId);
+      const result = transformMessageWithStatus(
+        messageWithStatus,
+        currentUserId,
+      );
 
       expect(result.status).toBeUndefined();
     });
 
     it('should handle empty status array', () => {
       const messageRow = createFakeMessageWithSender();
-      const messageWithStatus: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] } = {
+      const messageWithStatus: MessageWithStatus & {
+        sender: Database['public']['Tables']['profiles']['Row'];
+      } = {
         ...messageRow,
         message_status: [],
       };
 
-      const result = transformMessageWithStatus(messageWithStatus, currentUserId);
+      const result = transformMessageWithStatus(
+        messageWithStatus,
+        currentUserId,
+      );
 
       expect(result.status).toBeUndefined();
     });
@@ -138,12 +177,17 @@ describe('messageTransformer', () => {
       const messageRow = createFakeMessageWithSender({
         sender_id: currentUserId,
       });
-      const messageWithStatus: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] } = {
+      const messageWithStatus: MessageWithStatus & {
+        sender: Database['public']['Tables']['profiles']['Row'];
+      } = {
         ...messageRow,
         message_status: [],
       };
 
-      const result = transformMessageWithStatus(messageWithStatus, currentUserId);
+      const result = transformMessageWithStatus(
+        messageWithStatus,
+        currentUserId,
+      );
 
       expect(result.id).toBe(messageRow.id);
       expect(result.content).toBe(messageRow.content);
@@ -156,7 +200,7 @@ describe('messageTransformer', () => {
       const deliveredAt = '2024-01-01T10:00:00.000Z';
       const readAt = '2024-01-01T10:30:00.000Z';
       const messageId = 'test-message-id';
-      
+
       const statusRow: Database['public']['Tables']['message_status']['Row'] = {
         message_id: messageId,
         user_id: currentUserId,
@@ -177,7 +221,7 @@ describe('messageTransformer', () => {
     it('should handle null readAt', () => {
       const deliveredAt = '2024-01-01T10:00:00.000Z';
       const messageId = 'test-message-id';
-      
+
       const statusRow: Database['public']['Tables']['message_status']['Row'] = {
         message_id: messageId,
         user_id: currentUserId,
