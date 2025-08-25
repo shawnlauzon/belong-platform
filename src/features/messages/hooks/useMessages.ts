@@ -118,8 +118,8 @@ export function useMessages(conversationId: string): UseMessagesResult {
                   conversationId
                 });
 
-                // Add new message to the beginning of the list (newest first)
-                setMessages(prev => [newMessage, ...prev]);
+                // Add new message to the end of the list (chronological order)
+                setMessages(prev => [...prev, newMessage]);
               } else {
                 logger.warn('useMessages: failed to fetch new message data', {
                   messageId: payload.new.id,
