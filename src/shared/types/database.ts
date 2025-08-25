@@ -1635,12 +1635,15 @@ export type Database = {
           id: string
         }[]
       }
-      get_user_public_info_by_connection_code: {
+      get_connection_details: {
         Args: { connection_code: string }
         Returns: {
-          avatar_url: string
+          user_id: string
           first_name: string
-          id: string
+          avatar_url: string
+          community_id: string
+          is_active: boolean
+          created_at: string
         }[]
       }
       gettransactionid: {

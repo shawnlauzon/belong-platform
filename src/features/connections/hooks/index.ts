@@ -5,3 +5,4 @@ export * from './useRejectConnection';
 export * from './usePendingConnections';
 export * from './useUserConnections';
 export * from './useRegenerateMemberCode';
+export * from './useConnectionDetails';

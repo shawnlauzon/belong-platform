@@ -7,4 +7,7 @@ export const connectionQueries = {
     [...connectionQueries.all, 'pending', communityId] as const,
   userConnections: (communityId: string) => 
     [...connectionQueries.all, 'userConnections', communityId] as const,
+  details: () => [...connectionQueries.all, 'details'] as const,
+  detail: (memberConnectionCode: string) => 
+    [...connectionQueries.details(), memberConnectionCode] as const,
 } as const;

@@ -44,3 +44,14 @@ export interface ConnectionSummary {
   pendingRequests: number;
   recentConnections: UserConnection[];
 }
+
+export interface ConnectionDetails {
+  user: {
+    id: string;
+    firstName: string;
+    avatarUrl?: string;
+  };
+  communityId: string;
+  isActive: boolean;
+  createdAt: Date;
+}
