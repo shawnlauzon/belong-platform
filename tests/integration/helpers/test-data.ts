@@ -17,14 +17,9 @@ import {
 } from '@/features';
 import {
   getMemberConnectionCode,
-  processConnectionLink,
   approveConnection,
 } from '@/features/connections/api';
-import type {
-  MemberConnectionCode,
-  ConnectionRequest,
-  UserConnection,
-} from '@/features/connections/types';
+import type { UserConnection } from '@/features/connections/types';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -77,7 +72,7 @@ export async function createTestResource(
     communityIds: [communityId],
     category,
     status: 'open', // Ensure resources are open for feed tests
-    lastRenewedAt: new Date()
+    lastRenewedAt: new Date(),
   });
 
   // Add small delay to ensure community membership trigger has completed
@@ -136,7 +131,6 @@ export async function createTestShoutout({
   return shoutout;
 }
 
-
 /**
  * Creates a connection request by processing a connection link
  * @param initiatorSupabase - Supabase client for the code owner
@@ -149,15 +143,21 @@ export async function createTestConnectionRequest(
   communityId: string,
 ): Promise<{ connectionCode: string; requestId: string }> {
   // Get the initiator's connection code
-  const memberCode = await getMemberConnectionCode(initiatorSupabase, communityId);
-  
+  const memberCode = await getMemberConnectionCode(
+    initiatorSupabase,
+    communityId,
+  );
+
   // Process the connection link as the requester
-  const response = await processConnectionLink(requesterSupabase, memberCode.code);
-  
+  const response = await processConnectionLink(
+    requesterSupabase,
+    memberCode.code,
+  );
+
   if (!response.success || !response.connectionRequestId) {
     throw new Error(`Failed to create connection request: ${response.message}`);
   }
-  
+
   return {
     connectionCode: memberCode.code,
     requestId: response.connectionRequestId,
@@ -181,9 +181,9 @@ export async function createTestConnection(
     requesterSupabase,
     communityId,
   );
-  
+
   // Then approve it as the initiator
   const connection = await approveConnection(initiatorSupabase, requestId);
-  
+
   return connection;
 }

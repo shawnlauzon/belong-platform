@@ -1627,6 +1627,22 @@ export type Database = {
         Args: { resource_type: Database["public"]["Enums"]["resource_type"] }
         Returns: number
       }
+      get_user_public_info: {
+        Args: { user_id: string }
+        Returns: {
+          avatar_url: string
+          first_name: string
+          id: string
+        }[]
+      }
+      get_user_public_info_by_connection_code: {
+        Args: { connection_code: string }
+        Returns: {
+          avatar_url: string
+          first_name: string
+          id: string
+        }[]
+      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown

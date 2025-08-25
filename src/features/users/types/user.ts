@@ -27,3 +27,9 @@ export type UserMetadata = {
 
 
 export type UserSummary = Pick<User, 'id' | 'firstName' | 'lastName' | 'fullName' | 'avatarUrl'>;
+
+export type UserPublicInfo = {
+  id: string;
+  firstName: string;
+  avatarUrl?: string;
+};

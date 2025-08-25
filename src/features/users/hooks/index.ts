@@ -2,6 +2,7 @@
 // Query hooks
 export * from "./useUsers";
 export * from "./useUser";
+export * from "./useUserPublicInfo";
 
 // Mutation hooks  
 export * from "./useCreateUser";
