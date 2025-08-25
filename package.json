@@ -37,7 +37,9 @@
     "e2e:install": "playwright install",
     "e2e:dev": "cd tests/e2e/test-app && vite",
     "gen:db-types": "pnpx supabase gen types typescript --local --schema public > src/shared/types/database.ts",
-    "delete-test-users": "dotenv -e .env.local tsx scripts/delete-test-users.ts"
+    "delete-test-users": "dotenv -e .env.local tsx scripts/delete-test-users.ts",
+    "backfill-connection-codes": "dotenv -e .env.local tsx scripts/backfill-connection-codes.ts",
+    "backfill-connection-codes:dry-run": "dotenv -e .env.local tsx scripts/backfill-connection-codes.ts --dry-run"
   },
   "dependencies": {
     "@supabase/postgrest-js": "^1.20.0",
