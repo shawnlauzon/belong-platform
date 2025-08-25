@@ -28,7 +28,7 @@ describe('Communities API - Membership Operations', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   describe('joinCommunity', () => {

@@ -44,15 +44,28 @@ export async function leaveCommunity(
       throw new Error(MESSAGE_ORGANIZER_CANNOT_LEAVE);
     }
 
-    const { error } = await supabase
+    // Delete the membership
+    const { error: membershipError } = await supabase
       .from('community_memberships')
       .delete()
       .eq('community_id', communityId)
       .eq('user_id', currentUserId);
 
-    if (error) {
-      logger.error('🏘️ API: Failed to leave community', { error, communityId });
-      throw error;
+    if (membershipError) {
+      logger.error('🏘️ API: Failed to leave community', { error: membershipError, communityId });
+      throw membershipError;
+    }
+
+    // Also delete the connection code to prevent conflicts when rejoining
+    const { error: codeError } = await supabase
+      .from('community_member_codes')
+      .delete()
+      .eq('community_id', communityId)
+      .eq('user_id', currentUserId);
+
+    if (codeError) {
+      logger.error('🏘️ API: Failed to delete connection code', { error: codeError, communityId });
+      // Don't throw here - leaving the community succeeded, code cleanup is secondary
     }
 
     logger.debug('🏘️ API: Successfully left community', {

@@ -1,6 +1,5 @@
 import type {
   CommunityMemberCodeRow,
-  CommunityMemberCodeInsertRow,
   ConnectionRequestRow,
   ConnectionRequestInsertRow,
   UserConnectionRow,
@@ -22,16 +21,6 @@ export function toDomainMemberCode(row: CommunityMemberCodeRow): MemberConnectio
   };
 }
 
-export function toCommunityMemberCodeInsertRow(
-  data: Omit<MemberConnectionCode, 'createdAt' | 'updatedAt'>,
-): CommunityMemberCodeInsertRow {
-  return {
-    code: data.code,
-    user_id: data.userId,
-    community_id: data.communityId,
-    is_active: data.isActive,
-  };
-}
 
 export function toDomainConnectionRequest(row: ConnectionRequestRow): ConnectionRequest {
   return {

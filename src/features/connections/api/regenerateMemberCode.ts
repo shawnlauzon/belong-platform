@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { MemberConnectionCode } from '../types';
-import { toDomainMemberCode, toCommunityMemberCodeInsertRow } from '../transformers';
-import { generateConnectionCode } from '../utils/codeGenerator';
+import { toDomainMemberCode } from '../transformers';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 

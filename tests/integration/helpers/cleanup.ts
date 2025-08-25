@@ -118,8 +118,16 @@ export async function cleanupMembership(communityId: string, userId: string) {
   // Use service key client for cleanup to bypass RLS policies
   const serviceClient = createServiceClient();
 
+  // Delete the membership
   await serviceClient
     .from('community_memberships')
+    .delete()
+    .eq('community_id', communityId)
+    .eq('user_id', userId);
+
+  // Also delete any connection codes to prevent conflicts
+  await serviceClient
+    .from('community_member_codes')
     .delete()
     .eq('community_id', communityId)
     .eq('user_id', userId);
