@@ -8,9 +8,11 @@ import type {
   UserConnection,
   ConnectionLink,
 } from '../types';
-import { formatConnectionUrl } from '../utils/codeGenerator';
+import { formatConnectionUrl } from '../utils/codeUtils';
 
-export function toDomainMemberCode(row: CommunityMemberCodeRow): MemberConnectionCode {
+export function toDomainMemberCode(
+  row: CommunityMemberCodeRow,
+): MemberConnectionCode {
   return {
     code: row.code,
     userId: row.user_id,
@@ -21,8 +23,9 @@ export function toDomainMemberCode(row: CommunityMemberCodeRow): MemberConnectio
   };
 }
 
-
-export function toDomainConnectionRequest(row: ConnectionRequestRow): ConnectionRequest {
+export function toDomainConnectionRequest(
+  row: ConnectionRequestRow,
+): ConnectionRequest {
   return {
     id: row.id,
     communityId: row.community_id,
@@ -56,7 +59,10 @@ export function toDomainUserConnection(row: UserConnectionRow): UserConnection {
   };
 }
 
-export function toConnectionLink(memberCode: MemberConnectionCode, baseUrl?: string): ConnectionLink {
+export function toConnectionLink(
+  memberCode: MemberConnectionCode,
+  baseUrl?: string,
+): ConnectionLink {
   return {
     code: memberCode.code,
     url: formatConnectionUrl(memberCode.code, baseUrl),

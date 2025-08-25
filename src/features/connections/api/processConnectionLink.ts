@@ -1,8 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { ProcessConnectionLinkResponse, ConnectionRequest } from '../types';
-import { toDomainConnectionRequest, toConnectionRequestInsertRow } from '../transformers';
-import { normalizeConnectionCode, isValidConnectionCode } from '../utils/codeGenerator';
+import type {
+  ProcessConnectionLinkResponse,
+  ConnectionRequest,
+} from '../types';
+import {
+  toDomainConnectionRequest,
+  toConnectionRequestInsertRow,
+} from '../transformers';
+import {
+  normalizeConnectionCode,
+  isValidConnectionCode,
+} from '../utils/codeUtils';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
@@ -27,13 +36,15 @@ export async function processConnectionLink(
     // Find the connection code
     const { data: memberCode, error: codeError } = await supabase
       .from('community_member_codes')
-      .select(`
+      .select(
+        `
         *,
         communities!inner(
           id,
           name
         )
-      `)
+      `,
+      )
       .eq('code', normalizedCode)
       .eq('is_active', true)
       .maybeSingle();
@@ -115,7 +126,7 @@ export async function processConnectionLink(
           message: 'Connection request already pending',
         };
       }
-      
+
       if (existingRequest.status === 'accepted') {
         return {
           success: true,
@@ -183,7 +194,9 @@ export async function processConnectionLink(
     }
 
     if (!data) {
-      logger.error('🔗 API: No data returned after creating connection request');
+      logger.error(
+        '🔗 API: No data returned after creating connection request',
+      );
       throw new Error('No data returned after creating connection request');
     }
 

@@ -13,10 +13,7 @@ import {
 import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import * as connectionsApi from '@/features/connections/api';
-import {
-  generateConnectionCode,
-  isValidConnectionCode,
-} from '@/features/connections/utils/codeGenerator';
+import { isValidConnectionCode } from '@/features/connections/utils/codeUtils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
@@ -208,11 +205,9 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('rejects non-existent connection code', async () => {
-      const nonExistentCode = generateConnectionCode();
-
       const response = await connectionsApi.processConnectionLink(
         supabaseUserB,
-        nonExistentCode,
+        'NVALD234',
       );
 
       expect(response.success).toBe(false);
@@ -393,15 +388,15 @@ describe('Connections API - CRUD Operations', () => {
       const supabaseTestUserA = createTestClient();
       const testUserA = await createTestUser(supabaseTestUserA);
       await signIn(supabaseTestUserA, testUserA.email, 'TestPass123!');
-      
+
       const supabaseTestUserB = createTestClient();
       const testUserB = await createTestUser(supabaseTestUserB);
       await signIn(supabaseTestUserB, testUserB.email, 'TestPass123!');
-      
+
       // Both users join the community (this creates member codes automatically)
       await joinCommunity(supabaseTestUserA, testCommunity.id);
       await joinCommunity(supabaseTestUserB, testCommunity.id);
-      
+
       // Wait for triggers to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 

@@ -9,8 +9,6 @@ import {
 import {
   createFakeMemberConnectionCode,
   createFakeConnectionRequest,
-  createFakeUserConnection,
-  createFakeConnectionLink,
   createFakeCommunityMemberCodeRow,
   createFakeConnectionRequestRow,
   createFakeUserConnectionRow,
