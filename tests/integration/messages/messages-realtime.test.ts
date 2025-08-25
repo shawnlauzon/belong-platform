@@ -7,7 +7,11 @@ import {
   signInAsUser,
 } from './messaging-helpers';
 import { sendMessage } from '@/features/messages/api';
-import { TEST_PREFIX } from '../helpers/test-data';
+import {
+  createTestCommunity,
+  createTestUser,
+  TEST_PREFIX,
+} from '../helpers/test-data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
@@ -26,10 +30,17 @@ describe('Realtime Messaging', () => {
     clientA = createTestClient();
     clientB = createTestClient();
 
-    // Setup users
-    const setup = await setupMessagingUsers(clientA);
-    userA = setup.userA;
-    userB = setup.userB;
+    // Create first user on clientA
+    userA = await createTestUser(clientA);
+
+    // Create community as userA
+    const community = await createTestCommunity(clientA);
+
+    // Create second user on clientB
+    userB = await createTestUser(clientB);
+
+    // Join userB to the same community (using clientB)
+    await joinCommunity(clientB, community.id);
   });
 
   afterEach(async () => {

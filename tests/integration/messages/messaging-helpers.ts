@@ -2,8 +2,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
 import type { Community } from '@/features/communities';
-import type { Conversation, Message, SendMessageInput, BlockUserInput, ReportMessageInput } from '@/features/messages/types';
-import { createTestUser, createTestCommunity, TEST_PREFIX } from '../helpers/test-data';
+import type {
+  Conversation,
+  Message,
+  SendMessageInput,
+  BlockUserInput,
+  ReportMessageInput,
+} from '@/features/messages/types';
+import {
+  createTestUser,
+  createTestCommunity,
+  TEST_PREFIX,
+} from '../helpers/test-data';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import * as messagesApi from '@/features/messages/api';
@@ -13,23 +23,27 @@ import { faker } from '@faker-js/faker';
  * Creates two test users that share a community for messaging tests.
  * Both users will be in the same community and signed in as the second user.
  */
-export async function setupMessagingUsers(supabase: SupabaseClient<Database>): Promise<{
+export async function setupMessagingUsers(
+  supabase: SupabaseClient<Database>,
+): Promise<{
   userA: User;
   userB: User;
   community: Community;
 }> {
   // Create first user (will be auto-signed in)
   const userA = await createTestUser(supabase);
-  
+
   // Create community as userA
   const community = await createTestCommunity(supabase);
-  
+
   // Create second user (will be auto-signed in as userB)
   const userB = await createTestUser(supabase);
-  
+
   // Join userB to the same community
   await joinCommunity(supabase, community.id);
-  
+
+  await signInAsUser(supabase, userA);
+
   return { userA, userB, community };
 }
 
@@ -38,16 +52,16 @@ export async function setupMessagingUsers(supabase: SupabaseClient<Database>): P
  */
 export async function createTestConversation(
   supabase: SupabaseClient<Database>,
-  otherUserId: string
+  otherUserId: string,
 ): Promise<Conversation> {
   const conversation = await messagesApi.startConversation(supabase, {
-    otherUserId
+    otherUserId,
   });
-  
+
   if (!conversation) {
     throw new Error('Failed to create test conversation');
   }
-  
+
   return conversation;
 }
 
@@ -57,20 +71,21 @@ export async function createTestConversation(
 export async function sendTestMessage(
   supabase: SupabaseClient<Database>,
   conversationId: string,
-  content?: string
+  content?: string,
 ): Promise<Message> {
   const messageInput: SendMessageInput = {
     conversationId,
-    content: content || `${TEST_PREFIX} Test message: ${faker.lorem.sentence()}`,
-    messageType: 'text'
+    content:
+      content || `${TEST_PREFIX} Test message: ${faker.lorem.sentence()}`,
+    messageType: 'text',
   };
-  
+
   const message = await messagesApi.sendMessage(supabase, messageInput);
-  
+
   if (!message) {
     throw new Error('Failed to send test message');
   }
-  
+
   return message;
 }
 
@@ -79,12 +94,12 @@ export async function sendTestMessage(
  */
 export async function blockTestUser(
   supabase: SupabaseClient<Database>,
-  blockedUserId: string
+  blockedUserId: string,
 ): Promise<void> {
   const blockInput: BlockUserInput = {
-    userId: blockedUserId
+    userId: blockedUserId,
   };
-  
+
   await messagesApi.blockUser(supabase, blockInput);
 }
 
@@ -94,14 +109,14 @@ export async function blockTestUser(
 export async function reportTestMessage(
   supabase: SupabaseClient<Database>,
   messageId: string,
-  reason: 'spam' | 'harassment' | 'inappropriate' | 'other' = 'spam'
+  reason: 'spam' | 'harassment' | 'inappropriate' | 'other' = 'spam',
 ): Promise<void> {
   const reportInput: ReportMessageInput = {
     messageId,
     reason,
-    details: `${TEST_PREFIX} Test report details`
+    details: `${TEST_PREFIX} Test report details`,
   };
-  
+
   await messagesApi.reportMessage(supabase, reportInput);
 }
 
@@ -110,7 +125,7 @@ export async function reportTestMessage(
  */
 export async function signInAsUser(
   supabase: SupabaseClient<Database>,
-  user: User
+  user: User,
 ): Promise<void> {
   await signIn(supabase, user.email, 'TestPass123!');
 }
@@ -123,7 +138,7 @@ export async function signInAsUser(
 export async function assertConversationExists(
   supabase: SupabaseClient<Database>,
   conversationId: string,
-  expectedParticipants?: string[]
+  expectedParticipants?: string[],
 ): Promise<void> {
   // Check conversation exists
   const { data: conversation, error: convError } = await supabase
@@ -131,28 +146,32 @@ export async function assertConversationExists(
     .select('*')
     .eq('id', conversationId)
     .single();
-    
+
   if (convError || !conversation) {
-    throw new Error(`Conversation ${conversationId} does not exist: ${convError?.message}`);
+    throw new Error(
+      `Conversation ${conversationId} does not exist: ${convError?.message}`,
+    );
   }
-  
+
   // Check participants if provided
   if (expectedParticipants) {
     const { data: participants, error: partError } = await supabase
       .from('conversation_participants')
       .select('user_id')
       .eq('conversation_id', conversationId);
-      
+
     if (partError || !participants) {
-      throw new Error(`Failed to fetch conversation participants: ${partError?.message}`);
+      throw new Error(
+        `Failed to fetch conversation participants: ${partError?.message}`,
+      );
     }
-    
-    const participantIds = participants.map(p => p.user_id).sort();
+
+    const participantIds = participants.map((p) => p.user_id).sort();
     const expectedIds = expectedParticipants.sort();
-    
+
     if (JSON.stringify(participantIds) !== JSON.stringify(expectedIds)) {
       throw new Error(
-        `Conversation participants mismatch. Expected: ${expectedIds.join(', ')}, Got: ${participantIds.join(', ')}`
+        `Conversation participants mismatch. Expected: ${expectedIds.join(', ')}, Got: ${participantIds.join(', ')}`,
       );
     }
   }
@@ -164,7 +183,7 @@ export async function assertConversationExists(
 export async function assertMessageDelivered(
   supabase: SupabaseClient<Database>,
   messageId: string,
-  recipientUserId: string
+  recipientUserId: string,
 ): Promise<void> {
   const { data: messageStatus, error } = await supabase
     .from('message_status')
@@ -172,11 +191,13 @@ export async function assertMessageDelivered(
     .eq('message_id', messageId)
     .eq('user_id', recipientUserId)
     .maybeSingle();
-    
+
   if (error || !messageStatus) {
-    throw new Error(`Message status not found for message ${messageId} and user ${recipientUserId}: ${error?.message}`);
+    throw new Error(
+      `Message status not found for message ${messageId} and user ${recipientUserId}: ${error?.message}`,
+    );
   }
-  
+
   if (!messageStatus.delivered_at) {
     throw new Error(`Message ${messageId} was not marked as delivered`);
   }
@@ -189,7 +210,7 @@ export async function assertUnreadCount(
   supabase: SupabaseClient<Database>,
   conversationId: string,
   userId: string,
-  expectedCount: number
+  expectedCount: number,
 ): Promise<void> {
   const { data: participant, error } = await supabase
     .from('conversation_participants')
@@ -197,14 +218,14 @@ export async function assertUnreadCount(
     .eq('conversation_id', conversationId)
     .eq('user_id', userId)
     .single();
-    
+
   if (error || !participant) {
     throw new Error(`Conversation participant not found: ${error?.message}`);
   }
-  
+
   if (participant.unread_count !== expectedCount) {
     throw new Error(
-      `Unread count mismatch. Expected: ${expectedCount}, Got: ${participant.unread_count}`
+      `Unread count mismatch. Expected: ${expectedCount}, Got: ${participant.unread_count}`,
     );
   }
 }
@@ -214,18 +235,18 @@ export async function assertUnreadCount(
  */
 export async function assertMessageExists(
   supabase: SupabaseClient<Database>,
-  messageId: string
+  messageId: string,
 ): Promise<Database['public']['Tables']['messages']['Row']> {
   const { data: message, error } = await supabase
     .from('messages')
     .select('*')
     .eq('id', messageId)
     .single();
-    
+
   if (error || !message) {
     throw new Error(`Message ${messageId} does not exist: ${error?.message}`);
   }
-  
+
   return message;
 }
 
@@ -235,7 +256,7 @@ export async function assertMessageExists(
 export async function assertUserBlocked(
   supabase: SupabaseClient<Database>,
   blockerId: string,
-  blockedId: string
+  blockedId: string,
 ): Promise<void> {
   const { data: blockedUser, error } = await supabase
     .from('blocked_users')
@@ -243,9 +264,11 @@ export async function assertUserBlocked(
     .eq('blocker_id', blockerId)
     .eq('blocked_id', blockedId)
     .single();
-    
+
   if (error || !blockedUser) {
-    throw new Error(`User ${blockedId} is not blocked by ${blockerId}: ${error?.message}`);
+    throw new Error(
+      `User ${blockedId} is not blocked by ${blockerId}: ${error?.message}`,
+    );
   }
 }
 
@@ -255,7 +278,7 @@ export async function assertUserBlocked(
 export async function assertMessageReported(
   supabase: SupabaseClient<Database>,
   messageId: string,
-  reporterId: string
+  reporterId: string,
 ): Promise<void> {
   const { data: report, error } = await supabase
     .from('message_reports')
@@ -263,21 +286,28 @@ export async function assertMessageReported(
     .eq('message_id', messageId)
     .eq('reporter_id', reporterId)
     .single();
-    
+
   if (error || !report) {
-    throw new Error(`Message report not found for message ${messageId} by reporter ${reporterId}: ${error?.message}`);
+    throw new Error(
+      `Message report not found for message ${messageId} by reporter ${reporterId}: ${error?.message}`,
+    );
   }
 }
 
 /**
  * Gets the current authenticated user ID from Supabase
  */
-export async function getCurrentUserId(supabase: SupabaseClient<Database>): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
+export async function getCurrentUserId(
+  supabase: SupabaseClient<Database>,
+): Promise<string> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
   if (error || !user) {
     throw new Error(`Failed to get current user: ${error?.message}`);
   }
-  
+
   return user.id;
 }
