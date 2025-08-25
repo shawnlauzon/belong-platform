@@ -1,8 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestUser, createTestCommunity, createTestResource } from '../helpers/test-data';
-import { createComment, fetchComments, deleteComment } from '@/features/comments';
+import {
+  createTestUser,
+  createTestCommunity,
+  createTestResource,
+} from '../helpers/test-data';
+import {
+  createComment,
+  fetchComments,
+  deleteComment,
+} from '@/features/comments';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -12,11 +20,11 @@ describe('Comments Soft Delete Behavior', () => {
   let supabase: SupabaseClient<Database>;
   let testUser: User;
   let testCommunity: Community;
-  
+
   beforeAll(async () => {
     supabase = createTestClient();
     await cleanupAllTestData();
-    
+
     // Create shared test data
     testUser = await createTestUser(supabase);
     testCommunity = await createTestCommunity(supabase);
@@ -27,89 +35,44 @@ describe('Comments Soft Delete Behavior', () => {
   });
 
   describe('Soft delete with replies', () => {
-    it('should show [deleted] for deleted comments that have replies', async () => {
+    it('should prevent deletion of comments with replies', async () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Create a top-level comment
       const topComment = await createComment(supabase, {
-        content: 'This will be deleted',
+        content: 'This cannot be deleted',
         resourceId: resource.id,
       });
 
       // Create a reply to it
       const reply = await createComment(supabase, {
-        content: 'Reply to deleted comment',
+        content: 'Reply to parent comment',
         resourceId: resource.id,
         parentId: topComment.id,
       });
 
-      // Delete the top-level comment
-      await deleteComment(supabase, topComment.id);
+      // Try to delete the top-level comment - should fail
+      await expect(deleteComment(supabase, topComment.id)).rejects.toThrow(
+        'Cannot delete comment with replies. Please delete all replies first.',
+      );
 
-      // Fetch comments with deleted flag
+      // Verify the comment still exists and is not deleted
       const comments = await fetchComments(supabase, {
         resourceId: resource.id,
-        includeDeleted: true,
       });
 
-      // The deleted comment should still appear in the structure
       expect(comments).toHaveLength(1);
-      expect(comments[0].isDeleted).toBe(true);
-      expect(comments[0].content).toBe('This will be deleted'); // Original content is preserved in DB
+      expect(comments[0].isDeleted).toBe(false);
+      expect(comments[0].content).toBe('This cannot be deleted');
       expect(comments[0].replies).toHaveLength(1);
-      expect(comments[0].replies![0].content).toBe('Reply to deleted comment');
-      expect(comments[0].replies![0].isDeleted).toBe(false);
-    });
-
-    it('should maintain thread structure when parent comment is deleted', async () => {
-      const user1 = testUser;
-      const user2 = await createTestUser(supabase);
-      
-      await signIn(supabase, user1.email, 'TestPass123!');
-
-      // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-
-      // User1 creates top-level comment
-      const topComment = await createComment(supabase, {
-        content: 'Top level by user1',
-        resourceId: resource.id,
-      });
-
-      // User2 replies
-      await signIn(supabase, user2.email, 'TestPass123!');
-      const reply1 = await createComment(supabase, {
-        content: 'Reply by user2',
-        resourceId: resource.id,
-        parentId: topComment.id,
-      });
-
-      // User1 replies too
-      await signIn(supabase, user1.email, 'TestPass123!');
-      const reply2 = await createComment(supabase, {
-        content: 'Reply by user1',
-        resourceId: resource.id,
-        parentId: topComment.id,
-      });
-
-      // User1 deletes their top-level comment
-      await deleteComment(supabase, topComment.id);
-
-      // Fetch all comments including deleted
-      const comments = await fetchComments(supabase, {
-        resourceId: resource.id,
-        includeDeleted: true,
-      });
-
-      // Structure should be maintained
-      expect(comments).toHaveLength(1);
-      expect(comments[0].isDeleted).toBe(true);
-      expect(comments[0].replies).toHaveLength(2);
-      expect(comments[0].replies![0].isDeleted).toBe(false);
-      expect(comments[0].replies![1].isDeleted).toBe(false);
+      expect(comments[0].replies![0].content).toBe('Reply to parent comment');
     });
   });
 
@@ -118,7 +81,11 @@ describe('Comments Soft Delete Behavior', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Create comments
       const comment1 = await createComment(supabase, {
@@ -162,7 +129,11 @@ describe('Comments Soft Delete Behavior', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Create a top-level comment
       const topComment = await createComment(supabase, {
@@ -211,7 +182,11 @@ describe('Comments Soft Delete Behavior', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Create comments
       const comment1 = await createComment(supabase, {
@@ -236,7 +211,7 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single();
-      
+
       expect(resourceData!.comment_count).toBe(3);
 
       // Delete a comment without replies
@@ -248,10 +223,22 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single());
-      
+
       expect(resourceData!.comment_count).toBe(2);
 
-      // Delete a comment with replies
+      // Delete the reply
+      await deleteComment(supabase, reply.id);
+
+      // Count should be 1
+      ({ data: resourceData } = await supabase
+        .from('resources')
+        .select('comment_count')
+        .eq('id', resource.id)
+        .single());
+
+      expect(resourceData!.comment_count).toBe(1); // Only the parent remains
+
+      // Delete a comment with deleted replies
       await deleteComment(supabase, comment1.id);
 
       // Count should decrease again
@@ -260,19 +247,7 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single());
-      
-      expect(resourceData!.comment_count).toBe(1); // Only the reply remains
 
-      // Delete the reply
-      await deleteComment(supabase, reply.id);
-
-      // Count should be 0
-      ({ data: resourceData } = await supabase
-        .from('resources')
-        .select('comment_count')
-        .eq('id', resource.id)
-        .single());
-      
       expect(resourceData!.comment_count).toBe(0);
     });
 
@@ -280,7 +255,11 @@ describe('Comments Soft Delete Behavior', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Create a comment
       const comment = await createComment(supabase, {
@@ -294,7 +273,7 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single();
-      
+
       expect(resourceData!.comment_count).toBe(1);
 
       // Delete the comment
@@ -306,7 +285,7 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single());
-      
+
       expect(resourceData!.comment_count).toBe(0);
 
       // Try to "delete" it again (this would just update is_deleted from true to true)
@@ -324,7 +303,7 @@ describe('Comments Soft Delete Behavior', () => {
         .select('comment_count')
         .eq('id', resource.id)
         .single());
-      
+
       expect(resourceData!.comment_count).toBe(0);
     });
   });

@@ -39,7 +39,7 @@ describe('Comments Permissions', () => {
   });
 
   describe('Delete permissions', () => {
-    it.only('should allow comment author to delete their own comment', async () => {
+    it('should allow comment author to delete their own comment', async () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Create a resource
