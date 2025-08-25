@@ -19,14 +19,15 @@ import { logger } from '@/shared';
  *     email: '',
  *     password: '',
  *     firstName: '',
- *     lastName: ''
+ *     lastName: '',
+ *     connectionCode: '' // Optional invitation code
  *   });
  *   
  *   const handleSubmit = async (e) => {
  *     e.preventDefault();
  *     try {
  *       await signUp(formData);
- *       // User is now signed up and signed in
+ *       // User is now signed up, signed in, and auto-joined to community if invitation code provided
  *     } catch (error) {
  *       console.error('Sign up failed:', error);
  *     }
@@ -67,12 +68,14 @@ export function useSignUp() {
       password,
       firstName,
       lastName,
+      connectionCode,
     }: {
       email: string;
       password: string;
       firstName: string;
       lastName?: string;
-    }) => signUp(supabase, email, password, firstName, lastName),
+      connectionCode?: string;
+    }) => signUp(supabase, email, password, firstName, lastName, connectionCode),
     onSuccess: (account) => {
       logger.info('🔐 API: User signed up successfully', {
         userId: account.id,

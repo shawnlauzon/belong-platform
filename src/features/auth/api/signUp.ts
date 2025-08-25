@@ -13,18 +13,30 @@ export async function signUp(
   password: string,
   firstName: string,
   lastName?: string,
+  connectionCode?: string,
 ): Promise<Account> {
-  logger.debug('🔐 API: Signing up user', { email, firstName, lastName });
+  logger.debug('🔐 API: Signing up user', {
+    email,
+    firstName,
+    lastName,
+    hasConnectionCode: !!connectionCode,
+  });
 
   try {
+    const metadata: Record<string, string | undefined> = {
+      first_name: firstName,
+      last_name: lastName,
+    };
+
+    if (connectionCode) {
+      metadata.invitation_code = connectionCode;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
+        data: metadata,
       },
     });
 

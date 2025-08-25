@@ -70,6 +70,46 @@ describe('useSignUp', () => {
       signUpData.password,
       signUpData.firstName,
       signUpData.lastName,
+      undefined, // no connectionCode
+    );
+  });
+
+  it('should pass connectionCode to signUp API when provided', async () => {
+    // Arrange
+    const connectionCode = 'CONNECT123';
+    const signUpData = {
+      email: fakeAccount.email,
+      password: 'password123',
+      firstName: fakeAccount.firstName,
+      lastName: fakeAccount.lastName,
+      connectionCode,
+    };
+
+    mockSignUp.mockResolvedValue(fakeAccount);
+
+    // Act
+    const { result } = renderHook(() => useSignUp(), { wrapper });
+    const account = await result.current.mutateAsync(signUpData);
+
+    // Assert: Should return Account object
+    expect(account).toBeDefined();
+    expect(account).toEqual(
+      expect.objectContaining({
+        id: fakeAccount.id,
+        email: fakeAccount.email,
+        firstName: fakeAccount.firstName,
+        lastName: fakeAccount.lastName,
+      }),
+    );
+
+    // Verify API was called with connectionCode
+    expect(mockSignUp).toHaveBeenCalledWith(
+      mockSupabase,
+      signUpData.email,
+      signUpData.password,
+      signUpData.firstName,
+      signUpData.lastName,
+      connectionCode,
     );
   });
 });
