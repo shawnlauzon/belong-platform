@@ -43,7 +43,7 @@ export function createFakeUserConnection(
 ): UserConnection {
   const userAId = faker.string.uuid();
   const userBId = faker.string.uuid();
-  
+
   return {
     id: faker.string.uuid(),
     userAId: userAId < userBId ? userAId : userBId, // Ensure ordering
@@ -61,7 +61,7 @@ export function createFakeConnectionLink(
   const code = faker.string.alphanumeric(8).toUpperCase();
   return {
     code,
-    url: `https://app.belong.network/connect/${code}`,
+    url: `https://app.belongnetwork.co/connect/${code}`,
     isActive: true,
     ...overrides,
   };
@@ -103,7 +103,7 @@ export function createFakeUserConnectionRow(
 ): UserConnectionRow {
   const userAId = faker.string.uuid();
   const userBId = faker.string.uuid();
-  
+
   return {
     id: faker.string.uuid(),
     user_a_id: userAId < userBId ? userAId : userBId,

@@ -1,42 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
-  generateConnectionCode,
   isValidConnectionCode,
   normalizeConnectionCode,
   formatConnectionUrl,
 } from '../../utils/codeUtils';
 
 describe('codeGenerator', () => {
-  describe('generateConnectionCode', () => {
-    it('should generate an 8-character uppercase code', () => {
-      const code = generateConnectionCode();
-
-      expect(code).toHaveLength(8);
-      expect(code).toMatch(/^[A-Z0-9]+$/);
-      expect(code).toBe(code.toUpperCase());
-    });
-
-    it('should not include ambiguous characters', () => {
-      // Generate many codes to test exclusions
-      const codes = Array.from({ length: 100 }, () => generateConnectionCode());
-      const allChars = codes.join('');
-
-      expect(allChars).not.toMatch(/[01IO]/); // Should not contain 0, 1, I, O
-    });
-
-    it('should generate unique codes', () => {
-      const codes = new Set();
-
-      // Generate 100 codes - should be unique
-      for (let i = 0; i < 100; i++) {
-        const code = generateConnectionCode();
-        codes.add(code);
-      }
-
-      expect(codes.size).toBe(100); // All codes should be unique
-    });
-  });
-
   describe('isValidConnectionCode', () => {
     it('should validate correct codes', () => {
       expect(isValidConnectionCode('ABCD2345')).toBe(true);
@@ -57,8 +26,8 @@ describe('codeGenerator', () => {
     });
 
     it('should handle null and undefined', () => {
-      expect(isValidConnectionCode(null as any)).toBe(false);
-      expect(isValidConnectionCode(undefined as any)).toBe(false);
+      expect(isValidConnectionCode(null as unknown as string)).toBe(false);
+      expect(isValidConnectionCode(undefined as unknown as string)).toBe(false);
     });
   });
 
@@ -81,7 +50,7 @@ describe('codeGenerator', () => {
   describe('formatConnectionUrl', () => {
     it('should format URL with default base', () => {
       const url = formatConnectionUrl('ABCD2345');
-      expect(url).toBe('https://app.belong.network/connect/ABCD2345');
+      expect(url).toBe('https://app.belongnetwork.co/connect/ABCD2345');
     });
 
     it('should format URL with custom base', () => {

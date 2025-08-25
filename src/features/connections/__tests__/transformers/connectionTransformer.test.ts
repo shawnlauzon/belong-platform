@@ -140,7 +140,7 @@ describe('connectionTransformer', () => {
 
       expect(result).toEqual({
         code: 'ABCD2345',
-        url: 'https://app.belong.network/connect/ABCD2345',
+        url: 'https://app.belongnetwork.co/connect/ABCD2345',
         isActive: true,
       });
     });
