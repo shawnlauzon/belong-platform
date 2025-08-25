@@ -21,12 +21,25 @@ export async function fetchMessages(
   client: SupabaseClient<Database>,
   filters: MessageListFilters
 ): Promise<RawMessageListResponse> {
+  logger.info('Starting message fetch process', {
+    conversationId: filters.conversationId,
+    limit: filters.limit || 50,
+    hasCursor: !!filters.cursor
+  });
+
   const { error: userError } = await client.auth.getUser();
   
   if (userError) {
-    logger.error('Error fetching user', { error: userError });
+    logger.error('Message fetch failed: user authentication error', { 
+      error: userError,
+      conversationId: filters.conversationId 
+    });
     throw userError;
   }
+
+  logger.debug('User authentication verified for message fetch', {
+    conversationId: filters.conversationId
+  });
 
   // Authentication verified, proceed with message fetch
   const limit = filters.limit || 50;
@@ -40,19 +53,43 @@ export async function fetchMessages(
     .limit(limit + 1);
 
   if (filters.cursor) {
+    logger.debug('Using cursor for paginated message fetch', {
+      conversationId: filters.conversationId,
+      cursor: filters.cursor
+    });
     query = query.lt('created_at', filters.cursor);
   }
+
+  logger.debug('Executing message fetch query', {
+    conversationId: filters.conversationId,
+    limit: limit + 1,
+    hasCursor: !!filters.cursor
+  });
 
   const { data, error } = await query;
 
   if (error) {
-    logger.error('Error fetching messages', { error });
+    logger.error('Database error while fetching messages', { 
+      error,
+      conversationId: filters.conversationId,
+      limit,
+      hasCursor: !!filters.cursor
+    });
     throw error;
   }
 
   if (!data) {
+    logger.warn('No data returned from message fetch query', {
+      conversationId: filters.conversationId
+    });
     return { messages: [], hasMore: false };
   }
+
+  logger.debug('Raw message data retrieved from database', {
+    conversationId: filters.conversationId,
+    rawCount: data.length,
+    requestedLimit: limit
+  });
 
   const hasMore = data.length > limit;
   const rawMessages = data.slice(0, limit);
@@ -61,6 +98,13 @@ export async function fetchMessages(
   const nextCursor = hasMore && rawMessages.length > 0
     ? new Date(rawMessages[0].created_at).toISOString()
     : undefined;
+
+  logger.info('Message fetch process completed successfully', {
+    conversationId: filters.conversationId,
+    messageCount: rawMessages.length,
+    hasMore,
+    hasNextCursor: !!nextCursor
+  });
 
   return {
     messages: rawMessages.reverse(), // Reverse to get chronological order
