@@ -4,10 +4,8 @@ import {
   toDomainMemberCode,
   toDomainConnectionRequest,
   toDomainUserConnection,
-  toConnectionLink,
 } from '../../transformers/connectionTransformer';
 import {
-  createFakeMemberConnectionCode,
   createFakeConnectionRequest,
   createFakeCommunityMemberCodeRow,
   createFakeConnectionRequestRow,
@@ -129,45 +127,4 @@ describe('connectionTransformer', () => {
     });
   });
 
-  describe('toConnectionLink', () => {
-    it('should create connection link from member code', () => {
-      const memberCode = createFakeMemberConnectionCode({
-        code: 'ABCD2345',
-        isActive: true,
-      });
-
-      const result = toConnectionLink(memberCode);
-
-      expect(result).toEqual({
-        code: 'ABCD2345',
-        url: 'https://app.belongnetwork.co/connect/ABCD2345',
-        isActive: true,
-      });
-    });
-
-    it('should handle custom base URL', () => {
-      const memberCode = createFakeMemberConnectionCode({
-        code: 'XYZ89ABC',
-        isActive: false,
-      });
-
-      const result = toConnectionLink(memberCode, 'https://custom.domain.com');
-
-      expect(result).toEqual({
-        code: 'XYZ89ABC',
-        url: 'https://custom.domain.com/connect/XYZ89ABC',
-        isActive: false,
-      });
-    });
-
-    it('should handle trailing slash in base URL', () => {
-      const memberCode = createFakeMemberConnectionCode({
-        code: 'TEST1234',
-      });
-
-      const result = toConnectionLink(memberCode, 'https://custom.domain.com/');
-
-      expect(result.url).toBe('https://custom.domain.com/connect/TEST1234');
-    });
-  });
 });

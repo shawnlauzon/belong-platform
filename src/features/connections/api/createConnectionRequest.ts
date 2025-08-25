@@ -15,11 +15,11 @@ import {
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
-export async function processConnectionLink(
+export async function createConnectionRequest(
   supabase: SupabaseClient<Database>,
   code: string,
 ): Promise<ProcessConnectionLinkResponse> {
-  logger.debug('🔗 API: Processing connection link', { code });
+  logger.debug('🔗 API: Creating connection request from code', { code });
 
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);
@@ -215,7 +215,7 @@ export async function processConnectionLink(
       message: 'Connection request created successfully',
     };
   } catch (error) {
-    logger.error('🔗 API: Error processing connection link', {
+    logger.error('🔗 API: Error creating connection request', {
       error,
       code,
     });

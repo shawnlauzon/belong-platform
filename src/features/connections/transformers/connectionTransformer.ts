@@ -6,9 +6,7 @@ import type {
   MemberConnectionCode,
   ConnectionRequest,
   UserConnection,
-  ConnectionLink,
 } from '../types';
-import { formatConnectionUrl } from '../utils/codeUtils';
 
 export function toDomainMemberCode(
   row: CommunityMemberCodeRow,
@@ -59,13 +57,3 @@ export function toDomainUserConnection(row: UserConnectionRow): UserConnection {
   };
 }
 
-export function toConnectionLink(
-  memberCode: MemberConnectionCode,
-  baseUrl?: string,
-): ConnectionLink {
-  return {
-    code: memberCode.code,
-    url: formatConnectionUrl(memberCode.code, baseUrl),
-    isActive: memberCode.isActive,
-  };
-}

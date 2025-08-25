@@ -1,5 +1,5 @@
 export * from './getMemberConnectionCode';
-export * from './processConnectionLink';
+export * from './createConnectionRequest';
 export * from './approveConnection';
 export * from './rejectConnection';
 export * from './fetchPendingConnections';

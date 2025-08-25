@@ -1,22 +1,19 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { getMemberConnectionCode } from '../api';
-import { toConnectionLink } from '../transformers';
 import { connectionQueries } from '../queries';
-import type { ConnectionLink } from '../types';
 
 export function useMemberConnectionCode(
   communityId: string,
-  baseUrl?: string,
-  options?: Partial<UseQueryOptions<ConnectionLink, Error>>
+  options?: Partial<UseQueryOptions<string, Error>>
 ) {
   const supabase = useSupabase();
 
   return useQuery({
     queryKey: connectionQueries.memberCode(communityId),
-    queryFn: async (): Promise<ConnectionLink> => {
+    queryFn: async (): Promise<string> => {
       const memberCode = await getMemberConnectionCode(supabase, communityId);
-      return toConnectionLink(memberCode, baseUrl);
+      return memberCode.code;
     },
     enabled: !!communityId,
     staleTime: 5 * 60 * 1000, // 5 minutes

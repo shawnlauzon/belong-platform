@@ -29,12 +29,6 @@ export interface UserConnection {
   createdAt: Date;
 }
 
-export interface ConnectionLink {
-  code: string;
-  url: string;
-  shortUrl?: string;
-  isActive: boolean;
-}
 
 export interface ProcessConnectionLinkResponse {
   success: boolean;

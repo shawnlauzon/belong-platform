@@ -3,7 +3,6 @@ import type {
   MemberConnectionCode,
   ConnectionRequest,
   UserConnection,
-  ConnectionLink,
   CommunityMemberCodeRow,
   ConnectionRequestRow,
   UserConnectionRow,
@@ -55,17 +54,6 @@ export function createFakeUserConnection(
   };
 }
 
-export function createFakeConnectionLink(
-  overrides?: Partial<ConnectionLink>,
-): ConnectionLink {
-  const code = faker.string.alphanumeric(8).toUpperCase();
-  return {
-    code,
-    url: `https://app.belongnetwork.co/connect/${code}`,
-    isActive: true,
-    ...overrides,
-  };
-}
 
 // Database row fakes
 export function createFakeCommunityMemberCodeRow(
