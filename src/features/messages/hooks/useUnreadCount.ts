@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
 import { messageKeys } from '../queries';
 
-export function useUnreadCount() {
+export function useUnreadCount(
+  options?: Partial<UseQueryOptions<number, Error>>
+) {
   const client = useSupabase();
 
   return useQuery({
@@ -28,5 +30,6 @@ export function useUnreadCount() {
     },
     enabled: !!client,
     refetchInterval: 30000, // Refetch every 30 seconds
+    ...options,
   });
 }
