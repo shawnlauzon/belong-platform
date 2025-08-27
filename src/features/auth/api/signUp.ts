@@ -19,7 +19,7 @@ export async function signUp(
     email,
     firstName,
     lastName,
-    hasConnectionCode: !!connectionCode,
+    connectionCode,
   });
 
   try {
