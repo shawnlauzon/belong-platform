@@ -4,6 +4,7 @@ import { useUpdateUser } from '../../hooks/useUpdateUser';
 import { createMockSupabase } from '../../../../test-utils';
 import { createFakeUser } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
+import { authKeys } from '../../../auth/queries';
 
 // Mock the API
 vi.mock('../../api', () => ({
@@ -20,13 +21,14 @@ const mockUpdateUser = vi.mocked(updateUser);
 describe('useUpdateUser', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let queryClient: ReturnType<typeof createDefaultTestWrapper>['queryClient'];
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockSupabase = createMockSupabase({});
     mockUseSupabase.mockReturnValue(mockSupabase);
-    ({ wrapper } = createDefaultTestWrapper());
+    ({ wrapper, queryClient } = createDefaultTestWrapper());
   });
 
   it('should return User after update', async () => {
@@ -54,6 +56,35 @@ describe('useUpdateUser', () => {
     expect(mockUpdateUser).toHaveBeenCalledWith(mockSupabase, {
       id: mockUpdatedUser.id,
       ...updateData,
+    });
+  });
+
+  it('should invalidate current user cache on successful update', async () => {
+    // Arrange: Create test data
+    const mockUser = createFakeUser();
+    const updateData: Partial<UserData> = {
+      bio: 'Updated bio content',
+    };
+
+    mockUpdateUser.mockResolvedValue(mockUser);
+
+    // Pre-populate current user cache
+    const currentUserKey = authKeys.currentUser();
+    queryClient.setQueryData(currentUserKey, mockUser);
+
+    // Spy on invalidateQueries to verify it's called
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    // Act
+    const { result } = renderHook(() => useUpdateUser(), { wrapper });
+    await result.current.mutateAsync({
+      id: mockUser.id,
+      ...updateData,
+    });
+
+    // Assert: Should invalidate current user cache
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: currentUserKey,
     });
   });
 });
