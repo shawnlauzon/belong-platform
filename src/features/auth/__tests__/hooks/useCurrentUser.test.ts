@@ -10,14 +10,20 @@ import type { User } from '@/features/users/types';
 
 // Mock the API functions
 vi.mock('../../api', () => ({
-  getCurrentUser: vi.fn(),
+  getCurrentUserId: vi.fn(),
+}));
+
+vi.mock('@/features/users/api', () => ({
+  fetchUserById: vi.fn(),
 }));
 
 import { useSupabase } from '@/shared';
-import { getCurrentUser } from '../../api';
+import { getCurrentUserId } from '../../api';
+import { fetchUserById } from '@/features/users/api';
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockGetCurrentUser = vi.mocked(getCurrentUser);
+const mockGetCurrentUserId = vi.mocked(getCurrentUserId);
+const mockFetchUserById = vi.mocked(fetchUserById);
 
 describe('useCurrentUser', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
@@ -39,7 +45,8 @@ describe('useCurrentUser', () => {
 
   it('should return User when authenticated', async () => {
     // Arrange
-    mockGetCurrentUser.mockResolvedValue(fakeUser);
+    mockGetCurrentUserId.mockResolvedValue(fakeUser.id);
+    mockFetchUserById.mockResolvedValue(fakeUser);
 
     // Act
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
@@ -63,12 +70,13 @@ describe('useCurrentUser', () => {
     );
 
     // Verify API was called correctly
-    expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
+    expect(mockGetCurrentUserId).toHaveBeenCalledWith(mockSupabase);
+    expect(mockFetchUserById).toHaveBeenCalledWith(mockSupabase, fakeUser.id);
   });
 
   it('should return null when not authenticated', async () => {
     // Arrange
-    mockGetCurrentUser.mockResolvedValue(null);
+    mockGetCurrentUserId.mockResolvedValue(null);
 
     // Act
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
@@ -82,6 +90,8 @@ describe('useCurrentUser', () => {
     }
     // Assert
     expect(result.current.data).toBeNull();
-    expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
+    expect(mockGetCurrentUserId).toHaveBeenCalledWith(mockSupabase);
+    // fetchUserById should not be called when no user ID is returned
+    expect(mockFetchUserById).not.toHaveBeenCalled();
   });
 });

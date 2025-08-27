@@ -5,6 +5,7 @@ import { createMockSupabase } from '../../../../test-utils';
 import { createFakeUser } from '../../__fakes__';
 import { createDefaultTestWrapper } from '../../../../test-utils/testWrapper';
 import { authKeys } from '../../../auth/queries';
+import { userKeys } from '../../queries';
 
 // Mock the API
 vi.mock('../../api', () => ({
@@ -59,7 +60,7 @@ describe('useUpdateUser', () => {
     });
   });
 
-  it('should invalidate current user cache on successful update', async () => {
+  it('should update user cache and invalidate lists on successful update', async () => {
     // Arrange: Create test data
     const mockUser = createFakeUser();
     const updateData: Partial<UserData> = {
@@ -68,11 +69,8 @@ describe('useUpdateUser', () => {
 
     mockUpdateUser.mockResolvedValue(mockUser);
 
-    // Pre-populate current user cache
-    const currentUserKey = authKeys.currentUser();
-    queryClient.setQueryData(currentUserKey, mockUser);
-
-    // Spy on invalidateQueries to verify it's called
+    // Spy on cache operations
+    const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
     // Act
@@ -82,9 +80,17 @@ describe('useUpdateUser', () => {
       ...updateData,
     });
 
-    // Assert: Should invalidate current user cache
+    // Assert: Should update user detail cache with new data
+    expect(setQueryDataSpy).toHaveBeenCalledWith(userKeys.detail(mockUser.id), mockUser);
+    
+    // Assert: Should invalidate user lists cache
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: currentUserKey,
+      queryKey: userKeys.lists(),
+    });
+
+    // Assert: Should NOT try to invalidate current user cache (it no longer exists)
+    expect(invalidateSpy).not.toHaveBeenCalledWith({
+      queryKey: authKeys.currentUser(),
     });
   });
 });

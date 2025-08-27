@@ -1,10 +1,12 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { STANDARD_CACHE_TIME } from '@/config';
-import { getCurrentUser } from '../api';
+import { getCurrentUserId } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
 import type { User } from '@/features/users/types';
 import { authKeys } from '../queries';
+import { fetchUserById } from '@/features/users/api';
+import { userKeys } from '@/features/users/queries';
 
 /**
  * Hook for fetching the current authenticated user.
@@ -32,9 +34,10 @@ export function useCurrentUser(
 ) {
   const supabase = useSupabase();
 
-  const query = useQuery({
-    queryKey: authKeys.currentUser(),
-    queryFn: () => getCurrentUser(supabase),
+  // First query: Get current user ID
+  const userIdQuery = useQuery({
+    queryKey: authKeys.currentUserId(),
+    queryFn: () => getCurrentUserId(supabase),
     staleTime: STANDARD_CACHE_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
@@ -47,14 +50,42 @@ export function useCurrentUser(
       }
       return failureCount < 2;
     },
+  });
+
+  const userId = userIdQuery.data;
+
+  // Second query: Get user data if ID exists
+  const userQuery = useQuery({
+    queryKey: userKeys.detail(userId || ''),
+    queryFn: () => fetchUserById(supabase, userId!),
+    enabled: !!userId,
+    staleTime: STANDARD_CACHE_TIME,
+    gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
   });
 
-  if (query.error) {
-    logger.error('🔐 API: Error fetching current user', {
-      error: query.error,
-    });
+  // Handle errors from either query
+  const error = userIdQuery.error || userQuery.error;
+  if (error) {
+    logger.error('🔐 API: Error fetching current user', { error });
   }
 
-  return query;
+  // Return combined state
+  return {
+    data: userId ? userQuery.data || null : null,
+    error,
+    isPending: userIdQuery.isPending || (userId ? userQuery.isPending : false),
+    isLoading: userIdQuery.isLoading || (userId ? userQuery.isLoading : false),
+    isFetching: userIdQuery.isFetching || (userId ? userQuery.isFetching : false),
+    isError: userIdQuery.isError || userQuery.isError,
+    isSuccess: userIdQuery.isSuccess && (!userId || userQuery.isSuccess),
+    status: userIdQuery.isError || userQuery.isError 
+      ? 'error' as const
+      : (userIdQuery.isPending || (userId ? userQuery.isPending : false))
+        ? 'pending' as const 
+        : 'success' as const,
+    fetchStatus: userIdQuery.isFetching || (userId ? userQuery.isFetching : false) 
+      ? 'fetching' as const 
+      : 'idle' as const,
+  };
 }

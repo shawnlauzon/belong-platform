@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signIn } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
+import { authKeys } from '../queries';
 
 /**
  * Hook for signing in a user.
@@ -50,9 +51,11 @@ export function useSignIn() {
         userId: account.id,
       });
 
-      // Invalidate auth state to refetch with new session
+      // Set current user ID in cache
+      queryClient.setQueryData(authKeys.currentUserId(), account.id);
+      
+      // Invalidate auth cache for any other auth-related data
       queryClient.invalidateQueries({ queryKey: ['auth'] });
-      queryClient.invalidateQueries({ queryKey: ['user', account.id] });
     },
     onError: (error) => {
       logger.error('🔐 API: Failed to sign in', { error });

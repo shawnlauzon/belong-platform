@@ -111,6 +111,9 @@ export function useUpdateUser() {
     },
     onSuccess: (updatedUser: User) => {
       queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
+      queryClient.invalidateQueries({
+        queryKey: userKeys.lists(),
+      });
       logger.info('👤 useUpdateUser: Successfully updated user', {
         id: updatedUser.id,
         email: updatedUser.email,

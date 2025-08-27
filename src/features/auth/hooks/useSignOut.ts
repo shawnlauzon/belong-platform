@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signOut } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
+import { authKeys } from '../queries';
 
 /**
  * Hook for signing out the current user.
@@ -41,6 +42,9 @@ export function useSignOut() {
     mutationFn: () => signOut(supabase),
     onSuccess: () => {
       logger.info('🔐 API: User signed out successfully');
+      
+      // Clear current user ID from cache
+      queryClient.setQueryData(authKeys.currentUserId(), null);
       
       // Invalidate auth cache since user is now signed out
       queryClient.invalidateQueries({ queryKey: ['auth'] });
