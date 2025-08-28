@@ -17,7 +17,7 @@ describe('fetchCommunityConversation', () => {
         user: { id: 'user-789' } 
       },
       error: null
-    } as any);
+    });
   });
 
   it('should fetch community conversation successfully', async () => {
@@ -37,43 +37,42 @@ describe('fetchCommunityConversation', () => {
       unread_count: 5
     };
 
-    // Mock the conversation query
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    // Mock the first call - conversations query
+    const conversationsSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: mockConversationRow,
-              error: null
-            })
+          single: vi.fn().mockResolvedValue({
+            data: mockConversationRow,
+            error: null
           })
         })
       })
     });
 
-    // Mock participant count query
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          count: 10,
-          error: null
-        })
+    // Mock the second call - participant count query
+    const participantCountSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({
+        count: 10,
+        error: null
       })
     });
 
-    // Mock current user participant data query  
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
+    // Mock the third call - current user participant data query  
+    const participantDataSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: mockParticipantData,
-              error: null
-            })
+          single: vi.fn().mockResolvedValue({
+            data: mockParticipantData,
+            error: null
           })
         })
       })
     });
+
+    mockSupabase.from
+      .mockReturnValueOnce({ select: conversationsSelectMock })
+      .mockReturnValueOnce({ select: participantCountSelectMock })
+      .mockReturnValueOnce({ select: participantDataSelectMock });
 
     const result = await fetchCommunityConversation(mockSupabase, mockCommunityId);
 
@@ -94,18 +93,18 @@ describe('fetchCommunityConversation', () => {
 
   it('should return null when no conversation exists for community', async () => {
     // Mock the conversation query to return no data
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    const conversationsSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { code: 'PGRST116', message: 'No rows found' }
-            })
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: { code: 'PGRST116', message: 'No rows found' }
           })
         })
       })
     });
+
+    mockSupabase.from.mockReturnValueOnce({ select: conversationsSelectMock });
 
     const result = await fetchCommunityConversation(mockSupabase, mockCommunityId);
     expect(result).toBeNull();
@@ -114,18 +113,18 @@ describe('fetchCommunityConversation', () => {
   it('should throw error when conversation query fails', async () => {
     const mockError = new Error('Database error');
 
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    const conversationsSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: mockError
-            })
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: mockError
           })
         })
       })
     });
+
+    mockSupabase.from.mockReturnValueOnce({ select: conversationsSelectMock });
 
     await expect(fetchCommunityConversation(mockSupabase, mockCommunityId))
       .rejects.toThrow('Database error');
@@ -144,34 +143,34 @@ describe('fetchCommunityConversation', () => {
     };
 
     // Mock successful conversation query
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    const conversationsSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: mockConversationRow,
-              error: null
-            })
+          single: vi.fn().mockResolvedValue({
+            data: mockConversationRow,
+            error: null
           })
         })
       })
     });
 
     // Mock successful participant count query
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          count: 5,
-          error: null
-        })
+    const participantCountSelectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({
+        count: 5,
+        error: null
       })
     });
+
+    mockSupabase.from
+      .mockReturnValueOnce({ select: conversationsSelectMock })
+      .mockReturnValueOnce({ select: participantCountSelectMock });
 
     // Mock auth.getUser to return no user
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: null },
       error: null
-    } as any);
+    });
 
     await expect(fetchCommunityConversation(mockSupabase, mockCommunityId))
       .rejects.toThrow('User not authenticated');

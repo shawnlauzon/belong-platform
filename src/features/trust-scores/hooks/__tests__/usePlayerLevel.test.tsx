@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { usePlayerLevel, type UsePlayerLevelResult } from '../usePlayerLevel';
+import { usePlayerLevel } from '../usePlayerLevel';
 import { createFakeTrustScore } from '../../__fakes__';
 import { createTestWrapper } from '@/test-utils/testWrapper';
 import type { TrustScore } from '../../types';
@@ -33,7 +33,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -61,7 +61,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -81,7 +81,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -108,7 +108,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -127,7 +127,7 @@ describe('usePlayerLevel', () => {
       isPending: true,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -147,7 +147,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: true,
       error: mockError,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -173,7 +173,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -202,7 +202,7 @@ describe('usePlayerLevel', () => {
       isPending: false,
       isError: false,
       error: null,
-    } as any);
+    });
 
     const { wrapper } = createTestWrapper();
     const { result } = renderHook(
@@ -235,7 +235,7 @@ describe('usePlayerLevel', () => {
         isPending: false,
         isError: false,
         error: null,
-      } as any);
+      });
 
       const { wrapper } = createTestWrapper();
       const { result } = renderHook(

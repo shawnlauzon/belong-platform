@@ -6,7 +6,6 @@ import {
   getTotalLevels,
   getAllLevels,
 } from '../levelCalculator';
-import { PLAYER_LEVELS } from '../../config/levelConfig';
 
 describe('levelCalculator', () => {
   describe('calculateLevel', () => {
