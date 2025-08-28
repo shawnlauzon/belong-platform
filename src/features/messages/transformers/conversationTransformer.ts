@@ -1,6 +1,7 @@
-import { Conversation } from '../types';
+import { Conversation, CommunityConversation } from '../types';
 import { ConversationWithParticipants } from '../types/messageRow';
 import { toDomainUser } from '../../users/transformers/userTransformer';
+import type { Database } from '@/shared/types/database';
 
 export function transformConversation(
   row: ConversationWithParticipants,
@@ -30,5 +31,33 @@ export function transformConversation(
     lastReadAt: currentParticipant.last_read_at 
       ? new Date(currentParticipant.last_read_at) 
       : null,
+    conversationType: 'direct',
+  };
+}
+
+/**
+ * Transform database row to CommunityConversation domain object
+ */
+export function transformCommunityConversation(
+  conversationRow: Database['public']['Tables']['conversations']['Row'],
+  participantRow: { last_read_at: string | null; unread_count: number },
+  participantCount: number
+): CommunityConversation {
+  if (!conversationRow.community_id) {
+    throw new Error('Community conversation must have community_id');
+  }
+
+  return {
+    id: conversationRow.id,
+    createdAt: new Date(conversationRow.created_at),
+    updatedAt: new Date(conversationRow.updated_at),
+    lastMessageAt: conversationRow.last_message_at ? new Date(conversationRow.last_message_at) : null,
+    lastMessagePreview: conversationRow.last_message_preview,
+    lastMessageSenderId: conversationRow.last_message_sender_id,
+    communityId: conversationRow.community_id,
+    conversationType: 'community',
+    unreadCount: participantRow.unread_count,
+    lastReadAt: participantRow.last_read_at ? new Date(participantRow.last_read_at) : null,
+    participantCount,
   };
 }

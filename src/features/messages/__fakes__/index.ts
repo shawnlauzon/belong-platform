@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Message, Conversation, SendMessageInput, MessageReport } from '../types';
+import { Message, Conversation, SendMessageInput, MessageReport, CommunityConversation } from '../types';
 import { MessageWithSender, ConversationWithParticipants } from '../types/messageRow';
 import { createFakeUser, createFakeProfileRow } from '../../users/__fakes__';
 import type { Database } from '../../../shared/types/database';
@@ -45,6 +45,30 @@ export function createFakeConversation(overrides: Partial<Conversation> = {}): C
     otherParticipant: otherUser,
     unreadCount: faker.number.int({ min: 0, max: 10 }),
     lastReadAt: faker.date.recent(),
+    conversationType: 'direct',
+    communityId: undefined,
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a fake CommunityConversation domain object
+ */
+export function createFakeCommunityConversation(overrides: Partial<CommunityConversation> = {}): CommunityConversation {
+  const now = faker.date.recent();
+
+  return {
+    id: faker.string.uuid(),
+    createdAt: now,
+    updatedAt: now,
+    lastMessageAt: faker.date.recent(),
+    lastMessagePreview: faker.lorem.sentence(),
+    lastMessageSenderId: faker.string.uuid(),
+    communityId: faker.string.uuid(),
+    conversationType: 'community',
+    unreadCount: faker.number.int({ min: 0, max: 10 }),
+    lastReadAt: faker.date.recent(),
+    participantCount: faker.number.int({ min: 1, max: 50 }),
     ...overrides,
   };
 }
@@ -133,6 +157,8 @@ export function createFakeConversationRow(overrides: Partial<Database['public'][
     last_message_at: faker.date.recent().toISOString(),
     last_message_preview: faker.lorem.sentence(),
     last_message_sender_id: faker.string.uuid(),
+    community_id: null,
+    conversation_type: 'direct',
     ...overrides,
   };
 }
@@ -213,6 +239,8 @@ export function createFakeConversationWithParticipants(
     last_message_at: faker.date.recent().toISOString(),
     last_message_preview: faker.lorem.sentence(),
     last_message_sender_id: faker.string.uuid(),
+    community_id: null,
+    conversation_type: 'direct',
     conversation_participants: [
       {
         user_id: currentUserId,

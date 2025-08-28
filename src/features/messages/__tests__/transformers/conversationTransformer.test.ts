@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { transformConversation } from '../../transformers/conversationTransformer';
+import { transformConversation, transformCommunityConversation } from '../../transformers/conversationTransformer';
 import { createFakeConversationWithParticipants } from '../../__fakes__';
+import type { Database } from '@/shared/types/database';
 
 describe('conversationTransformer', () => {
   const currentUserId = 'test-user-id';
@@ -24,6 +25,7 @@ describe('conversationTransformer', () => {
         }),
         unreadCount: expect.any(Number),
         lastReadAt: expect.any(Date),
+        conversationType: 'direct',
       });
     });
 
@@ -133,6 +135,118 @@ describe('conversationTransformer', () => {
 
       expect(result.lastMessagePreview).toBeNull();
       expect(result.lastMessageSenderId).toBeNull();
+    });
+
+    it('should set conversation type as direct', () => {
+      const conversationRow = createFakeConversationWithParticipants(currentUserId, otherUserId);
+
+      const result = transformConversation(conversationRow, currentUserId);
+
+      expect(result.conversationType).toBe('direct');
+    });
+  });
+
+  describe('transformCommunityConversation', () => {
+    const mockCommunityId = 'community-123';
+    
+    const createMockConversationRow = (overrides?: Partial<Database['public']['Tables']['conversations']['Row']>): Database['public']['Tables']['conversations']['Row'] => ({
+      id: 'conversation-456',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T12:00:00Z',
+      last_message_at: '2024-01-01T12:30:00Z',
+      last_message_preview: 'Welcome to the community!',
+      last_message_sender_id: 'user-789',
+      community_id: mockCommunityId,
+      ...overrides
+    });
+
+    const mockParticipantData = {
+      last_read_at: '2024-01-01T12:00:00Z',
+      unread_count: 3
+    };
+
+    it('should transform community conversation row to domain object correctly', () => {
+      const conversationRow = createMockConversationRow();
+      const participantCount = 15;
+
+      const result = transformCommunityConversation(conversationRow, mockParticipantData, participantCount);
+
+      expect(result).toEqual({
+        id: 'conversation-456',
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-01T12:00:00Z'),
+        lastMessageAt: new Date('2024-01-01T12:30:00Z'),
+        lastMessagePreview: 'Welcome to the community!',
+        lastMessageSenderId: 'user-789',
+        communityId: mockCommunityId,
+        conversationType: 'community',
+        unreadCount: 3,
+        lastReadAt: new Date('2024-01-01T12:00:00Z'),
+        participantCount: 15
+      });
+    });
+
+    it('should handle null values correctly', () => {
+      const conversationRow = createMockConversationRow({
+        last_message_at: null,
+        last_message_preview: null,
+        last_message_sender_id: null
+      });
+      
+      const participantData = {
+        last_read_at: null,
+        unread_count: 0
+      };
+
+      const result = transformCommunityConversation(conversationRow, participantData, 5);
+
+      expect(result.lastMessageAt).toBeNull();
+      expect(result.lastMessagePreview).toBeNull();
+      expect(result.lastMessageSenderId).toBeNull();
+      expect(result.lastReadAt).toBeNull();
+      expect(result.unreadCount).toBe(0);
+    });
+
+    it('should convert date strings to Date objects', () => {
+      const conversationRow = createMockConversationRow();
+
+      const result = transformCommunityConversation(conversationRow, mockParticipantData, 10);
+
+      expect(result.createdAt).toEqual(new Date('2024-01-01T00:00:00Z'));
+      expect(result.updatedAt).toEqual(new Date('2024-01-01T12:00:00Z'));
+      expect(result.lastMessageAt).toEqual(new Date('2024-01-01T12:30:00Z'));
+      expect(result.lastReadAt).toEqual(new Date('2024-01-01T12:00:00Z'));
+      
+      expect(result.createdAt instanceof Date).toBe(true);
+      expect(result.updatedAt instanceof Date).toBe(true);
+      expect(result.lastMessageAt instanceof Date).toBe(true);
+      expect(result.lastReadAt instanceof Date).toBe(true);
+    });
+
+    it('should throw error when community_id is null', () => {
+      const conversationRow = createMockConversationRow({
+        community_id: null
+      });
+
+      expect(() => transformCommunityConversation(conversationRow, mockParticipantData, 5))
+        .toThrow('Community conversation must have community_id');
+    });
+
+    it('should set conversation type as community', () => {
+      const conversationRow = createMockConversationRow();
+
+      const result = transformCommunityConversation(conversationRow, mockParticipantData, 8);
+
+      expect(result.conversationType).toBe('community');
+    });
+
+    it('should include participant count', () => {
+      const conversationRow = createMockConversationRow();
+      const participantCount = 25;
+
+      const result = transformCommunityConversation(conversationRow, mockParticipantData, participantCount);
+
+      expect(result.participantCount).toBe(25);
     });
   });
 });

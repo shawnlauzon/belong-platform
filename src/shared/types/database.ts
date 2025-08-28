@@ -349,6 +349,8 @@ export type Database = {
       }
       conversations: {
         Row: {
+          community_id: string | null
+          conversation_type: Database["public"]["Enums"]["conversation_type"]
           created_at: string
           id: string
           last_message_at: string | null
@@ -357,6 +359,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          community_id?: string | null
+          conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
           last_message_at?: string | null
@@ -365,6 +369,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          community_id?: string | null
+          conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
           last_message_at?: string | null
@@ -373,6 +379,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_last_message_sender_id_fkey"
             columns: ["last_message_sender_id"]
@@ -1344,6 +1357,10 @@ export type Database = {
           name: string
         }[]
       }
+      create_community_conversation: {
+        Args: { p_community_id: string }
+        Returns: string
+      }
       create_user_connection: {
         Args: { request_id: string }
         Returns: string
@@ -1615,6 +1632,17 @@ export type Database = {
         Args: { community_id: string }
         Returns: Json
       }
+      get_connection_details: {
+        Args: { connection_code: string }
+        Returns: {
+          avatar_url: string
+          community_id: string
+          created_at: string
+          first_name: string
+          is_active: boolean
+          user_id: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
@@ -1626,25 +1654,6 @@ export type Database = {
       get_resource_renewal_days: {
         Args: { resource_type: Database["public"]["Enums"]["resource_type"] }
         Returns: number
-      }
-      get_user_public_info: {
-        Args: { user_id: string }
-        Returns: {
-          avatar_url: string
-          first_name: string
-          id: string
-        }[]
-      }
-      get_connection_details: {
-        Args: { connection_code: string }
-        Returns: {
-          user_id: string
-          first_name: string
-          avatar_url: string
-          community_id: string
-          is_active: boolean
-          created_at: string
-        }[]
       }
       gettransactionid: {
         Args: Record<PropertyKey, never>
@@ -3015,6 +3024,7 @@ export type Database = {
     }
     Enums: {
       connection_request_status: "pending" | "accepted" | "rejected" | "expired"
+      conversation_type: "direct" | "community"
       resource_category:
         | "tools"
         | "skills"
@@ -3183,6 +3193,7 @@ export const Constants = {
   public: {
     Enums: {
       connection_request_status: ["pending", "accepted", "rejected", "expired"],
+      conversation_type: ["direct", "community"],
       resource_category: [
         "tools",
         "skills",
