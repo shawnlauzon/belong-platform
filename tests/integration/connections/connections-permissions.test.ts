@@ -191,7 +191,7 @@ describe('Connections API - Permissions and Security', () => {
       if (!codeA) throw new Error('UserA should have a member code');
 
       // UserB creates a request by processing UserA's code
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         codeA.code,
       );
