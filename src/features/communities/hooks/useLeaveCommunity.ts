@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger } from '@/shared';
+import { logger, useCurrentUser } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveCommunity } from '@/features/communities/api';
-import { communityMembersKeys } from '../queries';
+import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 
 /**
  * Hook for leaving a community.
@@ -44,6 +44,7 @@ import { communityMembersKeys } from '../queries';
 export function useLeaveCommunity() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation<void, Error, string>({
     mutationFn: (communityId: string) => leaveCommunity(supabase, communityId),
@@ -52,8 +53,16 @@ export function useLeaveCommunity() {
         queryKey: communityMembersKeys.list(communityId),
       });
 
+      // Invalidate user's community list since they no longer belong to this community
+      if (currentUser?.id) {
+        queryClient.invalidateQueries({
+          queryKey: userCommunitiesKeys.list(currentUser.id),
+        });
+      }
+
       logger.info('🏘️ API: Successfully left community', {
         communityId,
+        userId: currentUser?.id,
       });
     },
     onError: (error) => {
