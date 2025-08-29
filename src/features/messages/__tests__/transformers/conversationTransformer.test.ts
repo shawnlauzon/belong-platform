@@ -264,11 +264,20 @@ describe('conversationTransformer', () => {
     });
 
     it('should convert date strings to Date objects', () => {
-      const conversationRow = createMockConversationRow();
+      const conversationRow = createMockConversationRow({
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T12:00:00Z',
+        last_message_at: '2024-01-01T12:30:00Z',
+      });
+
+      const participantData = {
+        last_read_at: '2024-01-01T12:00:00Z',
+        unread_count: 3,
+      };
 
       const result = transformCommunityConversation(
         conversationRow,
-        mockParticipantData,
+        participantData,
         10,
       );
 
