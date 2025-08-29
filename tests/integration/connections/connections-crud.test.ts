@@ -169,7 +169,7 @@ describe('Connections API - CRUD Operations', () => {
 
       if (!memberCodeA) throw new Error('UserA should have a member code');
 
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         memberCodeA.code,
       );
@@ -195,7 +195,7 @@ describe('Connections API - CRUD Operations', () => {
     it('rejects invalid connection code', async () => {
       const invalidCode = 'INVALID1';
 
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         invalidCode,
       );
@@ -205,7 +205,7 @@ describe('Connections API - CRUD Operations', () => {
     });
 
     it('rejects non-existent connection code', async () => {
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         'NVALD234',
       );
@@ -225,7 +225,7 @@ describe('Connections API - CRUD Operations', () => {
 
       if (!memberCode) throw new Error('UserA should have a member code');
 
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserA,
         memberCode.code,
       );
@@ -248,13 +248,13 @@ describe('Connections API - CRUD Operations', () => {
       if (!memberCodeA) throw new Error('UserA should have a member code');
 
       // First request
-      const response1 = await connectionsApi.processConnectionLink(
+      const response1 = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         memberCodeA.code,
       );
 
       // Second request with same code
-      const response2 = await connectionsApi.processConnectionLink(
+      const response2 = await connectionsApi.createConnectionRequest(
         supabaseUserB,
         memberCodeA.code,
       );
@@ -281,7 +281,7 @@ describe('Connections API - CRUD Operations', () => {
 
       if (!memberCodeA) throw new Error('UserA should have a member code');
 
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseUserC,
         memberCodeA.code,
       );
@@ -420,7 +420,7 @@ describe('Connections API - CRUD Operations', () => {
 
       if (!memberCodeB) throw new Error('TestUserB should have a member code');
 
-      const response = await connectionsApi.processConnectionLink(
+      const response = await connectionsApi.createConnectionRequest(
         supabaseTestUserA,
         memberCodeB.code,
       );
