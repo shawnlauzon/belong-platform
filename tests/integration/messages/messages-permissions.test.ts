@@ -82,8 +82,7 @@ describe('Messages Permissions & Authorization', () => {
 
       // UserC should not be able to fetch messages (returns empty instead of error)
       await signInAsUser(supabase, userC);
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
       

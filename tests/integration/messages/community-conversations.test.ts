@@ -33,35 +33,26 @@ describe('Community Conversations Integration', () => {
     await cleanupAllTestData();
   });
 
-  describe('createCommunityConversation', () => {
-    it('creates community conversation successfully', async () => {
+  describe('fetchCommunityConversation auto-creation', () => {
+    it('creates community conversation automatically on first fetch', async () => {
       await signInAsUser(supabase, userA);
 
-      const conversationId = await api.createCommunityConversation(
+      const conversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
 
-      expect(conversationId).toBeTruthy();
-      expect(typeof conversationId).toBe('string');
-
-      // Verify conversation exists in database with correct type
-      const { data: conversation, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', conversationId)
-        .single();
-
-      expect(error).toBeFalsy();
       expect(conversation).toBeTruthy();
-      expect(conversation!.community_id).toBe(community.id);
-      expect(conversation!.conversation_type).toBe('community');
+      expect(conversation!.id).toBeTruthy();
+      expect(typeof conversation!.id).toBe('string');
+      expect(conversation!.communityId).toBe(community.id);
+      expect(conversation!.conversationType).toBe('community');
     });
 
     it('automatically adds all community members as participants', async () => {
       await signInAsUser(supabase, userA);
 
-      const conversationId = await api.createCommunityConversation(
+      const conversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
@@ -70,7 +61,7 @@ describe('Community Conversations Integration', () => {
       const { data: participants, error } = await supabase
         .from('conversation_participants')
         .select('user_id')
-        .eq('conversation_id', conversationId);
+        .eq('conversation_id', conversation!.id);
 
       expect(error).toBeFalsy();
       expect(participants).toBeTruthy();
@@ -84,16 +75,16 @@ describe('Community Conversations Integration', () => {
     it('is idempotent - returns existing conversation if it exists', async () => {
       await signInAsUser(supabase, userA);
 
-      const conversationId1 = await api.createCommunityConversation(
+      const conversation1 = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
-      const conversationId2 = await api.createCommunityConversation(
+      const conversation2 = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
 
-      expect(conversationId1).toBe(conversationId2);
+      expect(conversation1!.id).toBe(conversation2!.id);
     });
 
     it('fails when user is not a community member', async () => {
@@ -104,7 +95,7 @@ describe('Community Conversations Integration', () => {
       await signInAsUser(supabase, outsiderUser);
 
       await expect(
-        api.createCommunityConversation(supabase, community.id),
+        api.fetchCommunityConversation(supabase, community.id),
       ).rejects.toThrow();
     });
   });
@@ -114,10 +105,11 @@ describe('Community Conversations Integration', () => {
 
     beforeAll(async () => {
       await signInAsUser(supabase, userA);
-      communityConversationId = await api.createCommunityConversation(
+      const conversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
+      communityConversationId = conversation!.id;
     });
 
     it('fetches community conversation successfully', async () => {
@@ -134,10 +126,10 @@ describe('Community Conversations Integration', () => {
       expect(conversation!.conversationType).toBe('community');
       expect(conversation!.participantCount).toBeGreaterThanOrEqual(2);
       expect(conversation!.unreadCount).toBe(0); // No messages yet
-      expect(conversation!.lastReadAt).toBeFalsy();
+      expect(conversation!.lastReadAt).toBeTruthy(); // Set to community join time initially
     });
 
-    it('returns null when no community conversation exists', async () => {
+    it('creates conversation automatically when none exists', async () => {
       const isolatedUser = await createTestUser(supabase);
 
       // Sign in as the isolated user before creating their community
@@ -152,7 +144,9 @@ describe('Community Conversations Integration', () => {
         supabase,
         isolatedCommunity.id,
       );
-      expect(conversation).toBeNull();
+      expect(conversation).toBeTruthy();
+      expect(conversation!.communityId).toBe(isolatedCommunity.id);
+      expect(conversation!.conversationType).toBe('community');
     });
 
     it('fails when user is not a community member', async () => {
@@ -172,20 +166,10 @@ describe('Community Conversations Integration', () => {
 
     beforeAll(async () => {
       await signInAsUser(supabase, userA);
-      const conversationId = await api.createCommunityConversation(
+      communityConversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
-      const fetchedConversation = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-      if (!fetchedConversation) {
-        throw new Error(
-          'Failed to fetch community conversation in test setup - userA cannot access conversation',
-        );
-      }
-      communityConversation = fetchedConversation;
     });
 
     it('allows community members to send messages', async () => {
@@ -225,13 +209,13 @@ describe('Community Conversations Integration', () => {
 
       // Verify both messages exist in the conversation
       await signInAsUser(supabase, userA);
-      const messages = await api.fetchMessages(
+      const result = await api.fetchMessages(
         supabase,
-        communityConversation.id,
+        communityConversation.id
       );
 
-      expect(messages.length).toBeGreaterThanOrEqual(2);
-      const messageIds = messages.map((m) => m.id);
+      expect(result.messages.length).toBeGreaterThanOrEqual(2);
+      const messageIds = result.messages.map((m) => m.id);
       expect(messageIds).toContain(messageA.id);
       expect(messageIds).toContain(messageB.id);
     });
@@ -279,20 +263,10 @@ describe('Community Conversations Integration', () => {
 
     beforeAll(async () => {
       await signInAsUser(supabase, userA);
-      const conversationId = await api.createCommunityConversation(
+      communityConversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
-      const fetchedConversation = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-      if (!fetchedConversation) {
-        throw new Error(
-          'Failed to fetch community conversation in test setup - userA cannot access conversation',
-        );
-      }
-      communityConversation = fetchedConversation;
     });
 
     it('automatically adds new community members to conversation', async () => {
@@ -332,20 +306,10 @@ describe('Community Conversations Integration', () => {
 
     beforeAll(async () => {
       await signInAsUser(supabase, userA);
-      const conversationId = await api.createCommunityConversation(
+      communityConversation = await api.fetchCommunityConversation(
         supabase,
         community.id,
       );
-      const fetchedConversation = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-      if (!fetchedConversation) {
-        throw new Error(
-          'Failed to fetch community conversation in test setup - userA cannot access conversation',
-        );
-      }
-      communityConversation = fetchedConversation;
     });
 
     it('increments unread count for recipients when message is sent', async () => {
@@ -391,7 +355,7 @@ describe('Community Conversations Integration', () => {
       const fakeCommunityId = '00000000-0000-0000-0000-000000000000';
 
       await expect(
-        api.createCommunityConversation(supabase, fakeCommunityId),
+        api.fetchCommunityConversation(supabase, fakeCommunityId),
       ).rejects.toThrow();
     });
 

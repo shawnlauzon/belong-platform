@@ -60,8 +60,7 @@ export function useMessages(conversationId: string): UseMessagesResult {
         });
 
         // Load initial messages (load all messages, no pagination)
-        const initialData = await fetchMessages(client, {
-          conversationId,
+        const initialData = await fetchMessages(client, conversationId, {
           limit: 1000, // Large limit to get all messages
         });
 

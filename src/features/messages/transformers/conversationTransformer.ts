@@ -1,18 +1,20 @@
 import { Conversation, CommunityConversation } from '../types';
-import { ConversationWithParticipants } from '../types/messageRow';
+import {
+  ConversationRow,
+  ConversationWithParticipants,
+} from '../types/messageRow';
 import { toDomainUser } from '../../users/transformers/userTransformer';
-import type { Database } from '@/shared/types/database';
 
 export function transformConversation(
   row: ConversationWithParticipants,
-  currentUserId: string
+  currentUserId: string,
 ): Conversation {
   const otherParticipant = row.conversation_participants.find(
-    p => p.user_id !== currentUserId
+    (p) => p.user_id !== currentUserId,
   );
-  
+
   const currentParticipant = row.conversation_participants.find(
-    p => p.user_id === currentUserId
+    (p) => p.user_id === currentUserId,
   );
 
   if (!otherParticipant || !currentParticipant) {
@@ -28,8 +30,8 @@ export function transformConversation(
     lastMessageSenderId: row.last_message_sender_id,
     otherParticipant: toDomainUser(otherParticipant.profiles),
     unreadCount: currentParticipant.unread_count,
-    lastReadAt: currentParticipant.last_read_at 
-      ? new Date(currentParticipant.last_read_at) 
+    lastReadAt: currentParticipant.last_read_at
+      ? new Date(currentParticipant.last_read_at)
       : null,
     conversationType: 'direct',
   };
@@ -39,9 +41,9 @@ export function transformConversation(
  * Transform database row to CommunityConversation domain object
  */
 export function transformCommunityConversation(
-  conversationRow: Database['public']['Tables']['conversations']['Row'],
+  conversationRow: ConversationRow,
   participantRow: { last_read_at: string | null; unread_count: number },
-  participantCount: number
+  participantCount: number,
 ): CommunityConversation {
   if (!conversationRow.community_id) {
     throw new Error('Community conversation must have community_id');
@@ -51,13 +53,17 @@ export function transformCommunityConversation(
     id: conversationRow.id,
     createdAt: new Date(conversationRow.created_at),
     updatedAt: new Date(conversationRow.updated_at),
-    lastMessageAt: conversationRow.last_message_at ? new Date(conversationRow.last_message_at) : null,
+    lastMessageAt: conversationRow.last_message_at
+      ? new Date(conversationRow.last_message_at)
+      : null,
     lastMessagePreview: conversationRow.last_message_preview,
     lastMessageSenderId: conversationRow.last_message_sender_id,
     communityId: conversationRow.community_id,
     conversationType: 'community',
     unreadCount: participantRow.unread_count,
-    lastReadAt: participantRow.last_read_at ? new Date(participantRow.last_read_at) : null,
+    lastReadAt: participantRow.last_read_at
+      ? new Date(participantRow.last_read_at)
+      : null,
     participantCount,
   };
 }

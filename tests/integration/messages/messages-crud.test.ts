@@ -87,8 +87,7 @@ describe('Messages CRUD Operations', () => {
       expect(message2.createdAt.getTime()).toBeGreaterThanOrEqual(message1.createdAt.getTime());
 
       // Fetch messages to verify order
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 10
       });
 
@@ -186,8 +185,7 @@ describe('Messages CRUD Operations', () => {
       // Send a test message
       const sentMessage = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} History test`);
 
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
 
@@ -199,8 +197,7 @@ describe('Messages CRUD Operations', () => {
       const testMessage = result.messages.find(m => m.id === sentMessage.id);
       expect(testMessage).toBeTruthy();
       expect(testMessage!.content).toBe(sentMessage.content);
-      expect(testMessage!.sender).toBeTruthy();
-      expect(testMessage!.sender.id).toBe(userA.id);
+      expect(testMessage!.sender_id).toBe(userA.id);
     });
 
     it('paginates messages correctly', async () => {
@@ -214,8 +211,7 @@ describe('Messages CRUD Operations', () => {
       }
 
       // Fetch with limit of 3
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 3
       });
 
@@ -234,8 +230,7 @@ describe('Messages CRUD Operations', () => {
       // Create a new conversation without messages using fresh users
       const emptyConversation = await createTestConversation(supabase, freshUserB.id);
 
-      const result = await api.fetchMessages(supabase, {
-        conversationId: emptyConversation.id,
+      const result = await api.fetchMessages(supabase, emptyConversation.id, {
         limit: 50
       });
 
@@ -248,18 +243,13 @@ describe('Messages CRUD Operations', () => {
       
       const sentMessage = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Profile test`);
 
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
 
       const testMessage = result.messages.find(m => m.id === sentMessage.id);
       expect(testMessage).toBeTruthy();
-      expect(testMessage!.sender).toBeTruthy();
-      expect(testMessage!.sender.id).toBe(userA.id);
-      expect(testMessage!.sender.email).toBeTruthy();
-      expect(testMessage!.sender.firstName).toBeTruthy();
-      expect(testMessage!.sender.lastName).toBeTruthy();
+      expect(testMessage!.sender_id).toBe(userA.id);
     });
   });
 

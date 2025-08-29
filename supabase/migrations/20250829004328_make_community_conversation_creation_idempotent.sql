@@ -11,7 +11,7 @@ COMMENT ON INDEX unique_community_conversation IS 'Ensures only one community co
 DROP FUNCTION IF EXISTS create_community_conversation(UUID);
 
 -- Create the new idempotent function
-CREATE OR REPLACE FUNCTION upsert_community_conversation(p_community_id UUID)
+CREATE OR REPLACE FUNCTION create_community_conversation(p_community_id UUID)
 RETURNS UUID AS $$
 DECLARE
   v_conversation_id UUID;

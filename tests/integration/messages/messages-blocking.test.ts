@@ -173,8 +173,7 @@ describe.skip('Messages Blocking System', () => {
       expect(fetchedConversation).toBeTruthy();
 
       // Should still be able to fetch messages
-      const messages = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const messages = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
       expect(messages.messages.length).toBeGreaterThan(0);
