@@ -409,7 +409,7 @@ describe('Trust Score Points Distribution Integration Tests', () => {
   });
 
   describe('Event Participation Points', () => {
-    it.only('should award initial points when user claims event', async () => {
+    it('should award initial points when user claims event', async () => {
       // Create event organizer and community (previous tests verified: 1000 points)
       const organizer = await createTestUser(supabase);
       await signIn(supabase, organizer.email, 'TestPass123!');
