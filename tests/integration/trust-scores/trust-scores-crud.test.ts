@@ -154,7 +154,7 @@ describe('Trust Scores Integration Tests - CRUD Operations', () => {
 
   describe('Data Validation', () => {
     it('should require valid user_id', async () => {
-      const account = await createTestUser(supabase);
+      await createTestUser(supabase);
 
       const community = await createTestCommunity(supabase);
 
