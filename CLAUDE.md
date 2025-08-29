@@ -394,3 +394,4 @@ This workflow prevents the dangerous situation where local and production schema
   For detailed debugging examples, test patterns, and troubleshooting guidance, see the documentation files linked at the top of this document.
 
 - Use supabase MCP to connect to remote database and supabase-local MCP to connect to local database. All development is done against local database
+- Tests should test a single operation. Prefer many tests in a test suite rather than a small number which attempt to test many things
