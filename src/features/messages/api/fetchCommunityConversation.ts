@@ -5,18 +5,19 @@ import { transformCommunityConversation } from '../transformers/conversationTran
 
 /**
  * Fetches the community conversation for a given community
- * 
+ *
  * @param supabase - Supabase client instance
  * @param communityId - ID of the community to get conversation for
  * @returns Community conversation or null if not found
  */
 export async function fetchCommunityConversation(
-  supabase: SupabaseClient<Database>, 
-  communityId: string
+  supabase: SupabaseClient<Database>,
+  communityId: string,
 ): Promise<CommunityConversation | null> {
   const { data, error } = await supabase
     .from('conversations')
-    .select(`
+    .select(
+      `
       id,
       created_at,
       updated_at,
@@ -25,17 +26,18 @@ export async function fetchCommunityConversation(
       last_message_sender_id,
       community_id,
       conversation_type
-    `)
+    `,
+    )
     .eq('community_id', communityId)
     .eq('conversation_type', 'community')
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // No conversation found for this community
-      return null;
-    }
     throw error;
+  }
+
+  if (!data) {
+    return null;
   }
 
   // Get participant count
@@ -65,5 +67,9 @@ export async function fetchCommunityConversation(
     throw participantError;
   }
 
-  return transformCommunityConversation(data, participantData, participantCount || 0);
+  return transformCommunityConversation(
+    data,
+    participantData,
+    participantCount || 0,
+  );
 }
