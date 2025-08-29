@@ -2,6 +2,13 @@ import { useMemo } from 'react';
 import { useTrustScores } from './useTrustScores';
 import { getProgressToNextLevel } from '../utils/levelCalculator';
 import type { LevelProgress } from '../types/playerLevel';
+import type { UseQueryOptions } from '@tanstack/react-query';
+import type { TrustScore } from '../types';
+
+export interface UsePlayerLevelParams {
+  userId: string;
+  communityId?: string;
+}
 
 export interface UsePlayerLevelResult {
   data: LevelProgress | null;
@@ -18,17 +25,17 @@ export interface UsePlayerLevelResult {
  *
  * This hook provides player level information derived from trust scores,
  * including the current level, progress to next level, and associated metadata.
- * Can calculate levels for a specific community or across all communities.
+ * Can calculate levels for a specific community or the highest level across all communities.
  *
- * @param userId - The user's ID
- * @param communityId - Optional community ID to get level for specific community
+ * @param params - Query parameters containing userId and optional communityId
+ * @param options - Optional React Query options for customizing the query behavior
  * @returns Level progress information with loading states
  *
  * @example
  * ```tsx
- * // Get overall player level across all communities
+ * // Get highest player level across all communities
  * function PlayerLevelDisplay({ userId }: { userId: string }) {
- *   const { data: levelProgress, isPending } = usePlayerLevel(userId);
+ *   const { data: levelProgress, isPending } = usePlayerLevel({ userId });
  *
  *   if (isPending) return <div>Loading level...</div>;
  *   if (!levelProgress) return null;
@@ -54,7 +61,7 @@ export interface UsePlayerLevelResult {
  *   userId: string;
  *   communityId: string;
  * }) {
- *   const { data: levelProgress } = usePlayerLevel(userId, communityId);
+ *   const { data: levelProgress } = usePlayerLevel({ userId, communityId });
  *
  *   if (!levelProgress) return null;
  *
@@ -67,13 +74,29 @@ export interface UsePlayerLevelResult {
  * }
  * ```
  *
+ * @example
+ * ```tsx
+ * // Get level with custom query options
+ * function PlayerLevelWithOptions({ userId }: { userId: string }) {
+ *   const { data: levelProgress } = usePlayerLevel({ userId }, {
+ *     staleTime: 60000, // Cache for 1 minute
+ *     enabled: true     // Enable query
+ *   });
+ *
+ *   return levelProgress ? (
+ *     <div>{levelProgress.currentLevel.emoji} Level {levelProgress.currentLevel.index + 1}</div>
+ *   ) : null;
+ * }
+ * ```
+ *
  * @category React Hooks
  */
 export function usePlayerLevel(
-  userId: string,
-  communityId?: string
+  params: UsePlayerLevelParams,
+  options?: Partial<UseQueryOptions<TrustScore[], Error>>
 ): UsePlayerLevelResult {
-  const trustScoresQuery = useTrustScores(userId);
+  const { userId, communityId } = params;
+  const trustScoresQuery = useTrustScores(userId, options);
 
   const levelProgress = useMemo(() => {
     if (!trustScoresQuery.data) {
@@ -89,9 +112,9 @@ export function usePlayerLevel(
       );
       totalScore = communityScore?.score || 0;
     } else {
-      // Sum all community scores for overall level
+      // Get highest score from any community
       totalScore = trustScoresQuery.data.reduce(
-        (sum, score) => sum + score.score,
+        (max, score) => Math.max(max, score.score),
         0
       );
     }
