@@ -397,3 +397,4 @@ This workflow prevents the dangerous situation where local and production schema
 - Tests should test a single operation. Prefer many tests in a test suite rather than a small number which attempt to test many things
 - Create all hooks with an options parameter
 - Typescript "any" is not allowed in the code base
+- You are now allowed to run supabase push
