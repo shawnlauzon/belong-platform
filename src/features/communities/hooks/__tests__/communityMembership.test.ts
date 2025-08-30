@@ -11,6 +11,8 @@ import type { Database } from '@/shared/types/database';
 import { useSupabase, useCurrentUser } from '@/shared';
 import { trustScoreKeys } from '../../../trust-scores/queries';
 import { communityMembersKeys, userCommunitiesKeys } from '../../queries';
+import type { User } from '@/features/users/types';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 // Mock dependencies
 vi.mock('../../api', () => ({
@@ -45,10 +47,10 @@ describe('Community membership hooks', () => {
     
     // Mock current user
     mockUseCurrentUser.mockReturnValue({
-      data: { id: 'test-user-id' },
+      data: { id: 'test-user-id' } as User,
       isLoading: false,
       error: null,
-    } as any);
+    } as UseQueryResult<User | null, Error>);
 
     // Use shared test wrapper
     const testWrapper = createDefaultTestWrapper();
@@ -82,8 +84,9 @@ describe('Community membership hooks', () => {
     });
 
     // Check that userCommunities cache is NOT invalidated (this is the issue!)
-    const userCommunitiesInvalidated = (queryClient.invalidateQueries as any).mock.calls.some(
-      (call: any) => {
+    const mockedInvalidateQueries = vi.mocked(queryClient.invalidateQueries);
+    const userCommunitiesInvalidated = mockedInvalidateQueries.mock.calls.some(
+      (call) => {
         const queryKey = call[0]?.queryKey;
         return (
           Array.isArray(queryKey) &&

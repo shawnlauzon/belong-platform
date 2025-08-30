@@ -396,3 +396,4 @@ This workflow prevents the dangerous situation where local and production schema
 - Use supabase MCP to connect to remote database and supabase-local MCP to connect to local database. All development is done against local database
 - Tests should test a single operation. Prefer many tests in a test suite rather than a small number which attempt to test many things
 - Create all hooks with an options parameter
+- Typescript "any" is not allowed in the code base
