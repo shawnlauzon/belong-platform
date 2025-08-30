@@ -8,11 +8,11 @@ import { createDefaultTestWrapper, createMockSupabase } from '@/test-utils';
 import type { QueryClient } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { useSupabase, useCurrentUser } from '@/shared';
+import { useSupabase } from '@/shared';
 import { trustScoreKeys } from '../../../trust-scores/queries';
 import { communityMembersKeys, userCommunitiesKeys } from '../../queries';
 import type { User } from '@/features/users/types';
-import type { UseQueryResult } from '@tanstack/react-query';
+import { useCurrentUser } from '@/features/auth';
 
 // Mock dependencies
 vi.mock('../../api', () => ({
@@ -44,13 +44,13 @@ describe('Community membership hooks', () => {
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
-    
+
     // Mock current user
     mockUseCurrentUser.mockReturnValue({
       data: { id: 'test-user-id' } as User,
       isLoading: false,
       error: null,
-    } as UseQueryResult<User | null, Error>);
+    } as User | null);
 
     // Use shared test wrapper
     const testWrapper = createDefaultTestWrapper();
@@ -94,7 +94,7 @@ describe('Community membership hooks', () => {
           queryKey[1] === 'list' &&
           queryKey[2] === newMembership.userId
         );
-      }
+      },
     );
 
     // Verify that userCommunities cache IS invalidated for the joined user
@@ -111,7 +111,7 @@ describe('Community membership hooks', () => {
 
     expect(joinCommunity).toHaveBeenCalledWith(
       mockSupabase,
-      newMembership.communityId
+      newMembership.communityId,
     );
   });
 
@@ -121,9 +121,9 @@ describe('Community membership hooks', () => {
 
     const { result } = renderHook(() => useJoinCommunity(), { wrapper });
 
-    await expect(
-      result.current.mutateAsync('community-id')
-    ).rejects.toThrow('Failed to join community');
+    await expect(result.current.mutateAsync('community-id')).rejects.toThrow(
+      'Failed to join community',
+    );
   });
 
   describe('useLeaveCommunity', () => {
@@ -158,10 +158,7 @@ describe('Community membership hooks', () => {
 
       await result.current.mutateAsync(communityId);
 
-      expect(leaveCommunity).toHaveBeenCalledWith(
-        mockSupabase,
-        communityId
-      );
+      expect(leaveCommunity).toHaveBeenCalledWith(mockSupabase, communityId);
     });
 
     it('should handle leave community errors', async () => {
@@ -170,9 +167,9 @@ describe('Community membership hooks', () => {
 
       const { result } = renderHook(() => useLeaveCommunity(), { wrapper });
 
-      await expect(
-        result.current.mutateAsync('community-id')
-      ).rejects.toThrow('Failed to leave community');
+      await expect(result.current.mutateAsync('community-id')).rejects.toThrow(
+        'Failed to leave community',
+      );
     });
   });
 });

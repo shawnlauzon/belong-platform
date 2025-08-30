@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { logger, useCurrentUser } from '@/shared';
+import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveCommunity } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
+import { useCurrentUser } from '@/features/auth';
 
 /**
  * Hook for leaving a community.
