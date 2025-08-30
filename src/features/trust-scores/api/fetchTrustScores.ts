@@ -21,5 +21,5 @@ export async function fetchTrustScores(
     throw error;
   }
 
-  return data.map(toDomainTrustScore) || [];
+  return data?.map(toDomainTrustScore) || [];
 }
