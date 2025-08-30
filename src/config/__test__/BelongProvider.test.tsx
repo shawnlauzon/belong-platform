@@ -27,7 +27,7 @@ vi.mock('../../shared/hooks/useSupabase', () => ({
 
 // Mock client creation
 vi.mock('../client', () => ({
-  createBelongClient: vi.fn(() => ({
+  createBelongClient: vi.fn((config) => ({
     supabase: {
       auth: {
         onAuthStateChange: vi.fn(() => ({
@@ -45,10 +45,10 @@ vi.mock('../client', () => ({
       warn: vi.fn(),
       error: vi.fn(),
     },
-    mapbox: {
+    mapbox: config.mapboxPublicToken ? {
       autocomplete: vi.fn(),
       reverseGeocode: vi.fn(),
-    },
+    } : null,
   })),
 }));
 
@@ -84,6 +84,11 @@ describe('BelongProvider', () => {
     mapboxPublicToken: 'test-token',
   };
 
+  const configWithoutMapbox = {
+    supabaseUrl: 'https://test.supabase.co',
+    supabaseAnonKey: 'test-key',
+  };
+
   it('should render children when properly configured', () => {
     const TestComponent = () => <div>Test Content</div>;
 
@@ -113,5 +118,19 @@ describe('BelongProvider', () => {
     );
 
     expect(screen.getByText('Provider Working')).toBeDefined();
+  });
+
+  it('should work without mapbox token', () => {
+    const TestComponent = () => <div>No Mapbox Working</div>;
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BelongProvider config={configWithoutMapbox}>
+          <TestComponent />
+        </BelongProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('No Mapbox Working')).toBeDefined();
   });
 });

@@ -12,8 +12,8 @@ export interface BelongClientConfig {
   supabaseUrl: string;
   /** Supabase anonymous key */
   supabaseAnonKey: string;
-  /** Mapbox public access token */
-  mapboxPublicToken: string;
+  /** Mapbox public access token (optional) */
+  mapboxPublicToken?: string;
 }
 
 /**
@@ -22,8 +22,8 @@ export interface BelongClientConfig {
 export interface BelongClient {
   /** Configured Supabase client */
   supabase: SupabaseClient<Database>;
-  /** Configured Mapbox client */
-  mapbox: ReturnType<typeof createMapboxClient>;
+  /** Configured Mapbox client (null if no token provided) */
+  mapbox: ReturnType<typeof createMapboxClient> | null;
 }
 
 /**
@@ -37,12 +37,14 @@ export interface BelongClient {
  * const client = createBelongClient({
  *   supabaseUrl: 'https://your-project.supabase.co',
  *   supabaseAnonKey: 'your-anon-key',
- *   mapboxPublicToken: 'your-mapbox-token'
+ *   mapboxPublicToken: 'your-mapbox-token' // optional
  * });
  *
  * // Use the configured clients
  * const { data } = await client.supabase.from('communities').select('*');
- * const addresses = await client.mapbox.searchAddresses('Austin, TX');
+ * if (client.mapbox) {
+ *   const addresses = await client.mapbox.searchAddresses('Austin, TX');
+ * }
  * ```
  */
 export function createBelongClient(config: BelongClientConfig): BelongClient {
@@ -55,9 +57,6 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   if (!supabaseAnonKey) {
     throw new Error('supabaseAnonKey is required');
   }
-  if (!mapboxPublicToken) {
-    throw new Error('mapboxPublicToken is required');
-  }
 
   // Create configured instances
   const supabase = createSupabaseClient(
@@ -65,7 +64,9 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
     supabaseAnonKey,
     defaultLogger,
   );
-  const mapbox = createMapboxClient(mapboxPublicToken, defaultLogger);
+  const mapbox = mapboxPublicToken 
+    ? createMapboxClient(mapboxPublicToken, defaultLogger)
+    : null;
 
   return {
     supabase,
