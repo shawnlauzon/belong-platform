@@ -4,8 +4,12 @@ import { renderHook } from '@testing-library/react';
 import { useMapbox } from '../useMapbox';
 import { ClientContext } from '../../../config';
 import { BelongClient } from '../../../config/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/shared/types/database';
 
 describe('useMapbox', () => {
+  const mockSupabaseClient = {} as SupabaseClient<Database>;
+
   it('should throw error when used outside BelongProvider', () => {
     expect(() => {
       renderHook(() => useMapbox());
@@ -14,7 +18,7 @@ describe('useMapbox', () => {
 
   it('should throw error when mapbox is not configured', () => {
     const mockClient: BelongClient = {
-      supabase: {} as any,
+      supabase: mockSupabaseClient,
       mapbox: null,
     };
 
@@ -39,7 +43,7 @@ describe('useMapbox', () => {
     };
 
     const mockClient: BelongClient = {
-      supabase: {} as any,
+      supabase: mockSupabaseClient,
       mapbox: mockMapboxClient,
     };
 
