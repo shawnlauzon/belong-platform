@@ -187,11 +187,12 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 # 1. Pull latest production schema
 supabase db pull
 
-# 2. Apply to local database  
+# 2. Apply to local database
 supabase db reset
 ```
 
 **If migration history conflicts occur:**
+
 ```bash
 # Repair migration history as instructed by the error message
 supabase migration repair --status reverted <migration-id>
@@ -207,11 +208,13 @@ supabase db reset
 Choose one of these approaches:
 
 **Option A: Direct SQL via Supabase Studio (Recommended for iteration)**
+
 - Access Studio: `http://localhost:54323`
 - Use SQL Editor for direct schema changes
 - Perfect for rapid iteration and testing
 
 **Option B: Migration File Approach**
+
 ```bash
 supabase migration new <descriptive_name>
 # Edit the created migration file with your SQL
@@ -237,6 +240,7 @@ pnpm test:integration
 ### Phase 4: Generate Production Migration (If Using Studio)
 
 If you made changes via Studio instead of migration files:
+
 ```bash
 supabase db diff -f <descriptive_name>
 ```
@@ -251,7 +255,7 @@ pnpm test:integration
 
 # Review the migration file for any issues
 # - No duplicate policies
-# - No syntax errors  
+# - No syntax errors
 # - Descriptive name and comments
 ```
 
@@ -266,6 +270,7 @@ Or use MCP tool if CLI push fails, but prefer the CLI approach.
 ## Critical Rules
 
 ### ❌ What NOT to Do
+
 - Create migrations without checking production first
 - Apply untested migrations to production
 - Create duplicate RLS policies or constraints
@@ -273,7 +278,8 @@ Or use MCP tool if CLI push fails, but prefer the CLI approach.
 - Make direct changes to production during development
 - Create multiple "fix" migrations for the same issue
 
-### ✅ What TO Do  
+### ✅ What TO Do
+
 - Always start by syncing with production
 - Test changes locally with real integration tests
 - Create one clean migration per logical change
@@ -283,6 +289,7 @@ Or use MCP tool if CLI push fails, but prefer the CLI approach.
 ### Rollback Strategy
 
 If something goes wrong in production:
+
 1. **Don't panic** - Supabase tracks migration history
 2. Create a rollback migration locally that undoes the changes
 3. Test the rollback migration locally first
@@ -298,7 +305,7 @@ supabase db pull && supabase db reset
 # 2. Make changes in Studio (localhost:54323)
 # ... modify schema, test manually ...
 
-# 3. Test thoroughly  
+# 3. Test thoroughly
 supabase db reset && pnpm test:integration
 
 # 4. Generate clean migration
@@ -338,38 +345,32 @@ This workflow prevents the dangerous situation where local and production schema
 ### Problem-Solving Methodology
 
 1. **Understand the Problem**: Create a unit test that reproduces the exact problem to validate your understanding
-
    - Unit tests should demonstrate the bug in isolation
    - Use proper mocking strategy: only mock external dependencies (like Supabase), never mock platform code
    - The test should validate the expected behavior
 
 2. **Understand the Real Problem Space**:
-
    - **Unit vs Integration failures**: Different failure types indicate different root causes
    - **Mock vs Reality gaps**: Unit tests with mocks may pass while integration tests fail, indicating the mock doesn't reflect real behavior
    - **Integration-specific issues**: Real database constraints, shared state, timing issues, and external dependencies that unit tests can't detect
 
 3. **Test Your Hypothesis with Real Evidence**:
-
    - When you think you've identified the root cause, test it against the actual failing scenario
    - If your fix works for unit tests but not integration tests, your hypothesis may be incomplete
    - Don't assume a fix works just because it seems logical - verify it against the failing test case
 
 4. **Fix the Root Cause, Not Symptoms**:
-
    - Don't mask problems with workarounds (e.g., clearing caches manually between tests)
    - Ask "Why isn't the intended behavior working?" rather than "How can I make this pass?"
    - Example: If cache is polluted after sign-out, fix the sign-out cache invalidation, don't clear cache manually
 
 5. **Verify the Fix Completely**:
-
    - **Unit tests**: Should pass after the fix
    - **Integration tests**: Should also pass without additional workarounds - this is the ultimate validation
    - **Both test types**: Should demonstrate the same correct behavior
    - **If integration tests still fail**: There may be additional root causes
 
 6. **Development Process**:
-
    - Write tests to validate expected behavior
    - Implement the feature or fix
    - Ensure all tests pass

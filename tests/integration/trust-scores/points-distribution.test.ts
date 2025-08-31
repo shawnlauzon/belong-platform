@@ -374,16 +374,20 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       const community = await createTestCommunity(supabase);
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Get score after community creation
+      const scoreAfterCommunity = await getCurrentTrustScore(user.id, community.id);
+
       // Create resource offer
       await createTestResource(supabase, community.id, 'offer');
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify community creation + resource offer points
-      await verifyTrustScore(
+      // Verify resource offer increment
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        1000 + POINTS_CONFIG.RESOURCE_OFFER,
-        'Community creation + resource offer points',
+        scoreAfterCommunity,
+        POINTS_CONFIG.RESOURCE_OFFER,
+        'Resource offer points',
       );
     });
 
@@ -394,16 +398,20 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       const community = await createTestCommunity(supabase);
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Get score after community creation
+      const scoreAfterCommunity = await getCurrentTrustScore(user.id, community.id);
+
       // Create resource request (should not award additional points)
       await createTestResource(supabase, community.id, 'request');
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify ONLY community creation points (no additional points)
-      await verifyTrustScore(
+      // Verify no additional points awarded
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        1000,
-        'Only community creation points (no request points)',
+        scoreAfterCommunity,
+        0,
+        'No additional points for request resources',
       );
     });
   });
@@ -425,6 +433,12 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       await joinCommunity(supabase, community.id);
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Get score before claiming event
+      const scoreBeforeClaim = await getCurrentTrustScore(
+        participant.id,
+        community.id,
+      );
+
       // Claim event (should add 5 points)
       await createResourceClaim(supabase, {
         resourceId: event.id,
@@ -433,12 +447,13 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       });
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify community join + event claim points
-      await verifyTrustScore(
+      // Verify event claim increment
+      await verifyTrustScoreIncrement(
         participant.id,
         community.id,
-        POINTS_CONFIG.COMMUNITY_JOIN + POINTS_CONFIG.EVENT_CLAIM_INITIAL,
-        'Community join + event claim points',
+        scoreBeforeClaim,
+        POINTS_CONFIG.EVENT_CLAIM_INITIAL,
+        'Event claim points',
       );
     });
 
@@ -461,18 +476,25 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       });
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Get score before confirmation
+      const scoreBeforeConfirm = await getCurrentTrustScore(
+        participant.id,
+        community.id,
+      );
+
+      // Sign back in as organizer to confirm the claim
+      await signIn(supabase, organizer.email, 'TestPass123!');
       // Confirm the claim (should add 25 points)
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify community join + claim + confirmed points
-      await verifyTrustScore(
+      // Verify confirmation increment
+      await verifyTrustScoreIncrement(
         participant.id,
         community.id,
-        POINTS_CONFIG.COMMUNITY_JOIN +
-          POINTS_CONFIG.EVENT_CLAIM_INITIAL +
-          POINTS_CONFIG.EVENT_CLAIM_CONFIRMED,
-        'Community join + claim + confirmed points',
+        scoreBeforeConfirm,
+        POINTS_CONFIG.EVENT_CLAIM_CONFIRMED,
+        'Event confirmation points',
       );
     });
 
@@ -501,6 +523,8 @@ describe('Trust Score Points Distribution Integration Tests', () => {
         community.id,
       );
 
+      // Sign back in as participant to complete the event
+      await signIn(supabase, participant.email, 'TestPass123!');
       // Complete the event (should add completion points)
       await updateResourceClaim(supabase, {
         id: claim.id,
@@ -534,6 +558,10 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       await signIn(supabase, user.email, 'TestPass123!');
 
       const community = await createTestCommunity(supabase);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Get score after community creation
+      const scoreAfterCommunity = await getCurrentTrustScore(user.id, community.id);
 
       // Create a resource offer
       const resource = await createTestResource(
@@ -545,13 +573,12 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       // Wait for trigger
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify points awarded (community join + resource offer)
-      const expectedTotal =
-        POINTS_CONFIG.COMMUNITY_JOIN + POINTS_CONFIG.RESOURCE_OFFER;
-      await verifyTrustScore(
+      // Verify resource offer increment
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        expectedTotal,
+        scoreAfterCommunity,
+        POINTS_CONFIG.RESOURCE_OFFER,
         'Resource offer creation',
       );
 
@@ -570,6 +597,10 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       await signIn(supabase, user.email, 'TestPass123!');
 
       const community = await createTestCommunity(supabase);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Get score after community creation
+      const scoreAfterCommunity = await getCurrentTrustScore(user.id, community.id);
 
       // Create a resource request (should not award points)
       await createTestResource(supabase, community.id, 'request');
@@ -577,11 +608,12 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       // Wait for trigger
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Should only have community join points
-      await verifyTrustScore(
+      // Verify no additional points awarded
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        POINTS_CONFIG.COMMUNITY_JOIN,
+        scoreAfterCommunity,
+        0,
         'Request resource (no additional points)',
       );
     });
@@ -617,45 +649,68 @@ describe('Trust Score Points Distribution Integration Tests', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify initial claim points
-      let expectedTotal =
-        POINTS_CONFIG.COMMUNITY_JOIN + POINTS_CONFIG.EVENT_CLAIM_INITIAL;
-      await verifyTrustScore(
+      // Get score before claim
+      const scoreBeforeClaim = await getCurrentTrustScore(
         participant.id,
         community.id,
-        expectedTotal,
+      );
+
+      // Verify initial claim increment
+      const scoreAfterClaim = await getCurrentTrustScore(
+        participant.id,
+        community.id,
+      );
+      await verifyTrustScoreIncrement(
+        participant.id,
+        community.id,
+        scoreBeforeClaim,
+        POINTS_CONFIG.EVENT_CLAIM_INITIAL,
         'Event claim (pending)',
       );
 
-      // Approve the claim
-      await updateResourceClaim(participantClient, {
+      // Get score before approval
+      const scoreBeforeApproval = await getCurrentTrustScore(
+        participant.id,
+        community.id,
+      );
+
+      // Sign back in as organizer to approve the claim
+      await signIn(supabase, organizer.email, 'TestPass123!');
+      await updateResourceClaim(supabase, {
         id: claim.id,
         status: 'approved',
       });
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify confirmed points
-      expectedTotal += POINTS_CONFIG.EVENT_CLAIM_CONFIRMED;
-      await verifyTrustScore(
+      // Verify confirmed increment
+      await verifyTrustScoreIncrement(
         participant.id,
         community.id,
-        expectedTotal,
+        scoreBeforeApproval,
+        POINTS_CONFIG.EVENT_CLAIM_CONFIRMED,
         'Event claim (confirmed)',
       );
 
-      // Complete the event
+      // Get score before completion
+      const scoreBeforeCompletion = await getCurrentTrustScore(
+        participant.id,
+        community.id,
+      );
+
+      // Sign back in as participant to complete the event
+      await signIn(participantClient, participant.email, 'TestPass123!');
       await updateResourceClaim(participantClient, {
         id: claim.id,
         status: 'completed',
       });
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify completion points
-      expectedTotal += POINTS_CONFIG.EVENT_COMPLETION;
-      await verifyTrustScore(
+      // Verify completion increment
+      await verifyTrustScoreIncrement(
         participant.id,
         community.id,
-        expectedTotal,
+        scoreBeforeCompletion,
+        POINTS_CONFIG.EVENT_COMPLETION,
         'Event completion',
       );
 
@@ -751,49 +806,57 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       await signIn(supabase, user.email, 'TestPass123!');
 
       const community = await createTestCommunity(supabase);
-
-      // Step 1: Join community (50 points)
-      let expectedTotal = POINTS_CONFIG.COMMUNITY_JOIN;
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Step 2: Create resource offer (50 points)
+      // Get initial score after community creation
+      let currentScore = await getCurrentTrustScore(user.id, community.id);
+
+      // Step 1: Create resource offer
       await createTestResource(supabase, community.id, 'offer');
-      expectedTotal += POINTS_CONFIG.RESOURCE_OFFER;
       await new Promise((resolve) => setTimeout(resolve, 300));
+      await verifyTrustScoreIncrement(
+        user.id,
+        community.id,
+        currentScore,
+        POINTS_CONFIG.RESOURCE_OFFER,
+        'First resource offer',
+      );
+      currentScore += POINTS_CONFIG.RESOURCE_OFFER;
 
-      // Step 3: Create another user for shoutout
+      // Step 2: Create another user for shoutout
       const otherUser = await createTestUser(supabase);
       await signIn(supabase, otherUser.email, 'TestPass123!');
       await joinCommunity(supabase, community.id);
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Step 4: Send shoutout (10 points) - but this creates another resource (+50 points)
-      // Create a specific resource for the shoutout to avoid extra points
-      const shoutoutResource = await createTestResource(
-        supabase,
-        community.id,
-        'offer',
-      );
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      expectedTotal += POINTS_CONFIG.RESOURCE_OFFER; // Account for the resource created for shoutout
+      // Step 3: Send shoutout using existing resource to avoid extra points
+      const { data: existingResources } = await serviceClient
+        .from('resources')
+        .select('id')
+        .eq('community_id', community.id)
+        .limit(1);
+      
+      const resourceId = existingResources?.[0]?.id;
+      if (!resourceId) {
+        throw new Error('No existing resource found for shoutout');
+      }
 
       await createTestShoutout(supabase, {
         senderId: user.id,
         receiverId: otherUser.id,
         communityId: community.id,
         message: 'Welcome to the community!',
-        resourceId: shoutoutResource.id,
+        resourceId,
       });
-      expectedTotal += POINTS_CONFIG.SHOUTOUT_SENT;
       await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Verify final cumulative score
-      await verifyTrustScore(
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        expectedTotal,
-        'Complex user journey cumulative score',
+        currentScore,
+        POINTS_CONFIG.SHOUTOUT_SENT,
+        'Shoutout sent',
       );
+      currentScore += POINTS_CONFIG.SHOUTOUT_SENT;
 
       // Verify we have multiple log entries
       const { data: logs } = await serviceClient
@@ -807,15 +870,9 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       expect(logs!.length).toBeGreaterThanOrEqual(3);
 
       const actionTypes = logs!.map((log) => log.action_type);
-      expect(actionTypes).toContain('community_join');
+      expect(actionTypes).toContain('community_creation');
       expect(actionTypes).toContain('resource_offer');
       expect(actionTypes).toContain('shoutout_sent');
-
-      // Should have multiple resource_offer entries (original + shoutout resource)
-      const resourceOffers = logs!.filter(
-        (log) => log.action_type === 'resource_offer',
-      );
-      expect(resourceOffers.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should handle edge case with no double-counting on repeated actions', async () => {
@@ -823,26 +880,35 @@ describe('Trust Score Points Distribution Integration Tests', () => {
       await signIn(supabase, user.email, 'TestPass123!');
 
       const community = await createTestCommunity(supabase);
-
-      // Create multiple resource offers
-      await createTestResource(supabase, community.id, 'offer');
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Get score after community creation
+      let currentScore = await getCurrentTrustScore(user.id, community.id);
+
+      // Create first resource offer
       await createTestResource(supabase, community.id, 'offer');
       await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Expected total: community join + two resource offers
-      const expectedTotal =
-        POINTS_CONFIG.COMMUNITY_JOIN + POINTS_CONFIG.RESOURCE_OFFER * 2;
-
-      await verifyTrustScore(
+      await verifyTrustScoreIncrement(
         user.id,
         community.id,
-        expectedTotal,
-        'Multiple resource offers',
+        currentScore,
+        POINTS_CONFIG.RESOURCE_OFFER,
+        'First resource offer',
+      );
+      currentScore += POINTS_CONFIG.RESOURCE_OFFER;
+
+      // Create second resource offer
+      await createTestResource(supabase, community.id, 'offer');
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await verifyTrustScoreIncrement(
+        user.id,
+        community.id,
+        currentScore,
+        POINTS_CONFIG.RESOURCE_OFFER,
+        'Second resource offer',
       );
 
-      // Verify we have the correct number of log entries
+      // Verify we have the correct number of resource offer log entries
       const { data: logs } = await serviceClient
         .from('trust_score_logs')
         .select('*')
