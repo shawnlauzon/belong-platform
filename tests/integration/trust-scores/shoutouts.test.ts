@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -21,10 +21,33 @@ import {
 describe('Trust Score Points - Shoutouts', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
+  let sender: any;
+  let receiver: any;
+  let community: any;
 
   beforeAll(async () => {
     supabase = createTestClient();
     serviceClient = createServiceClient();
+
+    // Create sender (automatically signed in)
+    sender = await createTestUser(supabase);
+
+    // Create community (sender automatically becomes member)
+    community = await createTestCommunity(supabase);
+
+    // Create receiver (automatically signed in as receiver now)
+    receiver = await createTestUser(supabase);
+
+    // Receiver joins community
+    await joinCommunity(supabase, community.id);
+
+    // Switch back to sender for shoutout creation
+    await signIn(supabase, sender.email, 'TestPass123!');
+  });
+
+  beforeEach(async () => {
+    // Sign back in as sender for consistency
+    await signIn(supabase, sender.email, 'TestPass123!');
   });
 
   afterAll(async () => {
@@ -32,32 +55,13 @@ describe('Trust Score Points - Shoutouts', () => {
   });
 
   describe('Basic Shoutout Points', () => {
-    it('should award correct points for sending and receiving shoutouts', async () => {
-      // Create sender
-      const sender = await createTestUser(supabase);
-      await signIn(supabase, sender.email, 'TestPass123!');
+    it('should award correct points for sending shoutouts', async () => {
+      // Sender is already signed in from beforeEach
 
-      const community = await createTestCommunity(supabase);
-
-      // Create receiver
-      const receiver = await createTestUser(supabase);
-      await signIn(supabase, receiver.email, 'TestPass123!');
-      await joinCommunity(supabase, community.id);
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Sign back in as sender to create the shoutout
-      await signIn(supabase, sender.email, 'TestPass123!');
-
-      // Get scores before shoutout
+      // Get sender score before shoutout
       const senderScoreBefore = await getCurrentTrustScore(
         supabase,
         sender.id,
-        community.id,
-      );
-      const receiverScoreBefore = await getCurrentTrustScore(
-        supabase,
-        receiver.id,
         community.id,
       );
 
@@ -69,8 +73,6 @@ describe('Trust Score Points - Shoutouts', () => {
         message: 'Great job!',
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
       // Verify sender increment (shoutout sent + resource created)
       await verifyTrustScoreIncrement(
         supabase,
@@ -80,6 +82,33 @@ describe('Trust Score Points - Shoutouts', () => {
         POINTS_CONFIG.RESOURCE_OFFER + POINTS_CONFIG.SHOUTOUT_SENT,
         'Shoutout sender increment',
       );
+
+      // Verify log entry for shoutout sent
+      await verifyTrustScoreLog(
+        serviceClient,
+        sender.id,
+        community.id,
+        'shoutout_sent',
+        POINTS_CONFIG.SHOUTOUT_SENT,
+        'Shoutout sent log',
+      );
+    });
+
+    it('should award correct points for receiving shoutouts', async () => {
+      // Get receiver score before shoutout
+      const receiverScoreBefore = await getCurrentTrustScore(
+        supabase,
+        receiver.id,
+        community.id,
+      );
+
+      // Create shoutout (sender is already signed in from beforeEach)
+      await createTestShoutout(supabase, {
+        senderId: sender.id,
+        receiverId: receiver.id,
+        communityId: community.id,
+        message: 'Great work!',
+      });
 
       // Verify receiver increment (shoutout received)
       await verifyTrustScoreIncrement(
@@ -91,16 +120,7 @@ describe('Trust Score Points - Shoutouts', () => {
         'Shoutout receiver increment',
       );
 
-      // Verify log entries
-      await verifyTrustScoreLog(
-        serviceClient,
-        sender.id,
-        community.id,
-        'shoutout_sent',
-        POINTS_CONFIG.SHOUTOUT_SENT,
-        'Shoutout sent log',
-      );
-
+      // Verify log entry for shoutout received
       await verifyTrustScoreLog(
         serviceClient,
         receiver.id,
@@ -111,7 +131,7 @@ describe('Trust Score Points - Shoutouts', () => {
       );
     });
 
-    it('should award points when using existing resource for shoutout', async () => {
+    it('should award points when sending shoutout with existing resource', async () => {
       // Create sender and community
       const sender = await createTestUser(supabase);
       await signIn(supabase, sender.email, 'TestPass123!');
@@ -128,17 +148,59 @@ describe('Trust Score Points - Shoutouts', () => {
       const receiver = await createTestUser(supabase);
       await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, community.id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Sign back in as sender
       await signIn(supabase, sender.email, 'TestPass123!');
 
-      // Get scores before shoutout
+      // Get sender score before shoutout
       const senderScoreBefore = await getCurrentTrustScore(
         supabase,
         sender.id,
         community.id,
       );
+
+      // Create shoutout using existing resource
+      await createTestShoutout(supabase, {
+        senderId: sender.id,
+        receiverId: receiver.id,
+        communityId: community.id,
+        message: 'Thanks for your help!',
+        resourceId: existingResource.id,
+      });
+
+      // Verify sender increment (only shoutout sent, no new resource)
+      await verifyTrustScoreIncrement(
+        supabase,
+        sender.id,
+        community.id,
+        senderScoreBefore,
+        POINTS_CONFIG.SHOUTOUT_SENT,
+        'Shoutout sender increment (existing resource)',
+      );
+    });
+
+    it('should award points when receiving shoutout with existing resource', async () => {
+      // Create sender and community
+      const sender = await createTestUser(supabase);
+      await signIn(supabase, sender.email, 'TestPass123!');
+      const community = await createTestCommunity(supabase);
+
+      // Create existing resource
+      const existingResource = await createTestResource(
+        supabase,
+        community.id,
+        'offer',
+      );
+
+      // Create receiver
+      const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      await joinCommunity(supabase, community.id);
+
+      // Sign back in as sender
+      await signIn(supabase, sender.email, 'TestPass123!');
+
+      // Get receiver score before shoutout
       const receiverScoreBefore = await getCurrentTrustScore(
         supabase,
         receiver.id,
@@ -154,18 +216,6 @@ describe('Trust Score Points - Shoutouts', () => {
         resourceId: existingResource.id,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Verify sender increment (only shoutout sent, no new resource)
-      await verifyTrustScoreIncrement(
-        supabase,
-        sender.id,
-        community.id,
-        senderScoreBefore,
-        POINTS_CONFIG.SHOUTOUT_SENT,
-        'Shoutout sender increment (existing resource)',
-      );
-
       // Verify receiver increment (shoutout received)
       await verifyTrustScoreIncrement(
         supabase,
@@ -179,7 +229,7 @@ describe('Trust Score Points - Shoutouts', () => {
   });
 
   describe('Multiple Shoutouts', () => {
-    it('should award points for multiple shoutouts between same users', async () => {
+    it('should award points for sending multiple shoutouts to same user', async () => {
       // Setup users and community
       const sender = await createTestUser(supabase);
       await signIn(supabase, sender.email, 'TestPass123!');
@@ -188,7 +238,6 @@ describe('Trust Score Points - Shoutouts', () => {
       const receiver = await createTestUser(supabase);
       await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, community.id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       await signIn(supabase, sender.email, 'TestPass123!');
 
@@ -199,13 +248,64 @@ describe('Trust Score Points - Shoutouts', () => {
         communityId: community.id,
         message: 'First shoutout!',
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const senderAfterFirst = await getCurrentTrustScore(
         supabase,
         sender.id,
         community.id,
       );
+
+      // Send second shoutout (using existing resource to avoid extra resource points)
+      const { data: existingResources } = await serviceClient
+        .from('resources')
+        .select('id')
+        .eq('community_id', community.id)
+        .limit(1);
+
+      const resourceId = existingResources?.[0]?.id;
+      if (!resourceId) {
+        throw new Error('No existing resource found for shoutout');
+      }
+
+      await createTestShoutout(supabase, {
+        senderId: sender.id,
+        receiverId: receiver.id,
+        communityId: community.id,
+        message: 'Second shoutout!',
+        resourceId,
+      });
+
+      // Verify sender incremental points
+      await verifyTrustScoreIncrement(
+        supabase,
+        sender.id,
+        community.id,
+        senderAfterFirst,
+        POINTS_CONFIG.SHOUTOUT_SENT,
+        'Second shoutout sender increment',
+      );
+    });
+
+    it('should award points for receiving multiple shoutouts from same user', async () => {
+      // Setup users and community
+      const sender = await createTestUser(supabase);
+      await signIn(supabase, sender.email, 'TestPass123!');
+      const community = await createTestCommunity(supabase);
+
+      const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      await joinCommunity(supabase, community.id);
+
+      await signIn(supabase, sender.email, 'TestPass123!');
+
+      // Send first shoutout
+      await createTestShoutout(supabase, {
+        senderId: sender.id,
+        receiverId: receiver.id,
+        communityId: community.id,
+        message: 'First shoutout!',
+      });
+
       const receiverAfterFirst = await getCurrentTrustScore(
         supabase,
         receiver.id,
@@ -231,18 +331,8 @@ describe('Trust Score Points - Shoutouts', () => {
         message: 'Second shoutout!',
         resourceId,
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Verify incremental points
-      await verifyTrustScoreIncrement(
-        supabase,
-        sender.id,
-        community.id,
-        senderAfterFirst,
-        POINTS_CONFIG.SHOUTOUT_SENT,
-        'Second shoutout sender increment',
-      );
-
+      // Verify receiver incremental points
       await verifyTrustScoreIncrement(
         supabase,
         receiver.id,
@@ -262,7 +352,6 @@ describe('Trust Score Points - Shoutouts', () => {
       const user2 = await createTestUser(supabase);
       await signIn(supabase, user2.email, 'TestPass123!');
       await joinCommunity(supabase, community.id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // User1 sends shoutout to User2
       await signIn(supabase, user1.email, 'TestPass123!');
@@ -272,7 +361,6 @@ describe('Trust Score Points - Shoutouts', () => {
         communityId: community.id,
         message: 'Thanks user2!',
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const user1AfterSending = await getCurrentTrustScore(
         supabase,
@@ -300,7 +388,6 @@ describe('Trust Score Points - Shoutouts', () => {
         message: 'Thanks user1!',
         resourceId: secondResource.id,
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Verify final scores
       const user1Final = await getCurrentTrustScore(
@@ -334,7 +421,7 @@ describe('Trust Score Points - Shoutouts', () => {
   });
 
   describe('Cross-Community Shoutouts', () => {
-    it('should award points correctly for shoutouts across different communities', async () => {
+    it('should award sending points correctly across different communities', async () => {
       // Create user1 with community1
       const user1 = await createTestUser(supabase);
       await signIn(supabase, user1.email, 'TestPass123!');
@@ -347,7 +434,6 @@ describe('Trust Score Points - Shoutouts', () => {
 
       // Have user1 join community2
       await joinCommunity(supabase, community2.id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // User1 sends shoutout to User2 in community2
       await signIn(supabase, user1.email, 'TestPass123!');
@@ -357,7 +443,6 @@ describe('Trust Score Points - Shoutouts', () => {
         communityId: community2.id,
         message: 'Great community!',
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Verify user1 has separate scores in both communities
       const user1Community1Score = await getCurrentTrustScore(
@@ -371,7 +456,7 @@ describe('Trust Score Points - Shoutouts', () => {
         community2.id,
       );
 
-      // Community1: Creation + auto-join
+      // Community1: Creation + auto-join (no shoutout activity here)
       expect(user1Community1Score).toBe(
         POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_JOIN,
       );
@@ -382,6 +467,30 @@ describe('Trust Score Points - Shoutouts', () => {
           POINTS_CONFIG.RESOURCE_OFFER +
           POINTS_CONFIG.SHOUTOUT_SENT,
       );
+    });
+
+    it('should award receiving points correctly across different communities', async () => {
+      // Create user1 with community1
+      const user1 = await createTestUser(supabase);
+      await signIn(supabase, user1.email, 'TestPass123!');
+      const community1 = await createTestCommunity(supabase);
+
+      // Create user2 with community2
+      const user2 = await createTestUser(supabase);
+      await signIn(supabase, user2.email, 'TestPass123!');
+      const community2 = await createTestCommunity(supabase);
+
+      // Have user1 join community2
+      await joinCommunity(supabase, community2.id);
+
+      // User1 sends shoutout to User2 in community2
+      await signIn(supabase, user1.email, 'TestPass123!');
+      await createTestShoutout(supabase, {
+        senderId: user1.id,
+        receiverId: user2.id,
+        communityId: community2.id,
+        message: 'Great community!',
+      });
 
       // Verify user2's score in their community
       const user2Community2Score = await getCurrentTrustScore(
@@ -402,7 +511,6 @@ describe('Trust Score Points - Shoutouts', () => {
       const user = await createTestUser(supabase);
       await signIn(supabase, user.email, 'TestPass123!');
       const community = await createTestCommunity(supabase);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const scoreBefore = await getCurrentTrustScore(
         supabase,
@@ -418,7 +526,6 @@ describe('Trust Score Points - Shoutouts', () => {
           communityId: community.id,
           message: 'Self appreciation!',
         });
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         // If allowed, should only get resource points, not double points
         const scoreAfter = await getCurrentTrustScore(
@@ -444,7 +551,6 @@ describe('Trust Score Points - Shoutouts', () => {
       const receiver = await createTestUser(supabase);
       await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, community.id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       await signIn(supabase, sender.email, 'TestPass123!');
 
@@ -463,7 +569,6 @@ describe('Trust Score Points - Shoutouts', () => {
           communityId: community.id,
           message: `Shoutout ${i + 1}`,
         });
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         const newScore = await getCurrentTrustScore(
           supabase,

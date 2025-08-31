@@ -109,7 +109,6 @@ describe('Trust Scores - Player Levels', () => {
       const community = await createTestCommunity(supabase);
       
       // Allow time for triggers to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
       
       // Get initial automatically created score
       const initialScores = await fetchTrustScores(supabase, account.id);

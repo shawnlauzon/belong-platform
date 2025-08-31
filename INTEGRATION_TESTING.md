@@ -41,6 +41,9 @@ Only actual failures of the test suite should be considered failures.
 - **Environment Issue**: Database/setup problems
 
 **It's probably not a race condition**: diagnose other issues before jumping to this
+**It might be an RLS issue**, but check other issues first before jumping to this
+
+- If there is an RLS failure, check first if there is a bug in the test
 
 ### 2. Investigation Process
 
@@ -65,14 +68,17 @@ Only actual failures of the test suite should be considered failures.
 - **Always use `createFake*` utilities** from test-utils
 - **Include `test_int_` prefix** for identification
 - **Clean up** in afterAll hooks
-- **Data created in beforeAll is read-only**; create writable data in tests
+- **Data created in beforeAll is read-only**; create writable data in tests.
+- **This is not all or none**; often most data is read-only and so you can recreate just the stuff you need to modify
 - **Use describe blocks to group related mutation tests into scopes with their own beforeAll/beforeEach**
 - **Use beforeEach/afterEach when tests actually mutate shared data.** If tests just read or create their own data, let each test create what it needs.
 - **Similarly, rather than copying and pasting the same setup code, do it once in setupAll / setupEach**
 - **Create one test at a time**: After writing it, run it to confirm it works, and then write another
 - **Do not attempt to test 'edge cases'**: Focus on validation of real life issues
 - **Avoid manually inserting data into the database**; use the provided test utilities instead unless you needed to test a specific case
+- **However, you should almost always check the database at the end of the test to confirm data is as expected**
 - **Authentication state changes in tests must be cleaned up** - either in afterEach or within the same test
+- **NEVER rename tests just because they fail** - seriously, don't do it.
 
 ### Essential Test Structure
 
@@ -81,6 +87,7 @@ describe('Feature - Operation Group', () => {
   let supabase: SupabaseClient<Database>;
   let testUser: User;
   let testCommunity: Community;
+  let anotherUser: User;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -90,10 +97,21 @@ describe('Feature - Operation Group', () => {
 
     // Creating a community automatically adds logged as a member
     testCommunity = await createTestCommunity(supabase);
+
+    // Create another user (automatically signed in as anotherUser now)
+    anotherUser = await createTestUser(supabase);
+
+    // anotherUser joins community
+    await joinCommunity(supabase, testCommunity.id);
   });
 
   afterAll(async () => {
     await cleanupAllTestData(supabase);
+  });
+
+  beforeEach(async () => {
+    // Sign back in as sender for consistency
+    await signIn(supabase, testUser.email, 'TestPass123!');
   });
 
   it('describes expected behavior', async () => {

@@ -31,7 +31,6 @@ describe('Trust Scores - CRUD Operations', () => {
       const community = await createTestCommunity(supabase);
       
       // Allow time for triggers to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const trustScores = await fetchTrustScores(supabase, account.id);
 
@@ -53,7 +52,6 @@ describe('Trust Scores - CRUD Operations', () => {
       const community2 = await createTestCommunity(supabase);
       
       // Allow time for triggers to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const trustScores = await fetchTrustScores(supabase, account.id);
 
@@ -82,7 +80,6 @@ describe('Trust Scores - CRUD Operations', () => {
       const community2 = await createTestCommunity(supabase);
       
       // Allow time for triggers to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // User1 should only see their own trust score
       await supabase.auth.signInWithPassword({
@@ -118,7 +115,6 @@ describe('Trust Scores - CRUD Operations', () => {
       const community = await createTestCommunity(supabase);
       
       // Allow time for triggers to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const trustScores = await fetchTrustScores(supabase, account.id);
       

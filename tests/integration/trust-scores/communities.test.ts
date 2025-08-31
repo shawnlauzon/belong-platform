@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchTrustScores } from '@/features/trust-scores/api';
@@ -17,10 +25,18 @@ import {
 describe('Trust Score Points - Communities', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
+  let testUser: any;
 
   beforeAll(async () => {
     supabase = createTestClient();
     serviceClient = createServiceClient();
+
+    // Create fresh user for each test (automatically signed in)
+    testUser = await createTestUser(supabase);
+  });
+
+  beforeEach(async () => {
+    await signIn(supabase, testUser.email, 'TestPass123!');
   });
 
   afterAll(async () => {
@@ -28,37 +44,26 @@ describe('Trust Score Points - Communities', () => {
   });
 
   it('should have zero trust scores for new user', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
-    const trustScores = await fetchTrustScores(supabase, user.id);
+    const trustScores = await fetchTrustScores(supabase, testUser.id);
 
     expect(trustScores).toHaveLength(0);
   });
 
   it('should award community creation points', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
     const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const trustScores = await fetchTrustScores(supabase, user.id);
+    const trustScores = await fetchTrustScores(supabase, testUser.id);
     expect(trustScores).toHaveLength(1);
     expect(trustScores[0].communityId).toBe(community.id);
     expect(trustScores[0].score).toBeGreaterThan(0);
   });
 
   it('should award exactly 1000 points for community creation', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
     const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
-      user.id,
+      testUser.id,
       community.id,
       'community_creation',
       POINTS_CONFIG.COMMUNITY_CREATION,
@@ -67,15 +72,11 @@ describe('Trust Score Points - Communities', () => {
   });
 
   it('should award auto-join points when creating community', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
     const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
-      user.id,
+      testUser.id,
       community.id,
       'community_join',
       POINTS_CONFIG.COMMUNITY_JOIN,
@@ -84,13 +85,13 @@ describe('Trust Score Points - Communities', () => {
   });
 
   it('should have total score of 1050 after creating community', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
     const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const score = await getCurrentTrustScore(supabase, user.id, community.id);
+    const score = await getCurrentTrustScore(
+      supabase,
+      testUser.id,
+      community.id,
+    );
     expect(score).toBe(
       POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_JOIN,
     );
@@ -105,7 +106,6 @@ describe('Trust Score Points - Communities', () => {
     await signIn(supabase, joiner.email, 'TestPass123!');
 
     await joinCommunity(supabase, community.id);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const trustScores = await fetchTrustScores(supabase, joiner.id);
     expect(trustScores).toHaveLength(1);
@@ -120,7 +120,6 @@ describe('Trust Score Points - Communities', () => {
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
     await joinCommunity(supabase, community.id);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const score = await getCurrentTrustScore(supabase, joiner.id, community.id);
     expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
@@ -134,7 +133,6 @@ describe('Trust Score Points - Communities', () => {
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
     await joinCommunity(supabase, community.id);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -147,16 +145,11 @@ describe('Trust Score Points - Communities', () => {
   });
 
   it('should track separate scores for multiple communities', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-
     const community1 = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const community2 = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const trustScores = await fetchTrustScores(supabase, user.id);
+    const trustScores = await fetchTrustScores(supabase, testUser.id);
     expect(trustScores).toHaveLength(2);
 
     const score1 = trustScores.find((s) => s.communityId === community1.id);
@@ -176,7 +169,7 @@ describe('Trust Score Points - Communities', () => {
     await signIn(ownerClient, owner.email, 'TestPass123!');
     const community = await createTestCommunity(ownerClient);
 
-    // Create invitee with separate client  
+    // Create invitee with separate client
     const inviteeClient = createTestClient();
     const invitee = await createTestUser(inviteeClient);
     await signIn(inviteeClient, invitee.email, 'TestPass123!');

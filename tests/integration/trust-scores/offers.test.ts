@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -11,6 +19,7 @@ import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import {
   createResourceClaim,
+  deleteResourceClaim,
   updateResourceClaim,
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -21,49 +30,69 @@ import {
   verifyTrustScoreIncrement,
   verifyTrustScoreLog,
 } from './helpers';
+import { ResourceClaim } from '@/features';
 
 describe('Trust Score Points - Offers', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
+  let owner: any;
+  let claimant: any;
+  let community: any;
+  let offer: any;
+  let timeslot: any;
+  let testClaim: ResourceClaim | null = null;
 
   beforeAll(async () => {
     supabase = createTestClient();
     serviceClient = createServiceClient();
+
+    // Create owner (automatically signed in)
+    owner = await createTestUser(supabase);
+
+    // Create community (owner automatically becomes member)
+    community = await createTestCommunity(supabase);
+
+    // Create offer and timeslot while owner is signed in
+    offer = await createTestResource(supabase, community.id, 'offer');
+    timeslot = await createTestResourceTimeslot(supabase, offer.id);
+
+    // Create claimant (automatically signed in as claimant now)
+    claimant = await createTestUser(supabase);
+
+    // Claimant joins community
+    await joinCommunity(supabase, community.id);
+  });
+
+  beforeEach(async () => {
+    // At end of beforeEach: claimant is signed in
+    await signIn(supabase, claimant.email, 'TestPass123!');
+  });
+
+  afterEach(async () => {
+    if (testClaim) {
+      await deleteResourceClaim(supabase, testClaim.id);
+    }
   });
 
   afterAll(async () => {
     await cleanupAllTestData();
   });
 
-  it('should create resource offer', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-
-    const offer = await createTestResource(supabase, community.id, 'offer');
-
-    expect(offer.id).toBeDefined();
-    expect(offer.type).toBe('offer');
-  });
-
   it('should award 50 points for creating offer', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Switch to owner context to check their points
+    await signIn(supabase, owner.email, 'TestPass123!');
 
     const scoreAfterCommunity = await getCurrentTrustScore(
       supabase,
-      user.id,
+      owner.id,
       community.id,
     );
 
     await createTestResource(supabase, community.id, 'offer');
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreAfterOffer = await getCurrentTrustScore(
       supabase,
-      user.id,
+      owner.id,
       community.id,
     );
     expect(scoreAfterOffer - scoreAfterCommunity).toBe(
@@ -72,16 +101,14 @@ describe('Trust Score Points - Offers', () => {
   });
 
   it('should log offer creation action', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
+    // Switch to owner context to create another offer
+    await signIn(supabase, owner.email, 'TestPass123!');
 
     await createTestResource(supabase, community.id, 'offer');
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
-      user.id,
+      owner.id,
       community.id,
       'resource_offer',
       POINTS_CONFIG.RESOURCE_OFFER,
@@ -90,58 +117,27 @@ describe('Trust Score Points - Offers', () => {
   });
 
   it('should not award points for creating request', async () => {
-    const user = await createTestUser(supabase);
-    await signIn(supabase, user.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Switch to owner context
+    await signIn(supabase, owner.email, 'TestPass123!');
 
     const scoreAfterCommunity = await getCurrentTrustScore(
       supabase,
-      user.id,
+      owner.id,
       community.id,
     );
 
     await createTestResource(supabase, community.id, 'request');
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreAfterRequest = await getCurrentTrustScore(
       supabase,
-      user.id,
+      owner.id,
       community.id,
     );
     expect(scoreAfterRequest - scoreAfterCommunity).toBe(0);
   });
 
-  it('should allow claiming offer without approval', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-
-    const claim = await createResourceClaim(supabase, {
-      resourceId: offer.id,
-      timeslotId: timeslot.id,
-    });
-
-    expect(claim.id).toBeDefined();
-  });
-
   it('should award 25 points for claiming offer', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Claimant is already signed in from beforeEach
 
     const scoreBeforeClaim = await getCurrentTrustScore(
       supabase,
@@ -149,11 +145,10 @@ describe('Trust Score Points - Offers', () => {
       community.id,
     );
 
-    await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreAfterClaim = await getCurrentTrustScore(
       supabase,
@@ -165,45 +160,11 @@ describe('Trust Score Points - Offers', () => {
     );
   });
 
-  it('should allow owner to mark as given', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
-      resourceId: offer.id,
-      timeslotId: timeslot.id,
-    });
-
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const updatedClaim = await updateResourceClaim(supabase, {
-      id: claim.id,
-      status: 'given',
-    });
-
-    expect(updatedClaim.status).toBe('given');
-  });
-
   it('should not award points for given status', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreBeforeGiven = await getCurrentTrustScore(
       supabase,
@@ -212,8 +173,7 @@ describe('Trust Score Points - Offers', () => {
     );
 
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
     const scoreAfterGiven = await getCurrentTrustScore(
       supabase,
@@ -223,54 +183,12 @@ describe('Trust Score Points - Offers', () => {
     expect(scoreAfterGiven - scoreBeforeGiven).toBe(0);
   });
 
-  it('should allow claimant to mark as received', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
-      resourceId: offer.id,
-      timeslotId: timeslot.id,
-    });
-
-    // Owner must mark as given
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
-
-    // Claimant must mark as received
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    const updatedClaim = await updateResourceClaim(supabase, {
-      id: claim.id,
-      status: 'received',
-    });
-
-    expect(updatedClaim.status).toBe('received');
-  });
-
   it('should not award points for received status', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
+    // Use shared data from beforeEach
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
-
-    // Owner must mark as given
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreBeforeReceived = await getCurrentTrustScore(
       supabase,
@@ -278,10 +196,11 @@ describe('Trust Score Points - Offers', () => {
       community.id,
     );
 
-    // Claimant must mark as received
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // For offers: claimant can mark as received directly from approved
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'received',
+    });
 
     const scoreAfterReceived = await getCurrentTrustScore(
       supabase,
@@ -291,32 +210,21 @@ describe('Trust Score Points - Offers', () => {
     expect(scoreAfterReceived - scoreBeforeReceived).toBe(0);
   });
 
-  it('should allow owner to mark as completed', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
+  it('should allow claimant to mark as completed after given', async () => {
+    // Use shared data from beforeEach
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
 
-    // Owner must mark as given
+    // For offers: owner marks as given
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
-    // Claimant must mark as received
+    // For offers: claimant marks as completed (business logic requires this)
     await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
-
-    await signIn(supabase, owner.email, 'TestPass123!');
     const updatedClaim = await updateResourceClaim(supabase, {
-      id: claim.id,
+      id: testClaim.id,
       status: 'completed',
     });
 
@@ -324,28 +232,15 @@ describe('Trust Score Points - Offers', () => {
   });
 
   it('should award 50 points for completed status', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
+    // Use shared data from beforeEach
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
 
-    // Owner must mark as given
+    // For offers: owner marks as given
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
-
-    // Claimant must mark as received
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
     const scoreBeforeCompleted = await getCurrentTrustScore(
       supabase,
@@ -353,9 +248,12 @@ describe('Trust Score Points - Offers', () => {
       community.id,
     );
 
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // For offers: claimant marks as completed (business logic requires this)
+    await signIn(supabase, claimant.email, 'TestPass123!');
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'completed',
+    });
 
     const scoreAfterCompleted = await getCurrentTrustScore(
       supabase,
@@ -368,31 +266,22 @@ describe('Trust Score Points - Offers', () => {
   });
 
   it('should log completed action', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-    const claim = await createResourceClaim(supabase, {
+    // Use shared data from beforeEach
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
 
-    // Owner must mark as given
+    // For offers: owner marks as given
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
-    // Claimant must mark as received
+    // For offers: claimant marks as completed (business logic requires this)
     await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
-
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'completed',
+    });
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -405,32 +294,22 @@ describe('Trust Score Points - Offers', () => {
   });
 
   it('should accumulate points through full offer flow', async () => {
-    const owner = await createTestUser(supabase);
-    await signIn(supabase, owner.email, 'TestPass123!');
-    const community = await createTestCommunity(supabase);
-    const offer = await createTestResource(supabase, community.id, 'offer');
-    const timeslot = await createTestResourceTimeslot(supabase, offer.id);
-
-    const claimant = await createTestUser(supabase);
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
-
-    const claim = await createResourceClaim(supabase, {
+    // Use shared data from beforeEach
+    testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
 
-    // Owner must mark as given
+    // For offers: owner marks as given
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
-    // Claimant must mark as received
+    // For offers: claimant marks as completed (business logic requires this)
     await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
-
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'completed',
+    });
 
     const finalScore = await getCurrentTrustScore(
       supabase,

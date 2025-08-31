@@ -34,9 +34,7 @@ describe('Trust Score Points - Events', () => {
   beforeAll(async () => {
     supabase = createTestClient();
     serviceClient = createServiceClient();
-  });
 
-  beforeEach(async () => {
     // Create organizer (automatically signed in)
     organizer = await createTestUser(supabase);
 
@@ -52,13 +50,11 @@ describe('Trust Score Points - Events', () => {
 
     // Participant joins community
     await joinCommunity(supabase, community.id);
-
-    // At end of beforeEach: participant is signed in
   });
 
-  afterEach(async () => {
-    // Always sign back in as participant for consistency
+  beforeEach(async () => {
     await signIn(supabase, participant.email, 'TestPass123!');
+    // At end of beforeEach: participant is signed in
   });
 
   afterAll(async () => {
@@ -76,8 +72,6 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should award 5 points for event registration', async () => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
     const scoreBeforeRegistration = await getCurrentTrustScore(
       supabase,
       participant.id,
@@ -88,7 +82,6 @@ describe('Trust Score Points - Events', () => {
       resourceId: event.id,
       timeslotId: timeslot.id,
     });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreAfterRegistration = await getCurrentTrustScore(
       supabase,
@@ -105,7 +98,6 @@ describe('Trust Score Points - Events', () => {
       resourceId: event.id,
       timeslotId: timeslot.id,
     });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -138,7 +130,6 @@ describe('Trust Score Points - Events', () => {
       resourceId: event.id,
       timeslotId: timeslot.id,
     });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreBeforeGoing = await getCurrentTrustScore(
       supabase,
@@ -147,7 +138,6 @@ describe('Trust Score Points - Events', () => {
     );
 
     await updateResourceClaim(supabase, { id: claim.id, status: 'going' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreAfterGoing = await getCurrentTrustScore(
       supabase,
@@ -185,7 +175,6 @@ describe('Trust Score Points - Events', () => {
     });
 
     await updateResourceClaim(supabase, { id: claim.id, status: 'going' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreBeforeAttended = await getCurrentTrustScore(
       supabase,
@@ -196,7 +185,6 @@ describe('Trust Score Points - Events', () => {
     // Switch to organizer to mark attended
     await signIn(supabase, organizer.email, 'TestPass123!');
     await updateResourceClaim(supabase, { id: claim.id, status: 'attended' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Switch back to participant to check score
     await signIn(supabase, participant.email, 'TestPass123!');
@@ -222,7 +210,6 @@ describe('Trust Score Points - Events', () => {
 
     await signIn(supabase, organizer.email, 'TestPass123!');
     await updateResourceClaim(supabase, { id: claim.id, status: 'attended' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -260,7 +247,6 @@ describe('Trust Score Points - Events', () => {
     });
 
     await updateResourceClaim(supabase, { id: claim.id, status: 'going' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const scoreBeforeFlaked = await getCurrentTrustScore(
       supabase,
@@ -270,7 +256,6 @@ describe('Trust Score Points - Events', () => {
 
     await signIn(supabase, organizer.email, 'TestPass123!');
     await updateResourceClaim(supabase, { id: claim.id, status: 'flaked' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Switch back to participant to check score
     await signIn(supabase, participant.email, 'TestPass123!');
@@ -315,8 +300,6 @@ describe('Trust Score Points - Events', () => {
     });
 
     it('should not award points for pending registration', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
       const scoreBeforeRegistration = await getCurrentTrustScore(
         supabase,
         participant.id,
@@ -327,7 +310,6 @@ describe('Trust Score Points - Events', () => {
         resourceId: approvalEvent.id,
         timeslotId: approvalTimeslot.id,
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const scoreAfterRegistration = await getCurrentTrustScore(
         supabase,
@@ -344,7 +326,6 @@ describe('Trust Score Points - Events', () => {
       });
 
       // Wait for claim creation to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Verify initial status is pending
       expect(claim.status).toBe('pending');
@@ -364,7 +345,6 @@ describe('Trust Score Points - Events', () => {
         resourceId: approvalEvent.id,
         timeslotId: approvalTimeslot.id,
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const scoreBeforeApproval = await getCurrentTrustScore(
         supabase,
@@ -378,7 +358,6 @@ describe('Trust Score Points - Events', () => {
         id: claim.id,
         status: 'interested',
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Switch back to participant to check score
       await signIn(supabase, participant.email, 'TestPass123!');
@@ -404,7 +383,6 @@ describe('Trust Score Points - Events', () => {
 
     await signIn(supabase, organizer.email, 'TestPass123!');
     await updateResourceClaim(supabase, { id: claim.id, status: 'attended' });
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Switch back to participant to check score
     await signIn(supabase, participant.email, 'TestPass123!');
