@@ -1,6 +1,6 @@
 import type { IsPersisted } from '@/shared';
 
-export type TrustScore = IsPersisted<TrustScoreData>;
+export type TrustScore = Omit<IsPersisted<TrustScoreData>, 'id'>;
 
 export type TrustScoreData = {
   userId: string;

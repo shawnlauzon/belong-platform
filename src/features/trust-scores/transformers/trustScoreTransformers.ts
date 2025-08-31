@@ -5,7 +5,6 @@ import type { TrustScore, TrustScoreRow } from '../types';
  */
 export function toDomainTrustScore(row: TrustScoreRow): TrustScore {
   return {
-    id: `${row.user_id}-${row.community_id}`,
     userId: row.user_id,
     communityId: row.community_id,
     score: row.score,

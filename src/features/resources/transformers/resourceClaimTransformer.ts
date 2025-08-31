@@ -8,6 +8,7 @@ import type {
   ResourceClaimUpdateDbData,
   ResourceClaimRowJoinResourceJoinTimeslot,
   ResourceClaimRow,
+  ResourceClaimStatus,
 } from '../types/resourceRow';
 import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
 
@@ -28,14 +29,22 @@ export function toResourceClaimInsertRow(
 
 /**
  * Transform a domain claim object to a database claim record for updates.
- * Note: Status updates are handled separately through state transitions.
+ * Note: Status can be updated via this function for state transitions.
  */
 export function forDbClaimUpdate(
-  claim: Partial<ResourceClaimInput>,
+  claim: Partial<ResourceClaimInput> & { status?: string },
 ): ResourceClaimUpdateDbData {
-  return {
-    notes: claim.notes,
-  };
+  const updateData: ResourceClaimUpdateDbData = {};
+
+  if (claim.notes !== undefined) {
+    updateData.notes = claim.notes;
+  }
+
+  if (claim.status !== undefined) {
+    updateData.status = claim.status as ResourceClaimStatus; // Status type is defined in database
+  }
+
+  return updateData;
 }
 
 /**

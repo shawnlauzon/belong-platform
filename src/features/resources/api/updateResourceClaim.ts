@@ -5,12 +5,16 @@ import { ResourceClaim, ResourceClaimInput } from '../types';
 import { forDbClaimUpdate, toDomainResourceClaim } from '../transformers';
 import {
   ResourceClaimRowJoinResourceJoinTimeslot,
+  ResourceClaimStatus,
   SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT,
 } from '../types/resourceRow';
 
 export async function updateResourceClaim(
   supabase: SupabaseClient<Database>,
-  claimInput: Partial<ResourceClaimInput> & { id: string },
+  claimInput: Partial<ResourceClaimInput> & {
+    id: string;
+    status?: ResourceClaimStatus;
+  },
 ): Promise<ResourceClaim> {
   // Transform to database format
   const updateData = forDbClaimUpdate(claimInput);

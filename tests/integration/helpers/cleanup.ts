@@ -17,6 +17,19 @@ export async function cleanupAllTestData() {
   let communityIds: string[] = [];
   if (testCommunities?.length) {
     communityIds = testCommunities.map((c) => c.id);
+    
+    // Clean up trust scores for test communities
+    await serviceClient
+      .from('trust_scores')
+      .delete()
+      .in('community_id', communityIds);
+    
+    // Clean up trust score logs for test communities
+    await serviceClient
+      .from('trust_score_logs')
+      .delete()
+      .in('community_id', communityIds);
+    
     await serviceClient
       .from('community_memberships')
       .delete()

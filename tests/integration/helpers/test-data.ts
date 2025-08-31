@@ -65,6 +65,7 @@ export async function createTestResource(
   communityId: string,
   type: 'offer' | 'request' | 'event' = 'offer',
   category: ResourceCategory = 'tools',
+  requiresApproval: boolean = false,
 ) {
   const data = createFakeResourceInput({
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
@@ -74,6 +75,7 @@ export async function createTestResource(
     category,
     status: 'open', // Ensure resources are open for feed tests
     lastRenewedAt: new Date(),
+    requiresApproval,
   });
 
   // Add small delay to ensure community membership trigger has completed
