@@ -12,7 +12,9 @@ import type {
 import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
 
 /**
- * Transform a domain claim object to a database claim record
+ * Transform a domain claim object to a database claim record.
+ * Note: Status is NOT mapped here - it's determined by the API based on
+ * resource type and approval requirements.
  */
 export function toResourceClaimInsertRow(
   claim: ResourceClaimInput,
@@ -20,19 +22,18 @@ export function toResourceClaimInsertRow(
   return {
     resource_id: claim.resourceId,
     timeslot_id: claim.timeslotId,
-    status: claim.status,
     notes: claim.notes,
   };
 }
 
 /**
- * Transform a domain claim object to a database claim record for updates
+ * Transform a domain claim object to a database claim record for updates.
+ * Note: Status updates are handled separately through state transitions.
  */
 export function forDbClaimUpdate(
   claim: Partial<ResourceClaimInput>,
 ): ResourceClaimUpdateDbData {
   return {
-    status: claim.status,
     notes: claim.notes,
   };
 }

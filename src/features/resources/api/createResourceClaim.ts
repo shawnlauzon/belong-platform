@@ -1,7 +1,7 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
-import { ResourceClaim, ResourceClaimInput } from '../types';
+import { ResourceClaim, ResourceClaimInput, ResourceClaimStatus } from '../types';
 import {
   toResourceClaimInsertRow,
   toDomainResourceClaim,
@@ -10,13 +10,32 @@ import {
   ResourceClaimRowJoinResourceJoinTimeslot,
   SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT,
 } from '../types/resourceRow';
+import { fetchResourceById } from './fetchResourceById';
 
 export async function createResourceClaim(
   supabase: SupabaseClient<Database>,
   claimInput: ResourceClaimInput,
 ): Promise<ResourceClaim> {
-  // Transform to database format
-  const insertData = toResourceClaimInsertRow(claimInput);
+  // Fetch the resource to determine type and approval requirements
+  const resource = await fetchResourceById(supabase, claimInput.resourceId);
+  
+  if (!resource) {
+    throw new Error('Resource not found');
+  }
+
+  // Determine initial status based on resource type and approval requirements
+  let initialStatus: ResourceClaimStatus;
+  if (resource.type === 'event') {
+    initialStatus = resource.requiresApproval ? 'pending' : 'interested';
+  } else {
+    initialStatus = resource.requiresApproval ? 'pending' : 'approved';
+  }
+
+  // Transform to database format and add the determined status
+  const insertData = {
+    ...toResourceClaimInsertRow(claimInput),
+    status: initialStatus,
+  };
 
   const { data, error } = (await supabase
     .from('resource_claims')
