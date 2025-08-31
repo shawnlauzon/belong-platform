@@ -7,9 +7,11 @@ The Belong Platform uses a comprehensive state transition system for resource cl
 ## Current System Architecture
 
 ### Entity Relationships
+
 ```
 Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 ```
+
 - **Resources**: Events, offers, or requests with a `requires_approval` flag
 - **Timeslots**: Time-bounded availability windows for resources
 - **Claims**: Individual user claims on timeslots with enforced state transitions
@@ -17,11 +19,13 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 ### Database Schema
 
 #### Resource Types
+
 - `offer` - User offering something to the community (owner gives to claimant)
 - `request` - User requesting something from the community (claimant gives to owner)
 - `event` - Scheduled gathering or activity
 
 #### Claim Status Enum (Current Implementation)
+
 - `pending` - Initial state for claims requiring approval
 - `approved` - Claim has been approved (or initial state when no approval required)
 - `rejected` - Claim has been rejected by resource owner
@@ -37,6 +41,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 ## Implemented State Transition Rules
 
 ### Core Principles
+
 1. **Role-Based Permissions**: Only specific roles can make certain transitions
 2. **No State Skipping**: Cannot go directly from `approved` to `completed` - requires handshake
 3. **Two-Party Confirmation**: Both parties must participate for completion (offers/requests)
@@ -48,6 +53,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 #### OFFERS (Owner Giving to Claimant)
 
 **Initial State Logic:**
+
 - If `requires_approval = true` → `pending`
 - If `requires_approval = false` → `approved`
 
@@ -63,6 +69,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 | Any (except rejected/completed) | cancelled | Claimant only | Claimant cancels |
 
 **Key Rules:**
+
 - Owner gives, claimant receives
 - Both parties must confirm for completion
 - Cannot skip from approved directly to completed
@@ -70,6 +77,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 #### REQUESTS (Claimant Giving to Owner)
 
 **Initial State Logic:**
+
 - If `requires_approval = true` → `pending`
 - If `requires_approval = false` → `approved`
 
@@ -85,6 +93,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 | Any (except rejected/completed) | cancelled | Claimant only | Claimant cancels |
 
 **Key Rules:**
+
 - Claimant gives, owner receives (inverse of offers)
 - Both parties must confirm for completion
 - Cannot skip from approved directly to completed
@@ -92,6 +101,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 #### EVENTS
 
 **Initial State Logic:**
+
 - If `requires_approval = true` → `pending`
 - If `requires_approval = false` → `interested`
 
@@ -105,6 +115,7 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 | going | flaked | Owner only | Event owner marks as no-show |
 
 **Key Rules:**
+
 - Events do NOT use `cancelled` status
 - One-directional flow (no going back)
 - Only owner can mark final attendance status
@@ -147,18 +158,20 @@ The `validate_claim_state_transition()` PostgreSQL function enforces all rules:
 Points are awarded based on state transitions:
 
 #### Events
-| Status | Points | When Awarded |
-|--------|--------|--------------|
-| interested | 5 | Initial registration (no approval needed) |
-| approved | 25 | When moving from pending to approved |
-| going | 25 | When confirming attendance |
-| attended | 50 | When marked as attended |
+
+| Status     | Points | When Awarded                              |
+| ---------- | ------ | ----------------------------------------- |
+| interested | 5      | Initial registration (no approval needed) |
+| approved   | 25     | When moving from pending to approved      |
+| going      | 25     | When confirming attendance                |
+| attended   | 50     | When marked as attended                   |
 
 #### Offers/Requests
-| Status | Points | When Awarded |
-|--------|--------|--------------|
-| approved | 25 | Initial claim (no approval needed) or approval |
-| completed | 50 | When transaction completes |
+
+| Status    | Points | When Awarded                                   |
+| --------- | ------ | ---------------------------------------------- |
+| approved  | 25     | Initial claim (no approval needed) or approval |
+| completed | 50     | When transaction completes                     |
 
 ## API Integration
 
@@ -181,7 +194,7 @@ export type ResourceClaimInput = {
 const claim = await createResourceClaim(supabase, {
   resourceId: 'xxx',
   timeslotId: 'yyy',
-  notes: 'optional notes'
+  notes: 'optional notes',
 });
 // Status will be set based on resource type and approval requirements
 ```
@@ -193,7 +206,7 @@ const claim = await createResourceClaim(supabase, {
 try {
   await updateResourceClaim(supabase, {
     id: claimId,
-    status: 'given'
+    status: 'given',
   });
 } catch (error) {
   // Database returns clear error messages
@@ -206,74 +219,17 @@ try {
 The database provides specific error messages for invalid transitions:
 
 ### Common Error Messages
+
 - **Wrong Role**: "Only resource owner can approve or reject claims"
 - **Invalid Transition**: "Approved offer claims can only transition to given or received"
 - **Skipping States**: "Cannot skip to completed. Both parties must confirm the exchange"
 - **Terminal States**: "Cannot transition from completed status"
 - **Event Specific**: "Event registrations cannot be cancelled"
 
-## Testing Considerations
-
-### Unit Tests
-- Mock resource data to test initial status determination
-- Verify API correctly fetches resource type and approval requirements
-
-### Integration Tests
-- Test all valid state transitions for each resource type
-- Verify role-based permissions are enforced
-- Confirm error messages are returned for invalid transitions
-- Test two-party handshake for offers/requests
-
-## Benefits of Current Implementation
-
-1. **Database-Level Enforcement**: Rules enforced at lowest level, ensuring data integrity
-2. **Clear Error Messages**: Users understand why transitions fail
-3. **Type Safety**: TypeScript types prevent client-side errors
-4. **Audit Trail**: All transitions logged with timestamps
-5. **Scalability**: State logic centralized in database
-6. **Consistency**: Same rules apply regardless of client
-7. **Security**: Cannot bypass validation through API manipulation
-
-## Future Enhancements
-
-### Potential Improvements
-1. **State History Table**: Track all transitions with metadata
-2. **Notification Triggers**: Alert users on state changes
-3. **Bulk Operations**: Approve/reject multiple claims efficiently
-4. **Analytics Views**: Track transition patterns and bottlenecks
-5. **Configurable Workflows**: Allow communities to customize state machines
-
-### Additional States to Consider
-- `in_progress` - For events/resources currently happening
-- `disputed` - For handling conflicts in transactions
-- `expired` - For time-sensitive claims that weren't acted upon
-
-## Migration Notes
-
-### From Previous System
-- Fixed database trigger bug (was checking for non-existent 'confirmed' status)
-- Removed direct status manipulation from client
-- Added 'going' and 'attended' states for events
-- Implemented comprehensive validation function
-- Enforced two-party confirmation for offers/requests
-
-### Database Migration Applied
-```sql
--- Added new enum values
-ALTER TYPE resource_claim_status ADD VALUE 'going' AFTER 'given';
-ALTER TYPE resource_claim_status ADD VALUE 'attended' AFTER 'going';
-
--- Created validation function and trigger
-CREATE FUNCTION validate_claim_state_transition() ...
-CREATE TRIGGER validate_claim_transition_trigger ...
-
--- Fixed trust score triggers
--- Changed references from 'confirmed' to 'approved'
-```
-
 ## Summary
 
 The current implementation provides a robust, database-enforced state transition system that:
+
 - Ensures data integrity through validation triggers
 - Provides clear feedback through specific error messages
 - Supports three distinct workflows for different resource types
