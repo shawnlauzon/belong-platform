@@ -40,6 +40,8 @@ Only actual failures of the test suite should be considered failures.
 - **Code Failure**: Bug in application code
 - **Environment Issue**: Database/setup problems
 
+**It's probably not a race condition**: diagnose other issues before jumping to this
+
 ### 2. Investigation Process
 
 1. **Write Failing Test First**: Reproduce issue in isolation
@@ -70,6 +72,7 @@ Only actual failures of the test suite should be considered failures.
 - **Create one test at a time**: After writing it, run it to confirm it works, and then write another
 - **Do not attempt to test 'edge cases'**: Focus on validation of real life issues
 - **Avoid manually inserting data into the database**; use the provided test utilities instead unless you needed to test a specific case
+- **Authentication state changes in tests must be cleaned up** - either in afterEach or within the same test
 
 ### Essential Test Structure
 
