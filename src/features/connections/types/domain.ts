@@ -1,4 +1,5 @@
 import type { ConnectionRequestStatus } from './connectionRow';
+import type { UserSummary } from '@/features/users/types';
 
 export interface MemberConnectionCode {
   code: string;
@@ -29,7 +30,6 @@ export interface UserConnection {
   createdAt: Date;
 }
 
-
 export interface ProcessConnectionLinkResponse {
   success: boolean;
   connectionRequestId?: string;
@@ -46,11 +46,7 @@ export interface ConnectionSummary {
 }
 
 export interface ConnectionDetails {
-  user: {
-    id: string;
-    firstName: string;
-    avatarUrl?: string;
-  };
+  user: UserSummary;
   communityId: string;
   isActive: boolean;
   createdAt: Date;

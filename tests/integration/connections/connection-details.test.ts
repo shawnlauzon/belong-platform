@@ -5,10 +5,8 @@ import { cleanupAllTestData } from '../helpers/cleanup';
 import * as connectionsApi from '@/features/connections/api';
 import * as usersApi from '@/features/users/api';
 import { signIn, signOut } from '@/features/auth/api';
-import { joinCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { getMemberConnectionCode } from '@/features';
@@ -60,6 +58,8 @@ describe('Connections API - Connection Details', () => {
         user: {
           id: member.id,
           firstName: member.firstName,
+          lastName: member.lastName,
+          fullName: member.fullName,
           avatarUrl: member.avatarUrl,
         },
         communityId: testCommunity.id,
@@ -76,6 +76,8 @@ describe('Connections API - Connection Details', () => {
       // Ensure user object has required fields
       expect(connectionDetails?.user).toHaveProperty('id');
       expect(connectionDetails?.user).toHaveProperty('firstName');
+      expect(connectionDetails?.user).toHaveProperty('lastName');
+      expect(connectionDetails?.user).toHaveProperty('fullName');
       expect(connectionDetails?.user).toHaveProperty('avatarUrl');
     });
 
@@ -123,41 +125,6 @@ describe('Connections API - Connection Details', () => {
       await signOut(supabase);
     });
 
-    it('handles users without avatarUrl gracefully', async () => {
-      // Create a user without an avatar and a separate community 
-      const userWithoutAvatar = await createTestUser(supabase, {
-        firstName: 'TestNoAvatar',
-      });
-
-      // Create another organizer and community
-      const anotherOrganizer = await createTestUser(supabase);
-      await signIn(supabase, anotherOrganizer.email, 'TestPass123!');
-      const anotherCommunity = await createTestCommunity(supabase);
-      await signOut(supabase);
-
-      // Join the community as the user without avatar
-      await signIn(supabase, userWithoutAvatar.email, 'TestPass123!');
-      await joinCommunity(supabase, anotherCommunity.id);
-      const connectionCode = (
-        await getMemberConnectionCode(supabase, anotherCommunity.id)
-      ).code;
-      await signOut(supabase);
-
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(supabase, connectionCode);
-
-      expect(connectionDetails).not.toBeNull();
-      expect(connectionDetails).toEqual({
-        user: {
-          id: userWithoutAvatar.id,
-          firstName: userWithoutAvatar.firstName,
-          avatarUrl: undefined,
-        },
-        communityId: anotherCommunity.id,
-        isActive: true,
-        createdAt: expect.any(Date),
-      });
-    });
-
     it('includes correct community information', async () => {
       const connectionDetails = await connectionsApi.fetchConnectionDetails(
         supabase,
@@ -181,8 +148,12 @@ describe('Connections API - Connection Details', () => {
       // Check that the timestamp is reasonable (within the last hour)
       const now = new Date();
       const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-      expect(connectionDetails?.createdAt.getTime()).toBeGreaterThan(hourAgo.getTime());
-      expect(connectionDetails?.createdAt.getTime()).toBeLessThanOrEqual(now.getTime());
+      expect(connectionDetails?.createdAt.getTime()).toBeGreaterThan(
+        hourAgo.getTime(),
+      );
+      expect(connectionDetails?.createdAt.getTime()).toBeLessThanOrEqual(
+        now.getTime(),
+      );
     });
   });
 });

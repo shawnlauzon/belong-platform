@@ -1826,7 +1826,9 @@ export type Database = {
           community_id: string
           created_at: string
           first_name: string
+          full_name: string
           is_active: boolean
+          last_name: string
           user_id: string
         }[]
       }
