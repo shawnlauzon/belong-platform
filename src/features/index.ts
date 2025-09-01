@@ -5,6 +5,7 @@ export * from './connections';
 export * from './feed';
 export * from './images';
 export * from './messages';
+export * from './notifications';
 export * from './resources';
 export * from './shoutouts';
 export * from './trust-scores';

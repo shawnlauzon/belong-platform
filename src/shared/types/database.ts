@@ -644,41 +644,250 @@ export type Database = {
           },
         ]
       }
+      notification_counts: {
+        Row: {
+          last_checked_at: string | null
+          unread_claims: number | null
+          unread_comments: number | null
+          unread_messages: number | null
+          unread_resources: number | null
+          unread_total: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          last_checked_at?: string | null
+          unread_claims?: number | null
+          unread_comments?: number | null
+          unread_messages?: number | null
+          unread_resources?: number | null
+          unread_total?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          last_checked_at?: string | null
+          unread_claims?: number | null
+          unread_comments?: number | null
+          unread_messages?: number | null
+          unread_resources?: number | null
+          unread_total?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_counts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_counts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          comment_replies: boolean | null
+          comments_on_resources: boolean | null
+          community_resources: boolean | null
+          created_at: string | null
+          email_enabled: boolean | null
+          new_messages: boolean | null
+          push_enabled: boolean | null
+          resource_claims: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_replies?: boolean | null
+          comments_on_resources?: boolean | null
+          community_resources?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          new_messages?: boolean | null
+          push_enabled?: boolean | null
+          resource_claims?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_replies?: boolean | null
+          comments_on_resources?: boolean | null
+          community_resources?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          new_messages?: boolean | null
+          push_enabled?: boolean | null
+          resource_claims?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
-          content: string | null
+          action_url: string | null
+          actor_count: number | null
+          actor_id: string | null
+          body: string | null
+          claim_id: string | null
+          comment_id: string | null
+          community_id: string | null
+          conversation_id: string | null
           created_at: string | null
-          data: Json | null
+          group_key: string | null
           id: string
-          read: boolean | null
+          image_url: string | null
+          is_read: boolean | null
+          message_id: string | null
+          metadata: Json | null
+          read_at: string | null
+          resource_id: string | null
           title: string
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          content?: string | null
+          action_url?: string | null
+          actor_count?: number | null
+          actor_id?: string | null
+          body?: string | null
+          claim_id?: string | null
+          comment_id?: string | null
+          community_id?: string | null
+          conversation_id?: string | null
           created_at?: string | null
-          data?: Json | null
+          group_key?: string | null
           id?: string
-          read?: boolean | null
+          image_url?: string | null
+          is_read?: boolean | null
+          message_id?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          resource_id?: string | null
           title: string
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          content?: string | null
+          action_url?: string | null
+          actor_count?: number | null
+          actor_id?: string | null
+          body?: string | null
+          claim_id?: string | null
+          comment_id?: string | null
+          community_id?: string | null
+          conversation_id?: string | null
           created_at?: string | null
-          data?: Json | null
+          group_key?: string | null
           id?: string
-          read?: boolean | null
+          image_url?: string | null
+          is_read?: boolean | null
+          message_id?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          resource_id?: string | null
           title?: string
           type?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "resource_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -949,6 +1158,46 @@ export type Database = {
           {
             foreignKeyName: "resources_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seen_resources: {
+        Row: {
+          resource_id: string
+          seen_at: string | null
+          user_id: string
+        }
+        Insert: {
+          resource_id: string
+          seen_at?: string | null
+          user_id: string
+        }
+        Update: {
+          resource_id?: string
+          seen_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seen_resources_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seen_resources_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seen_resources_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1548,6 +1797,47 @@ export type Database = {
         Args: { p_community_id: string }
         Returns: string
       }
+      create_or_update_notification: {
+        Args: {
+          p_action_url?: string
+          p_actor_id: string
+          p_body?: string
+          p_claim_id?: string
+          p_comment_id?: string
+          p_community_id?: string
+          p_conversation_id?: string
+          p_group_key: string
+          p_message_id?: string
+          p_metadata?: Json
+          p_resource_id?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: {
+          action_url: string | null
+          actor_count: number | null
+          actor_id: string | null
+          body: string | null
+          claim_id: string | null
+          comment_id: string | null
+          community_id: string | null
+          conversation_id: string | null
+          created_at: string | null
+          group_key: string | null
+          id: string
+          image_url: string | null
+          is_read: boolean | null
+          message_id: string | null
+          metadata: Json | null
+          read_at: string | null
+          resource_id: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+      }
       create_user_connection: {
         Args: { request_id: string }
         Returns: string
@@ -2091,6 +2381,10 @@ export type Database = {
       regenerate_member_connection_code: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
+      }
+      should_send_notification: {
+        Args: { p_type: string; p_user_id: string }
+        Returns: boolean
       }
       spheroid_in: {
         Args: { "": unknown }
@@ -3180,6 +3474,10 @@ export type Database = {
       unlockrows: {
         Args: { "": string }
         Returns: number
+      }
+      update_notification_counts: {
+        Args: { p_delta: number; p_type: string; p_user_id: string }
+        Returns: undefined
       }
       update_trust_score: {
         Args: {
