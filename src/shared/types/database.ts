@@ -3059,6 +3059,7 @@ export type Database = {
         | "resource_completion"
         | "shoutout_sent"
         | "shoutout_received"
+        | "community_leave"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -3232,6 +3233,7 @@ export const Constants = {
         "resource_completion",
         "shoutout_sent",
         "shoutout_received",
+        "community_leave",
       ],
     },
   },

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { updateResourceClaim } from '../api';
 import { Resource, ResourceClaim, ResourceClaimInput } from '../types';
+import { ResourceClaimStatus } from '../types/resourceRow';
 import { resourceClaimsKeys, resourceKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 
@@ -12,9 +13,9 @@ export function useUpdateResourceClaim() {
   return useMutation<
     ResourceClaim,
     Error,
-    Pick<ResourceClaimInput, 'status' | 'notes'> & { id: string }
+    Partial<ResourceClaimInput> & { id: string; status?: ResourceClaimStatus }
   >({
-    mutationFn: (update: Pick<ResourceClaimInput, 'status' | 'notes'> & { id: string }) => updateResourceClaim(supabase, update),
+    mutationFn: (update: Partial<ResourceClaimInput> & { id: string; status?: ResourceClaimStatus }) => updateResourceClaim(supabase, update),
     onSuccess: (claim: ResourceClaim) => {
       queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
 

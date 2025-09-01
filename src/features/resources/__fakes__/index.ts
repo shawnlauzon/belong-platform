@@ -352,7 +352,6 @@ export function createFakeResourceClaimInput(
   return {
     resourceId: faker.string.uuid(),
     timeslotId: faker.string.uuid(),
-    status: 'pending',
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     ...overrides,
   };

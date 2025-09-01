@@ -8,7 +8,6 @@ export function createFakeTrustScore(overrides: Partial<TrustScore> = {}): Trust
   const now = faker.date.recent();
   
   return {
-    id: `${faker.string.uuid()}-${faker.string.uuid()}`,
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
     score: faker.number.int({ min: 0, max: 5000 }),

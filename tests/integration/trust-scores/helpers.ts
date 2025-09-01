@@ -9,6 +9,7 @@ import type { Database } from '@/shared/types/database';
 export const POINTS_CONFIG = {
   COMMUNITY_CREATION: 1000,
   COMMUNITY_JOIN: 50,
+  COMMUNITY_LEAVE: -50, // Points deducted when leaving a community
   COMMUNITY_JOIN_WITH_INVITATION: 50, // Same as regular join currently
   RESOURCE_OFFER: 50,
   EVENT_CLAIM_INITIAL: 5,

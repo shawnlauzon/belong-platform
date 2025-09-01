@@ -4,7 +4,7 @@ import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchTrustScores } from '@/features/trust-scores/api';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { signIn } from '@/features/auth/api';
-import { joinCommunity } from '@/features/communities/api';
+import { joinCommunity, leaveCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
@@ -187,5 +187,49 @@ describe('Trust Score Points - Communities', () => {
       community.id,
     );
     expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN_WITH_INVITATION);
+  });
+
+  it('should deduct points when user leaves community', async () => {
+    const owner = await createTestUser(supabase);
+    await signIn(supabase, owner.email, 'TestPass123!');
+    const community = await createTestCommunity(supabase);
+
+    const joiner = await createTestUser(supabase);
+    await signIn(supabase, joiner.email, 'TestPass123!');
+    
+    // Join community first
+    await joinCommunity(supabase, community.id);
+    
+    // Verify user has 50 points for joining
+    const scoreAfterJoin = await getCurrentTrustScore(supabase, joiner.id, community.id);
+    expect(scoreAfterJoin).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+
+    // Leave the community
+    await leaveCommunity(supabase, community.id);
+
+    // Verify user lost the 50 points
+    const scoreAfterLeave = await getCurrentTrustScore(supabase, joiner.id, community.id);
+    expect(scoreAfterLeave).toBe(0);
+  });
+
+  it('should log community leave action', async () => {
+    const owner = await createTestUser(supabase);
+    await signIn(supabase, owner.email, 'TestPass123!');
+    const community = await createTestCommunity(supabase);
+
+    const joiner = await createTestUser(supabase);
+    await signIn(supabase, joiner.email, 'TestPass123!');
+    
+    await joinCommunity(supabase, community.id);
+    await leaveCommunity(supabase, community.id);
+
+    await verifyTrustScoreLog(
+      serviceClient,
+      joiner.id,
+      community.id,
+      'community_leave',
+      POINTS_CONFIG.COMMUNITY_LEAVE,
+      'Community leave log',
+    );
   });
 });

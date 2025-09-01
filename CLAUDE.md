@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - A maximum file size is around 500 lines
 - Only catch errors for 1. logging and rethrowing or 2. if they are specifically expected
 - Do not maintain old / legacy interfaces. When you make a change, remove the old code.
+- Before stating a feature is done, run verification (`pnpm lint && pnpm typecheck && pnpm test && pnpm build`) and fix any problems which arise, regardless of whether they were added by this feature or not.
 
 ## Development Commands
 
