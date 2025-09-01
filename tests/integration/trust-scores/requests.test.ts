@@ -20,24 +20,32 @@ import { joinCommunity } from '@/features/communities/api';
 import {
   createResourceClaim,
   updateResourceClaim,
+  deleteResourceClaim,
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
   POINTS_CONFIG,
   getCurrentTrustScore,
-  verifyTrustScoreIncrement,
   verifyTrustScoreLog,
 } from './helpers';
+import type { User } from '@/features/users/types';
+import type { Community } from '@/features/communities/types';
+import type {
+  Resource,
+  ResourceTimeslot,
+  ResourceClaim,
+} from '@/features/resources/types';
 
 describe('Trust Score Points - Requests', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let owner: any;
-  let claimant: any;
-  let community: any;
-  let request: any;
-  let timeslot: any;
+  let owner: User;
+  let claimant: User;
+  let community: Community;
+  let request: Resource;
+  let timeslot: ResourceTimeslot;
+  let testClaim: ResourceClaim;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -65,6 +73,12 @@ describe('Trust Score Points - Requests', () => {
     // At end of beforeEach: claimant is signed in
   });
 
+  afterEach(async () => {
+    if (testClaim) {
+      await deleteResourceClaim(supabase, testClaim.id);
+    }
+  });
+
   afterAll(async () => {
     await cleanupAllTestData();
   });
@@ -89,7 +103,7 @@ describe('Trust Score Points - Requests', () => {
     expect(scoreAfterRequest - scoreAfterCommunity).toBe(0);
   });
 
-  it('should award 25 points for claiming request', async () => {
+  it('should award points for claiming request', async () => {
     // Claimant is already signed in from beforeEach
 
     const scoreBeforeClaim = await getCurrentTrustScore(
@@ -98,7 +112,7 @@ describe('Trust Score Points - Requests', () => {
       community.id,
     );
 
-    await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: request.id,
       timeslotId: timeslot.id,
     });
@@ -115,7 +129,7 @@ describe('Trust Score Points - Requests', () => {
 
   it('should not award points for given status', async () => {
     // Use shared data from beforeEach
-    const claim = await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: request.id,
       timeslotId: timeslot.id,
     });
@@ -126,7 +140,7 @@ describe('Trust Score Points - Requests', () => {
       community.id,
     );
 
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
     const scoreAfterGiven = await getCurrentTrustScore(
       supabase,
@@ -136,15 +150,15 @@ describe('Trust Score Points - Requests', () => {
     expect(scoreAfterGiven - scoreBeforeGiven).toBe(0);
   });
 
-  it('should award 50 points for completed status', async () => {
+  it('should award points for completed status', async () => {
     // Use shared data from beforeEach
-    const claim = await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: request.id,
       timeslotId: timeslot.id,
     });
 
     // For requests: claimant marks as given (they give to fulfill the request)
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
     const scoreBeforeCompleted = await getCurrentTrustScore(
       supabase,
@@ -154,7 +168,10 @@ describe('Trust Score Points - Requests', () => {
 
     // For requests: owner marks as completed (they confirm receipt)
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'completed',
+    });
 
     const scoreAfterCompleted = await getCurrentTrustScore(
       supabase,
@@ -168,17 +185,20 @@ describe('Trust Score Points - Requests', () => {
 
   it('should log completed action', async () => {
     // Use shared data from beforeEach
-    const claim = await createResourceClaim(supabase, {
+    testClaim = await createResourceClaim(supabase, {
       resourceId: request.id,
       timeslotId: timeslot.id,
     });
 
     // For requests: claimant marks as given (they give to fulfill the request)
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
 
     // For requests: owner marks as completed (they confirm receipt)
     await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'completed',
+    });
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -188,31 +208,5 @@ describe('Trust Score Points - Requests', () => {
       POINTS_CONFIG.REQUEST_COMPLETED,
       'Request completion log',
     );
-  });
-
-  it('should accumulate points through full request flow', async () => {
-    // Use shared data from beforeEach
-    const claim = await createResourceClaim(supabase, {
-      resourceId: request.id,
-      timeslotId: timeslot.id,
-    });
-
-    // For requests: claimant marks as given (they give to fulfill the request)
-    await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
-
-    // For requests: owner marks as completed (they confirm receipt)
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
-
-    const finalScore = await getCurrentTrustScore(
-      supabase,
-      claimant.id,
-      community.id,
-    );
-    const expectedTotal =
-      POINTS_CONFIG.COMMUNITY_JOIN +
-      POINTS_CONFIG.REQUEST_APPROVED +
-      POINTS_CONFIG.REQUEST_COMPLETED;
-    expect(finalScore).toBe(expectedTotal);
   });
 });

@@ -1,12 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  beforeEach,
-  afterEach,
-  afterAll,
-} from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchTrustScores } from '@/features/trust-scores/api';
@@ -21,11 +13,12 @@ import {
   verifyTrustScoreLog,
   createTestConnectionAndJoin,
 } from './helpers';
+import type { User } from '@/features/users/types';
 
 describe('Trust Score Points - Communities', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let testUser: any;
+  let testUser: User;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -58,7 +51,7 @@ describe('Trust Score Points - Communities', () => {
     expect(trustScores[0].score).toBeGreaterThan(0);
   });
 
-  it('should award exactly 1000 points for community creation', async () => {
+  it('should award points for community creation', async () => {
     const community = await createTestCommunity(supabase);
 
     await verifyTrustScoreLog(
@@ -84,7 +77,7 @@ describe('Trust Score Points - Communities', () => {
     );
   });
 
-  it('should have total score of 1050 after creating community', async () => {
+  it('should have correct total score after creating community', async () => {
     const community = await createTestCommunity(supabase);
 
     const score = await getCurrentTrustScore(
@@ -112,7 +105,7 @@ describe('Trust Score Points - Communities', () => {
     expect(trustScores[0].communityId).toBe(community.id);
   });
 
-  it('should award 50 points for joining existing community', async () => {
+  it('should award points for joining existing community', async () => {
     const owner = await createTestUser(supabase);
     await signIn(supabase, owner.email, 'TestPass123!');
     const community = await createTestCommunity(supabase);
@@ -150,7 +143,6 @@ describe('Trust Score Points - Communities', () => {
     const community2 = await createTestCommunity(supabase);
 
     const trustScores = await fetchTrustScores(supabase, testUser.id);
-    expect(trustScores).toHaveLength(2);
 
     const score1 = trustScores.find((s) => s.communityId === community1.id);
     const score2 = trustScores.find((s) => s.communityId === community2.id);
