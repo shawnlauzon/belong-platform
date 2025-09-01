@@ -1,8 +1,8 @@
 import { Message, MessageStatus } from '../types';
 import { MessageWithStatus } from '../types/messageRow';
 import { Database } from '../../../shared/types/database';
-import { toDomainUser } from '../../users/transformers/userTransformer';
-import { User } from '../../users/types/user';
+import { toUserSummary } from '../../users/transformers/userTransformer';
+import { UserSummary, CurrentUser } from '../../users/types';
 
 interface MessageBasic {
   id: string;
@@ -15,11 +15,16 @@ interface MessageBasic {
 export function transformMessage(
   row: MessageBasic,
   currentUserId: string,
-  currentUser: User,
-  otherParticipant: User
+  currentUser: CurrentUser,
+  otherParticipant: UserSummary
 ): Message {
-  // Determine sender based on sender_id
-  const sender = row.sender_id === currentUserId ? currentUser : otherParticipant;
+  // Determine sender based on sender_id - convert CurrentUser to UserSummary for consistency
+  const currentUserSummary: UserSummary = {
+    id: currentUser.id,
+    firstName: currentUser.firstName,
+    avatarUrl: currentUser.avatarUrl,
+  };
+  const sender = row.sender_id === currentUserId ? currentUserSummary : otherParticipant;
 
   return {
     id: row.id,
@@ -39,7 +44,7 @@ export function transformMessage(
 
 
 export function transformMessageWithStatus(
-  row: MessageWithStatus & { sender: Database['public']['Tables']['profiles']['Row'] },
+  row: MessageWithStatus & { sender: { id: string | null; first_name: string | null; avatar_url: string | null; } },
   currentUserId: string
 ): Message {
   const status = row.message_status.find(s => s.user_id === currentUserId);
@@ -55,7 +60,7 @@ export function transformMessageWithStatus(
     encryptionVersion: row.encryption_version,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
-    sender: toDomainUser(row.sender),
+    sender: toUserSummary(row.sender),
     isMine: row.sender_id === currentUserId,
     status: status ? transformMessageStatus(status) : undefined,
   };

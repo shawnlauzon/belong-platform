@@ -1,4 +1,5 @@
 import { Database } from '../../../shared/types/database';
+import { PublicProfileSummaryRow } from '../../users/types/publicProfileRow';
 
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];
 export type MessageUpdate = Database['public']['Tables']['messages']['Update'];
@@ -28,7 +29,7 @@ export type ConversationWithParticipants = ConversationRow & {
     user_id: string;
     unread_count: number;
     last_read_at: string | null;
-    profiles: Database['public']['Tables']['profiles']['Row'];
+    public_profiles: PublicProfileSummaryRow;
   }>;
 };
 

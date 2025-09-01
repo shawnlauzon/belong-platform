@@ -1,28 +1,58 @@
-import type { User, UserData } from '..';
-import type {
-  ProfileRow,
-  ProfileInsertRow,
-  ProfileUpdateRow,
-} from '../types/profileRow';
-
+import type { UserSummary, PublicUser, CurrentUser } from '../types/user';
+import type { ProfileRow, ProfileInsertRow, ProfileUpdateRow } from '../types/profileRow';
+import type { PublicProfileRow, PublicProfileSummaryRow } from '../types/publicProfileRow';
 import type { UserMetadata } from '../types/user';
 
 /**
- * Transforms a database profile record to a domain user object
+ * Transforms a public profile row to UserSummary (minimal user info)
  */
-export function toDomainUser(profile: ProfileRow): User {
+export function toUserSummary(profile: PublicProfileSummaryRow): UserSummary {
+  if (!profile.id) {
+    throw new Error('Profile ID is required');
+  }
+  
+  return {
+    id: profile.id,
+    firstName: profile.first_name || '',
+    avatarUrl: profile.avatar_url || undefined,
+  };
+}
+
+/**
+ * Transforms a public profile row to PublicUser (full public profile)
+ */
+export function toPublicUser(profile: PublicProfileRow): PublicUser {
+  if (!profile.id || !profile.created_at || !profile.updated_at) {
+    throw new Error('Profile ID, created_at, and updated_at are required');
+  }
+  
+  return {
+    id: profile.id,
+    firstName: profile.first_name || '',
+    lastName: profile.last_name || undefined,
+    fullName: profile.full_name || undefined,
+    avatarUrl: profile.avatar_url || undefined,
+    bio: profile.bio || undefined,
+    createdAt: new Date(profile.created_at),
+    updatedAt: new Date(profile.updated_at),
+  };
+}
+
+/**
+ * Transforms a full profile row to CurrentUser (includes private fields)
+ */
+export function toCurrentUser(profile: ProfileRow): CurrentUser {
   const metadata = (profile.user_metadata || {}) as UserMetadata;
-  const { first_name, last_name, full_name, avatar_url, bio, location } =
-    metadata;
+  const { first_name, last_name, full_name, avatar_url, bio, location } = metadata;
 
   return {
     id: profile.id,
-    email: profile.email || '',
     firstName: first_name || '',
-    lastName: last_name,
-    fullName: full_name,
-    avatarUrl: avatar_url,
-    bio,
+    lastName: last_name || undefined,
+    fullName: full_name || undefined,
+    avatarUrl: avatar_url || undefined,
+    bio: bio || undefined,
+    email: profile.email || '',
     location,
     createdAt: new Date(profile.created_at),
     updatedAt: new Date(profile.updated_at),
@@ -30,13 +60,12 @@ export function toDomainUser(profile: ProfileRow): User {
 }
 
 /**
- * Prepares user data for database insertion into profiles table
+ * Prepares current user data for database insertion into profiles table
  */
-export function toUserInsertRow(
-  userData: UserData & { id: string },
+export function toCurrentUserInsertRow(
+  userData: Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'> & { id: string },
 ): ProfileInsertRow {
-  const { id, email, firstName, lastName, fullName, avatarUrl, bio, location } =
-    userData;
+  const { id, email, firstName, lastName, fullName, avatarUrl, bio, location } = userData;
 
   const user_metadata: UserMetadata = {
     first_name: firstName,
@@ -55,10 +84,10 @@ export function toUserInsertRow(
 }
 
 /**
- * Prepares user data for updating the profiles table
+ * Prepares current user data for updating the profiles table
  */
-export function toUserUpdateRow(
-  userData: Partial<UserData> & { id: string },
+export function toCurrentUserUpdateRow(
+  userData: Partial<Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'>> & { id: string },
   currentProfile: ProfileRow,
 ): ProfileUpdateRow {
   const currentMetadata = (currentProfile.user_metadata || {}) as UserMetadata;
@@ -86,16 +115,22 @@ export function toUserUpdateRow(
     updatedMetadata.location = userData.location;
   }
 
-  return {
+  const updateRow: ProfileUpdateRow = {
     user_metadata: updatedMetadata,
     updated_at: new Date().toISOString(),
   };
+
+  // Update email if provided (only for current user)
+  if (userData.email !== undefined) {
+    updateRow.email = userData.email;
+  }
+
+  return updateRow;
 }
 
-
-// Export types for testing
+// Re-export row types for convenience
 export type {
-  ProfileRow as UserRow,
-  ProfileInsertRow as UserInsertRow,
-  ProfileUpdateRow as UserUpdateRow,
-};
+  ProfileRow,
+  ProfileInsertRow,
+  ProfileUpdateRow,
+} from '../types/profileRow';

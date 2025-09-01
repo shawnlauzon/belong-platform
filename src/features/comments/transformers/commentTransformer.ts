@@ -1,13 +1,13 @@
 import type { Comment } from '../types/comment';
 import type { CommentRowJoinAuthor, CommentWithRepliesRow } from '../types/commentRow';
-import { toDomainUser } from '@/features/users/transformers/userTransformer';
+import { toUserSummary } from '@/features/users/transformers/userTransformer';
 
 export function toDomainComment(row: CommentRowJoinAuthor): Comment {
   return {
     id: row.id,
     content: row.content,
     authorId: row.author_id,
-    author: toDomainUser(row.profiles),
+    author: toUserSummary(row.public_profiles),
     isEdited: row.is_edited ?? false,
     isDeleted: row.is_deleted ?? false,
     parentId: row.parent_id ?? undefined,

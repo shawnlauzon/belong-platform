@@ -1,14 +1,33 @@
 import { Coordinates, IsPersisted } from '@/shared';
 
-export type User = IsPersisted<UserData>;
-
-export type UserData = {
+/**
+ * Minimal user info - just enough to identify someone
+ * Used in: comment authors, resource owners, message previews
+ */
+export type UserSummary = {
+  id: string;
   firstName: string;
+  avatarUrl?: string;
+};
+
+/**
+ * Full public profile - what anyone can see about another user
+ * Used in: user profile pages, user directories, detailed views
+ */
+export type PublicUser = UserSummary & {
   lastName?: string;
   fullName?: string;
-  avatarUrl?: string;
-  email: string;
   bio?: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/**
+ * Current user data - includes private fields only the user themselves can see
+ * Used in: current user's profile, settings, edit forms
+ */
+export type CurrentUser = PublicUser & {
+  email: string;
   location?: Coordinates;
 };
 
@@ -25,5 +44,6 @@ export type UserMetadata = {
   };
 };
 
-
-export type UserSummary = Pick<User, 'id' | 'firstName' | 'lastName' | 'fullName' | 'avatarUrl'>;
+// Make types persistent with ID
+export type PublicUserWithId = IsPersisted<PublicUser>;
+export type CurrentUserWithId = IsPersisted<CurrentUser>;

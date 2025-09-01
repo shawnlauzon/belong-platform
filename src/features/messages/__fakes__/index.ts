@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Message, Conversation, SendMessageInput, MessageReport, CommunityConversation } from '../types';
 import { MessageWithSender, ConversationWithParticipants } from '../types/messageRow';
-import { createFakeUser, createFakeProfileRow } from '../../users/__fakes__';
+import { createFakeUser } from '../../users/__fakes__';
 import type { Database } from '../../../shared/types/database';
 
 /**
@@ -246,13 +246,21 @@ export function createFakeConversationWithParticipants(
         user_id: currentUserId,
         unread_count: faker.number.int({ min: 0, max: 5 }),
         last_read_at: faker.date.recent().toISOString(),
-        profiles: createFakeProfileRow({ id: currentUserId }),
+        public_profiles: {
+          id: currentUserId,
+          first_name: faker.person.firstName(),
+          avatar_url: faker.image.avatar(),
+        },
       },
       {
         user_id: otherParticipantId,
         unread_count: faker.number.int({ min: 0, max: 5 }),
         last_read_at: faker.date.recent().toISOString(),
-        profiles: createFakeProfileRow({ id: otherParticipantId }),
+        public_profiles: {
+          id: otherParticipantId,
+          first_name: faker.person.firstName(),
+          avatar_url: faker.image.avatar(),
+        },
       },
     ],
     ...overrides,

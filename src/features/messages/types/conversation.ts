@@ -1,5 +1,5 @@
 import { Database } from '../../../shared/types/database';
-import { User } from '../../users/types';
+import { UserSummary } from '../../users/types';
 
 export type ConversationParticipantRow = Database['public']['Tables']['conversation_participants']['Row'];
 
@@ -12,7 +12,7 @@ export interface Conversation {
   lastMessageAt: Date | null;
   lastMessagePreview: string | null;
   lastMessageSenderId: string | null;
-  otherParticipant: User;
+  otherParticipant: UserSummary;
   unreadCount: number;
   lastReadAt: Date | null;
   conversationType: ConversationType;
@@ -39,7 +39,7 @@ export interface ConversationParticipant {
   joinedAt: Date;
   lastReadAt: Date | null;
   unreadCount: number;
-  user?: User;
+  user?: UserSummary;
 }
 
 export interface StartConversationInput {

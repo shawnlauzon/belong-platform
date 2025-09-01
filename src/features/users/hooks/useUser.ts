@@ -3,7 +3,7 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUserById } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
-import type { User } from '../types';
+import type { PublicUser } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { userKeys } from '../queries';
 
@@ -29,11 +29,10 @@ import { userKeys } from '../queries';
  *   return (
  *     <div>
  *       <h1>{user.firstName} {user.lastName}</h1>
- *       <p>Email: {user.email}</p>
  *       {user.bio && <p>Bio: {user.bio}</p>}
- *       {user.profilePictureUrl && (
+ *       {user.avatarUrl && (
  *         <img
- *           src={user.profilePictureUrl}
+ *           src={user.avatarUrl}
  *           alt={`${user.firstName}'s profile`}
  *         />
  *       )}
@@ -66,11 +65,11 @@ import { userKeys } from '../queries';
  */
 export function useUser(
   userId: string,
-  options?: Partial<UseQueryOptions<User | null, Error>>,
-): UseQueryResult<User | null, Error> {
+  options?: Partial<UseQueryOptions<PublicUser | null, Error>>,
+): UseQueryResult<PublicUser | null, Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<User | null, Error>({
+  const query = useQuery<PublicUser | null, Error>({
     queryKey: userKeys.detail(userId),
     queryFn: () => fetchUserById(supabase, userId),
     staleTime: STANDARD_CACHE_TIME,

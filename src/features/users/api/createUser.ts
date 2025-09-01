@@ -1,8 +1,8 @@
 import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toDomainUser, toUserInsertRow } from '../transformers/userTransformer';
-import { User, UserData } from '../types';
+import { toCurrentUser, toCurrentUserInsertRow } from '../transformers/userTransformer';
+import { CurrentUser } from '../types';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { joinCommunity } from '@/features/communities/api/joinCommunity';
 import { createConnectionRequest } from '@/features/connections/api/createConnectionRequest';
@@ -84,13 +84,13 @@ async function processInvitationCode(
 
 export async function createUser(
   supabase: SupabaseClient<Database>,
-  userData: UserData,
-): Promise<User> {
+  userData: Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'>,
+): Promise<CurrentUser> {
   logger.debug('👤 API: Creating user', { email: userData.email });
 
   try {
     const userId = await getAuthIdOrThrow(supabase);
-    const dbData = toUserInsertRow({ ...userData, id: userId });
+    const dbData = toCurrentUserInsertRow({ ...userData, id: userId });
 
     const { data, error } = await supabase
       .from('profiles')
@@ -106,7 +106,7 @@ export async function createUser(
       throw error;
     }
 
-    const user = toDomainUser(data);
+    const user = toCurrentUser(data);
 
     logger.info('👤 API: Successfully created user', {
       id: user.id,

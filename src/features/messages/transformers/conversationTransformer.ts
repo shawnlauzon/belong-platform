@@ -3,7 +3,7 @@ import {
   ConversationRow,
   ConversationWithParticipants,
 } from '../types/messageRow';
-import { toDomainUser } from '../../users/transformers/userTransformer';
+import { toUserSummary } from '../../users/transformers/userTransformer';
 
 export function transformConversation(
   row: ConversationWithParticipants,
@@ -28,7 +28,7 @@ export function transformConversation(
     lastMessageAt: row.last_message_at ? new Date(row.last_message_at) : null,
     lastMessagePreview: row.last_message_preview,
     lastMessageSenderId: row.last_message_sender_id,
-    otherParticipant: toDomainUser(otherParticipant.profiles),
+    otherParticipant: toUserSummary(otherParticipant.public_profiles),
     unreadCount: currentParticipant.unread_count,
     lastReadAt: currentParticipant.last_read_at
       ? new Date(currentParticipant.last_read_at)

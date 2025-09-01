@@ -12,7 +12,7 @@ export async function joinCommunity(
   supabase: SupabaseClient<Database>,
   communityId: string,
 ): Promise<CommunityMembership> {
-  logger.debug('🏘️ API: Joining community', { communityId });
+  logger.debug('🏘️ API: Joining community!', { communityId });
 
   try {
     const currentUserId = await getAuthIdOrThrow(supabase);

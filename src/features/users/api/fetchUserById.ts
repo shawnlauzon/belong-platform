@@ -2,17 +2,17 @@ import { logger } from '@/shared';
 import { ERROR_CODES } from '@/shared/constants';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toDomainUser } from '../transformers/userTransformer';
-import { User } from '../types';
+import { toPublicUser } from '../transformers/userTransformer';
+import { PublicUser } from '../types';
 
 export async function fetchUserById(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<User | null> {
+): Promise<PublicUser | null> {
   logger.debug('👤 API: Fetching user by ID', { id });
 
   try {
-    const query = supabase.from('profiles').select('*').eq('id', id);
+    const query = supabase.from('public_profiles').select('*').eq('id', id);
     const { data, error } = await query.single();
 
     if (error) {
@@ -24,11 +24,11 @@ export async function fetchUserById(
       throw error;
     }
 
-    const user = toDomainUser(data);
+    const user = toPublicUser(data);
 
     logger.debug('👤 API: Successfully fetched user', {
       id,
-      email: user.email,
+      firstName: user.firstName,
     });
     return user;
   } catch (error) {

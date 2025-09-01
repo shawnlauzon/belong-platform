@@ -26,7 +26,7 @@ export async function fetchConversation(
         user_id,
         unread_count,
         last_read_at,
-        profiles(*)
+        public_profiles(id, first_name, avatar_url)
       )
     `)
     .eq('id', conversationId)
@@ -45,7 +45,11 @@ export async function fetchConversation(
     user_id: string;
     unread_count: number;
     last_read_at: string | null;
-    profiles: Database['public']['Tables']['profiles']['Row'];
+    public_profiles: {
+      id: string | null;
+      first_name: string | null;
+      avatar_url: string | null;
+    };
   }>;
   
   if (!participants.some(p => p.user_id === userId)) {

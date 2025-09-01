@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { updateUser } from '../api';
-import type { User } from '../types';
+import type { CurrentUser } from '../types';
 import { userKeys } from '../queries';
+import { authKeys } from '@/features/auth/queries';
 
 /**
  * Hook for updating existing user profiles.
@@ -16,10 +17,10 @@ import { userKeys } from '../queries';
  *
  * @example
  * ```tsx
- * function EditProfileForm({ user }: { user: User }) {
+ * function EditProfileForm({ user }: { user: CurrentUser }) {
  *   const updateUser = useUpdateUser();
  *
- *   const handleSubmit = useCallback(async (updates: Partial<User>) => {
+ *   const handleSubmit = useCallback(async (updates: Partial<CurrentUser>) => {
  *     try {
  *       const updatedUser = await updateUser.mutateAsync({
  *         id: user.id,
@@ -103,14 +104,15 @@ export function useUpdateUser() {
   const supabase = useSupabase();
 
   return useMutation({
-    mutationFn: async (userData: Partial<User> & { id: string }) => {
+    mutationFn: async (userData: Partial<CurrentUser> & { id: string }) => {
       logger.debug('👤 useUpdateUser: Updating user', { id: userData.id });
 
       // Update user (auto-commits images internally)
       return updateUser(supabase, userData);
     },
-    onSuccess: (updatedUser: User) => {
-      queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
+    onSuccess: (updatedUser: CurrentUser) => {
+      // Update both current user cache and user lists
+      queryClient.setQueryData(authKeys.currentUser(), updatedUser);
       queryClient.invalidateQueries({
         queryKey: userKeys.lists(),
       });

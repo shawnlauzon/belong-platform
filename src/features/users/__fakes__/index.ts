@@ -1,30 +1,78 @@
 import { faker } from '@faker-js/faker';
-import { User, UserData } from '../types';
+import { CurrentUser, PublicUser, UserSummary } from '../types';
 import { ProfileRow } from '../types/profileRow';
 
 /**
- * Creates a fake domain User object (Entity)
+ * Creates a fake UserSummary object
  */
-export function createFakeUser(overrides: Partial<User> = {}): User {
+export function createFakeUserSummary(overrides: Partial<UserSummary> = {}): UserSummary {
+  return {
+    id: faker.string.uuid(),
+    firstName: faker.person.firstName(),
+    avatarUrl: faker.image.avatar(),
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a fake PublicUser object
+ */
+export function createFakePublicUser(overrides: Partial<PublicUser> = {}): PublicUser {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
 
   return {
     id: faker.string.uuid(),
-    email: faker.internet.email(),
     firstName,
     lastName,
+    fullName: `${firstName} ${lastName}`,
     avatarUrl: faker.image.avatar(),
+    bio: faker.lorem.paragraph(),
     createdAt: now,
     updatedAt: now,
     ...overrides,
   };
 }
 
-export function createFakeUserInput(
-  overrides: Partial<UserData> = {},
-): UserData {
+/**
+ * Creates a fake CurrentUser object (includes private fields)
+ */
+export function createFakeCurrentUser(overrides: Partial<CurrentUser> = {}): CurrentUser {
+  const now = faker.date.recent();
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
+
+  return {
+    id: faker.string.uuid(),
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+    avatarUrl: faker.image.avatar(),
+    bio: faker.lorem.paragraph(),
+    email: faker.internet.email(),
+    location: {
+      lat: faker.location.latitude(),
+      lng: faker.location.longitude(),
+    },
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+/**
+ * Legacy alias for createFakeCurrentUser
+ * @deprecated Use createFakeCurrentUser instead
+ */
+export const createFakeUser = createFakeCurrentUser;
+
+/**
+ * Creates fake CurrentUser input data for creation
+ */
+export function createFakeCurrentUserInput(
+  overrides: Partial<Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'>> = {},
+): Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'> {
   return {
     email: faker.internet.email(),
     firstName: faker.person.firstName(),

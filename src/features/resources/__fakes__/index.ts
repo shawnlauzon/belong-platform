@@ -15,8 +15,8 @@ import {
   ResourceClaimRow,
   ResourceRowJoinCommunitiesJoinTimeslots,
 } from '../types/resourceRow';
-import { User } from '../../users';
-import { createFakeUser } from '../../users/__fakes__';
+import { CurrentUser } from '../../users';
+import { createFakeCurrentUser } from '../../users/__fakes__';
 
 /**
  * Creates a fake domain Resource object with an owner
@@ -26,7 +26,7 @@ export function createFakeResource(
 ): Resource {
   const now = new Date();
 
-  const owner = createFakeUser();
+  const owner = createFakeCurrentUser();
 
   const type = faker.helpers.arrayElement([
     ResourceTypeEnum.OFFER,
@@ -92,7 +92,7 @@ export function createFakeResource(
  * Creates a fake domain Resource with a custom owner
  */
 export function createFakeResourceWithOwner(
-  owner: User,
+  owner: CurrentUser,
   overrides: Partial<Resource> = {},
 ): Resource {
   const resource = createFakeResource({ ...overrides, ownerId: owner.id });

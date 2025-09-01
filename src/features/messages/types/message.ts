@@ -1,5 +1,5 @@
 import { Database } from '../../../shared/types/database';
-import { User } from '../../users/types';
+import { UserSummary } from '../../users/types';
 
 export type MessageStatusRow = Database['public']['Tables']['message_status']['Row'];
 export type MessageReportRow = Database['public']['Tables']['message_reports']['Row'];
@@ -20,7 +20,7 @@ export interface Message {
   encryptionVersion: number;
   createdAt: Date;
   updatedAt: Date;
-  sender: User;
+  sender: UserSummary;
   status?: MessageStatus;
   isMine: boolean;
 }
@@ -81,7 +81,7 @@ export interface BlockedUser {
   blockerId: string;
   blockedId: string;
   blockedAt: Date;
-  blockedUser?: User;
+  blockedUser?: UserSummary;
 }
 
 export interface BlockUserInput {

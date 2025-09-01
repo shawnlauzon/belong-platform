@@ -1,16 +1,16 @@
 import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toDomainUser, toUserUpdateRow } from '../transformers/userTransformer';
-import { User } from '../types';
+import { toCurrentUser, toCurrentUserUpdateRow } from '../transformers/userTransformer';
+import { CurrentUser } from '../types';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { ProfileRow } from '../types/profileRow';
 import { QueryError } from '@supabase/supabase-js';
 
 export async function updateUser(
   supabase: SupabaseClient<Database>,
-  userData: Partial<User> & { id: string },
-): Promise<User> {
+  userData: Partial<CurrentUser> & { id: string },
+): Promise<CurrentUser> {
   logger.debug('👤 API: Updating user', { id: userData.id });
 
   try {
@@ -67,7 +67,7 @@ export async function updateUser(
       }
     }
 
-    const updateData = toUserUpdateRow(
+    const updateData = toCurrentUserUpdateRow(
       { ...userData, avatarUrl: finalAvatarUrl },
       currentProfile,
     );
@@ -87,7 +87,7 @@ export async function updateUser(
       throw error;
     }
 
-    const user = toDomainUser(data);
+    const user = toCurrentUser(data);
 
     logger.info('👤 API: Successfully updated user', {
       id: user.id,

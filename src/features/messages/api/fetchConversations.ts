@@ -28,7 +28,7 @@ export async function fetchConversations(
         user_id,
         unread_count,
         last_read_at,
-        profiles(*)
+        public_profiles(id, first_name, avatar_url)
       )
     `)
     .order('last_message_at', { ascending: false, nullsFirst: false })
@@ -61,7 +61,11 @@ export async function fetchConversations(
         user_id: string;
         unread_count: number;
         last_read_at: string | null;
-        profiles: Database['public']['Tables']['profiles']['Row'];
+        public_profiles: {
+          id: string | null;
+          first_name: string | null;
+          avatar_url: string | null;
+        };
       }>;
       return participants.length === 2 && 
              participants.some(p => p.user_id === userId);

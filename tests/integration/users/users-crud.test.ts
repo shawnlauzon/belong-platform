@@ -52,8 +52,9 @@ describe('Users API - CRUD Operations', () => {
 
       expect(user).toBeTruthy();
       expect(user!.id).toBe(testUser.id);
-      expect(user!.email).toBe(testUser.email);
       expect(user!.firstName).toBe(testUser.firstName);
+      // Email should not be accessible when fetching other users (security feature)
+      expect('email' in user!).toBe(false);
     });
 
     it('returns null for non-existent id', async () => {
