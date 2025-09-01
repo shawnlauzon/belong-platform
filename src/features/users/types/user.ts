@@ -26,10 +26,11 @@ export type User = UserSummary & {
  * Current user data - includes private fields only the user themselves can see
  * Used in: current user's profile, settings, edit forms
  */
-export type CurrentUser = User & {
-  email: string;
-  location?: Coordinates;
-};
+export type CurrentUser = User &
+  UserSummary & {
+    email: string;
+    location?: Coordinates;
+  };
 
 // Type for the user_metadata JSONB column
 export type UserMetadata = {
