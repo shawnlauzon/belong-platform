@@ -200,17 +200,17 @@ export async function createTestConnectionAndJoin(
   }
 
   // Create connection request from invitee to inviter using the code
-  const connectionRequest = await createTestConnectionRequest(
+  const { requestId } = await createTestConnectionRequest(
+    inviterClient,
     inviteeClient,
     communityId,
-    memberCode.code,
   );
 
   // Approve the connection as the inviter
-  await approveConnection(inviterClient, connectionRequest.id);
+  await approveConnection(inviterClient, requestId);
 
   // Wait for triggers to complete
   await new Promise((resolve) => setTimeout(resolve, 300));
 
-  return connectionRequest;
+  return { id: requestId };
 }
