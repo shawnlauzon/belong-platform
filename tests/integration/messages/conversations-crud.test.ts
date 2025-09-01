@@ -7,13 +7,14 @@ import * as api from '@/features/messages/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import { joinCommunity } from '@/features/communities/api';
 
 describe('Conversations CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
+  let userA: Account;
+  let userB: Account;
   let community: Community;
 
   beforeAll(async () => {

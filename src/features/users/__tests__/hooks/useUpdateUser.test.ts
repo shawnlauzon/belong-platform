@@ -80,17 +80,15 @@ describe('useUpdateUser', () => {
       ...updateData,
     });
 
-    // Assert: Should update user detail cache with new data
-    expect(setQueryDataSpy).toHaveBeenCalledWith(userKeys.detail(mockUser.id), mockUser);
+    // Assert: Should update current user cache with new data
+    expect(setQueryDataSpy).toHaveBeenCalledWith(authKeys.currentUser(), mockUser);
     
     // Assert: Should invalidate user lists cache
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: userKeys.lists(),
     });
 
-    // Assert: Should NOT try to invalidate current user cache (it no longer exists)
-    expect(invalidateSpy).not.toHaveBeenCalledWith({
-      queryKey: authKeys.currentUser(),
-    });
+    // Assert: Should NOT update user detail cache (that's for viewing other users)
+    expect(setQueryDataSpy).not.toHaveBeenCalledWith(userKeys.detail(mockUser.id), expect.anything());
   });
 });

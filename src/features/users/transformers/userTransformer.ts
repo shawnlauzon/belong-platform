@@ -1,4 +1,4 @@
-import type { UserSummary, PublicUser, CurrentUser } from '../types/user';
+import type { UserSummary, User, CurrentUser } from '../types/user';
 import type { ProfileRow, ProfileInsertRow, ProfileUpdateRow } from '../types/profileRow';
 import type { PublicProfileRow, PublicProfileSummaryRow } from '../types/publicProfileRow';
 import type { UserMetadata } from '../types/user';
@@ -19,9 +19,9 @@ export function toUserSummary(profile: PublicProfileSummaryRow): UserSummary {
 }
 
 /**
- * Transforms a public profile row to PublicUser (full public profile)
+ * Transforms a public profile row to User (full public profile)
  */
-export function toPublicUser(profile: PublicProfileRow): PublicUser {
+export function toUser(profile: PublicProfileRow): User {
   if (!profile.id || !profile.created_at || !profile.updated_at) {
     throw new Error('Profile ID, created_at, and updated_at are required');
   }
@@ -53,7 +53,7 @@ export function toCurrentUser(profile: ProfileRow): CurrentUser {
     avatarUrl: avatar_url || undefined,
     bio: bio || undefined,
     email: profile.email || '',
-    location,
+    location: location || undefined,
     createdAt: new Date(profile.created_at),
     updatedAt: new Date(profile.updated_at),
   };

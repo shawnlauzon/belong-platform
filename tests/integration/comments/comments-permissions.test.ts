@@ -19,11 +19,12 @@ import { joinCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 
 describe('Comments Permissions', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
 
   beforeAll(async () => {

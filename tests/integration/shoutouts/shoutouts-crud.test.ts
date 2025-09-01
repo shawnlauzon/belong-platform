@@ -19,6 +19,7 @@ import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Shoutout } from '@/features/shoutouts/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
@@ -26,8 +27,8 @@ import { joinCommunity } from '@/features/communities/api';
 
 describe('Shoutouts API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
-  let testUser2: User;
+  let testUser: Account;
+  let testUser2: Account;
   let testCommunity: Community;
   let testResource: Resource;
   let testResource2: Resource;

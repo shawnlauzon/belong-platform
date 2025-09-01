@@ -16,13 +16,14 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import type { Resource, ResourceTimeslot } from '@/features/resources';
 
 describe('Resource Requests - Workflow', () => {
   let supabase: SupabaseClient<Database>;
-  let owner: User;
-  let claimant: User;
+  let owner: Account;
+  let claimant: Account;
   let community: Community;
   let request: Resource;
   let timeslot: ResourceTimeslot;

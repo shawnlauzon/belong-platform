@@ -13,6 +13,7 @@ import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 import type { Shoutout } from '@/features/shoutouts/types';
@@ -21,7 +22,7 @@ import { joinCommunity } from '@/features/communities/api';
 describe('Shoutouts API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
   let testResource: Resource;
   let testShoutout: Shoutout;

@@ -14,11 +14,12 @@ import {
   createTestConnectionAndJoin,
 } from './helpers';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 
 describe('Trust Score Points - Communities', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
 
   beforeAll(async () => {
     supabase = createTestClient();

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import {
-  toDomainUser,
-  toUserInsertRow,
-  toUserUpdateRow,
+  toCurrentUser,
+  toCurrentUserInsertRow,
+  toCurrentUserUpdateRow,
 } from '../../transformers/userTransformer';
-import { createFakeProfileRow, createFakeUserInput } from '../../__fakes__';
+import { createFakeProfileRow, createFakeCurrentUserInput } from '../../__fakes__';
 import {
   assertNoSnakeCaseProperties,
   COMMON_SNAKE_CASE_PROPERTIES,
@@ -38,7 +38,7 @@ describe('User Transformer', () => {
     });
 
     // Act
-    const result = toDomainUser(dbProfile);
+    const result = toCurrentUser(dbProfile);
 
     // Assert - Should have camelCase properties
     expect(result).toMatchObject({
@@ -73,7 +73,7 @@ describe('User Transformer', () => {
     });
 
     // Act
-    const result = toDomainUser(dbProfile);
+    const result = toCurrentUser(dbProfile);
 
     // Assert
     expect(result.bio).toBe(bio);
@@ -92,13 +92,13 @@ describe('User Transformer', () => {
     });
 
     // Act
-    const result = toDomainUser(dbProfile);
+    const result = toCurrentUser(dbProfile);
 
     // Assert
-    expect(result.lastName).toBeNull();
-    expect(result.fullName).toBeNull();
-    expect(result.avatarUrl).toBeNull();
-    expect(result.location).toBeNull();
+    expect(result.lastName).toBeUndefined();
+    expect(result.fullName).toBeUndefined();
+    expect(result.avatarUrl).toBeUndefined();
+    expect(result.location).toBeUndefined();
 
     // Verify no snake_case leakage
     assertNoSnakeCaseProperties(result, [
@@ -109,13 +109,13 @@ describe('User Transformer', () => {
     ]);
   });
 
-  describe('toUserInsertRow', () => {
+  describe('toCurrentUserInsertRow', () => {
     it('should transform domain user to database format', () => {
       // Arrange
-      const userData = createFakeUserInput();
+      const userData = createFakeCurrentUserInput();
 
       // Act
-      const dbData = toUserInsertRow({ ...userData, id: faker.string.uuid() });
+      const dbData = toCurrentUserInsertRow({ ...userData, id: faker.string.uuid() });
 
       // Assert
       expect(dbData).toMatchObject({
@@ -133,7 +133,7 @@ describe('User Transformer', () => {
 
     it('should handle minimal user data for database insert', () => {
       // Arrange
-      const userData = createFakeUserInput({
+      const userData = createFakeCurrentUserInput({
         lastName: undefined,
         fullName: undefined,
         avatarUrl: undefined,
@@ -142,7 +142,7 @@ describe('User Transformer', () => {
       });
 
       // Act
-      const dbData = toUserInsertRow({ ...userData, id: faker.string.uuid() });
+      const dbData = toCurrentUserInsertRow({ ...userData, id: faker.string.uuid() });
 
       // Assert
       expect(dbData).toMatchObject({
@@ -159,7 +159,7 @@ describe('User Transformer', () => {
     });
   });
 
-  describe('toUserUpdateRow', () => {
+  describe('toCurrentUserUpdateRow', () => {
     it('should prepare partial update data for database', () => {
       // Arrange
       const userId = faker.string.uuid();
@@ -180,7 +180,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should only update firstName, preserve other fields
       expect(dbData.user_metadata).toEqual({
@@ -212,7 +212,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should update bio, preserve other fields
       expect(dbData.user_metadata).toEqual({
@@ -245,7 +245,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert
       expect(dbData.user_metadata).toEqual({
@@ -279,7 +279,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - undefined values should be ignored
       expect(dbData.user_metadata).toEqual({
@@ -310,7 +310,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert - Should preserve all existing data
       expect(dbData.user_metadata).toEqual({
@@ -337,7 +337,7 @@ describe('User Transformer', () => {
       };
 
       // Act
-      const dbData = toUserUpdateRow(partialUpdate, currentProfile);
+      const dbData = toCurrentUserUpdateRow(partialUpdate, currentProfile);
 
       // Assert
       expect(dbData.user_metadata).toEqual({

@@ -13,11 +13,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import { parsePostGisPoint } from '@/shared';
 
 describe('Communities API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let readOnlyCommunity1: Community;
   let readOnlyCommunity2: Community;
 

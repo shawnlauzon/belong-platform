@@ -6,11 +6,12 @@ import * as api from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { Community } from '@/features';
 
 describe('Communities API - Multiple Membership Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let community1: Community;
   let community2: Community;
   let community3: Community;

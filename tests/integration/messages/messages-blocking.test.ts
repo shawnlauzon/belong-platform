@@ -14,13 +14,14 @@ import * as api from '@/features/messages/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import type { Conversation } from '@/features/messages/types';
 
 describe.skip('Messages Blocking System', () => {
   let supabase: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
+  let userA: Account;
+  let userB: Account;
   let community: Community;
 
   beforeAll(async () => {

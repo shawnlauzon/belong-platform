@@ -2,13 +2,13 @@ import { logger } from '@/shared';
 import { ERROR_CODES } from '@/shared/constants';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toPublicUser } from '../transformers/userTransformer';
-import { PublicUser } from '../types';
+import { toUser } from '../transformers/userTransformer';
+import { User } from '../types';
 
 export async function fetchUserById(
   supabase: SupabaseClient<Database>,
   id: string,
-): Promise<PublicUser | null> {
+): Promise<User | null> {
   logger.debug('👤 API: Fetching user by ID', { id });
 
   try {
@@ -24,7 +24,7 @@ export async function fetchUserById(
       throw error;
     }
 
-    const user = toPublicUser(data);
+    const user = toUser(data);
 
     logger.debug('👤 API: Successfully fetched user', {
       id,

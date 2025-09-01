@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { CurrentUser, PublicUser, UserSummary } from '../types';
+import { CurrentUser, User, UserSummary } from '../types';
 import { ProfileRow } from '../types/profileRow';
 
 /**
@@ -15,9 +15,9 @@ export function createFakeUserSummary(overrides: Partial<UserSummary> = {}): Use
 }
 
 /**
- * Creates a fake PublicUser object
+ * Creates a fake User object
  */
-export function createFakePublicUser(overrides: Partial<PublicUser> = {}): PublicUser {
+export function createFakeUser(overrides: Partial<User> = {}): User {
   const now = faker.date.recent();
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
@@ -61,11 +61,12 @@ export function createFakeCurrentUser(overrides: Partial<CurrentUser> = {}): Cur
   };
 }
 
+
 /**
- * Legacy alias for createFakeCurrentUser
- * @deprecated Use createFakeCurrentUser instead
+ * Legacy alias for createFakeUser
+ * @deprecated Use createFakeUser instead
  */
-export const createFakeUser = createFakeCurrentUser;
+export const createFakePublicUser = createFakeUser;
 
 /**
  * Creates fake CurrentUser input data for creation

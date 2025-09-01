@@ -16,6 +16,7 @@ import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import {
   createTestImageFile,
@@ -25,7 +26,7 @@ import {
 
 describe.skip('Entity Creation with Auto-Commit Image Workflow', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
 
   beforeAll(async () => {

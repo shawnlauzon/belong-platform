@@ -7,6 +7,7 @@ import { commitImageUrls, uploadImage } from '@/features/images/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import {
   createTestImageFile,
   verifyImagesExist,
@@ -16,7 +17,7 @@ import {
 
 describe.skip('Images API - Commit Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
 
   beforeAll(async () => {
     supabase = createTestClient();

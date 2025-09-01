@@ -7,12 +7,13 @@ import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 
 describe('Users API - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
-  let readOnlyUser1: User;
-  let readOnlyUser2: User;
+  let testUser: Account;
+  let readOnlyUser1: Account;
+  let readOnlyUser2: Account;
 
   beforeAll(async () => {
     supabase = createTestClient();

@@ -8,7 +8,7 @@ import {
   createFakeMessageWithSender,
   createFakeMessageBasic,
 } from '../../__fakes__';
-import { createFakeUser } from '../../../users/__fakes__';
+import { createFakeCurrentUser, createFakeUserSummary } from '../../../users/__fakes__';
 import type { Database } from '../../../../shared/types/database';
 import type { MessageWithStatus } from '../../types/messageRow';
 
@@ -18,8 +18,8 @@ describe('messageTransformer', () => {
 
   describe('transformMessage', () => {
     it('should transform basic message with participant data correctly', () => {
-      const currentUser = createFakeUser({ id: currentUserId });
-      const otherUser = createFakeUser({ id: otherUserId });
+      const currentUser = createFakeCurrentUser({ id: currentUserId });
+      const otherUser = createFakeUserSummary({ id: otherUserId });
       const messageRow = createFakeMessageBasic({
         sender_id: otherUserId,
       });
@@ -48,8 +48,8 @@ describe('messageTransformer', () => {
     });
 
     it('should use current user data when sender is current user', () => {
-      const currentUser = createFakeUser({ id: currentUserId });
-      const otherUser = createFakeUser({ id: otherUserId });
+      const currentUser = createFakeCurrentUser({ id: currentUserId });
+      const otherUser = createFakeUserSummary({ id: otherUserId });
       const messageRow = createFakeMessageBasic({
         sender_id: currentUserId,
       });
@@ -61,13 +61,18 @@ describe('messageTransformer', () => {
         otherUser,
       );
 
-      expect(result.sender).toBe(currentUser);
+      // Sender should be a UserSummary derived from currentUser
+      expect(result.sender).toEqual({
+        id: currentUser.id,
+        firstName: currentUser.firstName,
+        avatarUrl: currentUser.avatarUrl,
+      });
       expect(result.isMine).toBe(true);
     });
 
     it('should use other user data when sender is other user', () => {
-      const currentUser = createFakeUser({ id: currentUserId });
-      const otherUser = createFakeUser({ id: otherUserId });
+      const currentUser = createFakeCurrentUser({ id: currentUserId });
+      const otherUser = createFakeUserSummary({ id: otherUserId });
       const messageRow = createFakeMessageBasic({
         sender_id: otherUserId,
       });
@@ -84,8 +89,8 @@ describe('messageTransformer', () => {
     });
 
     it('should convert date strings to Date objects', () => {
-      const currentUser = createFakeUser({ id: currentUserId });
-      const otherUser = createFakeUser({ id: otherUserId });
+      const currentUser = createFakeCurrentUser({ id: currentUserId });
+      const otherUser = createFakeUserSummary({ id: otherUserId });
       const messageRow = createFakeMessageBasic();
 
       const result = transformMessage(

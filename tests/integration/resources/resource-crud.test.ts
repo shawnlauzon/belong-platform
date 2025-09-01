@@ -16,6 +16,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 import { parsePostGisPoint } from '@/shared';
@@ -23,7 +24,7 @@ import { joinCommunity } from '@/features/communities/api';
 
 describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
   let readOnlyOffer: Resource;
   let readOnlyRequest: Resource;

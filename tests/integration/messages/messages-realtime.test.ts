@@ -15,14 +15,15 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Conversation } from '@/features/messages/types';
 import { joinCommunity } from '@/features/communities/api';
 
 describe('Realtime Messaging', () => {
   let clientA: SupabaseClient<Database>;
   let clientB: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
+  let userA: Account;
+  let userB: Account;
   let activeChannels: any[] = [];
 
   beforeAll(async () => {

@@ -1,14 +1,14 @@
 import { logger } from '@/shared';
 import type { Database } from '@/shared/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { toPublicUser } from '../transformers/userTransformer';
-import { PublicUser, UserFilter } from '../types';
+import { toUser } from '../transformers/userTransformer';
+import { User, UserFilter } from '../types';
 import { appendQueries } from '@/shared';
 
 export async function fetchUsers(
   supabase: SupabaseClient<Database>,
   filters?: UserFilter,
-): Promise<PublicUser[]> {
+): Promise<User[]> {
   logger.debug('👤 API: Fetching users', { filters });
 
   try {
@@ -30,7 +30,7 @@ export async function fetchUsers(
       throw error;
     }
 
-    const users = (data || []).map(toPublicUser);
+    const users = (data || []).map(toUser);
 
     logger.debug('👤 API: Successfully fetched users', {
       count: users.length,

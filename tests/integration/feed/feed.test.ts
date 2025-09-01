@@ -14,14 +14,15 @@ import { createResourceTimeslot } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 import type { Shoutout } from '@/features/shoutouts/types';
 
 describe('Feed API - Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
-  let testUser2: User;
+  let testUser: Account;
+  let testUser2: Account;
   let testCommunity1: Community;
   let testCommunity2: Community;
   let testResource1: Resource;

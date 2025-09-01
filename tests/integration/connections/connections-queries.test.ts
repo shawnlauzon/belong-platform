@@ -17,14 +17,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 
 describe('Connections API - Query Operations', () => {
   let supabaseUserA: SupabaseClient<Database>;
   let supabaseUserB: SupabaseClient<Database>;
   let supabaseUserC: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
-  let userC: User;
+  let userA: Account;
+  let userB: Account;
+  let userC: Account;
   let testCommunity1: Community;
   let testCommunity2: Community;
 

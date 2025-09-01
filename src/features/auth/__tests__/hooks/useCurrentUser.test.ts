@@ -2,39 +2,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { createMockSupabase } from '@/test-utils';
-import { createFakeUser } from '@/features/users/__fakes__';
+import { createFakeCurrentUser } from '@/features/users/__fakes__';
 import { createDefaultTestWrapper } from '@/test-utils/testWrapper';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
+import type { CurrentUser } from '@/features/users/types';
 
 // Mock the API functions
 vi.mock('../../api', () => ({
-  getCurrentUserId: vi.fn(),
-}));
-
-vi.mock('@/features/users/api', () => ({
-  fetchUserById: vi.fn(),
+  getCurrentUser: vi.fn(),
 }));
 
 import { useSupabase } from '@/shared';
-import { getCurrentUserId } from '../../api';
-import { fetchUserById } from '@/features/users/api';
+import { getCurrentUser } from '../../api';
 
 const mockUseSupabase = vi.mocked(useSupabase);
-const mockGetCurrentUserId = vi.mocked(getCurrentUserId);
-const mockFetchUserById = vi.mocked(fetchUserById);
+const mockGetCurrentUser = vi.mocked(getCurrentUser);
 
 describe('useCurrentUser', () => {
   let wrapper: ReturnType<typeof createDefaultTestWrapper>['wrapper'];
   let mockSupabase: SupabaseClient<Database>;
-  let fakeUser: User;
+  let fakeCurrentUser: CurrentUser;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeUser = createFakeUser();
+    fakeCurrentUser = createFakeCurrentUser();
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
@@ -45,8 +39,7 @@ describe('useCurrentUser', () => {
 
   it('should return User when authenticated', async () => {
     // Arrange
-    mockGetCurrentUserId.mockResolvedValue(fakeUser.id);
-    mockFetchUserById.mockResolvedValue(fakeUser);
+    mockGetCurrentUser.mockResolvedValue(fakeCurrentUser);
 
     // Act
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
@@ -60,23 +53,22 @@ describe('useCurrentUser', () => {
     }
     const user = result.current.data;
 
-    // Assert: Should return User object
+    // Assert: Should return CurrentUser object (includes email)
     expect(user).toEqual(
       expect.objectContaining({
-        id: fakeUser.id,
-        email: fakeUser.email,
-        firstName: fakeUser.firstName,
+        id: fakeCurrentUser.id,
+        email: fakeCurrentUser.email,
+        firstName: fakeCurrentUser.firstName,
       }),
     );
 
     // Verify API was called correctly
-    expect(mockGetCurrentUserId).toHaveBeenCalledWith(mockSupabase);
-    expect(mockFetchUserById).toHaveBeenCalledWith(mockSupabase, fakeUser.id);
+    expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
   });
 
   it('should return null when not authenticated', async () => {
     // Arrange
-    mockGetCurrentUserId.mockResolvedValue(null);
+    mockGetCurrentUser.mockResolvedValue(null);
 
     // Act
     const { result } = renderHook(() => useCurrentUser(), { wrapper });
@@ -90,8 +82,6 @@ describe('useCurrentUser', () => {
     }
     // Assert
     expect(result.current.data).toBeNull();
-    expect(mockGetCurrentUserId).toHaveBeenCalledWith(mockSupabase);
-    // fetchUserById should not be called when no user ID is returned
-    expect(mockFetchUserById).not.toHaveBeenCalled();
+    expect(mockGetCurrentUser).toHaveBeenCalledWith(mockSupabase);
   });
 });

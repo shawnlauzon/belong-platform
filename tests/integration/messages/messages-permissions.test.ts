@@ -13,14 +13,15 @@ import * as api from '@/features/messages/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import type { Conversation } from '@/features/messages/types';
 
 describe('Messages Permissions & Authorization', () => {
   let supabase: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
-  let userC: User; // User not in any shared community
+  let userA: Account;
+  let userB: Account;
+  let userC: Account; // User not in any shared community
   let community: Community;
 
   beforeAll(async () => {

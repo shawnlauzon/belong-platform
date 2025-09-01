@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import type {
   Conversation,
@@ -26,8 +27,8 @@ import { faker } from '@faker-js/faker';
 export async function setupMessagingUsers(
   supabase: SupabaseClient<Database>,
 ): Promise<{
-  userA: User;
-  userB: User;
+  userA: Account;
+  userB: Account;
   community: Community;
 }> {
   // Create first user (will be auto-signed in)

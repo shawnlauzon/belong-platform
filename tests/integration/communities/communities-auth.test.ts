@@ -12,12 +12,13 @@ import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { Community } from '@/features';
 
 describe('Communities API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
   let unauthenticatedClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
 
   beforeAll(async () => {
@@ -214,7 +215,7 @@ describe('Communities API - Authentication Requirements', () => {
   });
 
   describe('Lonely User Tests', () => {
-    let lonelyUser: User;
+    let lonelyUser: Account;
 
     beforeAll(async () => {
       // Create a new user who hasn't joined any communities

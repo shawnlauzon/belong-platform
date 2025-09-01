@@ -8,6 +8,7 @@ import { StorageManager } from '@/features/images/utils/storage';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import {
   createTestImageFile,
   verifyImagesExist,
@@ -17,7 +18,7 @@ import {
 
 describe.skip('Images API - Upload Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
 
   beforeAll(async () => {
     supabase = createTestClient();

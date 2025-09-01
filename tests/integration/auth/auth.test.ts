@@ -7,6 +7,7 @@ import { faker } from '@faker-js/faker';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { createTestUser } from '../helpers/test-data';
 
 // Helper to avoid rate limiting
@@ -15,7 +16,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 describe('Auth API - Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   const testPassword = 'TestPass123!';
 
   beforeAll(async () => {

@@ -3,7 +3,7 @@ import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { fetchUsers } from '../api';
 import { STANDARD_CACHE_TIME } from '@/config';
-import type { PublicUser, UserFilter } from '../types';
+import type { User, UserFilter } from '../types';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { userKeys } from '../queries';
 
@@ -50,11 +50,11 @@ import { userKeys } from '../queries';
  */
 export function useUsers(
   filter?: UserFilter,
-  options?: Partial<UseQueryOptions<PublicUser[], Error>>,
-): UseQueryResult<PublicUser[], Error> {
+  options?: Partial<UseQueryOptions<User[], Error>>,
+): UseQueryResult<User[], Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<PublicUser[], Error>({
+  const query = useQuery<User[], Error>({
     queryKey: filter ? userKeys.list(filter) : userKeys.all,
     queryFn: () => fetchUsers(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,

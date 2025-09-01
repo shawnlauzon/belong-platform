@@ -17,15 +17,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
 import type { User } from '@/features/users';
+import type { Account } from '@/features/auth/types';
 import { signInAsUser } from '../messages/messaging-helpers';
 
 describe('Connections API - Permissions and Security', () => {
   let supabaseUserA: SupabaseClient<Database>;
   let supabaseUserB: SupabaseClient<Database>;
   let supabaseUserC: SupabaseClient<Database>;
-  let userA: User;
-  let userB: User;
-  let userC: User;
+  let userA: Account;
+  let userB: Account;
+  let userC: Account;
   let testCommunity: Community;
 
   beforeAll(async () => {

@@ -14,7 +14,7 @@ export type UserSummary = {
  * Full public profile - what anyone can see about another user
  * Used in: user profile pages, user directories, detailed views
  */
-export type PublicUser = UserSummary & {
+export type User = UserSummary & {
   lastName?: string;
   fullName?: string;
   bio?: string;
@@ -26,7 +26,7 @@ export type PublicUser = UserSummary & {
  * Current user data - includes private fields only the user themselves can see
  * Used in: current user's profile, settings, edit forms
  */
-export type CurrentUser = PublicUser & {
+export type CurrentUser = User & {
   email: string;
   location?: Coordinates;
 };
@@ -45,5 +45,5 @@ export type UserMetadata = {
 };
 
 // Make types persistent with ID
-export type PublicUserWithId = IsPersisted<PublicUser>;
+export type UserWithId = IsPersisted<User>;
 export type CurrentUserWithId = IsPersisted<CurrentUser>;

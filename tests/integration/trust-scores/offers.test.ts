@@ -30,6 +30,7 @@ import {
   verifyTrustScoreLog,
 } from './helpers';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type {
   Resource,
@@ -40,8 +41,8 @@ import type {
 describe('Trust Score Points - Offers', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let owner: User;
-  let claimant: User;
+  let owner: Account;
+  let claimant: Account;
   let community: Community;
   let offer: Resource;
   let timeslot: ResourceTimeslot;

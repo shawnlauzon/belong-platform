@@ -20,13 +20,13 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
-import { Community, Resource, ResourceTimeslot, User } from '@/features';
+import { Account, Community, Resource, ResourceTimeslot } from '@/features';
 
 describe('Trust Score Points - Events', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let organizer: User;
-  let participant: User;
+  let organizer: Account;
+  let participant: Account;
   let community: Community;
   let event: Resource;
   let timeslot: ResourceTimeslot;
@@ -109,7 +109,7 @@ describe('Trust Score Points - Events', () => {
     );
   });
 
-  it.only('should allow participant to confirm going', async () => {
+  it('should allow participant to confirm going', async () => {
     // Participant is signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: event.id,

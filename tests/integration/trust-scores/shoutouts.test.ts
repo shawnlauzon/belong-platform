@@ -18,13 +18,14 @@ import {
   verifyTrustScoreLog,
 } from './helpers';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 
 describe('Trust Score Points - Shoutouts', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let sender: User;
-  let receiver: User;
+  let sender: Account;
+  let receiver: Account;
   let community: Community;
 
   beforeAll(async () => {

@@ -12,6 +12,7 @@ import { ResourceTimeslot } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { createFakeResourceTimeslotInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';
 import { Resource } from '@/features/resources/types';
@@ -19,7 +20,7 @@ import { joinCommunity } from '@/features/communities/api';
 
 describe('Resources API - Resource Timeslots Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let resourceOwner: User;
+  let resourceOwner: Account;
   let testCommunity: Community;
   let testResource: Resource;
 

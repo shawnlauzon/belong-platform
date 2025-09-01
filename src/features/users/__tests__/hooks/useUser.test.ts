@@ -62,7 +62,6 @@ describe('useUser', () => {
         id: fakeUser.id,
         firstName: fakeUser.firstName,
         lastName: fakeUser.lastName,
-        email: fakeUser.email,
       }),
     );
 

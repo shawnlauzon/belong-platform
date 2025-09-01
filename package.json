@@ -1,6 +1,6 @@
 {
   "name": "@belongnetwork/platform",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "private": false,
   "description": "The platform for building a network of independent, organizer-led communities where trust is built through acts of kindness and shared experiences.",
   "type": "module",
@@ -27,7 +27,7 @@
     "docs": "typedoc",
     "docs:serve": "typedoc --watch",
     "prepare": "husky install",
-    "tdd": "pnpm lint && pnpm typecheck && pnpm test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
     "qa": "pnpm lint && pnpm typecheck && pnpm test:complete && pnpm build",
     "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",

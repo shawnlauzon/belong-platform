@@ -12,6 +12,7 @@ import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { createFakeResourceClaimInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';
 import {
@@ -23,8 +24,8 @@ import { joinCommunity } from '@/features/communities/api';
 
 describe('Resource Claims - Basic Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let resourceOwner: User;
-  let claimant: User;
+  let resourceOwner: Account;
+  let claimant: Account;
   let testCommunity: Community;
   let testResource: Resource;
   let testTimeslot: ResourceTimeslot;

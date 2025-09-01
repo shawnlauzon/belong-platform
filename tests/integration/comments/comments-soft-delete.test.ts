@@ -15,10 +15,11 @@ import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { Community, User } from '@/features';
+import type { Account } from '@/features/auth/types';
 
 describe('Comments Soft Delete Behavior', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser: User;
+  let testUser: Account;
   let testCommunity: Community;
 
   beforeAll(async () => {

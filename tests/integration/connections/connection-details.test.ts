@@ -9,13 +9,14 @@ import { joinCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { getMemberConnectionCode } from '@/features';
 import { faker } from '@faker-js/faker';
 
 describe('Connections API - Connection Details', () => {
   let supabase: SupabaseClient<Database>;
-  let member: User;
+  let member: Account;
   let testCommunity: Community;
   let memberConnectionCode: string;
 

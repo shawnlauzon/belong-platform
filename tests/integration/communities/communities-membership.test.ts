@@ -6,13 +6,14 @@ import * as api from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users/types';
+import type { Account } from '@/features/auth/types';
 import { Community } from '@/features';
 import { signIn } from '@/features/auth/api';
 
 describe('Communities API - Membership Operations', () => {
   let supabase: SupabaseClient<Database>;
-  let testUser1: User;
-  let testUser2: User;
+  let testUser1: Account;
+  let testUser2: Account;
   let membershipTestCommunity: Community;
 
   beforeAll(async () => {
