@@ -100,6 +100,11 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 
 #### EVENTS
 
+Resources vs Claims:
+
+- Events (Resources) - The actual events themselves (e.g., "Community BBQ", "Book Club Meeting")
+- Event Registrations (Claims) - Individual user registrations/claims for attending those events
+
 **Initial State Logic:**
 
 - If `requires_approval = true` → `pending`
@@ -113,12 +118,14 @@ Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
 | interested | going | Claimant only | Attendee confirms attendance |
 | going | attended | Owner only | Event owner marks as attended |
 | going | flaked | Owner only | Event owner marks as no-show |
+| Any (except rejected/attended/flaked) | cancelled | Claimant only | Attendee cancels |
 
 **Key Rules:**
 
-- Events do NOT use `cancelled` status
 - One-directional flow (no going back)
 - Only owner can mark final attendance status
+- Transition to attended / flaked can only happen after the event has completed
+- Transition to cancelled can only happen before the event has completed
 
 ## Implementation Details
 
