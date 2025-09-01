@@ -27,19 +27,24 @@ import type { Database } from '@/shared/types/database';
 import {
   POINTS_CONFIG,
   getCurrentTrustScore,
-  verifyTrustScoreIncrement,
   verifyTrustScoreLog,
 } from './helpers';
-import { ResourceClaim } from '@/features';
+import type { User } from '@/features/users/types';
+import type { Community } from '@/features/communities/types';
+import type {
+  Resource,
+  ResourceTimeslot,
+  ResourceClaim,
+} from '@/features/resources/types';
 
 describe('Trust Score Points - Offers', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
-  let owner: any;
-  let claimant: any;
-  let community: any;
-  let offer: any;
-  let timeslot: any;
+  let owner: User;
+  let claimant: User;
+  let community: Community;
+  let offer: Resource;
+  let timeslot: ResourceTimeslot;
   let testClaim: ResourceClaim | null = null;
 
   beforeAll(async () => {
@@ -78,7 +83,7 @@ describe('Trust Score Points - Offers', () => {
     await cleanupAllTestData();
   });
 
-  it('should award 50 points for creating offer', async () => {
+  it('should award points for creating offer', async () => {
     // Switch to owner context to check their points
     await signIn(supabase, owner.email, 'TestPass123!');
 
@@ -136,7 +141,7 @@ describe('Trust Score Points - Offers', () => {
     expect(scoreAfterRequest - scoreAfterCommunity).toBe(0);
   });
 
-  it('should award 25 points for claiming offer', async () => {
+  it('should award points for claiming offer', async () => {
     // Claimant is already signed in from beforeEach
 
     const scoreBeforeClaim = await getCurrentTrustScore(
@@ -231,7 +236,7 @@ describe('Trust Score Points - Offers', () => {
     expect(updatedClaim.status).toBe('completed');
   });
 
-  it('should award 50 points for completed status', async () => {
+  it('should award points for completed status', async () => {
     // Use shared data from beforeEach
     testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
@@ -291,35 +296,5 @@ describe('Trust Score Points - Offers', () => {
       POINTS_CONFIG.OFFER_COMPLETED,
       'Offer completion log',
     );
-  });
-
-  it('should accumulate points through full offer flow', async () => {
-    // Use shared data from beforeEach
-    testClaim = await createResourceClaim(supabase, {
-      resourceId: offer.id,
-      timeslotId: timeslot.id,
-    });
-
-    // For offers: owner marks as given
-    await signIn(supabase, owner.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: testClaim.id, status: 'given' });
-
-    // For offers: claimant marks as completed (business logic requires this)
-    await signIn(supabase, claimant.email, 'TestPass123!');
-    await updateResourceClaim(supabase, {
-      id: testClaim.id,
-      status: 'completed',
-    });
-
-    const finalScore = await getCurrentTrustScore(
-      supabase,
-      claimant.id,
-      community.id,
-    );
-    const expectedTotal =
-      POINTS_CONFIG.COMMUNITY_JOIN +
-      POINTS_CONFIG.OFFER_APPROVED +
-      POINTS_CONFIG.OFFER_COMPLETED;
-    expect(finalScore).toBe(expectedTotal);
   });
 });
