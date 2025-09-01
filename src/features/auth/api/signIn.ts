@@ -33,7 +33,7 @@ export async function signIn(
     const account: Account = {
       id: data.user.id,
       email: data.user.email!,
-      firstName: data.user.user_metadata?.first_name || '',
+      firstName: data.user.user_metadata?.first_name,
       lastName: data.user.user_metadata?.last_name,
       fullName: data.user.user_metadata?.full_name,
       avatarUrl: data.user.user_metadata?.avatar_url,

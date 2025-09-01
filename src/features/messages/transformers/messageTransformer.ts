@@ -22,6 +22,8 @@ export function transformMessage(
   const currentUserSummary: UserSummary = {
     id: currentUser.id,
     firstName: currentUser.firstName,
+    lastName: currentUser.lastName,
+    fullName: currentUser.fullName,
     avatarUrl: currentUser.avatarUrl,
   };
   const sender = row.sender_id === currentUserId ? currentUserSummary : otherParticipant;
@@ -44,7 +46,7 @@ export function transformMessage(
 
 
 export function transformMessageWithStatus(
-  row: MessageWithStatus & { sender: { id: string | null; first_name: string | null; avatar_url: string | null; } },
+  row: MessageWithStatus & { sender: { id: string | null; first_name: string | null; last_name: string | null; full_name: string | null; avatar_url: string | null; } },
   currentUserId: string
 ): Message {
   const status = row.message_status.find(s => s.user_id === currentUserId);

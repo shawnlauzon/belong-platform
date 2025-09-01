@@ -65,6 +65,8 @@ describe('messageTransformer', () => {
       expect(result.sender).toEqual({
         id: currentUser.id,
         firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        fullName: currentUser.fullName,
         avatarUrl: currentUser.avatarUrl,
       });
       expect(result.isMine).toBe(true);

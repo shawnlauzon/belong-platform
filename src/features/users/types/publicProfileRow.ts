@@ -18,4 +18,4 @@ export type PublicProfileRow = {
  * Database row type for UserSummary queries from public_profiles
  * Only includes the minimal fields needed
  */
-export type PublicProfileSummaryRow = Pick<PublicProfileRow, 'id' | 'first_name' | 'avatar_url'>;
+export type PublicProfileSummaryRow = Pick<PublicProfileRow, 'id' | 'first_name' | 'last_name' | 'full_name' | 'avatar_url'>;

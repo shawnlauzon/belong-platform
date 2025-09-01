@@ -13,7 +13,9 @@ export function toUserSummary(profile: PublicProfileSummaryRow): UserSummary {
   
   return {
     id: profile.id,
-    firstName: profile.first_name || '',
+    firstName: profile.first_name || undefined,
+    lastName: profile.last_name || undefined,
+    fullName: profile.full_name || undefined,
     avatarUrl: profile.avatar_url || undefined,
   };
 }
@@ -28,7 +30,7 @@ export function toUser(profile: PublicProfileRow): User {
   
   return {
     id: profile.id,
-    firstName: profile.first_name || '',
+    firstName: profile.first_name || undefined,
     lastName: profile.last_name || undefined,
     fullName: profile.full_name || undefined,
     avatarUrl: profile.avatar_url || undefined,
@@ -47,7 +49,7 @@ export function toCurrentUser(profile: ProfileRow): CurrentUser {
 
   return {
     id: profile.id,
-    firstName: first_name || '',
+    firstName: first_name || undefined,
     lastName: last_name || undefined,
     fullName: full_name || undefined,
     avatarUrl: avatar_url || undefined,

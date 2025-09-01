@@ -249,6 +249,8 @@ export function createFakeConversationWithParticipants(
         public_profiles: {
           id: currentUserId,
           first_name: faker.person.firstName(),
+          last_name: faker.person.lastName(),
+          full_name: faker.person.fullName(),
           avatar_url: faker.image.avatar(),
         },
       },
@@ -259,6 +261,8 @@ export function createFakeConversationWithParticipants(
         public_profiles: {
           id: otherParticipantId,
           first_name: faker.person.firstName(),
+          last_name: faker.person.lastName(),
+          full_name: faker.person.fullName(),
           avatar_url: faker.image.avatar(),
         },
       },

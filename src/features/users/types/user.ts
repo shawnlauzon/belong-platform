@@ -6,7 +6,9 @@ import { Coordinates, IsPersisted } from '@/shared';
  */
 export type UserSummary = {
   id: string;
-  firstName: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
   avatarUrl?: string;
 };
 
@@ -15,8 +17,6 @@ export type UserSummary = {
  * Used in: user profile pages, user directories, detailed views
  */
 export type User = UserSummary & {
-  lastName?: string;
-  fullName?: string;
   bio?: string;
   createdAt: Date;
   updatedAt: Date;
