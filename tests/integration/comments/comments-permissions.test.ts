@@ -7,6 +7,7 @@ import {
   createTestCommunity,
   createTestResource,
   createTestShoutout,
+  TEST_PREFIX,
 } from '../helpers/test-data';
 import {
   createComment,
@@ -103,11 +104,11 @@ describe('Comments Permissions', () => {
         'offer',
       );
 
-      const shoutout = await createTestShoutout({
-        supabase,
+      const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
         communityId: testCommunity.id,
+        message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       });
 
       // Create comment as commenter
@@ -168,11 +169,11 @@ describe('Comments Permissions', () => {
         'offer',
       );
 
-      const shoutout = await createTestShoutout({
-        supabase,
+      const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
         communityId: testCommunity.id,
+        message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       });
 
       // Create comment as commenter

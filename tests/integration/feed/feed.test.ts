@@ -68,17 +68,17 @@ describe('Feed API - Integration Tests', () => {
     await joinCommunity(supabase, testCommunity1.id);
 
     // Create shoutouts for the resources (testUser2 thanking testUser)
-    testShoutout1 = await createTestShoutout({
-      supabase,
+    testShoutout1 = await createTestShoutout(supabase, {
       receiverId: testUser.id,
       resourceId: testResource1.id,
       communityId: testCommunity1.id,
+      message: 'Thank you for sharing this resource!',
     });
-    testShoutout1a = await createTestShoutout({
-      supabase,
+    testShoutout1a = await createTestShoutout(supabase, {
       receiverId: testUser.id,
       resourceId: testResource1a.id,
       communityId: testCommunity1.id,
+      message: 'Thank you for sharing this resource!',
     });
   });
 
@@ -260,7 +260,9 @@ describe('Feed API - Integration Tests', () => {
         .eq('id', expiredOffer.id);
 
       if (updateError) {
-        throw new Error(`Failed to update expired offer: ${updateError.message}`);
+        throw new Error(
+          `Failed to update expired offer: ${updateError.message}`,
+        );
       }
 
       // Set last_renewed_at to 1 day ago for the current offer (should still be active)
@@ -271,7 +273,9 @@ describe('Feed API - Integration Tests', () => {
         .eq('id', currentOffer.id);
 
       if (updateError2) {
-        throw new Error(`Failed to update current offer: ${updateError2.message}`);
+        throw new Error(
+          `Failed to update current offer: ${updateError2.message}`,
+        );
       }
 
       // Fetch the feed
@@ -315,7 +319,9 @@ describe('Feed API - Integration Tests', () => {
         .eq('id', expiredRequest.id);
 
       if (updateError) {
-        throw new Error(`Failed to update expired request: ${updateError.message}`);
+        throw new Error(
+          `Failed to update expired request: ${updateError.message}`,
+        );
       }
 
       // Set last_renewed_at to 1 day ago for the current request (should still be active)
@@ -326,7 +332,9 @@ describe('Feed API - Integration Tests', () => {
         .eq('id', currentRequest.id);
 
       if (updateError2) {
-        throw new Error(`Failed to update current request: ${updateError2.message}`);
+        throw new Error(
+          `Failed to update current request: ${updateError2.message}`,
+        );
       }
 
       // Fetch the feed

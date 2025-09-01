@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  beforeEach,
-  afterAll,
-} from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -22,14 +15,17 @@ import {
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
+import type { User } from '@/features/users';
+import type { Community } from '@/features/communities';
+import type { Resource, ResourceTimeslot } from '@/features/resources';
 
 describe('Resource Requests - Workflow', () => {
   let supabase: SupabaseClient<Database>;
-  let owner: any;
-  let claimant: any;
-  let community: any;
-  let request: any;
-  let timeslot: any;
+  let owner: User;
+  let claimant: User;
+  let community: Community;
+  let request: Resource;
+  let timeslot: ResourceTimeslot;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -65,21 +61,34 @@ describe('Resource Requests - Workflow', () => {
     expect(request.type).toBe('request');
   });
 
-  it('should allow claiming request without approval', async () => {
+  it('should allow claiming request without approval and start in approved state', async () => {
+    // Create fresh timeslot for this test
+    const freshTimeslot = await createTestResourceTimeslot(
+      supabase,
+      request.id,
+    );
+
     // Claimant is already signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: request.id,
-      timeslotId: timeslot.id,
+      timeslotId: freshTimeslot.id,
     });
 
     expect(claim.id).toBeDefined();
+    expect(claim.status).toBe('approved'); // Should start approved since request doesn't require approval
   });
 
   it('should allow claimant to mark as given', async () => {
+    // Create fresh timeslot for this test
+    const freshTimeslot = await createTestResourceTimeslot(
+      supabase,
+      request.id,
+    );
+
     // Use shared data from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: request.id,
-      timeslotId: timeslot.id,
+      timeslotId: freshTimeslot.id,
     });
 
     const updatedClaim = await updateResourceClaim(supabase, {
@@ -91,10 +100,16 @@ describe('Resource Requests - Workflow', () => {
   });
 
   it('should allow owner to mark as completed', async () => {
+    // Create fresh timeslot for this test
+    const freshTimeslot = await createTestResourceTimeslot(
+      supabase,
+      request.id,
+    );
+
     // Use shared data from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: request.id,
-      timeslotId: timeslot.id,
+      timeslotId: freshTimeslot.id,
     });
 
     // For requests: claimant marks as given (they give to fulfill the request)

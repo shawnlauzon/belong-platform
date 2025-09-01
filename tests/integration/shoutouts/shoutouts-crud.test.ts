@@ -47,20 +47,20 @@ describe('Shoutouts API - CRUD Operations', () => {
     testResource2 = await createTestResource(supabase, testCommunity.id);
 
     // signed in as testUser2
-    readOnlyShoutout1 = await createTestShoutout({
-      supabase,
+    readOnlyShoutout1 = await createTestShoutout(supabase, {
       receiverId: testUser.id,
       resourceId: testResource.id,
       communityId: testCommunity.id,
+      message: `${TEST_PREFIX}Thank you for sharing this resource!`,
     });
 
     await signIn(supabase, testUser.email, 'TestPass123!');
 
-    readOnlyShoutout2 = await createTestShoutout({
-      supabase,
+    readOnlyShoutout2 = await createTestShoutout(supabase, {
       receiverId: testUser2.id,
       resourceId: testResource2.id,
       communityId: testCommunity.id,
+      message: `${TEST_PREFIX}Thank you for sharing this resource!`,
     });
 
     // Sign back in as testUser2 for other tests
@@ -220,11 +220,11 @@ describe('Shoutouts API - CRUD Operations', () => {
   describe('updateShoutout', () => {
     let createdShoutout: Shoutout;
     beforeEach(async () => {
-      createdShoutout = await createTestShoutout({
-        supabase,
+      createdShoutout = await createTestShoutout(supabase, {
         receiverId: testUser.id,
         resourceId: testResource.id,
         communityId: testCommunity.id,
+        message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       });
     });
 
@@ -282,7 +282,10 @@ describe('Shoutouts API - CRUD Operations', () => {
     });
 
     it('returns null for non-existent shoutout deletion', async () => {
-      const result = await deleteShoutout(supabase, '00000000-0000-0000-0000-000000000000');
+      const result = await deleteShoutout(
+        supabase,
+        '00000000-0000-0000-0000-000000000000',
+      );
       expect(result).toBeNull();
     });
   });
