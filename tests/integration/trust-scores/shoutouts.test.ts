@@ -69,7 +69,6 @@ describe('Trust Score Points - Shoutouts', () => {
 
       // Create shoutout (this will also create a resource since resource_id is required)
       await createTestShoutout(supabase, {
-        senderId: sender.id,
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Great job!',
@@ -106,7 +105,6 @@ describe('Trust Score Points - Shoutouts', () => {
 
       // Create shoutout (sender is already signed in from beforeEach)
       await createTestShoutout(supabase, {
-        senderId: sender.id,
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Great work!',
@@ -163,7 +161,6 @@ describe('Trust Score Points - Shoutouts', () => {
 
       // Create shoutout using existing resource
       await createTestShoutout(supabase, {
-        senderId: sender.id,
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Thanks for your help!',
@@ -211,7 +208,6 @@ describe('Trust Score Points - Shoutouts', () => {
 
       // Create shoutout using existing resource
       await createTestShoutout(supabase, {
-        senderId: sender.id,
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Thanks for your help!',

@@ -110,17 +110,20 @@ export async function createTestResourceTimeslot(
 export async function createTestShoutout(
   supabase: SupabaseClient<Database>,
   data: {
-    senderId: string;
     receiverId: string;
     communityId: string;
     message: string;
     resourceId?: string;
-  }
+  },
 ): Promise<Shoutout> {
   // Create a resource if none provided since resource_id is required
   let resourceId = data.resourceId;
   if (!resourceId) {
-    const resource = await createTestResource(supabase, data.communityId, 'offer');
+    const resource = await createTestResource(
+      supabase,
+      data.communityId,
+      'offer',
+    );
     resourceId = resource.id;
   }
 
@@ -129,7 +132,8 @@ export async function createTestShoutout(
     communityId: string;
   } = {
     resourceId,
-    message: data.message || `${TEST_PREFIX}Thank you for sharing this resource!`,
+    message:
+      data.message || `${TEST_PREFIX}Thank you for sharing this resource!`,
     receiverId: data.receiverId,
     communityId: data.communityId,
   };
@@ -153,11 +157,12 @@ export async function createTestShoutoutForResource({
   communityId: string;
 }): Promise<Shoutout> {
   // Get current user to use as sender
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('No authenticated user for shoutout sender');
 
   return createTestShoutout(supabase, {
-    senderId: user.id,
     receiverId,
     communityId,
     resourceId,
@@ -167,43 +172,15 @@ export async function createTestShoutoutForResource({
 
 /**
  * Creates a connection request by processing a connection link
- * @param requesterSupabase - Supabase client for the user scanning the code
- * @param communityId - Community ID where connection is being made
- * @param connectionCode - The connection code to use
- */
-export async function createTestConnectionRequest(
-  requesterSupabase: SupabaseClient<Database>,
-  communityId: string,
-  connectionCode: string,
-): Promise<{ id: string; connectionCode: string }> {
-  // Process the connection link as the requester
-  const response = await createConnectionRequest(
-    requesterSupabase,
-    connectionCode,
-  );
-
-  if (!response.success || !response.connectionRequestId) {
-    throw new Error(`Failed to create connection request: ${response.message}`);
-  }
-
-  return {
-    id: response.connectionRequestId,
-    connectionCode,
-  };
-}
-
-/**
- * Legacy version for backward compatibility
- * Creates a connection request by processing a connection link
  * @param initiatorSupabase - Supabase client for the code owner
  * @param requesterSupabase - Supabase client for the user scanning the code
  * @param communityId - Community ID where connection is being made
  */
-export async function createTestConnectionRequestLegacy(
+export async function createTestConnectionRequest(
   initiatorSupabase: SupabaseClient<Database>,
   requesterSupabase: SupabaseClient<Database>,
   communityId: string,
-): Promise<{ connectionCode: string; requestId: string }> {
+): Promise<{ requestId: string; connectionCode: string }> {
   // Get the initiator's connection code
   const memberCode = await getMemberConnectionCode(
     initiatorSupabase,
@@ -221,8 +198,8 @@ export async function createTestConnectionRequestLegacy(
   }
 
   return {
-    connectionCode: memberCode.code,
     requestId: response.connectionRequestId,
+    connectionCode: memberCode.code,
   };
 }
 
@@ -237,8 +214,8 @@ export async function createTestConnection(
   requesterSupabase: SupabaseClient<Database>,
   communityId: string,
 ): Promise<UserConnection> {
-  // First create a connection request using the legacy version
-  const { requestId } = await createTestConnectionRequestLegacy(
+  // First create a connection request
+  const { requestId } = await createTestConnectionRequest(
     initiatorSupabase,
     requesterSupabase,
     communityId,

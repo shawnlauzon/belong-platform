@@ -65,7 +65,7 @@ describe('Resource Offers - Workflow', () => {
     expect(offer.type).toBe('offer');
   });
 
-  it('should allow claiming offer without approval', async () => {
+  it('should allow claiming offer without approval and start in approved state', async () => {
     // Claimant is already signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: offer.id,
@@ -73,13 +73,17 @@ describe('Resource Offers - Workflow', () => {
     });
 
     expect(claim.id).toBeDefined();
+    expect(claim.status).toBe('approved'); // Should start approved since offer doesn't require approval
   });
 
   it('should allow owner to mark as given', async () => {
+    // Create fresh timeslot for this test
+    const freshTimeslot = await createTestResourceTimeslot(supabase, offer.id);
+    
     // Claimant is already signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: offer.id,
-      timeslotId: timeslot.id,
+      timeslotId: freshTimeslot.id,
     });
 
     await signIn(supabase, owner.email, 'TestPass123!');
@@ -92,10 +96,13 @@ describe('Resource Offers - Workflow', () => {
   });
 
   it('should allow claimant to mark as received from approved state', async () => {
+    // Create fresh timeslot for this test
+    const freshTimeslot = await createTestResourceTimeslot(supabase, offer.id);
+    
     // Use shared data from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: offer.id,
-      timeslotId: timeslot.id,
+      timeslotId: freshTimeslot.id,
     });
 
     // For offers: claimant can mark as received directly from approved

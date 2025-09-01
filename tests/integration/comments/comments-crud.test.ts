@@ -85,11 +85,11 @@ describe('Comments CRUD', () => {
         'offer',
       );
 
-      const shoutout = await createTestShoutout({
-        supabase,
+      const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
         communityId: community.id,
+        message: 'Thanks for your help!',
       });
 
       // Create a comment on the shoutout
@@ -454,11 +454,11 @@ describe('Comments CRUD', () => {
         'offer',
       );
 
-      const shoutout = await createTestShoutout({
-        supabase,
+      const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
         communityId: testCommunity.id,
+        message: 'Thanks for your help!',
       });
 
       // Check initial comment count

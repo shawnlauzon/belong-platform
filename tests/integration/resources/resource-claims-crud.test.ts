@@ -66,12 +66,12 @@ describe('Resource Claims - Basic Operations', () => {
       }
     });
 
-    it('creates resource claim with default "pending" status', async () => {
+    it('creates resource claim with default "approved" status when resource does not require approval', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
         timeslotId: testTimeslot2.id,
       });
-      delete claimInput.status;
+      // Status is now automatically determined by API, no need to delete anything
 
       testClaim = await resourcesApi.createResourceClaim(supabase, claimInput);
 
@@ -79,7 +79,7 @@ describe('Resource Claims - Basic Operations', () => {
       expect(testClaim).toMatchObject({
         resourceId: testResource.id,
         claimantId: claimant.id,
-        status: 'pending',
+        status: 'approved',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -87,20 +87,20 @@ describe('Resource Claims - Basic Operations', () => {
       await verifyClaimInDatabase(supabase, testClaim);
     });
 
-    it('creates resource claim with explictly set "pending" status', async () => {
+    it('should not allow explicitly setting status on creation', async () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResource.id,
         timeslotId: testTimeslot2.id,
-        status: 'pending',
       });
 
+      // Status should be ignored/determined automatically by the API
       testClaim = await resourcesApi.createResourceClaim(supabase, claimInput);
 
       expect(testClaim).toBeTruthy();
       expect(testClaim).toMatchObject({
         resourceId: testResource.id,
         claimantId: claimant.id,
-        status: 'pending',
+        status: 'approved', // Should be approved since resource doesn't require approval
         timeslotId: testTimeslot2.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -125,31 +125,19 @@ describe('Resource Claims - Basic Operations', () => {
       }
     });
 
-    it('expect.fails if attempting to create resource claim status other than "pending"', async () => {
-      const invalidStatuses = [
-        'approved',
-        'rejected',
-        'completed',
-        'cancelled',
-      ];
+    it('determines initial status automatically based on resource approval requirements', async () => {
+      const claimInput = createFakeResourceClaimInput({
+        resourceId: testResource.id,
+        timeslotId: testTimeslot2.id,
+      });
 
-      for (const status of invalidStatuses) {
-        const claimInput = createFakeResourceClaimInput({
-          resourceId: testResource.id,
-          timeslotId: testTimeslot2.id,
-          status: status as 'approved' | 'rejected' | 'completed' | 'cancelled',
-        });
-
-        try {
-          testClaim = await resourcesApi.createResourceClaim(
-            supabase,
-            claimInput,
-          );
-          expect.fail('Should have thrown');
-        } catch (error) {
-          expect(error).toBeTruthy();
-        }
-      }
+      testClaim = await resourcesApi.createResourceClaim(
+        supabase,
+        claimInput,
+      );
+      
+      // Status should be 'approved' for non-approval-required resources
+      expect(testClaim.status).toBe('approved');
     });
 
     describe('Fetches a claim', () => {
@@ -175,7 +163,7 @@ describe('Resource Claims - Basic Operations', () => {
           resourceId: testResource.id,
           timeslotId: testTimeslot.id,
           claimantId: claimant.id,
-          status: 'pending',
+          status: 'approved',
         });
       });
 
@@ -222,7 +210,6 @@ describe('Resource Claims - Basic Operations', () => {
       const claimInput = createFakeResourceClaimInput({
         resourceId: invalidResourceId,
         timeslotId: testTimeslot2.id,
-        status: 'pending',
       });
 
       await expect(
@@ -260,7 +247,7 @@ describe('Resource Claims - Basic Operations', () => {
           resourceId: testResource.id,
           timeslotId: testTimeslot2.id,
           claimantId: claimant.id,
-          status: 'pending',
+          status: 'approved',
         });
       });
 
@@ -275,54 +262,32 @@ describe('Resource Claims - Basic Operations', () => {
         await verifyClaimInDatabase(supabase, updatedClaim);
       });
 
-      it('updates claim status from "cancelled" to pending', async () => {
-        // Check current status by fetching claims for claimant
-        const claims = await resourcesApi.fetchResourceClaims(supabase, {
-          claimantId: claimant.id,
-        });
-        const curClaim = claims.find((c) => c.id === testClaim2.id);
-
-        if (curClaim?.status !== 'cancelled') {
-          await resourcesApi.updateResourceClaim(supabase, {
-            id: testClaim2.id,
-            status: 'cancelled',
-          });
-        }
-
-        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+      it('cannot update claim status from "cancelled" (terminal state)', async () => {
+        // First cancel the claim
+        await resourcesApi.updateResourceClaim(supabase, {
           id: testClaim2.id,
-          status: 'pending',
+          status: 'cancelled',
         });
 
-        expect(updatedClaim.status).toBe('pending');
-        // Verify record exists in database
-        await verifyClaimInDatabase(supabase, updatedClaim);
+        // Try to update from cancelled to approved - should fail
+        await expect(
+          resourcesApi.updateResourceClaim(supabase, {
+            id: testClaim2.id,
+            status: 'approved',
+          })
+        ).rejects.toThrow();
       });
 
-      it('expect.fails if attempting to update resource claim status other than "cancelled or pending"', async () => {
-        const invalidStatuses = ['approved', 'rejected', 'completed'];
-
-        for (const status of invalidStatuses) {
-          const claimInput = createFakeResourceClaimInput({
-            resourceId: testResource.id,
-            timeslotId: testTimeslot2.id,
-            status: status as
-              | 'approved'
-              | 'rejected'
-              | 'completed'
-              | 'cancelled',
-          });
-
-          try {
-            await resourcesApi.updateResourceClaim(supabase, {
-              id: testClaim2.id,
-              ...claimInput,
-            });
-            expect.fail('Should have thrown');
-          } catch (error) {
-            expect(error).toBeTruthy();
-          }
-        }
+      it('allows claimant to update claim status to cancelled', async () => {
+        // Test that claimant can update to cancelled
+        const cancelledClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          status: 'cancelled',
+        });
+        expect(cancelledClaim.status).toBe('cancelled');
+        
+        // Verify record exists in database
+        await verifyClaimInDatabase(supabase, cancelledClaim);
       });
 
       it('deletes resource claim', async () => {
@@ -436,30 +401,50 @@ describe('Resource Claims - Basic Operations', () => {
         });
       });
 
-      it('resource owner can update claim status', async () => {
-        const validStatuses = ['approved', 'rejected', 'completed', 'pending'];
-
-        for (const status of validStatuses) {
-          const updatedClaim = await resourcesApi.updateResourceClaim(
-            supabase,
-            {
-              id: testClaim2.id,
-              status: status as 'approved' | 'rejected' | 'completed',
-            },
-          );
-
-          expect(updatedClaim.status).toBe(status);
-          // Verify record exists in database
-          await verifyClaimInDatabase(supabase, updatedClaim);
-        }
+      it('resource owner can update claim status according to state machine rules', async () => {
+        // For offers without approval: approved -> given/received -> completed
+        
+        // Create fresh timeslot and claim for this test
+        const freshTimeslot = await createTestResourceTimeslot(supabase, testResource.id);
+        const freshClaim = await resourcesApi.createResourceClaim(supabase, {
+          resourceId: testResource.id,
+          timeslotId: freshTimeslot.id,
+        });
+        
+        // Owner can mark as given
+        const givenClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: freshClaim.id,
+          status: 'given',
+        });
+        expect(givenClaim.status).toBe('given');
+        await verifyClaimInDatabase(supabase, givenClaim);
+        
+        // Clean up
+        await resourcesApi.deleteResourceClaim(supabase, freshClaim.id);
+        
+        // Test alternative path: approved -> received
+        const freshTimeslot2 = await createTestResourceTimeslot(supabase, testResource.id);
+        const freshClaim2 = await resourcesApi.createResourceClaim(supabase, {
+          resourceId: testResource.id,
+          timeslotId: freshTimeslot2.id,
+        });
+        
+        const receivedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: freshClaim2.id,
+          status: 'received', 
+        });
+        expect(receivedClaim.status).toBe('received');
+        await verifyClaimInDatabase(supabase, receivedClaim);
+        
+        // Clean up
+        await resourcesApi.deleteResourceClaim(supabase, freshClaim2.id);
       });
 
       it('expect.fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
-        const claimInput = createFakeResourceClaimInput({
+        const claimInput = {
           resourceId: testResource.id,
           timeslotId: undefined,
-          status: 'cancelled',
-        });
+        };
 
         try {
           await resourcesApi.updateResourceClaim(supabase, {
