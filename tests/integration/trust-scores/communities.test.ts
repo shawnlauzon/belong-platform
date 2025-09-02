@@ -71,7 +71,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       testUser.id,
       community.id,
-      'community_organizer',
+      'community_organizer_join',
       POINTS_CONFIG.COMMUNITY_ORGANIZER,
       'Community organizer log',
     );
@@ -131,7 +131,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      'community_join',
+      'community_member_join',
       POINTS_CONFIG.COMMUNITY_JOIN,
       'Community join log',
     );
