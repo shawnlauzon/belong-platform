@@ -138,14 +138,6 @@ describe('Communities API - CRUD Operations', () => {
       }
     });
 
-    it('filters by organizerId', async () => {
-      const filtered = await api.fetchCommunities(supabase, {
-        organizerId: testUser.id,
-      });
-
-      expect(filtered.length).toBeGreaterThanOrEqual(2);
-      expect(filtered.every((c) => c.organizerId === testUser.id)).toBe(true);
-    });
   });
 
   describe('fetchCommunityById', () => {
@@ -201,7 +193,6 @@ describe('Communities API - CRUD Operations', () => {
           id: community.id,
           name: newName,
           description: newDescription,
-          organizer_id: community.organizerId,
           time_zone: community.timeZone,
           icon: community.icon,
           boundary: community.boundary,
@@ -226,7 +217,6 @@ describe('Communities API - CRUD Operations', () => {
 
         expect(updated!.name).toBe(newName);
         expect(updated!.description).toBe(originalDescription);
-        expect(updated!.organizerId).toBe(community.organizerId);
 
         // Verify database record preserves unchanged fields
         const { data: dbRecord } = await supabase
@@ -239,7 +229,6 @@ describe('Communities API - CRUD Operations', () => {
           id: community.id,
           name: newName,
           description: originalDescription,
-          organizer_id: community.organizerId,
           time_zone: community.timeZone,
           icon: community.icon,
           boundary: community.boundary,

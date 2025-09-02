@@ -13,7 +13,6 @@ import {
   verifyTrustScoreLog,
   createTestConnectionAndJoin,
 } from './helpers';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 
 describe('Trust Score Points - Communities', () => {
@@ -34,7 +33,7 @@ describe('Trust Score Points - Communities', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   it('should have zero trust scores for new user', async () => {
@@ -65,16 +64,16 @@ describe('Trust Score Points - Communities', () => {
     );
   });
 
-  it('should award auto-join points when creating community', async () => {
+  it('should award organizer role points automatically', async () => {
     const community = await createTestCommunity(supabase);
 
     await verifyTrustScoreLog(
       serviceClient,
       testUser.id,
       community.id,
-      'community_join',
-      POINTS_CONFIG.COMMUNITY_JOIN,
-      'Community auto-join log',
+      'community_organizer',
+      POINTS_CONFIG.COMMUNITY_ORGANIZER,
+      'Community organizer log',
     );
   });
 
@@ -87,7 +86,7 @@ describe('Trust Score Points - Communities', () => {
       community.id,
     );
     expect(score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_JOIN,
+      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
     );
   });
 
@@ -148,10 +147,10 @@ describe('Trust Score Points - Communities', () => {
     const score1 = trustScores.find((s) => s.communityId === community1.id);
     const score2 = trustScores.find((s) => s.communityId === community2.id);
     expect(score1?.score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_JOIN,
+      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
     );
     expect(score2?.score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_JOIN,
+      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
     );
   });
 
@@ -197,19 +196,27 @@ describe('Trust Score Points - Communities', () => {
 
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
-    
+
     // Join community first
     await joinCommunity(supabase, community.id);
-    
+
     // Verify user has 50 points for joining
-    const scoreAfterJoin = await getCurrentTrustScore(supabase, joiner.id, community.id);
+    const scoreAfterJoin = await getCurrentTrustScore(
+      supabase,
+      joiner.id,
+      community.id,
+    );
     expect(scoreAfterJoin).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
 
     // Leave the community
     await leaveCommunity(supabase, community.id);
 
     // Verify user lost the 50 points
-    const scoreAfterLeave = await getCurrentTrustScore(supabase, joiner.id, community.id);
+    const scoreAfterLeave = await getCurrentTrustScore(
+      supabase,
+      joiner.id,
+      community.id,
+    );
     expect(scoreAfterLeave).toBe(0);
   });
 
@@ -220,7 +227,7 @@ describe('Trust Score Points - Communities', () => {
 
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
-    
+
     await joinCommunity(supabase, community.id);
     await leaveCommunity(supabase, community.id);
 
