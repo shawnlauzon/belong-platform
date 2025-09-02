@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { createCommunity } from '@/features/communities/api';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 import type { CommunityInput } from '@/features/communities/types';
 import { communityKeys } from '../queries';
@@ -70,14 +71,19 @@ export function useCreateCommunity() {
 
       return result;
     },
-    onSuccess: (newCommunity) => {
+    onSuccess: async (newCommunity) => {
       // Invalidate all lists of communities
       queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
 
-      // Invalidate trust score for the community creator (they get +1000 points)
-      queryClient.invalidateQueries({
-        queryKey: trustScoreKeys.listByUser(newCommunity.organizerId),
-      });
+      // Invalidate trust score for the current user (community creator gets +1000 points)
+      try {
+        const currentUserId = await getAuthIdOrThrow(supabase);
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.listByUser(currentUserId),
+        });
+      } catch (error) {
+        logger.warn('🏘️ API: Could not invalidate trust score cache', { error });
+      }
 
       logger.info('🏘️ API: Successfully created community', {
         id: newCommunity.id,

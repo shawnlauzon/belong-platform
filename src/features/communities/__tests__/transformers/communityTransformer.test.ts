@@ -152,6 +152,7 @@ describe('communityTransformer', () => {
       expect(result).toEqual({
         user_id: membershipData.userId,
         community_id: membershipData.communityId,
+        role: 'member', // Default role
       });
     });
   });

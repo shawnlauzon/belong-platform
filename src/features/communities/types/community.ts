@@ -3,7 +3,6 @@ import { Coordinates, IsPersisted } from '@/shared';
 
 export type Community = IsPersisted<CommunityInput> & {
   memberCount: number;
-  organizerId: string;
 };
 
 // Just enough to display in the list / map of communities
@@ -61,5 +60,4 @@ export type CommunityBoundary = IsochroneBoundary;
 // For filtering communities
 export type CommunityFilter = {
   name?: string;
-  organizerId?: string;
 };

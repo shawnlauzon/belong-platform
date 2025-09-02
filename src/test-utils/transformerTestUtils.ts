@@ -11,7 +11,7 @@ import { expect } from 'vitest';
  * ```typescript
  * const result = toCommunityInfo(dbCommunity);
  * assertNoSnakeCaseProperties(result, [
- *   'organizer_id', 'community_id', 'created_at', 'updated_at'
+ *   'community_id', 'created_at', 'updated_at'
  * ]);
  * ```
  */
@@ -34,7 +34,6 @@ export const COMMON_SNAKE_CASE_PROPERTIES = {
 
   /** User/Community relationship fields */
   USER_COMMUNITY_FIELDS: [
-    'organizer_id',
     'community_id',
     'user_id',
     'owner_id',

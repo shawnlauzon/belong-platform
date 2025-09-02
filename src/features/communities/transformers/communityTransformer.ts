@@ -6,6 +6,7 @@ import type {
   IsochroneBoundary,
   CommunityType,
   CommunityMembership,
+  CommunityMembershipRole,
 } from '../types';
 import {
   CommunityInsertRow,
@@ -46,7 +47,6 @@ export function toDomainCommunity(dbCommunity: CommunityRow): Community {
 
   return {
     id: dbCommunity.id,
-    organizerId: dbCommunity.organizer_id,
     name: dbCommunity.name,
     description: dbCommunity.description ?? undefined,
     icon: dbCommunity.icon ?? undefined,
@@ -130,6 +130,7 @@ export function toDomainMembershipInfo(
   return {
     userId: dbMembership.user_id,
     communityId: dbMembership.community_id,
+    role: dbMembership.role as CommunityMembershipRole,
     createdAt: new Date(dbMembership.created_at),
     updatedAt: new Date(dbMembership.updated_at || dbMembership.created_at),
   };
@@ -144,5 +145,6 @@ export function toCommunityMembershipInsertRow(
   return {
     user_id: membership.userId,
     community_id: membership.communityId,
+    role: membership.role || 'member',
   };
 }

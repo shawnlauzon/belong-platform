@@ -145,7 +145,6 @@ export type Database = {
           id: string
           member_count: number
           name: string
-          organizer_id: string
           time_zone: string
           type: string
           updated_at: string
@@ -163,7 +162,6 @@ export type Database = {
           id?: string
           member_count?: number
           name: string
-          organizer_id?: string
           time_zone: string
           type?: string
           updated_at?: string
@@ -181,27 +179,11 @@ export type Database = {
           id?: string
           member_count?: number
           name?: string
-          organizer_id?: string
           time_zone?: string
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "communities_organizer_id_fkey"
-            columns: ["organizer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "communities_organizer_id_fkey"
-            columns: ["organizer_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       community_member_codes: {
         Row: {
@@ -256,18 +238,21 @@ export type Database = {
         Row: {
           community_id: string
           created_at: string
+          role: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
           community_id: string
           created_at?: string
+          role?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
           community_id?: string
           created_at?: string
+          role?: string
           updated_at?: string | null
           user_id?: string
         }

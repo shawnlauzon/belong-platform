@@ -52,7 +52,7 @@ describe('Communities API - CRUD Operations', () => {
         expect(community).toBeTruthy();
         expect(community!.id).toBeTruthy();
         expect(community!.name).toBe(data.name);
-        expect(community!.organizerId).toBe(testUser.id);
+        // Note: organizerId field was removed in favor of role-based membership system
 
         // Verify database record exists with all expected fields
         const { data: dbRecord } = await supabase
@@ -65,12 +65,12 @@ describe('Communities API - CRUD Operations', () => {
           id: community!.id,
           name: data.name,
           description: data.description,
-          organizer_id: testUser.id,
           time_zone: data.timeZone,
           icon: data.icon,
           boundary: data.boundary,
           member_count: 1,
         });
+        // Note: organizer_id column was removed in favor of role-based membership system
         expect(parsePostGisPoint(dbRecord!.center)).toEqual(data.center);
         expect(dbRecord!.created_at).toBeTruthy();
         expect(dbRecord!.updated_at).toBeTruthy();
@@ -96,6 +96,7 @@ describe('Communities API - CRUD Operations', () => {
           .single();
 
         expect(membership).toBeTruthy();
+        expect(membership!.role).toBe('organizer'); // Verify organizer role is set
       } finally {
         await cleanupCommunity(community);
       }

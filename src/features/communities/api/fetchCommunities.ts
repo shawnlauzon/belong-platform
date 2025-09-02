@@ -21,9 +21,6 @@ export async function fetchCommunities(
     if (filter?.name) {
       query = query.ilike('name', `%${filter.name}%`);
     }
-    if (filter?.organizerId) {
-      query = query.eq('organizer_id', filter.organizerId);
-    }
 
     const { data, error } = await query;
 

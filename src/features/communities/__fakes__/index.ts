@@ -4,6 +4,7 @@ import {
   CommunityInput,
   CommunityMembership,
   CommunityMembershipInput,
+  CommunityMembershipRole,
 } from '../types';
 import { CommunityRow } from '../types/communityRow';
 
@@ -12,7 +13,6 @@ export function createFakeCommunity(
 ): Community {
   return {
     id: faker.string.uuid(),
-    organizerId: faker.string.uuid(),
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
@@ -89,7 +89,6 @@ export function createFakeCommunityRow(
 
   return {
     id: faker.string.uuid(),
-    organizer_id: faker.string.uuid(),
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
@@ -175,6 +174,7 @@ export function createFakeCommunityMembershipInput(
   return {
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
+    role: faker.helpers.arrayElement(['member', 'organizer'] as CommunityMembershipRole[]),
     ...overrides,
   };
 }
@@ -189,6 +189,7 @@ export function createFakeCommunityMembership(
   return {
     userId: faker.string.uuid(),
     communityId: faker.string.uuid(),
+    role: faker.helpers.arrayElement(['member', 'organizer'] as CommunityMembershipRole[]),
     createdAt: joinedAt,
     updatedAt: joinedAt,
     ...overrides,
