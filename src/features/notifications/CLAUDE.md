@@ -6,192 +6,72 @@ Implement a comprehensive notification system for the Belong Platform to support
 
 ## Notification Types
 
-1. **Comment on my resource** - Someone comments on a resource I own
-2. **Reply to my comment** - Someone replies to one of my comments
-3. **Claim on my resource** - Someone claims one of my resources
-4. **Message received** - New direct message (already tracked but needs badge integration)
-5. **New community resource** - New resource added to a community I'm a member of
+### Permission Group 1: **Social Interactions**
 
-## Database Schema Design
+Controls notifications about direct interactions with other users:
 
-### Core Tables
+- `comment` - Someone comments on your resource
+- `comment_reply` - Someone replies to your comment
+- `shoutout_received` - Someone gives you a shoutout
+- `connection_request` - Someone wants to connect with you
+- `connection_accepted` - Your connection request was accepted
 
-#### 1. notifications
+### Permission Group 2: **My Resources**
 
-```sql
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('comment', 'comment_reply', 'claim', 'message', 'new_resource')),
+Controls notifications about resources you own:
 
-  -- Polymorphic references (only one will be set based on type)
-  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
-  comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
-  claim_id UUID REFERENCES resource_claims(id) ON DELETE CASCADE,
-  message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
-  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
-  community_id UUID REFERENCES communities(id) ON DELETE CASCADE,
+- `resource_claimed` - Someone claims your resource
+- `resource_claim_cancelled` - Someone cancelled their claim on your resource
+- `resource_claim_completed` - Someone marked their claim as completed on your resource
 
-  -- Actor who triggered the notification
-  actor_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+### Permission Group 3: **My Registrations**
 
-  -- Grouping support for "John and 3 others commented"
-  group_key TEXT,
-  actor_count INTEGER DEFAULT 1,
+Controls notifications about things you've signed up for (claims/event registrations):
 
-  -- Metadata for rendering notifications
-  title TEXT NOT NULL,
-  body TEXT,
-  image_url TEXT,
-  action_url TEXT, -- Deep link to content
-  metadata JSONB DEFAULT '{}',
+- `claim_approved` - Your claim/registration was approved by the resource owner
+- `claim_rejected` - Your claim/registration was rejected by the resource owner
+- `claimed_resource_updated` - A resource/event you claimed/registered for was updated
+- `claimed_resource_cancelled` - A resource/event you claimed/registered for was cancelled
 
-  -- Status tracking
-  is_read BOOLEAN DEFAULT FALSE,
-  read_at TIMESTAMPTZ,
+### Permission Group 4: **My Communities** (as organizer)
 
-  -- Timestamps
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+Controls notifications about communities you organize:
 
-#### 2. notification_preferences
+- `community_member_joined` - Someone joined your community
+- `community_member_left` - Someone left your community
 
-```sql
-CREATE TABLE notification_preferences (
-  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+### Permission Group 5: **Community Activity** (as member)
 
-  -- Per-type preferences
-  comments_on_resources BOOLEAN DEFAULT TRUE,
-  comment_replies BOOLEAN DEFAULT TRUE,
-  resource_claims BOOLEAN DEFAULT TRUE,
-  new_messages BOOLEAN DEFAULT TRUE,
-  community_resources BOOLEAN DEFAULT TRUE,
+Controls notifications about communities you're a member of:
 
-  -- Global settings (for future email/push)
-  email_enabled BOOLEAN DEFAULT FALSE,
-  push_enabled BOOLEAN DEFAULT FALSE,
+- `new_resource` - New resource added to a community you're in
+- `new_event` - New event created in your community
+- `community_invitation` - Invited to join a community
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### Permission Group 6: **Trust & Recognition**
 
-#### 3. notification_counts (for performance)
+Controls notifications about achievements:
 
-```sql
-CREATE TABLE notification_counts (
-  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+- `trust_points_received` - You received trust points from an action
+- `trust_level_changed` - You reached a new trust level
 
-  -- Cached counts by category
-  unread_total INTEGER DEFAULT 0,
-  unread_comments INTEGER DEFAULT 0,
-  unread_claims INTEGER DEFAULT 0,
-  unread_messages INTEGER DEFAULT 0,
-  unread_resources INTEGER DEFAULT 0,
+### Permission Group 7: **Messages**
 
-  -- For "new" indicators
-  last_checked_at TIMESTAMPTZ DEFAULT NOW(),
+Always enabled (no user control):
 
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+- `message` - Direct message received
 
-#### 4. seen_resources (track viewed community resources)
+### Key Design Principles
 
-```sql
-CREATE TABLE seen_resources (
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
-  seen_at TIMESTAMPTZ DEFAULT NOW(),
-  PRIMARY KEY (user_id, resource_id)
-);
-```
+1. **Clear Ownership Separation**: Distinguishes between "my stuff" (resources I own, communities I organize) and "their stuff" (resources I've claimed, communities I'm a member of)
 
-### Indexes for Performance
+2. **Unified Registrations**: Treats event attendance and resource claims uniformly as "registrations" since they use the same underlying system
 
-```sql
--- Core notification queries
-CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, created_at DESC);
-CREATE INDEX idx_notifications_group ON notifications(user_id, group_key, is_read);
-CREATE INDEX idx_notifications_type ON notifications(user_id, type, created_at DESC);
+3. **Minimal Overlap**: Each notification type belongs to exactly one group with no duplication
 
--- Cleanup and maintenance
-CREATE INDEX idx_notifications_cleanup ON notifications(created_at) WHERE is_read = TRUE;
-```
+4. **User-Friendly Grouping**: Groups make intuitive sense to users managing their notification preferences
 
-## Database Functions & Triggers
-
-### 1. Core Notification Creation Function
-
-```sql
-CREATE OR REPLACE FUNCTION create_or_update_notification(
-  p_user_id UUID,
-  p_type TEXT,
-  p_actor_id UUID,
-  p_group_key TEXT,
-  p_title TEXT,
-  p_body TEXT DEFAULT NULL,
-  p_action_url TEXT DEFAULT NULL,
-  p_resource_id UUID DEFAULT NULL,
-  p_comment_id UUID DEFAULT NULL,
-  p_claim_id UUID DEFAULT NULL,
-  p_message_id UUID DEFAULT NULL,
-  p_conversation_id UUID DEFAULT NULL,
-  p_community_id UUID DEFAULT NULL,
-  p_metadata JSONB DEFAULT '{}'
-) RETURNS notifications;
-```
-
-### 2. Preference Check Function
-
-```sql
-CREATE OR REPLACE FUNCTION should_send_notification(p_user_id UUID, p_type TEXT)
-RETURNS BOOLEAN;
-```
-
-### 3. Count Update Function
-
-```sql
-CREATE OR REPLACE FUNCTION update_notification_counts(
-  p_user_id UUID,
-  p_type TEXT,
-  p_delta INTEGER
-) RETURNS VOID;
-```
-
-### 4. Trigger Functions
-
-#### Comment Notifications
-
-```sql
-CREATE OR REPLACE FUNCTION notify_on_comment() RETURNS TRIGGER;
-CREATE TRIGGER comment_notification_trigger
-AFTER INSERT ON comments
-FOR EACH ROW
-EXECUTE FUNCTION notify_on_comment();
-```
-
-#### Claim Notifications
-
-```sql
-CREATE OR REPLACE FUNCTION notify_on_claim() RETURNS TRIGGER;
-CREATE TRIGGER claim_notification_trigger
-AFTER INSERT ON resource_claims
-FOR EACH ROW
-EXECUTE FUNCTION notify_on_claim();
-```
-
-#### New Resource Notifications
-
-```sql
-CREATE OR REPLACE FUNCTION notify_on_new_resource() RETURNS TRIGGER;
-CREATE TRIGGER resource_notification_trigger
-AFTER INSERT ON resources
-FOR EACH ROW
-EXECUTE FUNCTION notify_on_new_resource();
-```
+5. **Always-On Critical Notifications**: Messages remain always enabled as they're direct person-to-person communication
 
 ## Platform Implementation
 
@@ -329,31 +209,6 @@ export function useNotificationCounts() {
 - Implement notification archival system
 - Add read replica support for heavy read workloads
 
-## Testing Strategy
-
-### Unit Tests
-
-- [ ] Notification API functions (fetch, mark read, preferences)
-- [ ] Hook behavior and cache updates
-- [ ] Transformer functions
-- [ ] Database trigger functions
-
-### Integration Tests
-
-- [ ] End-to-end notification flows
-- [ ] Real-time subscription behavior
-- [ ] Badge count accuracy across scenarios
-- [ ] Notification grouping logic
-- [ ] Cross-feature integration (comments → notifications)
-
-### Performance Tests
-
-- [ ] Badge count query performance (< 50ms)
-- [ ] Notification list pagination performance
-- [ ] Real-time broadcast latency (< 200ms)
-- [ ] Database trigger performance impact
-- [ ] Memory usage with many subscriptions
-
 ## Security Considerations
 
 ### Row Level Security (RLS)
@@ -378,49 +233,6 @@ USING (user_id = auth.uid());
 - No sensitive data in notification previews
 - Respect user privacy preferences
 - Secure real-time channel authorization
-
-## Monitoring & Maintenance
-
-### Metrics to Track
-
-- Notification delivery success rate
-- Real-time update latency
-- Badge count accuracy
-- User engagement with notifications
-- Database performance impact
-
-### Maintenance Tasks
-
-- Clean up old read notifications (monthly)
-- Monitor trigger performance impact
-- Update cached counts periodically
-- Archive old notification data
-
-## Success Criteria
-
-### Functional Requirements
-
-- ✅ Badge counts update instantly across all sessions
-- ✅ Notifications appear for all specified events
-- ✅ Real-time updates work without page refresh
-- ✅ User preferences are respected
-- ✅ Blocked users don't generate notifications
-
-### Performance Requirements
-
-- Badge count queries < 50ms (p95)
-- Real-time updates < 200ms latency
-- Notification list loads < 500ms
-- UI remains responsive with 1000+ notifications
-- Memory usage stable over time
-
-### User Experience Requirements
-
-- Clear, actionable notification messages
-- Appropriate grouping to avoid spam
-- Easy mark-as-read functionality
-- Intuitive notification preferences
-- Seamless integration with existing message badges
 
 ## Notes
 

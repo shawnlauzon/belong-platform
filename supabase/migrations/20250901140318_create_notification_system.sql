@@ -1,3 +1,6 @@
+-- Merged notification system migration
+-- Combines: create_notification_system, fix_resource_notification_trigger, enable_notifications_realtime
+
 -- Drop old unused notifications table
 DROP TABLE IF EXISTS notifications CASCADE;
 
@@ -461,48 +464,62 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- New resource notifications
-CREATE OR REPLACE FUNCTION notify_on_new_resource() RETURNS TRIGGER AS $$
+-- Function that works with resource_communities context (fixed version)
+CREATE OR REPLACE FUNCTION notify_on_resource_community_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
 DECLARE
+  resource_record resources%ROWTYPE;
   resource_author_name TEXT;
+  community_name TEXT;
   community_member RECORD;
 BEGIN
+  -- Get the resource details
+  SELECT * INTO resource_record
+  FROM resources
+  WHERE id = NEW.resource_id;
+  
+  -- Get the community name
+  SELECT name INTO community_name
+  FROM communities
+  WHERE id = NEW.community_id;
+  
   -- Get resource author name with fallback
   SELECT COALESCE(full_name, first_name || ' ' || last_name, 'Someone') INTO resource_author_name
   FROM public_profiles
-  WHERE id = NEW.owner_id;
+  WHERE id = resource_record.owner_id;
   
   -- Fallback if no profile found
   IF resource_author_name IS NULL THEN
     resource_author_name := 'Someone';
   END IF;
   
-  -- Notify all community members where this resource is shared
+  -- Notify all members of this specific community
   FOR community_member IN
-    SELECT DISTINCT cm.user_id, c.name as community_name
+    SELECT DISTINCT cm.user_id
     FROM community_memberships cm
-    JOIN communities c ON c.id = cm.community_id
-    JOIN resource_communities rc ON rc.community_id = cm.community_id
-    WHERE rc.resource_id = NEW.id
-      AND cm.user_id != NEW.owner_id -- Don't notify the resource owner
+    WHERE cm.community_id = NEW.community_id
+      AND cm.user_id != resource_record.owner_id -- Don't notify the resource owner
   LOOP
     PERFORM create_or_update_notification(
       community_member.user_id,
       'new_resource',
-      NEW.owner_id,
-      'new_resource:' || community_member.community_name,
-      'New ' || LOWER(NEW.category::text) || ' in ' || community_member.community_name,
-      NEW.title,
-      '/resources/' || NEW.id::text,
-      NEW.id,
-      NULL, NULL, NULL, NULL, NULL,
-      jsonb_build_object('resource_title', NEW.title, 'community_name', community_member.community_name, 'resource_category', NEW.category)
+      resource_record.owner_id,
+      'new_resource:' || community_name,
+      'New ' || LOWER(resource_record.category::text) || ' in ' || community_name,
+      resource_record.title,
+      '/resources/' || resource_record.id::text,
+      resource_record.id,
+      NULL, NULL, NULL, NULL, NEW.community_id,
+      jsonb_build_object('resource_title', resource_record.title, 'community_name', community_name, 'resource_category', resource_record.category)
     );
   END LOOP;
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$function$;
 
 -- Update counts when notifications are marked as read
 CREATE OR REPLACE FUNCTION update_counts_on_read() RETURNS TRIGGER AS $$
@@ -527,13 +544,22 @@ AFTER INSERT ON resource_claims
 FOR EACH ROW
 EXECUTE FUNCTION notify_on_claim();
 
-CREATE TRIGGER resource_notification_trigger
-AFTER INSERT ON resources
-FOR EACH ROW
-EXECUTE FUNCTION notify_on_new_resource();
+-- Create the trigger on resource_communities table (fixed version)
+CREATE TRIGGER resource_community_notification_trigger
+  AFTER INSERT ON resource_communities
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_on_resource_community_insert();
 
 -- Update counts when notifications are read
 CREATE TRIGGER notification_read_trigger
 AFTER UPDATE ON notifications
 FOR EACH ROW
 EXECUTE FUNCTION update_counts_on_read();
+
+-- Enable realtime subscriptions for notification tables
+-- This allows postgres_changes subscriptions to work for real-time notifications
+
+-- Add notification tables to the supabase_realtime publication
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE notification_counts; 
+ALTER PUBLICATION supabase_realtime ADD TABLE notification_preferences;
