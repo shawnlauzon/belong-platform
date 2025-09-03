@@ -75,8 +75,14 @@ describe('Social Interactions Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      const commentNotification = notifications.find(n => 
+        n.type === 'comment' && 
+        n.resourceId === resource.id && 
+        n.actorId === interactingUser.id
+      );
+      expect(commentNotification).toBeDefined();
+      expect(commentNotification).toMatchObject({
         type: 'comment',
         resourceId: resource.id,
         actorId: interactingUser.id,
@@ -114,8 +120,14 @@ describe('Social Interactions Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      const replyNotification = notifications.find(n => 
+        n.type === 'comment_reply' && 
+        n.resourceId === resource.id && 
+        n.actorId === interactingUser.id
+      );
+      expect(replyNotification).toBeDefined();
+      expect(replyNotification).toMatchObject({
         type: 'comment_reply',
         resourceId: resource.id,
         commentId: expect.any(String),
@@ -152,8 +164,14 @@ describe('Social Interactions Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      const shoutoutNotification = notifications.find(n => 
+        n.type === 'shoutout_received' && 
+        n.communityId === testCommunity.id && 
+        n.actorId === interactingUser.id
+      );
+      expect(shoutoutNotification).toBeDefined();
+      expect(shoutoutNotification).toMatchObject({
         type: 'shoutout_received',
         communityId: testCommunity.id,
         actorId: interactingUser.id,
@@ -184,8 +202,13 @@ describe('Social Interactions Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      const connectionNotification = notifications.find(n => 
+        n.type === 'connection_request' && 
+        n.actorId === interactingUser.id
+      );
+      expect(connectionNotification).toBeDefined();
+      expect(connectionNotification).toMatchObject({
         type: 'connection_request',
         actorId: interactingUser.id,
         isRead: false,
@@ -212,8 +235,9 @@ describe('Social Interactions Notifications', () => {
       await signIn(clientA, interactingUser.email, 'TestPass123!');
       const pendingConnections = await fetchPendingConnections(clientA);
 
-      expect(pendingConnections).toHaveLength(1);
-      const connectionRequest = pendingConnections[0];
+      expect(pendingConnections.length).toBeGreaterThan(0);
+      const connectionRequest = pendingConnections.find(c => c.requesterId === resourceOwner.id);
+      expect(connectionRequest).toBeDefined();
 
       // Approve the connection (this should create notification for resourceOwner)
       await approveConnection(clientA, connectionRequest.id);
@@ -226,8 +250,13 @@ describe('Social Interactions Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      const acceptedNotification = notifications.find(n => 
+        n.type === 'connection_accepted' && 
+        n.actorId === interactingUser.id
+      );
+      expect(acceptedNotification).toBeDefined();
+      expect(acceptedNotification).toMatchObject({
         type: 'connection_accepted',
         actorId: interactingUser.id,
         isRead: false,

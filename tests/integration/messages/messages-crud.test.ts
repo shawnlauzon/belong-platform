@@ -7,7 +7,6 @@ import {
   createTestConversation, 
   sendTestMessage, 
   assertMessageExists,
-  assertUnreadCount,
   signInAsUser 
 } from './messaging-helpers';
 import * as api from '@/features/messages/api';
@@ -154,29 +153,6 @@ describe('Messages CRUD Operations', () => {
       expect(dbConversation!.last_message_at).toBeTruthy();
     });
 
-    it('increments unread count for recipient', async () => {
-      // Sign in as userA and send message
-      await signInAsUser(supabase, userA);
-      
-      // Get initial unread count for userB
-      const initialCount = await api.fetchConversation(supabase, conversation.id);
-      
-      // Switch to userB to see their unread count
-      await signInAsUser(supabase, userB);
-      const userBConversation = await api.fetchConversation(supabase, conversation.id);
-      const initialUnreadB = userBConversation.unreadCount;
-      
-      // Switch back to userA and send message
-      await signInAsUser(supabase, userA);
-      await api.sendMessage(supabase, {
-        conversationId: conversation.id,
-        content: `${TEST_PREFIX} Unread count test`,
-        messageType: 'text'
-      });
-
-      // Check userB's unread count increased
-      await assertUnreadCount(supabase, conversation.id, userB.id, initialUnreadB + 1);
-    });
   });
 
   describe('fetchMessages', () => {

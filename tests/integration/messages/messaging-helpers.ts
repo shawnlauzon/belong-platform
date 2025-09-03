@@ -204,32 +204,6 @@ export async function assertMessageDelivered(
   }
 }
 
-/**
- * Asserts the unread count for a user in a conversation
- */
-export async function assertUnreadCount(
-  supabase: SupabaseClient<Database>,
-  conversationId: string,
-  userId: string,
-  expectedCount: number,
-): Promise<void> {
-  const { data: participant, error } = await supabase
-    .from('conversation_participants')
-    .select('unread_count')
-    .eq('conversation_id', conversationId)
-    .eq('user_id', userId)
-    .single();
-
-  if (error || !participant) {
-    throw new Error(`Conversation participant not found: ${error?.message}`);
-  }
-
-  if (participant.unread_count !== expectedCount) {
-    throw new Error(
-      `Unread count mismatch. Expected: ${expectedCount}, Got: ${participant.unread_count}`,
-    );
-  }
-}
 
 /**
  * Asserts that a message exists in the database

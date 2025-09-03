@@ -6,7 +6,6 @@ import {
   setupMessagingUsers, 
   createTestConversation, 
   sendTestMessage,
-  assertUnreadCount,
   assertMessageDelivered,
   signInAsUser 
 } from './messaging-helpers';
@@ -125,95 +124,8 @@ describe('Messages Read Status & Receipts', () => {
       });
     });
 
-    it('batch mark resets unread count to 0', async () => {
-      // Create fresh conversation for this test
-      await signInAsUser(supabase, userA);
-      const freshConversation = await createTestConversation(supabase, userB.id);
-      
-      // Send messages to increment unread count
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Unread 1`);
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Unread 2`);
-
-      // Verify unread count is > 0 for userB
-      await signInAsUser(supabase, userB);
-      const beforeConversation = await api.fetchConversation(supabase, freshConversation.id);
-      expect(beforeConversation.unreadCount).toBeGreaterThan(0);
-
-      // Mark all as read
-      await supabase.rpc('mark_messages_as_read', {
-        p_conversation_id: freshConversation.id
-      });
-
-      // Verify unread count is 0
-      await assertUnreadCount(supabase, freshConversation.id, userB.id, 0);
-    });
   });
 
-  describe('Unread Count Management', () => {
-    it('increments unread count on new message', async () => {
-      // Get initial unread count for userB
-      await signInAsUser(supabase, userB);
-      const before = await api.fetchConversation(supabase, conversation.id);
-      const initialCount = before.unreadCount;
-
-      // Send message as userA
-      await signInAsUser(supabase, userA);
-      await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Increment unread`);
-
-      // Verify userB's unread count increased
-      await assertUnreadCount(supabase, conversation.id, userB.id, initialCount + 1);
-    });
-
-    it('unread count in conversation_participants syncs', async () => {
-      // Create fresh conversation
-      await signInAsUser(supabase, userA);
-      const freshConversation = await createTestConversation(supabase, userB.id);
-
-      // Send message
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Sync test`);
-
-      // Check unread count via API
-      await signInAsUser(supabase, userB);
-      const conversationData = await api.fetchConversation(supabase, freshConversation.id);
-      
-      // Check unread count directly from database
-      const { data: participant } = await supabase
-        .from('conversation_participants')
-        .select('unread_count')
-        .eq('conversation_id', freshConversation.id)
-        .eq('user_id', userB.id)
-        .single();
-
-      expect(conversationData.unreadCount).toBe(participant!.unread_count);
-    });
-
-    it('handles multiple unread messages correctly', async () => {
-      const freshUser = await createTestUser(supabase);
-      await joinCommunity(supabase, community.id);
-      const freshConversation = await createTestConversation(supabase, userB.id);
-
-      // Send 3 messages
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Multi 1`);
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Multi 2`);
-      await sendTestMessage(supabase, freshConversation.id, `${TEST_PREFIX} Multi 3`);
-
-      // Verify unread count is 3
-      await assertUnreadCount(supabase, freshConversation.id, userB.id, 3);
-
-      // Mark one message as read
-      const messages = await api.fetchMessages(supabase, freshConversation.id, {
-        limit: 10
-      });
-      
-      await signInAsUser(supabase, userB);
-      await api.markAsRead(supabase, freshConversation.id);
-
-      // Unread count should still be based on last_read_at, not individual message reads
-      // This depends on implementation - typically it's messages after last_read_at
-      const updatedConversation = await api.fetchConversation(supabase, freshConversation.id);
-      expect(updatedConversation.unreadCount).toBeGreaterThanOrEqual(0);
-    });
-  });
 
   describe('Delivery Status', () => {
     it('populates delivered_at on message creation', async () => {

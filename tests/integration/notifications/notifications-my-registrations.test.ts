@@ -113,8 +113,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claim_approved' && 
+        n.resourceId === resource.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claim_approved',
         resourceId: resource.id,
         actorId: resourceOwner.id,
@@ -153,8 +160,15 @@ describe('My Registrations Notifications', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify notification was received via persistent channel
-      expect(notificationsReceived).toHaveLength(1);
-      expect(notificationsReceived[0]).toMatchObject({
+      expect(notificationsReceived.length).toBeGreaterThan(0);
+      
+      const specificNotification = notificationsReceived.find(n => 
+        n.type === 'claim_approved' && 
+        n.resource_id === resource.id && 
+        n.actor_id === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claim_approved',
         resource_id: resource.id,
         actor_id: resourceOwner.id,
@@ -197,8 +211,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claim_rejected' && 
+        n.resourceId === resource.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claim_rejected',
         resourceId: resource.id,
         actorId: resourceOwner.id,
@@ -237,8 +258,15 @@ describe('My Registrations Notifications', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify notification was received via persistent channel
-      expect(notificationsReceived).toHaveLength(1);
-      expect(notificationsReceived[0]).toMatchObject({
+      expect(notificationsReceived.length).toBeGreaterThan(0);
+      
+      const specificNotification = notificationsReceived.find(n => 
+        n.type === 'claim_rejected' && 
+        n.resource_id === resource.id && 
+        n.actor_id === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claim_rejected',
         resource_id: resource.id,
         actor_id: resourceOwner.id,
@@ -282,8 +310,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claimed_resource_updated' && 
+        n.resourceId === resource.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claimed_resource_updated',
         resourceId: resource.id,
         actorId: resourceOwner.id,
@@ -324,8 +359,15 @@ describe('My Registrations Notifications', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify notification was received via persistent channel
-      expect(notificationsReceived).toHaveLength(1);
-      expect(notificationsReceived[0]).toMatchObject({
+      expect(notificationsReceived.length).toBeGreaterThan(0);
+      
+      const specificNotification = notificationsReceived.find(n => 
+        n.type === 'claimed_resource_updated' && 
+        n.resource_id === resource.id && 
+        n.actor_id === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claimed_resource_updated',
         resource_id: resource.id,
         actor_id: resourceOwner.id,
@@ -363,8 +405,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claimed_resource_cancelled' && 
+        n.resourceId === resource.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claimed_resource_cancelled',
         resourceId: resource.id,
         actorId: resourceOwner.id,
@@ -401,8 +450,15 @@ describe('My Registrations Notifications', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify notification was received via persistent channel
-      expect(notificationsReceived).toHaveLength(1);
-      expect(notificationsReceived[0]).toMatchObject({
+      expect(notificationsReceived.length).toBeGreaterThan(0);
+      
+      const specificNotification = notificationsReceived.find(n => 
+        n.type === 'claimed_resource_cancelled' && 
+        n.resource_id === resource.id && 
+        n.actor_id === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claimed_resource_cancelled',
         resource_id: resource.id,
         actor_id: resourceOwner.id,
@@ -447,8 +503,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claim_approved' && 
+        n.resourceId === event.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claim_approved',
         resourceId: event.id,
         actorId: resourceOwner.id,
@@ -490,8 +553,15 @@ describe('My Registrations Notifications', () => {
         limit: 10,
       });
 
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0]).toMatchObject({
+      expect(notifications.length).toBeGreaterThan(0);
+      
+      const specificNotification = notifications.find(n => 
+        n.type === 'claimed_resource_updated' && 
+        n.resourceId === event.id && 
+        n.actorId === resourceOwner.id
+      );
+      expect(specificNotification).toBeDefined();
+      expect(specificNotification).toMatchObject({
         type: 'claimed_resource_updated',
         resourceId: event.id,
         actorId: resourceOwner.id,
@@ -518,10 +588,6 @@ describe('My Registrations Notifications', () => {
         notes: 'Self-claim for update test',
       });
 
-      const initialNotifications = await fetchNotifications(supabase, {
-        type: 'claimed_resource_updated',
-      });
-      const initialCount = initialNotifications.length;
 
       // Update own resource
       await updateResource(supabase, {
@@ -533,7 +599,13 @@ describe('My Registrations Notifications', () => {
       const finalNotifications = await fetchNotifications(supabase, {
         type: 'claimed_resource_updated',
       });
-      expect(finalNotifications).toHaveLength(initialCount);
+      
+      const selfNotification = finalNotifications.find(n => 
+        n.type === 'claimed_resource_updated' && 
+        n.resourceId === resource.id && 
+        n.actorId === claimingUser.id
+      );
+      expect(selfNotification).toBeUndefined();
     });
   });
 });

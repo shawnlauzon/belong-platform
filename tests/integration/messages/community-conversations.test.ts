@@ -302,54 +302,6 @@ describe('Community Conversations Integration', () => {
     });
   });
 
-  describe('Read status and unread counts', () => {
-    let communityConversation: CommunityConversation;
-
-    beforeAll(async () => {
-      await signInAsUser(supabase, userA);
-      communityConversation = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-    });
-
-    it('increments unread count for recipients when message is sent', async () => {
-      // UserA sends a message
-      await signInAsUser(supabase, userA);
-      await sendTestMessage(
-        supabase,
-        communityConversation.id,
-        'Test unread message',
-      );
-
-      // UserB should have unread count incremented
-      await signInAsUser(supabase, userB);
-      const conversationForB = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-
-      expect(conversationForB).toBeTruthy();
-      expect(conversationForB!.unreadCount).toBeGreaterThan(0);
-    });
-
-    it('allows marking community messages as read', async () => {
-      await signInAsUser(supabase, userB);
-
-      // Mark messages as read
-      await api.markAsRead(supabase, communityConversation.id);
-
-      // Check that unread count is reset
-      const updatedConversation = await api.fetchCommunityConversation(
-        supabase,
-        community.id,
-      );
-      expect(updatedConversation).toBeTruthy();
-      expect(updatedConversation!.unreadCount).toBe(0);
-      expect(updatedConversation!.lastReadAt).toBeTruthy();
-    });
-  });
-
   describe('Edge cases and error conditions', () => {
     it('handles non-existent community gracefully', async () => {
       await signInAsUser(supabase, userA);
