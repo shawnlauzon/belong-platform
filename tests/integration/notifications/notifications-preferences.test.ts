@@ -10,6 +10,7 @@ import {
 import {
   fetchNotifications,
   updatePreferences,
+  fetchPreferences,
 } from '@/features/notifications';
 import { createComment } from '@/features/comments';
 import { createResourceClaim } from '@/features/resources/api';
@@ -49,58 +50,58 @@ describe('Notification Preferences', () => {
 
   describe('Preference updates', () => {
     it('should allow updating notification preferences', async () => {
-      // Update preferences to disable comment notifications
+      // Update preferences to disable some notifications
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: false,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: false,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
 
       // Verify preferences were updated
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .single();
+      const preferences = await fetchPreferences(supabase);
 
       expect(preferences).toMatchObject({
-        comments_on_resources: false,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: false,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
     });
 
     it('should create default preferences for new users', async () => {
       // Reset the test user's preferences to defaults first
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
 
       // Check that the user has default preferences
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .single();
+      const preferences = await fetchPreferences(supabase);
 
       expect(preferences).toMatchObject({
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
         email_enabled: false,
         push_enabled: false,
       });
@@ -109,15 +110,16 @@ describe('Notification Preferences', () => {
 
   describe('Preference enforcement', () => {
     it('should not create comment notifications when disabled', async () => {
-      // Disable comment notifications
+      // Disable social interaction notifications (includes comments)
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: false,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: false,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
 
       // Create a resource
@@ -149,15 +151,16 @@ describe('Notification Preferences', () => {
     });
 
     it('should not create claim notifications when disabled', async () => {
-      // Disable claim notifications
+      // Disable resource notifications (includes claims)
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: false,
+        social_interactions: true,
+        my_resources: false,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
 
       const resource = await createTestResource(
@@ -190,15 +193,16 @@ describe('Notification Preferences', () => {
     });
 
     it('should not create new resource notifications when disabled', async () => {
-      // Disable new resource notifications
+      // Disable community activity notifications (includes new resources)
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: false,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: false,
       });
 
       const initialNotifications = await fetchNotifications(supabase, {
@@ -224,15 +228,16 @@ describe('Notification Preferences', () => {
     });
 
     it('should still create notifications when preferences are enabled', async () => {
-      // Ensure comment notifications are enabled
+      // Ensure social interaction notifications are enabled
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
       });
 
       const resource = await createTestResource(
@@ -267,23 +272,21 @@ describe('Notification Preferences', () => {
 
   describe('Preference defaults', () => {
     it('should apply default preferences to new users', async () => {
-      // Create a new user
-      const newUser = await createTestUser(supabase);
+      // Create a new user (automatically signed in)
+      await createTestUser(supabase);
 
       // Check their default preferences
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', newUser.id)
-        .single();
+      const preferences = await fetchPreferences(supabase);
 
       expect(preferences).toMatchObject({
-        comments_on_resources: true,
-        comment_replies: true,
-        resource_claims: true,
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
         direct_messages: true,
         community_messages: true,
-        community_resources: true,
         email_enabled: false,
         push_enabled: false,
       });
@@ -291,140 +294,74 @@ describe('Notification Preferences', () => {
   });
 
   describe('Extended notification types', () => {
-    it('should handle all 19 notification types in preferences', async () => {
-      // Update preferences to include all new types
+    it('should handle grouped notification preferences', async () => {
+      // Update preferences using grouped categories
       await updatePreferences(supabase, {
-        user_id: testUser.id,
-        // Existing types
-        comments_on_resources: false,
-        comment_replies: true,
-        resource_claims: false,
+        social_interactions: false,
+        my_resources: true,
+        my_registrations: false,
+        my_communities: true,
+        community_activity: false,
+        trust_recognition: true,
         direct_messages: true,
-        community_messages: true, // Always enabled
-        community_resources: true,
-        // New Social Interactions
-        shoutout_received: false,
-        connection_request: true,
-        connection_accepted: false,
-        // New My Resources
-        resource_claim_cancelled: true,
-        resource_claim_completed: false,
-        // New My Registrations  
-        claim_approved: false,
-        claim_rejected: true,
-        claimed_resource_updated: false,
-        claimed_resource_cancelled: true,
-        // New My Communities
-        community_member_joined: false,
-        community_member_left: true,
-        // New Community Activity
-        new_event: false,
-        // New Trust & Recognition
-        trust_points_received: true,
-        trust_level_changed: false,
+        community_messages: true,
+        email_enabled: false,
+        push_enabled: true,
       });
 
       // Verify all preferences were saved
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', testUser.id)
-        .single();
+      const preferences = await fetchPreferences(supabase);
 
       expect(preferences).toMatchObject({
-        // Existing types
-        comments_on_resources: false,
-        comment_replies: true,
-        resource_claims: false,
+        social_interactions: false,
+        my_resources: true,
+        my_registrations: false,
+        my_communities: true,
+        community_activity: false,
+        trust_recognition: true,
         direct_messages: true,
-        community_messages: true, // Always enabled
-        community_resources: true,
-        // New Social Interactions
-        shoutout_received: false,
-        connection_request: true,
-        connection_accepted: false,
-        // New My Resources
-        resource_claim_cancelled: true,
-        resource_claim_completed: false,
-        // New My Registrations
-        claim_approved: false,
-        claim_rejected: true,
-        claimed_resource_updated: false,
-        claimed_resource_cancelled: true,
-        // New My Communities
-        community_member_joined: false,
-        community_member_left: true,
-        // New Community Activity
-        new_event: false,
-        // New Trust & Recognition
-        trust_points_received: true,
-        trust_level_changed: false,
+        community_messages: true,
+        email_enabled: false,
+        push_enabled: true,
       });
     });
 
     it('should allow disabling direct and community messages separately', async () => {
-      // Disable both types of messages
+      // Disable both types of messages and social interactions
       await updatePreferences(supabase, {
-        user_id: testUser.id,
+        social_interactions: false,
         direct_messages: false,
         community_messages: false,
-        comments_on_resources: false,
       });
 
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', testUser.id)
-        .single();
+      const preferences = await fetchPreferences(supabase);
 
       // Messages should be able to be disabled now
       expect(preferences?.direct_messages).toBe(false);
       expect(preferences?.community_messages).toBe(false);
-      expect(preferences?.comments_on_resources).toBe(false);
+      expect(preferences?.social_interactions).toBe(false);
     });
 
-    it('should provide default values for all new preference types', async () => {
-      // Create a fresh user to test defaults
-      const freshUser = await createTestUser(supabase);
+    it('should provide default values for all preference categories', async () => {
+      // Create a fresh user to test defaults (automatically signed in)
+      await createTestUser(supabase);
 
-      // Check that all new preference columns have proper defaults when accessed
-      const { data: preferences } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', freshUser.id)
-        .maybeSingle();
+      // Check that all preference categories have proper defaults
+      const preferences = await fetchPreferences(supabase);
 
-      // If no record exists, defaults should apply via database constraints
-      if (!preferences) {
-        // Insert a minimal record to trigger defaults
-        await supabase.from('notification_preferences').insert({
-          user_id: freshUser.id,
-        });
-
-        const { data: defaultPrefs } = await supabase
-          .from('notification_preferences')
-          .select('*')
-          .eq('user_id', freshUser.id)
-          .single();
-
-        // All new types should default to true
-        expect(defaultPrefs).toMatchObject({
-          shoutout_received: true,
-          connection_request: true,
-          connection_accepted: true,
-          resource_claim_cancelled: true,
-          resource_claim_completed: true,
-          claim_approved: true,
-          claim_rejected: true,
-          claimed_resource_updated: true,
-          claimed_resource_cancelled: true,
-          community_member_joined: true,
-          community_member_left: true,
-          new_event: true,
-          trust_points_received: true,
-          trust_level_changed: true,
-        });
-      }
+      // All categories should default to true except email/push
+      expect(preferences).toMatchObject({
+        social_interactions: true,
+        my_resources: true,
+        my_registrations: true,
+        my_communities: true,
+        community_activity: true,
+        trust_recognition: true,
+        direct_messages: true,
+        community_messages: true,
+        email_enabled: false,
+        push_enabled: false,
+      });
     });
   });
 });

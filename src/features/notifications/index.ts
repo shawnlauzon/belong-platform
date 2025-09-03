@@ -16,6 +16,7 @@ export {
   fetchNotificationCount,
   deleteNotification,
   updatePreferences,
+  fetchPreferences,
 } from './api';
 export { markAsRead as markNotificationAsRead } from './api/markAsRead';
 export { markAllAsRead as markAllNotificationsAsRead } from './api/markAllAsRead';

@@ -110,11 +110,7 @@ describe('Notifications CRUD', () => {
       // Get updated counts
       const updatedCounts = await fetchNotificationCount(supabase);
 
-      expect(updatedCounts.comments).toBeGreaterThan(initialCounts.comments);
-      expect(updatedCounts.notifications).toBeGreaterThan(
-        initialCounts.notifications,
-      );
-      expect(updatedCounts.total).toBeGreaterThan(initialCounts.total);
+      expect(updatedCounts).toBeGreaterThan(initialCounts);
     });
   });
 
@@ -229,23 +225,14 @@ describe('Notifications CRUD', () => {
 
       const countsAfterComment = await fetchNotificationCount(supabase);
 
-      expect(countsAfterComment.comments).toBe(
-        (initialCounts.comments || 0) + 1,
-      );
-      expect(countsAfterComment.notifications).toBe(
-        (initialCounts.notifications || 0) + 1,
-      );
-      expect(countsAfterComment.total).toBe((initialCounts.total || 0) + 1);
+      expect(countsAfterComment).toBe((initialCounts || 0) + 1);
 
       // Mark as read and verify counts update
       await markAllNotificationsAsRead(supabase);
 
       const countsAfterRead = await fetchNotificationCount(supabase);
 
-      expect(countsAfterRead.comments).toBe(0);
-      expect(countsAfterRead.notifications).toBe(0);
-      // Total should only include messages now
-      expect(countsAfterRead.total).toBe(countsAfterRead.messages);
+      expect(countsAfterRead).toBe(0);
     });
   });
 });

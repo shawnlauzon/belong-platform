@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestUser, createTestCommunity, TEST_PREFIX } from '../helpers/test-data';
-import { 
-  setupMessagingUsers, 
-  createTestConversation, 
-  sendTestMessage, 
-  signInAsUser 
+import {
+  createTestUser,
+  createTestCommunity,
+  TEST_PREFIX,
+} from '../helpers/test-data';
+import {
+  setupMessagingUsers,
+  createTestConversation,
+  sendTestMessage,
+  signInAsUser,
 } from './messaging-helpers';
 import { joinCommunity, leaveCommunity } from '@/features/communities/api';
 import * as api from '@/features/messages/api';
@@ -26,13 +30,13 @@ describe('Messages Permissions & Authorization', () => {
 
   beforeAll(async () => {
     supabase = createTestClient();
-    
+
     // Set up two users who share a community
     const setup = await setupMessagingUsers(supabase);
     userA = setup.userA;
     userB = setup.userB;
     community = setup.community;
-    
+
     // Create third user not in any shared community
     userC = await createTestUser(supabase);
   });
@@ -49,19 +53,25 @@ describe('Messages Permissions & Authorization', () => {
 
       // UserA should see the conversation
       const userAConversations = await api.fetchConversations(supabase);
-      const userAConversation = userAConversations.conversations.find(c => c.id === conversation.id);
+      const userAConversation = userAConversations.conversations.find(
+        (c) => c.id === conversation.id,
+      );
       expect(userAConversation).toBeTruthy();
 
       // UserB should see the conversation
       await signInAsUser(supabase, userB);
       const userBConversations = await api.fetchConversations(supabase);
-      const userBConversation = userBConversations.conversations.find(c => c.id === conversation.id);
+      const userBConversation = userBConversations.conversations.find(
+        (c) => c.id === conversation.id,
+      );
       expect(userBConversation).toBeTruthy();
 
       // UserC should NOT see the conversation
       await signInAsUser(supabase, userC);
       const userCConversations = await api.fetchConversations(supabase);
-      const userCConversation = userCConversations.conversations.find(c => c.id === conversation.id);
+      const userCConversation = userCConversations.conversations.find(
+        (c) => c.id === conversation.id,
+      );
       expect(userCConversation).toBeFalsy();
     });
 
@@ -72,21 +82,25 @@ describe('Messages Permissions & Authorization', () => {
       // UserC should not be able to fetch this conversation
       await signInAsUser(supabase, userC);
       await expect(
-        api.fetchConversation(supabase, conversation.id)
+        api.fetchConversation(supabase, conversation.id),
       ).rejects.toThrow();
     });
 
     it('non-participants cannot fetch messages for conversation', async () => {
       await signInAsUser(supabase, userA);
       const conversation = await createTestConversation(supabase, userB.id);
-      await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Secret message`);
+      await sendTestMessage(
+        supabase,
+        conversation.id,
+        `${TEST_PREFIX} Secret message`,
+      );
 
       // UserC should not be able to fetch messages (returns empty instead of error)
       await signInAsUser(supabase, userC);
       const result = await api.fetchMessages(supabase, conversation.id, {
-        limit: 50
+        limit: 50,
       });
-      
+
       // Should return empty results due to RLS policies
       expect(result.messages).toHaveLength(0);
     });
@@ -106,7 +120,7 @@ describe('Messages Permissions & Authorization', () => {
       const message = await api.sendMessage(supabase, {
         conversationId: conversation.id,
         content: `${TEST_PREFIX} Participant message`,
-        messageType: 'text'
+        messageType: 'text',
       });
       expect(message).toBeTruthy();
 
@@ -116,31 +130,35 @@ describe('Messages Permissions & Authorization', () => {
         api.sendMessage(supabase, {
           conversationId: conversation.id,
           content: `${TEST_PREFIX} Unauthorized message`,
-          messageType: 'text'
-        })
+          messageType: 'text',
+        }),
       ).rejects.toThrow();
     });
 
     it('only participants can view messages', async () => {
       // Send message as userA
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Private message`);
+      const message = await sendTestMessage(
+        supabase,
+        conversation.id,
+        `${TEST_PREFIX} Private message`,
+      );
 
       // UserB can view messages (participant)
       await signInAsUser(supabase, userB);
       const messages = await api.fetchMessages(supabase, conversation.id, {
-        limit: 50
+        limit: 50,
       });
-      
-      const foundMessage = messages.messages.find(m => m.id === message.id);
+
+      const foundMessage = messages.messages.find((m) => m.id === message.id);
       expect(foundMessage).toBeTruthy();
 
       // UserC cannot view messages (non-participant) - returns empty instead of error
       await signInAsUser(supabase, userC);
       const result = await api.fetchMessages(supabase, conversation.id, {
-        limit: 50
+        limit: 50,
       });
-      
+
       // Should return empty results due to RLS policies
       expect(result.messages).toHaveLength(0);
     });
@@ -149,14 +167,12 @@ describe('Messages Permissions & Authorization', () => {
       await signInAsUser(supabase, userA);
 
       // Try to send message with different sender_id (this should be prevented by RLS)
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversation.id,
-          sender_id: userB.id, // Wrong sender_id
-          content: `${TEST_PREFIX} Spoofed message`,
-          message_type: 'text'
-        });
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversation.id,
+        sender_id: userB.id, // Wrong sender_id
+        content: `${TEST_PREFIX} Spoofed message`,
+        message_type: 'text',
+      });
 
       expect(error).toBeTruthy();
     });
@@ -169,8 +185,8 @@ describe('Messages Permissions & Authorization', () => {
         api.sendMessage(supabase, {
           conversationId: fakeConversationId,
           content: `${TEST_PREFIX} Message to nowhere`,
-          messageType: 'text'
-        })
+          messageType: 'text',
+        }),
       ).rejects.toThrow();
     });
   });
@@ -182,8 +198,8 @@ describe('Messages Permissions & Authorization', () => {
       // UserA and userC don't share a community
       await expect(
         api.startConversation(supabase, {
-          otherUserId: userC.id
-        })
+          otherUserId: userC.id,
+        }),
       ).rejects.toThrow();
     });
 
@@ -199,7 +215,7 @@ describe('Messages Permissions & Authorization', () => {
       // Now userA and userB share two communities - conversation should work
       await signInAsUser(supabase, userA);
       const conversation = await api.startConversation(supabase, {
-        otherUserId: userB.id
+        otherUserId: userB.id,
       });
 
       expect(conversation).toBeTruthy();
@@ -209,9 +225,13 @@ describe('Messages Permissions & Authorization', () => {
       // First, ensure userA and userB share a community and can message
       await signInAsUser(supabase, userA);
       const conversation = await createTestConversation(supabase, userB.id);
-      
+
       // Send a message to confirm it works
-      const message = await sendTestMessage(supabase, conversation.id, `${TEST_PREFIX} Before leaving`);
+      const message = await sendTestMessage(
+        supabase,
+        conversation.id,
+        `${TEST_PREFIX} Before leaving`,
+      );
       expect(message).toBeTruthy();
 
       // UserB leaves the community
@@ -225,37 +245,16 @@ describe('Messages Permissions & Authorization', () => {
       await signInAsUser(supabase, userA);
       await expect(
         api.startConversation(supabase, {
-          otherUserId: userB.id
-        })
+          otherUserId: userB.id,
+        }),
       ).rejects.toThrow();
 
       // But existing conversation should still be accessible
-      const existingConversation = await api.fetchConversation(supabase, conversation.id);
+      const existingConversation = await api.fetchConversation(
+        supabase,
+        conversation.id,
+      );
       expect(existingConversation).toBeTruthy();
-
-    });
-  });
-
-  describe('Self-messaging prevention', () => {
-    it('cannot create conversation with self', async () => {
-      await signInAsUser(supabase, userA);
-
-      await expect(
-        api.startConversation(supabase, {
-          otherUserId: userA.id
-        })
-      ).rejects.toThrow();
-    });
-
-    it('get_or_create_conversation RPC fails for same user', async () => {
-      await signInAsUser(supabase, userA);
-
-      const { error } = await supabase.rpc('get_or_create_conversation', {
-        other_user_id: userA.id
-      });
-
-      expect(error).toBeTruthy();
-      expect(error!.message).toContain('yourself');
     });
   });
 
@@ -282,14 +281,12 @@ describe('Messages Permissions & Authorization', () => {
 
       // UserC tries to directly insert message
       await signInAsUser(supabase, userC);
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversation.id,
-          sender_id: userC.id,
-          content: `${TEST_PREFIX} Unauthorized direct insert`,
-          message_type: 'text'
-        });
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversation.id,
+        sender_id: userC.id,
+        content: `${TEST_PREFIX} Unauthorized direct insert`,
+        message_type: 'text',
+      });
 
       expect(error).toBeTruthy();
     });

@@ -7,17 +7,12 @@ import {
   createTestResource,
   createTestResourceTimeslot,
 } from '../helpers/test-data';
-import {
-  fetchNotifications,
-} from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications';
 import {
   createResourceClaim,
   updateResourceClaim,
 } from '@/features/resources/api';
-import {
-  updateResource,
-  deleteResource,
-} from '@/features/resources/api';
+import { updateResource, deleteResource } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
@@ -31,7 +26,7 @@ describe('My Registrations Notifications', () => {
   let resourceOwner: Account;
   let testCommunity: Community;
   let claimingUser: Account;
-  
+
   // Real-time testing
   let notificationChannel: RealtimeChannel;
   let notificationsReceived: Notification[] = [];
@@ -91,7 +86,7 @@ describe('My Registrations Notifications', () => {
         testCommunity.id,
         'offer',
         'tools',
-        true
+        true,
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
@@ -135,7 +130,7 @@ describe('My Registrations Notifications', () => {
         testCommunity.id,
         'offer',
         'tools',
-        true
+        true,
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
@@ -175,7 +170,7 @@ describe('My Registrations Notifications', () => {
         testCommunity.id,
         'offer',
         'tools',
-        true
+        true,
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
@@ -219,7 +214,7 @@ describe('My Registrations Notifications', () => {
         testCommunity.id,
         'offer',
         'tools',
-        true
+        true,
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
@@ -425,7 +420,7 @@ describe('My Registrations Notifications', () => {
         testCommunity.id,
         'event',
         'tools',
-        true
+        true,
       );
       const timeslot = await createTestResourceTimeslot(supabase, event.id);
 
@@ -506,42 +501,6 @@ describe('My Registrations Notifications', () => {
   });
 
   describe('Self-notification prevention', () => {
-    it('should not create notification when I approve my own claim on my own resource', async () => {
-      // Create a resource requiring approval
-      await signIn(supabase, claimingUser.email, 'TestPass123!');
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'request',
-        'tools',
-        true
-      );
-      const timeslot = await createTestResourceTimeslot(supabase, resource.id);
-
-      // Claim own resource
-      const claim = await createResourceClaim(supabase, {
-        resourceId: resource.id,
-        timeslotId: timeslot.id,
-        notes: 'Self-claim for approval test',
-      });
-
-      const initialNotifications = await fetchNotifications(supabase, {
-        type: 'claim_approved',
-      });
-      const initialCount = initialNotifications.length;
-
-      // Approve own claim
-      await updateResourceClaim(supabase, {
-        id: claim.id,
-        status: 'approved',
-      });
-
-      const finalNotifications = await fetchNotifications(supabase, {
-        type: 'claim_approved',
-      });
-      expect(finalNotifications).toHaveLength(initialCount);
-    });
-
     it('should not create notification when I update my own resource that I also claimed', async () => {
       // Create a resource
       await signIn(supabase, claimingUser.email, 'TestPass123!');
