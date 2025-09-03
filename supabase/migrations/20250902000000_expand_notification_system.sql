@@ -651,8 +651,8 @@ BEGIN
     resource_author_name := 'Someone';
   END IF;
   
-  -- Determine notification type based on resource category
-  IF resource_record.category = 'event' THEN
+  -- Determine notification type based on resource type
+  IF resource_record.type = 'event' THEN
     notification_type := 'new_event';
   ELSE
     notification_type := 'new_resource';
@@ -670,12 +670,12 @@ BEGIN
       notification_type,
       resource_record.owner_id,
       notification_type || ':' || community_name,
-      'New ' || LOWER(resource_record.category::text) || ' in ' || community_name,
+      'New ' || LOWER(resource_record.type::text) || ' in ' || community_name,
       resource_record.title,
       '/resources/' || resource_record.id::text,
       resource_record.id,
       NULL, NULL, NULL, NULL, NEW.community_id,
-      jsonb_build_object('resource_title', resource_record.title, 'community_name', community_name, 'resource_category', resource_record.category)
+      jsonb_build_object('resource_title', resource_record.title, 'community_name', community_name, 'resource_type', resource_record.type, 'resource_category', resource_record.category)
     );
   END LOOP;
   
