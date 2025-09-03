@@ -301,7 +301,7 @@ describe('Notification Triggers', () => {
   describe('Notification count updates', () => {
     it('should update counts when notifications are created and marked as read', async () => {
       // Get initial counts
-      const initialCounts = await fetchNotificationCount(supabase);
+      const initialCount = await fetchNotificationCount(supabase);
 
       // Create a resource and have someone comment on it
       const resource = await createTestResource(
@@ -319,16 +319,8 @@ describe('Notification Triggers', () => {
       // Switch back to resourceOwner and check counts
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const countsAfterComment = await fetchNotificationCount(supabase);
-      expect(countsAfterComment.comments).toBe(
-        (initialCounts.comments || 0) + 1,
-      );
-      expect(countsAfterComment.notifications).toBe(
-        (initialCounts.notifications || 0) + 1,
-      );
-      expect(countsAfterComment.total).toBeGreaterThan(
-        initialCounts.total || 0,
-      );
+      const countAfterComment = await fetchNotificationCount(supabase);
+      expect(countAfterComment).toBe(initialCount + 1);
 
       // Mark all as read and verify counts update
       const notifications = await fetchNotifications(supabase, {
@@ -341,13 +333,8 @@ describe('Notification Triggers', () => {
         await markNotificationAsRead(supabase, notifications[0].id);
       }
 
-      const countsAfterRead = await fetchNotificationCount(supabase);
-      expect(countsAfterRead.comments).toBeLessThan(
-        countsAfterComment.comments,
-      );
-      expect(countsAfterRead.notifications).toBeLessThan(
-        countsAfterComment.notifications,
-      );
+      const countAfterRead = await fetchNotificationCount(supabase);
+      expect(countAfterRead).toBeLessThan(countAfterComment);
     });
   });
 
