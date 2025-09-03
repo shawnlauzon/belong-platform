@@ -369,7 +369,7 @@ DECLARE
 BEGIN
   -- Only notify if non-status fields changed and resource has claims
   IF OLD.title = NEW.title AND OLD.description = NEW.description AND 
-     OLD.location_text = NEW.location_text AND OLD.expires_at = NEW.expires_at THEN
+     OLD.location_name = NEW.location_name THEN
     RETURN NEW;
   END IF;
   
