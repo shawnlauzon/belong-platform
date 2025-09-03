@@ -67,7 +67,7 @@ function NotificationList() {
 
   return (
     <div className="notification-list">
-      {data?.map((notification) => (
+      {data.map((notification) => (
         <NotificationItem key={notification.id} notification={notification} />
       ))}
       
@@ -84,15 +84,17 @@ function NotificationList() {
 }
 
 // Filter options
-const filters = {
-  type: 'comment' | 'claim' | 'message' | ..., // Specific notification type
-  isRead: true | false | undefined,             // Read status filter
-  limit: 20,                                    // Page size (default: 20)
-};
+interface FetchNotificationsFilter {
+  type?: Notification['type'];    // Specific notification type
+  isRead?: boolean;               // Read status filter  
+  limit?: number;                 // Page size (default: 20)
+  offset?: number;                // Pagination offset
+}
 
-// Hook returns React Query result with:
+// Hook returns custom result with:
 // data: Notification[] - Array of notifications (real-time updated)
-// Plus standard React Query fields (isLoading, isError, error, etc.)
+// isLoading: boolean, hasMore: boolean, fetchNextPage: () => Promise<void>
+// isFetchingNextPage: boolean, error: Error | null
 ```
 
 ### `useNotificationCount()`
@@ -120,9 +122,9 @@ function NotificationBell() {
   );
 }
 
-// Hook returns React Query result with:
-// data: number - Total unread notification count (real-time updated)
-// Plus standard React Query fields (isLoading, isError, error, etc.)
+// Hook returns custom result with:
+// data: number | undefined - Total unread notification count (real-time updated)
+// isLoading: boolean, isError: boolean, error: Error | null
 ```
 
 
@@ -496,13 +498,13 @@ function NotificationPanel() {
           <div className="p-4 text-center text-gray-500">
             Loading notifications...
           </div>
-        ) : notificationList.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <div className="text-4xl mb-2">🔔</div>
             <p>No notifications yet</p>
           </div>
         ) : (
-          notificationList.map((notification) => (
+          notifications.map((notification) => (
             <NotificationItem 
               key={notification.id} 
               notification={notification} 
@@ -542,24 +544,35 @@ function FilterTab({
 
 ### Toast Notifications
 
+Real-time notifications are automatically handled within the `useNotifications` hook. For toast notifications, you can listen for new notifications by tracking data changes:
+
 ```tsx
-import { useNotificationSubscription } from '@belongnetwork/platform';
+import { useNotifications } from '@belongnetwork/platform';
+import { useEffect, useRef, useState } from 'react';
 
 function ToastManager() {
   const [toasts, setToasts] = useState<Notification[]>([]);
+  const { data: notifications } = useNotifications({ limit: 5 }); // Recent notifications only
+  const previousCountRef = useRef(0);
 
-  useNotificationSubscription({
-    onNewNotification: (notification) => {
-      // Add toast
-      const toast = { ...notification, toastId: Date.now() };
-      setToasts(prev => [toast, ...prev]);
+  useEffect(() => {
+    if (notifications.length > previousCountRef.current && previousCountRef.current > 0) {
+      // New notification arrived
+      const newNotifications = notifications.slice(0, notifications.length - previousCountRef.current);
+      
+      newNotifications.forEach(notification => {
+        const toast = { ...notification, toastId: Date.now() + Math.random() };
+        setToasts(prev => [toast, ...prev]);
 
-      // Auto-remove after 5 seconds
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.toastId !== toast.toastId));
-      }, 5000);
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.toastId !== toast.toastId));
+        }, 5000);
+      });
     }
-  });
+    
+    previousCountRef.current = notifications.length;
+  }, [notifications]);
 
   return (
     <div className="fixed top-4 right-4 space-y-2 z-50">
@@ -612,29 +625,22 @@ function ToastNotification({
 ### Live Badge Updates
 
 ```tsx
+import { useNotificationCount } from '@belongnetwork/platform';
+import { useEffect, useRef, useState } from 'react';
+
 function LiveNotificationBell() {
-  const [count, setCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  
-  const { data: counts } = useNotificationCount();
+  const { data: count } = useNotificationCount();
+  const prevCountRef = useRef<number | undefined>(undefined);
 
-  useNotificationSubscription({
-    onCountChange: (newCounts) => {
-      if (newCounts.total > count) {
-        // Animate on new notifications
-        setIsAnimating(true);
-        setTimeout(() => setIsAnimating(false), 300);
-      }
-      setCount(newCounts.total);
-    }
-  });
-
-  // Initialize count
+  // Animate when count increases
   useEffect(() => {
-    if (counts) {
-      setCount(counts.total);
+    if (count !== undefined && prevCountRef.current !== undefined && count > prevCountRef.current) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 300);
     }
-  }, [counts]);
+    prevCountRef.current = count;
+  }, [count]);
 
   return (
     <button 
@@ -644,7 +650,7 @@ function LiveNotificationBell() {
         <path d="M12 2A3 3 0 0 0 9 5v4.38L7.29 10.96a1 1 0 0 0-.29.71v1.83a1 1 0 0 0 .29.71L9 15.62V19a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-3.38l1.71-1.41a1 1 0 0 0 .29-.71v-1.83a1 1 0 0 0-.29-.71L15 9.38V5a3 3 0 0 0-3-3z"/>
       </svg>
       
-      {count > 0 && (
+      {count && count > 0 && (
         <span 
           className={`
             absolute -top-1 -right-1 bg-red-500 text-white rounded-full 
@@ -797,32 +803,12 @@ function OptimisticMarkAsRead() {
   const markAsRead = useMarkAsRead();
 
   const optimisticMarkAsRead = (notificationId: string) => {
-    // Optimistically update the notification
-    queryClient.setQueriesData(
-      { queryKey: notificationKeys.lists() },
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page: Notification[]) =>
-            page.map(notification =>
-              notification.id === notificationId
-                ? { ...notification, isRead: true, readAt: new Date() }
-                : notification
-            )
-          )
-        };
-      }
-    );
+    // Since useNotifications uses custom state management, not React Query,
+    // optimistic updates would need to be handled differently.
+    // For now, the hook handles updates via real-time subscriptions.
 
-    // Perform the actual update
-    markAsRead.mutate(notificationId, {
-      onError: () => {
-        // Revert on error
-        queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      }
-    });
+    // Perform the actual update - real-time subscriptions handle UI updates
+    markAsRead.mutate(notificationId);
   };
 
   return optimisticMarkAsRead;
