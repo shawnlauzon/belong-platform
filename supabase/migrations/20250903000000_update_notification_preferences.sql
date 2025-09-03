@@ -1,6 +1,15 @@
 -- Update handle_new_user trigger to create default notification preferences for new users
 -- This ensures every new user has notification preferences from signup
 
+-- First, add the missing group-level notification columns to the notification_preferences table
+ALTER TABLE public.notification_preferences 
+ADD COLUMN IF NOT EXISTS social_interactions boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS my_resources boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS my_registrations boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS my_communities boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS community_activity boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS trust_recognition boolean DEFAULT true;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
