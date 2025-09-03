@@ -685,6 +685,7 @@ export type Database = {
           claimed_resource_updated: boolean | null
           comment_replies: boolean | null
           comments_on_resources: boolean | null
+          community_activity: boolean | null
           community_member_joined: boolean | null
           community_member_left: boolean | null
           community_messages: boolean | null
@@ -694,14 +695,19 @@ export type Database = {
           created_at: string | null
           direct_messages: boolean | null
           email_enabled: boolean | null
+          my_communities: boolean | null
+          my_registrations: boolean | null
+          my_resources: boolean | null
           new_event: boolean | null
           push_enabled: boolean | null
           resource_claim_cancelled: boolean | null
           resource_claim_completed: boolean | null
           resource_claims: boolean | null
           shoutout_received: boolean | null
+          social_interactions: boolean | null
           trust_level_changed: boolean | null
           trust_points_received: boolean | null
+          trust_recognition: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -712,6 +718,7 @@ export type Database = {
           claimed_resource_updated?: boolean | null
           comment_replies?: boolean | null
           comments_on_resources?: boolean | null
+          community_activity?: boolean | null
           community_member_joined?: boolean | null
           community_member_left?: boolean | null
           community_messages?: boolean | null
@@ -721,14 +728,19 @@ export type Database = {
           created_at?: string | null
           direct_messages?: boolean | null
           email_enabled?: boolean | null
+          my_communities?: boolean | null
+          my_registrations?: boolean | null
+          my_resources?: boolean | null
           new_event?: boolean | null
           push_enabled?: boolean | null
           resource_claim_cancelled?: boolean | null
           resource_claim_completed?: boolean | null
           resource_claims?: boolean | null
           shoutout_received?: boolean | null
+          social_interactions?: boolean | null
           trust_level_changed?: boolean | null
           trust_points_received?: boolean | null
+          trust_recognition?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -739,6 +751,7 @@ export type Database = {
           claimed_resource_updated?: boolean | null
           comment_replies?: boolean | null
           comments_on_resources?: boolean | null
+          community_activity?: boolean | null
           community_member_joined?: boolean | null
           community_member_left?: boolean | null
           community_messages?: boolean | null
@@ -748,14 +761,19 @@ export type Database = {
           created_at?: string | null
           direct_messages?: boolean | null
           email_enabled?: boolean | null
+          my_communities?: boolean | null
+          my_registrations?: boolean | null
+          my_resources?: boolean | null
           new_event?: boolean | null
           push_enabled?: boolean | null
           resource_claim_cancelled?: boolean | null
           resource_claim_completed?: boolean | null
           resource_claims?: boolean | null
           shoutout_received?: boolean | null
+          social_interactions?: boolean | null
           trust_level_changed?: boolean | null
           trust_points_received?: boolean | null
+          trust_recognition?: boolean | null
           updated_at?: string | null
           user_id?: string
         }
