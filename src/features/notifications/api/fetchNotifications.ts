@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Notification } from '../types/notification';
-import type { NotificationRowJoinActor } from '../types/notificationRow';
-import { SELECT_NOTIFICATIONS_JOIN_ACTOR } from '../types/notificationRow';
+import type { NotificationRow } from '../types/notificationRow';
 import { notificationTransformer } from '../transformers';
 
 export interface FetchNotificationsFilter {
@@ -20,7 +19,7 @@ export async function fetchNotifications(
 
   let query = supabase
     .from('notifications')
-    .select(SELECT_NOTIFICATIONS_JOIN_ACTOR)
+    .select('*')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -39,5 +38,5 @@ export async function fetchNotifications(
     throw error;
   }
 
-  return (data as NotificationRowJoinActor[]).map(notificationTransformer);
+  return (data as NotificationRow[]).map(notificationTransformer);
 }

@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - DO NOT edit more code than you have to.
 - DO NOT WASTE TOKENS, be succinct and concise.
 - **Always use IDE diagnostics to validate code (including tests!) after implementation**
-- **Always use `pnpx supabase migration new` to create a new migration**
 
 ## Code Style and Best Practices
 
@@ -97,7 +96,10 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 
 ## Database Management
 
-- Use supabase-local MCP to understand the database schema
+- Use supabase-local MCP to understand what the database looks like now
+- Avoid looking at old migrations in order to understand the database schema
+- Avoid using supabase-prod MCP unless you really need to see production data
+- **Always use `pnpx supabase migration new` to create a new migration**
 
 ### Migration files
 

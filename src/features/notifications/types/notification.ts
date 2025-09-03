@@ -38,13 +38,7 @@ export interface Notification {
   communityId?: string;
   
   // Actor information
-  actorId: string;
-  actorName?: string;
-  actorAvatarUrl?: string;
-  
-  // Grouping
-  groupKey?: string;
-  actorCount: number;
+  actorId?: string;
   
   // Content
   title: string;
@@ -70,8 +64,7 @@ export interface NotificationInput {
   messageId?: string;
   conversationId?: string;
   communityId?: string;
-  actorId: string;
-  groupKey?: string;
+  actorId?: string;
   title: string;
   body?: string;
   imageUrl?: string;
