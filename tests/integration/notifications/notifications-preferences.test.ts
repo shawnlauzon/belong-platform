@@ -55,7 +55,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: false,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
       });
 
@@ -69,7 +70,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: false,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
       });
     });
@@ -85,7 +87,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: true,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
         email_enabled: false,
         push_enabled: false,
@@ -101,7 +104,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: false,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
       });
 
@@ -140,7 +144,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: true,
         comment_replies: true,
         resource_claims: false,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
       });
 
@@ -180,7 +185,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: true,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: false,
       });
 
@@ -213,7 +219,8 @@ describe('Notification Preferences', () => {
         comments_on_resources: true,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
       });
 
@@ -263,11 +270,150 @@ describe('Notification Preferences', () => {
         comments_on_resources: true,
         comment_replies: true,
         resource_claims: true,
-        new_messages: true,
+        direct_messages: true,
+        community_messages: true,
         community_resources: true,
         email_enabled: false,
         push_enabled: false,
       });
+    });
+  });
+
+  describe('Extended notification types', () => {
+    it('should handle all 19 notification types in preferences', async () => {
+      // Update preferences to include all new types
+      await updatePreferences(supabase, {
+        user_id: testUser.id,
+        // Existing types
+        comments_on_resources: false,
+        comment_replies: true,
+        resource_claims: false,
+        direct_messages: true,
+        community_messages: true, // Always enabled
+        community_resources: true,
+        // New Social Interactions
+        shoutout_received: false,
+        connection_request: true,
+        connection_accepted: false,
+        // New My Resources
+        resource_claim_cancelled: true,
+        resource_claim_completed: false,
+        // New My Registrations  
+        claim_approved: false,
+        claim_rejected: true,
+        claimed_resource_updated: false,
+        claimed_resource_cancelled: true,
+        // New My Communities
+        community_member_joined: false,
+        community_member_left: true,
+        // New Community Activity
+        new_event: false,
+        // New Trust & Recognition
+        trust_points_received: true,
+        trust_level_changed: false,
+      });
+
+      // Verify all preferences were saved
+      const { data: preferences } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', testUser.id)
+        .single();
+
+      expect(preferences).toMatchObject({
+        // Existing types
+        comments_on_resources: false,
+        comment_replies: true,
+        resource_claims: false,
+        direct_messages: true,
+        community_messages: true, // Always enabled
+        community_resources: true,
+        // New Social Interactions
+        shoutout_received: false,
+        connection_request: true,
+        connection_accepted: false,
+        // New My Resources
+        resource_claim_cancelled: true,
+        resource_claim_completed: false,
+        // New My Registrations
+        claim_approved: false,
+        claim_rejected: true,
+        claimed_resource_updated: false,
+        claimed_resource_cancelled: true,
+        // New My Communities
+        community_member_joined: false,
+        community_member_left: true,
+        // New Community Activity
+        new_event: false,
+        // New Trust & Recognition
+        trust_points_received: true,
+        trust_level_changed: false,
+      });
+    });
+
+    it('should allow disabling direct and community messages separately', async () => {
+      // Disable both types of messages
+      await updatePreferences(supabase, {
+        user_id: testUser.id,
+        direct_messages: false,
+        community_messages: false,
+        comments_on_resources: false,
+      });
+
+      const { data: preferences } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', testUser.id)
+        .single();
+
+      // Messages should be able to be disabled now
+      expect(preferences?.direct_messages).toBe(false);
+      expect(preferences?.community_messages).toBe(false);
+      expect(preferences?.comments_on_resources).toBe(false);
+    });
+
+    it('should provide default values for all new preference types', async () => {
+      // Create a fresh user to test defaults
+      const freshUser = await createTestUser(supabase);
+
+      // Check that all new preference columns have proper defaults when accessed
+      const { data: preferences } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', freshUser.id)
+        .maybeSingle();
+
+      // If no record exists, defaults should apply via database constraints
+      if (!preferences) {
+        // Insert a minimal record to trigger defaults
+        await supabase.from('notification_preferences').insert({
+          user_id: freshUser.id,
+        });
+
+        const { data: defaultPrefs } = await supabase
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', freshUser.id)
+          .single();
+
+        // All new types should default to true
+        expect(defaultPrefs).toMatchObject({
+          shoutout_received: true,
+          connection_request: true,
+          connection_accepted: true,
+          resource_claim_cancelled: true,
+          resource_claim_completed: true,
+          claim_approved: true,
+          claim_rejected: true,
+          claimed_resource_updated: true,
+          claimed_resource_cancelled: true,
+          community_member_joined: true,
+          community_member_left: true,
+          new_event: true,
+          trust_points_received: true,
+          trust_level_changed: true,
+        });
+      }
     });
   });
 });

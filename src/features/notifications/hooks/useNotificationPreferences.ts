@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import type { NotificationPreferences, NotificationPreferencesUpdate } from '../types/notificationPreferences';
-import { updatePreferences } from '../api/updatePreferences';
+import type { NotificationPreferences, NotificationPreferencesUpdate, GroupedNotificationPreferences, groupPreferences } from '../types/notificationPreferences';
+import { fetchPreferences, updatePreferences } from '../api';
 import { notificationKeys } from '../queries';
 
 export function useNotificationPreferences(
@@ -11,17 +11,21 @@ export function useNotificationPreferences(
 
   return useQuery({
     queryKey: notificationKeys.preferences(),
+    queryFn: () => fetchPreferences(supabase),
+    ...options,
+  });
+}
+
+export function useGroupedNotificationPreferences(
+  options?: Partial<UseQueryOptions<GroupedNotificationPreferences | null, Error>>
+) {
+  const supabase = useSupabase();
+
+  return useQuery({
+    queryKey: [...notificationKeys.preferences(), 'grouped'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      return data;
+      const preferences = await fetchPreferences(supabase);
+      return preferences ? groupPreferences(preferences) : null;
     },
     ...options,
   });
