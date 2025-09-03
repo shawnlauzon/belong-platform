@@ -23,8 +23,7 @@ export { markAllAsRead as markAllNotificationsAsRead } from './api/markAllAsRead
 // Hooks
 export {
   useNotifications,
-  useNotificationCounts,
-  useNotificationSubscription,
+  useNotificationCount,
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from './hooks';

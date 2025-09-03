@@ -1,6 +1,5 @@
 export { useNotifications } from './useNotifications';
-export { useNotificationCounts } from './useNotificationCounts';
-export { useNotificationSubscription } from './useNotificationSubscription';
+export { useNotificationCount } from './useNotificationCount';
 export { useMarkAsRead } from './useMarkAsRead';
 export { useMarkAllAsRead } from './useMarkAllAsRead';
 export { useNotificationPreferences, useGroupedNotificationPreferences, useUpdateNotificationPreferences } from './useNotificationPreferences';
