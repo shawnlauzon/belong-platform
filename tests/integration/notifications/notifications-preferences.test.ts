@@ -77,6 +77,17 @@ describe('Notification Preferences', () => {
     });
 
     it('should create default preferences for new users', async () => {
+      // Reset the test user's preferences to defaults first
+      await updatePreferences(supabase, {
+        user_id: testUser.id,
+        comments_on_resources: true,
+        comment_replies: true,
+        resource_claims: true,
+        direct_messages: true,
+        community_messages: true,
+        community_resources: true,
+      });
+
       // Check that the user has default preferences
       const { data: preferences } = await supabase
         .from('notification_preferences')

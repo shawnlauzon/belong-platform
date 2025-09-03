@@ -13,7 +13,6 @@ vi.mock('../../api', () => ({
 
 import { useSupabase } from '../../../../shared';
 import { createCommunity } from '../../api';
-import { trustScoreKeys } from '../../../trust-scores/queries';
 import { communityKeys } from '../../queries';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../../shared/types/database';

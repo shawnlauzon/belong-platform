@@ -3,10 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { getCurrentUserId } from '@/features/auth/api';
 import { notificationKeys } from '../queries';
-import { notificationTransformer } from '../transformers/notificationTransformer';
 import type { Notification } from '../types/notification';
 import type { NotificationCounts } from '../types/notificationCounts';
-import type { NotificationRowJoinActor } from '../types/notificationRow';
 
 export interface UseNotificationSubscriptionOptions {
   onNewNotification?: (notification: Notification) => void;
@@ -132,7 +130,7 @@ export function useNotificationSubscription(
               }
             }
           })
-          .subscribe((status, err) => {
+          .subscribe((_, err) => {
             if (err) {
               console.error('Error subscribing to notification channel:', err);
             }

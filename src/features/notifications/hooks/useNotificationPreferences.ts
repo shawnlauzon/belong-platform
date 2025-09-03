@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import type { NotificationPreferences, NotificationPreferencesUpdate, GroupedNotificationPreferences, groupPreferences } from '../types/notificationPreferences';
+import type { NotificationPreferences, NotificationPreferencesUpdate, GroupedNotificationPreferences } from '../types/notificationPreferences';
+import { groupPreferences } from '../types/notificationPreferences';
 import { fetchPreferences, updatePreferences } from '../api';
 import { notificationKeys } from '../queries';
 

@@ -51,7 +51,7 @@ export interface Notification {
   body?: string;
   imageUrl?: string;
   actionUrl?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   
   // Status
   isRead: boolean;
@@ -76,7 +76,7 @@ export interface NotificationInput {
   body?: string;
   imageUrl?: string;
   actionUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Type guards for notification categories

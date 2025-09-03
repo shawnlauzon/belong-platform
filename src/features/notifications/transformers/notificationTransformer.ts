@@ -31,7 +31,7 @@ export function notificationTransformer(
     body: row.body || undefined,
     imageUrl: row.image_url || undefined,
     actionUrl: row.action_url || undefined,
-    metadata: (row.metadata as Record<string, any>) || {},
+    metadata: (row.metadata as Record<string, unknown>) || {},
     
     // Status
     isRead: row.is_read || false,
