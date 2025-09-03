@@ -19,8 +19,8 @@ export function notificationTransformer(
     
     // Actor information
     actorId: row.actor_id!,
-    actorName: row.actor_profile?.full_name,
-    actorAvatarUrl: row.actor_profile?.avatar_url || undefined,
+    actorName: row.actor?.full_name,
+    actorAvatarUrl: row.actor?.avatar_url || undefined,
     
     // Grouping
     groupKey: row.group_key || undefined,
