@@ -62,9 +62,11 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should register for event without approval', async () => {
+    const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
+    
     const claim = await createResourceClaim(supabase, {
       resourceId: event.id,
-      timeslotId: timeslot.id,
+      timeslotId: testTimeslot.id,
     });
 
     expect(claim.id).toBeDefined();
@@ -72,6 +74,8 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should award points for event registration', async () => {
+    const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
+    
     const scoreBeforeRegistration = await getCurrentTrustScore(
       supabase,
       participant.id,
@@ -80,7 +84,7 @@ describe('Trust Score Points - Events', () => {
 
     await createResourceClaim(supabase, {
       resourceId: event.id,
-      timeslotId: timeslot.id,
+      timeslotId: testTimeslot.id,
     });
 
     const scoreAfterRegistration = await getCurrentTrustScore(
@@ -94,9 +98,11 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should log event registration action', async () => {
+    const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
+    
     await createResourceClaim(supabase, {
       resourceId: event.id,
-      timeslotId: timeslot.id,
+      timeslotId: testTimeslot.id,
     });
 
     await verifyTrustScoreLog(
@@ -110,10 +116,12 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should allow participant to confirm going', async () => {
+    const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
+    
     // Participant is signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: event.id,
-      timeslotId: timeslot.id,
+      timeslotId: testTimeslot.id,
     });
 
     const updatedClaim = await updateResourceClaim(supabase, {
@@ -125,10 +133,12 @@ describe('Trust Score Points - Events', () => {
   });
 
   it('should award points for going status', async () => {
+    const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
+    
     // Participant is signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: event.id,
-      timeslotId: timeslot.id,
+      timeslotId: testTimeslot.id,
     });
 
     const scoreBeforeGoing = await getCurrentTrustScore(

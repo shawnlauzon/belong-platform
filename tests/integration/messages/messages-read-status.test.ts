@@ -201,8 +201,7 @@ describe('Messages Read Status & Receipts', () => {
       await assertUnreadCount(supabase, freshConversation.id, userB.id, 3);
 
       // Mark one message as read
-      const messages = await api.fetchMessages(supabase, {
-        conversationId: freshConversation.id,
+      const messages = await api.fetchMessages(supabase, freshConversation.id, {
         limit: 10
       });
       

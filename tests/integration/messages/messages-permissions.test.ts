@@ -128,8 +128,7 @@ describe('Messages Permissions & Authorization', () => {
 
       // UserB can view messages (participant)
       await signInAsUser(supabase, userB);
-      const messages = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const messages = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
       
@@ -138,8 +137,7 @@ describe('Messages Permissions & Authorization', () => {
 
       // UserC cannot view messages (non-participant) - returns empty instead of error
       await signInAsUser(supabase, userC);
-      const result = await api.fetchMessages(supabase, {
-        conversationId: conversation.id,
+      const result = await api.fetchMessages(supabase, conversation.id, {
         limit: 50
       });
       

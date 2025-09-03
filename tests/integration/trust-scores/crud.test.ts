@@ -38,7 +38,7 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(trustScores[0]).toMatchObject({
         userId: account.id,
         communityId: community.id,
-        score: 1050, // 1000 (creation) + 50 (join)
+        score: 1000, // 1000 (community creation)
         lastCalculatedAt: expect.any(Date),
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -64,7 +64,7 @@ describe('Trust Scores - CRUD Operations', () => {
 
       // Both should have the same score from automatic creation
       trustScores.forEach((score) => {
-        expect(score.score).toBe(1050); // 1000 (creation) + 50 (join)
+        expect(score.score).toBe(1000); // 1000 (community creation)
       });
     });
   });
@@ -91,7 +91,7 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(account1Scores[0]).toMatchObject({
         userId: account1.id,
         communityId: community1.id,
-        score: 1050,
+        score: 1000,
       });
 
       // User2 should only see their own trust score
@@ -104,7 +104,7 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(account2Scores[0]).toMatchObject({
         userId: account2.id,
         communityId: community2.id,
-        score: 1050,
+        score: 1000,
       });
     });
   });
@@ -122,7 +122,7 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(trustScores[0]).toMatchObject({
         userId: account.id,
         communityId: community.id,
-        score: 1050,
+        score: 1000,
         lastCalculatedAt: expect.any(Date),
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),

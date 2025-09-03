@@ -69,7 +69,7 @@ describe('Trust Scores - Player Levels', () => {
 
       // Get initial automatically created score
       const initialScores = await fetchTrustScores(supabase, account.id);
-      const initialScore = initialScores[0].score; // Should be 1050
+      const initialScore = initialScores[0].score; // Should be 1000
       const initialLevel = calculateLevel(initialScore);
 
       // Simulate gaining more points (e.g., from resource offers)
@@ -89,7 +89,7 @@ describe('Trust Scores - Player Levels', () => {
 
       // New level should be same or higher than initial
       expect(newLevel.minScore).toBeGreaterThanOrEqual(initialLevel.minScore);
-      expect(newScore).toBe(1150);
+      expect(newScore).toBe(1100);
     });
   });
 

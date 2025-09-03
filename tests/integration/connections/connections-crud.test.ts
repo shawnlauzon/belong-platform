@@ -497,7 +497,7 @@ describe('Connections API - CRUD Operations', () => {
         .eq('id', connection.userAId)
         .single();
 
-      const { data: userBProfile } = await supabaseUserA
+      const { data: userBProfile } = await supabaseUserB
         .from('profiles')
         .select('id')
         .eq('id', connection.userBId)
