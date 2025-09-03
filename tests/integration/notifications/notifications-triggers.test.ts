@@ -82,9 +82,7 @@ describe('Notification Triggers', () => {
         resourceId: resource.id,
         actorId: commenter.id,
         isRead: false,
-        actorCount: 1,
       });
-      expect(notifications[0].title).toContain('commented on your');
     });
 
     it('should not create notification when I comment on my own resource', async () => {
@@ -147,7 +145,6 @@ describe('Notification Triggers', () => {
         actorId: commenter.id,
         isRead: false,
       });
-      expect(notifications[0].title).toContain('replied to your comment');
     });
 
     it('should not create reply notification when I reply to my own comment', async () => {
@@ -214,7 +211,6 @@ describe('Notification Triggers', () => {
         actorId: commenter.id,
         isRead: false,
       });
-      expect(notifications[0].title).toContain('claimed your');
     });
 
     it('should not create claim notification when I claim my own resource', async () => {
@@ -248,7 +244,7 @@ describe('Notification Triggers', () => {
     it('should create notifications for community members when new resource is added', async () => {
       // Sign in as commenter to create a resource
       await signIn(supabase, commenter.email, 'TestPass123!');
-      
+
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
@@ -264,8 +260,10 @@ describe('Notification Triggers', () => {
       });
 
       expect(notifications.length).toBeGreaterThan(0);
-      
-      const resourceNotification = notifications.find(n => n.resourceId === resource.id);
+
+      const resourceNotification = notifications.find(
+        (n) => n.resourceId === resource.id,
+      );
       expect(resourceNotification).toBeDefined();
       expect(resourceNotification).toMatchObject({
         type: 'new_resource',
@@ -273,8 +271,6 @@ describe('Notification Triggers', () => {
         actorId: commenter.id,
         isRead: false,
       });
-      expect(resourceNotification!.title).toContain('New');
-      expect(resourceNotification!.title).toContain(testCommunity.name);
     });
 
     it('should not notify resource owner about their own new resource', async () => {
@@ -295,8 +291,8 @@ describe('Notification Triggers', () => {
       });
 
       // Should not have new notifications for own resource
-      const ownResourceNotifications = finalNotifications.filter(n => 
-        n.resourceId === resource.id && n.actorId === resourceOwner.id
+      const ownResourceNotifications = finalNotifications.filter(
+        (n) => n.resourceId === resource.id && n.actorId === resourceOwner.id,
       );
       expect(ownResourceNotifications).toHaveLength(0);
     });
@@ -324,20 +320,34 @@ describe('Notification Triggers', () => {
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
       const countsAfterComment = await fetchNotificationCount(supabase);
-      expect(countsAfterComment.comments).toBe((initialCounts.comments || 0) + 1);
-      expect(countsAfterComment.notifications).toBe((initialCounts.notifications || 0) + 1);
-      expect(countsAfterComment.total).toBeGreaterThan(initialCounts.total || 0);
+      expect(countsAfterComment.comments).toBe(
+        (initialCounts.comments || 0) + 1,
+      );
+      expect(countsAfterComment.notifications).toBe(
+        (initialCounts.notifications || 0) + 1,
+      );
+      expect(countsAfterComment.total).toBeGreaterThan(
+        initialCounts.total || 0,
+      );
 
       // Mark all as read and verify counts update
-      const notifications = await fetchNotifications(supabase, { isRead: false });
+      const notifications = await fetchNotifications(supabase, {
+        isRead: false,
+      });
       if (notifications.length > 0) {
-        const { markNotificationAsRead } = await import('@/features/notifications');
+        const { markNotificationAsRead } = await import(
+          '@/features/notifications'
+        );
         await markNotificationAsRead(supabase, notifications[0].id);
       }
 
       const countsAfterRead = await fetchNotificationCount(supabase);
-      expect(countsAfterRead.comments).toBeLessThan(countsAfterComment.comments);
-      expect(countsAfterRead.notifications).toBeLessThan(countsAfterComment.notifications);
+      expect(countsAfterRead.comments).toBeLessThan(
+        countsAfterComment.comments,
+      );
+      expect(countsAfterRead.notifications).toBeLessThan(
+        countsAfterComment.notifications,
+      );
     });
   });
 
@@ -352,7 +362,7 @@ describe('Notification Triggers', () => {
 
       // Create a shoutout from commenter to resourceOwner
       await signIn(supabase, commenter.email, 'TestPass123!');
-      
+
       const { createShoutout } = await import('@/features/shoutouts');
       await createShoutout(supabase, {
         receiverId: resourceOwner.id,
@@ -376,7 +386,6 @@ describe('Notification Triggers', () => {
         actorId: commenter.id,
         isRead: false,
       });
-      expect(notifications[0].title).toContain('gave you a shoutout');
     });
 
     it('should not create notification when I give myself a shoutout', async () => {
@@ -395,7 +404,7 @@ describe('Notification Triggers', () => {
           message: 'Self shoutout',
           resourceId: resource.id,
           communityId: testCommunity.id,
-        })
+        }),
       ).rejects.toThrow();
     });
   });

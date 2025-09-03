@@ -79,6 +79,7 @@ Only actual failures of the test suite should be considered failures.
 - **However, you should almost always check the database at the end of the test to confirm data is as expected**
 - **Authentication state changes in tests must be cleaned up** - either in afterEach or within the same test
 - **NEVER rename tests just because they fail** - seriously, don't do it.
+- **Look at working tests** - if a new test is failing, look at the working tests and compare what they are doing differently
 
 ### Essential Test Structure
 

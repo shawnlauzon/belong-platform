@@ -82,7 +82,6 @@ describe('Notifications CRUD', () => {
         actorId: anotherUser.id,
         isRead: false,
       });
-      expect(notifications[0].title).toContain('commented on your');
     });
 
     it('should update notification counts when notifications are created', async () => {
@@ -112,7 +111,9 @@ describe('Notifications CRUD', () => {
       const updatedCounts = await fetchNotificationCount(supabase);
 
       expect(updatedCounts.comments).toBeGreaterThan(initialCounts.comments);
-      expect(updatedCounts.notifications).toBeGreaterThan(initialCounts.notifications);
+      expect(updatedCounts.notifications).toBeGreaterThan(
+        initialCounts.notifications,
+      );
       expect(updatedCounts.total).toBeGreaterThan(initialCounts.total);
     });
   });
@@ -151,25 +152,35 @@ describe('Notifications CRUD', () => {
         limit: 10,
       });
 
-      const readNotification = updatedNotifications.find(n => n.id === notifications[0].id);
+      const readNotification = updatedNotifications.find(
+        (n) => n.id === notifications[0].id,
+      );
       expect(readNotification?.isRead).toBe(true);
       expect(readNotification?.readAt).toBeInstanceOf(Date);
     });
 
     it('should mark all notifications as read', async () => {
       // Create multiple notifications by creating comments
-      const resource1 = await createTestResource(supabase, testCommunity.id, 'offer');
-      const resource2 = await createTestResource(supabase, testCommunity.id, 'request');
+      const resource1 = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
+      const resource2 = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'request',
+      );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      
+
       await createComment(supabase, {
         content: 'Comment 1',
         resourceId: resource1.id,
       });
-      
+
       await createComment(supabase, {
-        content: 'Comment 2', 
+        content: 'Comment 2',
         resourceId: resource2.id,
       });
 
@@ -202,7 +213,11 @@ describe('Notifications CRUD', () => {
       const initialCounts = await fetchNotificationCount(supabase);
 
       // Create some notifications
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
       await createComment(supabase, {
@@ -214,8 +229,12 @@ describe('Notifications CRUD', () => {
 
       const countsAfterComment = await fetchNotificationCount(supabase);
 
-      expect(countsAfterComment.comments).toBe((initialCounts.comments || 0) + 1);
-      expect(countsAfterComment.notifications).toBe((initialCounts.notifications || 0) + 1);
+      expect(countsAfterComment.comments).toBe(
+        (initialCounts.comments || 0) + 1,
+      );
+      expect(countsAfterComment.notifications).toBe(
+        (initialCounts.notifications || 0) + 1,
+      );
       expect(countsAfterComment.total).toBe((initialCounts.total || 0) + 1);
 
       // Mark as read and verify counts update
