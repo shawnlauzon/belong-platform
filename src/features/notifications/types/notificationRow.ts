@@ -1,8 +1,11 @@
 import type { Database } from '@/shared/types/database';
 
-export type NotificationRow = Database['public']['Tables']['notifications']['Row'];
-export type NotificationInsertDbData = Database['public']['Tables']['notifications']['Insert'];
-export type NotificationUpdateDbData = Database['public']['Tables']['notifications']['Update'];
+export type NotificationRow =
+  Database['public']['Tables']['notifications']['Row'];
+export type NotificationInsertDbData =
+  Database['public']['Tables']['notifications']['Insert'];
+export type NotificationUpdateDbData =
+  Database['public']['Tables']['notifications']['Update'];
 
 // Join with public_profiles for actor information
 export interface NotificationRowJoinActor extends NotificationRow {
@@ -14,7 +17,7 @@ export interface NotificationRowJoinActor extends NotificationRow {
 
 export const SELECT_NOTIFICATIONS_JOIN_ACTOR = `
   *,
-  actor_profile:public_profiles!actor_id (
+  actor_profile:public_profiles!user_id (
     full_name,
     avatar_url
   )

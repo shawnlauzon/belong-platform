@@ -14,7 +14,7 @@ export interface FetchNotificationsFilter {
 
 export async function fetchNotifications(
   supabase: SupabaseClient<Database>,
-  filter: FetchNotificationsFilter = {}
+  filter: FetchNotificationsFilter = {},
 ): Promise<Notification[]> {
   const { type, isRead, limit = 20, offset = 0 } = filter;
 

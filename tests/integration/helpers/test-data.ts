@@ -5,7 +5,6 @@ import {
   createResource,
   createResourceTimeslot,
 } from '@/features/resources/api';
-import { createFakeResourceInput } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
@@ -64,19 +63,26 @@ export async function createTestResource(
   supabase: SupabaseClient<Database>,
   communityId: string,
   type: 'offer' | 'request' | 'event' = 'offer',
-  category: ResourceCategory = 'tools',
+  category?: ResourceCategory,
   requiresApproval: boolean = false,
 ) {
-  const data = createFakeResourceInput({
+  // Set appropriate category defaults based on type
+  const defaultCategory = category ?? (type === 'event' ? 'food' : 'tools');
+  
+  // Create resource input without using the faker function to avoid potential conflicts
+  const data = {
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
     description: `${TEST_PREFIX} test resource`,
-    type,
+    type: type as 'offer' | 'request' | 'event',
     communityIds: [communityId],
-    category,
-    status: 'open', // Ensure resources are open for feed tests
-    lastRenewedAt: new Date(),
+    category: defaultCategory,
+    status: 'open' as const,
+    locationName: 'Test Location',
     requiresApproval,
-  });
+    lastRenewedAt: new Date(),
+    imageUrls: [],
+  };
+
 
   // Add small delay to ensure community membership trigger has completed
   await new Promise((resolve) => setTimeout(resolve, 100));

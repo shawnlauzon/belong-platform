@@ -36,7 +36,7 @@ export function createFakeResource(
 
   const category =
     type === ResourceTypeEnum.EVENT
-      ? ('drinks' as ResourceCategory)
+      ? faker.helpers.arrayElement(['food', 'drinks'] as const)
       : (faker.helpers.maybe(
           () =>
             faker.helpers.arrayElement([
@@ -113,7 +113,7 @@ export function createFakeResourceInput(
 
   const category =
     type === ResourceTypeEnum.EVENT
-      ? ('drinks' as ResourceCategory)
+      ? faker.helpers.arrayElement(['food', 'drinks'] as const)
       : faker.helpers.arrayElement([
           'tools',
           'skills',
@@ -123,7 +123,7 @@ export function createFakeResourceInput(
           'drinks',
         ] as const);
 
-  return {
+  const baseInput = {
     title: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
     type,
@@ -150,6 +150,13 @@ export function createFakeResourceInput(
     isRecurring: faker.datatype.boolean(),
     ...overrides,
   };
+
+  // Recalculate category if type was overridden to ensure consistency
+  if (overrides?.type === ResourceTypeEnum.EVENT && !overrides.category) {
+    baseInput.category = faker.helpers.arrayElement(['food', 'drinks'] as const);
+  }
+
+  return baseInput;
 }
 
 export function createFakeResourceRow(
@@ -165,7 +172,7 @@ export function createFakeResourceRow(
 
   const category =
     type === ResourceTypeEnum.EVENT
-      ? 'drinks'
+      ? faker.helpers.arrayElement(['food', 'drinks'] as const)
       : faker.helpers.arrayElement([
           'tools',
           'skills',
@@ -175,6 +182,7 @@ export function createFakeResourceRow(
           'rides',
           'housing',
           'drinks',
+          'games',
         ] as const);
 
   return {

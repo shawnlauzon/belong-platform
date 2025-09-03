@@ -340,4 +340,63 @@ describe('Notification Triggers', () => {
       expect(countsAfterRead.notifications).toBeLessThan(countsAfterComment.notifications);
     });
   });
+
+  describe('Shoutout notifications', () => {
+    it('should create notification when someone gives me a shoutout', async () => {
+      // Create a resource for the shoutout (shoutouts are tied to resources)
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
+
+      // Create a shoutout from commenter to resourceOwner
+      await signIn(supabase, commenter.email, 'TestPass123!');
+      
+      const { createShoutout } = await import('@/features/shoutouts');
+      await createShoutout(supabase, {
+        receiverId: resourceOwner.id,
+        message: 'Great community member!',
+        resourceId: resource.id,
+        communityId: testCommunity.id,
+      });
+
+      // Switch to resourceOwner to check notifications
+      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+
+      const notifications = await fetchNotifications(supabase, {
+        type: 'shoutout_received',
+        limit: 10,
+      });
+
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0]).toMatchObject({
+        type: 'shoutout_received',
+        communityId: testCommunity.id,
+        actorId: commenter.id,
+        isRead: false,
+      });
+      expect(notifications[0].title).toContain('gave you a shoutout');
+    });
+
+    it('should not create notification when I give myself a shoutout', async () => {
+      // Create a resource for the shoutout
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
+
+      // Try to give shoutout to self - should be prevented by database constraint
+      const { createShoutout } = await import('@/features/shoutouts');
+      await expect(
+        createShoutout(supabase, {
+          receiverId: resourceOwner.id,
+          message: 'Self shoutout',
+          resourceId: resource.id,
+          communityId: testCommunity.id,
+        })
+      ).rejects.toThrow();
+    });
+  });
 });
