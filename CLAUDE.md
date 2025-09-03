@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - DO NOT edit more code than you have to.
 - DO NOT WASTE TOKENS, be succinct and concise.
 - **Always use IDE diagnostics to validate code (including tests!) after implementation**
+- **Always use `pnpx supabase migration new` to create a new migration**
 
 ## Code Style and Best Practices
 

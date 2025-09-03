@@ -1,35 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { NotificationCount } from '../types/notificationCount';
+import { getCurrentUserId } from '@/features/auth/api';
 
 export async function fetchNotificationCount(
   supabase: SupabaseClient<Database>
-): Promise<NotificationCount> {
-  // Get notification count from user_state
-  const { data: userStateData, error: userStateError } = await supabase
-    .from('user_state')
-    .select('unread_notification_count')
-    .single();
-
-  if (userStateError && userStateError.code !== 'PGRST116') {
-    throw userStateError;
+): Promise<number> {
+  const userId = await getCurrentUserId(supabase);
+  if (!userId) {
+    throw new Error('User not authenticated');
   }
 
-  // Get message counts from conversation participants
-  const { data: messageData, error: messageError } = await supabase
-    .from('conversation_participants')
-    .select('unread_count')
-    .gt('unread_count', 0);
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_read', false);
 
-  if (messageError) {
-    throw messageError;
+  if (error) {
+    throw error;
   }
 
-  // Calculate totals
-  const notificationCount = userStateData?.unread_notification_count || 0;
-  const messageTotal = messageData?.reduce((sum, participant) => sum + participant.unread_count, 0) || 0;
-
-  return {
-    total: notificationCount + messageTotal,
-  };
+  return count || 0;
 }
