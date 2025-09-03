@@ -5,5 +5,5 @@ export type {
   NotificationUpdateDbData,
   NotificationRowJoinActor
 } from './notificationRow';
-export type { NotificationCounts } from './notificationCounts';
+export type { NotificationCount } from './notificationCount';
 export type { NotificationPreferences } from './notificationPreferences';

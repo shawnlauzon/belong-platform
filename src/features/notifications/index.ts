@@ -6,14 +6,14 @@ export type {
   NotificationInsertDbData,
   NotificationUpdateDbData,
   NotificationRowJoinActor,
-  NotificationCounts,
+  NotificationCount,
   NotificationPreferences,
 } from './types';
 
 // API
 export {
   fetchNotifications,
-  fetchNotificationCounts,
+  fetchNotificationCount,
   deleteNotification,
   updatePreferences,
 } from './api';

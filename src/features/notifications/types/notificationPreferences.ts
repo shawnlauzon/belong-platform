@@ -1,8 +1,26 @@
-import type { Database } from '@/shared/types/database';
+// Notification preferences are now stored as JSONB in profiles table
+// Define the interface directly since it's no longer a separate table
 
-export type NotificationPreferences = Database['public']['Tables']['notification_preferences']['Row'];
-export type NotificationPreferencesInsert = Database['public']['Tables']['notification_preferences']['Insert'];
-export type NotificationPreferencesUpdate = Database['public']['Tables']['notification_preferences']['Update'];
+export interface NotificationPreferences {
+  // Group-level notification controls (7 groups)
+  social_interactions: boolean;      // Controls: comments, replies, shoutouts, connections
+  my_resources: boolean;            // Controls: resource claims, cancellations, completions
+  my_registrations: boolean;        // Controls: claim approvals, rejections, resource updates/cancellations
+  my_communities: boolean;          // Controls: member joins/leaves for communities you organize
+  community_activity: boolean;      // Controls: new resources/events in communities you're a member of
+  trust_recognition: boolean;       // Controls: trust points and level changes
+
+  // Messages (granular control)
+  direct_messages: boolean;         // Direct 1:1 messages
+  community_messages: boolean;      // Community chat messages
+
+  // Global settings
+  email_enabled: boolean;
+  push_enabled: boolean;
+}
+
+export type NotificationPreferencesUpdate = Partial<NotificationPreferences>;
+export type NotificationPreferencesInsert = NotificationPreferences;
 
 // Group-level preference interface matching database schema
 export interface GroupedNotificationPreferences {

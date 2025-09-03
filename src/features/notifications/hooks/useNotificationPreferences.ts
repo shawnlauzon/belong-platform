@@ -37,7 +37,7 @@ export function useUpdateNotificationPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (preferences: NotificationPreferencesUpdate & { user_id: string }) => 
+    mutationFn: (preferences: NotificationPreferencesUpdate) => 
       updatePreferences(supabase, preferences),
     onSuccess: () => {
       queryClient.invalidateQueries({

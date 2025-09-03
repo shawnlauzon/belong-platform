@@ -28,20 +28,19 @@ describe('Notification System - Basic Expansion', () => {
   it('should support new notification preference types in database', async () => {
     // Test that we can update preferences with the new notification types
     await updatePreferences(supabase, {
-      user_id: testUser.id,
       shoutout_received: false,
       connection_request: true,
       trust_points_received: false,
     });
 
-    // Verify the preferences were saved
-    const { data: preferences } = await supabase
-      .from('notification_preferences')
-      .select('shoutout_received, connection_request, trust_points_received')
-      .eq('user_id', testUser.id)
+    // Verify the preferences were saved in the profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('id', testUser.id)
       .single();
 
-    expect(preferences).toMatchObject({
+    expect(profile?.notification_preferences).toMatchObject({
       shoutout_received: false,
       connection_request: true,
       trust_points_received: false,

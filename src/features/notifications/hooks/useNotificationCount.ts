@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSupabase, logger } from '@/shared';
 import { getCurrentUserId } from '@/features/auth/api';
-import { fetchNotificationCounts } from '../api/fetchNotificationCounts';
+import { fetchNotificationCount } from '../api/fetchNotificationCount';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface UseNotificationCountResult {
@@ -45,8 +45,8 @@ export function useNotificationCount(): UseNotificationCountResult {
         });
 
         // Load initial count
-        const initialCounts = await fetchNotificationCounts(supabase);
-        setCount(initialCounts.total);
+        const initialCount = await fetchNotificationCount(supabase);
+        setCount(initialCount.total);
         setIsLoading(false);
 
         // Set up realtime subscription for count changes
@@ -55,14 +55,14 @@ export function useNotificationCount(): UseNotificationCountResult {
           .on('postgres_changes', {
             event: 'UPDATE',
             schema: 'public',
-            table: 'notification_counts',
+            table: 'user_state',
             filter: `user_id=eq.${userId}`,
           }, (payload) => {
             logger.debug('useNotificationCount: received count update via realtime', {
               userId,
-              newCount: payload.new.unread_total,
+              newCount: payload.new.unread_notification_count,
             });
-            setCount(payload.new.unread_total || 0);
+            setCount(payload.new.unread_notification_count || 0);
           })
           .on('postgres_changes', {
             event: 'INSERT',
@@ -72,8 +72,8 @@ export function useNotificationCount(): UseNotificationCountResult {
           }, async () => {
             // On new notification, refetch count to ensure accuracy
             try {
-              const refreshedCounts = await fetchNotificationCounts(supabase);
-              setCount(refreshedCounts.total);
+              const refreshedCount = await fetchNotificationCount(supabase);
+              setCount(refreshedCount.total);
             } catch (fetchError) {
               logger.error('useNotificationCount: error refreshing count', {
                 error: fetchError,
@@ -89,8 +89,8 @@ export function useNotificationCount(): UseNotificationCountResult {
           }, async () => {
             // On notification update (e.g., marked as read), refetch count
             try {
-              const refreshedCounts = await fetchNotificationCounts(supabase);
-              setCount(refreshedCounts.total);
+              const refreshedCount = await fetchNotificationCount(supabase);
+              setCount(refreshedCount.total);
             } catch (fetchError) {
               logger.error('useNotificationCount: error refreshing count', {
                 error: fetchError,
@@ -116,8 +116,8 @@ export function useNotificationCount(): UseNotificationCountResult {
         // Set up polling as backup (every 30 seconds)
         pollInterval = setInterval(async () => {
           try {
-            const polledCounts = await fetchNotificationCounts(supabase);
-            setCount(polledCounts.total);
+            const polledCount = await fetchNotificationCount(supabase);
+            setCount(polledCount.total);
           } catch (pollError) {
             logger.error('useNotificationCount: error during polling', {
               error: pollError,

@@ -4,11 +4,22 @@ import type { NotificationPreferencesUpdate } from '../types/notificationPrefere
 
 export async function updatePreferences(
   supabase: SupabaseClient<Database>,
-  preferences: NotificationPreferencesUpdate & { user_id: string }
+  preferences: NotificationPreferencesUpdate
 ): Promise<void> {
+  // Get current user ID
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   const { error } = await supabase
-    .from('notification_preferences')
-    .upsert(preferences, { onConflict: 'user_id' });
+    .from('profiles')
+    .update({
+      notification_preferences: preferences,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', user.id);
 
   if (error) {
     throw error;

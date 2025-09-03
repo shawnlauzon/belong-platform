@@ -629,171 +629,6 @@ export type Database = {
           },
         ]
       }
-      notification_counts: {
-        Row: {
-          last_checked_at: string | null
-          unread_claims: number | null
-          unread_comments: number | null
-          unread_messages: number | null
-          unread_resources: number | null
-          unread_total: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          last_checked_at?: string | null
-          unread_claims?: number | null
-          unread_comments?: number | null
-          unread_messages?: number | null
-          unread_resources?: number | null
-          unread_total?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          last_checked_at?: string | null
-          unread_claims?: number | null
-          unread_comments?: number | null
-          unread_messages?: number | null
-          unread_resources?: number | null
-          unread_total?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_counts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notification_counts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notification_preferences: {
-        Row: {
-          claim_approved: boolean | null
-          claim_rejected: boolean | null
-          claimed_resource_cancelled: boolean | null
-          claimed_resource_updated: boolean | null
-          comment_replies: boolean | null
-          comments_on_resources: boolean | null
-          community_activity: boolean | null
-          community_member_joined: boolean | null
-          community_member_left: boolean | null
-          community_messages: boolean | null
-          community_resources: boolean | null
-          connection_accepted: boolean | null
-          connection_request: boolean | null
-          created_at: string | null
-          direct_messages: boolean | null
-          email_enabled: boolean | null
-          my_communities: boolean | null
-          my_registrations: boolean | null
-          my_resources: boolean | null
-          new_event: boolean | null
-          push_enabled: boolean | null
-          resource_claim_cancelled: boolean | null
-          resource_claim_completed: boolean | null
-          resource_claims: boolean | null
-          shoutout_received: boolean | null
-          social_interactions: boolean | null
-          trust_level_changed: boolean | null
-          trust_points_received: boolean | null
-          trust_recognition: boolean | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          claim_approved?: boolean | null
-          claim_rejected?: boolean | null
-          claimed_resource_cancelled?: boolean | null
-          claimed_resource_updated?: boolean | null
-          comment_replies?: boolean | null
-          comments_on_resources?: boolean | null
-          community_activity?: boolean | null
-          community_member_joined?: boolean | null
-          community_member_left?: boolean | null
-          community_messages?: boolean | null
-          community_resources?: boolean | null
-          connection_accepted?: boolean | null
-          connection_request?: boolean | null
-          created_at?: string | null
-          direct_messages?: boolean | null
-          email_enabled?: boolean | null
-          my_communities?: boolean | null
-          my_registrations?: boolean | null
-          my_resources?: boolean | null
-          new_event?: boolean | null
-          push_enabled?: boolean | null
-          resource_claim_cancelled?: boolean | null
-          resource_claim_completed?: boolean | null
-          resource_claims?: boolean | null
-          shoutout_received?: boolean | null
-          social_interactions?: boolean | null
-          trust_level_changed?: boolean | null
-          trust_points_received?: boolean | null
-          trust_recognition?: boolean | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          claim_approved?: boolean | null
-          claim_rejected?: boolean | null
-          claimed_resource_cancelled?: boolean | null
-          claimed_resource_updated?: boolean | null
-          comment_replies?: boolean | null
-          comments_on_resources?: boolean | null
-          community_activity?: boolean | null
-          community_member_joined?: boolean | null
-          community_member_left?: boolean | null
-          community_messages?: boolean | null
-          community_resources?: boolean | null
-          connection_accepted?: boolean | null
-          connection_request?: boolean | null
-          created_at?: string | null
-          direct_messages?: boolean | null
-          email_enabled?: boolean | null
-          my_communities?: boolean | null
-          my_registrations?: boolean | null
-          my_resources?: boolean | null
-          new_event?: boolean | null
-          push_enabled?: boolean | null
-          resource_claim_cancelled?: boolean | null
-          resource_claim_completed?: boolean | null
-          resource_claims?: boolean | null
-          shoutout_received?: boolean | null
-          social_interactions?: boolean | null
-          trust_level_changed?: boolean | null
-          trust_points_received?: boolean | null
-          trust_recognition?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           action_url: string | null
@@ -942,6 +777,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          notification_preferences: Json | null
           updated_at: string
           user_metadata: Json
         }
@@ -949,6 +785,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          notification_preferences?: Json | null
           updated_at?: string
           user_metadata: Json
         }
@@ -956,6 +793,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          notification_preferences?: Json | null
           updated_at?: string
           user_metadata?: Json
         }
@@ -1206,46 +1044,6 @@ export type Database = {
           {
             foreignKeyName: "resources_owner_id_fkey"
             columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      seen_resources: {
-        Row: {
-          resource_id: string
-          seen_at: string | null
-          user_id: string
-        }
-        Insert: {
-          resource_id: string
-          seen_at?: string | null
-          user_id: string
-        }
-        Update: {
-          resource_id?: string
-          seen_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seen_resources_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "resources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seen_resources_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seen_resources_user_id_fkey"
-            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1533,6 +1331,45 @@ export type Database = {
             foreignKeyName: "user_connections_user_b_id_fkey"
             columns: ["user_b_id"]
             isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_state: {
+        Row: {
+          created_at: string | null
+          last_activity_at: string | null
+          unread_notification_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          last_activity_at?: string | null
+          unread_notification_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          last_activity_at?: string | null
+          unread_notification_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
@@ -1862,29 +1699,7 @@ export type Database = {
           p_type: string
           p_user_id: string
         }
-        Returns: {
-          action_url: string | null
-          actor_count: number | null
-          actor_id: string | null
-          body: string | null
-          claim_id: string | null
-          comment_id: string | null
-          community_id: string | null
-          conversation_id: string | null
-          created_at: string | null
-          group_key: string | null
-          id: string
-          image_url: string | null
-          is_read: boolean | null
-          message_id: string | null
-          metadata: Json | null
-          read_at: string | null
-          resource_id: string | null
-          title: string
-          type: string
-          updated_at: string | null
-          user_id: string
-        }
+        Returns: string
       }
       create_user_connection: {
         Args: { request_id: string }
@@ -3523,8 +3338,8 @@ export type Database = {
         Args: { "": string }
         Returns: number
       }
-      update_notification_counts: {
-        Args: { p_delta: number; p_type: string; p_user_id: string }
+      update_notification_count: {
+        Args: { p_delta: number; p_user_id: string }
         Returns: undefined
       }
       update_trust_score: {
