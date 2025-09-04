@@ -20,7 +20,7 @@ import { logger } from '@/shared';
  *     password: '',
  *     firstName: '',
  *     lastName: '',
- *     connectionCode: '' // Optional invitation code
+ *     invitationCode: '' // Optional invitation code
  *   });
  *   
  *   const handleSubmit = async (e) => {
@@ -68,14 +68,14 @@ export function useSignUp() {
       password,
       firstName,
       lastName,
-      connectionCode,
+      invitationCode,
     }: {
       email: string;
       password: string;
       firstName: string;
       lastName?: string;
-      connectionCode?: string;
-    }) => signUp(supabase, email, password, firstName, lastName, connectionCode),
+      invitationCode?: string;
+    }) => signUp(supabase, email, password, firstName, lastName, invitationCode),
     onSuccess: (account) => {
       logger.info('🔐 API: User signed up successfully', {
         userId: account.id,

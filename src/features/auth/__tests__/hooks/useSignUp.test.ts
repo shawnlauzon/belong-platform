@@ -28,7 +28,9 @@ describe('useSignUp', () => {
     vi.clearAllMocks();
 
     // Create mock data using factories
-    fakeAccount = createFakeAccount();
+    fakeAccount = createFakeAccount({
+      firstName: 'John', // Ensure firstName is always defined for tests
+    });
 
     mockSupabase = createMockSupabase();
     mockUseSupabase.mockReturnValue(mockSupabase);
@@ -42,7 +44,7 @@ describe('useSignUp', () => {
     const signUpData = {
       email: fakeAccount.email,
       password: 'password123',
-      firstName: fakeAccount.firstName,
+      firstName: fakeAccount.firstName!,
       lastName: fakeAccount.lastName,
     };
 
@@ -70,19 +72,19 @@ describe('useSignUp', () => {
       signUpData.password,
       signUpData.firstName,
       signUpData.lastName,
-      undefined, // no connectionCode
+      undefined, // no invitationCode
     );
   });
 
-  it('should pass connectionCode to signUp API when provided', async () => {
+  it('should pass invitationCode to signUp API when provided', async () => {
     // Arrange
-    const connectionCode = 'CONNECT123';
+    const invitationCode = 'CONNECT123';
     const signUpData = {
       email: fakeAccount.email,
       password: 'password123',
-      firstName: fakeAccount.firstName,
+      firstName: fakeAccount.firstName!,
       lastName: fakeAccount.lastName,
-      connectionCode,
+      invitationCode,
     };
 
     mockSignUp.mockResolvedValue(fakeAccount);
@@ -102,14 +104,14 @@ describe('useSignUp', () => {
       }),
     );
 
-    // Verify API was called with connectionCode
+    // Verify API was called with invitationCode
     expect(mockSignUp).toHaveBeenCalledWith(
       mockSupabase,
       signUpData.email,
       signUpData.password,
       signUpData.firstName,
       signUpData.lastName,
-      connectionCode,
+      invitationCode,
     );
   });
 });
