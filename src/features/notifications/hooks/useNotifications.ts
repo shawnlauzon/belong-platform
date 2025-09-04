@@ -9,6 +9,7 @@ import {
 } from '../api/fetchNotifications';
 import { notificationTransformer } from '../transformers';
 import { notificationKeys } from '../queries';
+import { subscribeToNotifications } from '../api/subscribeToNotifications';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface UseNotificationsResult {
@@ -122,174 +123,107 @@ export function useNotifications(
         setIsLoading(false);
 
         // Set up realtime subscription
-        logger.debug('useNotifications: setting up realtime subscription', {
-          userId,
-          channelName: `user:${userId}:notifications`,
-        });
+        channel = subscribeToNotifications(supabase, userId, {
+          onNotification: async (payload) => {
+            // Check if notification matches current filter
+            logger.debug('useNotifications: checking notification filter', {
+              notificationId: payload.new?.id,
+              userId,
+              payloadNew: payload.new,
+              currentFilter: filterRef.current,
+            });
 
-        channel = supabase
-          .channel(`user:${userId}:notifications`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'notifications',
-              filter: `user_id=eq.${userId}`,
-            },
-            async (payload) => {
-              logger.info(
-                'useNotifications: received new notification via realtime',
+            const matchesFilter = checkNotificationMatchesFilter(
+              payload.new,
+              filterRef.current,
+            );
+
+            logger.debug('useNotifications: filter check result', {
+              notificationId: payload.new?.id,
+              userId,
+              matchesFilter,
+              filterType: filterRef.current.type,
+              notificationType: payload.new?.type,
+              filterIsRead: filterRef.current.isRead,
+              notificationIsRead: payload.new?.is_read,
+            });
+
+            if (!matchesFilter) {
+              logger.debug(
+                'useNotifications: notification does not match filter, skipping',
                 {
-                  userId,
                   notificationId: payload.new?.id,
-                  type: payload.new?.type,
-                  payloadStructure: {
-                    hasNew: !!payload.new,
-                    hasOld: !!payload.old,
-                    eventType: payload.eventType,
-                    schema: payload.schema,
-                    table: payload.table,
-                    commit_timestamp: payload.commit_timestamp,
-                    errors: payload.errors,
-                  },
-                  fullPayload: payload,
+                  filter: filterRef.current,
+                },
+              );
+              return;
+            }
+
+            try {
+              logger.debug(
+                'useNotifications: fetching full notification details',
+                {
+                  notificationId: payload.new.id,
+                  userId,
                 },
               );
 
-              // Check if notification matches current filter
-              logger.debug('useNotifications: checking notification filter', {
-                notificationId: payload.new?.id,
+              // Fetch full notification with joins
+              const { data, error: fetchError } = await supabase
+                .from('notification_details')
+                .select('*')
+                .eq('id', payload.new.id)
+                .single();
+
+              logger.debug('useNotifications: notification fetch completed', {
+                notificationId: payload.new.id,
                 userId,
-                payloadNew: payload.new,
-                currentFilter: filterRef.current,
+                hasData: !!data,
+                hasError: !!fetchError,
+                fetchError,
+                dataKeys: data ? Object.keys(data) : null,
               });
 
-              const matchesFilter = checkNotificationMatchesFilter(
-                payload.new,
-                filterRef.current,
-              );
+              if (data) {
+                const newNotification = notificationTransformer(data);
 
-              logger.debug('useNotifications: filter check result', {
-                notificationId: payload.new?.id,
-                userId,
-                matchesFilter,
-                filterType: filterRef.current.type,
-                notificationType: payload.new?.type,
-                filterIsRead: filterRef.current.isRead,
-                notificationIsRead: payload.new?.is_read,
-              });
-
-              if (!matchesFilter) {
                 logger.debug(
-                  'useNotifications: notification does not match filter, skipping',
+                  'useNotifications: adding new notification to state',
                   {
-                    notificationId: payload.new?.id,
-                    filter: filterRef.current,
+                    notificationId: newNotification.id,
+                    type: newNotification.type,
+                    userId,
                   },
                 );
-                return;
-              }
 
-              try {
-                logger.debug(
-                  'useNotifications: fetching full notification details',
+                // Add new notification to the beginning of the list (most recent first)
+                setNotifications((prev) => [newNotification, ...prev]);
+
+                // Invalidate React Query cache for counts
+                queryClient.invalidateQueries({
+                  queryKey: notificationKeys.counts(),
+                });
+              } else {
+                logger.warn(
+                  'useNotifications: failed to fetch new notification data',
                   {
                     notificationId: payload.new.id,
                     userId,
                   },
                 );
-
-                // Fetch full notification with joins
-                const { data, error: fetchError } = await supabase
-                  .from('notification_details')
-                  .select('*')
-                  .eq('id', payload.new.id)
-                  .single();
-
-                logger.debug('useNotifications: notification fetch completed', {
+              }
+            } catch (fetchError) {
+              logger.error(
+                'useNotifications: error fetching new notification',
+                {
+                  error: fetchError,
                   notificationId: payload.new.id,
                   userId,
-                  hasData: !!data,
-                  hasError: !!fetchError,
-                  fetchError,
-                  dataKeys: data ? Object.keys(data) : null,
-                });
-
-                if (data) {
-                  const newNotification = notificationTransformer(data);
-
-                  logger.debug(
-                    'useNotifications: adding new notification to state',
-                    {
-                      notificationId: newNotification.id,
-                      type: newNotification.type,
-                      userId,
-                    },
-                  );
-
-                  // Add new notification to the beginning of the list (most recent first)
-                  setNotifications((prev) => [newNotification, ...prev]);
-
-                  // Invalidate React Query cache for counts
-                  queryClient.invalidateQueries({
-                    queryKey: notificationKeys.counts(),
-                  });
-                } else {
-                  logger.warn(
-                    'useNotifications: failed to fetch new notification data',
-                    {
-                      notificationId: payload.new.id,
-                      userId,
-                    },
-                  );
-                }
-              } catch (fetchError) {
-                logger.error(
-                  'useNotifications: error fetching new notification',
-                  {
-                    error: fetchError,
-                    notificationId: payload.new.id,
-                    userId,
-                  },
-                );
-              }
-            },
-          )
-          .subscribe((status, err) => {
-            logger.info(
-              'useNotifications: realtime subscription callback triggered',
-              {
-                status,
-                hasError: !!err,
-                userId,
-                channelName: `user:${userId}:notifications`,
-              },
-            );
-
-            if (err) {
-              logger.error('useNotifications: realtime subscription error', {
-                error: err,
-                errorMessage: err?.message,
-                errorName: err?.name,
-                errorStack: err?.stack,
-                errorDetails: JSON.stringify(err),
-                userId,
-                channelName: `user:${userId}:notifications`,
-                subscriberStatus: status,
-              });
-            } else {
-              logger.info(
-                'useNotifications: realtime subscription established',
-                {
-                  status,
-                  userId,
-                  channelName: `user:${userId}:notifications`,
-                  initialNotificationCount: initialData.length,
                 },
               );
             }
-          });
+          },
+        });
       } catch (setupError) {
         logger.error('useNotifications: failed to setup notifications', {
           error: setupError,
