@@ -2,14 +2,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import * as connectionsApi from '@/features/connections/api';
+import * as connectionsApi from '@/features/invitations/api';
 import * as usersApi from '@/features/users/api';
 import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
-import { getMemberConnectionCode } from '@/features';
+import { getInvitationCode } from '@/features';
 import { faker } from '@faker-js/faker';
 
 describe('Connections API - Connection Details', () => {
@@ -30,7 +30,7 @@ describe('Connections API - Connection Details', () => {
     testCommunity = await createTestCommunity(supabase);
 
     memberConnectionCode = (
-      await getMemberConnectionCode(supabase, testCommunity.id)
+      await getInvitationCode(supabase, testCommunity.id)
     ).code;
 
     await signOut(supabase);
@@ -40,7 +40,7 @@ describe('Connections API - Connection Details', () => {
     await cleanupAllTestData();
   });
 
-  describe('fetchConnectionDetails', () => {
+  describe('fetchInvitationDetails', () => {
     it('returns connection details by code when unauthenticated', async () => {
       // Ensure we're not authenticated
       const {
@@ -48,7 +48,7 @@ describe('Connections API - Connection Details', () => {
       } = await supabase.auth.getUser();
       expect(user).toBeNull();
 
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(
+      const connectionDetails = await connectionsApi.fetchInvitationDetails(
         supabase,
         memberConnectionCode,
       );
@@ -89,7 +89,7 @@ describe('Connections API - Connection Details', () => {
       expect(user).toBeNull();
 
       const nonExistentConnectionCode = 'INVALID123';
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(
+      const connectionDetails = await connectionsApi.fetchInvitationDetails(
         supabase,
         nonExistentConnectionCode,
       );
@@ -101,16 +101,16 @@ describe('Connections API - Connection Details', () => {
       // Sign in to deactivate the connection code
       await signIn(supabase, member.email, 'TestPass123!');
 
-      // Deactivate the connection code
+      // Deactivate the invitation code
       await supabase
-        .from('community_member_codes')
+        .from('invitation_codes')
         .update({ is_active: false })
         .eq('code', memberConnectionCode);
 
       await signOut(supabase);
 
       // Try to fetch with inactive code
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(
+      const connectionDetails = await connectionsApi.fetchInvitationDetails(
         supabase,
         memberConnectionCode,
       );
@@ -119,14 +119,14 @@ describe('Connections API - Connection Details', () => {
       // Reactivate for cleanup
       await signIn(supabase, member.email, 'TestPass123!');
       await supabase
-        .from('community_member_codes')
+        .from('invitation_codes')
         .update({ is_active: true })
         .eq('code', memberConnectionCode);
       await signOut(supabase);
     });
 
     it('includes correct community information', async () => {
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(
+      const connectionDetails = await connectionsApi.fetchInvitationDetails(
         supabase,
         memberConnectionCode,
       );
@@ -136,7 +136,7 @@ describe('Connections API - Connection Details', () => {
     });
 
     it('includes proper timestamps and connection status', async () => {
-      const connectionDetails = await connectionsApi.fetchConnectionDetails(
+      const connectionDetails = await connectionsApi.fetchInvitationDetails(
         supabase,
         memberConnectionCode,
       );

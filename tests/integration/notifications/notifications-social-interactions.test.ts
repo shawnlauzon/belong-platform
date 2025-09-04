@@ -9,10 +9,8 @@ import {
 import { fetchNotifications } from '@/features/notifications';
 import { createComment } from '@/features/comments';
 import {
-  createConnectionRequest,
-  approveConnection,
-  getMemberConnectionCode,
-} from '@/features/connections';
+  getInvitationCode,
+} from '@/features/invitations';
 import { createShoutout } from '@/features/shoutouts';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -180,89 +178,6 @@ describe('Social Interactions Notifications', () => {
     });
   });
 
-  describe('Connection notifications', () => {
-    it('should create connection_request notification in database when someone wants to connect with me', async () => {
-      // Get resourceOwner's connection code
-      const memberCode = await getMemberConnectionCode(
-        clientA,
-        testCommunity.id,
-      );
-
-      // Create connection request from interacting user using resourceOwner's code
-      await signIn(clientA, interactingUser.email, 'TestPass123!');
-
-      const response = await createConnectionRequest(clientA, memberCode.code);
-      expect(response.success).toBe(true);
-
-      // Switch to resourceOwner to check notifications
-      await signIn(clientA, resourceOwner.email, 'TestPass123!');
-
-      const notifications = await fetchNotifications(clientA, {
-        type: 'connection_request',
-        limit: 10,
-      });
-
-      expect(notifications.length).toBeGreaterThan(0);
-      const connectionNotification = notifications.find(n => 
-        n.type === 'connection_request' && 
-        n.actorId === interactingUser.id
-      );
-      expect(connectionNotification).toBeDefined();
-      expect(connectionNotification).toMatchObject({
-        type: 'connection_request',
-        actorId: interactingUser.id,
-        isRead: false,
-      });
-    });
-
-    it('should create connection_accepted notification in database when my connection request is accepted', async () => {
-      // Get interactingUser's connection code
-      await signIn(clientA, interactingUser.email, 'TestPass123!');
-      const memberCode = await getMemberConnectionCode(
-        clientA,
-        testCommunity.id,
-      );
-
-      // Create connection request from resourceOwner to interacting user
-      await signIn(clientA, resourceOwner.email, 'TestPass123!');
-      const response = await createConnectionRequest(clientA, memberCode.code);
-      expect(response.success).toBe(true);
-
-      // Get the pending connection
-      const { fetchPendingConnections } = await import(
-        '@/features/connections'
-      );
-      await signIn(clientA, interactingUser.email, 'TestPass123!');
-      const pendingConnections = await fetchPendingConnections(clientA);
-
-      expect(pendingConnections.length).toBeGreaterThan(0);
-      const connectionRequest = pendingConnections.find(c => c.requesterId === resourceOwner.id);
-      expect(connectionRequest).toBeDefined();
-
-      // Approve the connection (this should create notification for resourceOwner)
-      await approveConnection(clientA, connectionRequest.id);
-
-      // Switch to resourceOwner to check notifications
-      await signIn(clientA, resourceOwner.email, 'TestPass123!');
-
-      const notifications = await fetchNotifications(clientA, {
-        type: 'connection_accepted',
-        limit: 10,
-      });
-
-      expect(notifications.length).toBeGreaterThan(0);
-      const acceptedNotification = notifications.find(n => 
-        n.type === 'connection_accepted' && 
-        n.actorId === interactingUser.id
-      );
-      expect(acceptedNotification).toBeDefined();
-      expect(acceptedNotification).toMatchObject({
-        type: 'connection_accepted',
-        actorId: interactingUser.id,
-        isRead: false,
-      });
-    });
-  });
 
   describe('Self-notification prevention', () => {
     it('should not create notification when I comment on my own resource', async () => {

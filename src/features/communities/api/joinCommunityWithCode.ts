@@ -8,7 +8,7 @@ import {
 import {
   normalizeConnectionCode,
   isValidConnectionCode,
-} from '@/features/connections/utils/codeUtils';
+} from '@/features/invitations/utils/codeUtils';
 import { logger } from '@/shared';
 import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
@@ -34,7 +34,7 @@ export async function joinCommunityWithCode(
 
     // Find the connection code
     const { data: memberCode, error: codeError } = await supabase
-      .from('community_member_codes')
+      .from('invitation_codes')
       .select('*')
       .eq('code', normalizedCode)
       .eq('is_active', true)
@@ -124,7 +124,7 @@ export async function joinCommunityWithCode(
     const membership = toDomainMembershipInfo(data);
 
     // Create direct connection with the code owner
-    const { error: connectionError } = await supabase.rpc('create_direct_user_connection', {
+    const { error: connectionError } = await supabase.rpc('create_user_connection', {
       p_user_id: currentUserId,
       p_other_id: memberCode.user_id,
       p_community_id: communityId,

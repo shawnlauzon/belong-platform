@@ -1,7 +1,6 @@
 import { expect } from 'vitest';
 import { fetchTrustScores } from '@/features/trust-scores/api';
-import { createTestConnectionRequest } from '../helpers/test-data';
-import { approveConnection } from '@/features/connections/api';
+import { createTestConnection } from '../helpers/test-data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
@@ -179,7 +178,7 @@ export async function verifyTrustScoreLog(
 }
 
 /**
- * Helper function to create a connection request and join community via invitation
+ * Helper function to create a direct connection between users
  */
 export async function createTestConnectionAndJoin(
   inviterClient: SupabaseClient<Database>,
@@ -189,30 +188,15 @@ export async function createTestConnectionAndJoin(
   inviteeId: string,
   communityId: string,
 ) {
-  // Get inviter's connection code
-  const { data: memberCode } = await serviceClient
-    .from('community_member_codes')
-    .select('*')
-    .eq('user_id', inviterId)
-    .eq('community_id', communityId)
-    .single();
-
-  if (!memberCode) {
-    throw new Error('Member connection code not found');
-  }
-
-  // Create connection request from invitee to inviter using the code
-  const { requestId } = await createTestConnectionRequest(
+  // Create direct connection between the users
+  const connection = await createTestConnection(
     inviterClient,
     inviteeClient,
     communityId,
   );
 
-  // Approve the connection as the inviter
-  await approveConnection(inviterClient, requestId);
-
   // Wait for triggers to complete
   await new Promise((resolve) => setTimeout(resolve, 300));
 
-  return { id: requestId };
+  return { id: connection.id };
 }

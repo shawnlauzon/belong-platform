@@ -206,62 +206,6 @@ export type Database = {
         }
         Relationships: []
       }
-      community_member_codes: {
-        Row: {
-          code: string
-          community_id: string
-          created_at: string
-          is_active: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          code: string
-          community_id: string
-          created_at?: string
-          is_active?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          code?: string
-          community_id?: string
-          created_at?: string
-          is_active?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_member_codes_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_member_codes_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
-            foreignKeyName: "community_member_codes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_member_codes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       community_memberships: {
         Row: {
           community_id: string
@@ -417,6 +361,62 @@ export type Database = {
           {
             foreignKeyName: "conversations_last_message_sender_id_fkey"
             columns: ["last_message_sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_codes: {
+        Row: {
+          code: string
+          community_id: string
+          created_at: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          community_id: string
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          community_id?: string
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_member_codes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_member_codes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
+            foreignKeyName: "community_member_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_member_codes_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1820,10 +1820,6 @@ export type Database = {
         Args: { p_community_id: string }
         Returns: string
       }
-      create_direct_user_connection: {
-        Args: { p_community_id: string; p_other_id: string; p_user_id: string }
-        Returns: string
-      }
       create_notification: {
         Args: {
           p_action_url: string
@@ -1853,6 +1849,10 @@ export type Database = {
           p_type: string
           p_user_id: string
         }
+        Returns: string
+      }
+      create_user_connection: {
+        Args: { p_community_id: string; p_other_id: string; p_user_id: string }
         Returns: string
       }
       disablelongtransactions: {
@@ -2122,7 +2122,7 @@ export type Database = {
         Args: { community_id: string }
         Returns: Json
       }
-      get_connection_details: {
+      get_invitation_details: {
         Args: { connection_code: string }
         Returns: {
           avatar_url: string
@@ -2282,10 +2282,6 @@ export type Database = {
       }
       notify_connection_accepted: {
         Args: { p_actor_id: string; p_user_id: string }
-        Returns: string
-      }
-      notify_connection_created: {
-        Args: { p_community_id: string; p_other_id: string; p_user_id: string }
         Returns: string
       }
       notify_new_resource: {
@@ -2524,7 +2520,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      regenerate_member_connection_code: {
+      regenerate_invitation_code: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
       }

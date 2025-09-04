@@ -8,7 +8,7 @@ import {
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { signIn } from '@/features/auth/api';
 import * as api from '@/features/communities/api';
-import { getMemberConnectionCode } from '@/features/connections/api';
+import { getInvitationCode } from '@/features/invitations/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
@@ -114,7 +114,7 @@ describe('Communities - Joining Operations', () => {
     it('allows user to join community using connection code', async () => {
       // Get testUser's member code (testUser is already in testCommunity as organizer)
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getMemberConnectionCode(supabase, testCommunity.id);
+      const memberCode = await getInvitationCode(supabase, testCommunity.id);
 
       // Create new user (not joined to any community yet)
       const supabaseNewUser = createTestClient();
@@ -178,7 +178,7 @@ describe('Communities - Joining Operations', () => {
     it('prevents user from joining same community twice using connection code', async () => {
       // Get testUser's member code
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getMemberConnectionCode(supabase, testCommunity.id);
+      const memberCode = await getInvitationCode(supabase, testCommunity.id);
 
       // Create new user and join community
       const supabaseNewUser = createTestClient();
@@ -194,7 +194,7 @@ describe('Communities - Joining Operations', () => {
     it('requires authentication to join with connection code', async () => {
       // Get testUser's member code
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getMemberConnectionCode(supabase, testCommunity.id);
+      const memberCode = await getInvitationCode(supabase, testCommunity.id);
 
       // Try to join without authentication
       const unauthenticatedClient = createTestClient();

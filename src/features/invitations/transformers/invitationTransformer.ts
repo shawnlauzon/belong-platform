@@ -1,13 +1,13 @@
 import type {
-  CommunityMemberCodeRow,
+  InvitationCodeRow,
   UserConnectionRow,
-  MemberConnectionCode,
+  InvitationCode,
   UserConnection,
 } from '../types';
 
-export function toDomainMemberCode(
-  row: CommunityMemberCodeRow,
-): MemberConnectionCode {
+export function toDomainInvitationCode(
+  row: InvitationCodeRow,
+): InvitationCode {
   return {
     code: row.code,
     userId: row.user_id,

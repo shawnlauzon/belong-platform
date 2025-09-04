@@ -1,6 +1,6 @@
 import type { UserSummary } from '@/features/users/types';
 
-export interface MemberConnectionCode {
+export interface InvitationCode {
   code: string;
   userId: string;
   communityId: string;
@@ -18,7 +18,7 @@ export interface UserConnection {
   createdAt: Date;
 }
 
-export interface ProcessConnectionLinkResponse {
+export interface ProcessInvitationResponse {
   success: boolean;
   connectionId?: string;
   message?: string;
@@ -32,7 +32,7 @@ export interface ConnectionSummary {
   recentConnections: UserConnection[];
 }
 
-export interface ConnectionDetails {
+export interface InvitationDetails {
   user: UserSummary;
   communityId: string;
   isActive: boolean;

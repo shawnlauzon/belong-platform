@@ -15,11 +15,9 @@ import {
   createShoutout,
 } from '@/features';
 import {
-  getMemberConnectionCode,
-  approveConnection,
-  createConnectionRequest,
-} from '@/features/connections/api';
-import type { UserConnection } from '@/features/connections/types';
+  getInvitationCode,
+} from '@/features/invitations/api';
+import type { UserConnection } from '@/features/invitations/types';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
@@ -180,43 +178,11 @@ export async function createTestShoutoutForResource({
   });
 }
 
-/**
- * Creates a connection request by processing a connection link
- * @param initiatorSupabase - Supabase client for the code owner
- * @param requesterSupabase - Supabase client for the user scanning the code
- * @param communityId - Community ID where connection is being made
- */
-export async function createTestConnectionRequest(
-  initiatorSupabase: SupabaseClient<Database>,
-  requesterSupabase: SupabaseClient<Database>,
-  communityId: string,
-): Promise<{ requestId: string; connectionCode: string }> {
-  // Get the initiator's connection code
-  const memberCode = await getMemberConnectionCode(
-    initiatorSupabase,
-    communityId,
-  );
-
-  // Process the connection link as the requester
-  const response = await createConnectionRequest(
-    requesterSupabase,
-    memberCode.code,
-  );
-
-  if (!response.success || !response.connectionRequestId) {
-    throw new Error(`Failed to create connection request: ${response.message}`);
-  }
-
-  return {
-    requestId: response.connectionRequestId,
-    connectionCode: memberCode.code,
-  };
-}
 
 /**
- * Creates an approved connection between two users
- * @param initiatorSupabase - Supabase client for the code owner
- * @param requesterSupabase - Supabase client for the user scanning the code
+ * Creates a direct connection between two users using the simplified system
+ * @param initiatorSupabase - Supabase client for the first user
+ * @param requesterSupabase - Supabase client for the second user
  * @param communityId - Community ID where connection is being made
  */
 export async function createTestConnection(
@@ -224,15 +190,48 @@ export async function createTestConnection(
   requesterSupabase: SupabaseClient<Database>,
   communityId: string,
 ): Promise<UserConnection> {
-  // First create a connection request
-  const { requestId } = await createTestConnectionRequest(
-    initiatorSupabase,
-    requesterSupabase,
-    communityId,
-  );
+  // Get current user IDs
+  const { data: { user: initiatorUser } } = await initiatorSupabase.auth.getUser();
+  const { data: { user: requesterUser } } = await requesterSupabase.auth.getUser();
+  
+  if (!initiatorUser?.id || !requesterUser?.id) {
+    throw new Error('Both users must be authenticated');
+  }
 
-  // Then approve it as the initiator
-  const connection = await approveConnection(initiatorSupabase, requestId);
+  // Call the database function to create direct connection
+  const { data: connectionId, error } = await initiatorSupabase
+    .rpc('create_user_connection', {
+      p_user_id: initiatorUser.id,
+      p_other_id: requesterUser.id,
+      p_community_id: communityId,
+    });
 
-  return connection;
+  if (error) {
+    throw new Error(`Failed to create connection: ${error.message}`);
+  }
+
+  if (!connectionId) {
+    throw new Error('Connection was not created (possibly already exists)');
+  }
+
+  // Fetch the created connection to return it in the expected format
+  const { data: connectionData, error: fetchError } = await initiatorSupabase
+    .from('user_connections')
+    .select('*')
+    .eq('id', connectionId)
+    .single();
+
+  if (fetchError || !connectionData) {
+    throw new Error(`Failed to fetch created connection: ${fetchError?.message}`);
+  }
+
+  // Transform to domain type
+  return {
+    id: connectionData.id,
+    userId: connectionData.user_id,
+    otherId: connectionData.other_id,
+    communityId: connectionData.community_id,
+    type: connectionData.type as 'invited_by',
+    createdAt: new Date(connectionData.created_at),
+  };
 }

@@ -7,7 +7,7 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/auth/api';
-import { getMemberConnectionCode } from '@/features/connections/api';
+import { getInvitationCode } from '@/features/invitations/api';
 import { faker } from '@faker-js/faker';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -37,7 +37,7 @@ describe('Auto-join on Signup - Integration Tests', () => {
       const community = await createTestCommunity(supabase);
 
       // Step 2: Get the organizer's connection code for this community
-      const invitationCode = await getMemberConnectionCode(
+      const invitationCode = await getInvitationCode(
         supabase,
         community.id,
       );

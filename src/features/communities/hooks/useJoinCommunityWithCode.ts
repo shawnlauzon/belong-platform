@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { joinCommunityWithCode } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
-import { connectionQueries } from '@/features/connections/queries';
+import { connectionQueries } from '@/features/invitations/queries';
 
 /**
  * Hook for joining a community using a connection code.
