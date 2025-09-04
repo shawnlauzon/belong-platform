@@ -170,66 +170,6 @@ export function useNotifications(
               });
             }
           })
-          .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'notifications',
-          }, async (payload) => {
-            logger.info('useNotifications: received notification update via realtime', {
-              userId,
-              notificationId: payload.new.id,
-            });
-
-            try {
-              // Fetch updated notification with joins
-              const { data } = await supabase
-                .from('notifications')
-                .select(`
-                  *,
-                  actor:public_profiles!notifications_actor_id_fkey (
-                    id,
-                    full_name,
-                    first_name,
-                    last_name,
-                    avatar_url
-                  )
-                `)
-                .eq('id', payload.new.id)
-                .single();
-
-              if (data) {
-                const updatedNotification = notificationTransformer(data as NotificationRowJoinActor);
-
-                logger.debug('useNotifications: updating notification in state', {
-                  notificationId: updatedNotification.id,
-                  userId,
-                });
-
-                // Update the notification in place
-                setNotifications(prev =>
-                  prev.map(notification =>
-                    notification.id === updatedNotification.id ? updatedNotification : notification
-                  )
-                );
-
-                // Invalidate React Query cache for counts
-                queryClient.invalidateQueries({
-                  queryKey: notificationKeys.counts(),
-                });
-              } else {
-                logger.warn('useNotifications: failed to fetch updated notification data', {
-                  notificationId: payload.new.id,
-                  userId,
-                });
-              }
-            } catch (fetchError) {
-              logger.error('useNotifications: error fetching updated notification', {
-                error: fetchError,
-                notificationId: payload.new.id,
-                userId,
-              });
-            }
-          })
           .subscribe((status, err) => {
             if (err) {
               logger.error('useNotifications: realtime subscription error', {
