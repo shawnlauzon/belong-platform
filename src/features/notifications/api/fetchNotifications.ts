@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Notification } from '../types/notification';
-import type { NotificationRow } from '../types/notificationRow';
 import { notificationTransformer } from '../transformers';
 
 export interface FetchNotificationsFilter {
@@ -18,7 +17,7 @@ export async function fetchNotifications(
   const { type, isRead, limit = 20, offset = 0 } = filter;
 
   let query = supabase
-    .from('notifications')
+    .from('notification_details')
     .select('*')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -38,5 +37,6 @@ export async function fetchNotifications(
     throw error;
   }
 
-  return (data as NotificationRow[]).map(notificationTransformer);
+  // Use the view data directly with the transformer
+  return (data || []).map(notificationTransformer);
 }

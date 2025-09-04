@@ -1,30 +1,33 @@
 import type { Notification } from '../types/notification';
-import type { NotificationRow } from '../types/notificationRow';
+import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
+import { generateNotificationContent } from '../utils/generateNotificationContent';
 
 export function notificationTransformer(
-  row: NotificationRow
+  row: NotificationDetailsRow
 ): Notification {
+  // Generate content based on notification type and joined data
+  const { title, body, actionUrl, imageUrl } = generateNotificationContent(row);
+  
   return {
-    id: row.id,
-    userId: row.user_id,
-    type: row.type as Notification['type'],
+    id: row.id || '',
+    userId: row.user_id || '',
+    type: (row.type || 'new_resource') as Notification['type'],
     
-    // Polymorphic references
+    // Polymorphic references from view
     resourceId: row.resource_id || undefined,
     commentId: row.comment_id || undefined,
     claimId: row.claim_id || undefined,
-    messageId: row.message_id || undefined,
-    conversationId: row.conversation_id || undefined,
     communityId: row.community_id || undefined,
+    shoutoutId: row.shoutout_id || undefined,
     
     // Actor information
     actorId: row.actor_id || undefined,
     
-    // Content
-    title: row.title,
-    body: row.body || undefined,
-    imageUrl: row.image_url || undefined,
-    actionUrl: row.action_url || undefined,
+    // Generated content (client-side)
+    title,
+    body: body || undefined,
+    imageUrl: imageUrl || undefined,
+    actionUrl,
     metadata: (row.metadata as Record<string, unknown>) || {},
     
     // Status
@@ -32,7 +35,7 @@ export function notificationTransformer(
     readAt: row.read_at ? new Date(row.read_at) : undefined,
     
     // Timestamps
-    createdAt: new Date(row.created_at!),
-    updatedAt: new Date(row.updated_at!),
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
   };
 }

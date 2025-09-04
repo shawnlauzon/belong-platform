@@ -33,9 +33,8 @@ export interface Notification {
   resourceId?: string;
   commentId?: string;
   claimId?: string;
-  messageId?: string;
-  conversationId?: string;
   communityId?: string;
+  shoutoutId?: string;
   
   // Actor information
   actorId?: string;
@@ -61,9 +60,8 @@ export interface NotificationInput {
   resourceId?: string;
   commentId?: string;
   claimId?: string;
-  messageId?: string;
-  conversationId?: string;
   communityId?: string;
+  shoutoutId?: string;
   actorId?: string;
   title: string;
   body?: string;

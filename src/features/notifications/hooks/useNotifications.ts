@@ -6,7 +6,6 @@ import type { Notification } from '../types/notification';
 import { fetchNotifications, type FetchNotificationsFilter } from '../api/fetchNotifications';
 import { notificationTransformer } from '../transformers';
 import { notificationKeys } from '../queries';
-import type { NotificationRowJoinActor } from '../types/notificationRow';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface UseNotificationsResult {
@@ -126,22 +125,13 @@ export function useNotifications(
             try {
               // Fetch full notification with joins
               const { data } = await supabase
-                .from('notifications')
-                .select(`
-                  *,
-                  actor:public_profiles!notifications_actor_id_fkey (
-                    id,
-                    full_name,
-                    first_name,
-                    last_name,
-                    avatar_url
-                  )
-                `)
+                .from('notification_details')
+                .select('*')
                 .eq('id', payload.new.id)
                 .single();
 
               if (data) {
-                const newNotification = notificationTransformer(data as NotificationRowJoinActor);
+                const newNotification = notificationTransformer(data);
 
                 logger.debug('useNotifications: adding new notification to state', {
                   notificationId: newNotification.id,
