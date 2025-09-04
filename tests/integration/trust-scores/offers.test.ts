@@ -29,7 +29,6 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type {
@@ -195,6 +194,7 @@ describe('Trust Score Points - Offers', () => {
       resourceId: offer.id,
       timeslotId: timeslot.id,
     });
+
 
     const scoreBeforeReceived = await getCurrentTrustScore(
       supabase,

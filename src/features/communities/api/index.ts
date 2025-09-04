@@ -4,6 +4,7 @@ export * from './createCommunity';
 export * from './updateCommunity';
 export * from './deleteCommunity';
 export * from './joinCommunity';
+export * from './joinCommunityWithCode';
 export * from './leaveCommunity';
 export * from './fetchCommunityMemberships';
 export * from './fetchUserCommunities';
