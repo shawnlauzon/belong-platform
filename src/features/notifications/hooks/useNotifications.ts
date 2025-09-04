@@ -106,7 +106,6 @@ export function useNotifications(
             event: 'INSERT',
             schema: 'public',
             table: 'notifications',
-            filter: `user_id=eq.${userId}`,
           }, async (payload) => {
             logger.info('useNotifications: received new notification via realtime', {
               userId,
@@ -175,7 +174,6 @@ export function useNotifications(
             event: 'UPDATE',
             schema: 'public',
             table: 'notifications',
-            filter: `user_id=eq.${userId}`,
           }, async (payload) => {
             logger.info('useNotifications: received notification update via realtime', {
               userId,
