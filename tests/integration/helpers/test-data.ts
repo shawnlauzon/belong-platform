@@ -24,7 +24,10 @@ import type { UserConnection } from '@/features/connections/types';
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';
 
-export async function createTestUser(supabase: SupabaseClient<Database>) {
+export async function createTestUser(
+  supabase: SupabaseClient<Database>,
+  options?: { connectionCode?: string }
+) {
   const firstName = `${TEST_PREFIX}${faker.person.firstName()}`;
   const lastName = `${faker.person.lastName()}`;
   const testEmail = faker.internet.email({
@@ -42,6 +45,7 @@ export async function createTestUser(supabase: SupabaseClient<Database>) {
     'TestPass123!',
     firstName,
     lastName,
+    options?.connectionCode,
   );
 
   return account;

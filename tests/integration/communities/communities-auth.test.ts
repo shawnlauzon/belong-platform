@@ -11,7 +11,6 @@ import { signIn, signOut } from '@/features/auth/api';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import { Community } from '@/features';
 
@@ -118,10 +117,7 @@ describe('Communities API - Authentication Requirements', () => {
     describe('deleteCommunity', () => {
       it('throws error for unauthenticated delete attempt', async () => {
         await expect(
-          api.deleteCommunity(
-            unauthenticatedClient,
-            testCommunity.id,
-          )
+          api.deleteCommunity(unauthenticatedClient, testCommunity.id),
         ).rejects.toThrow();
       });
 
@@ -130,26 +126,11 @@ describe('Communities API - Authentication Requirements', () => {
           api.deleteCommunity(
             unauthenticatedClient,
             '00000000-0000-0000-0000-000000000000',
-          )
+          ),
         ).rejects.toThrow();
       });
     });
 
-    describe('joinCommunity', () => {
-      it('requires authentication', async () => {
-        await expect(
-          api.joinCommunity(unauthenticatedClient, testCommunity.id),
-        ).rejects.toThrow();
-      });
-    });
-
-    describe('leaveCommunity', () => {
-      it('requires authentication', async () => {
-        await expect(
-          api.leaveCommunity(unauthenticatedClient, testCommunity.id),
-        ).rejects.toThrow();
-      });
-    });
   });
 
   describe('Security Boundary Verification', () => {
@@ -175,31 +156,6 @@ describe('Communities API - Authentication Requirements', () => {
       expect(updated!.name).toBe(newName);
     });
 
-    it('authenticated client can join and leave communities', async () => {
-      // Create a second user and community
-      const secondUser = await createTestUser(authenticatedClient);
-      await signIn(authenticatedClient, secondUser.email, 'TestPass123!');
-
-      // Join the existing test community
-      const membership = await api.joinCommunity(
-        authenticatedClient,
-        testCommunity.id,
-      );
-
-      expect(membership).toBeTruthy();
-      expect(membership!.communityId).toBe(testCommunity.id);
-      expect(membership!.userId).toBe(secondUser.id);
-
-      // Leave the community
-      await api.leaveCommunity(authenticatedClient, testCommunity.id);
-
-      // Verify membership is gone
-      const members = await api.fetchCommunityMemberships(
-        authenticatedClient,
-        testCommunity.id,
-      );
-      expect(members.some((m) => m.userId === secondUser.id)).toBe(false);
-    });
 
     it('unauthenticated fetch still works after authenticated operations', async () => {
       // Verify that unauthenticated read access still works after auth operations

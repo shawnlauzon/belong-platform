@@ -5,7 +5,6 @@ import { cleanupAllTestData, cleanupMembership } from '../helpers/cleanup';
 import * as api from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import { Community } from '@/features';
 import { signIn } from '@/features/auth/api';
@@ -29,7 +28,7 @@ describe('Communities API - Membership Operations', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   describe('joinCommunity', () => {

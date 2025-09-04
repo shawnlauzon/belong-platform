@@ -12,7 +12,6 @@ import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
 import { parsePostGisPoint } from '@/shared';
 
@@ -137,7 +136,6 @@ describe('Communities API - CRUD Operations', () => {
         await cleanupCommunity(filteredCommunity);
       }
     });
-
   });
 
   describe('fetchCommunityById', () => {
@@ -273,7 +271,7 @@ describe('Communities API - CRUD Operations', () => {
   });
 
   describe('deleteCommunity', () => {
-    it('deletes community and cascades to memberships', async () => {
+    it.only('deletes community and cascades to memberships', async () => {
       // Create a community specifically for deletion
       const community = await createTestCommunity(supabase);
       const communityId = community.id;

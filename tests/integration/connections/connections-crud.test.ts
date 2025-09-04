@@ -431,6 +431,7 @@ describe('Connections API - CRUD Operations', () => {
     });
   });
 
+
   describe('Connection Data Validation', () => {
     it('ensures proper user ordering in connections table', async () => {
       const connection = await createTestConnection(
