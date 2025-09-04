@@ -1,12 +1,11 @@
 export interface Notification {
   id: string;
   userId: string;
-  type: 
-    // Existing types (5)
-    | 'comment' 
-    | 'comment_reply' 
-    | 'claim' 
-    | 'message' 
+  type: // Existing types (5)
+  | 'comment'
+    | 'comment_reply'
+    | 'claim'
+    | 'message'
     | 'new_resource'
     // Social Interactions (2)
     | 'shoutout_received'
@@ -27,28 +26,24 @@ export interface Notification {
     // Trust & Recognition (2)
     | 'trust_points_received'
     | 'trust_level_changed';
-  
+
   // Polymorphic references
   resourceId?: string;
   commentId?: string;
   claimId?: string;
   communityId?: string;
   shoutoutId?: string;
-  
+
   // Actor information
   actorId?: string;
-  
+
   // Content
-  title: string;
-  body?: string;
-  imageUrl?: string;
-  actionUrl?: string;
   metadata: Record<string, unknown>;
-  
+
   // Status
   isRead: boolean;
   readAt?: Date;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -62,22 +57,31 @@ export interface NotificationInput {
   communityId?: string;
   shoutoutId?: string;
   actorId?: string;
-  title: string;
-  body?: string;
-  imageUrl?: string;
-  actionUrl?: string;
   metadata?: Record<string, unknown>;
 }
 
 // Type guards for notification categories
-export const isCommentNotification = (type: Notification['type']): boolean => 
+export const isCommentNotification = (type: Notification['type']): boolean =>
   ['comment', 'comment_reply'].includes(type);
 
 export const isClaimNotification = (type: Notification['type']): boolean =>
-  ['claim', 'resource_claim_cancelled', 'resource_claim_completed', 'claim_approved', 'claim_rejected', 'claimed_resource_updated', 'claimed_resource_cancelled'].includes(type);
+  [
+    'claim',
+    'resource_claim_cancelled',
+    'resource_claim_completed',
+    'claim_approved',
+    'claim_rejected',
+    'claimed_resource_updated',
+    'claimed_resource_cancelled',
+  ].includes(type);
 
 export const isResourceNotification = (type: Notification['type']): boolean =>
-  ['new_resource', 'new_event', 'community_member_joined', 'community_member_left'].includes(type);
+  [
+    'new_resource',
+    'new_event',
+    'community_member_joined',
+    'community_member_left',
+  ].includes(type);
 
 export const isSocialNotification = (type: Notification['type']): boolean =>
   ['shoutout_received', 'connection_accepted'].includes(type);
@@ -91,48 +95,50 @@ export const isMessageNotification = (type: Notification['type']): boolean =>
 // Notification permission groups
 export enum NotificationGroup {
   SOCIAL_INTERACTIONS = 'social_interactions',
-  MY_RESOURCES = 'my_resources', 
+  MY_RESOURCES = 'my_resources',
   MY_REGISTRATIONS = 'my_registrations',
   MY_COMMUNITIES = 'my_communities',
   COMMUNITY_ACTIVITY = 'community_activity',
   TRUST_RECOGNITION = 'trust_recognition',
-  MESSAGES = 'messages'
+  MESSAGES = 'messages',
 }
 
-export const getNotificationGroup = (type: Notification['type']): NotificationGroup => {
+export const getNotificationGroup = (
+  type: Notification['type'],
+): NotificationGroup => {
   switch (type) {
     case 'comment':
     case 'comment_reply':
     case 'shoutout_received':
     case 'connection_accepted':
       return NotificationGroup.SOCIAL_INTERACTIONS;
-      
+
     case 'claim':
     case 'resource_claim_cancelled':
     case 'resource_claim_completed':
       return NotificationGroup.MY_RESOURCES;
-      
+
     case 'claim_approved':
     case 'claim_rejected':
     case 'claimed_resource_updated':
     case 'claimed_resource_cancelled':
       return NotificationGroup.MY_REGISTRATIONS;
-      
+
     case 'community_member_joined':
     case 'community_member_left':
       return NotificationGroup.MY_COMMUNITIES;
-      
+
     case 'new_resource':
     case 'new_event':
       return NotificationGroup.COMMUNITY_ACTIVITY;
-      
+
     case 'trust_points_received':
     case 'trust_level_changed':
       return NotificationGroup.TRUST_RECOGNITION;
-      
+
     case 'message':
       return NotificationGroup.MESSAGES;
-      
+
     default:
       return NotificationGroup.SOCIAL_INTERACTIONS;
   }

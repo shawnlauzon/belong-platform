@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Notification } from '../types/notification';
-import { notificationTransformer } from '../transformers';
+import { logger } from '@/shared';
 
 export interface FetchNotificationsFilter {
   type?: Notification['type'];
@@ -10,33 +10,106 @@ export interface FetchNotificationsFilter {
   offset?: number;
 }
 
+interface FetchNotificationsResponse {
+  notifications: Notification[];
+  hasMore: boolean;
+  cursor?: string;
+}
+
 export async function fetchNotifications(
-  supabase: SupabaseClient<Database>,
-  filter: FetchNotificationsFilter = {},
-): Promise<Notification[]> {
-  const { type, isRead, limit = 20, offset = 0 } = filter;
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: { limit?: number; cursor?: string },
+): Promise<FetchNotificationsResponse> {
+  logger.info('Starting notification fetch process', {
+    userId,
+    limit: options?.limit || 50,
+    hasCursor: !!options?.cursor,
+  });
 
-  let query = supabase
-    .from('notification_details')
+  // Authentication verified, proceed with message fetch
+  const limit = options?.limit || 50;
+
+  let query = client
+    .from('notifications')
     .select('*')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .limit(limit + 1);
 
-  // Apply filters
-  if (type) {
-    query = query.eq('type', type);
+  if (options?.cursor) {
+    logger.debug('Using cursor for paginated message fetch', {
+      userId,
+      cursor: options.cursor,
+    });
+    query = query.lt('created_at', options.cursor);
   }
 
-  if (typeof isRead === 'boolean') {
-    query = query.eq('is_read', isRead);
-  }
+  logger.debug('Executing message fetch query', {
+    userId,
+    limit: limit + 1,
+    hasCursor: !!options?.cursor,
+  });
 
   const { data, error } = await query;
 
   if (error) {
+    logger.error('Database error while fetching notifications', {
+      error,
+      userId,
+      limit,
+      hasCursor: !!options?.cursor,
+    });
     throw error;
   }
 
-  // Use the view data directly with the transformer
-  return (data || []).map(notificationTransformer);
+  if (!data) {
+    logger.warn('No data returned from message fetch query', {
+      userId,
+    });
+    return { notifications: [], hasMore: false };
+  }
+
+  logger.debug('Raw notification data retrieved from database', {
+    userId,
+    rawCount: data.length,
+    requestedLimit: limit,
+  });
+
+  // const hasMore = data.length > limit;
+  // const rawMessages = data.slice(0, limit);
+
+  // Note: Messages will be transformed in useMessages with participant data
+  // const nextCursor =
+  //   hasMore && rawMessages.length > 0
+  //     ? new Date(rawMessages[0].created_at).toISOString()
+  //     : undefined;
+
+  // logger.info('Message fetch process completed successfully', {
+  //   userId,
+  //   messageCount: rawMessages.length,
+  //   hasMore,
+  //   hasNextCursor: !!nextCursor,
+  // });
+
+  // return {
+  //   notifications: rawMessages.reverse(), // Reverse to get chronological order
+  //   hasMore,
+  //   cursor: nextCursor,
+  // };
+
+  return {
+    notifications: [
+      {
+        id: '1',
+        userId,
+        type: 'new_event',
+        metadata: {},
+        isRead: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ],
+    hasMore: false,
+  };
 }

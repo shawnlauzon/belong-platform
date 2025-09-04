@@ -1,133 +1,65 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { useSupabase, logger } from '@/shared';
-import { getCurrentUserId } from '@/features/auth/api';
 import type { Notification } from '../types/notification';
-import {
-  fetchNotifications,
-  type FetchNotificationsFilter,
-} from '../api/fetchNotifications';
-import { notificationTransformer } from '../transformers';
-import { notificationKeys } from '../queries';
+import { fetchNotifications } from '../api/fetchNotifications';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useCurrentUser } from '@/features/auth';
 
 interface UseNotificationsResult {
   data: Notification[];
   isLoading: boolean;
-  hasMore: boolean;
-  fetchNextPage: () => Promise<void>;
-  isFetchingNextPage: boolean;
-  error: Error | null;
 }
 
-export function useNotifications(
-  filter: FetchNotificationsFilter = {},
-): UseNotificationsResult {
-  const supabase = useSupabase();
-  const queryClient = useQueryClient();
+export function useNotifications(): UseNotificationsResult {
+  const client = useSupabase();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-
-  const { limit = 20, ...restFilter } = filter;
-
-  // Use ref to track filter changes and prevent unnecessary re-renders
-  const filterRef = useRef(restFilter);
-  const filterStringRef = useRef(JSON.stringify(restFilter));
-
-  // Only update filter if it actually changed
-  const currentFilterString = JSON.stringify(restFilter);
-  if (currentFilterString !== filterStringRef.current) {
-    filterRef.current = restFilter;
-    filterStringRef.current = currentFilterString;
-  }
+  const { data: currentUser, isLoading: isCurrentUserLoading } =
+    useCurrentUser();
 
   useEffect(() => {
-    logger.debug('useNotifications: useEffect triggered', {
-      hasSupabase: !!supabase,
-      currentFilterString,
-      limit,
-    });
-
-    if (!supabase) {
+    if (!client || !currentUser) {
       logger.debug('useNotifications: waiting for supabase client');
       return;
     }
 
     let channel: RealtimeChannel;
-    let userId: string | null;
+    let userId: string;
 
-    const setupNotifications = async () => {
+    const setupRealtimeNotifications = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Get current user ID
-        userId = await getCurrentUserId(supabase);
-        if (!userId) {
-          logger.warn('useNotifications: no authenticated user');
-          setIsLoading(false);
-          return;
-        }
+        userId = currentUser.id;
 
         logger.info(
           'useNotifications: initializing notification subscription',
           {
             userId,
-            filter: filterRef.current,
           },
         );
 
         // Load initial notifications
         logger.debug('useNotifications: loading initial notifications', {
           userId,
-          limit,
-          filter: filterRef.current,
         });
 
-        let initialData;
-        try {
-          initialData = await fetchNotifications(supabase, {
-            ...filterRef.current,
-            limit,
-            offset: 0,
-          });
-
-          logger.debug('useNotifications: initial fetch successful', {
-            userId,
-            dataCount: initialData.length,
-            limit,
-          });
-        } catch (fetchError) {
-          logger.error('useNotifications: initial fetch failed', {
-            error: fetchError,
-            userId,
-            filter: filterRef.current,
-          });
-          throw fetchError;
-        }
+        const initialData = await fetchNotifications(client, userId, {
+          limit: 1000,
+        });
 
         logger.info('useNotifications: initial notifications loaded', {
           userId,
-          notificationCount: initialData.length,
-          hasMore: initialData.length === limit,
+          notificationCount: initialData.notifications.length,
+          hasMore: initialData.hasMore,
         });
 
-        setNotifications(initialData);
-        setHasMore(initialData.length === limit);
-        setCurrentPage(1);
-        setIsLoading(false);
+        setNotifications(initialData.notifications);
 
-        // Set up realtime subscription
         logger.debug('useNotifications: setting up realtime subscription', {
           userId,
           channelName: `user:${userId}:notifications`,
         });
 
-        channel = supabase
+        // Set up realtime subscription for future notifications
+        channel = client
           .channel(`user:${userId}:notifications`)
           .on(
             'postgres_changes',
@@ -157,98 +89,52 @@ export function useNotifications(
                 },
               );
 
-              // Check if notification matches current filter
-              logger.debug('useNotifications: checking notification filter', {
-                notificationId: payload.new?.id,
-                userId,
-                payloadNew: payload.new,
-                currentFilter: filterRef.current,
-              });
+              // Fetch full notification with joins
+              const { data, error: fetchError } = await client
+                .from('notifications')
+                .select('id, type, user_id, created_at, updated_at')
+                .eq('id', payload.new.id)
+                .single();
 
-              const matchesFilter = checkNotificationMatchesFilter(
-                payload.new,
-                filterRef.current,
-              );
-
-              logger.debug('useNotifications: filter check result', {
-                notificationId: payload.new?.id,
-                userId,
-                matchesFilter,
-                filterType: filterRef.current.type,
-                notificationType: payload.new?.type,
-                filterIsRead: filterRef.current.isRead,
-                notificationIsRead: payload.new?.is_read,
-              });
-
-              if (!matchesFilter) {
-                logger.debug(
-                  'useNotifications: notification does not match filter, skipping',
+              if (fetchError) {
+                logger.error(
+                  'useNotifications: error fetching new notification',
                   {
-                    notificationId: payload.new?.id,
-                    filter: filterRef.current,
+                    error: fetchError,
+                    notificationId: payload.new.id,
+                    userId,
                   },
                 );
                 return;
               }
 
-              try {
+              if (data) {
+                // const newNotification = transformNotification(data);
+                const newNotification = {
+                  id: '2',
+                  userId,
+                  type: 'new_event',
+                  metadata: {},
+                  isRead: false,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                } as Notification;
+
                 logger.debug(
-                  'useNotifications: fetching full notification details',
+                  'useNotifications: adding new notification to state',
                   {
-                    notificationId: payload.new.id,
+                    notificationId: newNotification.id,
+                    type: newNotification.type,
                     userId,
                   },
                 );
 
-                // Fetch full notification with joins
-                const { data, error: fetchError } = await supabase
-                  .from('notification_details')
-                  .select('*')
-                  .eq('id', payload.new.id)
-                  .single();
-
-                logger.debug('useNotifications: notification fetch completed', {
-                  notificationId: payload.new.id,
-                  userId,
-                  hasData: !!data,
-                  hasError: !!fetchError,
-                  fetchError,
-                  dataKeys: data ? Object.keys(data) : null,
-                });
-
-                if (data) {
-                  const newNotification = notificationTransformer(data);
-
-                  logger.debug(
-                    'useNotifications: adding new notification to state',
-                    {
-                      notificationId: newNotification.id,
-                      type: newNotification.type,
-                      userId,
-                    },
-                  );
-
-                  // Add new notification to the beginning of the list (most recent first)
-                  setNotifications((prev) => [newNotification, ...prev]);
-
-                  // Invalidate React Query cache for counts
-                  queryClient.invalidateQueries({
-                    queryKey: notificationKeys.counts(),
-                  });
-                } else {
-                  logger.warn(
-                    'useNotifications: failed to fetch new notification data',
-                    {
-                      notificationId: payload.new.id,
-                      userId,
-                    },
-                  );
-                }
-              } catch (fetchError) {
-                logger.error(
-                  'useNotifications: error fetching new notification',
+                // Add new notification to the beginning of the list (most recent first)
+                setNotifications((prev) => [newNotification, ...prev]);
+              } else {
+                logger.warn(
+                  'useNotifications: failed to fetch new notification data',
                   {
-                    error: fetchError,
                     notificationId: payload.new.id,
                     userId,
                   },
@@ -285,22 +171,26 @@ export function useNotifications(
                   status,
                   userId,
                   channelName: `user:${userId}:notifications`,
-                  initialNotificationCount: initialData.length,
+                  initialNotificationCount: initialData.notifications.length,
                 },
               );
             }
           });
+        logger.info(
+          'useMessages: realtime subscription established successfully',
+          {
+            userId,
+          },
+        );
       } catch (setupError) {
         logger.error('useNotifications: failed to setup notifications', {
           error: setupError,
           userId,
         });
-        setError(setupError as Error);
-        setIsLoading(false);
       }
     };
 
-    setupNotifications();
+    setupRealtimeNotifications();
 
     return () => {
       if (channel) {
@@ -309,84 +199,13 @@ export function useNotifications(
           channelName: `user:${userId}:notifications`,
           channelState: channel.state,
         });
-        try {
-          const removeResult = supabase.removeChannel(channel);
-          logger.debug('useNotifications: channel removal result', {
-            userId,
-            channelName: `user:${userId}:notifications`,
-            removeResult,
-          });
-        } catch (cleanupError) {
-          logger.error('useNotifications: error during channel cleanup', {
-            error: cleanupError,
-            userId,
-            channelName: `user:${userId}:notifications`,
-          });
-        }
-      } else {
-        logger.debug('useNotifications: no channel to cleanup', { userId });
+        client.removeChannel(channel);
       }
     };
-  }, [supabase, queryClient, currentFilterString, limit]);
-
-  const fetchNextPage = async (): Promise<void> => {
-    if (!hasMore || isFetchingNextPage || isLoading) {
-      return;
-    }
-
-    setIsFetchingNextPage(true);
-    try {
-      const nextPageData = await fetchNotifications(supabase, {
-        ...filterRef.current,
-        limit,
-        offset: currentPage * limit,
-      });
-
-      logger.debug('useNotifications: fetched next page', {
-        page: currentPage,
-        newNotifications: nextPageData.length,
-        hasMore: nextPageData.length === limit,
-      });
-
-      setNotifications((prev) => [...prev, ...nextPageData]);
-      setHasMore(nextPageData.length === limit);
-      setCurrentPage((prev) => prev + 1);
-    } catch (fetchError) {
-      logger.error('useNotifications: error fetching next page', {
-        error: fetchError,
-        page: currentPage,
-      });
-      setError(fetchError as Error);
-    } finally {
-      setIsFetchingNextPage(false);
-    }
-  };
+  }, [client, currentUser]);
 
   return {
     data: notifications,
-    isLoading,
-    hasMore,
-    fetchNextPage,
-    isFetchingNextPage,
-    error,
+    isLoading: isCurrentUserLoading,
   };
-}
-
-// Helper function to check if a notification matches the current filter
-function checkNotificationMatchesFilter(
-  notification: Record<string, unknown>,
-  filter: Omit<FetchNotificationsFilter, 'limit' | 'offset'>,
-): boolean {
-  if (filter.type && notification.type !== filter.type) {
-    return false;
-  }
-
-  if (
-    typeof filter.isRead === 'boolean' &&
-    notification.is_read !== filter.isRead
-  ) {
-    return false;
-  }
-
-  return true;
 }

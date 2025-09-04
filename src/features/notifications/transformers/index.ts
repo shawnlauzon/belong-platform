@@ -1,1 +1,1 @@
-export { notificationTransformer } from './notificationTransformer';
+export { transformNotification as notificationTransformer } from './notificationTransformer';

@@ -89,7 +89,7 @@ export function useMessages(conversationId: string): UseMessagesResult {
           channelName: `conversation:${conversationId}`,
         });
 
-        // Set up realtime subscription
+        // Set up realtime subscription for all future messages
         channel = client
           .channel(`conversation:${conversationId}`)
           .on(
@@ -225,15 +225,12 @@ export function useMessages(conversationId: string): UseMessagesResult {
                 subscriberStatus: status,
               });
             } else {
-              logger.info(
-                'useMessages: realtime subscription established',
-                {
-                  status,
-                  conversationId,
-                  channelName: `conversation:${conversationId}`,
-                  initialMessageCount: transformedMessages.length,
-                },
-              );
+              logger.info('useMessages: realtime subscription established', {
+                status,
+                conversationId,
+                channelName: `conversation:${conversationId}`,
+                initialMessageCount: transformedMessages.length,
+              });
             }
           });
 
