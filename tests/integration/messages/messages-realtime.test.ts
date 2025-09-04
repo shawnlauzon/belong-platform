@@ -2,9 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
-  setupMessagingUsers,
   createTestConversation,
-  signInAsUser,
 } from './messaging-helpers';
 import { sendMessage } from '@/features/messages/api';
 import {
@@ -12,11 +10,9 @@ import {
   createTestUser,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
-import type { Conversation } from '@/features/messages/types';
 import { joinCommunity } from '@/features/communities/api';
 
 describe('Realtime Messaging', () => {
@@ -24,7 +20,7 @@ describe('Realtime Messaging', () => {
   let clientB: SupabaseClient<Database>;
   let userA: Account;
   let userB: Account;
-  let activeChannels: any[] = [];
+  let activeChannels: RealtimeChannel[] = [];
 
   beforeAll(async () => {
     // Create two separate clients
@@ -68,9 +64,9 @@ describe('Realtime Messaging', () => {
     // Create a fresh conversation for this test
     const conversation = await createTestConversation(clientA, userB.id);
 
-    // Track received messages
-    const messagesReceivedByA: any[] = [];
-    const messagesReceivedByB: any[] = [];
+    // Track received messages  
+    const messagesReceivedByA: Database['public']['Tables']['messages']['Row'][] = [];
+    const messagesReceivedByB: Database['public']['Tables']['messages']['Row'][] = [];
 
     // Subscribe clientB to realtime (simulating second user)
     const channelB = clientB
@@ -84,7 +80,7 @@ describe('Realtime Messaging', () => {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          messagesReceivedByB.push(payload.new);
+          messagesReceivedByB.push(payload.new as Database['public']['Tables']['messages']['Row']);
         },
       )
       .subscribe();
@@ -101,7 +97,7 @@ describe('Realtime Messaging', () => {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          messagesReceivedByA.push(payload.new);
+          messagesReceivedByA.push(payload.new as Database['public']['Tables']['messages']['Row']);
         },
       )
       .subscribe();
@@ -136,9 +132,9 @@ describe('Realtime Messaging', () => {
     // Create a fresh conversation for this test
     const conversation = await createTestConversation(clientA, userB.id);
 
-    // Track received messages
-    const messagesReceivedByA: any[] = [];
-    const messagesReceivedByB: any[] = [];
+    // Track received messages  
+    const messagesReceivedByA: Database['public']['Tables']['messages']['Row'][] = [];
+    const messagesReceivedByB: Database['public']['Tables']['messages']['Row'][] = [];
 
     // Subscribe both clients to realtime
     const channelB = clientB
@@ -152,7 +148,7 @@ describe('Realtime Messaging', () => {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          messagesReceivedByB.push(payload.new);
+          messagesReceivedByB.push(payload.new as Database['public']['Tables']['messages']['Row']);
         },
       )
       .subscribe();
@@ -168,7 +164,7 @@ describe('Realtime Messaging', () => {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          messagesReceivedByA.push(payload.new);
+          messagesReceivedByA.push(payload.new as Database['public']['Tables']['messages']['Row']);
         },
       )
       .subscribe();
