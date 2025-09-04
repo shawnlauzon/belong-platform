@@ -271,7 +271,7 @@ describe('Communities API - CRUD Operations', () => {
   });
 
   describe('deleteCommunity', () => {
-    it.only('deletes community and cascades to memberships', async () => {
+    it('deletes community and cascades to memberships', async () => {
       // Create a community specifically for deletion
       const community = await createTestCommunity(supabase);
       const communityId = community.id;

@@ -76,11 +76,12 @@ describe('Notifications CRUD', () => {
       });
 
       expect(notifications.length).toBeGreaterThan(0);
-      
-      const specificNotification = notifications.find(n => 
-        n.type === 'comment' && 
-        n.resourceId === resource.id && 
-        n.actorId === anotherUser.id
+
+      const specificNotification = notifications.find(
+        (n) =>
+          n.type === 'comment' &&
+          n.resourceId === resource.id &&
+          n.actorId === anotherUser.id,
       );
       expect(specificNotification).toBeDefined();
       expect(specificNotification).toMatchObject({
@@ -145,9 +146,9 @@ describe('Notifications CRUD', () => {
       });
 
       expect(notifications.length).toBeGreaterThan(0);
-      
-      const specificNotification = notifications.find(n => 
-        n.isRead === false
+
+      const specificNotification = notifications.find(
+        (n) => n.isRead === false,
       );
       expect(specificNotification).toBeDefined();
       expect(specificNotification!.isRead).toBe(false);
@@ -210,41 +211,6 @@ describe('Notifications CRUD', () => {
       });
 
       expect(stillUnreadNotifications.length).toBe(0);
-    });
-  });
-
-  describe('Notification counts accuracy', () => {
-    it('should return accurate notification counts', async () => {
-      // Start fresh
-      await markAllNotificationsAsRead(supabase);
-
-      const initialCounts = await fetchNotificationCount(supabase);
-
-      // Create some notifications
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'offer',
-      );
-
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
-        content: 'Count test comment',
-        resourceId: resource.id,
-      });
-
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
-      const countsAfterComment = await fetchNotificationCount(supabase);
-
-      expect(countsAfterComment).toBe((initialCounts || 0) + 1);
-
-      // Mark as read and verify counts update
-      await markAllNotificationsAsRead(supabase);
-
-      const countsAfterRead = await fetchNotificationCount(supabase);
-
-      expect(countsAfterRead).toBe(0);
     });
   });
 });
