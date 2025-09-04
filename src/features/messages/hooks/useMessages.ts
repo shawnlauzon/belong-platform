@@ -105,6 +105,16 @@ export function useMessages(conversationId: string): UseMessagesResult {
                 conversationId,
                 messageId: payload.new.id,
                 senderId: payload.new.sender_id,
+                payloadStructure: {
+                  hasNew: !!payload.new,
+                  hasOld: !!payload.old,
+                  eventType: payload.eventType,
+                  schema: payload.schema,
+                  table: payload.table,
+                  commit_timestamp: payload.commit_timestamp,
+                  errors: payload.errors,
+                },
+                fullPayload: payload,
               });
 
               // Fetch the message without profile data
@@ -192,7 +202,40 @@ export function useMessages(conversationId: string): UseMessagesResult {
               }
             },
           )
-          .subscribe();
+          .subscribe((status, err) => {
+            logger.info(
+              'useMessages: realtime subscription callback triggered',
+              {
+                status,
+                hasError: !!err,
+                conversationId,
+                channelName: `conversation:${conversationId}`,
+              },
+            );
+
+            if (err) {
+              logger.error('useMessages: realtime subscription error', {
+                error: err,
+                errorMessage: err?.message,
+                errorName: err?.name,
+                errorStack: err?.stack,
+                errorDetails: JSON.stringify(err),
+                conversationId,
+                channelName: `conversation:${conversationId}`,
+                subscriberStatus: status,
+              });
+            } else {
+              logger.info(
+                'useMessages: realtime subscription established',
+                {
+                  status,
+                  conversationId,
+                  channelName: `conversation:${conversationId}`,
+                  initialMessageCount: transformedMessages.length,
+                },
+              );
+            }
+          });
 
         logger.info(
           'useMessages: realtime subscription established successfully',
