@@ -1,10 +1,8 @@
 import { faker } from '@faker-js/faker';
 import type {
   MemberConnectionCode,
-  ConnectionRequest,
   UserConnection,
   CommunityMemberCodeRow,
-  ConnectionRequestRow,
   UserConnectionRow,
 } from '../types';
 
@@ -22,38 +20,19 @@ export function createFakeMemberConnectionCode(
   };
 }
 
-export function createFakeConnectionRequest(
-  overrides?: Partial<ConnectionRequest>,
-): ConnectionRequest {
-  return {
-    id: faker.string.uuid(),
-    communityId: faker.string.uuid(),
-    initiatorId: faker.string.uuid(),
-    requesterId: faker.string.uuid(),
-    status: 'pending',
-    createdAt: faker.date.recent(),
-    expiresAt: faker.date.future(),
-    ...overrides,
-  };
-}
-
 export function createFakeUserConnection(
   overrides?: Partial<UserConnection>,
 ): UserConnection {
-  const userAId = faker.string.uuid();
-  const userBId = faker.string.uuid();
-
   return {
     id: faker.string.uuid(),
-    userAId: userAId < userBId ? userAId : userBId, // Ensure ordering
-    userBId: userAId < userBId ? userBId : userAId,
+    userId: faker.string.uuid(),
+    otherId: faker.string.uuid(),
     communityId: faker.string.uuid(),
-    connectionRequestId: faker.string.uuid(),
+    type: 'invited_by',
     createdAt: faker.date.recent(),
     ...overrides,
   };
 }
-
 
 // Database row fakes
 export function createFakeCommunityMemberCodeRow(
@@ -70,34 +49,15 @@ export function createFakeCommunityMemberCodeRow(
   };
 }
 
-export function createFakeConnectionRequestRow(
-  overrides?: Partial<ConnectionRequestRow>,
-): ConnectionRequestRow {
-  return {
-    id: faker.string.uuid(),
-    community_id: faker.string.uuid(),
-    initiator_id: faker.string.uuid(),
-    requester_id: faker.string.uuid(),
-    status: 'pending',
-    created_at: faker.date.recent().toISOString(),
-    responded_at: null,
-    expires_at: faker.date.future().toISOString(),
-    ...overrides,
-  };
-}
-
 export function createFakeUserConnectionRow(
   overrides?: Partial<UserConnectionRow>,
 ): UserConnectionRow {
-  const userAId = faker.string.uuid();
-  const userBId = faker.string.uuid();
-
   return {
     id: faker.string.uuid(),
-    user_a_id: userAId < userBId ? userAId : userBId,
-    user_b_id: userAId < userBId ? userBId : userAId,
+    user_id: faker.string.uuid(),
+    other_id: faker.string.uuid(),
     community_id: faker.string.uuid(),
-    connection_request_id: faker.string.uuid(),
+    type: 'invited_by',
     created_at: faker.date.recent().toISOString(),
     ...overrides,
   };

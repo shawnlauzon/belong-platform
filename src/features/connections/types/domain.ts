@@ -1,4 +1,3 @@
-import type { ConnectionRequestStatus } from './connectionRow';
 import type { UserSummary } from '@/features/users/types';
 
 export interface MemberConnectionCode {
@@ -10,29 +9,18 @@ export interface MemberConnectionCode {
   updatedAt: Date;
 }
 
-export interface ConnectionRequest {
-  id: string;
-  communityId: string;
-  initiatorId: string;
-  requesterId: string;
-  status: ConnectionRequestStatus;
-  createdAt: Date;
-  respondedAt?: Date;
-  expiresAt: Date;
-}
-
 export interface UserConnection {
   id: string;
-  userAId: string;
-  userBId: string;
+  userId: string;
+  otherId: string;
   communityId: string;
-  connectionRequestId: string;
+  type: 'invited_by';
   createdAt: Date;
 }
 
 export interface ProcessConnectionLinkResponse {
   success: boolean;
-  connectionRequestId?: string;
+  connectionId?: string;
   message?: string;
   requiresJoinCommunity?: boolean;
   communityId?: string;
@@ -41,7 +29,6 @@ export interface ProcessConnectionLinkResponse {
 
 export interface ConnectionSummary {
   totalConnections: number;
-  pendingRequests: number;
   recentConnections: UserConnection[];
 }
 

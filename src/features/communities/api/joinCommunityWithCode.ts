@@ -123,31 +123,26 @@ export async function joinCommunityWithCode(
 
     const membership = toDomainMembershipInfo(data);
 
-    // Create connection request with the code owner
-    const { error: connectionError } = await supabase
-      .from('connection_requests')
-      .insert({
-        community_id: communityId,
-        initiator_id: memberCode.user_id,
-        requester_id: currentUserId,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-      });
+    // Create direct connection with the code owner
+    const { error: connectionError } = await supabase.rpc('create_direct_user_connection', {
+      p_user_id: currentUserId,
+      p_other_id: memberCode.user_id,
+      p_community_id: communityId,
+    });
 
     if (connectionError) {
-      logger.error('🏘️ API: Failed to create connection request', {
+      logger.error('🏘️ API: Failed to create direct connection', {
         error: connectionError,
         communityId,
-        initiatorId: memberCode.user_id,
-        requesterId: currentUserId,
+        codeOwnerId: memberCode.user_id,
+        userId: currentUserId,
       });
-      // Don't throw here - community join succeeded, connection request is bonus
+      // Don't throw here - community join succeeded, connection is bonus
     } else {
-      logger.debug('🏘️ API: Successfully created connection request', {
+      logger.debug('🏘️ API: Successfully created direct connection', {
         communityId,
-        initiatorId: memberCode.user_id,
-        requesterId: currentUserId,
+        codeOwnerId: memberCode.user_id,
+        userId: currentUserId,
       });
     }
 

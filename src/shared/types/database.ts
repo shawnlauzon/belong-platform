@@ -116,11 +116,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["comment_id"]
+          },
+          {
+            foreignKeyName: "comments_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
+          },
+          {
             foreignKeyName: "comments_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "resources"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_shoutout_id_fkey"
+            columns: ["shoutout_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["shoutout_id"]
           },
           {
             foreignKeyName: "comments_shoutout_id_fkey"
@@ -219,6 +240,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "community_member_codes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
             foreignKeyName: "community_member_codes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -263,6 +291,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_memberships_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "community_memberships_user_id_fkey1"
@@ -364,6 +399,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "conversations_last_message_sender_id_fkey"
@@ -562,69 +604,68 @@ export type Database = {
       }
       notifications: {
         Row: {
-          action_url: string | null
           actor_id: string | null
-          body: string | null
           claim_id: string | null
           comment_id: string | null
           community_id: string | null
-          conversation_id: string | null
           created_at: string | null
           id: string
-          image_url: string | null
           is_read: boolean | null
-          message_id: string | null
           metadata: Json | null
           read_at: string | null
           resource_id: string | null
-          title: string
+          shoutout_id: string | null
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          action_url?: string | null
           actor_id?: string | null
-          body?: string | null
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
-          conversation_id?: string | null
           created_at?: string | null
           id?: string
-          image_url?: string | null
           is_read?: boolean | null
-          message_id?: string | null
           metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
-          title: string
+          shoutout_id?: string | null
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          action_url?: string | null
           actor_id?: string | null
-          body?: string | null
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
-          conversation_id?: string | null
           created_at?: string | null
           id?: string
-          image_url?: string | null
           is_read?: boolean | null
-          message_id?: string | null
           metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
-          title?: string
+          shoutout_id?: string | null
           type?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_notifications_shoutout"
+            columns: ["shoutout_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["shoutout_id"]
+          },
+          {
+            foreignKeyName: "fk_notifications_shoutout"
+            columns: ["shoutout_id"]
+            isOneToOne: false
+            referencedRelation: "shoutouts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_actor_id_fkey"
             columns: ["actor_id"]
@@ -643,6 +684,13 @@ export type Database = {
             foreignKeyName: "notifications_claim_id_fkey"
             columns: ["claim_id"]
             isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["claim_id"]
+          },
+          {
+            foreignKeyName: "notifications_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
             referencedRelation: "resource_claims"
             referencedColumns: ["id"]
           },
@@ -654,6 +702,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["comment_id"]
+          },
+          {
             foreignKeyName: "notifications_community_id_fkey"
             columns: ["community_id"]
             isOneToOne: false
@@ -661,18 +716,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_conversation_id_fkey"
-            columns: ["conversation_id"]
+            foreignKeyName: "notifications_community_id_fkey"
+            columns: ["community_id"]
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
           },
           {
-            foreignKeyName: "notifications_message_id_fkey"
-            columns: ["message_id"]
+            foreignKeyName: "notifications_resource_id_fkey"
+            columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
           },
           {
             foreignKeyName: "notifications_resource_id_fkey"
@@ -774,6 +829,13 @@ export type Database = {
             foreignKeyName: "resource_claims_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
+          },
+          {
+            foreignKeyName: "resource_claims_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
@@ -814,6 +876,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "resource_communities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
+            foreignKeyName: "resource_communities_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
+          },
+          {
             foreignKeyName: "resource_communities_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
@@ -845,6 +921,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resource_responses_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
+          },
           {
             foreignKeyName: "resource_responses_resource_id_fkey"
             columns: ["resource_id"]
@@ -883,6 +966,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resource_timeslots_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
+          },
           {
             foreignKeyName: "resource_timeslots_resource_id_fkey"
             columns: ["resource_id"]
@@ -1021,6 +1111,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_shoutouts_community_id"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
             foreignKeyName: "shoutouts_from_user_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
@@ -1033,6 +1130,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["resource_id"]
           },
           {
             foreignKeyName: "shoutouts_resource_id_fkey"
@@ -1127,6 +1231,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "trust_score_logs_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
             foreignKeyName: "trust_score_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1176,6 +1287,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "trust_scores_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
+          },
+          {
             foreignKeyName: "trust_scores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1223,6 +1341,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "user_connections_other_id_fkey"
@@ -1297,6 +1422,144 @@ export type Database = {
           type?: string | null
         }
         Relationships: []
+      }
+      notification_details: {
+        Row: {
+          actor_avatar: string | null
+          actor_id: string | null
+          actor_name: string | null
+          claim_claimant_id: string | null
+          claim_id: string | null
+          claim_status:
+            | Database["public"]["Enums"]["resource_claim_status"]
+            | null
+          comment_content: string | null
+          comment_id: string | null
+          comment_parent_id: string | null
+          community_id: string | null
+          community_name: string | null
+          community_type: string | null
+          created_at: string | null
+          id: string | null
+          is_read: boolean | null
+          metadata: Json | null
+          read_at: string | null
+          resource_id: string | null
+          resource_location: string | null
+          resource_owner_id: string | null
+          resource_status: Database["public"]["Enums"]["resource_status"] | null
+          resource_title: string | null
+          resource_type: Database["public"]["Enums"]["resource_type"] | null
+          shoutout_id: string | null
+          shoutout_message: string | null
+          shoutout_receiver_id: string | null
+          shoutout_sender_id: string | null
+          trust_score: number | null
+          trust_score_calculated_at: string | null
+          type: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["comment_parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["comment_parent_id"]
+            isOneToOne: false
+            referencedRelation: "notification_details"
+            referencedColumns: ["comment_id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_claims_claimant_id_fkey"
+            columns: ["claim_claimant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_claims_claimant_id_fkey"
+            columns: ["claim_claimant_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_owner_id_fkey"
+            columns: ["resource_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_owner_id_fkey"
+            columns: ["resource_owner_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_from_user_id_fkey"
+            columns: ["shoutout_sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_from_user_id_fkey"
+            columns: ["shoutout_sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_to_user_id_fkey"
+            columns: ["shoutout_receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shoutouts_to_user_id_fkey"
+            columns: ["shoutout_receiver_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       public_profiles: {
         Row: {
@@ -1574,6 +1837,19 @@ export type Database = {
           p_metadata: Json
           p_resource_id: string
           p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      create_notification_base: {
+        Args: {
+          p_actor_id?: string
+          p_claim_id?: string
+          p_comment_id?: string
+          p_community_id?: string
+          p_resource_id?: string
+          p_shoutout_id?: string
           p_type: string
           p_user_id: string
         }
@@ -1925,8 +2201,137 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: undefined
       }
+      notify_claim: {
+        Args: {
+          p_actor_id: string
+          p_claim_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_claim_approved: {
+        Args: {
+          p_actor_id: string
+          p_claim_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_claim_cancelled: {
+        Args: {
+          p_actor_id: string
+          p_claim_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_claim_completed: {
+        Args: {
+          p_actor_id: string
+          p_claim_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_claim_rejected: {
+        Args: {
+          p_actor_id: string
+          p_claim_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_comment: {
+        Args: {
+          p_actor_id: string
+          p_comment_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_comment_reply: {
+        Args: {
+          p_actor_id: string
+          p_comment_id: string
+          p_community_id?: string
+          p_parent_comment_id: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_community_member_joined: {
+        Args: { p_actor_id: string; p_community_id: string; p_user_id: string }
+        Returns: string
+      }
+      notify_community_member_left: {
+        Args: { p_actor_id: string; p_community_id: string; p_user_id: string }
+        Returns: string
+      }
+      notify_connection_accepted: {
+        Args: { p_actor_id: string; p_user_id: string }
+        Returns: string
+      }
       notify_connection_created: {
         Args: { p_community_id: string; p_other_id: string; p_user_id: string }
+        Returns: string
+      }
+      notify_new_resource: {
+        Args: {
+          p_actor_id: string
+          p_community_id: string
+          p_resource_id: string
+          p_resource_type: Database["public"]["Enums"]["resource_type"]
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_resource_cancelled: {
+        Args: {
+          p_actor_id: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_resource_updated: {
+        Args: {
+          p_actor_id: string
+          p_claim_id?: string
+          p_community_id?: string
+          p_resource_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_shoutout: {
+        Args: {
+          p_actor_id: string
+          p_community_id: string
+          p_shoutout_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      notify_trust_level_change: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: string
+      }
+      notify_trust_points: {
+        Args: { p_community_id: string; p_user_id: string }
         Returns: string
       }
       path: {

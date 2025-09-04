@@ -18,7 +18,7 @@ export async function fetchUserConnections(
       .from('user_connections')
       .select('*')
       .eq('community_id', communityId)
-      .or(`user_a_id.eq.${currentUserId},user_b_id.eq.${currentUserId}`)
+      .or(`user_id.eq.${currentUserId},other_id.eq.${currentUserId}`)
       .order('created_at', { ascending: false });
 
     if (error) {

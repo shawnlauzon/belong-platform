@@ -1,10 +1,7 @@
 import type {
   CommunityMemberCodeRow,
-  ConnectionRequestRow,
-  ConnectionRequestInsertRow,
   UserConnectionRow,
   MemberConnectionCode,
-  ConnectionRequest,
   UserConnection,
 } from '../types';
 
@@ -21,38 +18,13 @@ export function toDomainMemberCode(
   };
 }
 
-export function toDomainConnectionRequest(
-  row: ConnectionRequestRow,
-): ConnectionRequest {
-  return {
-    id: row.id,
-    communityId: row.community_id,
-    initiatorId: row.initiator_id,
-    requesterId: row.requester_id,
-    status: row.status,
-    createdAt: new Date(row.created_at),
-    respondedAt: row.responded_at ? new Date(row.responded_at) : undefined,
-    expiresAt: new Date(row.expires_at),
-  };
-}
-
-export function toConnectionRequestInsertRow(
-  data: Pick<ConnectionRequest, 'communityId' | 'initiatorId' | 'requesterId'>,
-): ConnectionRequestInsertRow {
-  return {
-    community_id: data.communityId,
-    initiator_id: data.initiatorId,
-    requester_id: data.requesterId,
-  };
-}
-
 export function toDomainUserConnection(row: UserConnectionRow): UserConnection {
   return {
     id: row.id,
-    userAId: row.user_a_id,
-    userBId: row.user_b_id,
+    userId: row.user_id,
+    otherId: row.other_id,
     communityId: row.community_id,
-    connectionRequestId: row.connection_request_id,
+    type: row.type as 'invited_by',
     createdAt: new Date(row.created_at),
   };
 }

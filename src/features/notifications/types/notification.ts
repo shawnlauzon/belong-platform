@@ -8,9 +8,8 @@ export interface Notification {
     | 'claim' 
     | 'message' 
     | 'new_resource'
-    // Social Interactions (3)
+    // Social Interactions (2)
     | 'shoutout_received'
-    | 'connection_request'
     | 'connection_accepted'
     // My Resources (2)
     | 'resource_claim_cancelled'
@@ -81,7 +80,7 @@ export const isResourceNotification = (type: Notification['type']): boolean =>
   ['new_resource', 'new_event', 'community_member_joined', 'community_member_left'].includes(type);
 
 export const isSocialNotification = (type: Notification['type']): boolean =>
-  ['shoutout_received', 'connection_request', 'connection_accepted'].includes(type);
+  ['shoutout_received', 'connection_accepted'].includes(type);
 
 export const isTrustNotification = (type: Notification['type']): boolean =>
   ['trust_points_received', 'trust_level_changed'].includes(type);
@@ -105,7 +104,6 @@ export const getNotificationGroup = (type: Notification['type']): NotificationGr
     case 'comment':
     case 'comment_reply':
     case 'shoutout_received':
-    case 'connection_request':
     case 'connection_accepted':
       return NotificationGroup.SOCIAL_INTERACTIONS;
       
