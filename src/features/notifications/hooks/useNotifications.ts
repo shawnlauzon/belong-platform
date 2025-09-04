@@ -58,6 +58,15 @@ export function useNotifications(): UseNotificationsResult {
         channel = subscribeToNotifications(supabase, userId, {
           onNotification: async (payload) => {
             try {
+              // Guard clause - ensure we have a notification ID
+              if (!payload.new.id) {
+                logger.warn('useNotifications: received payload without ID', {
+                  payload,
+                  userId,
+                });
+                return;
+              }
+
               logger.debug(
                 'useNotifications: fetching full notification details',
                 {

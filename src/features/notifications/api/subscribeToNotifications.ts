@@ -2,9 +2,20 @@ import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
 
+// Type for Supabase postgres_changes payload
+interface PostgresChangesPayload {
+  new: Record<string, unknown> & { id?: string };
+  old?: Record<string, unknown>;
+  eventType: string;
+  schema: string;
+  table: string;
+  commit_timestamp: string;
+  errors?: unknown;
+}
+
 export interface NotificationSubscriptionCallbacks {
-  onNotification: (payload: any) => void;
-  onStatusChange?: (status: string, error?: any) => void;
+  onNotification: (payload: PostgresChangesPayload) => void;
+  onStatusChange?: (status: string, error?: unknown) => void;
 }
 
 /**
