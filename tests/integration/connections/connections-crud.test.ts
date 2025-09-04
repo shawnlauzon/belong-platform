@@ -17,7 +17,6 @@ import { isValidConnectionCode } from '@/features/connections/utils/codeUtils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Community } from '@/features/communities';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
 
 describe('Connections API - CRUD Operations', () => {
@@ -430,7 +429,6 @@ describe('Connections API - CRUD Operations', () => {
       expect(response.message).toContain('already established');
     });
   });
-
 
   describe('Connection Data Validation', () => {
     it('ensures proper user ordering in connections table', async () => {

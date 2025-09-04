@@ -51,7 +51,6 @@ describe('Communities API - Authentication Requirements', () => {
       it('allows unauthenticated access with filters', async () => {
         const communities = await api.fetchCommunities(unauthenticatedClient, {
           name: 'test',
-          organizerId: testUser.id,
         });
 
         expect(Array.isArray(communities)).toBe(true);
@@ -130,7 +129,6 @@ describe('Communities API - Authentication Requirements', () => {
         ).rejects.toThrow();
       });
     });
-
   });
 
   describe('Security Boundary Verification', () => {
@@ -155,7 +153,6 @@ describe('Communities API - Authentication Requirements', () => {
       expect(updated).toBeTruthy();
       expect(updated!.name).toBe(newName);
     });
-
 
     it('unauthenticated fetch still works after authenticated operations', async () => {
       // Verify that unauthenticated read access still works after auth operations
