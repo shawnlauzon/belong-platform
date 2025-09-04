@@ -142,7 +142,7 @@ describe('Communities - Joining Operations', () => {
 
       // Verify new user got their own connection code
       const { data: newUserCode } = await supabaseNewUser
-        .from('community_member_codes')
+        .from('invitation_codes')
         .select('*')
         .eq('user_id', newUserAccount.id)
         .eq('community_id', testCommunity.id)
@@ -219,7 +219,7 @@ describe('Communities - Joining Operations', () => {
 
       // Check that user has connection code
       const { data: code } = await supabase
-        .from('community_member_codes')
+        .from('invitation_codes')
         .select('*')
         .eq('user_id', anotherUser.id)
         .eq('community_id', newCommunity.id)

@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import {
-  toDomainMemberCode,
+  toDomainInvitationCode,
   toDomainUserConnection,
-} from '../../transformers/connectionTransformer';
+} from '../../transformers/invitationTransformer';
 import {
-  createFakeCommunityMemberCodeRow,
+  createFakeInvitationCodeRow,
   createFakeUserConnectionRow,
 } from '../../__fakes__';
 
-describe('connectionTransformer', () => {
-  describe('toDomainMemberCode', () => {
+describe('invitationTransformer', () => {
+  describe('toDomainInvitationCode', () => {
     it('should transform database row to domain format', () => {
-      const dbRow = createFakeCommunityMemberCodeRow({
+      const dbRow = createFakeInvitationCodeRow({
         code: 'ABCD2345',
         user_id: 'user-123',
         community_id: 'community-456',
@@ -20,7 +20,7 @@ describe('connectionTransformer', () => {
         updated_at: '2024-01-02T12:00:00Z',
       });
 
-      const result = toDomainMemberCode(dbRow);
+      const result = toDomainInvitationCode(dbRow);
 
       expect(result).toEqual({
         code: 'ABCD2345',
@@ -33,11 +33,11 @@ describe('connectionTransformer', () => {
     });
 
     it('should handle inactive codes', () => {
-      const dbRow = createFakeCommunityMemberCodeRow({
+      const dbRow = createFakeInvitationCodeRow({
         is_active: false,
       });
 
-      const result = toDomainMemberCode(dbRow);
+      const result = toDomainInvitationCode(dbRow);
 
       expect(result.isActive).toBe(false);
     });

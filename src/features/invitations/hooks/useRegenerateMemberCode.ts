@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import { regenerateMemberCode } from '../api';
+import { regenerateInvitationCode } from '../api';
 import { connectionQueries } from '../queries';
 
 export function useRegenerateMemberCode() {
@@ -9,8 +9,8 @@ export function useRegenerateMemberCode() {
 
   return useMutation({
     mutationFn: async (communityId: string): Promise<string> => {
-      const memberCode = await regenerateMemberCode(supabase, communityId);
-      return memberCode.code;
+      const invitationCode = await regenerateInvitationCode(supabase, communityId);
+      return invitationCode.code;
     },
     onSuccess: (code, communityId) => {
       // Update the cached member code

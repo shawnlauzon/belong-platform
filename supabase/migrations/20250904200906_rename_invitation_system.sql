@@ -57,9 +57,22 @@ DECLARE
   new_code TEXT;
   max_attempts INTEGER := 10;
   attempt_count INTEGER := 0;
+  existing_code RECORD;
 BEGIN
   -- Only for INSERT operations on community_memberships
   IF TG_OP != 'INSERT' THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Check if user already has an active invitation code for this community
+  SELECT * INTO existing_code
+  FROM invitation_codes 
+  WHERE user_id = NEW.user_id 
+    AND community_id = NEW.community_id 
+    AND is_active = true;
+  
+  -- If user already has an active code, don't create another one
+  IF FOUND THEN
     RETURN NEW;
   END IF;
   
@@ -295,17 +308,18 @@ BEGIN
       RAISE LOG 'User % automatically joined community: %', NEW.id, invitation_record.community_name;
       
       -- Create direct connection with the invitation originator
+      -- Fixed: Use user_id instead of created_by (which doesn't exist in invitation_codes table)
       SELECT create_user_connection(
         NEW.id,
-        invitation_record.created_by,
+        invitation_record.user_id,  -- This is the person who created the invitation code
         invitation_record.community_id
       ) INTO connection_id;
       
       IF connection_id IS NOT NULL THEN
         -- Notify the new user that their connection was accepted
-        PERFORM notify_connection_accepted(NEW.id, invitation_record.created_by);
+        PERFORM notify_connection_accepted(NEW.id, invitation_record.user_id);
         
-        RAISE LOG 'Created direct connection for user % with originator %', NEW.id, invitation_record.created_by;
+        RAISE LOG 'Created direct connection for user % with originator %', NEW.id, invitation_record.user_id;
       END IF;
     ELSE
       RAISE LOG 'Invalid or expired invitation code: %', invitation_code;

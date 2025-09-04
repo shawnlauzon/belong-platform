@@ -1,9 +1,9 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
-import { getMemberConnectionCode } from '../api';
+import { getInvitationCode } from '../api';
 import { connectionQueries } from '../queries';
 
-export function useMemberConnectionCode(
+export function useInvitation(
   communityId: string,
   options?: Partial<UseQueryOptions<string, Error>>
 ) {
@@ -12,8 +12,8 @@ export function useMemberConnectionCode(
   return useQuery({
     queryKey: connectionQueries.memberCode(communityId),
     queryFn: async (): Promise<string> => {
-      const memberCode = await getMemberConnectionCode(supabase, communityId);
-      return memberCode.code;
+      const invitation = await getInvitationCode(supabase, communityId);
+      return invitation.code;
     },
     enabled: !!communityId,
     staleTime: 5 * 60 * 1000, // 5 minutes

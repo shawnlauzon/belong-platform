@@ -1,0 +1,46 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/shared/types/database';
+import type { UserConnection } from '../types';
+import { toDomainUserConnection } from '../transformers';
+import { logger } from '@/shared';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
+
+export async function fetchUserConnections(
+  supabase: SupabaseClient<Database>,
+  communityId: string,
+): Promise<UserConnection[]> {
+  logger.debug('🔗 API: Fetching user connections', { communityId });
+
+  try {
+    const currentUserId = await getAuthIdOrThrow(supabase);
+
+    const { data: connections, error } = await supabase
+      .from('user_connections')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('community_id', communityId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('🔗 API: Failed to fetch user connections', {
+        error,
+        communityId,
+        userId: currentUserId,
+      });
+      throw error;
+    }
+
+    const userConnections = connections.map(toDomainUserConnection);
+    logger.debug('🔗 API: Found user connections', {
+      communityId,
+      count: userConnections.length,
+    });
+    return userConnections;
+  } catch (error) {
+    logger.error('🔗 API: Error fetching user connections', {
+      error,
+      communityId,
+    });
+    throw error;
+  }
+}

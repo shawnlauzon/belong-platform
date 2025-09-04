@@ -1,2 +1,2 @@
-export type * from './connectionRow';
+export type * from './invitationRow';
 export type * from './domain';

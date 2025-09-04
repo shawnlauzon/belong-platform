@@ -50,9 +50,9 @@ export async function leaveCommunity(
       throw membershipError;
     }
 
-    // Also delete the connection code to prevent conflicts when rejoining
+    // Also delete the invitation code to prevent conflicts when rejoining
     const { error: codeError } = await supabase
-      .from('community_member_codes')
+      .from('invitation_codes')
       .delete()
       .eq('community_id', communityId)
       .eq('user_id', currentUserId);

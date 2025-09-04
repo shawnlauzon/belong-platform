@@ -1,14 +1,14 @@
 import { faker } from '@faker-js/faker';
 import type {
-  MemberConnectionCode,
+  InvitationCode,
   UserConnection,
-  CommunityMemberCodeRow,
+  InvitationCodeRow,
   UserConnectionRow,
 } from '../types';
 
-export function createFakeMemberConnectionCode(
-  overrides?: Partial<MemberConnectionCode>,
-): MemberConnectionCode {
+export function createFakeInvitationCode(
+  overrides?: Partial<InvitationCode>,
+): InvitationCode {
   return {
     code: faker.string.alphanumeric(8).toUpperCase(),
     userId: faker.string.uuid(),
@@ -35,9 +35,9 @@ export function createFakeUserConnection(
 }
 
 // Database row fakes
-export function createFakeCommunityMemberCodeRow(
-  overrides?: Partial<CommunityMemberCodeRow>,
-): CommunityMemberCodeRow {
+export function createFakeInvitationCodeRow(
+  overrides?: Partial<InvitationCodeRow>,
+): InvitationCodeRow {
   return {
     code: faker.string.alphanumeric(8).toUpperCase(),
     user_id: faker.string.uuid(),

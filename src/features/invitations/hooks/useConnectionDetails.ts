@@ -3,8 +3,8 @@ import type { UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { useSupabase } from '@/shared/hooks/useSupabase';
 import { STANDARD_CACHE_TIME } from '@/config';
 import { logger } from '@/shared';
-import { fetchConnectionDetails } from '../api';
-import type { ConnectionDetails } from '../types';
+import { fetchInvitationDetails } from '../api';
+import type { InvitationDetails } from '../types';
 import { connectionQueries } from '../queries';
 
 /**
@@ -61,13 +61,13 @@ import { connectionQueries } from '../queries';
  */
 export function useConnectionDetails(
   memberConnectionCode: string,
-  options?: Partial<UseQueryOptions<ConnectionDetails | null, Error>>,
-): UseQueryResult<ConnectionDetails | null, Error> {
+  options?: Partial<UseQueryOptions<InvitationDetails | null, Error>>,
+): UseQueryResult<InvitationDetails | null, Error> {
   const supabase = useSupabase();
 
-  const query = useQuery<ConnectionDetails | null, Error>({
+  const query = useQuery<InvitationDetails | null, Error>({
     queryKey: connectionQueries.detail(memberConnectionCode),
-    queryFn: () => fetchConnectionDetails(supabase, memberConnectionCode),
+    queryFn: () => fetchInvitationDetails(supabase, memberConnectionCode),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });
