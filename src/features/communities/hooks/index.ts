@@ -9,4 +9,5 @@ export * from './useCreateCommunity';
 export * from './useUpdateCommunity';
 export * from './useDeleteCommunity';
 export * from './useJoinCommunity';
+export * from './useJoinCommunityWithCode';
 export * from './useLeaveCommunity';
