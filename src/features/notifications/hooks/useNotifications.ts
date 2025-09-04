@@ -44,6 +44,12 @@ export function useNotifications(
   }
 
   useEffect(() => {
+    logger.debug('useNotifications: useEffect triggered', {
+      hasSupabase: !!supabase,
+      currentFilterString,
+      limit,
+    });
+
     if (!supabase) {
       logger.debug('useNotifications: waiting for supabase client');
       return;
@@ -77,11 +83,27 @@ export function useNotifications(
           filter: filterRef.current,
         });
 
-        const initialData = await fetchNotifications(supabase, {
-          ...filterRef.current,
-          limit,
-          offset: 0,
-        });
+        let initialData;
+        try {
+          initialData = await fetchNotifications(supabase, {
+            ...filterRef.current,
+            limit,
+            offset: 0,
+          });
+
+          logger.debug('useNotifications: initial fetch successful', {
+            userId,
+            dataCount: initialData.length,
+            limit,
+          });
+        } catch (fetchError) {
+          logger.error('useNotifications: initial fetch failed', {
+            error: fetchError,
+            userId,
+            filter: filterRef.current,
+          });
+          throw fetchError;
+        }
 
         logger.info('useNotifications: initial notifications loaded', {
           userId,
@@ -109,23 +131,56 @@ export function useNotifications(
           }, async (payload) => {
             logger.info('useNotifications: received new notification via realtime', {
               userId,
-              notificationId: payload.new.id,
-              type: payload.new.type,
+              notificationId: payload.new?.id,
+              type: payload.new?.type,
+              payloadStructure: {
+                hasNew: !!payload.new,
+                hasOld: !!payload.old,
+                eventType: payload.eventType,
+                schema: payload.schema,
+                table: payload.table,
+                commit_timestamp: payload.commit_timestamp,
+                errors: payload.errors
+              },
+              fullPayload: payload
             });
 
             // Check if notification matches current filter
+            logger.debug('useNotifications: checking notification filter', {
+              notificationId: payload.new?.id,
+              userId,
+              payloadNew: payload.new,
+              currentFilter: filterRef.current,
+            });
+
             const matchesFilter = checkNotificationMatchesFilter(payload.new, filterRef.current);
+            
+            logger.debug('useNotifications: filter check result', {
+              notificationId: payload.new?.id,
+              userId,
+              matchesFilter,
+              filterType: filterRef.current.type,
+              notificationType: payload.new?.type,
+              filterIsRead: filterRef.current.isRead,
+              notificationIsRead: payload.new?.is_read,
+            });
+
             if (!matchesFilter) {
-              logger.debug('useNotifications: notification does not match filter', {
-                notificationId: payload.new.id,
+              logger.debug('useNotifications: notification does not match filter, skipping', {
+                notificationId: payload.new?.id,
                 filter: filterRef.current,
               });
               return;
             }
 
             try {
+              logger.debug('useNotifications: fetching full notification details', {
+                notificationId: payload.new.id,
+                userId,
+              });
+
               // Fetch full notification with joins
-              const { data } = await supabase
+              const { data, error: fetchError } = await supabase
                 .from('notifications')
                 .select(`
                   *,
@@ -139,6 +194,15 @@ export function useNotifications(
                 `)
                 .eq('id', payload.new.id)
                 .single();
+
+              logger.debug('useNotifications: notification fetch completed', {
+                notificationId: payload.new.id,
+                userId,
+                hasData: !!data,
+                hasError: !!fetchError,
+                fetchError,
+                dataKeys: data ? Object.keys(data) : null,
+              });
 
               if (data) {
                 const newNotification = notificationTransformer(data as NotificationRowJoinActor);
@@ -171,15 +235,33 @@ export function useNotifications(
             }
           })
           .subscribe((status, err) => {
+            logger.info('useNotifications: realtime subscription callback triggered', {
+              status,
+              hasError: !!err,
+              userId,
+              channelName: `user:${userId}:notifications`,
+            });
+
             if (err) {
               logger.error('useNotifications: realtime subscription error', {
                 error: err,
+                errorMessage: err?.message,
+                errorName: err?.name,
+                errorStack: err?.stack,
+                errorDetails: {
+                  code: err?.code,
+                  details: err?.details,
+                  hint: err?.hint
+                },
                 userId,
+                channelName: `user:${userId}:notifications`,
+                subscriberStatus: status,
               });
             } else {
               logger.info('useNotifications: realtime subscription established', {
                 status,
                 userId,
+                channelName: `user:${userId}:notifications`,
                 initialNotificationCount: initialData.length,
               });
             }
@@ -202,8 +284,24 @@ export function useNotifications(
         logger.debug('useNotifications: cleaning up realtime subscription', {
           userId,
           channelName: `user:${userId}:notifications`,
+          channelState: channel.state,
         });
-        supabase.removeChannel(channel);
+        try {
+          const removeResult = supabase.removeChannel(channel);
+          logger.debug('useNotifications: channel removal result', {
+            userId,
+            channelName: `user:${userId}:notifications`,
+            removeResult,
+          });
+        } catch (cleanupError) {
+          logger.error('useNotifications: error during channel cleanup', {
+            error: cleanupError,
+            userId,
+            channelName: `user:${userId}:notifications`,
+          });
+        }
+      } else {
+        logger.debug('useNotifications: no channel to cleanup', { userId });
       }
     };
   }, [supabase, queryClient, currentFilterString, limit]);
