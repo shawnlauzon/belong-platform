@@ -1,14 +1,18 @@
 import type { NotificationDetail } from '../types/notificationDetail';
 import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import type { NotificationType } from '../types/notification';
+import { getTypedMetadata } from '../types/notificationMetadata';
 
 export function transformNotification(
   row: NotificationDetailsRow,
 ): NotificationDetail {
+  const type = (row.type || 'new_resource') as NotificationType;
+  const rawMetadata = (row.metadata as Record<string, unknown>) || {};
+
   return {
     id: row.id || '',
     userId: row.user_id || '',
-    type: (row.type || 'new_resource') as NotificationType,
+    type,
 
     // Polymorphic references from view
     resourceId: row.resource_id || undefined,
@@ -39,8 +43,8 @@ export function transformNotification(
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,
 
-    // Generated content (client-side)
-    metadata: (row.metadata as Record<string, unknown>) || {},
+    // Typed metadata based on notification type
+    metadata: getTypedMetadata(type, rawMetadata),
 
     // Status
     isRead: row.is_read || false,

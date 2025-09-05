@@ -1,6 +1,10 @@
 import type { Database } from '../../../shared/types/database';
+import type { CommentMetadata, ShoutoutMetadata, TrustPointsMetadata, TrustLevelMetadata, ResourceUpdatedMetadata } from './notificationMetadata';
 
 export type NotificationType = Database['public']['Enums']['notification_type'];
+
+// Union type for all possible metadata types
+export type NotificationMetadata = CommentMetadata | ShoutoutMetadata | TrustPointsMetadata | TrustLevelMetadata | ResourceUpdatedMetadata | Record<string, never>;
 
 export interface Notification {
   id: string;
@@ -17,8 +21,8 @@ export interface Notification {
   // Actor information
   actorId?: string;
 
-  // Content
-  metadata: Record<string, unknown>;
+  // Typed metadata - will be properly typed based on notification type
+  metadata: NotificationMetadata;
 
   // Status
   isRead: boolean;
