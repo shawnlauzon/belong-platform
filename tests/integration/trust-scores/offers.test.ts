@@ -188,7 +188,7 @@ describe('Trust Score Points - Offers', () => {
     expect(scoreAfterGiven - scoreBeforeGiven).toBe(0);
   });
 
-  it('should not award points for received status', async () => {
+  it('should not award points for given status until completed', async () => {
     // Use shared data from beforeEach
     testClaim = await createResourceClaim(supabase, {
       resourceId: offer.id,
@@ -202,18 +202,18 @@ describe('Trust Score Points - Offers', () => {
       community.id,
     );
 
-    // For offers: claimant can mark as received directly from approved
+    // For offers: owner can mark as given directly from approved
     await updateResourceClaim(supabase, {
       id: testClaim.id,
-      status: 'received',
+      status: 'given',
     });
 
-    const scoreAfterReceived = await getCurrentTrustScore(
+    const scoreAfterGiven = await getCurrentTrustScore(
       supabase,
       claimant.id,
       community.id,
     );
-    expect(scoreAfterReceived - scoreBeforeReceived).toBe(0);
+    expect(scoreAfterGiven - scoreBeforeGiven).toBe(0);
   });
 
   it('should allow claimant to mark as completed after given', async () => {

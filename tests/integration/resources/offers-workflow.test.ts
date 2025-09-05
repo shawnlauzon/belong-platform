@@ -95,7 +95,7 @@ describe('Resource Offers - Workflow', () => {
     expect(updatedClaim.status).toBe('given');
   });
 
-  it('should allow claimant to mark as received from approved state', async () => {
+  it('should allow resource owner to mark as given from approved state', async () => {
     // Create fresh timeslot for this test
     const freshTimeslot = await createTestResourceTimeslot(supabase, offer.id);
     
@@ -105,12 +105,15 @@ describe('Resource Offers - Workflow', () => {
       timeslotId: freshTimeslot.id,
     });
 
-    // For offers: claimant can mark as received directly from approved
+    // Switch to resource owner to mark as given
+    await signIn(supabase, owner.email, 'TestPass123!');
+    
+    // For offers: resource owner can mark as given directly from approved
     const updatedClaim = await updateResourceClaim(supabase, {
       id: claim.id,
-      status: 'received',
+      status: 'given',
     });
 
-    expect(updatedClaim.status).toBe('received');
+    expect(updatedClaim.status).toBe('given');
   });
 });

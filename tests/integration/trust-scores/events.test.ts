@@ -79,7 +79,8 @@ describe('Trust Score Points - Events', () => {
     });
 
     expect(testClaim.id).toBeDefined();
-    expect(testClaim.status).toBe('interested');
+    expect(testClaim.status).toBe('approved');
+    expect(testClaim.commitmentLevel).toBe('interested');
   });
 
   it('should award points for event registration', async () => {
@@ -361,10 +362,10 @@ describe('Trust Score Points - Events', () => {
       await signIn(supabase, organizer.email, 'TestPass123!');
       const updatedClaim = await updateResourceClaim(supabase, {
         id: approvalClaim.id,
-        status: 'interested',
+        status: 'approved',
       });
 
-      expect(updatedClaim.status).toBe('interested');
+      expect(updatedClaim.status).toBe('approved');
     });
 
     it('should award points for approved registration', async () => {
@@ -383,7 +384,7 @@ describe('Trust Score Points - Events', () => {
       await signIn(supabase, organizer.email, 'TestPass123!');
       await updateResourceClaim(supabase, {
         id: approvalClaim.id,
-        status: 'interested',
+        status: 'approved',
       });
 
       // Switch back to participant to check score

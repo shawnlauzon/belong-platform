@@ -15,4 +15,5 @@ export * from './deleteResourceTimeslot';
 export * from './createResourceClaim';
 export * from './fetchResourceClaims';
 export * from './updateResourceClaim';
+export * from './updateCommitmentLevel';
 export * from './deleteResourceClaim';

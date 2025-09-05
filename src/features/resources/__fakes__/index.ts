@@ -8,6 +8,7 @@ import {
   ResourceClaim,
   ResourceClaimInput,
   ResourceTypeEnum,
+  CommitmentLevel,
 } from '../types';
 import {
   ResourceTimeslotRow,
@@ -340,10 +341,11 @@ export function createFakeResourceClaim(
       'rejected',
       'completed',
       'cancelled',
-      'interested',
       'given',
-      'received',
+      'going',
+      'attended',
     ] as const),
+    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed'] as CommitmentLevel[]),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
     createdAt: now,
     updatedAt: now,
@@ -361,6 +363,7 @@ export function createFakeResourceClaimInput(
     resourceId: faker.string.uuid(),
     timeslotId: faker.string.uuid(),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()),
+    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed'] as CommitmentLevel[]),
     ...overrides,
   };
 }
@@ -384,7 +387,11 @@ export function createFakeResourceClaimRow(
       'rejected',
       'completed',
       'cancelled',
+      'given',
+      'going',
+      'attended',
     ] as const),
+    commitment_level: faker.helpers.arrayElement(['interested', 'committed'] as CommitmentLevel[]),
     notes: faker.helpers.maybe(() => faker.lorem.sentence()) ?? null,
     created_at: now,
     updated_at: now,

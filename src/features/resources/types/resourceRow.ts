@@ -55,3 +55,5 @@ export type ResourceType = Database['public']['Enums']['resource_type'];
 
 export type ResourceTimeslotStatus =
   Database['public']['Enums']['resource_timeslot_status'];
+
+export type CommitmentLevel = Database['public']['Enums']['commitment_level_enum'];

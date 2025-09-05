@@ -197,11 +197,10 @@ describe('Resource Offers API - Authentication Requirements', () => {
       const secondUser = await createTestUser(authenticatedClient);
       await joinCommunity(authenticatedClient, testCommunity.id);
 
-      // Create claim for the resource offer
+      // Create claim for the resource offer (status no longer in input - determined by API)
       const claimInput = createFakeResourceClaimInput({
         resourceId: testResourceOffer.id,
         timeslotId: testTimeslot.id,
-        status: 'pending',
       });
 
       const claim = await resourcesApi.createResourceClaim(
@@ -212,7 +211,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
       expect(claim).toBeTruthy();
       expect(claim!.resourceId).toBe(testResourceOffer.id);
       expect(claim!.claimantId).toBe(secondUser.id);
-      expect(claim!.status).toBe('pending');
+      expect(claim!.status).toBe('approved'); // Offer doesn't require approval by default
 
       // Update claim status
       const updatedClaim = await resourcesApi.updateResourceClaim(
