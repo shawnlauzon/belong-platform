@@ -6,9 +6,10 @@ import type { Database } from '@/shared/types/database';
 
 // Configurable points constants for easy adjustment
 export const POINTS_CONFIG = {
-  COMMUNITY_CREATION: 500,
-  COMMUNITY_ORGANIZER: 500,
-  COMMUNITY_JOIN: 50,
+  COMMUNITY_CREATION: 0, // No points for creating community itself
+  COMMUNITY_FOUNDER: 2000, // Points for being founder (community creator)
+  COMMUNITY_ORGANIZER: 1000, // Points for being organizer
+  COMMUNITY_JOIN: 50, // Points for joining as member
   COMMUNITY_LEAVE: -50, // Points deducted when leaving a community
   COMMUNITY_JOIN_WITH_INVITATION: 50, // Same as regular join currently
   RESOURCE_OFFER: 50,

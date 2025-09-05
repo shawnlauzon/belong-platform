@@ -78,7 +78,7 @@ describe('Communities API - CRUD Operations', () => {
       }
     });
 
-    it('auto-creates organizer membership', async () => {
+    it('auto-creates founder membership', async () => {
       const data = createFakeCommunityInput({
         name: `${TEST_PREFIX}Membership_Test_${Date.now()}`,
       });
@@ -95,7 +95,7 @@ describe('Communities API - CRUD Operations', () => {
           .single();
 
         expect(membership).toBeTruthy();
-        expect(membership!.role).toBe('organizer'); // Verify organizer role is set
+        expect(membership!.role).toBe('founder'); // Verify founder role is set
       } finally {
         await cleanupCommunity(community);
       }
