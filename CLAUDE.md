@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - **Always use IDE diagnostics to validate code (including tests!) after implementation**
 - **Confirm a enum / function / variable / type exists before using it**: Do not just guess!
 - **If any MCP resource is unavailable, restart the MCP**
+- **You are not done until `pnpm verify` passes**
 
 ## Code Style and Best Practices
 
