@@ -368,6 +368,19 @@ GRANT EXECUTE ON FUNCTION get_invitation_details TO authenticated, service_role;
 ALTER TABLE user_connections DROP CONSTRAINT IF EXISTS ordered_user_ids;
 
 -- ============================================================================
+-- STEP 6: FIX CONNECTION_REQUEST REMOVAL
+-- ============================================================================
+
+-- Remove connection_request from profiles notification_preferences if it exists
+UPDATE profiles 
+SET notification_preferences = notification_preferences - 'connection_request'
+WHERE notification_preferences ? 'connection_request';
+
+-- Fix any existing notifications with connection_request type by removing them
+-- since the connection_request flow has been removed
+DELETE FROM notifications WHERE type = 'connection_request';
+
+-- ============================================================================
 -- COMMENTS
 -- ============================================================================
 
