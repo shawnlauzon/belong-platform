@@ -1,6 +1,7 @@
 // Types
 export type {
   Notification,
+  NotificationDetail,
   NotificationInput,
   NotificationRow,
   NotificationInsertDbData,
@@ -32,7 +33,7 @@ export { useMarkAsRead as useMarkNotificationAsRead } from './hooks/useMarkAsRea
 export { useMarkAllAsRead as useMarkAllNotificationsAsRead } from './hooks/useMarkAllAsRead';
 
 // Transformers
-export { notificationTransformer } from './transformers';
+export { transformNotification } from './transformers';
 
 // Queries
 export { notificationKeys } from './queries';

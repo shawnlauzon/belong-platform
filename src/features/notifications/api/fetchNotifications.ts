@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Notification } from '../types/notification';
+import type { NotificationDetail } from '../types/notificationDetail';
 import { transformNotification } from '../transformers/notificationTransformer';
 import { logger } from '@/shared';
 
@@ -12,7 +13,7 @@ export interface FetchNotificationsFilter {
 }
 
 interface FetchNotificationsResponse {
-  notifications: Notification[];
+  notifications: NotificationDetail[];
   hasMore: boolean;
   cursor?: string;
 }

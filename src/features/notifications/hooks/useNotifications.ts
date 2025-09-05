@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
-import type { Notification } from '../types/notification';
-import { notificationTransformer } from '../transformers';
+import type { NotificationDetail } from '../types/notificationDetail';
+import { transformNotification } from '../transformers/notificationTransformer';
 import { subscribeToNotifications } from '../api/subscribeToNotifications';
 import type { NotificationSubscription } from '../api/subscribeToNotifications';
 import { fetchNotifications } from '../api/fetchNotifications';
@@ -10,7 +10,7 @@ import { useCurrentUser } from '@/features/auth';
 import { notificationKeys } from '../queries';
 
 interface UseNotificationsResult {
-  data: Notification[];
+  data: NotificationDetail[];
   isLoading: boolean;
 }
 
@@ -87,7 +87,7 @@ export function useNotifications(): UseNotificationsResult {
                 .single();
 
               if (data) {
-                const newNotification = notificationTransformer(data);
+                const newNotification = transformNotification(data);
 
                 logger.debug(
                   'useNotifications: adding new notification to React Query cache',
@@ -101,7 +101,7 @@ export function useNotifications(): UseNotificationsResult {
                 // Update React Query cache with new notification
                 queryClient.setQueryData(
                   notificationKeys.list({ limit: 1000 }),
-                  (oldData: Notification[] | undefined) => {
+                  (oldData: NotificationDetail[] | undefined) => {
                     if (!oldData) return [newNotification];
                     return [newNotification, ...oldData];
                   },
