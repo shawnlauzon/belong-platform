@@ -84,6 +84,8 @@ describe('My Resources Notifications', () => {
       expect(claimNotification).toMatchObject({
         type: 'claim',
         resourceId: resource.id,
+        claimId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: claimingUser.id,
         isRead: false,
       });
@@ -127,6 +129,8 @@ describe('My Resources Notifications', () => {
       expect(cancelledNotification).toMatchObject({
         type: 'resource_claim_cancelled',
         resourceId: resource.id,
+        claimId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: claimingUser.id,
         isRead: false,
       });
@@ -181,6 +185,8 @@ describe('My Resources Notifications', () => {
       expect(completedNotification).toMatchObject({
         type: 'resource_claim_completed',
         resourceId: resource.id,
+        claimId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: claimingUser.id,
         isRead: false,
       });
