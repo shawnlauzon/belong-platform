@@ -86,6 +86,8 @@ describe('Notification Triggers', () => {
       expect(specificNotification).toMatchObject({
         type: 'comment',
         resourceId: resource.id,
+        commentId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: commenter.id,
         isRead: false,
       });
@@ -158,6 +160,7 @@ describe('Notification Triggers', () => {
         type: 'comment_reply',
         resourceId: resource.id,
         commentId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: commenter.id,
         isRead: false,
       });
@@ -232,6 +235,8 @@ describe('Notification Triggers', () => {
       expect(specificNotification).toMatchObject({
         type: 'claim',
         resourceId: resource.id,
+        claimId: expect.any(String),
+        communityId: testCommunity.id,
         actorId: commenter.id,
         isRead: false,
       });
@@ -396,6 +401,7 @@ describe('Notification Triggers', () => {
       expect(specificNotification).toBeDefined();
       expect(specificNotification).toMatchObject({
         type: 'shoutout_received',
+        shoutoutId: expect.any(String),
         communityId: testCommunity.id,
         actorId: commenter.id,
         isRead: false,

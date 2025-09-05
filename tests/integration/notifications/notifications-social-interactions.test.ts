@@ -8,9 +8,6 @@ import {
 } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications';
 import { createComment } from '@/features/comments';
-import {
-  getInvitationCode,
-} from '@/features/invitations';
 import { createShoutout } from '@/features/shoutouts';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -74,10 +71,11 @@ describe('Social Interactions Notifications', () => {
       });
 
       expect(result.notifications.length).toBeGreaterThan(0);
-      const commentNotification = result.notifications.find(n => 
-        n.type === 'comment' && 
-        n.resourceId === resource.id && 
-        n.actorId === interactingUser.id
+      const commentNotification = result.notifications.find(
+        (n) =>
+          n.type === 'comment' &&
+          n.resourceId === resource.id &&
+          n.actorId === interactingUser.id,
       );
       expect(commentNotification).toBeDefined();
       expect(commentNotification).toMatchObject({
@@ -119,10 +117,11 @@ describe('Social Interactions Notifications', () => {
       });
 
       expect(result2.notifications.length).toBeGreaterThan(0);
-      const replyNotification = result2.notifications.find(n => 
-        n.type === 'comment_reply' && 
-        n.resourceId === resource.id && 
-        n.actorId === interactingUser.id
+      const replyNotification = result2.notifications.find(
+        (n) =>
+          n.type === 'comment_reply' &&
+          n.resourceId === resource.id &&
+          n.actorId === interactingUser.id,
       );
       expect(replyNotification).toBeDefined();
       expect(replyNotification).toMatchObject({
@@ -163,10 +162,11 @@ describe('Social Interactions Notifications', () => {
       });
 
       expect(result3.notifications.length).toBeGreaterThan(0);
-      const shoutoutNotification = result3.notifications.find(n => 
-        n.type === 'shoutout_received' && 
-        n.communityId === testCommunity.id && 
-        n.actorId === interactingUser.id
+      const shoutoutNotification = result3.notifications.find(
+        (n) =>
+          n.type === 'shoutout_received' &&
+          n.communityId === testCommunity.id &&
+          n.actorId === interactingUser.id,
       );
       expect(shoutoutNotification).toBeDefined();
       expect(shoutoutNotification).toMatchObject({
@@ -177,7 +177,6 @@ describe('Social Interactions Notifications', () => {
       });
     });
   });
-
 
   describe('Self-notification prevention', () => {
     it('should not create notification when I comment on my own resource', async () => {

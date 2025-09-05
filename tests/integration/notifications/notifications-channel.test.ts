@@ -37,10 +37,10 @@ describe('Notification Channel Integration', () => {
 
   afterAll(async () => {
     // Clean up any remaining channels
-    supabase.realtime.channels.forEach(channel => {
+    supabase.realtime.channels.forEach((channel) => {
       supabase.removeChannel(channel);
     });
-    
+
     // Disconnect realtime to ensure clean state
     supabase.realtime.disconnect();
   });
@@ -146,20 +146,24 @@ describe('Notification Channel Integration', () => {
   describe('Error handling and reconnection', () => {
     it('should handle subscription errors gracefully', async () => {
       // This test verifies that our subscribeToNotifications function works reliably
-      const subscription = await subscribeToNotifications(supabase, testUser.id, {
-        onNotification: (payload) => {
-          receivedNotifications.push(payload.new);
+      const subscription = await subscribeToNotifications(
+        supabase,
+        testUser.id,
+        {
+          onNotification: (payload) => {
+            receivedNotifications.push(payload.new);
+          },
+          onStatusChange: (status, error) => {
+            statusChanges.push({ status, error });
+          },
         },
-        onStatusChange: (status, error) => {
-          statusChanges.push({ status, error });
-        },
-      });
-      
+      );
+
       // Wait briefly for status changes
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
+
       await subscription.cleanup();
-      
+
       // Should have recorded status changes
       expect(statusChanges.length).toBeGreaterThan(0);
     });
@@ -167,18 +171,18 @@ describe('Notification Channel Integration', () => {
     it('should retry on CHANNEL_ERROR with configured retry settings', async () => {
       let retryAttempts = 0;
       const channelErrors: Array<{ status: string; error?: unknown }> = [];
-      
+
       // Create a subscription with custom retry settings for testing
       const subscription = await subscribeToNotifications(
-        supabase, 
-        testUser.id, 
+        supabase,
+        testUser.id,
         {
           onNotification: (payload) => {
             receivedNotifications.push(payload.new);
           },
           onStatusChange: (status, error) => {
             statusChanges.push({ status, error });
-            
+
             // Track channel errors specifically
             if (status === 'CHANNEL_ERROR') {
               channelErrors.push({ status, error });
@@ -189,44 +193,44 @@ describe('Notification Channel Integration', () => {
         {
           maxRetries: 3, // Lower for testing
           retryDelayMs: 100, // Faster for testing
-        }
+        },
       );
-      
+
       // Wait for subscription to be established
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       // Simulate a channel error by disconnecting realtime
       // Note: In a real scenario, channel errors might occur due to network issues
       // This is a simplified test to verify our retry logic gets triggered
-      
+
       // Create a resource to trigger a notification
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
         'offer',
       );
-      
+
       // Have another user comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
       await createComment(supabase, {
         content: 'Test comment for retry logic',
         resourceId: resource.id,
       });
-      
+
       // Wait for notification
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       // The subscription should still work even if there were transient errors
       const hasNotification = receivedNotifications.some(
-        (n) => n.resource_id === resource.id
+        (n) => n.resource_id === resource.id,
       );
-      
+
       // Clean up
       await subscription.cleanup();
-      
+
       // Verify the subscription handled any errors and still received notifications
       expect(hasNotification).toBe(true);
-      
+
       // Log for debugging
       console.log('Status changes during test:', statusChanges);
       console.log('Channel errors:', channelErrors);
@@ -235,7 +239,7 @@ describe('Notification Channel Integration', () => {
 
     it('should stop retrying after max attempts', async () => {
       const statusLog: string[] = [];
-      
+
       // Create a subscription with very limited retries
       const subscription = await subscribeToNotifications(
         supabase,
@@ -252,23 +256,22 @@ describe('Notification Channel Integration', () => {
         {
           maxRetries: 2, // Very low for testing
           retryDelayMs: 50, // Very fast for testing
-        }
+        },
       );
-      
+
       // Wait for initial subscription
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
+
       // Clean up
       await subscription.cleanup();
-      
+
       // The subscription should have attempted connection
       expect(statusLog.length).toBeGreaterThan(0);
     });
 
     it('should retry on both CHANNEL_ERROR and TIMED_OUT statuses', async () => {
       const statusHistory: Array<{ status: string; error?: unknown }> = [];
-      const errorStatuses = new Set(['CHANNEL_ERROR', 'TIMED_OUT']);
-      
+
       // Create a subscription with retry settings
       const subscription = await subscribeToNotifications(
         supabase,
@@ -285,46 +288,49 @@ describe('Notification Channel Integration', () => {
         {
           maxRetries: 5, // Allow some retries
           retryDelayMs: 100, // Fast for testing
-        }
+        },
       );
-      
+
       // Wait for subscription to establish
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       // Create a notification to test that the subscription works
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
         'offer',
       );
-      
+
       await signIn(supabase, anotherUser.email, 'TestPass123!');
       await createComment(supabase, {
         content: 'Test comment for status recovery',
         resourceId: resource.id,
       });
-      
+
       // Wait for notification
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       // Clean up
       await subscription.cleanup();
-      
+
       // Verify subscription was established (should have SUBSCRIBED status)
       const hasSubscribed = statusHistory.some(
-        (change) => change.status === 'SUBSCRIBED'
+        (change) => change.status === 'SUBSCRIBED',
       );
       expect(hasSubscribed).toBe(true);
-      
+
       // Verify notification was received (proving connection works)
       const hasNotification = receivedNotifications.some(
-        (n) => n.resource_id === resource.id
+        (n) => n.resource_id === resource.id,
       );
       expect(hasNotification).toBe(true);
-      
+
       // Log for debugging - helps verify retry logic would work for error states
-      console.log('All status changes:', statusHistory.map(s => s.status));
-      
+      console.log(
+        'All status changes:',
+        statusHistory.map((s) => s.status),
+      );
+
       // The test verifies that:
       // 1. Subscription can be established successfully
       // 2. Notifications are received correctly
@@ -332,6 +338,5 @@ describe('Notification Channel Integration', () => {
       // Note: We can't easily force these error states in integration tests,
       // but we've verified the retry logic exists and handles both statuses
     });
-
   });
 });
