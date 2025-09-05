@@ -488,11 +488,11 @@ describe('My Registrations Notifications', () => {
         notes: 'Would like to attend this event',
       });
 
-      // Event owner approves the registration (pending -> interested for events)
+      // Event owner approves the registration (pending -> approved for events)
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
       await updateResourceClaim(supabase, {
         id: registration.id,
-        status: 'interested',
+        status: 'approved',
       });
 
       // Switch back to claimingUser to check notifications

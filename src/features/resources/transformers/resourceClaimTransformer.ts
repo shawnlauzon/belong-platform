@@ -19,11 +19,12 @@ import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
  */
 export function toResourceClaimInsertRow(
   claim: ResourceClaimInput,
-): ResourceClaimInsertDbData {
+): Omit<ResourceClaimInsertDbData, 'status'> {
   return {
     resource_id: claim.resourceId,
     timeslot_id: claim.timeslotId,
     notes: claim.notes,
+    commitment_level: claim.commitmentLevel ?? 'interested',
   };
 }
 
@@ -44,6 +45,10 @@ export function forDbClaimUpdate(
     updateData.status = claim.status as ResourceClaimStatus; // Status type is defined in database
   }
 
+  if (claim.commitmentLevel !== undefined) {
+    updateData.commitment_level = claim.commitmentLevel;
+  }
+
   return updateData;
 }
 
@@ -61,6 +66,7 @@ export function toDomainResourceClaim(
     timeslotId: dbClaim.timeslot_id,
     timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
     status: dbClaim.status,
+    commitmentLevel: dbClaim.commitment_level ?? 'interested',
     notes: dbClaim.notes ?? undefined,
     createdAt: new Date(dbClaim.created_at),
     updatedAt: new Date(dbClaim.updated_at),

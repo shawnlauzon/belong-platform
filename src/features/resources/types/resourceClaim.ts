@@ -1,4 +1,4 @@
-import { ResourceClaimStatus, ResourceTimeslot } from '@/index';
+import { ResourceClaimStatus, ResourceTimeslot, CommitmentLevel } from '@/index';
 import { IsPersisted } from '@/shared';
 
 export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
@@ -6,6 +6,7 @@ export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
   resourceOwnerId: string;
   timeslot: ResourceTimeslot;
   status: ResourceClaimStatus;
+  commitmentLevel: CommitmentLevel;
 };
 
 export type ResourceClaimSummary = Pick<
@@ -76,9 +77,11 @@ export type ResourceClaimSummary = Pick<
  * @property resourceId - The ID of the resource being claimed
  * @property timeslotId - The ID of the timeslot being claimed
  * @property notes - Optional notes from the claimant
+ * @property commitmentLevel - Optional commitment level (defaults to 'interested' for events)
  */
 export type ResourceClaimInput = {
   resourceId: string;
   timeslotId: string;
   notes?: string;
+  commitmentLevel?: CommitmentLevel;
 };

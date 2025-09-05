@@ -26,7 +26,7 @@ export async function createResourceClaim(
   // Determine initial status based on resource type and approval requirements
   let initialStatus: ResourceClaimStatus;
   if (resource.type === 'event') {
-    initialStatus = resource.requiresApproval ? 'pending' : 'interested';
+    initialStatus = resource.requiresApproval ? 'pending' : 'approved';
   } else {
     initialStatus = resource.requiresApproval ? 'pending' : 'approved';
   }
