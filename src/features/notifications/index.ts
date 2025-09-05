@@ -1,15 +1,5 @@
 // Types
-export type {
-  Notification,
-  NotificationDetail,
-  NotificationInput,
-  NotificationRow,
-  NotificationInsertDbData,
-  NotificationUpdateDbData,
-  NotificationRowJoinActor,
-  NotificationCount,
-  NotificationPreferences,
-} from './types';
+export type * from './types';
 
 // API
 export {

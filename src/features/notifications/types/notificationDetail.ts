@@ -1,5 +1,5 @@
-import type { Database } from '@/shared/types/database';
 import type { Notification } from './notification';
+import { ResourceClaimStatus, ResourceType } from '@/features/resources';
 
 /**
  * Enhanced notification type that includes all the rich denormalized data
@@ -13,13 +13,13 @@ export interface NotificationDetail extends Notification {
 
   // Resource information (denormalized from resources table)
   resourceTitle?: string;
-  resourceType?: Database['public']['Enums']['resource_type'];
+  resourceType?: ResourceType;
 
   // Comment information (denormalized from comments table)
   commentContent?: string;
 
   // Claim information (denormalized from resource_claims table)
-  claimStatus?: Database['public']['Enums']['resource_claim_status'];
+  claimStatus?: ResourceClaimStatus;
 
   // Community information (denormalized from communities table)
   communityName?: string;

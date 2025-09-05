@@ -43,6 +43,10 @@ pnpm verify
 
 # Run integration tests
 pnpm test:integration
+
+# Run a specific integration test
+pnpm test:integration <test-file-name>
+
 ```
 
 ## Architecture Overview
