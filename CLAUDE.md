@@ -107,6 +107,7 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - Avoid looking at old migrations in order to understand the database schema
 - Avoid using supabase-prod MCP unless you really need to see production data
 - **Always use `pnpx supabase migration new` to create a new migration**
+- If a migration already exists in the working directory, update it instead of creating a new one
 
 ### Migration files
 
