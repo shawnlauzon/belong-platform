@@ -1,6 +1,6 @@
 import type { NotificationDetail } from '../types/notificationDetail';
 import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
-import type { Notification } from '../types/notification';
+import type { NotificationType } from '../types/notification';
 
 export function transformNotification(
   row: NotificationDetailsRow,
@@ -8,7 +8,7 @@ export function transformNotification(
   return {
     id: row.id || '',
     userId: row.user_id || '',
-    type: (row.type || 'new_resource') as Notification['type'],
+    type: (row.type || 'new_resource') as NotificationType,
 
     // Polymorphic references from view
     resourceId: row.resource_id || undefined,
@@ -19,38 +19,25 @@ export function transformNotification(
 
     // Actor information (basic + denormalized)
     actorId: row.actor_id || undefined,
-    actorName: row.actor_name || undefined,
-    actorAvatar: row.actor_avatar || undefined,
+    actorName: row.actor_display_name || undefined,
+    actorAvatar: row.actor_avatar_url || undefined,
 
     // Resource information (denormalized from resources table)
     resourceTitle: row.resource_title || undefined,
-    resourceLocation: row.resource_location || undefined,
     resourceType: row.resource_type || undefined,
-    resourceStatus: row.resource_status || undefined,
-    resourceOwnerId: row.resource_owner_id || undefined,
 
     // Comment information (denormalized from comments table)
     commentContent: row.comment_content || undefined,
-    commentParentId: row.comment_parent_id || undefined,
 
     // Claim information (denormalized from resource_claims table)
     claimStatus: row.claim_status || undefined,
-    claimClaimantId: row.claim_claimant_id || undefined,
 
     // Community information (denormalized from communities table)
     communityName: row.community_name || undefined,
-    communityType: row.community_type || undefined,
+    communityAvatar: row.community_avatar_url || undefined,
 
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,
-    shoutoutSenderId: row.shoutout_sender_id || undefined,
-    shoutoutReceiverId: row.shoutout_receiver_id || undefined,
-
-    // Trust score information (denormalized from trust_scores table)
-    trustScore: row.trust_score || undefined,
-    trustScoreCalculatedAt: row.trust_score_calculated_at 
-      ? new Date(row.trust_score_calculated_at) 
-      : undefined,
 
     // Generated content (client-side)
     metadata: (row.metadata as Record<string, unknown>) || {},

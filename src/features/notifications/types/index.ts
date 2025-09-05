@@ -1,4 +1,4 @@
-export type { Notification, NotificationInput } from './notification';
+export type { Notification, NotificationInput, NotificationType } from './notification';
 export type { NotificationDetail } from './notificationDetail';
 export type { 
   NotificationRow,

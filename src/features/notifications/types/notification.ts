@@ -1,31 +1,11 @@
+import type { Database } from '../../../shared/types/database';
+
+export type NotificationType = Database['public']['Enums']['notification_type'];
+
 export interface Notification {
   id: string;
   userId: string;
-  type: // Existing types (5)
-  | 'comment'
-    | 'comment_reply'
-    | 'claim'
-    | 'message'
-    | 'new_resource'
-    // Social Interactions (2)
-    | 'shoutout_received'
-    | 'connection_accepted'
-    // My Resources (2)
-    | 'resource_claim_cancelled'
-    | 'resource_claim_completed'
-    // My Registrations (4)
-    | 'claim_approved'
-    | 'claim_rejected'
-    | 'claimed_resource_updated'
-    | 'claimed_resource_cancelled'
-    // My Communities (2)
-    | 'community_member_joined'
-    | 'community_member_left'
-    // Community Activity (1)
-    | 'new_event'
-    // Trust & Recognition (2)
-    | 'trust_points_changed'
-    | 'trust_level_changed';
+  type: NotificationType;
 
   // Polymorphic references
   resourceId?: string;
@@ -50,7 +30,7 @@ export interface Notification {
 }
 
 export interface NotificationInput {
-  type: Notification['type'];
+  type: NotificationType;
   resourceId?: string;
   commentId?: string;
   claimId?: string;
@@ -61,10 +41,10 @@ export interface NotificationInput {
 }
 
 // Type guards for notification categories
-export const isCommentNotification = (type: Notification['type']): boolean =>
+export const isCommentNotification = (type: NotificationType): boolean =>
   ['comment', 'comment_reply'].includes(type);
 
-export const isClaimNotification = (type: Notification['type']): boolean =>
+export const isClaimNotification = (type: NotificationType): boolean =>
   [
     'claim',
     'resource_claim_cancelled',
@@ -75,7 +55,7 @@ export const isClaimNotification = (type: Notification['type']): boolean =>
     'claimed_resource_cancelled',
   ].includes(type);
 
-export const isResourceNotification = (type: Notification['type']): boolean =>
+export const isResourceNotification = (type: NotificationType): boolean =>
   [
     'new_resource',
     'new_event',
@@ -83,13 +63,13 @@ export const isResourceNotification = (type: Notification['type']): boolean =>
     'community_member_left',
   ].includes(type);
 
-export const isSocialNotification = (type: Notification['type']): boolean =>
+export const isSocialNotification = (type: NotificationType): boolean =>
   ['shoutout_received', 'connection_accepted'].includes(type);
 
-export const isTrustNotification = (type: Notification['type']): boolean =>
-  ['trust_points_received', 'trust_level_changed'].includes(type);
+export const isTrustNotification = (type: NotificationType): boolean =>
+  ['trust_points_changed', 'trust_level_changed'].includes(type);
 
-export const isMessageNotification = (type: Notification['type']): boolean =>
+export const isMessageNotification = (type: NotificationType): boolean =>
   type === 'message';
 
 // Notification permission groups
@@ -104,7 +84,7 @@ export enum NotificationGroup {
 }
 
 export const getNotificationGroup = (
-  type: Notification['type'],
+  type: NotificationType,
 ): NotificationGroup => {
   switch (type) {
     case 'comment':

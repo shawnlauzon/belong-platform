@@ -13,29 +13,18 @@ export interface NotificationDetail extends Notification {
 
   // Resource information (denormalized from resources table)
   resourceTitle?: string;
-  resourceLocation?: string;
   resourceType?: Database['public']['Enums']['resource_type'];
-  resourceStatus?: Database['public']['Enums']['resource_status'];
-  resourceOwnerId?: string;
 
   // Comment information (denormalized from comments table)
   commentContent?: string;
-  commentParentId?: string;
 
   // Claim information (denormalized from resource_claims table)
   claimStatus?: Database['public']['Enums']['resource_claim_status'];
-  claimClaimantId?: string;
 
   // Community information (denormalized from communities table)
   communityName?: string;
-  communityType?: string;
+  communityAvatar?: string;
 
   // Shoutout information (denormalized from shoutouts table)
   shoutoutMessage?: string;
-  shoutoutSenderId?: string;
-  shoutoutReceiverId?: string;
-
-  // Trust score information (denormalized from trust_scores table)
-  trustScore?: number;
-  trustScoreCalculatedAt?: Date;
 }
