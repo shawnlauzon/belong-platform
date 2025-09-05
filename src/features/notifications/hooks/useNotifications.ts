@@ -42,12 +42,12 @@ export function useNotifications(): UseNotificationsResult {
       return data.notifications;
     },
     enabled: !!supabase && !!currentUser,
-    staleTime: 0, // Always consider stale so invalidations work properly
+    staleTime: 5 * 60 * 1000, // 5 minutes - real-time updates handle freshness
   });
 
   // Set up real-time subscription to update React Query cache
   useEffect(() => {
-    if (!supabase || !currentUser || !query.data) {
+    if (!supabase || !currentUser) {
       return;
     }
 
@@ -143,7 +143,7 @@ export function useNotifications(): UseNotificationsResult {
         subscription.cleanup();
       }
     };
-  }, [supabase, currentUser, query.data, queryClient]);
+  }, [supabase, currentUser, queryClient]);
 
   return {
     data: query.data || [],
