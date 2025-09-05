@@ -51,29 +51,19 @@ describe('Trust Score Points - Communities', () => {
     expect(trustScores[0].score).toBeGreaterThan(0);
   });
 
-  it('should award points for community creation', async () => {
+  // Community creation no longer awards points directly
+  // Only founder role assignment awards points
+
+  it('should award founder role points automatically', async () => {
     const community = await createTestCommunity(supabase);
 
     await verifyTrustScoreLog(
       serviceClient,
       testUser.id,
       community.id,
-      'community_creation',
-      POINTS_CONFIG.COMMUNITY_CREATION,
-      'Community creation log',
-    );
-  });
-
-  it('should award organizer role points automatically', async () => {
-    const community = await createTestCommunity(supabase);
-
-    await verifyTrustScoreLog(
-      serviceClient,
-      testUser.id,
-      community.id,
-      'community_organizer_join',
-      POINTS_CONFIG.COMMUNITY_ORGANIZER,
-      'Community organizer log',
+      'community_founder_join',
+      POINTS_CONFIG.COMMUNITY_FOUNDER,
+      'Community founder log',
     );
   });
 
@@ -85,9 +75,7 @@ describe('Trust Score Points - Communities', () => {
       testUser.id,
       community.id,
     );
-    expect(score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
-    );
+    expect(score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
   });
 
   it('should allow user to join existing community', async () => {
@@ -146,12 +134,8 @@ describe('Trust Score Points - Communities', () => {
 
     const score1 = trustScores.find((s) => s.communityId === community1.id);
     const score2 = trustScores.find((s) => s.communityId === community2.id);
-    expect(score1?.score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
-    );
-    expect(score2?.score).toBe(
-      POINTS_CONFIG.COMMUNITY_CREATION + POINTS_CONFIG.COMMUNITY_ORGANIZER,
-    );
+    expect(score1?.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
+    expect(score2?.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
   });
 
   it('should handle joining via connection invitation', async () => {

@@ -189,21 +189,21 @@ export type Database = {
         Row: {
           community_id: string
           created_at: string
-          role: string
+          role: Database["public"]["Enums"]["community_membership_role"]
           updated_at: string | null
           user_id: string
         }
         Insert: {
           community_id: string
           created_at?: string
-          role?: string
+          role?: Database["public"]["Enums"]["community_membership_role"]
           updated_at?: string | null
           user_id: string
         }
         Update: {
           community_id?: string
           created_at?: string
-          role?: string
+          role?: Database["public"]["Enums"]["community_membership_role"]
           updated_at?: string | null
           user_id?: string
         }
@@ -2097,21 +2097,13 @@ export type Database = {
         Returns: string
       }
       notify_new_resource: {
-        Args:
-          | {
-              p_actor_id: string
-              p_community_id: string
-              p_resource_id: string
-              p_resource_type: Database["public"]["Enums"]["resource_type"]
-              p_user_id: string
-            }
-          | {
-              p_actor_id: string
-              p_community_id: string
-              p_resource_id: string
-              p_resource_type: string
-              p_user_id: string
-            }
+        Args: {
+          p_actor_id: string
+          p_community_id: string
+          p_resource_id: string
+          p_resource_type: Database["public"]["Enums"]["resource_type"]
+          p_user_id: string
+        }
         Returns: string
       }
       notify_resource_cancelled: {
@@ -3484,6 +3476,7 @@ export type Database = {
       }
     }
     Enums: {
+      community_membership_role: "member" | "organizer" | "founder"
       conversation_type: "direct" | "community"
       notification_type:
         | "comment"
@@ -3541,6 +3534,7 @@ export type Database = {
         | "community_leave"
         | "community_organizer_join"
         | "community_member_join"
+        | "community_founder_join"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -3676,6 +3670,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      community_membership_role: ["member", "organizer", "founder"],
       conversation_type: ["direct", "community"],
       notification_type: [
         "comment",
@@ -3736,6 +3731,7 @@ export const Constants = {
         "community_leave",
         "community_organizer_join",
         "community_member_join",
+        "community_founder_join",
       ],
     },
   },
