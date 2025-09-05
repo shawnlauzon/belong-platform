@@ -1287,55 +1287,32 @@ export type Database = {
       }
       notification_details: {
         Row: {
+          actor_avatar_url: string | null
+          actor_display_name: string | null
           actor_id: string | null
           claim_details: Json | null
           claim_id: string | null
+          claim_status:
+            | Database["public"]["Enums"]["resource_claim_status"]
+            | null
+          comment_content: string | null
           comment_id: string | null
+          community_avatar_url: string | null
           community_id: string | null
+          community_name: string | null
           created_at: string | null
           id: string | null
           is_read: boolean | null
           metadata: Json | null
           read_at: string | null
           resource_id: string | null
+          resource_title: string | null
+          resource_type: Database["public"]["Enums"]["resource_type"] | null
           shoutout_id: string | null
+          shoutout_message: string | null
           type: Database["public"]["Enums"]["notification_type"] | null
           updated_at: string | null
           user_id: string | null
-        }
-        Insert: {
-          actor_id?: string | null
-          claim_details?: never
-          claim_id?: string | null
-          comment_id?: string | null
-          community_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          is_read?: boolean | null
-          metadata?: Json | null
-          read_at?: string | null
-          resource_id?: string | null
-          shoutout_id?: string | null
-          type?: Database["public"]["Enums"]["notification_type"] | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          actor_id?: string | null
-          claim_details?: never
-          claim_id?: string | null
-          comment_id?: string | null
-          community_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          is_read?: boolean | null
-          metadata?: Json | null
-          read_at?: string | null
-          resource_id?: string | null
-          shoutout_id?: string | null
-          type?: Database["public"]["Enums"]["notification_type"] | null
-          updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: [
           {
