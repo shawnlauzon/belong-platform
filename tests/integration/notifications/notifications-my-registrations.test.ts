@@ -108,14 +108,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result = await fetchNotifications(supabase, {
         type: 'claim_approved',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result.notifications.find(n => 
         n.type === 'claim_approved' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -206,14 +206,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result2 = await fetchNotifications(supabase, {
         type: 'claim_rejected',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result2.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result2.notifications.find(n => 
         n.type === 'claim_rejected' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -305,14 +305,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result3 = await fetchNotifications(supabase, {
         type: 'claimed_resource_updated',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result3.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result3.notifications.find(n => 
         n.type === 'claimed_resource_updated' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -400,14 +400,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result4 = await fetchNotifications(supabase, {
         type: 'claimed_resource_cancelled',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result4.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result4.notifications.find(n => 
         n.type === 'claimed_resource_cancelled' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -498,14 +498,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result5 = await fetchNotifications(supabase, {
         type: 'claim_approved',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result5.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result5.notifications.find(n => 
         n.type === 'claim_approved' && 
         n.resourceId === event.id && 
         n.actorId === resourceOwner.id
@@ -548,14 +548,14 @@ describe('My Registrations Notifications', () => {
       // Switch back to claimingUser to check notifications
       await signIn(supabase, claimingUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result6 = await fetchNotifications(supabase, {
         type: 'claimed_resource_updated',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result6.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result6.notifications.find(n => 
         n.type === 'claimed_resource_updated' && 
         n.resourceId === event.id && 
         n.actorId === resourceOwner.id
@@ -596,11 +596,11 @@ describe('My Registrations Notifications', () => {
         description: 'I updated my own resource',
       });
 
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult = await fetchNotifications(supabase, {
         type: 'claimed_resource_updated',
       });
       
-      const selfNotification = finalNotifications.find(n => 
+      const selfNotification = finalResult.notifications.find(n => 
         n.type === 'claimed_resource_updated' && 
         n.resourceId === resource.id && 
         n.actorId === claimingUser.id

@@ -132,11 +132,11 @@ describe('Notification Real-time Features', () => {
       await signIn(clientA, testUser.email, 'TestPass123!');
 
       // Get the notification
-      const notifications = await fetchNotifications(clientA, {
+      const result = await fetchNotifications(clientA, {
         isRead: false,
       });
 
-      const commentNotification = notifications.find(
+      const commentNotification = result.notifications.find(
         (n) => n.type === 'comment',
       );
       expect(commentNotification).toBeDefined();
@@ -145,11 +145,11 @@ describe('Notification Real-time Features', () => {
       await markNotificationAsRead(clientA, commentNotification!.id);
 
       // Verify it's marked as read via direct fetch
-      const updatedNotifications = await fetchNotifications(clientA, {
+      const updatedResult = await fetchNotifications(clientA, {
         isRead: true,
       });
 
-      const updatedCommentNotification = updatedNotifications.find(
+      const updatedCommentNotification = updatedResult.notifications.find(
         (n) => n.type === 'comment',
       );
 

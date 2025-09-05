@@ -67,26 +67,26 @@ describe('Trust & Recognition Notifications', () => {
   describe('Trust points notifications', () => {
     it('should create trust_points_received notification when I receive trust points', async () => {
       // Check initial trust points notifications
-      const initialNotifications = await fetchNotifications(clientA, {
+      const initialResult = await fetchNotifications(clientA, {
         type: 'trust_points_received',
         limit: 10,
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult.notifications.length;
 
       // Trigger an action that awards trust points (e.g., creating a community)
       // Note: This test may need to be adjusted based on what actions actually trigger trust points
       await createTestCommunity(clientA);
 
       // Check for new trust points notifications
-      const finalNotifications = await fetchNotifications(clientA, {
+      const finalResult = await fetchNotifications(clientA, {
         type: 'trust_points_received',
         limit: 10,
       });
 
       // Should have received a trust points notification for community creation
-      expect(finalNotifications.length).toBeGreaterThan(initialCount);
-      const trustPointsNotification = finalNotifications.find(n => 
-        n.type === 'trust_points_received' && !initialNotifications.some(init => init.id === n.id)
+      expect(finalResult.notifications.length).toBeGreaterThan(initialCount);
+      const trustPointsNotification = finalResult.notifications.find(n => 
+        n.type === 'trust_points_received' && !initialResult.notifications.some(init => init.id === n.id)
       );
       
       if (trustPointsNotification) {
@@ -106,7 +106,7 @@ describe('Trust & Recognition Notifications', () => {
       // This test is challenging to implement without knowing the exact trust level thresholds
       // and having a way to reliably trigger level changes
       
-      const initialNotifications = await fetchNotifications(clientA, {
+      const initialResult2 = await fetchNotifications(clientA, {
         type: 'trust_level_changed',
         limit: 10,
       });
@@ -115,8 +115,8 @@ describe('Trust & Recognition Notifications', () => {
       // which might be difficult in an integration test environment
       // For now, we'll check if any trust level notifications exist in the system
       
-      if (initialNotifications.length > 0) {
-        expect(initialNotifications[0]).toMatchObject({
+      if (initialResult2.notifications.length > 0) {
+        expect(initialResult2.notifications[0]).toMatchObject({
           type: 'trust_level_changed',
           userId: trustRecipient.id,
           isRead: expect.any(Boolean),
@@ -124,7 +124,7 @@ describe('Trust & Recognition Notifications', () => {
         });
       } else {
         // This is expected for new users who haven't leveled up yet
-        expect(initialNotifications).toHaveLength(0);
+        expect(initialResult2.notifications).toHaveLength(0);
       }
     });
 
@@ -157,7 +157,7 @@ describe('Trust & Recognition Notifications', () => {
 
     it('should not duplicate trust points notifications for the same action', async () => {
       // Get current notifications count
-      const initialNotifications = await fetchNotifications(clientA, {
+      const initialResult3 = await fetchNotifications(clientA, {
         type: 'trust_points_received',
       });
 
@@ -167,7 +167,7 @@ describe('Trust & Recognition Notifications', () => {
       // Wait a moment
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      await fetchNotifications(clientA, {
+      const middleResult = await fetchNotifications(clientA, {
         type: 'trust_points_received',
       });
 
@@ -176,13 +176,13 @@ describe('Trust & Recognition Notifications', () => {
       // Wait a moment
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      const finalNotifications = await fetchNotifications(clientA, {
+      const finalResult3 = await fetchNotifications(clientA, {
         type: 'trust_points_received',
       });
 
       // Each community creation should generate its own trust points notification
       // (assuming community creation awards trust points)
-      const newNotificationsCount = finalNotifications.length - initialNotifications.length;
+      const newNotificationsCount = finalResult3.notifications.length - initialResult3.notifications.length;
       
       // Should have received notifications for both community creations
       // or none if trust points for community creation aren't implemented

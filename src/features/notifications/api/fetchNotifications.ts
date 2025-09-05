@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Notification } from '../types/notification';
+import { transformNotification } from '../transformers/notificationTransformer';
 import { logger } from '@/shared';
 
 export interface FetchNotificationsFilter {
@@ -18,37 +19,37 @@ interface FetchNotificationsResponse {
 
 export async function fetchNotifications(
   client: SupabaseClient<Database>,
-  userId: string,
-  options?: { limit?: number; cursor?: string },
+  filter?: FetchNotificationsFilter,
 ): Promise<FetchNotificationsResponse> {
+  const limit = filter?.limit || 50;
+  
   logger.info('Starting notification fetch process', {
-    userId,
-    limit: options?.limit || 50,
-    hasCursor: !!options?.cursor,
+    filter,
+    limit,
   });
 
-  // Authentication verified, proceed with message fetch
-  const limit = options?.limit || 50;
-
+  // RLS will automatically filter to current user's notifications
   let query = client
-    .from('notifications')
+    .from('notification_details')
     .select('*')
-    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit + 1);
 
-  if (options?.cursor) {
-    logger.debug('Using cursor for paginated message fetch', {
-      userId,
-      cursor: options.cursor,
-    });
-    query = query.lt('created_at', options.cursor);
+  if (filter?.type) {
+    query = query.eq('type', filter.type);
   }
 
-  logger.debug('Executing message fetch query', {
-    userId,
+  if (filter?.isRead !== undefined) {
+    query = query.eq('is_read', filter.isRead);
+  }
+
+  if (filter?.offset) {
+    query = query.range(filter.offset, filter.offset + limit - 1);
+  }
+
+  logger.debug('Executing notification fetch query', {
     limit: limit + 1,
-    hasCursor: !!options?.cursor,
+    hasFilters: !!(filter?.type || filter?.isRead !== undefined),
   });
 
   const { data, error } = await query;
@@ -56,60 +57,44 @@ export async function fetchNotifications(
   if (error) {
     logger.error('Database error while fetching notifications', {
       error,
-      userId,
+      filter,
       limit,
-      hasCursor: !!options?.cursor,
     });
     throw error;
   }
 
   if (!data) {
-    logger.warn('No data returned from message fetch query', {
-      userId,
+    logger.warn('No data returned from notification fetch query', {
+      filter,
     });
     return { notifications: [], hasMore: false };
   }
 
   logger.debug('Raw notification data retrieved from database', {
-    userId,
     rawCount: data.length,
     requestedLimit: limit,
   });
 
-  // const hasMore = data.length > limit;
-  // const rawMessages = data.slice(0, limit);
+  const hasMore = data.length > limit;
+  const notifications = data.slice(0, limit);
 
-  // Note: Messages will be transformed in useMessages with participant data
-  // const nextCursor =
-  //   hasMore && rawMessages.length > 0
-  //     ? new Date(rawMessages[0].created_at).toISOString()
-  //     : undefined;
+  // Transform the raw data using the proper transformer
+  const transformedNotifications = notifications.map(transformNotification);
 
-  // logger.info('Message fetch process completed successfully', {
-  //   userId,
-  //   messageCount: rawMessages.length,
-  //   hasMore,
-  //   hasNextCursor: !!nextCursor,
-  // });
+  const nextCursor =
+    hasMore && transformedNotifications.length > 0
+      ? transformedNotifications[transformedNotifications.length - 1].createdAt.toISOString()
+      : undefined;
 
-  // return {
-  //   notifications: rawMessages.reverse(), // Reverse to get chronological order
-  //   hasMore,
-  //   cursor: nextCursor,
-  // };
+  logger.info('Notification fetch process completed successfully', {
+    notificationCount: transformedNotifications.length,
+    hasMore,
+    hasNextCursor: !!nextCursor,
+  });
 
   return {
-    notifications: [
-      {
-        id: '1',
-        userId,
-        type: 'new_event',
-        metadata: {},
-        isRead: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ],
-    hasMore: false,
+    notifications: transformedNotifications,
+    hasMore,
+    cursor: nextCursor,
   };
 }

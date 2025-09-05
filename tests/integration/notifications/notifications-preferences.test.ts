@@ -129,10 +129,10 @@ describe('Notification Preferences', () => {
         'offer',
       );
 
-      const initialNotifications = await fetchNotifications(supabase, {
+      const initialResult = await fetchNotifications(supabase, {
         type: 'comment',
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult.notifications.length;
 
       // Have another user comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
@@ -143,11 +143,11 @@ describe('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult = await fetchNotifications(supabase, {
         type: 'comment',
       });
 
-      expect(finalNotifications).toHaveLength(initialCount);
+      expect(finalResult.notifications).toHaveLength(initialCount);
     });
 
     it('should not create claim notifications when disabled', async () => {
@@ -170,10 +170,10 @@ describe('Notification Preferences', () => {
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
-      const initialNotifications = await fetchNotifications(supabase, {
+      const initialResult2 = await fetchNotifications(supabase, {
         type: 'claim',
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult2.notifications.length;
 
       // Have another user claim
       await signIn(supabase, anotherUser.email, 'TestPass123!');
@@ -185,11 +185,11 @@ describe('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult2 = await fetchNotifications(supabase, {
         type: 'claim',
       });
 
-      expect(finalNotifications).toHaveLength(initialCount);
+      expect(finalResult2.notifications).toHaveLength(initialCount);
     });
 
     it('should not create new resource notifications when disabled', async () => {
@@ -205,10 +205,10 @@ describe('Notification Preferences', () => {
         community_messages: true,
       });
 
-      const initialNotifications = await fetchNotifications(supabase, {
+      const initialResult3 = await fetchNotifications(supabase, {
         type: 'new_resource',
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult3.notifications.length;
 
       // Have another user create a resource
       await signIn(supabase, anotherUser.email, 'TestPass123!');
@@ -220,11 +220,11 @@ describe('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult3 = await fetchNotifications(supabase, {
         type: 'new_resource',
       });
 
-      expect(finalNotifications).toHaveLength(initialCount);
+      expect(finalResult3.notifications).toHaveLength(initialCount);
     });
 
     it('should still create notifications when preferences are enabled', async () => {
@@ -246,11 +246,11 @@ describe('Notification Preferences', () => {
         'offer',
       );
 
-      const initialNotifications = await fetchNotifications(supabase, {
+      const initialResult4 = await fetchNotifications(supabase, {
         type: 'comment',
         isRead: false,
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult4.notifications.length;
 
       // Have another user comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
@@ -261,12 +261,12 @@ describe('Notification Preferences', () => {
 
       // Check that notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult4 = await fetchNotifications(supabase, {
         type: 'comment',
         isRead: false,
       });
 
-      expect(finalNotifications).toHaveLength(initialCount + 1);
+      expect(finalResult4.notifications).toHaveLength(initialCount + 1);
     });
   });
 

@@ -70,14 +70,14 @@ describe('Notifications CRUD', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Fetch notifications for testUser
-      const notifications = await fetchNotifications(supabase, {
+      const result = await fetchNotifications(supabase, {
         type: 'comment',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result.notifications.length).toBeGreaterThan(0);
 
-      const specificNotification = notifications.find(
+      const specificNotification = result.notifications.find(
         (n) =>
           n.type === 'comment' &&
           n.resourceId === resource.id &&
@@ -140,14 +140,14 @@ describe('Notifications CRUD', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get the notification
-      const notifications = await fetchNotifications(supabase, {
+      const result = await fetchNotifications(supabase, {
         isRead: false,
         limit: 1,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result.notifications.length).toBeGreaterThan(0);
 
-      const specificNotification = notifications.find(
+      const specificNotification = result.notifications.find(
         (n) => n.isRead === false,
       );
       expect(specificNotification).toBeDefined();
@@ -157,11 +157,11 @@ describe('Notifications CRUD', () => {
       await markNotificationAsRead(supabase, specificNotification!.id);
 
       // Verify it's marked as read
-      const updatedNotifications = await fetchNotifications(supabase, {
+      const updatedResult = await fetchNotifications(supabase, {
         limit: 10,
       });
 
-      const readNotification = updatedNotifications.find(
+      const readNotification = updatedResult.notifications.find(
         (n) => n.id === specificNotification!.id,
       );
       expect(readNotification?.isRead).toBe(true);
@@ -200,7 +200,7 @@ describe('Notifications CRUD', () => {
         isRead: false,
       });
 
-      expect(unreadNotifications.length).toBeGreaterThan(0);
+      expect(unreadNotifications.notifications.length).toBeGreaterThan(0);
 
       // Mark all as read
       await markAllNotificationsAsRead(supabase);
@@ -210,7 +210,7 @@ describe('Notifications CRUD', () => {
         isRead: false,
       });
 
-      expect(stillUnreadNotifications.length).toBe(0);
+      expect(stillUnreadNotifications.notifications.length).toBe(0);
     });
   });
 });

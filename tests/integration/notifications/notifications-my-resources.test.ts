@@ -69,13 +69,13 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result = await fetchNotifications(supabase, {
         type: 'claim',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const claimNotification = notifications.find(n => 
+      expect(result.notifications.length).toBeGreaterThan(0);
+      const claimNotification = result.notifications.find(n => 
         n.type === 'claim' && 
         n.resourceId === resource.id && 
         n.actorId === claimingUser.id
@@ -112,13 +112,13 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result2 = await fetchNotifications(supabase, {
         type: 'resource_claim_cancelled',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const cancelledNotification = notifications.find(n => 
+      expect(result2.notifications.length).toBeGreaterThan(0);
+      const cancelledNotification = result2.notifications.find(n => 
         n.type === 'resource_claim_cancelled' && 
         n.resourceId === resource.id && 
         n.actorId === claimingUser.id
@@ -166,13 +166,13 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result3 = await fetchNotifications(supabase, {
         type: 'resource_claim_completed',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const completedNotification = notifications.find(n => 
+      expect(result3.notifications.length).toBeGreaterThan(0);
+      const completedNotification = result3.notifications.find(n => 
         n.type === 'resource_claim_completed' && 
         n.resourceId === resource.id && 
         n.actorId === claimingUser.id
@@ -204,12 +204,12 @@ describe('My Resources Notifications', () => {
         notes: 'Claiming my own resource',
       });
 
-      const notifications = await fetchNotifications(supabase, {
+      const result4 = await fetchNotifications(supabase, {
         type: 'claim',
       });
       
       // Should not find any notification for claiming own resource
-      const selfClaimNotification = notifications.find(n => 
+      const selfClaimNotification = result4.notifications.find(n => 
         n.type === 'claim' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -235,12 +235,12 @@ describe('My Resources Notifications', () => {
       // Cancel own claim
       await deleteResourceClaim(supabase, claim.id);
 
-      const notifications = await fetchNotifications(supabase, {
+      const result5 = await fetchNotifications(supabase, {
         type: 'resource_claim_cancelled',
       });
       
       // Should not find any notification for cancelling own claim
-      const selfCancelNotification = notifications.find(n => 
+      const selfCancelNotification = result5.notifications.find(n => 
         n.type === 'resource_claim_cancelled' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -274,12 +274,12 @@ describe('My Resources Notifications', () => {
         status: 'completed',
       });
 
-      const notifications = await fetchNotifications(supabase, {
+      const result6 = await fetchNotifications(supabase, {
         type: 'resource_claim_completed',
       });
       
       // Should not find any notification for completing own claim
-      const selfCompleteNotification = notifications.find(n => 
+      const selfCompleteNotification = result6.notifications.find(n => 
         n.type === 'resource_claim_completed' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id

@@ -68,13 +68,13 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA, {
+      const result = await fetchNotifications(clientA, {
         type: 'comment',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const commentNotification = notifications.find(n => 
+      expect(result.notifications.length).toBeGreaterThan(0);
+      const commentNotification = result.notifications.find(n => 
         n.type === 'comment' && 
         n.resourceId === resource.id && 
         n.actorId === interactingUser.id
@@ -113,13 +113,13 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA, {
+      const result2 = await fetchNotifications(clientA, {
         type: 'comment_reply',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const replyNotification = notifications.find(n => 
+      expect(result2.notifications.length).toBeGreaterThan(0);
+      const replyNotification = result2.notifications.find(n => 
         n.type === 'comment_reply' && 
         n.resourceId === resource.id && 
         n.actorId === interactingUser.id
@@ -157,13 +157,13 @@ describe('Social Interactions Notifications', () => {
       // Switch to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA, {
+      const result3 = await fetchNotifications(clientA, {
         type: 'shoutout_received',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const shoutoutNotification = notifications.find(n => 
+      expect(result3.notifications.length).toBeGreaterThan(0);
+      const shoutoutNotification = result3.notifications.find(n => 
         n.type === 'shoutout_received' && 
         n.communityId === testCommunity.id && 
         n.actorId === interactingUser.id
@@ -187,8 +187,8 @@ describe('Social Interactions Notifications', () => {
         'offer',
       );
 
-      const initialNotifications = await fetchNotifications(clientA);
-      const initialCount = initialNotifications.length;
+      const initialResult = await fetchNotifications(clientA);
+      const initialCount = initialResult.notifications.length;
 
       // Comment on own resource
       await createComment(clientA, {
@@ -196,8 +196,8 @@ describe('Social Interactions Notifications', () => {
         resourceId: resource.id,
       });
 
-      const finalNotifications = await fetchNotifications(clientA);
-      expect(finalNotifications).toHaveLength(initialCount);
+      const finalResult = await fetchNotifications(clientA);
+      expect(finalResult.notifications).toHaveLength(initialCount);
     });
 
     it('should not create notification when I reply to my own comment', async () => {
@@ -212,10 +212,10 @@ describe('Social Interactions Notifications', () => {
         resourceId: resource.id,
       });
 
-      const initialNotifications = await fetchNotifications(clientA, {
+      const initialResult2 = await fetchNotifications(clientA, {
         type: 'comment_reply',
       });
-      const initialCount = initialNotifications.length;
+      const initialCount = initialResult2.notifications.length;
 
       // Reply to own comment
       await createComment(clientA, {
@@ -224,10 +224,10 @@ describe('Social Interactions Notifications', () => {
         parentId: parentComment.id,
       });
 
-      const finalNotifications = await fetchNotifications(clientA, {
+      const finalResult2 = await fetchNotifications(clientA, {
         type: 'comment_reply',
       });
-      expect(finalNotifications).toHaveLength(initialCount);
+      expect(finalResult2.notifications).toHaveLength(initialCount);
     });
 
     it('should not create notification when I try to give myself a shoutout', async () => {

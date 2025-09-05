@@ -90,13 +90,13 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA, {
+      const result = await fetchNotifications(clientA, {
         type: 'new_resource',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const resourceNotification = notifications.find(n => n.resourceId === resource.id);
+      expect(result.notifications.length).toBeGreaterThan(0);
+      const resourceNotification = result.notifications.find(n => n.resourceId === resource.id);
       expect(resourceNotification).toBeDefined();
       expect(resourceNotification).toMatchObject({
         type: 'new_resource',
@@ -145,13 +145,13 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA, {
+      const result2 = await fetchNotifications(clientA, {
         type: 'new_event',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
-      const eventNotification = notifications.find(n => n.resourceId === event.id);
+      expect(result2.notifications.length).toBeGreaterThan(0);
+      const eventNotification = result2.notifications.find(n => n.resourceId === event.id);
       expect(eventNotification).toBeDefined();
       expect(eventNotification).toMatchObject({
         type: 'new_event',
@@ -174,12 +174,12 @@ describe('Community Activity Notifications', () => {
         'offer',
       );
 
-      const finalNotifications = await fetchNotifications(clientA, {
+      const result3 = await fetchNotifications(clientA, {
         type: 'new_resource',
       });
 
       // Should not have new notifications for own resource
-      const ownResourceNotifications = finalNotifications.filter(n => 
+      const ownResourceNotifications = result3.notifications.filter(n => 
         n.resourceId === resource.id && n.actorId === communityMember.id
       );
       expect(ownResourceNotifications).toHaveLength(0);
@@ -204,11 +204,11 @@ describe('Community Activity Notifications', () => {
 
       // Check that community member didn't receive notification
       await signIn(clientA, communityMember.email, 'TestPass123!');
-      const finalNotifications = await fetchNotifications(clientA, {
+      const result4 = await fetchNotifications(clientA, {
         type: 'new_resource',
       });
 
-      const newNotifications = finalNotifications.filter(n => n.resourceId === resource.id);
+      const newNotifications = result4.notifications.filter(n => n.resourceId === resource.id);
       expect(newNotifications).toHaveLength(0);
     });
   });

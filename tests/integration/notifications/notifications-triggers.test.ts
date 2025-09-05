@@ -70,14 +70,14 @@ describe('Notification Triggers', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result = await fetchNotifications(supabase, {
         type: 'comment',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result.notifications.find(n => 
         n.type === 'comment' && 
         n.resourceId === resource.id && 
         n.actorId === commenter.id
@@ -104,9 +104,9 @@ describe('Notification Triggers', () => {
         resourceId: resource.id,
       });
 
-      const finalNotifications = await fetchNotifications(supabase);
+      const finalResult = await fetchNotifications(supabase);
       
-      const selfCommentNotification = finalNotifications.find(n => 
+      const selfCommentNotification = finalResult.notifications.find(n => 
         n.type === 'comment' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -141,14 +141,14 @@ describe('Notification Triggers', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result2 = await fetchNotifications(supabase, {
         type: 'comment_reply',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result2.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result2.notifications.find(n => 
         n.type === 'comment_reply' && 
         n.resourceId === resource.id && 
         n.actorId === commenter.id
@@ -182,11 +182,11 @@ describe('Notification Triggers', () => {
         parentId: parentComment.id,
       });
 
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult2 = await fetchNotifications(supabase, {
         type: 'comment_reply',
       });
       
-      const selfReplyNotification = finalNotifications.find(n => 
+      const selfReplyNotification = finalResult2.notifications.find(n => 
         n.type === 'comment_reply' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -216,14 +216,14 @@ describe('Notification Triggers', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result3 = await fetchNotifications(supabase, {
         type: 'claim',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result3.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result3.notifications.find(n => 
         n.type === 'claim' && 
         n.resourceId === resource.id && 
         n.actorId === commenter.id
@@ -252,11 +252,11 @@ describe('Notification Triggers', () => {
         notes: 'Claiming my own resource',
       });
 
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult3 = await fetchNotifications(supabase, {
         type: 'claim',
       });
       
-      const selfClaimNotification = finalNotifications.find(n => 
+      const selfClaimNotification = finalResult3.notifications.find(n => 
         n.type === 'claim' && 
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
@@ -279,14 +279,14 @@ describe('Notification Triggers', () => {
       // Check notifications for resourceOwner (who is also a community member)
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result4 = await fetchNotifications(supabase, {
         type: 'new_resource',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result4.notifications.length).toBeGreaterThan(0);
 
-      const resourceNotification = notifications.find(
+      const resourceNotification = result4.notifications.find(
         (n) => n.resourceId === resource.id,
       );
       expect(resourceNotification).toBeDefined();
@@ -306,12 +306,12 @@ describe('Notification Triggers', () => {
         'offer',
       );
 
-      const finalNotifications = await fetchNotifications(supabase, {
+      const finalResult4 = await fetchNotifications(supabase, {
         type: 'new_resource',
       });
 
       // Should not have new notifications for own resource
-      const ownResourceNotification = finalNotifications.find(
+      const ownResourceNotification = finalResult4.notifications.find(
         (n) => n.resourceId === resource.id && n.actorId === resourceOwner.id,
       );
       expect(ownResourceNotification).toBeUndefined();
@@ -343,14 +343,14 @@ describe('Notification Triggers', () => {
       expect(countAfterComment).toBeGreaterThan(0);
 
       // Mark all as read and verify counts update
-      const notifications = await fetchNotifications(supabase, {
+      const result5 = await fetchNotifications(supabase, {
         isRead: false,
       });
-      if (notifications.length > 0) {
+      if (result5.notifications.length > 0) {
         const { markNotificationAsRead } = await import(
           '@/features/notifications'
         );
-        await markNotificationAsRead(supabase, notifications[0].id);
+        await markNotificationAsRead(supabase, result5.notifications[0].id);
       }
 
       const countAfterRead = await fetchNotificationCount(supabase);
@@ -381,14 +381,14 @@ describe('Notification Triggers', () => {
       // Switch to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const result6 = await fetchNotifications(supabase, {
         type: 'shoutout_received',
         limit: 10,
       });
 
-      expect(notifications.length).toBeGreaterThan(0);
+      expect(result6.notifications.length).toBeGreaterThan(0);
       
-      const specificNotification = notifications.find(n => 
+      const specificNotification = result6.notifications.find(n => 
         n.type === 'shoutout_received' && 
         n.communityId === testCommunity.id && 
         n.actorId === commenter.id

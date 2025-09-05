@@ -3,7 +3,7 @@ import { useSupabase, logger } from '@/shared';
 import type { Notification } from '../types/notification';
 import { notificationTransformer } from '../transformers';
 import { subscribeToNotifications } from '../api/subscribeToNotifications';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { NotificationSubscription } from '../api/subscribeToNotifications';
 import { useCurrentUser } from '@/features/auth';
 
 interface UseNotificationsResult {
@@ -23,7 +23,7 @@ export function useNotifications(): UseNotificationsResult {
       return;
     }
 
-    let channel: RealtimeChannel;
+    let subscription: NotificationSubscription;
     let userId: string;
 
     const setupRealtimeNotifications = async () => {
@@ -55,7 +55,7 @@ export function useNotifications(): UseNotificationsResult {
         // setNotifications(initialData.notifications);
 
         // Set up realtime subscription
-        channel = subscribeToNotifications(supabase, userId, {
+        subscription = await subscribeToNotifications(supabase, userId, {
           onNotification: async (payload) => {
             try {
               // Guard clause - ensure we have a notification ID
@@ -136,13 +136,12 @@ export function useNotifications(): UseNotificationsResult {
     setupRealtimeNotifications();
 
     return () => {
-      if (channel) {
+      if (subscription) {
         logger.debug('useNotifications: cleaning up realtime subscription', {
           userId,
           channelName: `user:${userId}:notifications`,
-          channelState: channel.state,
         });
-        supabase.removeChannel(channel);
+        subscription.cleanup();
       }
     };
   }, [supabase, currentUser]);
