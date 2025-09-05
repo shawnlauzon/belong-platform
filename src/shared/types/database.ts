@@ -3529,6 +3529,7 @@ export type Database = {
         | "going"
         | "attended"
         | "flaked"
+        | "received"
       resource_status: "open" | "completed" | "cancelled"
       resource_timeslot_status: "active" | "completed" | "cancelled"
       resource_type: "offer" | "request" | "event"
@@ -3724,6 +3725,7 @@ export const Constants = {
         "going",
         "attended",
         "flaked",
+        "received",
       ],
       resource_status: ["open", "completed", "cancelled"],
       resource_timeslot_status: ["active", "completed", "cancelled"],
