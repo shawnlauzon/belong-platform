@@ -18,11 +18,22 @@ export interface NotificationSubscriptionCallbacks {
   onStatusChange?: (status: string, error?: unknown) => void;
 }
 
+export interface NotificationSubscriptionOptions {
+  maxRetries?: number;
+  retryDelayMs?: number;
+}
+
 export interface NotificationSubscription {
   channel: RealtimeChannel;
   cleanup: () => Promise<void>;
+  retryCount?: number;
 }
 
+
+/**
+ * Helper function to sleep for a given number of milliseconds
+ */
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 /**
  * Helper function to wait for realtime connection to be established
@@ -48,144 +59,218 @@ function waitForConnection(supabase: SupabaseClient<Database>, maxWaitMs = 5000)
 }
 
 /**
- * Subscribe to real-time notifications for a specific user
+ * Subscribe to real-time notifications for a specific user with automatic retry on channel errors
  */
 export async function subscribeToNotifications(
   supabase: SupabaseClient<Database>,
   userId: string,
   callbacks: NotificationSubscriptionCallbacks,
+  options: NotificationSubscriptionOptions = {},
 ): Promise<NotificationSubscription> {
-  logger.debug('subscribeToNotifications: setting up realtime subscription', {
-    userId,
-    channelName: `user:${userId}:notifications`,
-  });
-
-  // Ensure realtime connection is established before creating channel
-  if (!supabase.realtime.isConnected()) {
-    logger.debug('subscribeToNotifications: connecting to realtime', {
+  const maxRetries = options.maxRetries ?? 20;
+  const retryDelayMs = options.retryDelayMs ?? 300;
+  
+  let retryCount = 0;
+  let isRetrying = false;
+  let cancelRetry = false;
+  
+  const attemptSubscription = async (): Promise<NotificationSubscription> => {
+    logger.debug('subscribeToNotifications: setting up realtime subscription', {
       userId,
-      connectionState: supabase.realtime.connectionState(),
+      channelName: `user:${userId}:notifications`,
+      attemptNumber: retryCount + 1,
+      maxRetries,
     });
-    supabase.realtime.connect();
-    
-    // Wait for connection to be established
-    try {
-      await waitForConnection(supabase);
-    } catch (error) {
-      logger.error('subscribeToNotifications: failed to establish realtime connection', {
+
+    // Ensure realtime connection is established before creating channel
+    if (!supabase.realtime.isConnected()) {
+      logger.debug('subscribeToNotifications: connecting to realtime', {
         userId,
-        error,
+        connectionState: supabase.realtime.connectionState(),
       });
-      throw error;
-    }
-  }
-
-  const channel = supabase
-    .channel(`user:${userId}:notifications`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`,
-      },
-      async (payload) => {
-        logger.info(
-          'subscribeToNotifications: received new notification via realtime',
-          {
-            userId,
-            notificationId: payload.new?.id,
-            type: payload.new?.type,
-            payloadStructure: {
-              hasNew: !!payload.new,
-              hasOld: !!payload.old,
-              eventType: payload.eventType,
-              schema: payload.schema,
-              table: payload.table,
-              commit_timestamp: payload.commit_timestamp,
-              errors: payload.errors,
-            },
-            fullPayload: payload,
-          },
-        );
-
-        // Call the provided callback
-        callbacks.onNotification(payload);
-      },
-    )
-    .subscribe((status, err) => {
-      logger.info(
-        'subscribeToNotifications: realtime subscription callback triggered',
-        {
-          status,
-          hasError: !!err,
+      supabase.realtime.connect();
+      
+      // Wait for connection to be established
+      try {
+        await waitForConnection(supabase);
+      } catch (error) {
+        logger.error('subscribeToNotifications: failed to establish realtime connection', {
           userId,
-          channelName: `user:${userId}:notifications`,
-        },
-      );
-
-      // Log channel errors but allow them - they're often transient
-      if (status === 'CHANNEL_ERROR') {
-        logger.warn('subscribeToNotifications: transient channel error (will retry)', {
-          userId,
-          error: err,
+          error,
         });
+        throw error;
       }
+    }
 
-      if (err) {
-        logger.error('subscribeToNotifications: realtime subscription error', {
-          error: err,
-          errorMessage: err?.message,
-          errorName: err?.name,
-          errorStack: err?.stack,
-          errorDetails: JSON.stringify(err),
-          userId,
-          channelName: `user:${userId}:notifications`,
-          subscriberStatus: status,
-        });
-      } else {
+    const channel = supabase
+      .channel(`user:${userId}:notifications`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          logger.info(
+            'subscribeToNotifications: received new notification via realtime',
+            {
+              userId,
+              notificationId: payload.new?.id,
+              type: payload.new?.type,
+              payloadStructure: {
+                hasNew: !!payload.new,
+                hasOld: !!payload.old,
+                eventType: payload.eventType,
+                schema: payload.schema,
+                table: payload.table,
+                commit_timestamp: payload.commit_timestamp,
+                errors: payload.errors,
+              },
+              fullPayload: payload,
+            },
+          );
+
+          // Call the provided callback
+          callbacks.onNotification(payload);
+        },
+      )
+      .subscribe(async (status, err) => {
         logger.info(
-          'subscribeToNotifications: realtime subscription established',
+          'subscribeToNotifications: realtime subscription callback triggered',
           {
             status,
+            hasError: !!err,
             userId,
             channelName: `user:${userId}:notifications`,
+            retryCount,
           },
         );
-      }
 
-      // Call optional status change callback
-      if (callbacks.onStatusChange) {
-        callbacks.onStatusChange(status, err);
-      }
-    });
+        // Handle channel errors with retry logic
+        if (status === 'CHANNEL_ERROR' && !isRetrying && !cancelRetry) {
+          if (retryCount < maxRetries) {
+            isRetrying = true;
+            retryCount++;
+            
+            logger.warn('subscribeToNotifications: channel error detected, attempting retry', {
+              userId,
+              error: err,
+              retryCount,
+              maxRetries,
+              nextRetryInMs: retryDelayMs,
+            });
+            
+            // Clean up the failed channel
+            await channel.unsubscribe();
+            supabase.removeChannel(channel);
+            
+            // Wait before retrying
+            await sleep(retryDelayMs);
+            
+            // Check if we should still retry (cleanup may have been called)
+            if (!cancelRetry) {
+              logger.info('subscribeToNotifications: retrying subscription', {
+                userId,
+                retryCount,
+                maxRetries,
+              });
+              
+              // Attempt to resubscribe
+              try {
+                const newSubscription = await attemptSubscription();
+                // Update the cleanup function to use the new subscription
+                Object.assign(subscription, newSubscription);
+                isRetrying = false;
+              } catch (retryError) {
+                logger.error('subscribeToNotifications: retry failed', {
+                  userId,
+                  retryCount,
+                  error: retryError,
+                });
+                isRetrying = false;
+              }
+            }
+          } else {
+            logger.error('subscribeToNotifications: max retries exceeded for channel error', {
+              userId,
+              retryCount,
+              maxRetries,
+              error: err,
+            });
+          }
+        }
 
-  const cleanup = async () => {
-    await channel.unsubscribe();
-    supabase.removeChannel(channel);
-    
-    // Wait for connection to properly close to prevent test isolation issues
-    // The connection needs time to transition from 'open' to 'closed' state
-    const startTime = Date.now();
-    const maxWaitMs = 3000; // 3 second timeout
-    
-    while (supabase.realtime.isConnected() || supabase.realtime.connectionState() !== 'closed') {
-      if (Date.now() - startTime > maxWaitMs) {
-        logger.warn('subscribeToNotifications: cleanup timeout, connection did not close properly', {
-          userId,
-          finalState: supabase.realtime.connectionState(),
-          finalConnected: supabase.realtime.isConnected(),
-        });
-        break;
-      }
+        if (err && status !== 'CHANNEL_ERROR') {
+          logger.error('subscribeToNotifications: realtime subscription error', {
+            error: err,
+            errorMessage: err?.message,
+            errorName: err?.name,
+            errorStack: err?.stack,
+            errorDetails: JSON.stringify(err),
+            userId,
+            channelName: `user:${userId}:notifications`,
+            subscriberStatus: status,
+          });
+        } else if (!err) {
+          logger.info(
+            'subscribeToNotifications: realtime subscription established',
+            {
+              status,
+              userId,
+              channelName: `user:${userId}:notifications`,
+              successAfterRetries: retryCount,
+            },
+          );
+          // Reset retry count on successful connection
+          if (status === 'SUBSCRIBED') {
+            retryCount = 0;
+            isRetrying = false;
+          }
+        }
+
+        // Call optional status change callback
+        if (callbacks.onStatusChange) {
+          callbacks.onStatusChange(status, err);
+        }
+      });
+
+    const cleanup = async () => {
+      // Signal that we should stop retrying
+      cancelRetry = true;
       
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  };
+      await channel.unsubscribe();
+      supabase.removeChannel(channel);
+      
+      // Wait for connection to properly close to prevent test isolation issues
+      // The connection needs time to transition from 'open' to 'closed' state
+      const startTime = Date.now();
+      const maxWaitMs = 3000; // 3 second timeout
+      
+      while (supabase.realtime.isConnected() || supabase.realtime.connectionState() !== 'closed') {
+        if (Date.now() - startTime > maxWaitMs) {
+          logger.warn('subscribeToNotifications: cleanup timeout, connection did not close properly', {
+            userId,
+            finalState: supabase.realtime.connectionState(),
+            finalConnected: supabase.realtime.isConnected(),
+          });
+          break;
+        }
+        
+        await sleep(100);
+      }
+    };
 
-  return {
-    channel,
-    cleanup,
+    const subscription: NotificationSubscription = {
+      channel,
+      cleanup,
+      retryCount,
+    };
+
+    return subscription;
   };
+  
+  // Start the initial subscription attempt
+  return attemptSubscription();
 }
