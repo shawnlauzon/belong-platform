@@ -24,7 +24,7 @@ export interface Notification {
     // Community Activity (1)
     | 'new_event'
     // Trust & Recognition (2)
-    | 'trust_points_received'
+    | 'trust_points_changed'
     | 'trust_level_changed';
 
   // Polymorphic references
@@ -132,7 +132,7 @@ export const getNotificationGroup = (
     case 'new_event':
       return NotificationGroup.COMMUNITY_ACTIVITY;
 
-    case 'trust_points_received':
+    case 'trust_points_changed':
     case 'trust_level_changed':
       return NotificationGroup.TRUST_RECOGNITION;
 

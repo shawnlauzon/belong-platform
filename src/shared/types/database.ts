@@ -116,32 +116,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["comment_id"]
-          },
-          {
-            foreignKeyName: "comments_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
-          },
-          {
             foreignKeyName: "comments_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "resources"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_shoutout_id_fkey"
-            columns: ["shoutout_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["shoutout_id"]
           },
           {
             foreignKeyName: "comments_shoutout_id_fkey"
@@ -235,13 +214,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_memberships_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "community_memberships_user_id_fkey1"
@@ -345,13 +317,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "conversations_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
             foreignKeyName: "conversations_last_message_sender_id_fkey"
             columns: ["last_message_sender_id"]
             isOneToOne: false
@@ -399,13 +364,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_member_codes_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "community_member_codes_user_id_fkey"
@@ -615,7 +573,7 @@ export type Database = {
           read_at: string | null
           resource_id: string | null
           shoutout_id: string | null
-          type: string
+          type: Database["public"]["Enums"]["notification_type"]
           updated_at: string | null
           user_id: string
         }
@@ -631,7 +589,7 @@ export type Database = {
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
-          type: string
+          type: Database["public"]["Enums"]["notification_type"]
           updated_at?: string | null
           user_id: string
         }
@@ -647,18 +605,11 @@ export type Database = {
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
-          type?: string
+          type?: Database["public"]["Enums"]["notification_type"]
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_notifications_shoutout"
-            columns: ["shoutout_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["shoutout_id"]
-          },
           {
             foreignKeyName: "fk_notifications_shoutout"
             columns: ["shoutout_id"]
@@ -684,13 +635,6 @@ export type Database = {
             foreignKeyName: "notifications_claim_id_fkey"
             columns: ["claim_id"]
             isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["claim_id"]
-          },
-          {
-            foreignKeyName: "notifications_claim_id_fkey"
-            columns: ["claim_id"]
-            isOneToOne: false
             referencedRelation: "resource_claims"
             referencedColumns: ["id"]
           },
@@ -702,32 +646,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_comment_id_fkey"
-            columns: ["comment_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["comment_id"]
-          },
-          {
             foreignKeyName: "notifications_community_id_fkey"
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
-            foreignKeyName: "notifications_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
           },
           {
             foreignKeyName: "notifications_resource_id_fkey"
@@ -829,13 +752,6 @@ export type Database = {
             foreignKeyName: "resource_claims_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
-          },
-          {
-            foreignKeyName: "resource_claims_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
@@ -876,20 +792,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "resource_communities_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
-            foreignKeyName: "resource_communities_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
-          },
-          {
             foreignKeyName: "resource_communities_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
@@ -921,13 +823,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "resource_responses_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
-          },
           {
             foreignKeyName: "resource_responses_resource_id_fkey"
             columns: ["resource_id"]
@@ -966,13 +861,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "resource_timeslots_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
-          },
           {
             foreignKeyName: "resource_timeslots_resource_id_fkey"
             columns: ["resource_id"]
@@ -1111,13 +999,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_shoutouts_community_id"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
             foreignKeyName: "shoutouts_from_user_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
@@ -1130,13 +1011,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["resource_id"]
           },
           {
             foreignKeyName: "shoutouts_resource_id_fkey"
@@ -1231,13 +1105,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "trust_score_logs_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
             foreignKeyName: "trust_score_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1287,13 +1154,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "trust_scores_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
-          },
-          {
             foreignKeyName: "trust_scores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1341,13 +1201,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_connections_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["community_id"]
           },
           {
             foreignKeyName: "user_connections_other_id_fkey"
@@ -1425,68 +1278,80 @@ export type Database = {
       }
       notification_details: {
         Row: {
-          actor_avatar: string | null
+          actor_avatar_url: string | null
+          actor_display_name: string | null
           actor_id: string | null
-          actor_name: string | null
-          claim_claimant_id: string | null
           claim_id: string | null
           claim_status:
             | Database["public"]["Enums"]["resource_claim_status"]
             | null
           comment_content: string | null
           comment_id: string | null
-          comment_parent_id: string | null
+          community_avatar_url: string | null
           community_id: string | null
           community_name: string | null
-          community_type: string | null
           created_at: string | null
           id: string | null
           is_read: boolean | null
           metadata: Json | null
           read_at: string | null
           resource_id: string | null
-          resource_location: string | null
-          resource_owner_id: string | null
-          resource_status: Database["public"]["Enums"]["resource_status"] | null
           resource_title: string | null
           resource_type: Database["public"]["Enums"]["resource_type"] | null
           shoutout_id: string | null
           shoutout_message: string | null
-          shoutout_receiver_id: string | null
-          shoutout_sender_id: string | null
-          trust_score: number | null
-          trust_score_calculated_at: string | null
-          type: string | null
+          type: Database["public"]["Enums"]["notification_type"] | null
           updated_at: string | null
           user_id: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["comment_parent_id"]
+            foreignKeyName: "fk_notifications_shoutout"
+            columns: ["shoutout_id"]
+            isOneToOne: false
+            referencedRelation: "shoutouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "resource_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
             isOneToOne: false
             referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["comment_parent_id"]
+            foreignKeyName: "notifications_community_id_fkey"
+            columns: ["community_id"]
             isOneToOne: false
-            referencedRelation: "notification_details"
-            referencedColumns: ["comment_id"]
-          },
-          {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
+            foreignKeyName: "notifications_resource_id_fkey"
+            columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "public_profiles"
+            referencedRelation: "resources"
             referencedColumns: ["id"]
           },
           {
@@ -1499,62 +1364,6 @@ export type Database = {
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resource_claims_claimant_id_fkey"
-            columns: ["claim_claimant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resource_claims_claimant_id_fkey"
-            columns: ["claim_claimant_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resources_owner_id_fkey"
-            columns: ["resource_owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resources_owner_id_fkey"
-            columns: ["resource_owner_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_from_user_id_fkey"
-            columns: ["shoutout_sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_from_user_id_fkey"
-            columns: ["shoutout_sender_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_to_user_id_fkey"
-            columns: ["shoutout_receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shoutouts_to_user_id_fkey"
-            columns: ["shoutout_receiver_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1822,18 +1631,18 @@ export type Database = {
       }
       create_notification: {
         Args: {
-          p_action_url: string
-          p_actor_id: string
-          p_body: string
-          p_claim_id: string
-          p_comment_id: string
-          p_community_id: string
-          p_conversation_id: string
-          p_message_id: string
-          p_metadata: Json
-          p_resource_id: string
-          p_title: string
-          p_type: string
+          p_action_url?: string
+          p_actor_id?: string
+          p_body?: string
+          p_claim_id?: string
+          p_comment_id?: string
+          p_community_id?: string
+          p_conversation_id?: string
+          p_message_id?: string
+          p_metadata?: Json
+          p_resource_id?: string
+          p_title?: string
+          p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
         }
         Returns: string
@@ -1844,9 +1653,10 @@ export type Database = {
           p_claim_id?: string
           p_comment_id?: string
           p_community_id?: string
+          p_metadata?: Json
           p_resource_id?: string
           p_shoutout_id?: string
-          p_type: string
+          p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
         }
         Returns: string
@@ -2256,6 +2066,7 @@ export type Database = {
           p_actor_id: string
           p_comment_id: string
           p_community_id?: string
+          p_content?: string
           p_resource_id: string
           p_user_id: string
         }
@@ -2266,6 +2077,7 @@ export type Database = {
           p_actor_id: string
           p_comment_id: string
           p_community_id?: string
+          p_content?: string
           p_parent_comment_id: string
           p_resource_id: string
           p_user_id: string
@@ -2285,13 +2097,21 @@ export type Database = {
         Returns: string
       }
       notify_new_resource: {
-        Args: {
-          p_actor_id: string
-          p_community_id: string
-          p_resource_id: string
-          p_resource_type: Database["public"]["Enums"]["resource_type"]
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_actor_id: string
+              p_community_id: string
+              p_resource_id: string
+              p_resource_type: Database["public"]["Enums"]["resource_type"]
+              p_user_id: string
+            }
+          | {
+              p_actor_id: string
+              p_community_id: string
+              p_resource_id: string
+              p_resource_type: string
+              p_user_id: string
+            }
         Returns: string
       }
       notify_resource_cancelled: {
@@ -2306,6 +2126,7 @@ export type Database = {
       notify_resource_updated: {
         Args: {
           p_actor_id: string
+          p_changes?: string[]
           p_claim_id?: string
           p_community_id?: string
           p_resource_id: string
@@ -2317,17 +2138,29 @@ export type Database = {
         Args: {
           p_actor_id: string
           p_community_id: string
+          p_content?: string
           p_shoutout_id: string
           p_user_id: string
         }
         Returns: string
       }
       notify_trust_level_change: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_community_id: string
+          p_new_level?: number
+          p_old_level?: number
+          p_user_id: string
+        }
         Returns: string
       }
       notify_trust_points: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_community_id: string
+          p_new_score?: number
+          p_old_score?: number
+          p_points_change?: number
+          p_user_id: string
+        }
         Returns: string
       }
       path: {
@@ -2525,7 +2358,10 @@ export type Database = {
         Returns: string
       }
       should_send_notification: {
-        Args: { p_type: string; p_user_id: string }
+        Args: {
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
+        }
         Returns: boolean
       }
       spheroid_in: {
@@ -3649,6 +3485,25 @@ export type Database = {
     }
     Enums: {
       conversation_type: "direct" | "community"
+      notification_type:
+        | "comment"
+        | "comment_reply"
+        | "claim"
+        | "message"
+        | "new_resource"
+        | "shoutout_received"
+        | "connection_accepted"
+        | "resource_claim_cancelled"
+        | "resource_claim_completed"
+        | "claim_approved"
+        | "claim_rejected"
+        | "claimed_resource_updated"
+        | "claimed_resource_cancelled"
+        | "community_member_joined"
+        | "community_member_left"
+        | "new_event"
+        | "trust_points_changed"
+        | "trust_level_changed"
       resource_category:
         | "tools"
         | "skills"
@@ -3822,6 +3677,26 @@ export const Constants = {
   public: {
     Enums: {
       conversation_type: ["direct", "community"],
+      notification_type: [
+        "comment",
+        "comment_reply",
+        "claim",
+        "message",
+        "new_resource",
+        "shoutout_received",
+        "connection_accepted",
+        "resource_claim_cancelled",
+        "resource_claim_completed",
+        "claim_approved",
+        "claim_rejected",
+        "claimed_resource_updated",
+        "claimed_resource_cancelled",
+        "community_member_joined",
+        "community_member_left",
+        "new_event",
+        "trust_points_changed",
+        "trust_level_changed",
+      ],
       resource_category: [
         "tools",
         "skills",
