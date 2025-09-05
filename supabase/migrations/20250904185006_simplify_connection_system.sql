@@ -259,6 +259,18 @@ DROP TYPE IF EXISTS connection_request_status;
 -- ============================================================================
 
 -- Remove connection_request notification type from constraint (keep connection_accepted)
+-- First, clean up any notifications with invalid types, especially connection_request
+DELETE FROM notifications WHERE type = 'connection_request';
+DELETE FROM notifications WHERE type NOT IN (
+    'comment', 'comment_reply', 'claim', 'direct_message', 'community_message', 'new_resource',
+    'shoutout_received', 'connection_accepted',
+    'resource_claim_cancelled', 'resource_claim_completed',
+    'claim_approved', 'claim_rejected', 'claimed_resource_updated', 'claimed_resource_cancelled',
+    'community_member_joined', 'community_member_left',
+    'new_event',
+    'trust_points_received', 'trust_level_changed'
+);
+
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
 ALTER TABLE notifications ADD CONSTRAINT notifications_type_check 
   CHECK (type IN (
