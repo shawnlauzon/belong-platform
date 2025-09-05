@@ -4,6 +4,7 @@ import type { Notification } from '../types/notification';
 import { notificationTransformer } from '../transformers';
 import { subscribeToNotifications } from '../api/subscribeToNotifications';
 import type { NotificationSubscription } from '../api/subscribeToNotifications';
+import { fetchNotifications } from '../api/fetchNotifications';
 import { useCurrentUser } from '@/features/auth';
 
 interface UseNotificationsResult {
@@ -42,17 +43,17 @@ export function useNotifications(): UseNotificationsResult {
           userId,
         });
 
-        // const initialData = await fetchNotifications(client, userId, {
-        //   limit: 1000,
-        // });
+        const initialData = await fetchNotifications(supabase, {
+          limit: 1000,
+        });
 
-        // logger.info('useNotifications: initial notifications loaded', {
-        //   userId,
-        //   notificationCount: initialData.notifications.length,
-        //   hasMore: initialData.hasMore,
-        // });
+        logger.info('useNotifications: initial notifications loaded', {
+          userId,
+          notificationCount: initialData.notifications.length,
+          hasMore: initialData.hasMore,
+        });
 
-        // setNotifications(initialData.notifications);
+        setNotifications(initialData.notifications);
 
         // Set up realtime subscription
         subscription = await subscribeToNotifications(supabase, userId, {

@@ -149,7 +149,7 @@ export async function subscribeToNotifications(
         );
 
         // Handle channel errors with retry logic
-        if (status === 'CHANNEL_ERROR' && !isRetrying && !cancelRetry) {
+        if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && !isRetrying && !cancelRetry) {
           if (retryCount < maxRetries) {
             isRetrying = true;
             retryCount++;
@@ -202,7 +202,7 @@ export async function subscribeToNotifications(
           }
         }
 
-        if (err && status !== 'CHANNEL_ERROR') {
+        if (err && status !== 'CHANNEL_ERROR' && status !== 'TIMED_OUT') {
           logger.error('subscribeToNotifications: realtime subscription error', {
             error: err,
             errorMessage: err?.message,
