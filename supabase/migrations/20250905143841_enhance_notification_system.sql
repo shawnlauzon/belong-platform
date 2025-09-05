@@ -415,8 +415,8 @@ BEGIN
 END;
 $function$;
 
--- Update notify_new_resource to work with enum
-CREATE OR REPLACE FUNCTION notify_new_resource(p_user_id UUID, p_actor_id UUID, p_resource_id UUID, p_community_id UUID, p_resource_type TEXT)
+-- Update notify_new_resource to work with resource_type enum (not TEXT)
+CREATE OR REPLACE FUNCTION notify_new_resource(p_user_id UUID, p_actor_id UUID, p_resource_id UUID, p_community_id UUID, p_resource_type resource_type)
 RETURNS UUID LANGUAGE plpgsql AS $function$
 DECLARE
   notification_type notification_type;
@@ -438,95 +438,6 @@ BEGIN
 END;
 $function$;
 
--- Update shoutout trigger to pass shoutout content
-CREATE OR REPLACE FUNCTION notify_on_shoutout()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
-BEGIN
-  PERFORM notify_shoutout(
-    NEW.receiver_id,
-    NEW.sender_id,
-    NEW.id,
-    NEW.community_id,
-    NEW.message
-  );
-  
-  RETURN NEW;
-END;
-$function$;
-
--- Update notify_new_resource to work with enum
-CREATE OR REPLACE FUNCTION notify_new_resource(p_user_id UUID, p_actor_id UUID, p_resource_id UUID, p_community_id UUID, p_resource_type TEXT)
-RETURNS UUID LANGUAGE plpgsql AS $function$
-DECLARE
-  notification_type notification_type;
-BEGIN
-  -- Determine notification type based on resource type
-  IF p_resource_type = 'event' THEN
-    notification_type := 'new_event';
-  ELSE
-    notification_type := 'new_resource';
-  END IF;
-  
-  RETURN create_notification_base(
-    p_user_id := p_user_id,
-    p_type := notification_type,
-    p_actor_id := p_actor_id,
-    p_resource_id := p_resource_id,
-    p_community_id := p_community_id
-  );
-END;
-$function$;
-
--- Update trust points trigger to notify on both increases and decreases
-CREATE OR REPLACE FUNCTION notify_on_trust_points()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
-DECLARE
-  score_change INTEGER;
-  old_score INTEGER;
-  new_score INTEGER;
-BEGIN
-  -- Get score values
-  old_score := COALESCE(OLD.score, 0);
-  new_score := NEW.score;
-  score_change := new_score - old_score;
-  
-  -- Notify on any score change (positive or negative)
-  IF score_change != 0 THEN
-    PERFORM notify_trust_points(
-      NEW.user_id,
-      NEW.community_id,
-      score_change,
-      new_score,
-      old_score
-    );
-  END IF;
-  
-  RETURN NEW;
-END;
-$function$;
-
--- Update notify_new_resource to work with enum
-CREATE OR REPLACE FUNCTION notify_new_resource(p_user_id UUID, p_actor_id UUID, p_resource_id UUID, p_community_id UUID, p_resource_type TEXT)
-RETURNS UUID LANGUAGE plpgsql AS $function$
-DECLARE
-  notification_type notification_type;
-BEGIN
-  -- Determine notification type based on resource type
-  IF p_resource_type = 'event' THEN
-    notification_type := 'new_event';
-  ELSE
-    notification_type := 'new_resource';
-  END IF;
-  
-  RETURN create_notification_base(
-    p_user_id := p_user_id,
-    p_type := notification_type,
-    p_actor_id := p_actor_id,
-    p_resource_id := p_resource_id,
-    p_community_id := p_community_id
-  );
-END;
-$function$;
 -- Recreate notify_new_message function to work with enum
 CREATE OR REPLACE FUNCTION notify_new_message()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
@@ -612,3 +523,39 @@ BEGIN
   RETURN notification_id;
 END;
 $function$;
+
+-- Fix the trust points trigger to pass the correct parameters with amount
+-- First update the trigger function to pass the amount and scores
+CREATE OR REPLACE FUNCTION notify_on_trust_points()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $function$
+DECLARE
+  score_change INTEGER;
+  old_score INTEGER;
+  new_score INTEGER;
+BEGIN
+  -- Get score values
+  old_score := COALESCE(OLD.score, 0);
+  new_score := NEW.score;
+  score_change := new_score - old_score;
+  
+  -- Notify on any score change (positive or negative)
+  IF score_change != 0 THEN
+    PERFORM notify_trust_points(
+      NEW.user_id,
+      NEW.community_id,
+      score_change,
+      new_score,
+      old_score
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$function$;
+
+-- Recreate the trigger 
+DROP TRIGGER IF EXISTS trust_points_notification_trigger ON trust_scores;
+CREATE TRIGGER trust_points_notification_trigger
+  AFTER UPDATE ON trust_scores
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_on_trust_points();
