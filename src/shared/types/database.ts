@@ -3486,7 +3486,7 @@ export type Database = {
       }
     }
     Enums: {
-      commitment_level_enum: "interested" | "committed"
+      commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
       conversation_type: "direct" | "community"
       notification_type:
@@ -3680,7 +3680,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      commitment_level_enum: ["interested", "committed"],
+      commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],
       conversation_type: ["direct", "community"],
       notification_type: [
