@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import type { Notification } from '../types/notification';
 import { notificationTransformer } from '../transformers';
@@ -6,6 +7,7 @@ import { subscribeToNotifications } from '../api/subscribeToNotifications';
 import type { NotificationSubscription } from '../api/subscribeToNotifications';
 import { fetchNotifications } from '../api/fetchNotifications';
 import { useCurrentUser } from '@/features/auth';
+import { notificationKeys } from '../queries';
 
 interface UseNotificationsResult {
   data: Notification[];
@@ -14,52 +16,54 @@ interface UseNotificationsResult {
 
 export function useNotifications(): UseNotificationsResult {
   const supabase = useSupabase();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const { data: currentUser, isLoading: isCurrentUserLoading } =
-    useCurrentUser();
+  const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
 
+  // Use React Query to fetch and cache notifications
+  const query = useQuery({
+    queryKey: notificationKeys.list({ limit: 1000 }),
+    queryFn: async () => {
+      if (!supabase || !currentUser) {
+        throw new Error('Supabase client or user not available');
+      }
+      
+      logger.debug('useNotifications: loading notifications via React Query', {
+        userId: currentUser.id,
+      });
+      
+      const data = await fetchNotifications(supabase, { limit: 1000 });
+      
+      logger.info('useNotifications: notifications loaded via React Query', {
+        userId: currentUser.id,
+        notificationCount: data.notifications.length,
+        hasMore: data.hasMore,
+      });
+      
+      return data.notifications;
+    },
+    enabled: !!supabase && !!currentUser,
+    staleTime: 0, // Always consider stale so invalidations work properly
+  });
+
+  // Set up real-time subscription to update React Query cache
   useEffect(() => {
-    if (!supabase || !currentUser) {
-      logger.debug('useNotifications: waiting for supabase client');
+    if (!supabase || !currentUser || !query.data) {
       return;
     }
 
     let subscription: NotificationSubscription;
-    let userId: string;
+    const userId = currentUser.id;
 
     const setupRealtimeNotifications = async () => {
       try {
-        userId = currentUser.id;
-
         logger.info(
           'useNotifications: initializing notification subscription',
-          {
-            userId,
-          },
+          { userId },
         );
 
-        // Load initial notifications
-        logger.debug('useNotifications: loading initial notifications', {
-          userId,
-        });
-
-        const initialData = await fetchNotifications(supabase, {
-          limit: 1000,
-        });
-
-        logger.info('useNotifications: initial notifications loaded', {
-          userId,
-          notificationCount: initialData.notifications.length,
-          hasMore: initialData.hasMore,
-        });
-
-        setNotifications(initialData.notifications);
-
-        // Set up realtime subscription
         subscription = await subscribeToNotifications(supabase, userId, {
           onNotification: async (payload) => {
             try {
-              // Guard clause - ensure we have a notification ID
               if (!payload.new.id) {
                 logger.warn('useNotifications: received payload without ID', {
                   payload,
@@ -76,27 +80,17 @@ export function useNotifications(): UseNotificationsResult {
                 },
               );
 
-              // Fetch full notification with joins
-              const { data, error: fetchError } = await supabase
+              const { data } = await supabase
                 .from('notification_details')
                 .select('*')
                 .eq('id', payload.new.id)
                 .single();
 
-              logger.debug('useNotifications: notification fetch completed', {
-                notificationId: payload.new.id,
-                userId,
-                hasData: !!data,
-                hasError: !!fetchError,
-                fetchError,
-                dataKeys: data ? Object.keys(data) : null,
-              });
-
               if (data) {
                 const newNotification = notificationTransformer(data);
 
                 logger.debug(
-                  'useNotifications: adding new notification to state',
+                  'useNotifications: adding new notification to React Query cache',
                   {
                     notificationId: newNotification.id,
                     type: newNotification.type,
@@ -104,14 +98,18 @@ export function useNotifications(): UseNotificationsResult {
                   },
                 );
 
-                // Add new notification to the beginning of the list (most recent first)
-                setNotifications((prev) => [newNotification, ...prev]);
+                // Update React Query cache with new notification
+                queryClient.setQueryData(
+                  notificationKeys.list({ limit: 1000 }),
+                  (oldData: Notification[] | undefined) => {
+                    if (!oldData) return [newNotification];
+                    return [newNotification, ...oldData];
+                  },
+                );
               } else {
                 logger.warn(
                   'useNotifications: failed to fetch new notification data',
-                  {
-                    userId,
-                  },
+                  { userId },
                 );
               }
             } catch (fetchError) {
@@ -145,10 +143,10 @@ export function useNotifications(): UseNotificationsResult {
         subscription.cleanup();
       }
     };
-  }, [supabase, currentUser]);
+  }, [supabase, currentUser, query.data, queryClient]);
 
   return {
-    data: notifications,
-    isLoading: isCurrentUserLoading,
+    data: query.data || [],
+    isLoading: query.isLoading,
   };
 }
