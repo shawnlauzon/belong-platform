@@ -14,6 +14,7 @@ export interface TrustPointsMetadata {
   amount: number;
   old_score?: number;
   new_score?: number;
+  reason?: string;
 }
 
 export interface TrustLevelMetadata {
@@ -58,7 +59,8 @@ export function getTypedMetadata(
       return {
         amount: typeof metadata.amount === 'number' ? metadata.amount : 0,
         old_score: typeof metadata.old_score === 'number' ? metadata.old_score : undefined,
-        new_score: typeof metadata.new_score === 'number' ? metadata.new_score : undefined
+        new_score: typeof metadata.new_score === 'number' ? metadata.new_score : undefined,
+        reason: typeof metadata.reason === 'string' ? metadata.reason : undefined
       };
 
     case 'trust_level_changed':
