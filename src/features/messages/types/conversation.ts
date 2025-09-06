@@ -1,7 +1,8 @@
 import { Database } from '../../../shared/types/database';
 import { UserSummary } from '../../users/types';
 
-export type ConversationParticipantRow = Database['public']['Tables']['conversation_participants']['Row'];
+export type ConversationParticipantRow =
+  Database['public']['Tables']['conversation_participants']['Row'];
 
 export type ConversationType = 'direct' | 'community';
 
@@ -49,6 +50,7 @@ export interface StartConversationInput {
 export interface ConversationListFilters {
   search?: string;
   hasUnread?: boolean;
+  conversationType?: ConversationType;
 }
 
 export interface ConversationListResponse {

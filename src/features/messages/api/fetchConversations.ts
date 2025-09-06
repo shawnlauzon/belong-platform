@@ -9,10 +9,10 @@ export async function fetchConversations(
   client: SupabaseClient<Database>,
   filters?: ConversationListFilters,
   limit: number = 20,
-  cursor?: string
+  cursor?: string,
 ): Promise<ConversationListResponse> {
   const { data: userData, error: userError } = await client.auth.getUser();
-  
+
   if (userError) {
     logger.error('Error fetching user', { error: userError });
     throw userError;
@@ -22,7 +22,8 @@ export async function fetchConversations(
 
   let query = client
     .from('conversations')
-    .select(`
+    .select(
+      `
       *,
       conversation_participants!inner(
         user_id,
@@ -30,7 +31,8 @@ export async function fetchConversations(
         last_read_at,
         public_profiles(id, first_name, avatar_url)
       )
-    `)
+    `,
+    )
     .order('last_message_at', { ascending: false, nullsFirst: false })
     .limit(limit + 1);
 
@@ -40,6 +42,10 @@ export async function fetchConversations(
 
   if (filters?.hasUnread) {
     query = query.gt('conversation_participants.unread_count', 0);
+  }
+
+  if (filters?.conversationType) {
+    query = query.eq('conversation_type', filters.conversationType);
   }
 
   const { data, error } = await query;
@@ -56,7 +62,7 @@ export async function fetchConversations(
   const hasMore = data.length > limit;
   const conversations = data
     .slice(0, limit)
-    .filter(conv => {
+    .filter((conv) => {
       const participants = conv.conversation_participants as Array<{
         user_id: string;
         unread_count: number;
@@ -67,14 +73,19 @@ export async function fetchConversations(
           avatar_url: string | null;
         };
       }>;
-      return participants.length === 2 && 
-             participants.some(p => p.user_id === userId);
+      return (
+        participants.length === 2 &&
+        participants.some((p) => p.user_id === userId)
+      );
     })
-    .map(conv => transformConversation(conv as ConversationWithParticipants, userId));
+    .map((conv) =>
+      transformConversation(conv as ConversationWithParticipants, userId),
+    );
 
-  const nextCursor = hasMore && conversations.length > 0
-    ? conversations[conversations.length - 1].lastMessageAt?.toISOString()
-    : undefined;
+  const nextCursor =
+    hasMore && conversations.length > 0
+      ? conversations[conversations.length - 1].lastMessageAt?.toISOString()
+      : undefined;
 
   return {
     conversations,
