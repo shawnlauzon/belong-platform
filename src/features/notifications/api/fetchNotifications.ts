@@ -29,10 +29,18 @@ export async function fetchNotifications(
     limit,
   });
 
-  // RLS will automatically filter to current user's notifications
+  // Get the current user to filter notifications
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Explicitly filter by user_id since views don't inherit RLS from underlying tables
   let query = client
     .from('notification_details')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit + 1);
 
