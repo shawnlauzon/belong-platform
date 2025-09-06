@@ -33,7 +33,8 @@ export function transformConversation(
     lastReadAt: currentParticipant.last_read_at
       ? new Date(currentParticipant.last_read_at)
       : null,
-    conversationType: 'direct',
+    conversationType: row.conversation_type,
+    communityId: row.community_id ? row.community_id : undefined,
   };
 }
 
