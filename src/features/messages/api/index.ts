@@ -10,3 +10,4 @@ export * from './blockUser';
 export * from './unblockUser';
 export * from './reportMessage';
 export * from './fetchCommunityConversation';
+export * from './createMessageSubscription';
