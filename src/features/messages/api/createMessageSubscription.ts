@@ -8,7 +8,13 @@ import type { CurrentUser } from '@/features/users/types';
 
 // Type for Supabase postgres_changes payload
 interface PostgresChangesPayload {
-  new: Record<string, unknown> & { id?: string; conversation_id?: string; sender_id?: string; content?: string; created_at?: string };
+  new: Record<string, unknown> & {
+    id?: string;
+    conversation_id?: string;
+    sender_id?: string;
+    content?: string;
+    created_at?: string;
+  };
   old?: Record<string, unknown>;
   eventType: string;
   schema: string;
@@ -34,17 +40,19 @@ export interface MessageSubscriptionResult {
  * Creates real-time message subscriptions for a user.
  * This function extracts the core subscription logic from MessageRealtimeProvider
  * to make it testable without React context.
- * 
+ *
  * @param dependencies - The required dependencies for creating the subscription
  * @returns Promise that resolves to subscription result with cleanup function
  */
 export async function createMessageSubscription(
-  dependencies: CreateMessageSubscriptionDependencies
+  dependencies: CreateMessageSubscriptionDependencies,
 ): Promise<MessageSubscriptionResult> {
   const { supabase, queryClient, userId, currentUser, logger } = dependencies;
   const channels = new Map<string, RealtimeChannel>();
 
-  logger.info('createMessageSubscription: initializing subscriptions', { userId });
+  logger.info('createMessageSubscription: initializing subscriptions', {
+    userId,
+  });
 
   // Subscribe to conversation updates (for last message, unread counts, etc.)
   const conversationChannel = supabase
@@ -67,19 +75,17 @@ export async function createMessageSubscription(
           messageKeys.conversationList(),
           (oldData: Conversation[] | undefined) => {
             if (!oldData) return oldData;
-            return oldData.map(conv =>
-              conv.id === payload.new.id
-                ? { ...conv, ...payload.new }
-                : conv
+            return oldData.map((conv) =>
+              conv.id === payload.new.id ? { ...conv, ...payload.new } : conv,
             );
-          }
+          },
         );
 
         // Invalidate counts to trigger refetch
         queryClient.invalidateQueries({
-          queryKey: ['unreadCounts'],
+          queryKey: messageKeys.unreadCount(),
         });
-      }
+      },
     )
     .subscribe();
 
@@ -97,12 +103,15 @@ export async function createMessageSubscription(
       },
       async (payload: PostgresChangesPayload) => {
         const conversationId = payload.new.conversation_id as string;
-        
+
         if (!conversationId || !payload.new.id || !payload.new.sender_id) {
-          logger.warn('createMessageSubscription: received incomplete message payload', {
-            payload,
-            userId,
-          });
+          logger.warn(
+            'createMessageSubscription: received incomplete message payload',
+            {
+              payload,
+              userId,
+            },
+          );
           return;
         }
 
@@ -128,7 +137,7 @@ export async function createMessageSubscription(
             created_at: payload.new.created_at as string,
             updated_at: payload.new.updated_at as string,
           };
-          
+
           // Convert profile to UserSummary format
           const senderSummary = {
             id: senderProfile.id,
@@ -137,12 +146,12 @@ export async function createMessageSubscription(
             fullName: senderProfile.full_name || undefined,
             avatarUrl: senderProfile.avatar_url || undefined,
           };
-          
+
           const newMessage = transformMessage(
             messageData,
             userId,
             currentUser,
-            payload.new.sender_id === userId ? senderSummary : senderSummary
+            payload.new.sender_id === userId ? senderSummary : senderSummary,
           );
           newMessage.conversationId = conversationId;
 
@@ -152,11 +161,11 @@ export async function createMessageSubscription(
             (oldData: Message[] | undefined) => {
               if (!oldData) return [newMessage];
               // Check if message already exists to avoid duplicates
-              if (oldData.some(msg => msg.id === newMessage.id)) {
+              if (oldData.some((msg) => msg.id === newMessage.id)) {
                 return oldData;
               }
               return [...oldData, newMessage];
-            }
+            },
           );
 
           // Update conversation list to reorder and show latest message
@@ -164,33 +173,40 @@ export async function createMessageSubscription(
             messageKeys.conversationList(),
             (oldData: Conversation[] | undefined) => {
               if (!oldData) return oldData;
-              
-              const existingConversation = oldData.find(c => c.id === conversationId);
+
+              const existingConversation = oldData.find(
+                (c) => c.id === conversationId,
+              );
               if (existingConversation) {
                 // Move conversation to top with updated last message
-                const updated = oldData.filter(c => c.id !== conversationId);
-                return [{
-                  ...existingConversation,
-                  lastMessageAt: new Date(payload.new.created_at as string),
-                  lastMessagePreview: (payload.new.content as string).substring(0, 100),
-                  lastMessageSenderId: payload.new.sender_id as string
-                }, ...updated];
+                const updated = oldData.filter((c) => c.id !== conversationId);
+                return [
+                  {
+                    ...existingConversation,
+                    lastMessageAt: new Date(payload.new.created_at as string),
+                    lastMessagePreview: (
+                      payload.new.content as string
+                    ).substring(0, 100),
+                    lastMessageSenderId: payload.new.sender_id as string,
+                  },
+                  ...updated,
+                ];
               }
-              
+
               // If conversation not found, invalidate to refetch
               queryClient.invalidateQueries({
                 queryKey: messageKeys.conversationList(),
               });
               return oldData;
-            }
+            },
           );
 
           // Invalidate counts to trigger refetch
           queryClient.invalidateQueries({
-            queryKey: ['unreadCounts'],
+            queryKey: messageKeys.unreadCount(),
           });
         }
-      }
+      },
     )
     .on(
       'postgres_changes',
@@ -201,12 +217,15 @@ export async function createMessageSubscription(
       },
       async (payload: PostgresChangesPayload) => {
         const conversationId = payload.new.conversation_id as string;
-        
+
         if (!conversationId || !payload.new.id || !payload.new.sender_id) {
-          logger.warn('createMessageSubscription: received incomplete message update payload', {
-            payload,
-            userId,
-          });
+          logger.warn(
+            'createMessageSubscription: received incomplete message update payload',
+            {
+              payload,
+              userId,
+            },
+          );
           return;
         }
 
@@ -231,7 +250,7 @@ export async function createMessageSubscription(
             created_at: payload.new.created_at as string,
             updated_at: payload.new.updated_at as string,
           };
-          
+
           // Convert profile to UserSummary format
           const senderSummary = {
             id: senderProfile.id,
@@ -240,12 +259,12 @@ export async function createMessageSubscription(
             fullName: senderProfile.full_name || undefined,
             avatarUrl: senderProfile.avatar_url || undefined,
           };
-          
+
           const updatedMessage = transformMessage(
             messageData,
             userId,
             currentUser,
-            payload.new.sender_id === userId ? senderSummary : senderSummary
+            payload.new.sender_id === userId ? senderSummary : senderSummary,
           );
           updatedMessage.conversationId = conversationId;
 
@@ -254,21 +273,21 @@ export async function createMessageSubscription(
             messageKeys.list(conversationId),
             (oldData: Message[] | undefined) => {
               if (!oldData) return oldData;
-              return oldData.map(msg =>
-                msg.id === updatedMessage.id ? updatedMessage : msg
+              return oldData.map((msg) =>
+                msg.id === updatedMessage.id ? updatedMessage : msg,
               );
-            }
+            },
           );
         }
-      }
+      },
     )
     .subscribe();
 
   channels.set('messages', messageChannel);
 
-  logger.info('createMessageSubscription: subscriptions established', { 
+  logger.info('createMessageSubscription: subscriptions established', {
     userId,
-    channelCount: channels.size 
+    channelCount: channels.size,
   });
 
   const cleanup = async () => {
