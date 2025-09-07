@@ -170,6 +170,71 @@ The `BelongProvider` manages authentication state and requires configuration:
 </BelongProvider>
 ```
 
+### Real-Time Providers
+
+For optimal real-time functionality, wrap your app with the specialized real-time providers. These handle all real-time subscriptions and cache updates automatically:
+
+```tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { 
+  BelongProvider,
+  NotificationRealtimeProvider,
+  MessageRealtimeProvider
+} from '@belongnetwork/platform';
+import App from './App';
+
+const queryClient = new QueryClient();
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BelongProvider
+        config={{
+          supabaseUrl: process.env.VITE_SUPABASE_URL!,
+          supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY!,
+          mapboxPublicToken: process.env.VITE_MAPBOX_PUBLIC_TOKEN!,
+        }}
+      >
+        {/* Real-time providers handle subscriptions automatically */}
+        <NotificationRealtimeProvider>
+          <MessageRealtimeProvider>
+            <App />
+          </MessageRealtimeProvider>
+        </NotificationRealtimeProvider>
+      </BelongProvider>
+    </QueryClientProvider>
+  </React.StrictMode>,
+);
+```
+
+**Why Use Real-Time Providers?**
+
+- 🔄 **Automatic Cache Updates** - React Query caches stay in sync with real-time changes
+- 🚫 **No Manual Subscriptions** - Providers handle all real-time setup and cleanup
+- 📱 **Unified Count Updates** - Badge counts update instantly across the app
+- ⚡ **Better Performance** - Smart cache invalidation reduces unnecessary refetches
+- 🧹 **Clean Architecture** - Keeps real-time logic separate from business logic
+
+**NotificationRealtimeProvider Features:**
+- Listens for new notifications and updates the cache instantly
+- Updates unread notification counts in real-time
+- Automatically fetches full notification details when new ones arrive
+- Handles user authentication changes gracefully
+
+**MessageRealtimeProvider Features:**
+- Updates message lists and conversation previews instantly
+- Maintains unread message counts across conversations
+- Handles both direct messages and community chat
+- Updates conversation ordering based on latest messages
+
+**Optional Usage:**
+These providers are optional but highly recommended for the best user experience. Without them:
+- Data updates only occur when hooks refetch (on focus, mount, etc.)
+- Users won't see real-time notifications or messages
+- Badge counts won't update until manual refresh
+
 ### Hook Architecture
 
 The platform follows React best practices with single-purpose hooks:
@@ -304,7 +369,7 @@ import {
   useSendMessage,
   useMarkAsRead,
   useTypingIndicator,
-  useUnreadCount,
+  useUnreadCounts, // Unified count hook for all badges
 } from '@belongnetwork/platform';
 
 // List conversations with realtime updates
@@ -342,8 +407,12 @@ const { sendTyping, typingUsers, isAnyoneTyping } = useTypingIndicator({
 sendTyping(true); // user is typing
 sendTyping(false); // user stopped typing
 
-// Get total unread count across all conversations
-const { data: totalUnread } = useUnreadCount();
+// Get unified unread counts for notifications and messages
+const { data: counts } = useUnreadCounts();
+// counts.notifications - unread notification count
+// counts.messages - total unread message count  
+// counts.total - total badge count (notifications + messages)
+// counts.messagesByConversation - unread count per conversation
 ```
 
 **Key Features:**
