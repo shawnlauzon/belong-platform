@@ -1,7 +1,7 @@
+import { UseQueryOptions } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useMessages } from './useMessages';
 import { useCommunityConversation } from './useCommunityConversation';
-
 import type { Message } from '@/features/messages/types';
 
 /**
@@ -11,6 +11,7 @@ import type { Message } from '@/features/messages/types';
  * Returns messages for the community chat if conversation exists.
  *
  * @param communityId - The community ID to fetch messages for
+ * @param options - Optional React Query options
  * @returns Query state for community messages
  *
  * @example
@@ -23,7 +24,7 @@ import type { Message } from '@/features/messages/types';
  *
  *   return (
  *     <div>
- *       {messages.map(message => (
+ *       {messages?.map(message => (
  *         <div key={message.id}>
  *           <strong>{message.sender.displayName}</strong>: {message.content}
  *         </div>
@@ -33,37 +34,24 @@ import type { Message } from '@/features/messages/types';
  * }
  * ```
  */
-interface UseCommunityMessagesResult {
-  data: Message[];
-  isLoading: boolean;
-  error?: Error | null;
-}
-
-export function useCommunityMessages(communityId: string): UseCommunityMessagesResult {
+export function useCommunityMessages(
+  communityId: string,
+  options?: Partial<UseQueryOptions<Message[], Error>>
+) {
   // First get the community conversation
   const { data: conversation, error: conversationError } = useCommunityConversation(communityId);
 
   // Then get messages for that conversation
-  // Note: useMessages doesn't support filters or options - it loads all messages for the conversation
-  const messagesQuery = useMessages(conversation?.id || '');
+  const messagesQuery = useMessages(conversation?.id || '', options);
 
-  // If there's a conversation error, we want to surface that
+  // If there's a conversation error, log it
   if (conversationError) {
-    logger.error('💬 API: Error fetching community conversation for messages', {
+    logger.error('useCommunityMessages: Error fetching community conversation', {
       error: conversationError,
       communityId,
     });
-    
-    return {
-      data: [],
-      isLoading: false,
-      error: conversationError,
-    };
   }
 
-  return {
-    data: messagesQuery.data,
-    isLoading: messagesQuery.isLoading,
-    error: null,
-  };
+  // Return the messages query directly - it handles the error state
+  return messagesQuery;
 }

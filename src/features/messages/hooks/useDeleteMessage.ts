@@ -13,7 +13,7 @@ export function useDeleteMessage(conversationId: string) {
     onSuccess: () => {
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({
-        queryKey: messageKeys.messages(conversationId),
+        queryKey: messageKeys.list(conversationId),
       });
       
       // Invalidate conversation to update last message if needed

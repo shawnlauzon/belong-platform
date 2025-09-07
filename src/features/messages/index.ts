@@ -12,3 +12,6 @@ export * from './transformers';
 
 // Query keys
 export { messageKeys } from './queries';
+
+// Providers
+export { MessageRealtimeProvider } from './providers/MessageRealtimeProvider';

@@ -15,7 +15,6 @@ export { markAllAsRead as markAllNotificationsAsRead } from './api/markAllAsRead
 // Hooks
 export {
   useNotifications,
-  useNotificationCount,
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from './hooks';
@@ -27,3 +26,6 @@ export { transformNotification } from './transformers';
 
 // Queries
 export { notificationKeys } from './queries';
+
+// Providers
+export { NotificationRealtimeProvider } from './providers/NotificationRealtimeProvider';

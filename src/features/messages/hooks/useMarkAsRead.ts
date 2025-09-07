@@ -17,7 +17,7 @@ export function useMarkAsRead() {
       
       // Invalidate conversations list
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversations(),
+        queryKey: messageKeys.conversationList(),
       });
       
       // Invalidate unread count

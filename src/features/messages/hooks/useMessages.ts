@@ -1,277 +1,97 @@
-import { useState, useEffect } from 'react';
-import { useSupabase } from '../../../shared/hooks';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useSupabase, logger } from '@/shared';
 import { fetchMessages } from '../api';
 import { Message } from '../types';
 import { transformMessage } from '../transformers';
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { useConversation } from './useConversation';
-import { useCurrentUser } from '../../auth/hooks/useCurrentUser';
-import { logger } from '../../../shared';
+import { useCurrentUser } from '@/features/auth';
+import { messageKeys } from '../queries';
+import { STANDARD_CACHE_TIME } from '@/config';
 
-interface UseMessagesResult {
-  data: Message[];
-  isLoading: boolean;
-}
+/**
+ * Hook for fetching messages for a conversation.
+ * 
+ * Real-time updates are handled by MessageRealtimeProvider.
+ * 
+ * @param conversationId - The conversation ID to fetch messages for
+ * @param options - Optional React Query options
+ * @returns Query state for messages
+ * 
+ * @example
+ * ```tsx
+ * function MessageList({ conversationId }) {
+ *   const { data: messages, isLoading, error } = useMessages(conversationId);
+ *   
+ *   if (isLoading) return <div>Loading messages...</div>;
+ *   if (error) return <div>Error: {error.message}</div>;
+ *   
+ *   return (
+ *     <div>
+ *       {messages?.map(message => (
+ *         <MessageBubble key={message.id} message={message} />
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useMessages(
+  conversationId: string,
+  options?: Partial<UseQueryOptions<Message[], Error>>
+) {
+  const supabase = useSupabase();
+  const { data: conversation } = useConversation(conversationId);
+  const { data: currentUser } = useCurrentUser();
 
-export function useMessages(conversationId: string): UseMessagesResult {
-  const client = useSupabase();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const { data: conversation, isLoading: isConversationLoading } =
-    useConversation(conversationId);
-  const { data: currentUser, isLoading: isCurrentUserLoading } =
-    useCurrentUser();
+  const query = useQuery<Message[], Error>({
+    queryKey: messageKeys.list(conversationId),
+    queryFn: async () => {
+      if (!supabase || !currentUser || !conversation) {
+        throw new Error('Dependencies not available');
+      }
 
-  useEffect(() => {
-    if (
-      !client ||
-      isConversationLoading ||
-      !conversation ||
-      isCurrentUserLoading ||
-      !currentUser
-    ) {
-      logger.debug('useMessages: waiting for dependencies', {
-        hasClient: !!client,
-        hasConversationId: !!conversationId,
-        isConversationLoading,
-        hasConversation: !!conversation,
-        isCurrentUserLoading,
-        hasCurrentUser: !!currentUser,
+      logger.debug('useMessages: loading messages', {
+        conversationId,
+        userId: currentUser.id,
       });
-      return;
-    }
 
-    logger.info('useMessages: initializing message subscription', {
-      conversationId,
-      userId: currentUser.id,
-      otherParticipantId: conversation.otherParticipant?.id,
-    });
+      // Load messages
+      const initialData = await fetchMessages(supabase, conversationId, {
+        limit: 1000, // Large limit to get all messages
+      });
 
-    let channel: RealtimeChannel;
-    let userId: string;
+      logger.info('useMessages: messages loaded', {
+        conversationId,
+        messageCount: initialData.messages.length,
+        hasMore: initialData.hasMore,
+      });
 
-    const setupRealtimeMessaging = async () => {
-      try {
-        userId = currentUser.id;
-
-        logger.debug('useMessages: loading initial messages', {
-          conversationId,
-          userId,
-          requestLimit: 1000,
-        });
-
-        // Load initial messages (load all messages, no pagination)
-        const initialData = await fetchMessages(client, conversationId, {
-          limit: 1000, // Large limit to get all messages
-        });
-
-        logger.info('useMessages: initial messages loaded', {
-          conversationId,
-          messageCount: initialData.messages.length,
-          hasMore: initialData.hasMore,
-        });
-
-        // Transform messages with participant data
-        const transformedMessages = initialData.messages.map((msg) => {
-          const message = transformMessage(
-            msg,
-            userId,
-            currentUser,
-            conversation.otherParticipant,
-          );
-          message.conversationId = conversationId;
-          return message;
-        });
-
-        setMessages(transformedMessages);
-
-        logger.debug('useMessages: setting up realtime subscription', {
-          conversationId,
-          channelName: `conversation:${conversationId}`,
-        });
-
-        // Set up realtime subscription for all future messages
-        channel = client
-          .channel(`conversation:${conversationId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `conversation_id=eq.${conversationId}`,
-            },
-            async (payload) => {
-              logger.info('useMessages: received new message via realtime', {
-                conversationId,
-                messageId: payload.new.id,
-                senderId: payload.new.sender_id,
-                payloadStructure: {
-                  hasNew: !!payload.new,
-                  hasOld: !!payload.old,
-                  eventType: payload.eventType,
-                  schema: payload.schema,
-                  table: payload.table,
-                  commit_timestamp: payload.commit_timestamp,
-                  errors: payload.errors,
-                },
-                fullPayload: payload,
-              });
-
-              // Fetch the message without profile data
-              const { data } = await client
-                .from('messages')
-                .select('id, sender_id, content, created_at, updated_at')
-                .eq('id', payload.new.id)
-                .single();
-
-              if (data) {
-                const newMessage = transformMessage(
-                  data,
-                  userId,
-                  currentUser,
-                  conversation.otherParticipant,
-                );
-                newMessage.conversationId = conversationId;
-
-                logger.debug('useMessages: adding new message to state', {
-                  messageId: newMessage.id,
-                  senderId: newMessage.senderId,
-                  conversationId,
-                });
-
-                // Add new message to the end of the list (chronological order)
-                setMessages((prev) => [...prev, newMessage]);
-              } else {
-                logger.warn('useMessages: failed to fetch new message data', {
-                  messageId: payload.new.id,
-                  conversationId,
-                });
-              }
-            },
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'messages',
-              filter: `conversation_id=eq.${conversationId}`,
-            },
-            async (payload) => {
-              logger.info('useMessages: received message update via realtime', {
-                conversationId,
-                messageId: payload.new.id,
-                senderId: payload.new.sender_id,
-              });
-
-              // Handle message edits/deletions
-              const { data } = await client
-                .from('messages')
-                .select('id, sender_id, content, created_at, updated_at')
-                .eq('id', payload.new.id)
-                .single();
-
-              if (data) {
-                const updatedMessage = transformMessage(
-                  data,
-                  userId,
-                  currentUser,
-                  conversation.otherParticipant,
-                );
-                updatedMessage.conversationId = conversationId;
-
-                logger.debug('useMessages: updating message in state', {
-                  messageId: updatedMessage.id,
-                  conversationId,
-                });
-
-                // Update the message in place
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === updatedMessage.id ? updatedMessage : msg,
-                  ),
-                );
-              } else {
-                logger.warn(
-                  'useMessages: failed to fetch updated message data',
-                  {
-                    messageId: payload.new.id,
-                    conversationId,
-                  },
-                );
-              }
-            },
-          )
-          .subscribe((status, err) => {
-            logger.info(
-              'useMessages: realtime subscription callback triggered',
-              {
-                status,
-                hasError: !!err,
-                conversationId,
-                channelName: `conversation:${conversationId}`,
-              },
-            );
-
-            if (err) {
-              logger.error('useMessages: realtime subscription error', {
-                error: err,
-                errorMessage: err?.message,
-                errorName: err?.name,
-                errorStack: err?.stack,
-                errorDetails: JSON.stringify(err),
-                conversationId,
-                channelName: `conversation:${conversationId}`,
-                subscriberStatus: status,
-              });
-            } else {
-              logger.info('useMessages: realtime subscription established', {
-                status,
-                conversationId,
-                channelName: `conversation:${conversationId}`,
-                initialMessageCount: transformedMessages.length,
-              });
-            }
-          });
-
-        logger.info(
-          'useMessages: realtime subscription established successfully',
-          {
-            conversationId,
-            initialMessageCount: transformedMessages.length,
-          },
+      // Transform messages with participant data
+      const transformedMessages = initialData.messages.map((msg) => {
+        const message = transformMessage(
+          msg,
+          currentUser.id,
+          currentUser,
+          conversation.otherParticipant,
         );
-      } catch (error) {
-        logger.error('useMessages: failed to setup realtime messaging', {
-          error,
-          conversationId,
-          userId: currentUser?.id,
-        });
-      }
-    };
+        message.conversationId = conversationId;
+        return message;
+      });
 
-    setupRealtimeMessaging();
+      return transformedMessages;
+    },
+    enabled: !!supabase && !!currentUser && !!conversation && !!conversationId,
+    staleTime: STANDARD_CACHE_TIME,
+    ...options,
+  });
 
-    return () => {
-      if (channel) {
-        logger.debug('useMessages: cleaning up realtime subscription', {
-          conversationId,
-          channelName: `conversation:${conversationId}`,
-        });
-        client.removeChannel(channel);
-      }
-    };
-  }, [
-    client,
-    conversationId,
-    conversation,
-    isConversationLoading,
-    currentUser,
-    isCurrentUserLoading,
-  ]);
+  if (query.error) {
+    logger.error('useMessages: Query error', {
+      error: query.error,
+      conversationId,
+      userId: currentUser?.id,
+    });
+  }
 
-  return {
-    data: messages,
-    isLoading: isConversationLoading || isCurrentUserLoading,
-  };
+  return query;
 }

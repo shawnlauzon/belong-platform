@@ -18,7 +18,7 @@ export function useBlockUser() {
       
       // Invalidate conversations as blocked users' conversations should be hidden
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversations(),
+        queryKey: messageKeys.conversationList(),
       });
     },
   });

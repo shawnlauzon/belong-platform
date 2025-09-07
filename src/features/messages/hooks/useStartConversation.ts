@@ -20,7 +20,7 @@ export function useStartConversation() {
       
       // Invalidate conversations list to include new conversation
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversations(),
+        queryKey: messageKeys.conversationList(),
       });
     },
   });

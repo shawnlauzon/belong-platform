@@ -18,7 +18,7 @@ export function useUnblockUser() {
       
       // Invalidate conversations as unblocked users' conversations may reappear
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversations(),
+        queryKey: messageKeys.conversationList(),
       });
     },
   });

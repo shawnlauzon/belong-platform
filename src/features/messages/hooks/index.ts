@@ -9,7 +9,6 @@ export * from './useBlockUser';
 export * from './useUnblockUser';
 export * from './useReportMessage';
 export * from './useTypingIndicator';
-export * from './useUnreadCount';
 export * from './useCommunityConversation';
 export * from './useCommunityMessages';
 export * from './useSendCommunityMessage';
