@@ -11,4 +11,3 @@ export * from './useReportMessage';
 export * from './useCommunityConversation';
 export * from './useCommunityMessages';
 export * from './useSendCommunityMessage';
-export * from './useUnreadCount';
