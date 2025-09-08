@@ -4,8 +4,8 @@ import { logger } from '../logger';
 
 export interface UnreadCounts {
   notifications: number;
-  messages: number;
-  total: number;
+  directMessages: number;
+  communityMessages: number;
   messagesByConversation: Record<string, number>;
 }
 
@@ -24,11 +24,14 @@ export interface UnreadCounts {
  *   
  *   if (isLoading || !counts) return null;
  *   
+ *   const totalMessages = counts.directMessages + counts.communityMessages;
+ *   
  *   return (
  *     <div>
  *       <NotificationBell count={counts.notifications} />
- *       <MessageIcon count={counts.messages} />
- *       <AppBadge count={counts.total} />
+ *       <DirectMessageIcon count={counts.directMessages} />
+ *       <CommunityMessageIcon count={counts.communityMessages} />
+ *       <AppBadge count={counts.notifications + totalMessages} />
  *     </div>
  *   );
  * }
@@ -50,8 +53,8 @@ export function useUnreadCounts(
           logger.warn('useUnreadCounts: No authenticated user', { error: userError });
           return {
             notifications: 0,
-            messages: 0,
-            total: 0,
+            directMessages: 0,
+            communityMessages: 0,
             messagesByConversation: {},
           };
         }
@@ -63,7 +66,7 @@ export function useUnreadCounts(
           .from('notifications')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .is('read_at', null);
+          .eq('is_read', false);
 
         if (notificationError) {
           logger.error('useUnreadCounts: Failed to fetch notification count', {
@@ -74,10 +77,14 @@ export function useUnreadCounts(
 
         const notificationCount = notificationData ? notificationData.length : 0;
 
-        // Fetch message counts by conversation
+        // Fetch message counts by conversation with conversation type
         const { data: messageData, error: messageError } = await supabase
           .from('conversation_participants')
-          .select('conversation_id, unread_count')
+          .select(`
+            conversation_id, 
+            unread_count,
+            conversations!inner(conversation_type)
+          `)
           .eq('user_id', userId)
           .gt('unread_count', 0);
 
@@ -96,15 +103,23 @@ export function useUnreadCounts(
           {} as Record<string, number>
         );
 
-        const messageCount = Object.values(messagesByConversation).reduce(
-          (sum, count) => sum + count,
-          0
-        );
+        // Separate counts by conversation type
+        let directMessageCount = 0;
+        let communityMessageCount = 0;
+
+        (messageData || []).forEach((participant) => {
+          const conversationType = participant.conversations?.conversation_type;
+          if (conversationType === 'direct') {
+            directMessageCount += participant.unread_count;
+          } else if (conversationType === 'community') {
+            communityMessageCount += participant.unread_count;
+          }
+        });
 
         const result = {
           notifications: notificationCount,
-          messages: messageCount,
-          total: notificationCount + messageCount,
+          directMessages: directMessageCount,
+          communityMessages: communityMessageCount,
           messagesByConversation,
         };
 
@@ -118,8 +133,8 @@ export function useUnreadCounts(
         logger.error('useUnreadCounts: Unexpected error', { error });
         return {
           notifications: 0,
-          messages: 0,
-          total: 0,
+          directMessages: 0,
+          communityMessages: 0,
           messagesByConversation: {},
         };
       }
