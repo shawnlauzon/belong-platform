@@ -5,19 +5,15 @@ import { logger } from '../../../shared';
 import { fetchConversation } from './fetchConversation';
 
 export async function startConversation(
-  client: SupabaseClient<Database>,
-  input: StartConversationInput
+  supabase: SupabaseClient<Database>,
+  input: StartConversationInput,
 ): Promise<Conversation> {
-  const { error: userError } = await client.auth.getUser();
-  
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
-  }
-
-  const { data, error } = await client.rpc('get_or_create_conversation', {
+  const { data, error } = (await supabase.rpc('get_or_create_conversation', {
     other_user_id: input.otherUserId,
-  });
+  })) as {
+    data: string;
+    error: Error | null;
+  };
 
   if (error) {
     logger.error('Error starting conversation', { error });
@@ -28,5 +24,5 @@ export async function startConversation(
     throw new Error('Failed to create conversation');
   }
 
-  return fetchConversation(client, data);
+  return fetchConversation(supabase, { conversationId: data });
 }

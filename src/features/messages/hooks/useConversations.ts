@@ -2,26 +2,26 @@ import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { fetchConversations } from '../api';
 import { ConversationListFilters, Conversation } from '../types';
-import { messageKeys } from '../queries';
+import { conversationKeys } from '../queries';
 import { STANDARD_CACHE_TIME } from '@/config';
 
 /**
  * Hook for fetching user's conversations.
- * 
+ *
  * Real-time updates are handled by MessageRealtimeProvider.
- * 
+ *
  * @param filters - Optional filters for the conversation list
  * @param options - Optional React Query options
  * @returns Query state for conversations
- * 
+ *
  * @example
  * ```tsx
  * function ConversationList() {
  *   const { data: conversations, isLoading, error } = useConversations();
- *   
+ *
  *   if (isLoading) return <div>Loading conversations...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
- *   
+ *
  *   return (
  *     <div>
  *       {conversations?.map(conversation => (
@@ -33,33 +33,14 @@ import { STANDARD_CACHE_TIME } from '@/config';
  * ```
  */
 export function useConversations(
-  filters?: ConversationListFilters,
-  options?: Partial<UseQueryOptions<Conversation[], Error>>
+  filters: ConversationListFilters,
+  options?: Partial<UseQueryOptions<Conversation[], Error>>,
 ) {
   const supabase = useSupabase();
 
   const query = useQuery<Conversation[], Error>({
-    queryKey: messageKeys.conversationList(),
-    queryFn: async () => {
-      if (!supabase) {
-        throw new Error('Supabase client not available');
-      }
-
-      logger.debug('useConversations: loading conversations', { filters });
-
-      // Load conversations with pagination support
-      const result = await fetchConversations(supabase, filters, 50);
-      
-      logger.info('useConversations: conversations loaded', {
-        conversationCount: result.conversations.length,
-        hasMore: result.hasMore,
-      });
-
-      // For now, return just the first page
-      // TODO: Implement infinite query for pagination
-      return result.conversations;
-    },
-    enabled: !!supabase,
+    queryKey: conversationKeys.list(filters),
+    queryFn: () => fetchConversations(supabase, filters),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });

@@ -1,14 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import type {
   Conversation,
   Message,
   SendMessageInput,
-  BlockUserInput,
-  ReportMessageInput,
 } from '@/features/messages/types';
 import {
   createTestUser,
@@ -78,7 +75,6 @@ export async function sendTestMessage(
     conversationId,
     content:
       content || `${TEST_PREFIX} Test message: ${faker.lorem.sentence()}`,
-    messageType: 'text',
   };
 
   const message = await messagesApi.sendMessage(supabase, messageInput);
@@ -91,42 +87,11 @@ export async function sendTestMessage(
 }
 
 /**
- * Blocks a user using the blockUser API
- */
-export async function blockTestUser(
-  supabase: SupabaseClient<Database>,
-  blockedUserId: string,
-): Promise<void> {
-  const blockInput: BlockUserInput = {
-    userId: blockedUserId,
-  };
-
-  await messagesApi.blockUser(supabase, blockInput);
-}
-
-/**
- * Reports a message using the reportMessage API
- */
-export async function reportTestMessage(
-  supabase: SupabaseClient<Database>,
-  messageId: string,
-  reason: 'spam' | 'harassment' | 'inappropriate' | 'other' = 'spam',
-): Promise<void> {
-  const reportInput: ReportMessageInput = {
-    messageId,
-    reason,
-    details: `${TEST_PREFIX} Test report details`,
-  };
-
-  await messagesApi.reportMessage(supabase, reportInput);
-}
-
-/**
  * Signs in as a specific user for testing different perspectives
  */
 export async function signInAsUser(
   supabase: SupabaseClient<Database>,
-  user: User,
+  user: Account,
 ): Promise<void> {
   await signIn(supabase, user.email, 'TestPass123!');
 }
@@ -187,7 +152,7 @@ export async function assertMessageDelivered(
   recipientUserId: string,
 ): Promise<void> {
   const { data: messageStatus, error } = await supabase
-    .from('message_status')
+    .from('conversation_status')
     .select('*')
     .eq('message_id', messageId)
     .eq('user_id', recipientUserId)
@@ -199,11 +164,10 @@ export async function assertMessageDelivered(
     );
   }
 
-  if (!messageStatus.delivered_at) {
+  if (!messageStatus.last_received_at) {
     throw new Error(`Message ${messageId} was not marked as delivered`);
   }
 }
-
 
 /**
  * Asserts that a message exists in the database
@@ -223,66 +187,4 @@ export async function assertMessageExists(
   }
 
   return message;
-}
-
-/**
- * Asserts that a user is blocked by another user
- */
-export async function assertUserBlocked(
-  supabase: SupabaseClient<Database>,
-  blockerId: string,
-  blockedId: string,
-): Promise<void> {
-  const { data: blockedUser, error } = await supabase
-    .from('blocked_users')
-    .select('*')
-    .eq('blocker_id', blockerId)
-    .eq('blocked_id', blockedId)
-    .single();
-
-  if (error || !blockedUser) {
-    throw new Error(
-      `User ${blockedId} is not blocked by ${blockerId}: ${error?.message}`,
-    );
-  }
-}
-
-/**
- * Asserts that a message report exists
- */
-export async function assertMessageReported(
-  supabase: SupabaseClient<Database>,
-  messageId: string,
-  reporterId: string,
-): Promise<void> {
-  const { data: report, error } = await supabase
-    .from('message_reports')
-    .select('*')
-    .eq('message_id', messageId)
-    .eq('reporter_id', reporterId)
-    .single();
-
-  if (error || !report) {
-    throw new Error(
-      `Message report not found for message ${messageId} by reporter ${reporterId}: ${error?.message}`,
-    );
-  }
-}
-
-/**
- * Gets the current authenticated user ID from Supabase
- */
-export async function getCurrentUserId(
-  supabase: SupabaseClient<Database>,
-): Promise<string> {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error(`Failed to get current user: ${error?.message}`);
-  }
-
-  return user.id;
 }

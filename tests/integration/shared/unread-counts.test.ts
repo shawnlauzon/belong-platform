@@ -158,7 +158,6 @@ describe('Unified Unread Counts Tests', () => {
     await sendMessage(otherUserClient, {
       conversationId: conversation.id,
       content: `${TEST_PREFIX} message count test`,
-      messageType: 'text',
     });
 
     // Wait for message to be processed
@@ -212,7 +211,6 @@ describe('Unified Unread Counts Tests', () => {
     await sendMessage(otherUserClient, {
       conversationId: conversation.id,
       content: `${TEST_PREFIX} combined count test`,
-      messageType: 'text',
     });
 
     // Create notification
@@ -250,13 +248,11 @@ describe('Unified Unread Counts Tests', () => {
     await sendMessage(otherUserClient, {
       conversationId: conversation1.id,
       content: `${TEST_PREFIX} conv1 message`,
-      messageType: 'text',
     });
 
     await sendMessage(otherUserClient, {
       conversationId: conversation2.id,
       content: `${TEST_PREFIX} conv2 message`,
-      messageType: 'text',
     });
 
     // Wait for messages to be processed
@@ -284,19 +280,16 @@ describe('Unified Unread Counts Tests', () => {
     await sendMessage(otherUserClient, {
       conversationId: conversation.id,
       content: `${TEST_PREFIX} message 1`,
-      messageType: 'text',
     });
 
     await sendMessage(otherUserClient, {
       conversationId: conversation.id,
       content: `${TEST_PREFIX} message 2`,
-      messageType: 'text',
     });
 
     await sendMessage(otherUserClient, {
       conversationId: conversation.id,
       content: `${TEST_PREFIX} message 3`,
-      messageType: 'text',
     });
 
     // Wait for messages to be processed

@@ -9,7 +9,6 @@ export function useSendMessage() {
   const mutate = async (input: SendMessageInput): Promise<Message> => {
     logger.info('useSendMessage: initiating message send', {
       conversationId: input.conversationId,
-      messageType: input.messageType || 'text',
       hasContent: !!input.content
     });
 
@@ -27,7 +26,6 @@ export function useSendMessage() {
       logger.error('useSendMessage: failed to send message', {
         error,
         conversationId: input.conversationId,
-        messageType: input.messageType || 'text'
       });
       throw error;
     }

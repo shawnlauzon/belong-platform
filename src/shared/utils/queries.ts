@@ -12,11 +12,12 @@ export function appendQuery<T extends PostgrestQueryBuilder<T>>(
   query: T,
   field: string,
   value: unknown,
+  dbFieldName?: string,
 ): T {
   if (value) {
     return Array.isArray(value)
-      ? query.in(field, value)
-      : query.eq(field, value);
+      ? query.in(dbFieldName || field, value)
+      : query.eq(dbFieldName || field, value);
   } else {
     return query;
   }

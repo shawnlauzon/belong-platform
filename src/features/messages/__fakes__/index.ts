@@ -1,6 +1,15 @@
 import { faker } from '@faker-js/faker';
-import { Message, Conversation, SendMessageInput, MessageReport, CommunityConversation } from '../types';
-import { MessageWithSender, ConversationWithParticipants } from '../types/messageRow';
+import {
+  Message,
+  Conversation,
+  SendMessageInput,
+  MessageReport,
+  CommunityConversation,
+} from '../types';
+import {
+  MessageWithSender,
+  ConversationWithParticipants,
+} from '../types/messageRow';
 import { createFakeUser } from '../../users/__fakes__';
 import type { Database } from '../../../shared/types/database';
 
@@ -16,7 +25,6 @@ export function createFakeMessage(overrides: Partial<Message> = {}): Message {
     conversationId: faker.string.uuid(),
     senderId: sender.id,
     content: faker.lorem.sentence(),
-    messageType: 'text',
     isEdited: faker.datatype.boolean(),
     isDeleted: false,
     encryptionVersion: 1,
@@ -31,7 +39,9 @@ export function createFakeMessage(overrides: Partial<Message> = {}): Message {
 /**
  * Creates a fake Conversation domain object
  */
-export function createFakeConversation(overrides: Partial<Conversation> = {}): Conversation {
+export function createFakeConversation(
+  overrides: Partial<Conversation> = {},
+): Conversation {
   const now = faker.date.recent();
   const otherUser = createFakeUser();
 
@@ -54,7 +64,9 @@ export function createFakeConversation(overrides: Partial<Conversation> = {}): C
 /**
  * Creates a fake CommunityConversation domain object
  */
-export function createFakeCommunityConversation(overrides: Partial<CommunityConversation> = {}): CommunityConversation {
+export function createFakeCommunityConversation(
+  overrides: Partial<CommunityConversation> = {},
+): CommunityConversation {
   const now = faker.date.recent();
 
   return {
@@ -76,11 +88,12 @@ export function createFakeCommunityConversation(overrides: Partial<CommunityConv
 /**
  * Creates a fake SendMessageInput
  */
-export function createFakeSendMessageInput(overrides: Partial<SendMessageInput> = {}): SendMessageInput {
+export function createFakeSendMessageInput(
+  overrides: Partial<SendMessageInput> = {},
+): SendMessageInput {
   return {
     conversationId: faker.string.uuid(),
     content: faker.lorem.sentence(),
-    messageType: 'text',
     ...overrides,
   };
 }
@@ -88,14 +101,21 @@ export function createFakeSendMessageInput(overrides: Partial<SendMessageInput> 
 /**
  * Creates a fake MessageReport domain object
  */
-export function createFakeMessageReport(overrides: Partial<MessageReport> = {}): MessageReport {
+export function createFakeMessageReport(
+  overrides: Partial<MessageReport> = {},
+): MessageReport {
   const now = faker.date.recent();
 
   return {
     id: faker.string.uuid(),
     messageId: faker.string.uuid(),
     reporterId: faker.string.uuid(),
-    reason: faker.helpers.arrayElement(['spam', 'harassment', 'inappropriate', 'other']),
+    reason: faker.helpers.arrayElement([
+      'spam',
+      'harassment',
+      'inappropriate',
+      'other',
+    ]),
     details: faker.lorem.paragraph(),
     createdAt: now,
     status: 'pending',
@@ -108,7 +128,9 @@ export function createFakeMessageReport(overrides: Partial<MessageReport> = {}):
 /**
  * Creates a fake MessageWithSender row (database format)
  */
-export function createFakeMessageWithSender(overrides: Partial<MessageWithSender> = {}): MessageWithSender {
+export function createFakeMessageWithSender(
+  overrides: Partial<MessageWithSender> = {},
+): MessageWithSender {
   const now = faker.date.recent().toISOString();
   const senderId = faker.string.uuid();
 
@@ -117,7 +139,6 @@ export function createFakeMessageWithSender(overrides: Partial<MessageWithSender
     conversation_id: faker.string.uuid(),
     sender_id: senderId,
     content: faker.lorem.sentence(),
-    message_type: 'text',
     is_edited: false,
     is_deleted: false,
     encryption_version: 1,
@@ -147,7 +168,9 @@ export function createFakeMessageWithSender(overrides: Partial<MessageWithSender
 /**
  * Creates a fake conversation database row
  */
-export function createFakeConversationRow(overrides: Partial<Database['public']['Tables']['conversations']['Row']> = {}): Database['public']['Tables']['conversations']['Row'] {
+export function createFakeConversationRow(
+  overrides: Partial<Database['public']['Tables']['conversations']['Row']> = {},
+): Database['public']['Tables']['conversations']['Row'] {
   const now = faker.date.recent().toISOString();
 
   return {
@@ -166,14 +189,23 @@ export function createFakeConversationRow(overrides: Partial<Database['public'][
 /**
  * Creates a fake message report database row
  */
-export function createFakeMessageReportRow(overrides: Partial<Database['public']['Tables']['message_reports']['Row']> = {}): Database['public']['Tables']['message_reports']['Row'] {
+export function createFakeMessageReportRow(
+  overrides: Partial<
+    Database['public']['Tables']['message_reports']['Row']
+  > = {},
+): Database['public']['Tables']['message_reports']['Row'] {
   const now = faker.date.recent().toISOString();
 
   return {
     id: faker.string.uuid(),
     message_id: faker.string.uuid(),
     reporter_id: faker.string.uuid(),
-    reason: faker.helpers.arrayElement(['spam', 'harassment', 'inappropriate', 'other']),
+    reason: faker.helpers.arrayElement([
+      'spam',
+      'harassment',
+      'inappropriate',
+      'other',
+    ]),
     details: faker.lorem.paragraph(),
     status: 'pending',
     created_at: now,
@@ -186,13 +218,15 @@ export function createFakeMessageReportRow(overrides: Partial<Database['public']
 /**
  * Creates a fake basic message row (minimal fields only)
  */
-export function createFakeMessageBasic(overrides: Partial<{
-  id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-}> = {}) {
+export function createFakeMessageBasic(
+  overrides: Partial<{
+    id: string;
+    sender_id: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+  }> = {},
+) {
   const now = faker.date.recent().toISOString();
 
   return {
@@ -208,7 +242,11 @@ export function createFakeMessageBasic(overrides: Partial<{
 /**
  * Creates a fake conversation participant row
  */
-export function createFakeConversationParticipantRow(overrides: Partial<Database['public']['Tables']['conversation_participants']['Row']> = {}): Database['public']['Tables']['conversation_participants']['Row'] {
+export function createFakeConversationParticipantRow(
+  overrides: Partial<
+    Database['public']['Tables']['conversation_participants']['Row']
+  > = {},
+): Database['public']['Tables']['conversation_participants']['Row'] {
   const now = faker.date.recent().toISOString();
 
   return {
@@ -227,7 +265,7 @@ export function createFakeConversationParticipantRow(overrides: Partial<Database
 export function createFakeConversationWithParticipants(
   currentUserId: string,
   otherUserId?: string,
-  overrides: Partial<ConversationWithParticipants> = {}
+  overrides: Partial<ConversationWithParticipants> = {},
 ): ConversationWithParticipants {
   const now = faker.date.recent().toISOString();
   const otherParticipantId = otherUserId || faker.string.uuid();

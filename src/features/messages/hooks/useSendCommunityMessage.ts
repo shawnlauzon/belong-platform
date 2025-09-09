@@ -11,7 +11,6 @@ import type { Message, SendMessageInput } from '@/features/messages/types';
 export interface SendCommunityMessageInput {
   communityId: string;
   content: string;
-  messageType?: 'text' | 'system';
 }
 
 /**
@@ -66,8 +65,8 @@ export function useSendCommunityMessage() {
       const conversation = await queryClient.fetchQuery({
         queryKey: ['conversations', 'community', input.communityId],
         queryFn: async () => {
-          const { fetchCommunityConversation } = await import('@/features/messages/api');
-          return fetchCommunityConversation(supabase, input.communityId);
+          const { fetchConversation } = await import('@/features/messages/api');
+          return fetchConversation({ supabase, communityId: input.communityId });
         },
       });
 
@@ -79,7 +78,6 @@ export function useSendCommunityMessage() {
       const messageInput: SendMessageInput = {
         conversationId: conversation.id,
         content: input.content,
-        messageType: input.messageType || 'text',
       };
 
       return sendMessage(supabase, messageInput);

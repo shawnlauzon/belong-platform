@@ -1,5 +1,4 @@
 export * from './useConversations';
-export * from './useConversation';
 export * from './useMessages';
 export * from './useSendMessage';
 export * from './useMarkAsRead';
@@ -8,6 +7,6 @@ export * from './useDeleteMessage';
 export * from './useBlockUser';
 export * from './useUnblockUser';
 export * from './useReportMessage';
-export * from './useCommunityConversation';
+export * from './useConversation';
 export * from './useCommunityMessages';
 export * from './useSendCommunityMessage';

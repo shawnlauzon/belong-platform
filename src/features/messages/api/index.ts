@@ -1,5 +1,4 @@
 export * from './fetchConversations';
-export * from './fetchConversation';
 export * from './fetchMessages';
 export * from './sendMessage';
 export * from './editMessage';
@@ -9,5 +8,5 @@ export * from './deleteMessage';
 export * from './blockUser';
 export * from './unblockUser';
 export * from './reportMessage';
-export * from './fetchCommunityConversation';
+export * from './fetchConversation';
 export * from './createMessageSubscription';

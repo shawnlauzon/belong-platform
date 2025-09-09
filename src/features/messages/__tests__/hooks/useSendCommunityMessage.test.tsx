@@ -8,7 +8,7 @@ import * as messagesApi from '../../api';
 
 // Mock the APIs
 vi.mock('../../api', () => ({
-  fetchCommunityConversation: vi.fn(),
+  fetchConversation: vi.fn(),
   sendMessage: vi.fn(),
 }));
 
@@ -64,7 +64,6 @@ describe('useSendCommunityMessage', () => {
       conversationId: mockConversationId,
       senderId: 'user-456',
       content: 'Hello community!',
-      messageType: 'text',
       isEdited: false,
       isDeleted: false,
       encryptionVersion: 1,
@@ -85,8 +84,8 @@ describe('useSendCommunityMessage', () => {
       isMine: true
     };
 
-    // Mock fetchCommunityConversation for queryClient.fetchQuery
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    // Mock fetchConversation for queryClient.fetchQuery
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
     vi.mocked(messagesApi.sendMessage).mockResolvedValue(mockMessage);
 
     const { result } = renderHook(() => useSendCommunityMessage(), { wrapper });
@@ -103,14 +102,13 @@ describe('useSendCommunityMessage', () => {
     });
 
     expect(result.current.data).toEqual(mockMessage);
-    expect(messagesApi.fetchCommunityConversation).toHaveBeenCalledWith(
-      mockSupabase,
-      mockCommunityId
-    );
+    expect(messagesApi.fetchConversation).toHaveBeenCalledWith({
+      supabase: mockSupabase,
+      communityId: mockCommunityId
+    });
     expect(messagesApi.sendMessage).toHaveBeenCalledWith(mockSupabase, {
       conversationId: mockConversationId,
       content: 'Hello community!',
-      messageType: 'text'
     });
   });
 
@@ -134,7 +132,6 @@ describe('useSendCommunityMessage', () => {
       conversationId: mockConversationId,
       senderId: 'user-456',
       content: 'System announcement',
-      messageType: 'system',
       isEdited: false,
       isDeleted: false,
       encryptionVersion: 1,
@@ -155,7 +152,7 @@ describe('useSendCommunityMessage', () => {
       isMine: true
     };
 
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
     vi.mocked(messagesApi.sendMessage).mockResolvedValue(mockSystemMessage);
 
     const { result } = renderHook(() => useSendCommunityMessage(), { wrapper });
@@ -164,7 +161,6 @@ describe('useSendCommunityMessage', () => {
       result.current.mutate({
         communityId: mockCommunityId,
         content: 'System announcement',
-        messageType: 'system'
       });
     });
 
@@ -175,12 +171,11 @@ describe('useSendCommunityMessage', () => {
     expect(messagesApi.sendMessage).toHaveBeenCalledWith(mockSupabase, {
       conversationId: mockConversationId,
       content: 'System announcement',
-      messageType: 'system'
     });
   });
 
   it('should handle error when community conversation not found', async () => {
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(null);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(null);
 
     const { result } = renderHook(() => useSendCommunityMessage(), { wrapper });
 
@@ -217,7 +212,7 @@ describe('useSendCommunityMessage', () => {
 
     const mockError = new Error('Failed to send message');
     
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
     vi.mocked(messagesApi.sendMessage).mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useSendCommunityMessage(), { wrapper });
@@ -256,7 +251,6 @@ describe('useSendCommunityMessage', () => {
       conversationId: mockConversationId,
       senderId: 'user-456',
       content: 'Test message',
-      messageType: 'text',
       isEdited: false,
       isDeleted: false,
       encryptionVersion: 1,
@@ -277,7 +271,7 @@ describe('useSendCommunityMessage', () => {
       isMine: true
     };
 
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
     vi.mocked(messagesApi.sendMessage).mockResolvedValue(mockMessage);
 
     // Spy on queryClient invalidation

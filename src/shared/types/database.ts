@@ -235,22 +235,16 @@ export type Database = {
         Row: {
           conversation_id: string
           joined_at: string
-          last_read_at: string | null
-          unread_count: number
           user_id: string
         }
         Insert: {
           conversation_id: string
           joined_at?: string
-          last_read_at?: string | null
-          unread_count?: number
           user_id: string
         }
         Update: {
           conversation_id?: string
           joined_at?: string
-          last_read_at?: string | null
-          unread_count?: number
           user_id?: string
         }
         Relationships: [
@@ -273,6 +267,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_status: {
+        Row: {
+          conversation_id: string
+          last_read_at: string | null
+          last_received_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          last_read_at?: string | null
+          last_received_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          last_read_at?: string | null
+          last_received_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_status_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -381,121 +404,6 @@ export type Database = {
           },
         ]
       }
-      message_reports: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          message_id: string
-          reason: string
-          reporter_id: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          message_id: string
-          reason: string
-          reporter_id: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          message_id?: string
-          reason?: string
-          reporter_id?: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_reports_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reports_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reports_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      message_status: {
-        Row: {
-          delivered_at: string
-          message_id: string
-          read_at: string | null
-          user_id: string
-        }
-        Insert: {
-          delivered_at?: string
-          message_id: string
-          read_at?: string | null
-          user_id: string
-        }
-        Update: {
-          delivered_at?: string
-          message_id?: string
-          read_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_status_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_status_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_status_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       messages: {
         Row: {
           content: string
@@ -505,8 +413,6 @@ export type Database = {
           id: string
           is_deleted: boolean
           is_edited: boolean
-          message_type: string
-          previous_content: string | null
           sender_id: string
           updated_at: string
         }
@@ -518,9 +424,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_edited?: boolean
-          message_type?: string
-          previous_content?: string | null
-          sender_id: string
+          sender_id?: string
           updated_at?: string
         }
         Update: {
@@ -531,8 +435,6 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_edited?: boolean
-          message_type?: string
-          previous_content?: string | null
           sender_id?: string
           updated_at?: string
         }
@@ -1635,10 +1537,6 @@ export type Database = {
           name: string
         }[]
       }
-      create_community_conversation: {
-        Args: { p_community_id: string }
-        Returns: string
-      }
       create_notification: {
         Args: {
           p_action_url?: string
@@ -1712,6 +1610,10 @@ export type Database = {
       }
       expires_at: {
         Args: { "": Database["public"]["Tables"]["resources"]["Row"] }
+        Returns: string
+      }
+      fetch_community_conversation: {
+        Args: { p_community_id: string }
         Returns: string
       }
       geography: {
@@ -2017,7 +1919,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      mark_messages_as_read: {
+      mark_conversation_as_read: {
         Args: { p_conversation_id: string }
         Returns: undefined
       }
