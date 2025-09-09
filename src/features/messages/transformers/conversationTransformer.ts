@@ -1,8 +1,11 @@
-import { Conversation } from '../types';
-import { ConversationRowWithParticipants } from '../types/messageRow';
+import { CommunityChat, Conversation, DirectConversation } from '../types';
+import {
+  ConversationRowWithParticipants,
+  ConversationRow,
+} from '../types/messageRow';
 
 export function toDomainConversation(
-  row: ConversationRowWithParticipants,
+  row: ConversationRowWithParticipants | ConversationRow,
 ): Conversation {
   return {
     id: row.id,
@@ -18,7 +21,23 @@ export function toDomainConversation(
       ? row.last_message_sender_id
       : undefined,
     conversationType: row.conversation_type,
-    communityId: row.community_id ? row.community_id : undefined,
+  };
+}
+
+export function toDomainCommunityChat(row: ConversationRow): CommunityChat {
+  const conversation = toDomainConversation(row);
+  return {
+    ...conversation,
+    communityId: row.community_id!,
+  };
+}
+
+export function toDomainDirectConversation(
+  row: ConversationRowWithParticipants,
+): DirectConversation {
+  const conversation = toDomainConversation(row);
+  return {
+    ...conversation,
     participants: row.conversation_participants.map((p) => p.user_id),
   };
 }

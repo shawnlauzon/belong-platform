@@ -133,9 +133,10 @@ describe('Conversations CRUD Operations', () => {
     });
 
     it('fetches single conversation details', async () => {
-      const fetchedConversation = await api.fetchConversation(supabase, {
-        conversationId: testConversation.id,
-      });
+      const fetchedConversation = await api.fetchDirectConversation(
+        supabase,
+        testConversation.id,
+      );
       console.log('fetched conversation', fetchedConversation);
 
       expect(fetchedConversation).toMatchObject({
@@ -150,9 +151,7 @@ describe('Conversations CRUD Operations', () => {
 
       try {
         await expect(
-          api.fetchConversation(supabase, {
-            conversationId: testConversation.id,
-          }),
+          api.fetchDirectConversation(supabase, testConversation.id),
         ).rejects.toThrow();
       } finally {
         await signInAsUser(supabase, userA);

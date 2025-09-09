@@ -135,7 +135,7 @@ describe('Messages Permissions & Authorization', () => {
       ).rejects.toThrow();
 
       // But existing conversation should still be accessible
-      const existingConversation = await api.fetchConversation(
+      const existingConversation = await api.fetchDirectConversation(
         supabase,
         conversation.id,
       );

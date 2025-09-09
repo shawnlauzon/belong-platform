@@ -6,7 +6,7 @@ import { logger } from '../../../shared';
 import { MessageRow } from '../types/messageRow';
 
 export async function sendMessage(
-  client: SupabaseClient<Database>,
+  supabase: SupabaseClient<Database>,
   input: SendMessageInput,
 ): Promise<Message> {
   logger.info('Starting message send process', {
@@ -14,7 +14,7 @@ export async function sendMessage(
     contentLength: input.content?.length || 0,
   });
 
-  const { data, error } = (await client
+  const { data, error } = (await supabase
     .from('messages')
     .insert(toMessageRow(input))
     .select('*')
@@ -37,6 +37,16 @@ export async function sendMessage(
     });
     throw new Error('Failed to send message');
   }
+
+  const myChannel = supabase.channel(`conversation:${input.conversationId}`);
+
+  myChannel.send({
+    type: 'broadcast',
+    event: 'message',
+    payload: {
+      message: input.content,
+    },
+  });
 
   return toDomainMessage(data);
 }

@@ -4,14 +4,20 @@ export type ConversationType = Database['public']['Enums']['conversation_type'];
 
 export interface Conversation {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  conversationType: ConversationType;
   lastMessageAt?: Date;
   lastMessagePreview?: string;
   lastMessageSenderId?: string;
-  conversationType: ConversationType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DirectConversation extends Conversation {
   participants: string[];
-  communityId?: string;
+}
+
+export interface CommunityChat extends Conversation {
+  communityId: string;
 }
 
 export interface StartConversationInput {

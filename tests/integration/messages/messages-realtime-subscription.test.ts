@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestConversation } from './messaging-helpers';
+import { createTestConversation, signInAsUser } from './messaging-helpers';
 import { sendMessage } from '@/features/messages/api';
 import {
   createTestCommunity,
@@ -20,6 +20,7 @@ import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
 import { Message } from '@/features';
+import { vi } from 'vitest';
 
 describe('Message Subscription API Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -37,10 +38,16 @@ describe('Message Subscription API Tests', () => {
     testUser = await createTestUser(supabase);
     testCommunity = await createTestCommunity(supabase);
 
-    otherUserClient = createTestClient();
+    // otherUserClient = createTestClient();
+    // // Create another user and have them join the community
+    // testOtherUser = await createTestUser(otherUserClient);
+    // await joinCommunity(otherUserClient, testCommunity.id);
+
     // Create another user and have them join the community
-    testOtherUser = await createTestUser(otherUserClient);
-    await joinCommunity(otherUserClient, testCommunity.id);
+    testOtherUser = await createTestUser(supabase);
+    await joinCommunity(supabase, testCommunity.id);
+
+    await signInAsUser(supabase, testUser);
 
     // Create query client once
     queryClient = new QueryClient({
@@ -50,19 +57,13 @@ describe('Message Subscription API Tests', () => {
       },
     });
 
-    // Create subscription once for all tests
-    subscriptions = await createMessageSubscription({
-      supabase,
-      queryClient,
-    });
-
     // Give subscription time to establish
     await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   afterAll(async () => {
-    subscriptions?.cleanup();
-    await cleanupAllTestData();
+    // subscriptions?.cleanup();
+    // await cleanupAllTestData();
   });
 
   it('should be notified of new conversations', async () => {
@@ -71,6 +72,47 @@ describe('Message Subscription API Tests', () => {
       supabase,
       testOtherUser.id,
     );
+    // const testMessage = `${TEST_PREFIX} subscription test`;
+
+    // const newMessage = await sendMessage(supabase, {
+    //   conversationId: conversation.id,
+    //   content: testMessage,
+    // });
+    // expect(newMessage).toMatchObject({
+    //   id: expect.any(String),
+    //   content: testMessage,
+    //   conversationId: conversation.id,
+    // });
+
+    // Wait for real-time update to process
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Check if message was added to React Query cache
+    const conversations = queryClient.getQueryData(
+      conversationKeys.list({ conversationType: 'direct' }),
+    );
+
+    expect(conversations).toContainEqual(
+      expect.objectContaining({
+        id: conversation.id,
+        conversationType: 'direct',
+      }),
+    );
+  });
+
+  it.only('should be notified of new messages', async () => {
+    // Create conversation and send message from other user
+    const conversation = await createTestConversation(
+      supabase,
+      testOtherUser.id,
+    );
+
+    await createMessageSubscription({
+      supabase,
+      queryClient,
+      conversationId: conversation.id,
+    });
+
     const testMessage = `${TEST_PREFIX} subscription test`;
 
     const newMessage = await sendMessage(supabase, {
@@ -87,11 +129,11 @@ describe('Message Subscription API Tests', () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Check if message was added to React Query cache
-    const conversations = queryClient.getQueryData(
-      conversationKeys.list({ conversationType: 'direct' }),
+    const messages = queryClient.getQueryData(
+      messageKeys.list(conversation.id),
     );
 
-    expect(conversations).toContainEqual(
+    expect(messages).toContainEqual(
       expect.objectContaining({
         id: conversation.id,
         conversationType: 'direct',

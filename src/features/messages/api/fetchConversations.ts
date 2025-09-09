@@ -1,10 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { ConversationListFilters, Conversation } from '../types';
-import {
-  ConversationRowWithParticipants,
-  SELECT_CONVERSATIONS_JOIN_PARTICIPANTS,
-} from '../types/messageRow';
+import { ConversationRow } from '../types/messageRow';
 import { toDomainConversation } from '../transformers';
 import { appendQueries, logger } from '../../../shared';
 
@@ -12,9 +9,7 @@ export async function fetchConversations(
   supabase: SupabaseClient<Database>,
   filters?: ConversationListFilters,
 ): Promise<Conversation[]> {
-  let query = supabase
-    .from('conversations')
-    .select(SELECT_CONVERSATIONS_JOIN_PARTICIPANTS);
+  let query = supabase.from('conversations').select('*');
 
   if (filters) {
     query = appendQueries(query, {
@@ -28,7 +23,7 @@ export async function fetchConversations(
     ascending: false,
     nullsFirst: false,
   })) as {
-    data: ConversationRowWithParticipants[] | null;
+    data: ConversationRow[] | null;
     error: Error | null;
   };
 

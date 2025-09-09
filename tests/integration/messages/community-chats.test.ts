@@ -12,8 +12,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import { Conversation } from '@/features';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { CommunityChat } from '@/features';
 
 describe('Community Conversations Integration', () => {
   let supabase: SupabaseClient<Database>;
@@ -34,31 +33,31 @@ describe('Community Conversations Integration', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   describe('Fetch community conversations', () => {
-    it('always exists', async () => {
-      const conversation = await api.fetchConversation(supabase, {
-        communityId: community.id,
-      });
+    it('is automatically created', async () => {
+      const conversation = await api.fetchCommunityChat(supabase, community.id);
 
-      expect(conversation).toBeTruthy();
-      expect(conversation!.id).toBeTruthy();
-      expect(typeof conversation!.id).toBe('string');
-      expect(conversation!.communityId).toBe(community.id);
-      expect(conversation!.conversationType).toBe('community');
+      expect(conversation).toMatchObject({
+        id: expect.any(String),
+        communityId: community.id,
+        conversationType: 'community',
+      });
     });
 
     it('is idempotent - returns existing conversation if it exists', async () => {
-      const conversation1 = await api.fetchConversation(supabase, {
-        communityId: community.id,
-      });
-      const conversation2 = await api.fetchConversation(supabase, {
-        communityId: community.id,
-      });
+      const conversation1 = await api.fetchCommunityChat(
+        supabase,
+        community.id,
+      );
+      const conversation2 = await api.fetchCommunityChat(
+        supabase,
+        community.id,
+      );
 
-      expect(conversation1!.id).toBe(conversation2!.id);
+      expect(conversation1.id).toBe(conversation2.id);
     });
 
     it('fails when user is not a community member', async () => {
@@ -66,18 +65,20 @@ describe('Community Conversations Integration', () => {
       await createTestUser(supabase);
 
       await expect(
-        api.fetchConversation(supabase, { communityId: community.id }),
+        api.fetchCommunityChat(supabase, community.id),
       ).rejects.toThrow();
     });
   });
 
   describe('Sending messages', () => {
-    let communityConversation: Conversation;
+    let communityConversation: CommunityChat;
 
     beforeAll(async () => {
-      communityConversation = await api.fetchConversation(supabase, {
-        communityId: community.id,
-      });
+      await signInAsUser(supabase, userA);
+      communityConversation = await api.fetchCommunityChat(
+        supabase,
+        community.id,
+      );
     });
 
     it('allows community members to send messages', async () => {
@@ -135,9 +136,10 @@ describe('Community Conversations Integration', () => {
       await sendTestMessage(supabase, communityConversation.id, testContent);
 
       // Refetch the conversation to check updated metadata
-      const updatedConversation = await api.fetchConversation(supabase, {
-        communityId: community.id,
-      });
+      const updatedConversation = await api.fetchCommunityChat(
+        supabase,
+        community.id,
+      );
 
       expect(updatedConversation).toBeTruthy();
       expect(updatedConversation!.lastMessagePreview).toBe(testContent);

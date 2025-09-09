@@ -8,5 +8,6 @@ export * from './deleteMessage';
 export * from './blockUser';
 export * from './unblockUser';
 export * from './reportMessage';
-export * from './fetchConversation';
+export * from './fetchDirectConversation';
+export * from './fetchCommunityChat';
 export * from './createMessageSubscription';

@@ -1,13 +1,13 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { Conversation, StartConversationInput } from '../types';
+import { DirectConversation, StartConversationInput } from '../types';
 import { logger } from '../../../shared';
-import { fetchConversation } from './fetchConversation';
+import { fetchDirectConversation } from './fetchDirectConversation';
 
 export async function startConversation(
   supabase: SupabaseClient<Database>,
   input: StartConversationInput,
-): Promise<Conversation> {
+): Promise<DirectConversation> {
   const { data, error } = (await supabase.rpc('get_or_create_conversation', {
     other_user_id: input.otherUserId,
   })) as {
@@ -24,5 +24,22 @@ export async function startConversation(
     throw new Error('Failed to create conversation');
   }
 
-  return fetchConversation(supabase, { conversationId: data });
+  const myChannel = supabase.channel(`messages:${input.otherUserId}`);
+
+  myChannel.send({
+    type: 'broadcast',
+    event: 'conversation',
+    payload: {
+      message: 'New conversation request',
+    },
+  });
+
+  logger.debug('Sent conversation request', {
+    channel: `messages:${input.otherUserId}`,
+    payload: {
+      message: 'New conversation request',
+    },
+  });
+
+  return fetchDirectConversation(supabase, data);
 }
