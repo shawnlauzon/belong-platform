@@ -1,7 +1,7 @@
 import { UseQueryOptions } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useMessages } from './useMessages';
-import { useCommunityConversation } from './useCommunityConversation';
+import { useConversation } from './useConversation';
 import type { Message } from '@/features/messages/types';
 
 /**
@@ -36,20 +36,27 @@ import type { Message } from '@/features/messages/types';
  */
 export function useCommunityMessages(
   communityId: string,
-  options?: Partial<UseQueryOptions<Message[], Error>>
+  options?: Partial<UseQueryOptions<Message[], Error>>,
 ) {
   // First get the community conversation
-  const { data: conversation, error: conversationError } = useCommunityConversation(communityId);
+  const { data: conversation, error: conversationError } =
+    useConversation(communityId);
 
   // Then get messages for that conversation
-  const messagesQuery = useMessages(conversation?.id || '', options);
+  const messagesQuery = useMessages(conversation?.id || '', {
+    enabled: !!conversation?.id,
+    ...options,
+  });
 
   // If there's a conversation error, log it
   if (conversationError) {
-    logger.error('useCommunityMessages: Error fetching community conversation', {
-      error: conversationError,
-      communityId,
-    });
+    logger.error(
+      'useCommunityMessages: Error fetching community conversation',
+      {
+        error: conversationError,
+        communityId,
+      },
+    );
   }
 
   // Return the messages query directly - it handles the error state

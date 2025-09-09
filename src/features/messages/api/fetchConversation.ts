@@ -1,36 +1,45 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { Conversation } from '../types';
-import { ConversationWithParticipants } from '../types/messageRow';
-import { transformConversation } from '../transformers';
-import { logger } from '../../../shared';
+import {
+  ConversationRowWithParticipants,
+  SELECT_CONVERSATIONS_JOIN_PARTICIPANTS,
+} from '../types/messageRow';
+import { toDomainConversation } from '../transformers';
+import { appendQuery, logger } from '../../../shared';
 
 export async function fetchConversation(
-  client: SupabaseClient<Database>,
-  conversationId: string
+  supabase: SupabaseClient<Database>,
+  {
+    communityId,
+    conversationId,
+  }: {
+    communityId?: string;
+    conversationId?: string;
+  },
 ): Promise<Conversation> {
-  const { data: userData, error: userError } = await client.auth.getUser();
-  
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
+  if (!communityId && !conversationId) {
+    throw new Error('Must provide either communityId or conversationId');
   }
 
-  const userId = userData.user.id;
+  if (communityId && conversationId) {
+    throw new Error(
+      'Must provide either communityId or conversationId, not both',
+    );
+  }
 
-  const { data, error } = await client
+  let query = supabase
     .from('conversations')
-    .select(`
-      *,
-      conversation_participants!inner(
-        user_id,
-        unread_count,
-        last_read_at,
-        public_profiles(id, first_name, avatar_url)
-      )
-    `)
-    .eq('id', conversationId)
-    .single();
+    .select(SELECT_CONVERSATIONS_JOIN_PARTICIPANTS)
+    .eq('conversation_type', communityId ? 'community' : 'direct');
+
+  query = appendQuery(query, 'conversation_id', conversationId, 'id');
+  query = appendQuery(query, 'community_id', communityId);
+
+  const { data, error } = (await query.maybeSingle()) as {
+    data: ConversationRowWithParticipants | null;
+    error: Error | null;
+  };
 
   if (error) {
     logger.error('Error fetching conversation', { error });
@@ -41,20 +50,5 @@ export async function fetchConversation(
     throw new Error('Conversation not found');
   }
 
-  const participants = data.conversation_participants as Array<{
-    user_id: string;
-    unread_count: number;
-    last_read_at: string | null;
-    public_profiles: {
-      id: string | null;
-      first_name: string | null;
-      avatar_url: string | null;
-    };
-  }>;
-  
-  if (!participants.some(p => p.user_id === userId)) {
-    throw new Error('Unauthorized to view this conversation');
-  }
-
-  return transformConversation(data as ConversationWithParticipants, userId);
+  return toDomainConversation(data);
 }

@@ -33,7 +33,7 @@ describe('Trust Score Points - Communities', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   it('should have zero trust scores for new user', async () => {

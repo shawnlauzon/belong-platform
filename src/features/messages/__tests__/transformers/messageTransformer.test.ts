@@ -36,7 +36,6 @@ describe('messageTransformer', () => {
         conversationId: '', // Empty by default, set by caller
         senderId: messageRow.sender_id,
         content: messageRow.content,
-        messageType: 'text', // Default value
         isEdited: false, // Default value
         isDeleted: false, // Default value
         encryptionVersion: 1, // Default value

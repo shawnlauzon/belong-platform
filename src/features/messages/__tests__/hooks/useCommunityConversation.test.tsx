@@ -8,7 +8,7 @@ import * as messagesApi from '../../api';
 
 // Mock the API
 vi.mock('../../api', () => ({
-  fetchCommunityConversation: vi.fn(),
+  fetchConversation: vi.fn(),
 }));
 
 // Mock the shared hooks
@@ -58,7 +58,7 @@ describe('useCommunityConversation', () => {
       participantCount: 10
     };
 
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
 
     const { result } = renderHook(
       () => useCommunityConversation(mockCommunityId),
@@ -74,14 +74,14 @@ describe('useCommunityConversation', () => {
 
     expect(result.current.data).toEqual(mockConversation);
     expect(result.current.error).toBeNull();
-    expect(messagesApi.fetchCommunityConversation).toHaveBeenCalledWith(
-      mockSupabase, 
-      mockCommunityId
-    );
+    expect(messagesApi.fetchConversation).toHaveBeenCalledWith({
+      supabase: mockSupabase, 
+      communityId: mockCommunityId
+    });
   });
 
   it('should handle null conversation (no chat exists)', async () => {
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(null);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(null);
 
     const { result } = renderHook(
       () => useCommunityConversation(mockCommunityId),
@@ -98,7 +98,7 @@ describe('useCommunityConversation', () => {
 
   it('should handle API errors', async () => {
     const mockError = new Error('Failed to fetch conversation');
-    vi.mocked(messagesApi.fetchCommunityConversation).mockRejectedValue(mockError);
+    vi.mocked(messagesApi.fetchConversation).mockRejectedValue(mockError);
 
     const { result } = renderHook(
       () => useCommunityConversation(mockCommunityId),
@@ -114,7 +114,7 @@ describe('useCommunityConversation', () => {
   });
 
   it('should use correct query key', async () => {
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(null);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(null);
 
     renderHook(
       () => useCommunityConversation(mockCommunityId),
@@ -143,7 +143,7 @@ describe('useCommunityConversation', () => {
       participantCount: 1
     };
 
-    vi.mocked(messagesApi.fetchCommunityConversation).mockResolvedValue(mockConversation);
+    vi.mocked(messagesApi.fetchConversation).mockResolvedValue(mockConversation);
 
     const { result } = renderHook(
       () => useCommunityConversation(mockCommunityId, { 
@@ -156,6 +156,6 @@ describe('useCommunityConversation', () => {
     // Should not fetch immediately due to enabled: false
     // Note: isPending can be true initially even when disabled
     expect(result.current.data).toBeUndefined();
-    expect(messagesApi.fetchCommunityConversation).not.toHaveBeenCalled();
+    expect(messagesApi.fetchConversation).not.toHaveBeenCalled();
   });
 });

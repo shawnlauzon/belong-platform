@@ -1,8 +1,20 @@
+import { ConversationListFilters } from './types';
+
+export const conversationKeys = {
+  all: ['conversations'] as const,
+  lists: () => [...conversationKeys.all, 'list'] as const,
+  list: (filters: ConversationListFilters) =>
+    [...conversationKeys.lists(), filters] as const,
+  details: () => [...conversationKeys.all, 'detail'] as const,
+  detail: (conversationId: string) =>
+    [...conversationKeys.details(), conversationId] as const,
+} as const;
+
 export const messageKeys = {
   all: ['messages'] as const,
-  conversationList: () => [...messageKeys.all, 'conversations'] as const,
-  conversation: (id: string) => [...messageKeys.conversationList(), id] as const,
-  list: (conversationId: string) => [...messageKeys.all, 'messages', conversationId] as const,
-  blockedUsers: () => [...messageKeys.all, 'blocked'] as const,
-  unreadCount: () => [...messageKeys.all, 'unread'] as const,
+  lists: () => [...messageKeys.all, 'list'] as const,
+  list: (conversationId: string) =>
+    [...messageKeys.all, 'messages', conversationId] as const,
+  unreadCount: (conversationId: string) =>
+    [...messageKeys.lists(), 'unread', conversationId] as const,
 } as const;

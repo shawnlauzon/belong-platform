@@ -1,17 +1,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { DeleteMessageInput } from '../types';
 import { logger } from '../../../shared';
 
 export async function deleteMessage(
   client: SupabaseClient<Database>,
-  input: DeleteMessageInput
+  messageId: string,
 ): Promise<void> {
   // Get the current message content to preserve it in previous_content
   const { data: messageToDelete, error: fetchError } = await client
     .from('messages')
     .select('id, conversation_id, content, created_at')
-    .eq('id', input.messageId)
+    .eq('id', messageId)
     .single();
 
   if (fetchError) {
@@ -43,12 +42,10 @@ export async function deleteMessage(
   // Soft delete: preserve original content in previous_content, set content to '[Message deleted]'
   const { data: updatedMessage, error } = await client
     .from('messages')
-    .update({ 
-      previous_content: messageToDelete.content,
-      content: '[Message deleted]',
+    .update({
       is_deleted: true,
     })
-    .eq('id', input.messageId)
+    .eq('id', messageId)
     .select('id')
     .single();
 
@@ -70,13 +67,16 @@ export async function deleteMessage(
   if (isLastMessage) {
     const { error: conversationUpdateError } = await client
       .from('conversations')
-      .update({ 
-        last_message_preview: '[Message deleted]'
+      .update({
+        last_message_preview: '[Message deleted]',
       })
       .eq('id', messageToDelete.conversation_id);
 
     if (conversationUpdateError) {
-      logger.error('Error updating conversation preview after message deletion', { error: conversationUpdateError });
+      logger.error(
+        'Error updating conversation preview after message deletion',
+        { error: conversationUpdateError },
+      );
       // Don't throw here - the message deletion succeeded, this is just a preview update
     }
   }
