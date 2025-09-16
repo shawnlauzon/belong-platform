@@ -40,6 +40,7 @@ This document outlines the implementation of a secure, real-time 1x1 messaging s
 ### Tables
 
 #### `conversations`
+
 ```sql
 CREATE TABLE conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,6 +53,7 @@ CREATE TABLE conversations (
 ```
 
 #### `conversation_participants`
+
 ```sql
 CREATE TABLE conversation_participants (
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
@@ -64,12 +66,13 @@ CREATE TABLE conversation_participants (
 
 -- Ensure exactly 2 participants per conversation
 CREATE UNIQUE INDEX idx_conversation_participants ON conversation_participants(conversation_id);
-ALTER TABLE conversation_participants 
-ADD CONSTRAINT check_max_participants 
+ALTER TABLE conversation_participants
+ADD CONSTRAINT check_max_participants
 CHECK ((SELECT COUNT(*) FROM conversation_participants cp WHERE cp.conversation_id = conversation_id) = 2);
 ```
 
 #### `messages`
+
 ```sql
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -90,6 +93,7 @@ CREATE INDEX idx_messages_sender ON messages(sender_id);
 ```
 
 #### `message_status`
+
 ```sql
 CREATE TABLE message_status (
   message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
@@ -101,6 +105,7 @@ CREATE TABLE message_status (
 ```
 
 #### `blocked_users`
+
 ```sql
 CREATE TABLE blocked_users (
   blocker_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -111,6 +116,7 @@ CREATE TABLE blocked_users (
 ```
 
 #### `message_reports`
+
 ```sql
 CREATE TABLE message_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -188,10 +194,10 @@ CREATE OR REPLACE FUNCTION users_share_community(user1_id UUID, user2_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 
+    SELECT 1
     FROM community_memberships cm1
     JOIN community_memberships cm2 ON cm1.community_id = cm2.community_id
-    WHERE cm1.user_id = user1_id 
+    WHERE cm1.user_id = user1_id
     AND cm2.user_id = user2_id
   );
 END;
@@ -222,7 +228,7 @@ BEGIN
   -- Create new conversation if none exists
   IF conv_id IS NULL THEN
     INSERT INTO conversations DEFAULT VALUES RETURNING id INTO conv_id;
-    INSERT INTO conversation_participants (conversation_id, user_id) 
+    INSERT INTO conversation_participants (conversation_id, user_id)
     VALUES (conv_id, auth.uid()), (conv_id, other_user_id);
   END IF;
 
@@ -234,6 +240,7 @@ $$ LANGUAGE plpgsql;
 ## API Implementation
 
 ### Directory Structure
+
 ```
 src/features/messages/
 ├── api/
@@ -255,7 +262,6 @@ src/features/messages/
 │   ├── useMessages.ts
 │   ├── useSendMessage.ts
 │   ├── useTypingIndicator.ts
-│   ├── useUnreadCount.ts
 │   ├── useMarkAsRead.ts
 │   ├── useBlockUser.ts
 │   ├── useUnblockUser.ts
@@ -276,23 +282,27 @@ src/features/messages/
 ### Core API Functions
 
 #### `fetchConversations`
+
 - Returns paginated list of user's conversations
 - Includes last message preview and unread count
 - Sorted by last_message_at DESC
 
 #### `fetchMessages`
+
 - Returns paginated messages for a conversation
 - 50 messages per page
 - Cursor-based pagination using created_at
 - Includes sender profile information
 
 #### `sendMessage`
+
 - Validates user is participant
 - Checks for blocked users
 - Updates conversation's last_message_at
 - Triggers real-time broadcast
 
 #### `markAsRead`
+
 - Updates last_read_at for user
 - Resets unread_count to 0
 - Updates message_status read_at
@@ -304,12 +314,12 @@ src/features/messages/
 ```typescript
 // Per-conversation channel for messages
 const conversationChannel = supabase.channel(`conversation:${conversationId}`, {
-  config: { private: true }
+  config: { private: true },
 });
 
 // User notification channel
 const notificationChannel = supabase.channel(`user:${userId}:notifications`, {
-  config: { private: true }
+  config: { private: true },
 });
 ```
 
@@ -320,16 +330,17 @@ const notificationChannel = supabase.channel(`user:${userId}:notifications`, {
 conversationChannel.send({
   type: 'broadcast',
   event: 'typing',
-  payload: { userId, isTyping: true }
+  payload: { userId, isTyping: true },
 });
 
 // Subscribe to new messages
 conversationChannel
-  .on('postgres_changes', 
+  .on(
+    'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'messages' },
     (payload) => {
       // Handle new message
-    }
+    },
   )
   .on('broadcast', { event: 'typing' }, (payload) => {
     // Handle typing indicator
@@ -342,6 +353,7 @@ conversationChannel
 ### Core Hooks Implementation
 
 #### `useConversations`
+
 ```typescript
 export function useConversations() {
   // Fetch conversations with real-time updates
@@ -351,6 +363,7 @@ export function useConversations() {
 ```
 
 #### `useMessages`
+
 ```typescript
 export function useMessages(conversationId: string) {
   // Fetch paginated message history
@@ -361,6 +374,7 @@ export function useMessages(conversationId: string) {
 ```
 
 #### `useTypingIndicator`
+
 ```typescript
 export function useTypingIndicator(conversationId: string) {
   // Send typing status with debouncing (300ms)
@@ -393,6 +407,7 @@ export function useTypingIndicator(conversationId: string) {
 #### Conversation List View
 
 **Layout:**
+
 - Left sidebar on desktop (full screen on mobile)
 - Search bar at top
 - List of conversations sorted by most recent
@@ -404,6 +419,7 @@ export function useTypingIndicator(conversationId: string) {
   - Typing indicator if active
 
 **Interactions:**
+
 - Click conversation to open message thread
 - Swipe left (mobile) to reveal delete/archive options
 - Long press (mobile) for context menu
@@ -412,12 +428,14 @@ export function useTypingIndicator(conversationId: string) {
 #### Message Thread View
 
 **Layout:**
+
 - Header with recipient name, avatar, online status
 - Message list with infinite scroll
 - Messages grouped by date
 - Input bar at bottom with send button
 
 **Message Bubble Design:**
+
 - Sent messages: Right-aligned, primary color
 - Received messages: Left-aligned, gray background
 - System messages: Centered, subtle styling
@@ -425,6 +443,7 @@ export function useTypingIndicator(conversationId: string) {
 - Read receipts below sent messages
 
 **Message States:**
+
 - Sending: Lighter opacity with spinner
 - Sent: Single checkmark
 - Delivered: Double checkmark
@@ -434,6 +453,7 @@ export function useTypingIndicator(conversationId: string) {
 #### Message Input
 
 **Features:**
+
 - Auto-expanding textarea (max 5 lines)
 - Character counter (appears at 1000 chars)
 - Send button (disabled when empty)
@@ -441,6 +461,7 @@ export function useTypingIndicator(conversationId: string) {
 - Keyboard shortcuts (Enter to send, Shift+Enter for new line)
 
 **Mobile Considerations:**
+
 - Input stays above keyboard
 - Scroll to bottom when keyboard opens
 - Haptic feedback on send
@@ -448,6 +469,7 @@ export function useTypingIndicator(conversationId: string) {
 ### Component Specifications
 
 #### ConversationList Component
+
 ```typescript
 interface ConversationListProps {
   onConversationSelect: (conversationId: string) => void;
@@ -463,6 +485,7 @@ interface ConversationListProps {
 ```
 
 #### MessageThread Component
+
 ```typescript
 interface MessageThreadProps {
   conversationId: string;
@@ -478,6 +501,7 @@ interface MessageThreadProps {
 ```
 
 #### Message Component
+
 ```typescript
 interface MessageProps {
   message: Message;
@@ -495,6 +519,7 @@ interface MessageProps {
 ```
 
 #### TypingIndicator Component
+
 ```typescript
 interface TypingIndicatorProps {
   users: User[]; // Who is typing
@@ -510,6 +535,7 @@ interface TypingIndicatorProps {
 ### Visual Design Requirements
 
 #### Colors
+
 - Primary: Brand color for sent messages
 - Secondary: #F3F4F6 for received messages
 - Danger: #EF4444 for destructive actions
@@ -517,18 +543,21 @@ interface TypingIndicatorProps {
 - Text: #111827 primary, #6B7280 secondary
 
 #### Typography
+
 - Message text: 14px/20px regular
 - Timestamps: 12px/16px regular
 - Names: 14px/20px semibold
 - System messages: 12px/16px italic
 
 #### Spacing
+
 - Message padding: 8px 12px
 - Message gap: 4px
 - Group gap: 16px
 - Conversation item: 12px padding
 
 #### Animations
+
 - Message appear: Fade in (200ms)
 - Typing indicator: Pulse (1.5s loop)
 - Send button: Scale on press
@@ -537,12 +566,14 @@ interface TypingIndicatorProps {
 ### Accessibility Requirements
 
 1. **Keyboard Navigation**
+
    - Tab through conversations
    - Arrow keys to navigate messages
    - Enter to send, Escape to cancel
    - Keyboard shortcuts with visible hints
 
 2. **Screen Readers**
+
    - Proper ARIA labels
    - Announce new messages
    - Describe message states
@@ -557,11 +588,13 @@ interface TypingIndicatorProps {
 ### Mobile-Specific UX
 
 1. **Navigation**
+
    - Slide between list and thread
    - Back button/gesture to return to list
    - Pull to refresh in both views
 
 2. **Input Handling**
+
    - Adjust viewport when keyboard appears
    - Maintain scroll position
    - Show "scroll to bottom" FAB
@@ -575,11 +608,13 @@ interface TypingIndicatorProps {
 ### Error States
 
 1. **Connection Lost**
+
    - Banner notification
    - Queue messages locally
    - Auto-retry with exponential backoff
 
 2. **Failed Message**
+
    - Inline error with retry button
    - Clear error message
    - Don't block other messages
@@ -592,10 +627,12 @@ interface TypingIndicatorProps {
 ### Loading States
 
 1. **Initial Load**
+
    - Skeleton screens matching layout
    - Progressive loading (list -> messages)
 
 2. **Pagination**
+
    - Spinner at top when loading history
    - Maintain scroll position
 
@@ -658,12 +695,14 @@ interface TypingIndicatorProps {
 ### UX Testing
 
 1. **Usability Testing**
+
    - Task completion rates
    - Time to send first message
    - Error recovery paths
    - Mobile gesture recognition
 
 2. **Performance Testing**
+
    - Time to interactive (< 3s)
    - Message send latency (< 500ms)
    - Scroll performance (60fps)
@@ -704,11 +743,13 @@ interface TypingIndicatorProps {
 ### Migration Strategy
 
 1. **Phase 1: Web Platform (Current)**
+
    - Server-side encryption at rest
    - Simple key management
    - Cross-device access
 
 2. **Phase 2: Mobile App**
+
    - Generate keypair on install
    - Store in Keychain/Keystore
    - Exchange public keys per conversation
@@ -752,22 +793,26 @@ CREATE TABLE conversation_keys (
 ## Implementation Timeline
 
 ### Week 1: Foundation
+
 - Database schema and migrations
 - Basic CRUD operations
 - Conversation management
 
 ### Week 2: Real-time
+
 - Supabase Realtime setup
 - Message subscriptions
 - Typing indicators
 - Read receipts
 
 ### Week 3: React Integration
+
 - All hooks implementation
 - Basic UI components
 - Conversation and message views
 
 ### Week 4: Polish & Safety
+
 - Blocking functionality
 - Message reporting
 - Error handling
@@ -775,6 +820,7 @@ CREATE TABLE conversation_keys (
 - Comprehensive testing
 
 ### Week 5: UX Refinement
+
 - Animations and transitions
 - Loading and error states
 - Mobile optimizations

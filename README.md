@@ -178,10 +178,10 @@ For optimal real-time functionality, wrap your app with the specialized real-tim
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { 
+import {
   BelongProvider,
   NotificationRealtimeProvider,
-  MessageRealtimeProvider
+  MessageRealtimeProvider,
 } from '@belongnetwork/platform';
 import App from './App';
 
@@ -218,12 +218,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 - 🧹 **Clean Architecture** - Keeps real-time logic separate from business logic
 
 **NotificationRealtimeProvider Features:**
+
 - Listens for new notifications and updates the cache instantly
 - Updates unread notification counts in real-time
 - Automatically fetches full notification details when new ones arrive
 - Handles user authentication changes gracefully
 
 **MessageRealtimeProvider Features:**
+
 - Updates message lists and conversation previews instantly
 - Maintains unread message counts across conversations
 - Handles both direct messages and community chat
@@ -231,6 +233,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 **Optional Usage:**
 These providers are optional but highly recommended for the best user experience. Without them:
+
 - Data updates only occur when hooks refetch (on focus, mount, etc.)
 - Users won't see real-time notifications or messages
 - Badge counts won't update until manual refresh
@@ -369,18 +372,17 @@ import {
   useSendMessage,
   useMarkAsRead,
   useTypingIndicator,
-  useUnreadCounts, // Unified count hook for all badges
 } from '@belongnetwork/platform';
 
 // List conversations with realtime updates
 const { data: conversations, isLoading } = useConversations();
 
 // Get messages with realtime subscription
-const { 
-  data: messages, 
+const {
+  data: messages,
   isLoading: messagesLoading,
   hasMore,
-  loadMore 
+  loadMore,
 } = useMessages(conversationId);
 
 // Send message (triggers realtime updates for recipients)
@@ -395,27 +397,21 @@ await sendMessage.mutateAsync({
 const markAsRead = useMarkAsRead();
 await markAsRead.mutateAsync({
   conversationId,
-  messageId: 'message-id'
+  messageId: 'message-id',
 });
 
 // Typing indicators (realtime)
 const { sendTyping, typingUsers, isAnyoneTyping } = useTypingIndicator({
-  conversationId
+  conversationId,
 });
 
 // Send typing indicator
 sendTyping(true); // user is typing
 sendTyping(false); // user stopped typing
-
-// Get unified unread counts for notifications and messages
-const { data: counts } = useUnreadCounts();
-// counts.notifications - unread notification count
-// counts.messages - total unread message count  
-// counts.total - total badge count (notifications + messages)
-// counts.messagesByConversation - unread count per conversation
 ```
 
 **Key Features:**
+
 - ✅ **Zero polling** - All updates via Supabase Realtime
 - ✅ **Instant delivery** - Messages appear immediately in recipient's UI
 - ✅ **Live typing indicators** - See when others are typing
