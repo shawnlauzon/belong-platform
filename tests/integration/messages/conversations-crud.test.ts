@@ -101,7 +101,7 @@ describe('Conversations CRUD Operations', () => {
       const conversation = await createTestConversation(supabase, userB.id);
 
       // Fetch conversations
-      const conversations = await api.fetchConversations(supabase);
+      const conversations = await api.fetchConversations(supabase, userA.id);
 
       expect(conversations).toContainEqual(
         expect.objectContaining({
@@ -112,10 +112,13 @@ describe('Conversations CRUD Operations', () => {
 
     it('returns empty list for user with no conversations', async () => {
       // Create a new isolated user
-      await createTestUser(supabase);
+      const isolatedUser = await createTestUser(supabase);
 
       try {
-        const conversations = await api.fetchConversations(supabase);
+        const conversations = await api.fetchConversations(
+          supabase,
+          isolatedUser.id,
+        );
 
         expect(conversations).toHaveLength(0);
       } finally {
