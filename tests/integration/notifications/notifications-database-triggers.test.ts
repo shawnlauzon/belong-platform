@@ -42,54 +42,6 @@ describe('Database triggers', () => {
   beforeEach(async () => {
     // Sign in as resource owner for consistency
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
-
-    // Ensure profiles exist for both users (workaround for profile trigger timing issues)
-    const { data: existingProfiles } = await supabase
-      .from('profiles')
-      .select('id')
-      .in('id', [resourceOwner.id, communityMember.id]);
-
-    const existingProfileIds = existingProfiles?.map((p) => p.id) || [];
-
-    if (!existingProfileIds.includes(resourceOwner.id)) {
-      await supabase.from('profiles').insert({
-        id: resourceOwner.id,
-        email: resourceOwner.email,
-        user_metadata: { first_name: 'test_resource_owner' },
-        notification_preferences: {
-          social_interactions: true,
-          my_resources: true,
-          my_registrations: true,
-          my_communities: true,
-          community_activity: true,
-          trust_recognition: true,
-          direct_messages: true,
-          community_messages: true,
-          email_enabled: false,
-          push_enabled: false,
-        },
-      });
-    }
-
-    if (!existingProfileIds.includes(communityMember.id)) {
-      await supabase.from('profiles').insert({
-        id: communityMember.id,
-        email: communityMember.email,
-        user_metadata: { first_name: 'test_community_member' },
-        notification_preferences: {
-          social_interactions: true,
-          my_resources: true,
-          my_registrations: true,
-          my_communities: true,
-          community_activity: true,
-          trust_recognition: true,
-          direct_messages: true,
-          community_messages: true,
-          email_enabled: false,
-          push_enabled: false,
-        },
-      });
-    }
   });
 
   it('should create notification record via database trigger when someone comments', async () => {
@@ -114,6 +66,8 @@ describe('Database triggers', () => {
       console.error('Failed to create comment:', error);
       throw error;
     }
+
+    await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
@@ -157,6 +111,8 @@ describe('Database triggers', () => {
       notes: 'Test claim that should trigger notification',
     });
 
+    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
       .from('notifications')
@@ -199,6 +155,8 @@ describe('Database triggers', () => {
       communityId: testCommunity.id,
     });
 
+    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
       .from('notifications')
@@ -230,6 +188,8 @@ describe('Database triggers', () => {
       testCommunity.id,
       'request',
     );
+
+    await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
     // Query database directly to verify trigger created notification for resourceOwner
     const { data: notifications, error } = await supabase
@@ -268,6 +228,8 @@ describe('Database triggers', () => {
       content: 'This is my own comment',
       resourceId: resource.id,
     });
+
+    await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
     // Query database to verify no notification was created
     const { data: notifications, error } = await supabase
