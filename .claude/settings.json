@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(VITEST_VERBOSE=true pnpm test:integration *)"
+      "Bash(VITEST_VERBOSE=true pnpm test:integration :*)"
     ],
     "deny": [],
     "ask": []
