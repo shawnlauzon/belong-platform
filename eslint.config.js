@@ -43,4 +43,16 @@ export default tseslint.config(
       ],
     },
   },
+  // Relaxed rules for test files
+  {
+    files: [
+      'tests/**/*.{ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      '**/__tests__/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
 );

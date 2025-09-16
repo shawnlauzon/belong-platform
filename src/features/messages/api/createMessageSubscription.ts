@@ -23,7 +23,7 @@ export async function createMessageSubscription({
   queryClient,
   conversationId,
 }: CreateMessageSubscriptionParams): Promise<RealtimeChannel> {
-  // Subscribe to new messages across all conversations
+  // Subscribe to new messages across given conversation
   const messageChannel = supabase
     .channel(`conversation:${conversationId}`)
     .on(
@@ -32,7 +32,7 @@ export async function createMessageSubscription({
         event: '*',
       },
       (payload) => {
-        logger.debug('Received broadcast', JSON.stringify(payload));
+        logger.debug('Received message broadcast', JSON.stringify(payload));
 
         queryClient.invalidateQueries({
           queryKey: messageKeys.list(conversationId),
@@ -41,23 +41,8 @@ export async function createMessageSubscription({
         // Increment unread count for conversation
         queryClient.setQueryData(
           messageKeys.unreadCount(conversationId),
-          (queryClient.getQueryData<number>(
-            messageKeys.unreadCount(conversationId),
-          ) || 0) + 1,
+          (prev: number) => (prev || 0) + 1,
         );
-      },
-    )
-    .on(
-      'broadcast',
-      {
-        event: '*',
-      },
-      (payload) => {
-        logger.debug('Received broadcast', JSON.stringify(payload));
-
-        queryClient.invalidateQueries({
-          queryKey: messageKeys.list(conversationId),
-        });
       },
     )
     .subscribe();
