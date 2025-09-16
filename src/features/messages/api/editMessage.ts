@@ -2,10 +2,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { EditMessageInput } from '../types';
 import { logger } from '../../../shared';
+import { channelManager } from './channelManager';
 
 export async function editMessage(
   client: SupabaseClient<Database>,
-  input: EditMessageInput
+  input: EditMessageInput,
 ): Promise<void> {
   // Get the current message content to preserve it in previous_content
   const { data: messageToEdit, error: fetchError } = await client
@@ -40,11 +41,10 @@ export async function editMessage(
 
   const isLastMessage = lastMessage?.id === messageToEdit.id;
 
-  // Edit: preserve original content in previous_content, set new content
+  // Edit: set new content and mark as edited
   const { data: updatedMessage, error } = await client
     .from('messages')
-    .update({ 
-      previous_content: messageToEdit.content,
+    .update({
       content: input.content,
       is_edited: true,
     })
@@ -70,14 +70,23 @@ export async function editMessage(
   if (isLastMessage) {
     const { error: conversationUpdateError } = await client
       .from('conversations')
-      .update({ 
-        last_message_preview: input.content.substring(0, 100) // First 100 chars as preview
+      .update({
+        last_message_preview: input.content.substring(0, 100), // First 100 chars as preview
       })
       .eq('id', messageToEdit.conversation_id);
 
     if (conversationUpdateError) {
-      logger.error('Error updating conversation preview after message edit', { error: conversationUpdateError });
+      logger.error('Error updating conversation preview after message edit', {
+        error: conversationUpdateError,
+      });
       // Don't throw here - the message edit succeeded, this is just a preview update
     }
   }
+
+  // Broadcast the message update using the channel manager
+  const channel = channelManager.getMessagesChannel(client, messageToEdit.conversation_id);
+
+  await channelManager.broadcast(channel, 'message:updated', {
+    message: input.content,
+  });
 }

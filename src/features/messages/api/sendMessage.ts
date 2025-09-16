@@ -4,12 +4,13 @@ import { Message, SendMessageInput } from '../types';
 import { toMessageRow, toDomainMessage } from '../transformers';
 import { logger } from '../../../shared';
 import { MessageRow } from '../types/messageRow';
+import { channelManager } from './channelManager';
 
 export async function sendMessage(
   supabase: SupabaseClient<Database>,
   input: SendMessageInput,
 ): Promise<Message> {
-  logger.info('Starting message send process', {
+  logger.info('Sending message', {
     conversationId: input.conversationId,
     contentLength: input.content?.length || 0,
   });
@@ -38,14 +39,14 @@ export async function sendMessage(
     throw new Error('Failed to send message');
   }
 
-  const myChannel = supabase.channel(`conversation:${input.conversationId}`);
+  // Broadcast the message using the channel manager
+  const channel = channelManager.getMessagesChannel(
+    supabase,
+    input.conversationId,
+  );
 
-  myChannel.send({
-    type: 'broadcast',
-    event: 'message',
-    payload: {
-      message: input.content,
-    },
+  await channelManager.broadcast(channel, 'message', {
+    message: input.content,
   });
 
   return toDomainMessage(data);

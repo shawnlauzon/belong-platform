@@ -3,6 +3,7 @@ import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { messageKeys } from '../queries';
 import { logger } from '@/shared';
+import { channelManager } from './channelManager';
 
 export interface CreateMessageSubscriptionParams {
   supabase: SupabaseClient<Database>;
@@ -11,25 +12,22 @@ export interface CreateMessageSubscriptionParams {
 }
 
 /**
- * Creates real-time message subscriptions for a user.
- * This function extracts the core subscription logic from MessageRealtimeProvider
- * to make it testable without React context.
- *
- * @param dependencies - The required dependencies for creating the subscription
- * @returns Promise that resolves to subscription result with cleanup function
+ * Creates a subscription for new messages in a given conversation.
  */
 export async function createMessageSubscription({
   supabase,
   queryClient,
   conversationId,
 }: CreateMessageSubscriptionParams): Promise<RealtimeChannel> {
-  // Subscribe to new messages across given conversation
-  const messageChannel = supabase
-    .channel(`conversation:${conversationId}`)
+  // Get the messages channel from the channel manager
+  const channel = channelManager.getMessagesChannel(supabase, conversationId);
+
+  // Add our listener to handle message broadcasts
+  channel
     .on(
       'broadcast',
       {
-        event: '*',
+        event: 'message',
       },
       (payload) => {
         logger.debug('Received message broadcast', JSON.stringify(payload));
@@ -45,12 +43,44 @@ export async function createMessageSubscription({
         );
       },
     )
-    .subscribe();
+    .on(
+      'broadcast',
+      {
+        event: 'message:updated',
+      },
+      (payload) => {
+        logger.debug(
+          'Received message updated broadcast',
+          JSON.stringify(payload),
+        );
 
-  logger.debug(
-    'Subscribed to message channel',
-    `conversation:${conversationId}`,
-  );
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(conversationId),
+        });
+      },
+    )
+    .on(
+      'broadcast',
+      {
+        event: 'message:deleted',
+      },
+      (payload) => {
+        logger.debug(
+          'Received message deleted broadcast',
+          JSON.stringify(payload),
+        );
 
-  return messageChannel;
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(conversationId),
+        });
+
+        // Decrement unread count for conversation
+        queryClient.setQueryData(
+          messageKeys.unreadCount(conversationId),
+          (prev: number) => (prev || 0) - 1,
+        );
+      },
+    );
+
+  return channel;
 }

@@ -3,7 +3,11 @@ import { QueryClient } from '@tanstack/react-query';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { createTestConversation } from './messaging-helpers';
-import { sendMessage } from '@/features/messages/api';
+import {
+  deleteMessage,
+  editMessage,
+  sendMessage,
+} from '@/features/messages/api';
 import {
   createTestCommunity,
   createTestUser,
@@ -109,5 +113,50 @@ describe('Message Subscription Tests', () => {
     const [, updaterFn] = mockSetQueryData.mock.calls[0];
     expect(updaterFn(5)).toBe(6); // Should increment 5 to 6
     expect(updaterFn(0)).toBe(1); // Should increment 0 to 1
+  });
+
+  it('should invalidate the conversation query cache after editing a message', async () => {
+    // Clear previous calls to have a clean slate
+    vi.clearAllMocks();
+
+    // Other user sends a message to me
+    const message = await sendMessage(otherUserClient, {
+      conversationId: testConversation.id,
+      content: `${TEST_PREFIX} subscription test`,
+    });
+
+    await editMessage(otherUserClient, {
+      messageId: message.id,
+      content: `${TEST_PREFIX} edited`,
+    });
+
+    // Wait for real-time update to process
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: messageKeys.list(testConversation.id),
+    });
+  });
+
+  it('should invalidate the conversation query cache after deleting a message', async () => {
+    // Clear previous calls to have a clean slate
+    vi.clearAllMocks();
+
+    // Other user sends a message to me
+    const message = await sendMessage(otherUserClient, {
+      conversationId: testConversation.id,
+      content: `${TEST_PREFIX} subscription test`,
+    });
+
+    await deleteMessage(otherUserClient, message.id);
+
+    // Wait for real-time update to process
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: messageKeys.list(testConversation.id),
+    });
   });
 });

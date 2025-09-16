@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
+import { channelManager } from './channelManager';
 
 export async function deleteMessage(
   client: SupabaseClient<Database>,
@@ -39,7 +40,7 @@ export async function deleteMessage(
 
   const isLastMessage = lastMessage?.id === messageToDelete.id;
 
-  // Soft delete: preserve original content in previous_content, set content to '[Message deleted]'
+  // Soft delete: mark message as deleted
   const { data: updatedMessage, error } = await client
     .from('messages')
     .update({
@@ -80,4 +81,12 @@ export async function deleteMessage(
       // Don't throw here - the message deletion succeeded, this is just a preview update
     }
   }
+
+  // Broadcast the message using the channel manager
+  const channel = channelManager.getMessagesChannel(
+    client,
+    messageToDelete.conversation_id,
+  );
+
+  await channelManager.broadcast(channel, 'message:deleted');
 }
