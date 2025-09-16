@@ -19,7 +19,7 @@ import { joinCommunity } from '@/features/communities/api';
 import type { Conversation } from '@/features/messages/types';
 import { vi } from 'vitest';
 
-describe('Message Subscription API Tests', () => {
+describe('Message Subscription Tests', () => {
   let supabase: SupabaseClient<Database>;
   let otherUserClient: SupabaseClient<Database>;
   let queryClient: QueryClient;
@@ -46,12 +46,7 @@ describe('Message Subscription API Tests', () => {
     // Create mock QueryClient
     queryClient = {
       invalidateQueries: vi.fn().mockResolvedValue(undefined),
-      setQueryData: vi.fn().mockImplementation((queryKey, updater) => {
-        if (typeof updater === 'function') {
-          return updater(0); // Return the result of calling the updater function with current value 0
-        }
-        return updater;
-      }),
+      setQueryData: vi.fn().mockResolvedValue(undefined),
       getQueryData: vi.fn().mockReturnValue(0),
       getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
     } as unknown as QueryClient;
