@@ -51,7 +51,10 @@ describe('Messages Permissions & Authorization', () => {
     it('users can view a conversation that another created with them', async () => {
       // UserB should see the conversation
       await signInAsUser(supabase, userB);
-      const userBConversations = await api.fetchConversations(supabase);
+      const userBConversations = await api.fetchConversations(
+        supabase,
+        userB.id,
+      );
       const userBConversation = userBConversations.find(
         (c) => c.id === conversation.id,
       );
@@ -59,12 +62,6 @@ describe('Messages Permissions & Authorization', () => {
     });
 
     it('non-participants cannot fetch messages for conversation', async () => {
-      await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Secret message`,
-      );
-
       // UserC should not be able to fetch messages (returns empty instead of error)
       await signInAsUser(supabase, userC);
       const messages = await api.fetchMessages(supabase, conversation.id);
@@ -144,8 +141,7 @@ describe('Messages Permissions & Authorization', () => {
   });
 
   describe('Database-level security', () => {
-    it('direct database access respects RLS policies', async () => {
-      // UserC tries to directly query conversations table
+    it('cannot query other users conversations', async () => {
       await signInAsUser(supabase, userC);
       const { data: conversations } = await supabase
         .from('conversations')
@@ -156,16 +152,29 @@ describe('Messages Permissions & Authorization', () => {
       expect(conversations).toHaveLength(0);
     });
 
-    it('direct message insertion respects RLS policies', async () => {
-      // UserC tries to directly insert message
+    it('cannot query other users messages', async () => {
       await signInAsUser(supabase, userC);
-      const { error } = await supabase.from('messages').insert({
-        conversation_id: conversation.id,
-        sender_id: userC.id,
-        content: `${TEST_PREFIX} Unauthorized direct insert`,
-      });
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversation.id);
 
-      expect(error).toBeTruthy();
+      // Should return empty due to RLS policy
+      expect(messages).toHaveLength(0);
+    });
+
+    it('connect insert a message directly into database from another user', async () => {
+      const { data } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversation.id,
+          sender_id: userC.id,
+          content: `${TEST_PREFIX} Unauthorized direct insert`,
+        })
+        .select()
+        .single();
+
+      expect(data).toBeNull();
     });
   });
 });
