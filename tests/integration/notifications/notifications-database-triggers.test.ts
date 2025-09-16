@@ -17,7 +17,7 @@ import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 
-describe('test_int_notifications_database_triggers', () => {
+describe('Database triggers', () => {
   let supabase: SupabaseClient<Database>;
   let resourceOwner: Account;
   let testCommunity: Community;
@@ -30,7 +30,7 @@ describe('test_int_notifications_database_triggers', () => {
     resourceOwner = await createTestUser(supabase);
     testCommunity = await createTestCommunity(supabase);
 
-    // Create another user and join community  
+    // Create another user and join community
     communityMember = await createTestUser(supabase);
     await joinCommunity(supabase, testCommunity.id);
   });
@@ -42,15 +42,15 @@ describe('test_int_notifications_database_triggers', () => {
   beforeEach(async () => {
     // Sign in as resource owner for consistency
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
-    
+
     // Ensure profiles exist for both users (workaround for profile trigger timing issues)
     const { data: existingProfiles } = await supabase
       .from('profiles')
       .select('id')
       .in('id', [resourceOwner.id, communityMember.id]);
 
-    const existingProfileIds = existingProfiles?.map(p => p.id) || [];
-    
+    const existingProfileIds = existingProfiles?.map((p) => p.id) || [];
+
     if (!existingProfileIds.includes(resourceOwner.id)) {
       await supabase.from('profiles').insert({
         id: resourceOwner.id,
@@ -66,8 +66,8 @@ describe('test_int_notifications_database_triggers', () => {
           direct_messages: true,
           community_messages: true,
           email_enabled: false,
-          push_enabled: false
-        }
+          push_enabled: false,
+        },
       });
     }
 
@@ -86,8 +86,8 @@ describe('test_int_notifications_database_triggers', () => {
           direct_messages: true,
           community_messages: true,
           email_enabled: false,
-          push_enabled: false
-        }
+          push_enabled: false,
+        },
       });
     }
   });
@@ -102,7 +102,7 @@ describe('test_int_notifications_database_triggers', () => {
 
     // Sign in as communityMember and create comment
     await signIn(supabase, communityMember.email, 'TestPass123!');
-    
+
     let comment;
     try {
       comment = await createComment(supabase, {
@@ -306,7 +306,7 @@ describe('test_int_notifications_database_triggers', () => {
     // Switch back to resourceOwner and check that count increased
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
     const updatedTotal = await fetchNotificationCount(supabase);
-    
+
     expect(updatedTotal).toBeGreaterThan(initialTotal);
   });
 });
