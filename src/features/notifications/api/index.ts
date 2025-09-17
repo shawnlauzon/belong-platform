@@ -5,5 +5,4 @@ export { markAllAsRead } from './markAllAsRead';
 export { deleteNotification } from './deleteNotification';
 export { fetchPreferences } from './fetchPreferences';
 export { updatePreferences } from './updatePreferences';
-export { subscribeToNotifications } from './subscribeToNotifications';
 export { createNotificationSubscription } from './createNotificationSubscription';

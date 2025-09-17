@@ -1,4 +1,4 @@
-import type { NotificationType } from './notification';
+import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
 
 // Specific metadata interfaces for each notification type
 
@@ -28,14 +28,14 @@ export interface ResourceUpdatedMetadata {
 
 // Helper function to check if notification type has metadata
 export function hasMetadata(type: NotificationType): boolean {
-  return [
-    'comment',
-    'comment_reply',
-    'shoutout_received',
-    'trust_points_changed',
-    'trust_level_changed',
-    'claimed_resource_updated',
-  ].includes(type);
+  return (
+    type === NOTIFICATION_TYPES.COMMENT ||
+    type === NOTIFICATION_TYPES.COMMENT_REPLY ||
+    type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
+    type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED ||
+    type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
+    type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED
+  );
 }
 
 // Helper function to get typed metadata for any notification
@@ -50,8 +50,8 @@ export function getTypedMetadata(
   | ResourceUpdatedMetadata
   | Record<string, never> {
   switch (type) {
-    case 'comment':
-    case 'comment_reply':
+    case NOTIFICATION_TYPES.COMMENT:
+    case NOTIFICATION_TYPES.COMMENT_REPLY:
       return {
         content_preview:
           typeof metadata.content_preview === 'string'
@@ -59,7 +59,7 @@ export function getTypedMetadata(
             : '',
       };
 
-    case 'shoutout_received':
+    case NOTIFICATION_TYPES.SHOUTOUT_RECEIVED:
       return {
         content_preview:
           typeof metadata.content_preview === 'string'
@@ -67,7 +67,7 @@ export function getTypedMetadata(
             : '',
       };
 
-    case 'trust_points_changed':
+    case NOTIFICATION_TYPES.TRUST_POINTS_CHANGED:
       return {
         amount: typeof metadata.amount === 'number' ? metadata.amount : 0,
         old_score:
@@ -82,7 +82,7 @@ export function getTypedMetadata(
           typeof metadata.reason === 'string' ? metadata.reason : undefined,
       };
 
-    case 'trust_level_changed':
+    case NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED:
       return {
         old_level:
           typeof metadata.old_level === 'number' ? metadata.old_level : 0,
@@ -90,7 +90,7 @@ export function getTypedMetadata(
           typeof metadata.new_level === 'number' ? metadata.new_level : 0,
       };
 
-    case 'claimed_resource_updated':
+    case NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED:
       return {
         changes:
           Array.isArray(metadata.changes) &&

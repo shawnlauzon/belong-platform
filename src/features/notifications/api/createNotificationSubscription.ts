@@ -1,111 +1,107 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { notificationKeys } from '../queries';
 import { transformNotification } from '../transformers/notificationTransformer';
 import type { NotificationDetail } from '../types/notificationDetail';
-import { subscribeToNotifications, type NotificationSubscription } from './subscribeToNotifications';
+import { logger } from '@/shared';
 
-export interface CreateNotificationSubscriptionDependencies {
+export interface CreateNotificationSubscriptionParams {
   supabase: SupabaseClient<Database>;
   queryClient: QueryClient;
   userId: string;
-  logger: typeof import('@/shared').logger;
-}
-
-export interface NotificationSubscriptionResult {
-  subscription: NotificationSubscription;
-  cleanup: () => Promise<void>;
 }
 
 /**
- * Creates a real-time notification subscription for a user.
- * This function extracts the core subscription logic from NotificationRealtimeProvider
- * to make it testable without React context.
- * 
- * @param dependencies - The required dependencies for creating the subscription
- * @returns Promise that resolves to subscription result with cleanup function
+ * Creates a subscription for new notifications for a given user.
  */
-export async function createNotificationSubscription(
-  dependencies: CreateNotificationSubscriptionDependencies
-): Promise<NotificationSubscriptionResult> {
-  const { supabase, queryClient, userId, logger } = dependencies;
+export async function createNotificationSubscription({
+  supabase,
+  queryClient,
+  userId,
+}: CreateNotificationSubscriptionParams): Promise<RealtimeChannel> {
+  const channel = supabase
+    .channel(`user:${userId}:notifications`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`,
+      },
+      async (payload) => {
+        try {
+          if (!payload.new.id) {
+            logger.warn(
+              'createNotificationSubscription: received payload without ID',
+              {
+                payload,
+                userId,
+              },
+            );
+            return;
+          }
 
-  logger.info('createNotificationSubscription: initializing subscription', { userId });
-
-  const subscription = await subscribeToNotifications(supabase, userId, {
-    onNotification: async (payload) => {
-      try {
-        if (!payload.new.id) {
-          logger.warn('createNotificationSubscription: received payload without ID', {
-            payload,
-            userId,
-          });
-          return;
-        }
-
-        logger.debug('createNotificationSubscription: fetching full notification details', {
-          notificationId: payload.new.id,
-          userId,
-        });
-
-        // Fetch full notification details
-        const { data } = await supabase
-          .from('notification_details')
-          .select('*')
-          .eq('id', payload.new.id)
-          .single();
-
-        if (data) {
-          const newNotification = transformNotification(data);
-
-          logger.debug('createNotificationSubscription: updating React Query cache', {
-            notificationId: newNotification.id,
-            type: newNotification.type,
-            userId,
-          });
-
-          // Update notifications list cache
-          queryClient.setQueryData(
-            notificationKeys.list({ limit: 1000 }),
-            (oldData: NotificationDetail[] | undefined) => {
-              if (!oldData) return [newNotification];
-              return [newNotification, ...oldData];
-            }
+          logger.debug(
+            'createNotificationSubscription: fetching full notification details',
+            {
+              notificationId: payload.new.id,
+              userId,
+            },
           );
 
-          // Invalidate counts to trigger refetch
-          queryClient.invalidateQueries({
-            queryKey: ['unreadCounts'],
-          });
-        } else {
-          logger.warn('createNotificationSubscription: failed to fetch notification data', {
-            notificationId: payload.new.id,
-            userId,
-          });
+          // Fetch full notification details
+          const { data } = await supabase
+            .from('notification_details')
+            .select('*')
+            .eq('id', payload.new.id)
+            .single();
+
+          if (data) {
+            const newNotification = transformNotification(data);
+
+            logger.debug(
+              'createNotificationSubscription: updating React Query cache',
+              newNotification,
+            );
+
+            // Update notifications list cache
+            queryClient.setQueryData(
+              notificationKeys.list(userId),
+              (oldData: NotificationDetail[] | undefined) => {
+                if (!oldData) return [newNotification];
+                return [newNotification, ...oldData];
+              },
+            );
+
+            // Increment unread count for conversation
+            queryClient.setQueryData(
+              notificationKeys.unreadCount(),
+              (prev: number) => (prev || 0) + 1,
+            );
+          } else {
+            logger.warn(
+              'createNotificationSubscription: failed to fetch notification data',
+              {
+                notificationId: payload.new.id,
+                userId,
+              },
+            );
+          }
+        } catch (error) {
+          logger.error(
+            'createNotificationSubscription: error processing notification',
+            {
+              error,
+              notificationId: payload.new.id,
+              userId,
+            },
+          );
         }
-      } catch (error) {
-        logger.error('createNotificationSubscription: error processing notification', {
-          error,
-          notificationId: payload.new.id,
-          userId,
-        });
-      }
-    },
-  });
+      },
+    )
+    .subscribe();
 
-  logger.info('createNotificationSubscription: subscription established', { userId });
-
-  const cleanup = async () => {
-    logger.debug('createNotificationSubscription: cleaning up subscription', {
-      userId,
-      channelName: `user:${userId}:notifications`,
-    });
-    await subscription.cleanup();
-  };
-
-  return {
-    subscription,
-    cleanup,
-  };
+  return channel;
 }

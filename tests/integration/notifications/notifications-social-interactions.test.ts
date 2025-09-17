@@ -7,6 +7,7 @@ import {
   createTestResource,
 } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { createShoutout } from '@/features/shoutouts';
 import { joinCommunity } from '@/features/communities/api';
@@ -66,20 +67,20 @@ describe('Social Interactions Notifications', () => {
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
       const result = await fetchNotifications(clientA, {
-        type: 'comment',
+        type: NOTIFICATION_TYPES.COMMENT,
         limit: 10,
       });
 
       expect(result.notifications.length).toBeGreaterThan(0);
       const commentNotification = result.notifications.find(
         (n) =>
-          n.type === 'comment' &&
+          n.type === NOTIFICATION_TYPES.COMMENT &&
           n.resourceId === resource.id &&
           n.actorId === interactingUser.id,
       );
       expect(commentNotification).toBeDefined();
       expect(commentNotification).toMatchObject({
-        type: 'comment',
+        type: NOTIFICATION_TYPES.COMMENT,
         resourceId: resource.id,
         actorId: interactingUser.id,
         isRead: false,
@@ -112,20 +113,20 @@ describe('Social Interactions Notifications', () => {
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
       const result2 = await fetchNotifications(clientA, {
-        type: 'comment_reply',
+        type: NOTIFICATION_TYPES.COMMENT_REPLY,
         limit: 10,
       });
 
       expect(result2.notifications.length).toBeGreaterThan(0);
       const replyNotification = result2.notifications.find(
         (n) =>
-          n.type === 'comment_reply' &&
+          n.type === NOTIFICATION_TYPES.COMMENT_REPLY &&
           n.resourceId === resource.id &&
           n.actorId === interactingUser.id,
       );
       expect(replyNotification).toBeDefined();
       expect(replyNotification).toMatchObject({
-        type: 'comment_reply',
+        type: NOTIFICATION_TYPES.COMMENT_REPLY,
         resourceId: resource.id,
         commentId: expect.any(String),
         actorId: interactingUser.id,
@@ -157,20 +158,20 @@ describe('Social Interactions Notifications', () => {
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
       const result3 = await fetchNotifications(clientA, {
-        type: 'shoutout_received',
+        type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
         limit: 10,
       });
 
       expect(result3.notifications.length).toBeGreaterThan(0);
       const shoutoutNotification = result3.notifications.find(
         (n) =>
-          n.type === 'shoutout_received' &&
+          n.type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED &&
           n.communityId === testCommunity.id &&
           n.actorId === interactingUser.id,
       );
       expect(shoutoutNotification).toBeDefined();
       expect(shoutoutNotification).toMatchObject({
-        type: 'shoutout_received',
+        type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
         communityId: testCommunity.id,
         actorId: interactingUser.id,
         isRead: false,
@@ -212,7 +213,7 @@ describe('Social Interactions Notifications', () => {
       });
 
       const initialResult2 = await fetchNotifications(clientA, {
-        type: 'comment_reply',
+        type: NOTIFICATION_TYPES.COMMENT_REPLY,
       });
       const initialCount = initialResult2.notifications.length;
 
@@ -224,7 +225,7 @@ describe('Social Interactions Notifications', () => {
       });
 
       const finalResult2 = await fetchNotifications(clientA, {
-        type: 'comment_reply',
+        type: NOTIFICATION_TYPES.COMMENT_REPLY,
       });
       expect(finalResult2.notifications).toHaveLength(initialCount);
     });

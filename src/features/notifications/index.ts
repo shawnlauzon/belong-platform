@@ -1,6 +1,9 @@
 // Types
 export type * from './types';
 
+// Constants
+export { NOTIFICATION_TYPES, type NotificationType } from './constants';
+
 // API
 export {
   fetchNotifications,

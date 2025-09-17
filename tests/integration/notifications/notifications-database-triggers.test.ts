@@ -8,6 +8,7 @@ import {
   createTestResourceTimeslot,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -74,7 +75,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', 'comment')
+      .eq('type', NOTIFICATION_TYPES.COMMENT)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -84,7 +85,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: 'comment',
+      type: NOTIFICATION_TYPES.COMMENT,
       resource_id: resource.id,
       comment_id: comment.id,
       community_id: testCommunity.id,
@@ -118,7 +119,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', 'claim')
+      .eq('type', NOTIFICATION_TYPES.CLAIM)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -128,7 +129,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: 'claim',
+      type: NOTIFICATION_TYPES.CLAIM,
       resource_id: resource.id,
       claim_id: claim.id,
       community_id: testCommunity.id,
@@ -162,7 +163,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', 'shoutout_received')
+      .eq('type', NOTIFICATION_TYPES.SHOUTOUT_RECEIVED)
       .eq('actor_id', communityMember.id);
 
     expect(error).toBeNull();
@@ -171,7 +172,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: 'shoutout_received',
+      type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
       shoutout_id: shoutout.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,
@@ -196,7 +197,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', 'new_resource')
+      .eq('type', NOTIFICATION_TYPES.NEW_RESOURCE)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -206,7 +207,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: 'new_resource',
+      type: NOTIFICATION_TYPES.NEW_RESOURCE,
       resource_id: resource.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,
@@ -236,7 +237,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', 'comment')
+      .eq('type', NOTIFICATION_TYPES.COMMENT)
       .eq('resource_id', resource.id)
       .eq('actor_id', resourceOwner.id);
 

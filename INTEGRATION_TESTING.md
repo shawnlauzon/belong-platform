@@ -107,7 +107,7 @@ describe('Feature - Operation Group', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData(supabase);
+    await cleanupAllTestData();
   });
 
   beforeEach(async () => {
