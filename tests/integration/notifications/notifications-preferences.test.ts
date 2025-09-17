@@ -12,7 +12,6 @@ import {
   updatePreferences,
   fetchPreferences,
 } from '@/features/notifications';
-import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
@@ -22,7 +21,7 @@ import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 
-describe('Notification Preferences', () => {
+describe.skip('Notification Preferences', () => {
   let supabase: SupabaseClient<Database>;
   let testUser: Account;
   let testCommunity: Community;

@@ -5,7 +5,7 @@ import {
   createTestCommunity,
   createTestResource,
 } from '../helpers/test-data';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupResourceClaim } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -78,7 +78,7 @@ describe('Resource Claims - Timeslot Operations', () => {
   afterEach(async () => {
     await signIn(supabase, claimant.email, 'TestPass123!');
     if (firstClaim) {
-      await resourcesApi.deleteResourceClaim(supabase, firstClaim.id);
+      await cleanupResourceClaim(firstClaim.id);
       firstClaim = null;
     }
     if (secondClaim) {
@@ -86,7 +86,7 @@ describe('Resource Claims - Timeslot Operations', () => {
         await signIn(supabase, secondClaimUser.email, 'TestPass123!');
       }
 
-      await resourcesApi.deleteResourceClaim(supabase, secondClaim.id);
+      await cleanupResourceClaim(secondClaim.id);
       secondClaim = null;
 
       if (secondClaimUser && secondClaimUser !== claimant) {

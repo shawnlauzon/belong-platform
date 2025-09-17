@@ -13,7 +13,7 @@ export async function updateResourceClaim(
   supabase: SupabaseClient<Database>,
   claimInput: Partial<ResourceClaimInput> & {
     id: string;
-    status?: ResourceClaimStatus;
+    status: ResourceClaimStatus;
   },
 ): Promise<ResourceClaim> {
   // Transform to database format

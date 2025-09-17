@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupResourceClaim } from '../helpers/cleanup';
 import {
   createTestUser,
   createTestCommunity,
@@ -12,7 +12,6 @@ import { signIn } from '@/features/auth/api';
 import {
   createResourceClaim,
   updateResourceClaim,
-  deleteResourceClaim,
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -61,7 +60,7 @@ describe('Trust Score Points - Events', () => {
 
   afterEach(async () => {
     if (testClaim) {
-      await deleteResourceClaim(supabase, testClaim.id);
+      await cleanupResourceClaim(testClaim.id);
       testClaim = null;
     }
   });
@@ -313,7 +312,7 @@ describe('Trust Score Points - Events', () => {
 
     afterEach(async () => {
       if (approvalClaim) {
-        await deleteResourceClaim(supabase, approvalClaim.id);
+        await cleanupResourceClaim(approvalClaim.id);
         approvalClaim = null;
       }
     });

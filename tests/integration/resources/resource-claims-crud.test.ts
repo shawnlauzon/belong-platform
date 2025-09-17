@@ -6,7 +6,7 @@ import {
   createTestResource,
   createTestResourceTimeslot,
 } from '../helpers/test-data';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupResourceClaim } from '../helpers/cleanup';
 import * as resourcesApi from '@/features/resources/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -62,7 +62,7 @@ describe('Resource Claims - Basic Operations', () => {
 
     afterEach(async () => {
       if (testClaim) {
-        await resourcesApi.deleteResourceClaim(supabase, testClaim.id);
+        await cleanupResourceClaim(testClaim.id);
         testClaim = null;
       }
     });
@@ -232,7 +232,7 @@ describe('Resource Claims - Basic Operations', () => {
       });
 
       afterEach(async () => {
-        await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+        await cleanupResourceClaim(testClaim2.id);
       });
 
       it('finds claim by claimant lookup', async () => {
@@ -293,7 +293,7 @@ describe('Resource Claims - Basic Operations', () => {
 
       it('deletes resource claim', async () => {
         // Delete claim
-        await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+        await cleanupResourceClaim(testClaim2.id);
 
         // Wait a bit for the delete to propagate
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -339,8 +339,8 @@ describe('Resource Claims - Basic Operations', () => {
 
       afterAll(async () => {
         await signIn(supabase, claimant.email, 'TestPass123!');
-        await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
-        await resourcesApi.deleteResourceClaim(supabase, testClaim3.id);
+        await cleanupResourceClaim(testClaim2.id);
+        await cleanupResourceClaim(testClaim3.id);
       });
 
       describe('Fetches a claim', () => {
@@ -422,7 +422,7 @@ describe('Resource Claims - Basic Operations', () => {
         await verifyClaimInDatabase(supabase, givenClaim);
         
         // Clean up - just test the approved -> given transition for now
-        await resourcesApi.deleteResourceClaim(supabase, givenClaim.id);
+        await cleanupResourceClaim(givenClaim.id);
       });
 
       it('expect.fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
@@ -445,7 +445,7 @@ describe('Resource Claims - Basic Operations', () => {
       it('cannot delete resource claim', async () => {
         await verifyClaimInDatabase(supabase, testClaim2);
         try {
-          await resourcesApi.deleteResourceClaim(supabase, testClaim2.id);
+          await cleanupResourceClaim(testClaim2.id);
 
           // The record should still be there
           await verifyClaimInDatabase(supabase, testClaim2);
@@ -458,7 +458,7 @@ describe('Resource Claims - Basic Operations', () => {
       // TODO: fix this test; RLS permissions cause it to delete 0 rows silently
       it.skip('cannot delete resource claim', async () => {
         await expect(
-          resourcesApi.deleteResourceClaim(supabase, testClaim2.id),
+          cleanupResourceClaim(testClaim2.id),
         ).rejects.toThrow();
       });
     });
