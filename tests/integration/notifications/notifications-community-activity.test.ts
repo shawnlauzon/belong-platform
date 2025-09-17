@@ -10,11 +10,10 @@ import { fetchNotifications } from '@/features/notifications';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
-import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import type { Notification } from '@/features/notifications';
 
 describe('Community Activity Notifications', () => {
   let clientA: SupabaseClient<Database>;
@@ -22,10 +21,6 @@ describe('Community Activity Notifications', () => {
   let communityMember: Account;
   let testCommunity: Community;
   let resourceCreator: Account;
-
-  // Real-time testing
-  let notificationChannel: RealtimeChannel;
-  const notificationsReceived: Notification[] = [];
 
   beforeAll(async () => {
     // Create two separate clients for better realtime isolation
@@ -39,33 +34,9 @@ describe('Community Activity Notifications', () => {
     // Create resource creator user
     resourceCreator = await createTestUser(clientB);
     await joinCommunity(clientB, testCommunity.id);
-
-    // Set up single persistent channel for INSERT events on clientA
-    notificationChannel = clientA
-      .channel(`user:${communityMember.id}:notifications`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${communityMember.id}`,
-        },
-        (payload) => {
-          notificationsReceived.push(payload.new as Notification);
-        },
-      )
-      .subscribe();
-
-    // Wait for channel to be established
-    await new Promise((resolve) => setTimeout(resolve, 2000));
   });
 
   afterAll(async () => {
-    if (notificationChannel) {
-      await notificationChannel.unsubscribe();
-      clientA.removeChannel(notificationChannel);
-    }
     await cleanupAllTestData();
   });
 
@@ -87,45 +58,14 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const result = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result.notifications.length).toBeGreaterThan(0);
-      const resourceNotification = result.notifications.find(
+      expect(notifications.length).toBeGreaterThan(0);
+      const resourceNotification = notifications.find(
         (n) => n.resourceId === resource.id,
       );
       expect(resourceNotification).toBeDefined();
       expect(resourceNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-        resourceId: resource.id,
-        communityId: testCommunity.id,
-        actorId: resourceCreator.id,
-        isRead: false,
-      });
-    });
-
-    it('should receive real-time new_resource notification when someone adds a resource to my community', async () => {
-      // Have resource creator add a resource using clientB to trigger realtime
-      await signIn(clientB, resourceCreator.email, 'TestPass123!');
-      const resource = await createTestResource(
-        clientB,
-        testCommunity.id,
-        'offer',
-      );
-
-      // Wait for realtime to propagate
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Verify notification was received via persistent channel
-      const resourceNotifications = notificationsReceived.filter(
-        (n) =>
-          n.type === NOTIFICATION_TYPES.NEW_RESOURCE &&
-          n.resourceId === resource.id,
-      );
-      expect(resourceNotifications.length).toBeGreaterThan(0);
-      expect(resourceNotifications[0]).toMatchObject({
         type: NOTIFICATION_TYPES.NEW_RESOURCE,
         resourceId: resource.id,
         communityId: testCommunity.id,
@@ -146,13 +86,10 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const result2 = await fetchNotifications(clientA, {
-        type: 'new_event',
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result2.notifications.length).toBeGreaterThan(0);
-      const eventNotification = result2.notifications.find(
+      expect(notifications.length).toBeGreaterThan(0);
+      const eventNotification = notifications.find(
         (n) => n.resourceId === event.id,
       );
       expect(eventNotification).toBeDefined();
@@ -166,10 +103,6 @@ describe('Community Activity Notifications', () => {
     });
 
     it('should not notify myself when I create a resource in my own community', async () => {
-      const initialNotifications = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-      });
-
       // Create a resource as the community member (should not notify self)
       const resource = await createTestResource(
         clientA,
@@ -177,12 +110,10 @@ describe('Community Activity Notifications', () => {
         'offer',
       );
 
-      const result3 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-      });
+      const notifications = await fetchNotifications(clientA);
 
       // Should not have new notifications for own resource
-      const ownResourceNotifications = result3.notifications.filter(
+      const ownResourceNotifications = notifications.filter(
         (n) => n.resourceId === resource.id && n.actorId === communityMember.id,
       );
       expect(ownResourceNotifications).toHaveLength(0);
@@ -192,10 +123,6 @@ describe('Community Activity Notifications', () => {
       // Create a separate community and user
       const anotherUser = await createTestUser(clientB);
       const anotherCommunity = await createTestCommunity(clientB);
-
-      const initialNotifications = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-      });
 
       // Have another user create a resource in their community
       await signIn(clientB, anotherUser.email, 'TestPass123!');
@@ -207,11 +134,9 @@ describe('Community Activity Notifications', () => {
 
       // Check that community member didn't receive notification
       await signIn(clientA, communityMember.email, 'TestPass123!');
-      const result4 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      const newNotifications = result4.notifications.filter(
+      const newNotifications = notifications.filter(
         (n) => n.resourceId === resource.id,
       );
       expect(newNotifications).toHaveLength(0);

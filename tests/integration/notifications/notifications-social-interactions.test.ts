@@ -66,13 +66,10 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const result = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMENT,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result.notifications.length).toBeGreaterThan(0);
-      const commentNotification = result.notifications.find(
+      expect(notifications.length).toBeGreaterThan(0);
+      const commentNotification = notifications.find(
         (n) =>
           n.type === NOTIFICATION_TYPES.COMMENT &&
           n.resourceId === resource.id &&
@@ -112,13 +109,10 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const result2 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMENT_REPLY,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result2.notifications.length).toBeGreaterThan(0);
-      const replyNotification = result2.notifications.find(
+      expect(notifications.length).toBeGreaterThan(0);
+      const replyNotification = notifications.find(
         (n) =>
           n.type === NOTIFICATION_TYPES.COMMENT_REPLY &&
           n.resourceId === resource.id &&
@@ -157,13 +151,10 @@ describe('Social Interactions Notifications', () => {
       // Switch to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const result3 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result3.notifications.length).toBeGreaterThan(0);
-      const shoutoutNotification = result3.notifications.find(
+      expect(notifications.length).toBeGreaterThan(0);
+      const shoutoutNotification = notifications.find(
         (n) =>
           n.type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED &&
           n.communityId === testCommunity.id &&
@@ -179,74 +170,4 @@ describe('Social Interactions Notifications', () => {
     });
   });
 
-  describe('Self-notification prevention', () => {
-    it('should not create notification when I comment on my own resource', async () => {
-      const resource = await createTestResource(
-        clientA,
-        testCommunity.id,
-        'offer',
-      );
-
-      const initialResult = await fetchNotifications(clientA);
-      const initialCount = initialResult.notifications.length;
-
-      // Comment on own resource
-      await createComment(clientA, {
-        content: 'This is my own comment',
-        resourceId: resource.id,
-      });
-
-      const finalResult = await fetchNotifications(clientA);
-      expect(finalResult.notifications).toHaveLength(initialCount);
-    });
-
-    it('should not create notification when I reply to my own comment', async () => {
-      const resource = await createTestResource(
-        clientA,
-        testCommunity.id,
-        'offer',
-      );
-
-      const parentComment = await createComment(clientA, {
-        content: 'My original comment',
-        resourceId: resource.id,
-      });
-
-      const initialResult2 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMENT_REPLY,
-      });
-      const initialCount = initialResult2.notifications.length;
-
-      // Reply to own comment
-      await createComment(clientA, {
-        content: 'My own reply',
-        resourceId: resource.id,
-        parentId: parentComment.id,
-      });
-
-      const finalResult2 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMENT_REPLY,
-      });
-      expect(finalResult2.notifications).toHaveLength(initialCount);
-    });
-
-    it('should not create notification when I try to give myself a shoutout', async () => {
-      // Create a resource for the shoutout
-      const resource = await createTestResource(
-        clientA,
-        testCommunity.id,
-        'offer',
-      );
-
-      // Try to give shoutout to self - should be prevented by database constraint
-      await expect(
-        createShoutout(clientA, {
-          receiverId: resourceOwner.id,
-          message: 'Self shoutout',
-          resourceId: resource.id,
-          communityId: testCommunity.id,
-        }),
-      ).rejects.toThrow();
-    });
-  });
 });

@@ -61,7 +61,7 @@ describe('Trust & Recognition Notifications', () => {
     it('should create trust_points_changed notification when I receive trust points', async () => {
       // Check initial trust points notifications
       const initialResult = await fetchNotifications(clientA);
-      const initialCount = initialResult.notifications.length;
+      const initialCount = initialResult.length;
 
       // Trigger an action that awards trust points (e.g., creating a community)
       // Note: This test may need to be adjusted based on what actions actually trigger trust points
@@ -71,11 +71,11 @@ describe('Trust & Recognition Notifications', () => {
       const finalResult = await fetchNotifications(clientA);
 
       // Should have received a trust points notification for community creation
-      expect(finalResult.notifications.length).toBeGreaterThan(initialCount);
-      const trustPointsNotification = finalResult.notifications.find(
+      expect(finalResult.length).toBeGreaterThan(initialCount);
+      const trustPointsNotification = finalResult.find(
         (n) =>
           n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED &&
-          !initialResult.notifications.some((init) => init.id === n.id),
+          !initialResult.some((init) => init.id === n.id),
       );
 
       expect(trustPointsNotification).toBeDefined();
@@ -85,8 +85,8 @@ describe('Trust & Recognition Notifications', () => {
         communityId: expect.any(String),
         isRead: false,
         metadata: expect.objectContaining({
-          amount: expect.any(Number)
-        })
+          amount: expect.any(Number),
+        }),
       });
     });
 
@@ -101,8 +101,10 @@ describe('Trust & Recognition Notifications', () => {
       // For now, we'll check if any trust level notifications exist in the system
 
       // Filter to only trust level notifications
-      const trustLevelNotifications = initialResult2.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED);
-      
+      const trustLevelNotifications = initialResult2.filter(
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED,
+      );
+
       if (trustLevelNotifications.length > 0) {
         expect(trustLevelNotifications[0]).toMatchObject({
           type: NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED,
@@ -157,8 +159,12 @@ describe('Trust & Recognition Notifications', () => {
 
       // Each community creation should generate its own trust points notification
       // (assuming community creation awards trust points)
-      const initialTrustCount = initialResult3.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
-      const finalTrustCount = finalResult3.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
+      const initialTrustCount = initialResult3.filter(
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
+      ).length;
+      const finalTrustCount = finalResult3.filter(
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
+      ).length;
       const newNotificationsCount = finalTrustCount - initialTrustCount;
 
       // Should have received notifications for both community creations
@@ -173,7 +179,9 @@ describe('Trust & Recognition Notifications', () => {
     it('should send notification for trust points when offering a resource', async () => {
       // Get initial trust points notifications
       const initialResult = await fetchNotifications(clientA);
-      const initialTrustCount = initialResult.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
+      const initialTrustCount = initialResult.filter(
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
+      ).length;
 
       // Create a community first
       const testCommunity = await createTestCommunity(clientA);
@@ -187,7 +195,7 @@ describe('Trust & Recognition Notifications', () => {
         communityIds: [testCommunity.id],
         locationName: 'Test Location',
         status: 'open',
-        requiresApproval: false
+        requiresApproval: false,
       });
 
       // Wait for trust point calculation
@@ -196,24 +204,26 @@ describe('Trust & Recognition Notifications', () => {
       // Check for new trust points notifications
       const finalResult = await fetchNotifications(clientA);
 
-      const finalTrustCount = finalResult.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
+      const finalTrustCount = finalResult.filter(
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
+      ).length;
       expect(finalTrustCount).toBeGreaterThan(initialTrustCount);
-      
-      const newNotification = finalResult.notifications.find(n => 
-        n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED && 
-        !initialResult.notifications.some(init => init.id === n.id)
+
+      const newNotification = finalResult.find(
+        (n) =>
+          n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED &&
+          !initialResult.some((init) => init.id === n.id),
       );
-      
+
       expect(newNotification).toBeDefined();
       expect(newNotification).toMatchObject({
         type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         userId: trustRecipient.id,
         isRead: false,
         metadata: expect.objectContaining({
-          amount: expect.any(Number)
-        })
+          amount: expect.any(Number),
+        }),
       });
     });
-
   });
 });
