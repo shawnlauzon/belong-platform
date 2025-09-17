@@ -11,7 +11,6 @@ import { fetchNotifications } from '@/features/notifications';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import {
   createResourceClaim,
-  deleteResourceClaim,
   updateResourceClaim,
 } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
@@ -106,8 +105,11 @@ describe('My Resources Notifications', () => {
         notes: 'Initial claim',
       });
 
-      // claimingUser cancels their claim (deletes the claim)
-      await deleteResourceClaim(supabase, claim.id);
+      // claimingUser cancels their claim
+      await updateResourceClaim(supabase, {
+        id: claim.id,
+        status: 'cancelled',
+      });
 
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
@@ -186,5 +188,4 @@ describe('My Resources Notifications', () => {
       });
     });
   });
-
 });

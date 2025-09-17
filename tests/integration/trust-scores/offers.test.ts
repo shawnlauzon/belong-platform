@@ -8,7 +8,7 @@ import {
   afterAll,
 } from 'vitest';
 import { createTestClient, createServiceClient } from '../helpers/test-client';
-import { cleanupAllTestData } from '../helpers/cleanup';
+import { cleanupAllTestData, cleanupResourceClaim } from '../helpers/cleanup';
 import {
   createTestUser,
   createTestCommunity,
@@ -19,7 +19,6 @@ import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import {
   createResourceClaim,
-  deleteResourceClaim,
   updateResourceClaim,
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -75,7 +74,7 @@ describe('Trust Score Points - Offers', () => {
 
   afterEach(async () => {
     if (testClaim) {
-      await deleteResourceClaim(supabase, testClaim.id);
+      await cleanupResourceClaim(testClaim.id);
     }
   });
 
