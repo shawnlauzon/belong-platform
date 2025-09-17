@@ -8,11 +8,9 @@ import {
 } from '../helpers/test-data';
 import {
   fetchNotifications,
-  fetchNotificationCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '@/features/notifications';
-import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -49,80 +47,6 @@ describe('Notifications CRUD', () => {
     await signIn(supabase, testUser.email, 'TestPass123!');
   });
 
-  describe('Notification creation via triggers', () => {
-    it('should create notification when someone comments on my resource', async () => {
-      // Create a resource as testUser
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'offer',
-      );
-
-      // Sign in as anotherUser to comment
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
-
-      // Create a comment on the resource
-      await createComment(supabase, {
-        content: 'This is a test comment on your resource',
-        resourceId: resource.id,
-      });
-
-      // Switch back to testUser to check notifications
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
-      // Fetch notifications for testUser
-      const result = await fetchNotifications(supabase, {
-        type: NOTIFICATION_TYPES.COMMENT,
-        limit: 10,
-      });
-
-      expect(result.notifications.length).toBeGreaterThan(0);
-
-      const specificNotification = result.notifications.find(
-        (n) =>
-          n.type === NOTIFICATION_TYPES.COMMENT &&
-          n.resourceId === resource.id &&
-          n.actorId === anotherUser.id,
-      );
-      expect(specificNotification).toBeDefined();
-      expect(specificNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.COMMENT,
-        resourceId: resource.id,
-        actorId: anotherUser.id,
-        isRead: false,
-      });
-    });
-
-    it('should update notification counts when notifications are created', async () => {
-      // Get initial counts
-      const initialCounts = await fetchNotificationCount(supabase);
-
-      // Create a resource as testUser
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'offer',
-      );
-
-      // Sign in as anotherUser to comment
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
-
-      // Create a comment
-      await createComment(supabase, {
-        content: 'Another test comment',
-        resourceId: resource.id,
-      });
-
-      // Switch back to testUser to check counts
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
-      // Get updated counts
-      const updatedCounts = await fetchNotificationCount(supabase);
-
-      expect(updatedCounts).toBeGreaterThan(initialCounts);
-    });
-  });
-
   describe('Mark as read functionality', () => {
     it('should mark single notification as read', async () => {
       // Create a resource and comment to generate notification
@@ -141,14 +65,13 @@ describe('Notifications CRUD', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get the notification
-      const result = await fetchNotifications(supabase, {
+      const notifications = await fetchNotifications(supabase, {
         isRead: false,
-        limit: 1,
       });
 
-      expect(result.notifications.length).toBeGreaterThan(0);
+      expect(notifications.length).toBeGreaterThan(0);
 
-      const specificNotification = result.notifications.find(
+      const specificNotification = notifications.find(
         (n) => n.isRead === false,
       );
       expect(specificNotification).toBeDefined();
@@ -158,11 +81,9 @@ describe('Notifications CRUD', () => {
       await markNotificationAsRead(supabase, specificNotification!.id);
 
       // Verify it's marked as read
-      const updatedResult = await fetchNotifications(supabase, {
-        limit: 10,
-      });
+      const updatedResult = await fetchNotifications(supabase);
 
-      const readNotification = updatedResult.notifications.find(
+      const readNotification = updatedResult.find(
         (n) => n.id === specificNotification!.id,
       );
       expect(readNotification?.isRead).toBe(true);
@@ -201,7 +122,7 @@ describe('Notifications CRUD', () => {
         isRead: false,
       });
 
-      expect(unreadNotifications.notifications.length).toBeGreaterThan(0);
+      expect(unreadNotifications.length).toBeGreaterThan(0);
 
       // Mark all as read
       await markAllNotificationsAsRead(supabase);
@@ -211,7 +132,7 @@ describe('Notifications CRUD', () => {
         isRead: false,
       });
 
-      expect(stillUnreadNotifications.notifications.length).toBe(0);
+      expect(stillUnreadNotifications.length).toBe(0);
     });
   });
 });

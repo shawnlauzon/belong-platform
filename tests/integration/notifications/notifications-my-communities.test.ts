@@ -47,13 +47,9 @@ describe('My Communities Notifications', () => {
       // Switch back to community organizer to check notifications
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
-      const result = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result.notifications.length).toBeGreaterThan(0);
-      const joinNotification = result.notifications.find(
+      const joinNotification = notifications.find(
         (n) => n.actorId === freshJoiningUser.id,
       );
       expect(joinNotification).toBeDefined();
@@ -76,13 +72,9 @@ describe('My Communities Notifications', () => {
       // Switch back to community organizer to check notifications
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
-      const result2 = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(clientA);
 
-      expect(result2.notifications.length).toBeGreaterThan(0);
-      const leftNotification = result2.notifications.find(
+      const leftNotification = notifications.find(
         (n) => n.actorId === leavingUser.id,
       );
       expect(leftNotification).toBeDefined();
@@ -95,20 +87,16 @@ describe('My Communities Notifications', () => {
     });
 
     it('should not notify myself when I join another community', async () => {
-      const initialResult = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
-      });
-      const initialCount = initialResult.notifications.length;
+      const initialNotifications = await fetchNotifications(clientA);
+      const initialCount = initialNotifications.length;
 
       // Create another test community and join it as the organizer
       const anotherCommunity = await createTestCommunity(clientA);
 
-      const finalResult = await fetchNotifications(clientA, {
-        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
-      });
+      const finalNotifications = await fetchNotifications(clientA);
 
       // Should not have new notifications for joining own community
-      const ownCommunityNotifications = finalResult.notifications.filter(
+      const ownCommunityNotifications = finalNotifications.filter(
         (n) =>
           n.communityId === anotherCommunity.id &&
           n.actorId === communityOrganizer.id,

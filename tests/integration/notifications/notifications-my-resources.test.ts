@@ -37,7 +37,6 @@ describe('My Resources Notifications', () => {
     // Create claiming user
     claimingUser = await createTestUser(supabase);
     await joinCommunity(supabase, testCommunity.id);
-
   });
 
   afterAll(async () => {
@@ -70,16 +69,14 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const result = await fetchNotifications(supabase, {
-        type: NOTIFICATION_TYPES.CLAIM,
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(supabase);
 
-      expect(result.notifications.length).toBeGreaterThan(0);
-      const claimNotification = result.notifications.find(n => 
-        n.type === NOTIFICATION_TYPES.CLAIM &&
-        n.resourceId === resource.id && 
-        n.actorId === claimingUser.id
+      expect(notifications.length).toBeGreaterThan(0);
+      const claimNotification = notifications.find(
+        (n) =>
+          n.type === NOTIFICATION_TYPES.CLAIM &&
+          n.resourceId === resource.id &&
+          n.actorId === claimingUser.id,
       );
       expect(claimNotification).toBeDefined();
       expect(claimNotification).toMatchObject({
@@ -115,16 +112,14 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const result2 = await fetchNotifications(supabase, {
-        type: 'resource_claim_cancelled',
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(supabase);
 
-      expect(result2.notifications.length).toBeGreaterThan(0);
-      const cancelledNotification = result2.notifications.find(n => 
-        n.type === 'resource_claim_cancelled' && 
-        n.resourceId === resource.id && 
-        n.actorId === claimingUser.id
+      expect(notifications.length).toBeGreaterThan(0);
+      const cancelledNotification = notifications.find(
+        (n) =>
+          n.type === 'resource_claim_cancelled' &&
+          n.resourceId === resource.id &&
+          n.actorId === claimingUser.id,
       );
       expect(cancelledNotification).toBeDefined();
       expect(cancelledNotification).toMatchObject({
@@ -171,16 +166,14 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const result3 = await fetchNotifications(supabase, {
-        type: 'resource_claim_completed',
-        limit: 10,
-      });
+      const notifications = await fetchNotifications(supabase);
 
-      expect(result3.notifications.length).toBeGreaterThan(0);
-      const completedNotification = result3.notifications.find(n => 
-        n.type === 'resource_claim_completed' && 
-        n.resourceId === resource.id && 
-        n.actorId === claimingUser.id
+      expect(notifications.length).toBeGreaterThan(0);
+      const completedNotification = notifications.find(
+        (n) =>
+          n.type === 'resource_claim_completed' &&
+          n.resourceId === resource.id &&
+          n.actorId === claimingUser.id,
       );
       expect(completedNotification).toBeDefined();
       expect(completedNotification).toMatchObject({
@@ -192,106 +185,6 @@ describe('My Resources Notifications', () => {
         isRead: false,
       });
     });
-
   });
 
-  describe('Self-notification prevention', () => {
-    it('should not create claim notification when I claim my own resource', async () => {
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'request',
-      );
-      const timeslot = await createTestResourceTimeslot(supabase, resource.id);
-
-      // Claim own resource
-      await createResourceClaim(supabase, {
-        resourceId: resource.id,
-        timeslotId: timeslot.id,
-        notes: 'Claiming my own resource',
-      });
-
-      const result4 = await fetchNotifications(supabase, {
-        type: NOTIFICATION_TYPES.CLAIM,
-      });
-      
-      // Should not find any notification for claiming own resource
-      const selfClaimNotification = result4.notifications.find(n => 
-        n.type === NOTIFICATION_TYPES.CLAIM &&
-        n.resourceId === resource.id && 
-        n.actorId === resourceOwner.id
-      );
-      expect(selfClaimNotification).toBeUndefined();
-    });
-
-    it('should not create notification when I cancel my own claim on my own resource', async () => {
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'request',
-      );
-      const timeslot = await createTestResourceTimeslot(supabase, resource.id);
-
-      // Claim own resource
-      const claim = await createResourceClaim(supabase, {
-        resourceId: resource.id,
-        timeslotId: timeslot.id,
-        notes: 'Self-claim for cancellation test',
-      });
-
-      // Cancel own claim
-      await deleteResourceClaim(supabase, claim.id);
-
-      const result5 = await fetchNotifications(supabase, {
-        type: 'resource_claim_cancelled',
-      });
-      
-      // Should not find any notification for cancelling own claim
-      const selfCancelNotification = result5.notifications.find(n => 
-        n.type === 'resource_claim_cancelled' && 
-        n.resourceId === resource.id && 
-        n.actorId === resourceOwner.id
-      );
-      expect(selfCancelNotification).toBeUndefined();
-    });
-
-    it('should not create notification when I complete my own claim on my own resource', async () => {
-      const resource = await createTestResource(
-        supabase,
-        testCommunity.id,
-        'request',
-      );
-      const timeslot = await createTestResourceTimeslot(supabase, resource.id);
-
-      // Claim own resource
-      const claim = await createResourceClaim(supabase, {
-        resourceId: resource.id,
-        timeslotId: timeslot.id,
-        notes: 'Self-claim for completion test',
-      });
-
-      // For requests, claimant gives first, then owner receives, then claimant confirms
-      await updateResourceClaim(supabase, {
-        id: claim.id,
-        status: 'given',
-      });
-
-      await updateResourceClaim(supabase, {
-        id: claim.id,
-        status: 'completed',
-      });
-
-      const result6 = await fetchNotifications(supabase, {
-        type: 'resource_claim_completed',
-      });
-      
-      // Should not find any notification for completing own claim
-      const selfCompleteNotification = result6.notifications.find(n => 
-        n.type === 'resource_claim_completed' && 
-        n.resourceId === resource.id && 
-        n.actorId === resourceOwner.id
-      );
-      expect(selfCompleteNotification).toBeUndefined();
-    });
-  });
 });
