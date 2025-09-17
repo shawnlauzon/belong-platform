@@ -22,7 +22,7 @@ export function useMarkAsRead() {
       
       // Invalidate unread count
       queryClient.invalidateQueries({
-        queryKey: messageKeys.unreadCount(),
+        queryKey: messageKeys.unreadCount(conversationId),
       });
     },
   });

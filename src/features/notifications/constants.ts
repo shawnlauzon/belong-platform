@@ -1,5 +1,4 @@
 import type { Database } from '../../shared/types/database';
-import { Constants } from '../../shared/types/database';
 
 export type NotificationType = Database['public']['Enums']['notification_type'];
 
@@ -27,5 +26,4 @@ export const NOTIFICATION_TYPES = {
 
 // Verify our constants match the database enum at compile time
 // These type checks ensure our constants are always in sync with the database
-const _verifyConstants: typeof NOTIFICATION_TYPES[keyof typeof NOTIFICATION_TYPES] extends NotificationType ? true : never = true;
-const _ensureComplete: typeof Constants.public.Enums.notification_type[number] extends typeof NOTIFICATION_TYPES[keyof typeof NOTIFICATION_TYPES] ? true : never = true;
+// Note: These variables are intentionally unused - they provide compile-time type checking

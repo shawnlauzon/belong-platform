@@ -2,21 +2,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestConversation, signInAsUser } from './messaging-helpers';
-import { sendMessage } from '@/features/messages/api';
-import {
-  createTestCommunity,
-  createTestUser,
-  TEST_PREFIX,
-} from '../helpers/test-data';
+import { createTestConversation } from './messaging-helpers';
+import { createTestCommunity, createTestUser } from '../helpers/test-data';
 import { createConversationSubscription } from '@/features/messages/api/createConversationSubscription';
-import { conversationKeys, messageKeys } from '@/features/messages/queries';
+import { conversationKeys } from '@/features/messages/queries';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
-import { Message } from '@/features';
 import { vi } from 'vitest';
 
 describe('Conversation Subscription Tests', () => {

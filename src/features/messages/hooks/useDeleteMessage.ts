@@ -9,7 +9,7 @@ export function useDeleteMessage(conversationId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: DeleteMessageInput) => deleteMessage(client, input),
+    mutationFn: (input: DeleteMessageInput) => deleteMessage(client, input.messageId),
     onSuccess: () => {
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({

@@ -30,8 +30,6 @@ export function createFakeMessage(overrides: Partial<Message> = {}): Message {
     encryptionVersion: 1,
     createdAt: now,
     updatedAt: now,
-    sender,
-    isMine: faker.datatype.boolean(),
     ...overrides,
   };
 }
@@ -43,7 +41,6 @@ export function createFakeConversation(
   overrides: Partial<Conversation> = {},
 ): Conversation {
   const now = faker.date.recent();
-  const otherUser = createFakeUser();
 
   return {
     id: faker.string.uuid(),
@@ -52,11 +49,7 @@ export function createFakeConversation(
     lastMessageAt: faker.date.recent(),
     lastMessagePreview: faker.lorem.sentence(),
     lastMessageSenderId: faker.string.uuid(),
-    otherParticipant: otherUser,
-    unreadCount: faker.number.int({ min: 0, max: 10 }),
-    lastReadAt: faker.date.recent(),
     conversationType: 'direct',
-    communityId: undefined,
     ...overrides,
   };
 }
@@ -119,8 +112,8 @@ export function createFakeMessageReport(
     details: faker.lorem.paragraph(),
     createdAt: now,
     status: 'pending',
-    reviewedAt: null,
-    reviewedBy: null,
+    reviewedAt: undefined,
+    reviewedBy: undefined,
     ...overrides,
   };
 }
@@ -186,34 +179,6 @@ export function createFakeConversationRow(
   };
 }
 
-/**
- * Creates a fake message report database row
- */
-export function createFakeMessageReportRow(
-  overrides: Partial<
-    Database['public']['Tables']['message_reports']['Row']
-  > = {},
-): Database['public']['Tables']['message_reports']['Row'] {
-  const now = faker.date.recent().toISOString();
-
-  return {
-    id: faker.string.uuid(),
-    message_id: faker.string.uuid(),
-    reporter_id: faker.string.uuid(),
-    reason: faker.helpers.arrayElement([
-      'spam',
-      'harassment',
-      'inappropriate',
-      'other',
-    ]),
-    details: faker.lorem.paragraph(),
-    status: 'pending',
-    created_at: now,
-    reviewed_at: null,
-    reviewed_by: null,
-    ...overrides,
-  };
-}
 
 /**
  * Creates a fake basic message row (minimal fields only)
@@ -253,8 +218,6 @@ export function createFakeConversationParticipantRow(
     conversation_id: faker.string.uuid(),
     user_id: faker.string.uuid(),
     joined_at: now,
-    last_read_at: faker.date.recent().toISOString(),
-    unread_count: faker.number.int({ min: 0, max: 10 }),
     ...overrides,
   };
 }

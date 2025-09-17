@@ -20,7 +20,7 @@ export async function unblockUser(
     .from('blocked_users')
     .delete()
     .eq('blocker_id', userId)
-    .eq('blocked_id', input.userId);
+    .eq('blocked_id', input.blockedUserId);
 
   if (error) {
     logger.error('Error unblocking user', { error });

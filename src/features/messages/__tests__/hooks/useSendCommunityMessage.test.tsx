@@ -102,10 +102,10 @@ describe('useSendCommunityMessage', () => {
     });
 
     expect(result.current.data).toEqual(mockMessage);
-    expect(messagesApi.fetchConversation).toHaveBeenCalledWith({
-      supabase: mockSupabase,
-      communityId: mockCommunityId
-    });
+    expect(messagesApi.fetchConversation).toHaveBeenCalledWith(
+      mockSupabase,
+      mockCommunityId
+    );
     expect(messagesApi.sendMessage).toHaveBeenCalledWith(mockSupabase, {
       conversationId: mockConversationId,
       content: 'Hello community!',

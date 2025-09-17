@@ -19,3 +19,37 @@ export interface EditMessageInput {
   messageId: string;
   content: string;
 }
+
+export interface BlockUserInput {
+  blockedUserId: string;
+}
+
+export interface ReportMessageInput {
+  messageId: string;
+  reason: MessageReportReason;
+  details?: string;
+}
+
+export interface MessageReport {
+  id: string;
+  messageId: string;
+  reporterId: string;
+  reason: MessageReportReason;
+  details?: string;
+  status: MessageReportStatus;
+  createdAt: Date;
+  reviewedAt?: Date | null;
+  reviewedBy?: string | null;
+}
+
+export type MessageReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+
+export type MessageReportStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DeleteMessageInput {
+  messageId: string;
+}
+
+export interface UnblockUserInput {
+  blockedUserId: string;
+}

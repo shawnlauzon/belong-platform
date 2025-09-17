@@ -3,6 +3,7 @@ import { useSupabase, logger } from '@/shared';
 import { fetchConversations } from '../api';
 import { ConversationListFilters, Conversation } from '../types';
 import { conversationKeys } from '../queries';
+import { useCurrentUser } from '@/features/auth';
 import { STANDARD_CACHE_TIME } from '@/config';
 
 /**
@@ -33,14 +34,21 @@ import { STANDARD_CACHE_TIME } from '@/config';
  * ```
  */
 export function useConversations(
-  filters: ConversationListFilters,
+  filters: ConversationListFilters = {},
   options?: Partial<UseQueryOptions<Conversation[], Error>>,
 ) {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<Conversation[], Error>({
     queryKey: conversationKeys.list(filters),
-    queryFn: () => fetchConversations(supabase, filters),
+    queryFn: () => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      return fetchConversations(supabase, currentUser.id, filters);
+    },
+    enabled: !!supabase && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });

@@ -27,7 +27,6 @@ describe('Message Subscription Tests', () => {
   let supabase: SupabaseClient<Database>;
   let otherUserClient: SupabaseClient<Database>;
   let queryClient: QueryClient;
-  let testUser: Account;
   let testCommunity: Community;
   let testConversation: Conversation;
   let anotherUser: Account;
@@ -38,7 +37,7 @@ describe('Message Subscription Tests', () => {
     otherUserClient = createTestClient();
 
     // Create test users and community
-    testUser = await createTestUser(supabase);
+    await createTestUser(supabase);
     testCommunity = await createTestCommunity(supabase);
 
     // Create another user and have them join the community

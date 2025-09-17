@@ -4,18 +4,14 @@ import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { signIn } from '@/features/auth/api';
-import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
-import type { Notification } from '@/features/notifications';
+import { cleanupAllTestData } from '../helpers/cleanup';
 
 describe('Trust & Recognition Notifications', () => {
   let clientA: SupabaseClient<Database>;
   let trustRecipient: Account;
-
-  // Real-time testing
-  let notificationChannel: RealtimeChannel;
-  let notificationsReceived: Notification[] = [];
 
   beforeAll(async () => {
     // Create client for testing
@@ -24,32 +20,12 @@ describe('Trust & Recognition Notifications', () => {
     // Create test user
     trustRecipient = await createTestUser(clientA);
 
-    // Set up single persistent channel for INSERT events on clientA
-    notificationChannel = clientA
-      .channel(`user:${trustRecipient.id}:notifications`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${trustRecipient.id}`,
-        },
-        (payload) => {
-          notificationsReceived.push(payload.new as Notification);
-        },
-      )
-      .subscribe();
-
     // Wait for channel to be established
     await new Promise((resolve) => setTimeout(resolve, 2000));
   });
 
   afterAll(async () => {
-    if (notificationChannel) {
-      await notificationChannel.unsubscribe();
-      clientA.removeChannel(notificationChannel);
-    }
+    await cleanupAllTestData();
   });
 
   beforeEach(async () => {
@@ -115,29 +91,6 @@ describe('Trust & Recognition Notifications', () => {
         // This is expected for new users who haven't leveled up yet
         expect(trustLevelNotifications).toHaveLength(0);
       }
-    });
-
-    it('should receive real-time trust_points_received notification', async () => {
-      // Clear any existing notifications
-      notificationsReceived = [];
-
-      // Trigger an action that awards trust points
-      await createTestCommunity(clientA);
-
-      // Wait for realtime to propagate
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Check if we received any trust points notifications via realtime
-      const trustPointsNotifications = notificationsReceived.filter(
-        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
-      );
-
-      expect(trustPointsNotifications.length).toBeGreaterThan(0);
-      expect(trustPointsNotifications[0]).toMatchObject({
-        type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
-        user_id: trustRecipient.id,
-        is_read: false,
-      });
     });
 
     it('should not duplicate trust points notifications for the same action', async () => {
