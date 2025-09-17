@@ -66,7 +66,7 @@ export function useSendCommunityMessage() {
         queryKey: ['conversations', 'community', input.communityId],
         queryFn: async () => {
           const { fetchConversation } = await import('@/features/messages/api');
-          return fetchConversation({ supabase, communityId: input.communityId });
+          return fetchConversation(supabase, input.communityId);
         },
       });
 

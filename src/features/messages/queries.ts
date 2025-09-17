@@ -17,4 +17,8 @@ export const messageKeys = {
     [...messageKeys.all, 'messages', conversationId] as const,
   unreadCount: (conversationId: string) =>
     [...messageKeys.all, 'unread-count', conversationId] as const,
+  blockedUsers: () => [...messageKeys.all, 'blocked-users'] as const,
+  conversation: (conversationId: string) =>
+    [...messageKeys.all, 'conversation', conversationId] as const,
+  conversationList: () => [...messageKeys.all, 'conversation-list'] as const,
 } as const;

@@ -1,10 +1,6 @@
 import { useEffect, PropsWithChildren } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
-import {
-  createMessageSubscription,
-  type MessageSubscriptionResult,
-} from '../api/createMessageSubscription';
 
 /**
  * Provider that manages real-time message subscriptions.
@@ -22,28 +18,8 @@ export function MessageRealtimeProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    let subscriptionResult: MessageSubscriptionResult | undefined;
-
-    const setupRealtimeMessaging = async () => {
-      try {
-        subscriptionResult = await createMessageSubscription({
-          supabase,
-          queryClient,
-        });
-      } catch (error) {
-        logger.error('MessageRealtimeProvider: failed to setup messaging', {
-          error,
-        });
-      }
-    };
-
-    setupRealtimeMessaging();
-
-    return () => {
-      if (subscriptionResult) {
-        subscriptionResult.cleanup();
-      }
-    };
+    // TODO: Implement global message subscription when needed
+    logger.info('MessageRealtimeProvider: Global message subscription not yet implemented');
   }, [supabase, queryClient]);
 
   return <>{children}</>;

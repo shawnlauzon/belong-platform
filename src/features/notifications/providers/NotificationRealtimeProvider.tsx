@@ -2,7 +2,8 @@ import { useEffect, PropsWithChildren } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { useCurrentUser } from '@/features/auth';
-import { createNotificationSubscription, type NotificationSubscriptionResult } from '../api/createNotificationSubscription';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import { createNotificationSubscription } from '../api/createNotificationSubscription';
 
 /**
  * Provider that manages real-time notification subscriptions.
@@ -22,15 +23,14 @@ export function NotificationRealtimeProvider({ children }: PropsWithChildren) {
     }
 
     const userId = currentUser.id;
-    let subscriptionResult: NotificationSubscriptionResult | undefined;
+    let channel: RealtimeChannel;
 
     const setupRealtimeNotifications = async () => {
       try {
-        subscriptionResult = await createNotificationSubscription({
+        channel = await createNotificationSubscription({
           supabase,
           queryClient,
           userId,
-          logger,
         });
       } catch (error) {
         logger.error('NotificationRealtimeProvider: failed to setup notifications', {
@@ -43,8 +43,8 @@ export function NotificationRealtimeProvider({ children }: PropsWithChildren) {
     setupRealtimeNotifications();
 
     return () => {
-      if (subscriptionResult) {
-        subscriptionResult.cleanup();
+      if (channel) {
+        supabase.removeChannel(channel);
       }
     };
   }, [supabase, currentUser, queryClient]);

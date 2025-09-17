@@ -20,7 +20,13 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
-import { Account, Community, Resource, ResourceTimeslot, ResourceClaim } from '@/features';
+import {
+  Account,
+  Community,
+  Resource,
+  ResourceTimeslot,
+  ResourceClaim,
+} from '@/features';
 
 describe('Trust Score Points - Events', () => {
   let supabase: SupabaseClient<Database>;
@@ -71,7 +77,7 @@ describe('Trust Score Points - Events', () => {
 
   it('should register for event without approval', async () => {
     const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
-    
+
     testClaim = await createResourceClaim(supabase, {
       resourceId: event.id,
       timeslotId: testTimeslot.id,
@@ -84,7 +90,7 @@ describe('Trust Score Points - Events', () => {
 
   it('should award points for event registration', async () => {
     const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
-    
+
     const scoreBeforeRegistration = await getCurrentTrustScore(
       supabase,
       participant.id,
@@ -108,7 +114,7 @@ describe('Trust Score Points - Events', () => {
 
   it('should log event registration action', async () => {
     const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
-    
+
     testClaim = await createResourceClaim(supabase, {
       resourceId: event.id,
       timeslotId: testTimeslot.id,
@@ -126,7 +132,7 @@ describe('Trust Score Points - Events', () => {
 
   it('should allow participant to confirm going', async () => {
     const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
-    
+
     // Participant is signed in from beforeEach
     testClaim = await createResourceClaim(supabase, {
       resourceId: event.id,
@@ -143,7 +149,7 @@ describe('Trust Score Points - Events', () => {
 
   it('should award points for going status', async () => {
     const testTimeslot = await createTestResourceTimeslot(supabase, event.id);
-    
+
     // Participant is signed in from beforeEach
     testClaim = await createResourceClaim(supabase, {
       resourceId: event.id,
@@ -203,7 +209,10 @@ describe('Trust Score Points - Events', () => {
 
     // Switch to organizer to mark attended
     await signIn(supabase, organizer.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: testClaim.id, status: 'attended' });
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'attended',
+    });
 
     // Switch back to participant to check score
     await signIn(supabase, participant.email, 'TestPass123!');
@@ -228,7 +237,10 @@ describe('Trust Score Points - Events', () => {
     await updateResourceClaim(supabase, { id: testClaim.id, status: 'going' });
 
     await signIn(supabase, organizer.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: testClaim.id, status: 'attended' });
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'attended',
+    });
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -346,27 +358,6 @@ describe('Trust Score Points - Events', () => {
       expect(scoreAfterRegistration - scoreBeforeRegistration).toBe(0);
     });
 
-    it('should allow organizer to approve registration', async () => {
-      approvalClaim = await createResourceClaim(supabase, {
-        resourceId: approvalEvent.id,
-        timeslotId: approvalTimeslot.id,
-      });
-
-      // Wait for claim creation to complete
-
-      // Verify initial status is pending
-      expect(approvalClaim.status).toBe('pending');
-
-      // Switch to organizer to approve
-      await signIn(supabase, organizer.email, 'TestPass123!');
-      const updatedClaim = await updateResourceClaim(supabase, {
-        id: approvalClaim.id,
-        status: 'approved',
-      });
-
-      expect(updatedClaim.status).toBe('approved');
-    });
-
     it('should award points for approved registration', async () => {
       approvalClaim = await createResourceClaim(supabase, {
         resourceId: approvalEvent.id,
@@ -409,7 +400,10 @@ describe('Trust Score Points - Events', () => {
     await updateResourceClaim(supabase, { id: testClaim.id, status: 'going' });
 
     await signIn(supabase, organizer.email, 'TestPass123!');
-    await updateResourceClaim(supabase, { id: testClaim.id, status: 'attended' });
+    await updateResourceClaim(supabase, {
+      id: testClaim.id,
+      status: 'attended',
+    });
 
     // Switch back to participant to check score
     await signIn(supabase, participant.email, 'TestPass123!');

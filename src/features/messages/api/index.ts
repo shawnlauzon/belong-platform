@@ -1,4 +1,5 @@
 export * from './fetchConversations';
+export * from './fetchConversation';
 export * from './fetchMessages';
 export * from './sendMessage';
 export * from './editMessage';

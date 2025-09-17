@@ -28,3 +28,17 @@ export interface ConversationListFilters {
   conversationType?: ConversationType;
   communityId?: string | string[];
 }
+
+export interface CommunityConversation {
+  id: string;
+  conversationType: 'community';
+  communityId: string;
+  lastMessageAt?: Date;
+  lastMessagePreview?: string;
+  lastMessageSenderId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  unreadCount?: number;
+  lastReadAt?: Date;
+  participantCount?: number;
+}

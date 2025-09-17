@@ -16,7 +16,7 @@ export async function blockUser(
 
   const userId = userData.user.id;
 
-  if (userId === input.userId) {
+  if (userId === input.blockedUserId) {
     throw new Error('Cannot block yourself');
   }
 
@@ -24,7 +24,7 @@ export async function blockUser(
     .from('blocked_users')
     .insert({
       blocker_id: userId,
-      blocked_id: input.userId,
+      blocked_id: input.blockedUserId,
     });
 
   if (error) {

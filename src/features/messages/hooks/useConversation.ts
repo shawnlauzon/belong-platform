@@ -12,7 +12,7 @@ export function useConversation(
 
   return useQuery({
     queryKey: conversationKeys.detail(conversationId),
-    queryFn: () => fetchConversation(client, { conversationId }),
+    queryFn: () => fetchConversation(client, conversationId),
     enabled: !!client && !!conversationId,
     ...options,
   });
