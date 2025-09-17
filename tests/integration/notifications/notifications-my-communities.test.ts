@@ -1,17 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import {
-  createTestUser,
-  createTestCommunity,
-} from '../helpers/test-data';
-import {
-  fetchNotifications,
-} from '@/features/notifications';
-import {
-  joinCommunity,
-  leaveCommunity,
-} from '@/features/communities/api';
+import { createTestUser, createTestCommunity } from '../helpers/test-data';
+import { fetchNotifications } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
+import { joinCommunity, leaveCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -32,7 +25,6 @@ describe('My Communities Notifications', () => {
     // Create test users and community
     communityOrganizer = await createTestUser(clientA);
     testCommunity = await createTestCommunity(clientA);
-
   });
 
   afterAll(async () => {
@@ -48,24 +40,25 @@ describe('My Communities Notifications', () => {
     it('should create community_member_joined notification when someone joins my community', async () => {
       // Create a fresh user for this test
       const freshJoiningUser = await createTestUser(clientB);
-      
+
       // Have fresh user join the community using clientB
-      await signIn(clientB, freshJoiningUser.email, 'TestPass123!');
       await joinCommunity(clientB, testCommunity.id);
 
       // Switch back to community organizer to check notifications
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
       const result = await fetchNotifications(clientA, {
-        type: 'community_member_joined',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
         limit: 10,
       });
 
       expect(result.notifications.length).toBeGreaterThan(0);
-      const joinNotification = result.notifications.find(n => n.actorId === freshJoiningUser.id);
+      const joinNotification = result.notifications.find(
+        (n) => n.actorId === freshJoiningUser.id,
+      );
       expect(joinNotification).toBeDefined();
       expect(joinNotification).toMatchObject({
-        type: 'community_member_joined',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
         communityId: testCommunity.id,
         actorId: freshJoiningUser.id,
         isRead: false,
@@ -75,9 +68,6 @@ describe('My Communities Notifications', () => {
     it('should create community_member_left notification when someone leaves my community', async () => {
       // Create a fresh user for this test
       const leavingUser = await createTestUser(clientB);
-      
-      // First, have user join the community
-      await signIn(clientB, leavingUser.email, 'TestPass123!');
       await joinCommunity(clientB, testCommunity.id);
 
       // Then have them leave
@@ -87,15 +77,17 @@ describe('My Communities Notifications', () => {
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
       const result2 = await fetchNotifications(clientA, {
-        type: 'community_member_left',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
         limit: 10,
       });
 
       expect(result2.notifications.length).toBeGreaterThan(0);
-      const leftNotification = result2.notifications.find(n => n.actorId === leavingUser.id);
+      const leftNotification = result2.notifications.find(
+        (n) => n.actorId === leavingUser.id,
+      );
       expect(leftNotification).toBeDefined();
       expect(leftNotification).toMatchObject({
-        type: 'community_member_left',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
         communityId: testCommunity.id,
         actorId: leavingUser.id,
         isRead: false,
@@ -104,7 +96,7 @@ describe('My Communities Notifications', () => {
 
     it('should not notify myself when I join another community', async () => {
       const initialResult = await fetchNotifications(clientA, {
-        type: 'community_member_joined',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
       });
       const initialCount = initialResult.notifications.length;
 
@@ -112,12 +104,14 @@ describe('My Communities Notifications', () => {
       const anotherCommunity = await createTestCommunity(clientA);
 
       const finalResult = await fetchNotifications(clientA, {
-        type: 'community_member_joined',
+        type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
       });
 
-      // Should not have new notifications for joining own community  
-      const ownCommunityNotifications = finalResult.notifications.filter(n => 
-        n.communityId === anotherCommunity.id && n.actorId === communityOrganizer.id
+      // Should not have new notifications for joining own community
+      const ownCommunityNotifications = finalResult.notifications.filter(
+        (n) =>
+          n.communityId === anotherCommunity.id &&
+          n.actorId === communityOrganizer.id,
       );
       expect(ownCommunityNotifications).toHaveLength(0);
     });

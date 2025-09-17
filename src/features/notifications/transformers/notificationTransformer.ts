@@ -1,12 +1,12 @@
 import type { NotificationDetail } from '../types/notificationDetail';
 import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
-import type { NotificationType } from '../types/notification';
+import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
 import { getTypedMetadata } from '../types/notificationMetadata';
 
 export function transformNotification(
   row: NotificationDetailsRow,
 ): NotificationDetail {
-  const type = (row.type || 'new_resource') as NotificationType;
+  const type = (row.type || NOTIFICATION_TYPES.NEW_RESOURCE) as NotificationType;
   const rawMetadata = (row.metadata as Record<string, unknown>) || {};
 
   return {

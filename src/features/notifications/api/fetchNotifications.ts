@@ -23,15 +23,17 @@ export async function fetchNotifications(
   filter?: FetchNotificationsFilter,
 ): Promise<FetchNotificationsResponse> {
   const limit = filter?.limit || 50;
-  
+
   logger.info('Starting notification fetch process', {
     filter,
     limit,
   });
 
   // Get the current user to filter notifications
-  const { data: { user } } = await client.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+
   if (!user) {
     throw new Error('User not authenticated');
   }
@@ -92,7 +94,9 @@ export async function fetchNotifications(
 
   const nextCursor =
     hasMore && transformedNotifications.length > 0
-      ? transformedNotifications[transformedNotifications.length - 1].createdAt.toISOString()
+      ? transformedNotifications[
+          transformedNotifications.length - 1
+        ].createdAt.toISOString()
       : undefined;
 
   logger.info('Notification fetch process completed successfully', {

@@ -6,12 +6,13 @@ import {
   createTestCommunity,
   createTestResource,
 } from '../helpers/test-data';
-import { 
+import {
   fetchNotifications,
   fetchNotificationCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -66,7 +67,7 @@ describe('test_int_notifications_react_query_integration', () => {
     await signIn(supabase, notificationReceiver.email, 'TestPass123!');
     
     const result = await fetchNotifications(supabase, {
-      type: 'comment',
+      type: NOTIFICATION_TYPES.COMMENT,
       limit: 10,
     });
 
@@ -75,7 +76,7 @@ describe('test_int_notifications_react_query_integration', () => {
     
     // Find the specific notification created by the trigger
     const triggerNotification = result.notifications.find(n => 
-      n.type === 'comment' && 
+      n.type === NOTIFICATION_TYPES.COMMENT &&
       n.resourceId === resource.id && 
       n.commentId === comment.id &&
       n.actorId === notificationTrigger.id
@@ -83,7 +84,7 @@ describe('test_int_notifications_react_query_integration', () => {
 
     expect(triggerNotification).toBeDefined();
     expect(triggerNotification).toMatchObject({
-      type: 'comment',
+      type: NOTIFICATION_TYPES.COMMENT,
       resourceId: resource.id,
       commentId: comment.id,
       communityId: testCommunity.id,
@@ -236,24 +237,24 @@ describe('test_int_notifications_react_query_integration', () => {
     
     // Fetch only comment notifications
     const commentResult = await fetchNotifications(supabase, {
-      type: 'comment',
+      type: NOTIFICATION_TYPES.COMMENT,
       limit: 10,
     });
 
     // All returned notifications should be comment type
     commentResult.notifications.forEach(notification => {
-      expect(notification.type).toBe('comment');
+      expect(notification.type).toBe(NOTIFICATION_TYPES.COMMENT);
     });
 
     // Fetch only new_resource notifications
     const resourceResult = await fetchNotifications(supabase, {
-      type: 'new_resource',
+      type: NOTIFICATION_TYPES.NEW_RESOURCE,
       limit: 10,
     });
 
     // All returned notifications should be new_resource type
     resourceResult.notifications.forEach(notification => {
-      expect(notification.type).toBe('new_resource');
+      expect(notification.type).toBe(NOTIFICATION_TYPES.NEW_RESOURCE);
     });
 
     expect(commentResult.notifications.length).toBeGreaterThan(0);

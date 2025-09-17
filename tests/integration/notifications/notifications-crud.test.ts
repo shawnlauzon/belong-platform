@@ -12,6 +12,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -71,7 +72,7 @@ describe('Notifications CRUD', () => {
 
       // Fetch notifications for testUser
       const result = await fetchNotifications(supabase, {
-        type: 'comment',
+        type: NOTIFICATION_TYPES.COMMENT,
         limit: 10,
       });
 
@@ -79,13 +80,13 @@ describe('Notifications CRUD', () => {
 
       const specificNotification = result.notifications.find(
         (n) =>
-          n.type === 'comment' &&
+          n.type === NOTIFICATION_TYPES.COMMENT &&
           n.resourceId === resource.id &&
           n.actorId === anotherUser.id,
       );
       expect(specificNotification).toBeDefined();
       expect(specificNotification).toMatchObject({
-        type: 'comment',
+        type: NOTIFICATION_TYPES.COMMENT,
         resourceId: resource.id,
         actorId: anotherUser.id,
         isRead: false,

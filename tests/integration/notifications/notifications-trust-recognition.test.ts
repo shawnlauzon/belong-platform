@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -73,13 +74,13 @@ describe('Trust & Recognition Notifications', () => {
       expect(finalResult.notifications.length).toBeGreaterThan(initialCount);
       const trustPointsNotification = finalResult.notifications.find(
         (n) =>
-          n.type === 'trust_points_changed' &&
+          n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED &&
           !initialResult.notifications.some((init) => init.id === n.id),
       );
 
       expect(trustPointsNotification).toBeDefined();
       expect(trustPointsNotification).toMatchObject({
-        type: 'trust_points_changed',
+        type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         userId: trustRecipient.id,
         communityId: expect.any(String),
         isRead: false,
@@ -100,11 +101,11 @@ describe('Trust & Recognition Notifications', () => {
       // For now, we'll check if any trust level notifications exist in the system
 
       // Filter to only trust level notifications
-      const trustLevelNotifications = initialResult2.notifications.filter(n => n.type === 'trust_level_changed');
+      const trustLevelNotifications = initialResult2.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED);
       
       if (trustLevelNotifications.length > 0) {
         expect(trustLevelNotifications[0]).toMatchObject({
-          type: 'trust_level_changed',
+          type: NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED,
           userId: trustRecipient.id,
           isRead: expect.any(Boolean),
         });
@@ -126,12 +127,12 @@ describe('Trust & Recognition Notifications', () => {
 
       // Check if we received any trust points notifications via realtime
       const trustPointsNotifications = notificationsReceived.filter(
-        (n) => n.type === 'trust_points_changed',
+        (n) => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
       );
 
       expect(trustPointsNotifications.length).toBeGreaterThan(0);
       expect(trustPointsNotifications[0]).toMatchObject({
-        type: 'trust_points_changed',
+        type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         user_id: trustRecipient.id,
         is_read: false,
       });
@@ -156,8 +157,8 @@ describe('Trust & Recognition Notifications', () => {
 
       // Each community creation should generate its own trust points notification
       // (assuming community creation awards trust points)
-      const initialTrustCount = initialResult3.notifications.filter(n => n.type === 'trust_points_changed').length;
-      const finalTrustCount = finalResult3.notifications.filter(n => n.type === 'trust_points_changed').length;
+      const initialTrustCount = initialResult3.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
+      const finalTrustCount = finalResult3.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
       const newNotificationsCount = finalTrustCount - initialTrustCount;
 
       // Should have received notifications for both community creations
@@ -172,7 +173,7 @@ describe('Trust & Recognition Notifications', () => {
     it('should send notification for trust points when offering a resource', async () => {
       // Get initial trust points notifications
       const initialResult = await fetchNotifications(clientA);
-      const initialTrustCount = initialResult.notifications.filter(n => n.type === 'trust_points_changed').length;
+      const initialTrustCount = initialResult.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
 
       // Create a community first
       const testCommunity = await createTestCommunity(clientA);
@@ -195,17 +196,17 @@ describe('Trust & Recognition Notifications', () => {
       // Check for new trust points notifications
       const finalResult = await fetchNotifications(clientA);
 
-      const finalTrustCount = finalResult.notifications.filter(n => n.type === 'trust_points_changed').length;
+      const finalTrustCount = finalResult.notifications.filter(n => n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).length;
       expect(finalTrustCount).toBeGreaterThan(initialTrustCount);
       
       const newNotification = finalResult.notifications.find(n => 
-        n.type === 'trust_points_changed' && 
+        n.type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED && 
         !initialResult.notifications.some(init => init.id === n.id)
       );
       
       expect(newNotification).toBeDefined();
       expect(newNotification).toMatchObject({
-        type: 'trust_points_changed',
+        type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         userId: trustRecipient.id,
         isRead: false,
         metadata: expect.objectContaining({

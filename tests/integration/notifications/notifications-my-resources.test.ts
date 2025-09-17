@@ -8,6 +8,7 @@ import {
   createTestResourceTimeslot,
 } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications';
+import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import {
   createResourceClaim,
   deleteResourceClaim,
@@ -70,19 +71,19 @@ describe('My Resources Notifications', () => {
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
       const result = await fetchNotifications(supabase, {
-        type: 'claim',
+        type: NOTIFICATION_TYPES.CLAIM,
         limit: 10,
       });
 
       expect(result.notifications.length).toBeGreaterThan(0);
       const claimNotification = result.notifications.find(n => 
-        n.type === 'claim' && 
+        n.type === NOTIFICATION_TYPES.CLAIM &&
         n.resourceId === resource.id && 
         n.actorId === claimingUser.id
       );
       expect(claimNotification).toBeDefined();
       expect(claimNotification).toMatchObject({
-        type: 'claim',
+        type: NOTIFICATION_TYPES.CLAIM,
         resourceId: resource.id,
         claimId: expect.any(String),
         communityId: testCommunity.id,
@@ -211,12 +212,12 @@ describe('My Resources Notifications', () => {
       });
 
       const result4 = await fetchNotifications(supabase, {
-        type: 'claim',
+        type: NOTIFICATION_TYPES.CLAIM,
       });
       
       // Should not find any notification for claiming own resource
       const selfClaimNotification = result4.notifications.find(n => 
-        n.type === 'claim' && 
+        n.type === NOTIFICATION_TYPES.CLAIM &&
         n.resourceId === resource.id && 
         n.actorId === resourceOwner.id
       );
