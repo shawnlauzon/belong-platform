@@ -21,20 +21,17 @@ export async function createNotificationSubscription({
   userId,
 }: CreateNotificationSubscriptionParams): Promise<RealtimeChannel> {
   const channel = supabase
-    .channel(`user:${userId}:notifications`)
+    .channel(`user:${userId}:notifications`, { config: { private: true } })
     .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`,
-      },
+      'broadcast',
+      { event: 'new_notification' },
       async (payload) => {
         try {
-          if (!payload.new.id) {
+          const notificationData = payload.payload?.record;
+
+          if (!notificationData?.id) {
             logger.warn(
-              'createNotificationSubscription: received payload without ID',
+              'createNotificationSubscription: received payload without notification data',
               {
                 payload,
                 userId,
@@ -44,57 +41,41 @@ export async function createNotificationSubscription({
           }
 
           logger.debug(
-            'createNotificationSubscription: fetching full notification details',
+            'createNotificationSubscription: received broadcast notification',
             {
-              notificationId: payload.new.id,
+              notificationId: notificationData.id,
               userId,
             },
           );
 
-          // Fetch full notification details
-          const { data } = await supabase
-            .from('notification_details')
-            .select('*')
-            .eq('id', payload.new.id)
-            .single();
+          // Transform the notification data (no need to fetch since it's in the payload)
+          const newNotification = transformNotification(notificationData);
 
-          if (data) {
-            const newNotification = transformNotification(data);
+          logger.debug(
+            'createNotificationSubscription: updating React Query cache',
+            newNotification,
+          );
 
-            logger.debug(
-              'createNotificationSubscription: updating React Query cache',
-              newNotification,
-            );
+          // Update notifications list cache
+          queryClient.setQueryData(
+            notificationKeys.list(userId),
+            (oldData: NotificationDetail[] | undefined) => {
+              if (!oldData) return [newNotification];
+              return [newNotification, ...oldData];
+            },
+          );
 
-            // Update notifications list cache
-            queryClient.setQueryData(
-              notificationKeys.list(userId),
-              (oldData: NotificationDetail[] | undefined) => {
-                if (!oldData) return [newNotification];
-                return [newNotification, ...oldData];
-              },
-            );
-
-            // Increment unread count for conversation
-            queryClient.setQueryData(
-              notificationKeys.unreadCount(),
-              (prev: number) => (prev || 0) + 1,
-            );
-          } else {
-            logger.warn(
-              'createNotificationSubscription: failed to fetch notification data',
-              {
-                notificationId: payload.new.id,
-                userId,
-              },
-            );
-          }
+          // Increment unread count
+          queryClient.setQueryData(
+            notificationKeys.unreadCount(),
+            (prev: number) => (prev || 0) + 1,
+          );
         } catch (error) {
           logger.error(
             'createNotificationSubscription: error processing notification',
             {
               error,
-              notificationId: payload.new.id,
+              payload,
               userId,
             },
           );

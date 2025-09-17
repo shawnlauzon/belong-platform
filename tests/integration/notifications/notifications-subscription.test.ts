@@ -92,7 +92,7 @@ describe('Notification Subscription API Tests', () => {
 
     // Wait for real-time update to process
     // Not sure why this needs such a long timeout, but anything shorter and it fails
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Check if notification was added to React Query cache
     const notificationsData = queryClient.getQueryData(
@@ -128,7 +128,7 @@ describe('Notification Subscription API Tests', () => {
     await signIn(supabase, testUser.email, 'TestPass123!');
 
     // Wait for real-time update
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Check if unread counts query was invalidated
     const unreadCountDataAfter = queryClient.getQueryData<number>(
