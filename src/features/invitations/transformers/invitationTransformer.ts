@@ -5,9 +5,7 @@ import type {
   UserConnection,
 } from '../types';
 
-export function toDomainInvitationCode(
-  row: InvitationCodeRow,
-): InvitationCode {
+export function toDomainInvitationCode(row: InvitationCodeRow): InvitationCode {
   return {
     code: row.code,
     userId: row.user_id,
@@ -28,4 +26,3 @@ export function toDomainUserConnection(row: UserConnectionRow): UserConnection {
     createdAt: new Date(row.created_at),
   };
 }
-

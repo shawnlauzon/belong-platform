@@ -84,7 +84,7 @@ describe('Message Subscription Tests', () => {
     });
 
     // Wait for real-time update to process
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: messageKeys.list(testConversation.id),

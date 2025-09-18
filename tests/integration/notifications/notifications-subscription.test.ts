@@ -64,7 +64,7 @@ describe('Notification Subscription API Tests', () => {
 
   afterAll(async () => {
     await notificationChannel?.unsubscribe();
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   beforeEach(async () => {

@@ -15,7 +15,7 @@ import {
   createTestResource,
   createTestResourceTimeslot,
 } from '../helpers/test-data';
-import { signIn, signIn } from '@/features/auth/api';
+import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import {
   createResourceClaim,
