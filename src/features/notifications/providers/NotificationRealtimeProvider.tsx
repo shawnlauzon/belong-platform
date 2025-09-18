@@ -8,7 +8,7 @@ import { createNotificationSubscription } from '../api/createNotificationSubscri
 /**
  * Provider that manages real-time notification subscriptions.
  * Updates React Query cache when new notifications arrive.
- * 
+ *
  * This should be placed near the root of your app to ensure
  * notifications are received globally.
  */
@@ -33,19 +33,20 @@ export function NotificationRealtimeProvider({ children }: PropsWithChildren) {
           userId,
         });
       } catch (error) {
-        logger.error('NotificationRealtimeProvider: failed to setup notifications', {
-          error,
-          userId,
-        });
+        logger.error(
+          'NotificationRealtimeProvider: failed to setup notifications',
+          {
+            error,
+            userId,
+          },
+        );
       }
     };
 
     setupRealtimeNotifications();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase?.removeChannel(channel);
     };
   }, [supabase, currentUser, queryClient]);
 
