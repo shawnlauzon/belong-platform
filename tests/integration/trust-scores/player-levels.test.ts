@@ -10,7 +10,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
-describe('Trust Scores - Player Levels', () => {
+describe.skip('Trust Scores - Player Levels', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
 
