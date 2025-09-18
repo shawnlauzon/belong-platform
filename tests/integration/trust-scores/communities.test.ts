@@ -4,7 +4,7 @@ import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchTrustScores } from '@/features/trust-scores/api';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { signIn } from '@/features/auth/api';
-import { joinCommunity, leaveCommunity } from '@/features/communities/api';
+import { joinCommunity, leaveCommunity, joinCommunityWithCode } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
@@ -138,7 +138,7 @@ describe('Trust Score Points - Communities', () => {
     expect(score2?.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
   });
 
-  it('should handle joining via connection invitation', async () => {
+  it('should award regular join points when creating connections between existing members', async () => {
     // Create owner with their own client
     const ownerClient = createTestClient();
     const owner = await createTestUser(ownerClient);
@@ -150,12 +150,13 @@ describe('Trust Score Points - Communities', () => {
     const invitee = await createTestUser(inviteeClient);
     await signIn(inviteeClient, invitee.email, 'TestPass123!');
 
-    // Invitee must join community first to create connection
+    // Invitee joins community first (gets regular join points)
     await joinCommunity(inviteeClient, community.id);
 
     // Wait for membership to be processed
     await new Promise((resolve) => setTimeout(resolve, 200));
 
+    // Create connection between existing members (doesn't affect trust score)
     await createTestConnectionAndJoin(
       ownerClient,
       inviteeClient,
@@ -165,12 +166,13 @@ describe('Trust Score Points - Communities', () => {
       community.id,
     );
 
+    // Score should be regular community join points (not invitation-specific)
     const score = await getCurrentTrustScore(
       inviteeClient,
       invitee.id,
       community.id,
     );
-    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN_WITH_INVITATION);
+    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
   });
 
   it('should deduct points when user leaves community', async () => {
@@ -222,6 +224,52 @@ describe('Trust Score Points - Communities', () => {
       'community_leave',
       POINTS_CONFIG.COMMUNITY_LEAVE,
       'Community leave log',
+    );
+  });
+
+  it('should award points when joining with invitation code', async () => {
+    // Create community owner with their own client
+    const ownerClient = createTestClient();
+    const owner = await createTestUser(ownerClient);
+    await signIn(ownerClient, owner.email, 'TestPass123!');
+    const community = await createTestCommunity(ownerClient);
+
+    // Get the owner's invitation code
+    const { data: invitationCode, error } = await ownerClient
+      .from('invitation_codes')
+      .select('code')
+      .eq('user_id', owner.id)
+      .eq('community_id', community.id)
+      .eq('is_active', true)
+      .single();
+
+    expect(error).toBeNull();
+    expect(invitationCode).toBeDefined();
+
+    // Create joiner with separate client
+    const joinerClient = createTestClient();
+    const joiner = await createTestUser(joinerClient);
+    await signIn(joinerClient, joiner.email, 'TestPass123!');
+
+    // Join community using invitation code
+    await joinCommunityWithCode(joinerClient, invitationCode!.code);
+
+    // Verify joiner received community join points
+    const score = await getCurrentTrustScore(
+      joinerClient,
+      joiner.id,
+      community.id,
+    );
+    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+
+    // Verify trust score log was created
+    await verifyTrustScoreLog(
+      serviceClient,
+      joiner.id,
+      community.id,
+      'community_member_join',
+      POINTS_CONFIG.COMMUNITY_JOIN,
+      'Community join with invitation code log',
     );
   });
 });
