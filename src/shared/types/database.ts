@@ -1086,7 +1086,7 @@ export type Database = {
           created_at: string
           id: string
           other_id: string
-          type: string | null
+          type: Database["public"]["Enums"]["user_connection_type"] | null
           user_id: string
         }
         Insert: {
@@ -1094,7 +1094,7 @@ export type Database = {
           created_at?: string
           id?: string
           other_id: string
-          type?: string | null
+          type?: Database["public"]["Enums"]["user_connection_type"] | null
           user_id: string
         }
         Update: {
@@ -1102,7 +1102,7 @@ export type Database = {
           created_at?: string
           id?: string
           other_id?: string
-          type?: string | null
+          type?: Database["public"]["Enums"]["user_connection_type"] | null
           user_id?: string
         }
         Relationships: [
@@ -1610,10 +1610,6 @@ export type Database = {
       }
       expires_at: {
         Args: { "": Database["public"]["Tables"]["resources"]["Row"] }
-        Returns: string
-      }
-      fetch_community_conversation: {
-        Args: { p_community_id: string }
         Returns: string
       }
       geography: {
@@ -3378,6 +3374,10 @@ export type Database = {
         }
         Returns: string
       }
+      user_is_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
       user_is_conversation_participant: {
         Args: { check_user_id: string; conv_id: string }
         Returns: boolean
@@ -3447,6 +3447,7 @@ export type Database = {
         | "community_organizer_join"
         | "community_member_join"
         | "community_founder_join"
+      user_connection_type: "invited_by"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -3645,6 +3646,7 @@ export const Constants = {
         "community_member_join",
         "community_founder_join",
       ],
+      user_connection_type: ["invited_by"],
     },
   },
 } as const
