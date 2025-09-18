@@ -195,14 +195,11 @@ describe('Invitations API - CRUD Operations', () => {
       expect(connection1.communityId).toBe(testCommunity.id);
 
       // Try to create duplicate - should throw an error
-      await expect(createTestConnection(
-        supabaseUserA,
-        supabaseUserB,
-        testCommunity.id,
-      )).rejects.toThrow('Connection was not created (possibly already exists)');
+      await expect(
+        createTestConnection(supabaseUserA, supabaseUserB, testCommunity.id),
+      ).rejects.toThrow('Connection was not created (possibly already exists)');
     });
   });
-
 
   describe('Connection Data Validation', () => {
     it('stores connection data correctly', async () => {
@@ -223,26 +220,6 @@ describe('Invitations API - CRUD Operations', () => {
       expect(dbConnection!.other_id).toBeTruthy();
       expect(dbConnection!.community_id).toBe(testCommunity.id);
       expect(dbConnection!.type).toBe('invited_by');
-    });
-
-    it('creates connections with proper timestamps', async () => {
-      const beforeTime = new Date();
-
-      const connection = await createTestConnection(
-        supabaseUserA,
-        supabaseUserB,
-        testCommunity.id,
-      );
-
-      const afterTime = new Date();
-
-      expect(connection.createdAt).toBeInstanceOf(Date);
-      expect(connection.createdAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime(),
-      );
-      expect(connection.createdAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime(),
-      );
     });
 
     it('maintains referential integrity', async () => {

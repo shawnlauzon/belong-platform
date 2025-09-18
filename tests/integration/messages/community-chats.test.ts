@@ -13,6 +13,7 @@ import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 import { CommunityChat } from '@/features';
+import { cleanupAllTestData } from '../helpers/cleanup';
 
 describe('Community Conversations Integration', () => {
   let supabase: SupabaseClient<Database>;
@@ -33,7 +34,7 @@ describe('Community Conversations Integration', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   describe('Fetch community conversations', () => {

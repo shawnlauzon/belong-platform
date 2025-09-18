@@ -194,12 +194,13 @@ describe('Trust Score Points - Offers', () => {
       timeslotId: timeslot.id,
     });
 
-
-    const scoreBeforeReceived = await getCurrentTrustScore(
+    const scoreBeforeGiven = await getCurrentTrustScore(
       supabase,
       claimant.id,
       community.id,
     );
+
+    await signIn(supabase, owner.email, 'TestPass123!');
 
     // For offers: owner can mark as given directly from approved
     await updateResourceClaim(supabase, {

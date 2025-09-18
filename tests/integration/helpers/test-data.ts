@@ -13,10 +13,9 @@ import {
   Shoutout,
   ShoutoutInput,
   createShoutout,
+  toDomainUserConnection,
 } from '@/features';
-import {
-  getInvitationCode,
-} from '@/features/invitations/api';
+import { getInvitationCode } from '@/features/invitations/api';
 import type { UserConnection } from '@/features/invitations/types';
 
 // Test data prefix to identify test records
@@ -24,7 +23,7 @@ export const TEST_PREFIX = 'test_int_';
 
 export async function createTestUser(
   supabase: SupabaseClient<Database>,
-  options?: { connectionCode?: string }
+  options?: { connectionCode?: string },
 ) {
   const firstName = `${TEST_PREFIX}${faker.person.firstName()}`;
   const lastName = `${faker.person.lastName()}`;
@@ -70,7 +69,7 @@ export async function createTestResource(
 ) {
   // Set appropriate category defaults based on type
   const defaultCategory = category ?? (type === 'event' ? 'food' : 'tools');
-  
+
   // Create resource input without using the faker function to avoid potential conflicts
   const data = {
     title: `${TEST_PREFIX}Resource_${Date.now()}`,
@@ -84,7 +83,6 @@ export async function createTestResource(
     lastRenewedAt: new Date(),
     imageUrls: [],
   };
-
 
   // Add small delay to ensure community membership trigger has completed
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -178,7 +176,6 @@ export async function createTestShoutoutForResource({
   });
 }
 
-
 /**
  * Creates a direct connection between two users using the simplified system
  * @param initiatorSupabase - Supabase client for the first user
@@ -191,20 +188,26 @@ export async function createTestConnection(
   communityId: string,
 ): Promise<UserConnection> {
   // Get current user IDs
-  const { data: { user: initiatorUser } } = await initiatorSupabase.auth.getUser();
-  const { data: { user: requesterUser } } = await requesterSupabase.auth.getUser();
-  
+  const {
+    data: { user: initiatorUser },
+  } = await initiatorSupabase.auth.getUser();
+  const {
+    data: { user: requesterUser },
+  } = await requesterSupabase.auth.getUser();
+
   if (!initiatorUser?.id || !requesterUser?.id) {
     throw new Error('Both users must be authenticated');
   }
 
   // Call the database function to create direct connection
-  const { data: connectionId, error } = await initiatorSupabase
-    .rpc('create_user_connection', {
+  const { data: connectionId, error } = await initiatorSupabase.rpc(
+    'create_user_connection',
+    {
       p_user_id: initiatorUser.id,
       p_other_id: requesterUser.id,
       p_community_id: communityId,
-    });
+    },
+  );
 
   if (error) {
     throw new Error(`Failed to create connection: ${error.message}`);
@@ -222,16 +225,11 @@ export async function createTestConnection(
     .single();
 
   if (fetchError || !connectionData) {
-    throw new Error(`Failed to fetch created connection: ${fetchError?.message}`);
+    throw new Error(
+      `Failed to fetch created connection: ${fetchError?.message}`,
+    );
   }
 
   // Transform to domain type
-  return {
-    id: connectionData.id,
-    userId: connectionData.user_id,
-    otherId: connectionData.other_id,
-    communityId: connectionData.community_id,
-    type: connectionData.type as 'invited_by',
-    createdAt: new Date(connectionData.created_at),
-  };
+  return toDomainUserConnection(connectionData);
 }
