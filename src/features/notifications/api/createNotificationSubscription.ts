@@ -1,5 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import type {
+  SupabaseClient,
+  RealtimeChannel,
+  REALTIME_SUBSCRIBE_STATES,
+} from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { notificationKeys } from '../queries';
 import { transformNotification } from '../transformers/notificationTransformer';
@@ -12,6 +16,21 @@ export interface CreateNotificationSubscriptionParams {
   userId: string;
 }
 
+interface RealtimeBroadcastMessage {
+  event: string;
+  payload: {
+    id: string;
+    old_record:
+      | Database['public']['Views']['notification_details']['Row']
+      | null;
+    operation: string;
+    record: Database['public']['Views']['notification_details']['Row'];
+    schema: string;
+    table: string;
+  };
+  type: string;
+}
+
 /**
  * Creates a subscription for new notifications for a given user.
  */
@@ -20,41 +39,41 @@ export async function createNotificationSubscription({
   queryClient,
   userId,
 }: CreateNotificationSubscriptionParams): Promise<RealtimeChannel> {
+  logger.info('=== CREATING NOTIFICATION SUBSCRIPTION ===', {
+    userId,
+    channelName: `user:${userId}:notifications`,
+  });
+
+  await supabase.realtime.setAuth();
   const channel = supabase
-    .channel(`user:${userId}:notifications`, { config: { private: true } })
+    .channel(`user:${userId}:notifications`, {
+      config: { private: true },
+    })
     .on(
       'broadcast',
-      { event: 'new_notification' },
-      async (payload) => {
+      { event: '*' },
+      async (message: RealtimeBroadcastMessage) => {
         try {
-          const notificationData = payload.payload?.record;
+          logger.debug('🔔 === BROADCAST MESSAGE RECEIVED ===', {
+            message,
+            userId,
+          });
 
+          const notificationData = message.payload.record;
           if (!notificationData?.id) {
             logger.warn(
               'createNotificationSubscription: received payload without notification data',
               {
-                payload,
+                message,
+                notificationData,
                 userId,
               },
             );
             return;
           }
 
-          logger.debug(
-            'createNotificationSubscription: received broadcast notification',
-            {
-              notificationId: notificationData.id,
-              userId,
-            },
-          );
-
           // Transform the notification data (no need to fetch since it's in the payload)
           const newNotification = transformNotification(notificationData);
-
-          logger.debug(
-            'createNotificationSubscription: updating React Query cache',
-            newNotification,
-          );
 
           // Update notifications list cache
           queryClient.setQueryData(
@@ -66,23 +85,36 @@ export async function createNotificationSubscription({
           );
 
           // Increment unread count
-          queryClient.setQueryData(
-            notificationKeys.unreadCount(),
-            (prev: number) => (prev || 0) + 1,
-          );
+          if (message.event === 'new_notification') {
+            queryClient.setQueryData(
+              notificationKeys.unreadCount(),
+              (prev: number) => (prev || 0) + 1,
+            );
+          }
         } catch (error) {
           logger.error(
             'createNotificationSubscription: error processing notification',
             {
               error,
-              payload,
+              message,
               userId,
             },
           );
         }
       },
     )
-    .subscribe();
+    .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
+      console.log('=== SUBSCRIPTION STATUS CHANGE ===');
+      console.log('Status:', status);
+      console.log('Channel:', `user:${userId}:notifications`);
+      if (err) {
+        console.log('Error:', err);
+      }
+      console.log('==================================');
+      if (err) {
+        throw err;
+      }
+    });
 
   return channel;
 }
