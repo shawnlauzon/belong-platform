@@ -24,11 +24,6 @@ export interface StartConversationInput {
   otherUserId: string;
 }
 
-export interface ConversationListFilters {
-  conversationType?: ConversationType;
-  communityId?: string | string[];
-}
-
 export interface CommunityConversation {
   id: string;
   conversationType: 'community';

@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { ConversationListFilters, Conversation } from '../types';
+import { Conversation, ConversationType } from '../types';
 import {
   ConversationRow,
   SELECT_CONVERSATIONS_JOIN_PARTICIPANTS,
@@ -11,17 +11,16 @@ import { appendQueries, logger } from '../../../shared';
 export async function fetchConversations(
   supabase: SupabaseClient<Database>,
   userId: string,
-  filters?: ConversationListFilters,
+  type?: ConversationType,
 ): Promise<Conversation[]> {
   let query = supabase
     .from('conversations')
     .select(SELECT_CONVERSATIONS_JOIN_PARTICIPANTS)
     .eq('conversation_participants.user_id', userId);
 
-  if (filters) {
+  if (type) {
     query = appendQueries(query, {
-      conversation_type: filters.conversationType,
-      community_id: filters.communityId,
+      conversation_type: type,
     });
   }
 

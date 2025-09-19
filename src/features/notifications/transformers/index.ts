@@ -1,1 +1,1 @@
-export { transformNotification } from './notificationTransformer';
+export * from './notificationTransformer';

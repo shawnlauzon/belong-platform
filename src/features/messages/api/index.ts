@@ -12,5 +12,3 @@ export * from './reportMessage';
 export * from './fetchDirectConversation';
 export * from './fetchCommunityChat';
 export * from './createMessageSubscription';
-export * from './createConversationSubscription';
-export * from './channelManager';

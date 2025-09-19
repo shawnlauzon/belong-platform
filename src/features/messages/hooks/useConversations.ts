@@ -1,10 +1,10 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { fetchConversations } from '../api';
-import { ConversationListFilters, Conversation } from '../types';
 import { conversationKeys } from '../queries';
 import { useCurrentUser } from '@/features/auth';
 import { STANDARD_CACHE_TIME } from '@/config';
+import { Conversation, ConversationType } from '../types';
 
 /**
  * Hook for fetching user's conversations.
@@ -34,19 +34,19 @@ import { STANDARD_CACHE_TIME } from '@/config';
  * ```
  */
 export function useConversations(
-  filters: ConversationListFilters = {},
+  type?: ConversationType,
   options?: Partial<UseQueryOptions<Conversation[], Error>>,
 ) {
   const supabase = useSupabase();
   const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<Conversation[], Error>({
-    queryKey: conversationKeys.list(filters),
+    queryKey: conversationKeys.list(type),
     queryFn: () => {
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
-      return fetchConversations(supabase, currentUser.id, filters);
+      return fetchConversations(supabase, currentUser.id, type);
     },
     enabled: !!supabase && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,
@@ -56,7 +56,7 @@ export function useConversations(
   if (query.error) {
     logger.error('useConversations: Query error', {
       error: query.error,
-      filters,
+      type,
     });
   }
 

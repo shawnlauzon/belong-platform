@@ -1,14 +1,26 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import type {
+  SupabaseClient,
+  RealtimeChannel,
+  REALTIME_SUBSCRIBE_STATES,
+} from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { messageKeys } from '../queries';
 import { logger } from '@/shared';
-import { channelManager } from './channelManager';
+import { MessageRow } from '../types/messageRow';
+import { toDomainMessage } from '../transformers';
+import { Message } from '../types';
 
 export interface CreateMessageSubscriptionParams {
   supabase: SupabaseClient<Database>;
   queryClient: QueryClient;
   conversationId: string;
+}
+
+interface RealtimeBroadcastMessage {
+  event: string;
+  payload: MessageRow;
+  type: string;
 }
 
 /**
@@ -19,68 +31,99 @@ export async function createMessageSubscription({
   queryClient,
   conversationId,
 }: CreateMessageSubscriptionParams): Promise<RealtimeChannel> {
-  // Get the messages channel from the channel manager
-  const channel = channelManager.getMessagesChannel(supabase, conversationId);
+  logger.info('=== CREATING MESSAGE SUBSCRIPTION ===', {
+    conversationId,
+    channelName: `conversation:${conversationId}:messages`,
+  });
 
-  // Add our listener to handle message broadcasts
-  channel
+  await supabase.realtime.setAuth();
+  return supabase
+    .channel(`conversation:${conversationId}:messages`, {
+      config: { private: true },
+    })
     .on(
       'broadcast',
-      {
-        event: 'message',
-      },
-      (payload) => {
-        logger.debug('Received message broadcast', JSON.stringify(payload));
+      { event: '*' },
+      async (message: RealtimeBroadcastMessage) => {
+        try {
+          logger.debug('💬 === BROADCAST MESSAGE RECEIVED ===', {
+            message,
+            conversationId,
+          });
 
-        queryClient.invalidateQueries({
-          queryKey: messageKeys.list(conversationId),
-        });
-
-        // Increment unread count for conversation
-        queryClient.setQueryData(
-          messageKeys.unreadCount(conversationId),
-          (prev: number) => (prev || 0) + 1,
-        );
+          switch (message.event) {
+            case 'created':
+              handleMessageCreated(message.payload);
+              break;
+            case 'updated':
+              handleMessageUpdated(message.payload);
+              break;
+            case 'deleted':
+              handleMessageDeleted(message.payload);
+              break;
+            default:
+              break;
+          }
+        } catch (error) {
+          logger.error('createMessageSubscription: error processing message', {
+            error,
+            message,
+            conversationId,
+          });
+        }
       },
     )
-    .on(
-      'broadcast',
-      {
-        event: 'message:updated',
-      },
-      (payload) => {
-        logger.debug(
-          'Received message updated broadcast',
-          JSON.stringify(payload),
-        );
-
-        queryClient.invalidateQueries({
-          queryKey: messageKeys.list(conversationId),
+    .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
+      logger.info('=== MESSAGE SUBSCRIPTION STATUS CHANGE ===', {
+        status,
+        conversationId,
+      });
+      if (err) {
+        logger.error('=== MESSAGE SUBSCRIPTION ERROR ===', {
+          error: err,
+          conversationId,
         });
-      },
-    )
-    .on(
-      'broadcast',
-      {
-        event: 'message:deleted',
-      },
-      (payload) => {
-        logger.debug(
-          'Received message deleted broadcast',
-          JSON.stringify(payload),
-        );
+        throw err;
+      }
+    });
 
-        queryClient.invalidateQueries({
-          queryKey: messageKeys.list(conversationId),
-        });
+  function handleMessageCreated(messageRow: MessageRow) {
+    logger.debug('Handling message created', { messageId: messageRow.id });
 
-        // Decrement unread count for conversation
-        queryClient.setQueryData(
-          messageKeys.unreadCount(conversationId),
-          (prev: number) => (prev || 0) - 1,
-        );
-      },
+    const message = toDomainMessage(messageRow);
+
+    queryClient.setQueryData<Message[]>(
+      messageKeys.list(conversationId),
+      (prev: Message[] | undefined) => [...(prev || []), message],
     );
 
-  return channel;
+    // Increment unread count for conversation
+    queryClient.setQueryData(
+      messageKeys.unreadCount(conversationId),
+      (prev: number | undefined) => (prev || 0) + 1,
+    );
+  }
+
+  function handleMessageUpdated(messageRow: MessageRow) {
+    logger.debug('Handling message updated', { messageId: messageRow.id });
+
+    const message = toDomainMessage(messageRow);
+
+    queryClient.setQueryData<Message[]>(
+      messageKeys.list(conversationId),
+      (prev: Message[] | undefined) =>
+        prev?.map((m) => (m.id === message.id ? message : m)),
+    );
+  }
+
+  function handleMessageDeleted(messageRow: MessageRow) {
+    logger.debug('Handling message deleted', { messageId: messageRow.id });
+
+    const message = toDomainMessage(messageRow);
+
+    queryClient.setQueryData<Message[]>(
+      messageKeys.list(conversationId),
+      (prev: Message[] | undefined) => prev?.filter((m) => m.id !== message.id),
+    );
+  }
 }

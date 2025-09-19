@@ -6,9 +6,13 @@ import type {
 } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { notificationKeys } from '../queries';
-import { transformNotification } from '../transformers/notificationTransformer';
-import type { NotificationDetail } from '../types/notificationDetail';
+import { toDomainNotification } from '../transformers/';
+import type { NotificationDetail } from '../types/';
 import { logger } from '@/shared';
+import { Conversation, toDomainConversation } from '@/features/messages';
+import { NotificationDetailsRow } from '../types/notificationDetailsRow';
+import { ConversationRowWithParticipants } from '@/features/messages/types/messageRow';
+import { conversationKeys } from '@/features/messages/queries';
 
 export interface CreateNotificationSubscriptionParams {
   supabase: SupabaseClient<Database>;
@@ -18,16 +22,7 @@ export interface CreateNotificationSubscriptionParams {
 
 interface RealtimeBroadcastMessage {
   event: string;
-  payload: {
-    id: string;
-    old_record:
-      | Database['public']['Views']['notification_details']['Row']
-      | null;
-    operation: string;
-    record: Database['public']['Views']['notification_details']['Row'];
-    schema: string;
-    table: string;
-  };
+  payload: NotificationDetailsRow | ConversationRowWithParticipants;
   type: string;
 }
 
@@ -59,37 +54,17 @@ export async function createNotificationSubscription({
             userId,
           });
 
-          const notificationData = message.payload.record;
-          if (!notificationData?.id) {
-            logger.warn(
-              'createNotificationSubscription: received payload without notification data',
-              {
-                message,
-                notificationData,
-                userId,
-              },
-            );
-            return;
-          }
-
-          // Transform the notification data (no need to fetch since it's in the payload)
-          const newNotification = transformNotification(notificationData);
-
-          // Update notifications list cache
-          queryClient.setQueryData(
-            notificationKeys.list(userId),
-            (oldData: NotificationDetail[] | undefined) => {
-              if (!oldData) return [newNotification];
-              return [newNotification, ...oldData];
-            },
-          );
-
-          // Increment unread count
-          if (message.event === 'new_notification') {
-            queryClient.setQueryData(
-              notificationKeys.unreadCount(),
-              (prev: number) => (prev || 0) + 1,
-            );
+          switch (message.event) {
+            case 'new_notification':
+              handleNewNotification(message.payload as NotificationDetailsRow);
+              break;
+            case 'new_conversation':
+              handleNewConversation(
+                message.payload as ConversationRowWithParticipants,
+              );
+              break;
+            default:
+              break;
           }
         } catch (error) {
           logger.error(
@@ -104,17 +79,54 @@ export async function createNotificationSubscription({
       },
     )
     .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
-      console.log('=== SUBSCRIPTION STATUS CHANGE ===');
-      console.log('Status:', status);
-      console.log('Channel:', `user:${userId}:notifications`);
+      logger.info('=== SUBSCRIPTION STATUS CHANGE ===', {
+        status,
+        userId,
+      });
       if (err) {
-        console.log('Error:', err);
-      }
-      console.log('==================================');
-      if (err) {
+        logger.error('=== SUBSCRIPTION ERROR ===', {
+          error: err,
+          userId,
+        });
         throw err;
       }
     });
 
   return channel;
+
+  function handleNewNotification(notificationRow: NotificationDetailsRow) {
+    // Transform the notification data (no need to fetch since it's in the payload)
+    const newNotification = toDomainNotification(notificationRow);
+
+    // Update notifications list cache
+    queryClient.setQueryData(
+      notificationKeys.list(userId),
+      (oldData: NotificationDetail[] | undefined) => {
+        if (!oldData) return [newNotification];
+        return [newNotification, ...oldData];
+      },
+    );
+
+    // Increment unread count
+    queryClient.setQueryData(
+      notificationKeys.unreadCount(),
+      (prev: number) => (prev || 0) + 1,
+    );
+  }
+
+  function handleNewConversation(
+    conversationRow: ConversationRowWithParticipants,
+  ) {
+    // Transform the notification data (no need to fetch since it's in the payload)
+    const newConversation = toDomainConversation(conversationRow);
+
+    // Update notifications list cache
+    queryClient.setQueryData(
+      conversationKeys.list(newConversation.conversationType),
+      (oldData: Conversation[] | undefined) => {
+        if (!oldData) return [newConversation];
+        return [newConversation, ...oldData];
+      },
+    );
+  }
 }

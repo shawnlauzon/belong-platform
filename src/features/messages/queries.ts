@@ -1,10 +1,10 @@
-import { ConversationListFilters } from './types';
+import { ConversationType } from './types';
 
 export const conversationKeys = {
   all: ['conversations'] as const,
   lists: () => [...conversationKeys.all, 'list'] as const,
-  list: (filters: ConversationListFilters) =>
-    [...conversationKeys.lists(), filters] as const,
+  list: (type?: ConversationType) =>
+    [...conversationKeys.lists(), type] as const,
   details: () => [...conversationKeys.all, 'detail'] as const,
   detail: (conversationId: string) =>
     [...conversationKeys.details(), conversationId] as const,

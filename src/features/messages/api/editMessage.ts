@@ -2,7 +2,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { EditMessageInput } from '../types';
 import { logger } from '../../../shared';
-import { channelManager } from './channelManager';
 
 export async function editMessage(
   client: SupabaseClient<Database>,
@@ -83,10 +82,5 @@ export async function editMessage(
     }
   }
 
-  // Broadcast the message update using the channel manager
-  const channel = channelManager.getMessagesChannel(client, messageToEdit.conversation_id);
-
-  await channelManager.broadcast(channel, 'message:updated', {
-    message: input.content,
-  });
+  // Note: Broadcasting is now handled automatically by the database trigger
 }

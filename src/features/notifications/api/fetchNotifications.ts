@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { NotificationDetail } from '../types/notificationDetail';
-import { transformNotification } from '../transformers/notificationTransformer';
+import { toDomainNotification } from '../transformers';
 import { logger } from '@/shared';
 
 export interface FetchNotificationsFilter {
@@ -58,5 +58,5 @@ export async function fetchNotifications(
   });
 
   // Transform the raw data using the proper transformer
-  return data.map(transformNotification);
+  return data.map(toDomainNotification);
 }

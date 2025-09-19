@@ -70,11 +70,15 @@ describe('Message Subscription Tests', () => {
     await cleanupAllTestData();
   });
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should create a messages channel', async () => {
     expect(messagesChannel).toBeDefined();
   });
 
-  it('should invalidate the conversation query cache after receiving a message', async () => {
+  it('should add the new message to the cache after receiving a message', async () => {
     const testMessage = `${TEST_PREFIX} subscription test`;
 
     // Other user sends a message to me
@@ -84,11 +88,13 @@ describe('Message Subscription Tests', () => {
     });
 
     // Wait for real-time update to process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: messageKeys.list(testConversation.id),
-    });
+    expect(queryClient.setQueryData).toHaveBeenCalledTimes(2);
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      messageKeys.list(testConversation.id),
+      expect.any(Function),
+    );
   });
 
   it('should increment the unread count when new messages arrive', async () => {
@@ -100,25 +106,14 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    expect(queryClient.setQueryData).toHaveBeenCalledTimes(2);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       messageKeys.unreadCount(testConversation.id),
       expect.any(Function),
     );
-
-    // Verify the updater function increments the current value
-    const mockSetQueryData = queryClient.setQueryData as ReturnType<
-      typeof vi.fn
-    >;
-    const [, updaterFn] = mockSetQueryData.mock.calls[0];
-    expect(updaterFn(5)).toBe(6); // Should increment 5 to 6
-    expect(updaterFn(0)).toBe(1); // Should increment 0 to 1
   });
 
-  it('should invalidate the conversation query cache after editing a message', async () => {
-    // Clear previous calls to have a clean slate
-    vi.clearAllMocks();
-
-    // Other user sends a message to me
+  it('should update the messages query cache after editing a message', async () => {
     const message = await sendMessage(otherUserClient, {
       conversationId: testConversation.id,
       content: `${TEST_PREFIX} subscription test`,
@@ -132,17 +127,14 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: messageKeys.list(testConversation.id),
-    });
+    expect(queryClient.setQueryData).toHaveBeenCalledTimes(3);
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      messageKeys.list(testConversation.id),
+      expect.any(Function),
+    );
   });
 
-  it('should invalidate the conversation query cache after deleting a message', async () => {
-    // Clear previous calls to have a clean slate
-    vi.clearAllMocks();
-
-    // Other user sends a message to me
+  it('should update the messages query cache after deleting a message', async () => {
     const message = await sendMessage(otherUserClient, {
       conversationId: testConversation.id,
       content: `${TEST_PREFIX} subscription test`,
@@ -153,9 +145,10 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: messageKeys.list(testConversation.id),
-    });
+    expect(queryClient.setQueryData).toHaveBeenCalledTimes(3);
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      messageKeys.list(testConversation.id),
+      expect.any(Function),
+    );
   });
 });

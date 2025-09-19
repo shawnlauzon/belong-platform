@@ -3,10 +3,11 @@ import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
 import { getTypedMetadata } from '../types/notificationMetadata';
 
-export function transformNotification(
+export function toDomainNotification(
   row: NotificationDetailsRow,
 ): NotificationDetail {
-  const type = (row.type || NOTIFICATION_TYPES.NEW_RESOURCE) as NotificationType;
+  const type = (row.type ||
+    NOTIFICATION_TYPES.NEW_RESOURCE) as NotificationType;
   const rawMetadata = (row.metadata as Record<string, unknown>) || {};
 
   return {

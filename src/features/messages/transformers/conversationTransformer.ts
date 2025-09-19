@@ -41,7 +41,3 @@ export function toDomainDirectConversation(
     participants: row.conversation_participants.map((p) => p.user_id),
   };
 }
-
-// Export aliases for test compatibility
-export const transformConversation = toDomainConversation;
-export const transformCommunityConversation = toDomainCommunityChat;

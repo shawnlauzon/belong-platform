@@ -4,7 +4,6 @@ import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { createTestConversation } from './messaging-helpers';
 import { createTestCommunity, createTestUser } from '../helpers/test-data';
-import { createConversationSubscription } from '@/features/messages/api/createConversationSubscription';
 import { conversationKeys } from '@/features/messages/queries';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -12,6 +11,7 @@ import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
 import { vi } from 'vitest';
+import { createNotificationSubscription } from '@/features/notifications/api';
 
 describe('Conversation Subscription Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -20,7 +20,7 @@ describe('Conversation Subscription Tests', () => {
   let testUser: Account;
   let testCommunity: Community;
   let anotherUser: Account;
-  let conversationChannel: RealtimeChannel;
+  let notificationChannel: RealtimeChannel;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -43,7 +43,7 @@ describe('Conversation Subscription Tests', () => {
     } as unknown as QueryClient;
 
     // Create subscription once for all tests
-    conversationChannel = await createConversationSubscription({
+    notificationChannel = await createNotificationSubscription({
       supabase,
       queryClient,
       userId: testUser.id,
@@ -54,7 +54,7 @@ describe('Conversation Subscription Tests', () => {
   });
 
   afterAll(async () => {
-    await conversationChannel?.unsubscribe();
+    await notificationChannel?.unsubscribe();
     await cleanupAllTestData();
   });
 
@@ -63,10 +63,12 @@ describe('Conversation Subscription Tests', () => {
     await createTestConversation(otherUserClient, testUser.id);
 
     // Wait for real-time update to process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: conversationKeys.lists(),
-    });
+    expect(queryClient.setQueryData).toHaveBeenCalledOnce();
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      conversationKeys.list('direct'),
+      expect.any(Function),
+    );
   });
 });

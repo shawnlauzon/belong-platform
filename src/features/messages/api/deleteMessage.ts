@@ -1,7 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { logger } from '../../../shared';
-import { channelManager } from './channelManager';
 
 export async function deleteMessage(
   client: SupabaseClient<Database>,
@@ -82,11 +81,5 @@ export async function deleteMessage(
     }
   }
 
-  // Broadcast the message using the channel manager
-  const channel = channelManager.getMessagesChannel(
-    client,
-    messageToDelete.conversation_id,
-  );
-
-  await channelManager.broadcast(channel, 'message:deleted');
+  // Note: Broadcasting is now handled automatically by the database trigger
 }
