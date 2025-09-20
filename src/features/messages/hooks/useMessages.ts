@@ -40,7 +40,7 @@ export function useMessages(
 
   const query = useQuery<Message[], Error>({
     queryKey: messageKeys.list(conversationId),
-    queryFn: () => fetchMessages(supabase, conversationId),
+    queryFn: () => fetchMessages(supabase, { conversationId }),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });
