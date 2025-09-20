@@ -110,6 +110,25 @@ describe('Conversations CRUD Operations', () => {
       );
     });
 
+    it('returns conversations with participants for direct conversations', async () => {
+      const conversation = await createTestConversation(supabase, userB.id);
+
+      // Fetch conversations
+      const conversations = await api.fetchConversations(supabase, userA.id);
+
+      const foundConversation = conversations.find(c => c.id === conversation.id);
+      expect(foundConversation).toBeDefined();
+
+      // Direct conversations should include participants
+      if (foundConversation?.conversationType === 'direct') {
+        expect(foundConversation).toHaveProperty('participants');
+        expect(foundConversation.participants).toEqual(
+          expect.arrayContaining([userA.id, userB.id])
+        );
+        expect(foundConversation.participants).toHaveLength(2);
+      }
+    });
+
     it('returns empty list for user with no conversations', async () => {
       // Create a new isolated user
       const isolatedUser = await createTestUser(supabase);
