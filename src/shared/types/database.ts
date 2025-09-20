@@ -235,16 +235,19 @@ export type Database = {
         Row: {
           conversation_id: string
           joined_at: string
+          read_at: string | null
           user_id: string
         }
         Insert: {
           conversation_id: string
           joined_at?: string
+          read_at?: string | null
           user_id: string
         }
         Update: {
           conversation_id?: string
           joined_at?: string
+          read_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -267,35 +270,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversation_status: {
-        Row: {
-          conversation_id: string
-          last_read_at: string | null
-          last_received_at: string | null
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          last_read_at?: string | null
-          last_received_at?: string | null
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          last_read_at?: string | null
-          last_received_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_status_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -470,7 +444,6 @@ export type Database = {
           community_id: string | null
           created_at: string | null
           id: string
-          is_read: boolean | null
           metadata: Json | null
           read_at: string | null
           resource_id: string | null
@@ -486,7 +459,6 @@ export type Database = {
           community_id?: string | null
           created_at?: string | null
           id?: string
-          is_read?: boolean | null
           metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
@@ -502,7 +474,6 @@ export type Database = {
           community_id?: string | null
           created_at?: string | null
           id?: string
-          is_read?: boolean | null
           metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
@@ -1204,7 +1175,6 @@ export type Database = {
           community_name: string | null
           created_at: string | null
           id: string | null
-          is_read: boolean | null
           metadata: Json | null
           read_at: string | null
           resource_id: string | null

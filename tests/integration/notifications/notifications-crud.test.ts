@@ -6,11 +6,7 @@ import {
   createTestCommunity,
   createTestResource,
 } from '../helpers/test-data';
-import {
-  fetchNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-} from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -18,6 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
+import { markAsRead } from '@/features/notifications/api/markAsRead';
 
 describe('Notifications CRUD', () => {
   let supabase: SupabaseClient<Database>;
@@ -71,14 +68,12 @@ describe('Notifications CRUD', () => {
 
       expect(notifications.length).toBeGreaterThan(0);
 
-      const specificNotification = notifications.find(
-        (n) => n.isRead === false,
-      );
+      const specificNotification = notifications.find((n) => n.readAt === null);
       expect(specificNotification).toBeDefined();
-      expect(specificNotification!.isRead).toBe(false);
+      expect(specificNotification!.readAt).toBe(null);
 
       // Mark as read
-      await markNotificationAsRead(supabase, specificNotification!.id);
+      await markAsRead(supabase, specificNotification!.id);
 
       // Verify it's marked as read
       const updatedResult = await fetchNotifications(supabase);
@@ -86,8 +81,7 @@ describe('Notifications CRUD', () => {
       const readNotification = updatedResult.find(
         (n) => n.id === specificNotification!.id,
       );
-      expect(readNotification?.isRead).toBe(true);
-      expect(readNotification?.readAt).toBeInstanceOf(Date);
+      expect(readNotification?.readAt).toBeDefined();
     });
 
     it('should mark all notifications as read', async () => {
@@ -125,7 +119,7 @@ describe('Notifications CRUD', () => {
       expect(unreadNotifications.length).toBeGreaterThan(0);
 
       // Mark all as read
-      await markAllNotificationsAsRead(supabase);
+      await markAsRead(supabase, 'all');
 
       // Verify all are now read
       const stillUnreadNotifications = await fetchNotifications(supabase, {

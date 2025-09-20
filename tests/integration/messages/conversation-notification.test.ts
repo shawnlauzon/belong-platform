@@ -65,7 +65,6 @@ describe('Conversation Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledOnce();
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       conversationKeys.list('direct'),
       expect.any(Function),

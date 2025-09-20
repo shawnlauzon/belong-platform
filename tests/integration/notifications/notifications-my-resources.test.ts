@@ -7,7 +7,7 @@ import {
   createTestResource,
   createTestResourceTimeslot,
 } from '../helpers/test-data';
-import { fetchNotifications } from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import {
   createResourceClaim,
@@ -84,7 +84,7 @@ describe('My Resources Notifications', () => {
         claimId: expect.any(String),
         communityId: testCommunity.id,
         actorId: claimingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
 
@@ -130,7 +130,7 @@ describe('My Resources Notifications', () => {
         claimId: expect.any(String),
         communityId: testCommunity.id,
         actorId: claimingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
 
@@ -184,7 +184,7 @@ describe('My Resources Notifications', () => {
         claimId: expect.any(String),
         communityId: testCommunity.id,
         actorId: claimingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
   });

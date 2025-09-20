@@ -17,6 +17,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
+import { fetchNotificationUnreadCount } from '@/features/notifications/api';
 
 describe('Database triggers', () => {
   let supabase: SupabaseClient<Database>;
@@ -91,7 +92,7 @@ describe('Database triggers', () => {
       community_id: testCommunity.id,
       actor_id: communityMember.id,
       user_id: resourceOwner.id,
-      is_read: false,
+      read_at: null,
     });
   });
 
@@ -135,7 +136,7 @@ describe('Database triggers', () => {
       community_id: testCommunity.id,
       actor_id: communityMember.id,
       user_id: resourceOwner.id,
-      is_read: false,
+      read_at: null,
     });
   });
 
@@ -177,7 +178,7 @@ describe('Database triggers', () => {
       community_id: testCommunity.id,
       actor_id: communityMember.id,
       user_id: resourceOwner.id,
-      is_read: false,
+      read_at: null,
     });
   });
 
@@ -212,7 +213,7 @@ describe('Database triggers', () => {
       community_id: testCommunity.id,
       actor_id: communityMember.id,
       user_id: resourceOwner.id,
-      is_read: false,
+      read_at: null,
     });
   });
 
@@ -247,11 +248,8 @@ describe('Database triggers', () => {
   });
 
   it('should reflect notification count changes when notifications are created', async () => {
-    // Import the API function to get counts
-    const { fetchNotificationCount } = await import('@/features/notifications');
-
     // Get initial counts
-    const initialTotal = await fetchNotificationCount(supabase);
+    const initialTotal = await fetchNotificationUnreadCount(supabase);
 
     // Create a resource and have communityMember comment on it
     const resource = await createTestResource(
@@ -268,7 +266,7 @@ describe('Database triggers', () => {
 
     // Switch back to resourceOwner and check that count increased
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
-    const updatedTotal = await fetchNotificationCount(supabase);
+    const updatedTotal = await fetchNotificationUnreadCount(supabase);
 
     expect(updatedTotal).toBeGreaterThan(initialTotal);
   });

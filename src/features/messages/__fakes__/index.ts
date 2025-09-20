@@ -218,6 +218,7 @@ export function createFakeConversationParticipantRow(
     conversation_id: faker.string.uuid(),
     user_id: faker.string.uuid(),
     joined_at: now,
+    read_at: null,
     ...overrides,
   };
 }

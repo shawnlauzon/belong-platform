@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
-import { markAsRead } from '../api';
 import { messageKeys } from '../queries';
+import { markAsRead } from '../api/markAsRead';
 
 export function useMarkAsRead() {
   const client = useSupabase();
@@ -14,15 +14,18 @@ export function useMarkAsRead() {
       queryClient.invalidateQueries({
         queryKey: messageKeys.conversation(conversationId),
       });
-      
+
       // Invalidate conversations list
       queryClient.invalidateQueries({
         queryKey: messageKeys.conversationList(),
       });
-      
-      // Invalidate unread count
+
+      // Invalidate unread count for this conversation
+      queryClient.setQueryData(messageKeys.unreadCount(conversationId), 0);
+
+      // Invalidate total unread count
       queryClient.invalidateQueries({
-        queryKey: messageKeys.unreadCount(conversationId),
+        queryKey: messageKeys.totalUnreadCount(),
       });
     },
   });

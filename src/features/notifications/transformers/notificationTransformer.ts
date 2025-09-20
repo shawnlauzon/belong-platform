@@ -48,8 +48,7 @@ export function toDomainNotification(
     metadata: getTypedMetadata(type, rawMetadata),
 
     // Status
-    isRead: row.is_read || false,
-    readAt: row.read_at ? new Date(row.read_at) : undefined,
+    readAt: row.read_at ? new Date(row.read_at) : null,
 
     // Timestamps
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),

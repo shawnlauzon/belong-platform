@@ -1,13 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import {
-  createTestUser,
-  createTestCommunity,
-} from '../helpers/test-data';
-import {
-  fetchNotifications,
-} from '@/features/notifications';
+import { createTestUser, createTestCommunity } from '../helpers/test-data';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -74,25 +69,43 @@ describe('Connection and Claim Status Notifications', () => {
   describe('Notification type validation', () => {
     it('should validate all notification types exist in constants', async () => {
       // Validate that all notification types are properly defined
-      expect(NOTIFICATION_TYPES.CONNECTION_ACCEPTED).toBe('connection_accepted');
+      expect(NOTIFICATION_TYPES.CONNECTION_ACCEPTED).toBe(
+        'connection_accepted',
+      );
       expect(NOTIFICATION_TYPES.CLAIM_APPROVED).toBe('claim_approved');
       expect(NOTIFICATION_TYPES.CLAIM_REJECTED).toBe('claim_rejected');
-      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED).toBe('claimed_resource_updated');
-      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED).toBe('claimed_resource_cancelled');
+      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED).toBe(
+        'claimed_resource_updated',
+      );
+      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED).toBe(
+        'claimed_resource_cancelled',
+      );
       expect(NOTIFICATION_TYPES.NEW_EVENT).toBe('new_event');
       expect(NOTIFICATION_TYPES.NEW_RESOURCE).toBe('new_resource');
-      expect(NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).toBe('trust_points_changed');
-      expect(NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED).toBe('trust_level_changed');
+      expect(NOTIFICATION_TYPES.TRUST_POINTS_CHANGED).toBe(
+        'trust_points_changed',
+      );
+      expect(NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED).toBe(
+        'trust_level_changed',
+      );
       expect(NOTIFICATION_TYPES.MESSAGE).toBe('message');
-      expect(NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED).toBe('community_member_joined');
-      expect(NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT).toBe('community_member_left');
+      expect(NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED).toBe(
+        'community_member_joined',
+      );
+      expect(NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT).toBe(
+        'community_member_left',
+      );
     });
 
     it('should filter notifications correctly', async () => {
       // Test that notifications can be filtered by read status
       const allNotifications = await fetchNotifications(supabase);
-      const unreadNotifications = await fetchNotifications(supabase, { isRead: false });
-      const readNotifications = await fetchNotifications(supabase, { isRead: true });
+      const unreadNotifications = await fetchNotifications(supabase, {
+        isRead: false,
+      });
+      const readNotifications = await fetchNotifications(supabase, {
+        isRead: true,
+      });
 
       // Validate filtering works
       expect(Array.isArray(allNotifications)).toBe(true);
@@ -101,12 +114,12 @@ describe('Connection and Claim Status Notifications', () => {
 
       // Validate unread filter
       unreadNotifications.forEach((notification) => {
-        expect(notification.isRead).toBe(false);
+        expect(notification.readAt).toBeNull();
       });
 
       // Validate read filter
       readNotifications.forEach((notification) => {
-        expect(notification.isRead).toBe(true);
+        expect(notification.readAt).toBeDefined();
       });
     });
   });
@@ -117,7 +130,9 @@ describe('Connection and Claim Status Notifications', () => {
       // Once the connections API is implemented, this should be updated to test actual functionality
 
       // For now, just validate the type exists
-      expect(NOTIFICATION_TYPES.CONNECTION_ACCEPTED).toBe('connection_accepted');
+      expect(NOTIFICATION_TYPES.CONNECTION_ACCEPTED).toBe(
+        'connection_accepted',
+      );
 
       // Future implementation should test:
       // 1. Creating connection request
@@ -129,7 +144,9 @@ describe('Connection and Claim Status Notifications', () => {
       // This test documents the expected behavior for claimed resource updates
       // Once resource update triggers are implemented, this should be updated
 
-      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED).toBe('claimed_resource_updated');
+      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED).toBe(
+        'claimed_resource_updated',
+      );
 
       // Future implementation should test:
       // 1. User claims a resource
@@ -140,7 +157,9 @@ describe('Connection and Claim Status Notifications', () => {
     it('should support claimed resource cancellation notifications when implemented', async () => {
       // This test documents the expected behavior for claimed resource cancellations
 
-      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED).toBe('claimed_resource_cancelled');
+      expect(NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED).toBe(
+        'claimed_resource_cancelled',
+      );
 
       // Future implementation should test:
       // 1. User claims a resource

@@ -1,5 +1,4 @@
 export * from './useNotifications';
-export * from './useNotificationCount';
+export * from './useNotificationUnreadCount';
 export * from './useMarkAsRead';
-export * from './useMarkAllAsRead';
 export * from './useNotificationPreferences';

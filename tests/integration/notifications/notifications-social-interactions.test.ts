@@ -6,7 +6,7 @@ import {
   createTestCommunity,
   createTestResource,
 } from '../helpers/test-data';
-import { fetchNotifications } from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createComment } from '@/features/comments';
 import { createShoutout } from '@/features/shoutouts';
@@ -80,7 +80,7 @@ describe('Social Interactions Notifications', () => {
         type: NOTIFICATION_TYPES.COMMENT,
         resourceId: resource.id,
         actorId: interactingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
 
@@ -124,7 +124,7 @@ describe('Social Interactions Notifications', () => {
         resourceId: resource.id,
         commentId: expect.any(String),
         actorId: interactingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
   });
@@ -165,9 +165,8 @@ describe('Social Interactions Notifications', () => {
         type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
         communityId: testCommunity.id,
         actorId: interactingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
   });
-
 });

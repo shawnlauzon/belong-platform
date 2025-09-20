@@ -1,5 +1,5 @@
 import { createCommunity } from '@/features/communities/api';
-import { signUp } from '@/features/auth/api';
+import { signIn, signUp } from '@/features/auth/api';
 import { createFakeCommunityInput } from '@/features/communities/__fakes__';
 import {
   createResource,
@@ -9,6 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { faker } from '@faker-js/faker';
 import {
+  Account,
   ResourceCategory,
   Shoutout,
   ShoutoutInput,
@@ -232,4 +233,14 @@ export async function createTestConnection(
 
   // Transform to domain type
   return toDomainUserConnection(connectionData);
+}
+
+/**
+ * Signs in as a specific user for testing different perspectives
+ */
+export async function signInAsUser(
+  supabase: SupabaseClient<Database>,
+  user: Account,
+): Promise<void> {
+  await signIn(supabase, user.email, 'TestPass123!');
 }
