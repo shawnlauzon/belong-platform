@@ -1,22 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
-import { sendMessage } from '@/features/messages/api';
+import { sendCommunityMessage } from '@/features/messages/api/sendMessage';
+import { conversationKeys, messageKeys } from '../queries';
 
-import type { Message, SendMessageInput } from '@/features/messages/types';
-
-/**
- * Input for sending a community message
- */
-export interface SendCommunityMessageInput {
-  communityId: string;
-  content: string;
-}
+import type { Message, SendCommunityMessageInput } from '@/features/messages/types';
 
 /**
  * Hook for sending messages to community chat.
  *
- * Automatically resolves the community conversation and sends the message.
+ * Directly sends messages to community using community_id.
  *
  * @returns Mutation for sending community messages
  *
@@ -24,11 +17,11 @@ export interface SendCommunityMessageInput {
  * ```tsx
  * function SendMessageForm({ communityId }) {
  *   const [content, setContent] = useState('');
- *   const sendCommunityMessage = useSendCommunityMessage();
+ *   const sendMessage = useSendCommunityMessage();
  *
  *   const handleSubmit = (e) => {
  *     e.preventDefault();
- *     sendCommunityMessage.mutate({
+ *     sendMessage.mutate({
  *       communityId,
  *       content,
  *     }, {
@@ -44,9 +37,9 @@ export interface SendCommunityMessageInput {
  *         onChange={(e) => setContent(e.target.value)}
  *         placeholder="Type your message..."
  *       />
- *       <button 
- *         type="submit" 
- *         disabled={!content.trim() || sendCommunityMessage.isPending}
+ *       <button
+ *         type="submit"
+ *         disabled={!content.trim() || sendMessage.isPending}
  *       >
  *         Send
  *       </button>
@@ -60,27 +53,8 @@ export function useSendCommunityMessage() {
   const queryClient = useQueryClient();
 
   return useMutation<Message, Error, SendCommunityMessageInput>({
-    mutationFn: async (input: SendCommunityMessageInput) => {
-      // First, get or create the community conversation
-      const conversation = await queryClient.fetchQuery({
-        queryKey: ['conversations', 'community', input.communityId],
-        queryFn: async () => {
-          const { fetchConversation } = await import('@/features/messages/api');
-          return fetchConversation(supabase, input.communityId);
-        },
-      });
-
-      if (!conversation) {
-        throw new Error('Community conversation not found. Please contact an administrator.');
-      }
-
-      // Send the message using the existing sendMessage function
-      const messageInput: SendMessageInput = {
-        conversationId: conversation.id,
-        content: input.content,
-      };
-
-      return sendMessage(supabase, messageInput);
+    mutationFn: (input: SendCommunityMessageInput) => {
+      return sendCommunityMessage(supabase, input);
     },
     onSuccess: (data, variables) => {
       logger.info('💬 Successfully sent community message', {
@@ -88,12 +62,14 @@ export function useSendCommunityMessage() {
         communityId: variables.communityId,
       });
 
-      // Invalidate related queries
+      // Invalidate community messages
       queryClient.invalidateQueries({
-        queryKey: ['messages'],
+        queryKey: messageKeys.communityMessages(variables.communityId),
       });
+
+      // Invalidate community chats
       queryClient.invalidateQueries({
-        queryKey: ['conversations', 'community', variables.communityId],
+        queryKey: conversationKeys.communityChats(),
       });
     },
     onError: (error, variables) => {

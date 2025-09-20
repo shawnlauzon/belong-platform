@@ -121,11 +121,9 @@ export async function createNotificationSubscription({
     // Transform the notification data (no need to fetch since it's in the payload)
     const newConversation = toDomainConversation(conversationRow);
 
-    // Update notifications list cache
+    // Update conversations list cache (all conversations are now direct)
     queryClient.setQueryData(
-      newConversation.conversationType === 'direct'
-        ? conversationKeys.directConversations()
-        : conversationKeys.communityChats(),
+      conversationKeys.list(),
       (oldData: Conversation[] | undefined) => {
         if (!oldData) return [newConversation];
         return [newConversation, ...oldData];

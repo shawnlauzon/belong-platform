@@ -12,7 +12,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import { CommunityChat } from '@/features';
 import { cleanupAllTestData } from '../helpers/cleanup';
 
 describe('Community Conversations Integration', () => {
@@ -37,60 +36,19 @@ describe('Community Conversations Integration', () => {
     await cleanupAllTestData();
   });
 
-  describe('Fetch community conversations', () => {
-    it('is automatically created', async () => {
-      const conversation = await api.fetchCommunityChat(supabase, community.id);
-
-      expect(conversation).toMatchObject({
-        id: expect.any(String),
-        communityId: community.id,
-        conversationType: 'community',
-      });
-    });
-
-    it('is idempotent - returns existing conversation if it exists', async () => {
-      const conversation1 = await api.fetchCommunityChat(
-        supabase,
-        community.id,
-      );
-      const conversation2 = await api.fetchCommunityChat(
-        supabase,
-        community.id,
-      );
-
-      expect(conversation1.id).toBe(conversation2.id);
-    });
-
-    it('fails when user is not a community member', async () => {
-      // Create a user not in the community
-      await createTestUser(supabase);
-
-      await expect(
-        api.fetchCommunityChat(supabase, community.id),
-      ).rejects.toThrow();
-    });
-  });
-
   describe('Sending messages', () => {
-    let communityConversation: CommunityChat;
-
     beforeAll(async () => {
       await signInAsUser(supabase, userA);
-      communityConversation = await api.fetchCommunityChat(
-        supabase,
-        community.id,
-      );
     });
 
     it('allows community members to send messages', async () => {
-      const message = await sendTestMessage(
-        supabase,
-        communityConversation.id,
-        'Hello community!',
-      );
+      const message = await sendTestMessage(supabase, {
+        communityId: community.id,
+        content: 'Hello community!',
+      });
 
       expect(message).toBeTruthy();
-      expect(message.conversationId).toBe(communityConversation.id);
+      expect(message.communityId).toBe(community.id);
       expect(message.content).toBe('Hello community!');
       expect(message.senderId).toBe(userA.id);
 
@@ -98,19 +56,17 @@ describe('Community Conversations Integration', () => {
     });
 
     it('allows multiple users to send messages in community chat', async () => {
-      const messageA = await sendTestMessage(
-        supabase,
-        communityConversation.id,
-        'Message from A',
-      );
+      const messageA = await sendTestMessage(supabase, {
+        communityId: community.id,
+        content: 'Message from A',
+      });
 
       // UserB sends a message
       await signInAsUser(supabase, userB);
-      const messageB = await sendTestMessage(
-        supabase,
-        communityConversation.id,
-        'Message from B',
-      );
+      const messageB = await sendTestMessage(supabase, {
+        communityId: community.id,
+        content: 'Message from B',
+      });
 
       expect(messageA.senderId).toBe(userA.id);
       expect(messageB.senderId).toBe(userB.id);
@@ -120,10 +76,9 @@ describe('Community Conversations Integration', () => {
 
       // Verify both messages exist in the conversation
       await signInAsUser(supabase, userA);
-      const messages = await api.fetchMessages(
-        supabase,
-        communityConversation.id,
-      );
+      const messages = await api.fetchMessages(supabase, {
+        communityId: community.id,
+      });
 
       expect(messages.length).toBeGreaterThanOrEqual(2);
       const messageIds = messages.map((m) => m.id);
@@ -138,11 +93,10 @@ describe('Community Conversations Integration', () => {
       await signInAsUser(supabase, outsiderUser);
 
       await expect(
-        sendTestMessage(
-          supabase,
-          communityConversation.id,
-          'Unauthorized message',
-        ),
+        sendTestMessage(supabase, {
+          communityId: community.id,
+          content: 'Unauthorized message',
+        }),
       ).rejects.toThrow();
     });
   });

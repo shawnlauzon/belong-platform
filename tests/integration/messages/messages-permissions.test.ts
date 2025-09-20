@@ -40,7 +40,7 @@ describe('Messages Permissions & Authorization', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   beforeEach(async () => {
@@ -64,7 +64,9 @@ describe('Messages Permissions & Authorization', () => {
     it('non-participants cannot fetch messages for conversation', async () => {
       // UserC should not be able to fetch messages (returns empty instead of error)
       await signInAsUser(supabase, userC);
-      const messages = await api.fetchMessages(supabase, conversation.id);
+      const messages = await api.fetchMessages(supabase, {
+        conversationId: conversation.id,
+      });
 
       // Should return empty results due to RLS policies
       expect(messages).toHaveLength(0);
@@ -109,11 +111,10 @@ describe('Messages Permissions & Authorization', () => {
       const conversation = await createTestConversation(supabase, userB.id);
 
       // Send a message to confirm it works
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Before leaving`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Before leaving`,
+      });
       expect(message).toBeTruthy();
 
       // UserB leaves the community
@@ -163,7 +164,7 @@ describe('Messages Permissions & Authorization', () => {
       expect(messages).toHaveLength(0);
     });
 
-    it('connect insert a message directly into database from another user', async () => {
+    it('cannot insert a message directly into database from another user', async () => {
       const { data } = await supabase
         .from('messages')
         .insert({

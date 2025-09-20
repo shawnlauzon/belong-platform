@@ -48,11 +48,10 @@ describe.skip('Messages Read Status & Receipts', () => {
 
     beforeEach(async () => {
       await signInAsUser(supabase, userB);
-      testMessage = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Read status test`,
-      );
+      testMessage = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Read status test`,
+      });
       await signInAsUser(supabase, userA);
     });
 
@@ -74,11 +73,10 @@ describe.skip('Messages Read Status & Receipts', () => {
 
     it('updates last_read_at in conversation_participants', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Last read test`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Last read test`,
+      });
 
       // Mark as read by userB
       await signInAsUser(supabase, userB);
@@ -106,21 +104,18 @@ describe.skip('Messages Read Status & Receipts', () => {
     it('marks multiple messages as read using mark_messages_as_read RPC', async () => {
       // Send multiple messages as userA
       await signInAsUser(supabase, userA);
-      const message1 = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Batch 1`,
-      );
-      const message2 = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Batch 2`,
-      );
-      const message3 = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Batch 3`,
-      );
+      const message1 = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Batch 1`,
+      });
+      const message2 = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Batch 2`,
+      });
+      const message3 = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Batch 3`,
+      });
 
       // Mark all as read using RPC as userB
       await signInAsUser(supabase, userB);
@@ -147,11 +142,10 @@ describe.skip('Messages Read Status & Receipts', () => {
   describe('Delivery Status', () => {
     it('populates delivered_at on message creation', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Delivery test`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Delivery test`,
+      });
 
       // Verify message_status was created for recipient
       await signInAsUser(supabase, userB);
@@ -160,11 +154,10 @@ describe.skip('Messages Read Status & Receipts', () => {
 
     it('creates message status record for recipient only', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Status recipient test`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Status recipient test`,
+      });
 
       // Should have status for recipient (userB)
       await signInAsUser(supabase, userB);
@@ -198,18 +191,16 @@ describe.skip('Messages Read Status & Receipts', () => {
         userB.id,
       );
 
-      const messageFromA = await sendTestMessage(
-        supabase,
-        freshConversation.id,
-        `${TEST_PREFIX} From A`,
-      );
+      const messageFromA = await sendTestMessage(supabase, {
+        conversationId: freshConversation.id,
+        content: `${TEST_PREFIX} From A`,
+      });
 
       await signInAsUser(supabase, userB);
-      const messageFromB = await sendTestMessage(
-        supabase,
-        freshConversation.id,
-        `${TEST_PREFIX} From B`,
-      );
+      const messageFromB = await sendTestMessage(supabase, {
+        conversationId: freshConversation.id,
+        content: `${TEST_PREFIX} From B`,
+      });
 
       // UserA reads userB's message
       await signInAsUser(supabase, userA);
@@ -234,11 +225,10 @@ describe.skip('Messages Read Status & Receipts', () => {
 
     it('persists read status across sessions', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Persist test`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Persist test`,
+      });
 
       // Mark as read
       await signInAsUser(supabase, userB);
@@ -266,11 +256,10 @@ describe.skip('Messages Read Status & Receipts', () => {
   describe('Read Status Edge Cases', () => {
     it('handles marking already read message as read', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Already read`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Already read`,
+      });
 
       await signInAsUser(supabase, userB);
 
@@ -293,11 +282,10 @@ describe.skip('Messages Read Status & Receipts', () => {
 
     it('handles deleted messages in read status', async () => {
       await signInAsUser(supabase, userA);
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Will be deleted`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Will be deleted`,
+      });
 
       // Delete the message (userA should be able to delete their own message)
       try {

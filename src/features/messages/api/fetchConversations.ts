@@ -1,20 +1,18 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { DirectConversation, CommunityChat, ConversationType } from '../types';
+import { Conversation } from '../types';
 import {
   ConversationRowWithLastMessage,
 } from '../types/messageRow';
 import {
-  toDomainDirectConversation,
-  toDomainCommunityChat,
+  toDomainConversation,
 } from '../transformers';
 import { logger } from '../../../shared';
 
 export async function fetchConversations(
   supabase: SupabaseClient<Database>,
   userId: string,
-  type?: ConversationType,
-): Promise<Array<DirectConversation | CommunityChat>> {
+): Promise<Conversation[]> {
   // First, get the conversation IDs where the user is a participant
   const participantQuery = supabase
     .from('conversation_participants')
@@ -35,7 +33,7 @@ export async function fetchConversations(
   const conversationIds = participantData.map(p => p.conversation_id);
 
   // Now get the full conversations with all participants and last message
-  let conversationQuery = supabase
+  const conversationQuery = supabase
     .from('conversations')
     .select(`
       *,
@@ -47,6 +45,7 @@ export async function fetchConversations(
         created_at,
         is_deleted,
         conversation_id,
+        community_id,
         encryption_version,
         is_edited,
         updated_at
@@ -55,10 +54,6 @@ export async function fetchConversations(
     .in('id', conversationIds)
     .order('created_at', { ascending: false, referencedTable: 'last_message' })
     .limit(1, { referencedTable: 'last_message' });
-
-  if (type) {
-    conversationQuery = conversationQuery.eq('conversation_type', type);
-  }
 
   const { data, error } = await conversationQuery;
 
@@ -84,21 +79,10 @@ export async function fetchConversations(
       id: dbRow.id,
       created_at: dbRow.created_at,
       updated_at: dbRow.updated_at,
-      community_id: dbRow.community_id,
-      conversation_type: dbRow.conversation_type,
       conversation_participants: dbRow.conversation_participants || [],
       last_message: dbRow.last_message?.[0] || null,
     };
 
-    // Transform based on conversation type
-    if (row.conversation_type === 'direct') {
-      return toDomainDirectConversation(row);
-    } else if (row.conversation_type === 'community') {
-      return toDomainCommunityChat(row);
-    } else {
-      // Fallback for unknown types
-      logger.warn('Unknown conversation type', { type: row.conversation_type });
-      return toDomainDirectConversation(row);
-    }
+    return toDomainConversation(row);
   });
 }

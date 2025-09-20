@@ -1,14 +1,15 @@
-import { UseQueryOptions } from '@tanstack/react-query';
-import { logger } from '@/shared';
-import { useMessages } from './useMessages';
-import { useConversation } from './useConversation';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useSupabase, logger } from '@/shared';
+import { fetchMessages } from '../api';
+import { messageKeys } from '../queries';
+import { useCurrentUser } from '@/features/auth';
+import { STANDARD_CACHE_TIME } from '@/config';
 import type { Message } from '@/features/messages/types';
 
 /**
  * Hook for fetching community chat messages.
  *
- * Combines community conversation lookup with message fetching.
- * Returns messages for the community chat if conversation exists.
+ * Directly fetches messages by community_id.
  *
  * @param communityId - The community ID to fetch messages for
  * @param options - Optional React Query options
@@ -38,27 +39,28 @@ export function useCommunityMessages(
   communityId: string,
   options?: Partial<UseQueryOptions<Message[], Error>>,
 ) {
-  // First get the community conversation
-  const { data: conversation, error: conversationError } =
-    useConversation(communityId);
+  const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
-  // Then get messages for that conversation
-  const messagesQuery = useMessages(conversation?.id || '', {
-    enabled: !!conversation?.id,
+  const query = useQuery<Message[], Error>({
+    queryKey: messageKeys.communityMessages(communityId),
+    queryFn: () => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      return fetchMessages(supabase, { communityId });
+    },
+    enabled: !!supabase && !!currentUser && !!communityId,
+    staleTime: STANDARD_CACHE_TIME,
     ...options,
   });
 
-  // If there's a conversation error, log it
-  if (conversationError) {
-    logger.error(
-      'useCommunityMessages: Error fetching community conversation',
-      {
-        error: conversationError,
-        communityId,
-      },
-    );
+  if (query.error) {
+    logger.error('useCommunityMessages: Query error', {
+      error: query.error,
+      communityId,
+    });
   }
 
-  // Return the messages query directly - it handles the error state
-  return messagesQuery;
+  return query;
 }

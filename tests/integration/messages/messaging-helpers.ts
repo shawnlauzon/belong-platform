@@ -63,16 +63,32 @@ export async function createTestConversation(
   return conversation;
 }
 
+interface SendTestMessageOptions {
+  conversationId?: string;
+  communityId?: string;
+  content?: string;
+}
+
 /**
- * Sends a test message to a conversation
+ * Sends a test message to a conversation or community
  */
 export async function sendTestMessage(
   supabase: SupabaseClient<Database>,
-  conversationId: string,
-  content?: string,
+  options: SendTestMessageOptions,
 ): Promise<Message> {
+  const { conversationId, communityId, content } = options;
+
+  if (!conversationId && !communityId) {
+    throw new Error('Either conversationId or communityId must be provided');
+  }
+
+  if (conversationId && communityId) {
+    throw new Error('Cannot provide both conversationId and communityId');
+  }
+
   const messageInput: SendMessageInput = {
     conversationId,
+    communityId,
     content:
       content || `${TEST_PREFIX} Test message: ${faker.lorem.sentence()}`,
   };
@@ -151,10 +167,10 @@ export async function assertMessageDelivered(
   messageId: string,
   recipientUserId: string,
 ): Promise<void> {
-  // First get the conversation_id from the message
+  // First get the conversation_id and community_id from the message
   const { data: message, error: messageError } = await supabase
     .from('messages')
-    .select('conversation_id')
+    .select('conversation_id, community_id')
     .eq('id', messageId)
     .single();
 
@@ -164,23 +180,43 @@ export async function assertMessageDelivered(
     );
   }
 
-  // Check if the recipient is a participant in the conversation
-  const { data: participant, error } = await supabase
-    .from('conversation_participants')
-    .select('*')
-    .eq('conversation_id', message.conversation_id)
-    .eq('user_id', recipientUserId)
-    .maybeSingle();
+  if (message.conversation_id) {
+    // Check if the recipient is a participant in the conversation
+    const { data: participant, error } = await supabase
+      .from('conversation_participants')
+      .select('*')
+      .eq('conversation_id', message.conversation_id)
+      .eq('user_id', recipientUserId)
+      .maybeSingle();
 
-  if (error || !participant) {
+    if (error || !participant) {
+      throw new Error(
+        `User ${recipientUserId} is not a participant in conversation for message ${messageId}: ${error?.message}`,
+      );
+    }
+  } else if (message.community_id) {
+    // Check if the recipient is a member of the community
+    const { data: membership, error } = await supabase
+      .from('community_memberships')
+      .select('*')
+      .eq('community_id', message.community_id)
+      .eq('user_id', recipientUserId)
+      .maybeSingle();
+
+    if (error || !membership) {
+      throw new Error(
+        `User ${recipientUserId} is not a member of community for message ${messageId}: ${error?.message}`,
+      );
+    }
+  } else {
     throw new Error(
-      `User ${recipientUserId} is not a participant in conversation for message ${messageId}: ${error?.message}`,
+      `Message ${messageId} has neither conversation_id nor community_id`,
     );
   }
 
-  // For now, we just verify that the participant exists
+  // For now, we just verify that the participant/member exists
   // The old logic was checking for last_received_at which doesn't exist anymore
-  // Message delivery is now implicit - if user is a participant, they can receive messages
+  // Message delivery is now implicit - if user is a participant/member, they can receive messages
 }
 
 /**

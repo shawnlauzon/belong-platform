@@ -83,7 +83,9 @@ describe('Messages CRUD Operations', () => {
       );
 
       // Fetch messages to verify order
-      const messages = await api.fetchMessages(supabase, conversation.id);
+      const messages = await api.fetchMessages(supabase, {
+        conversationId: conversation.id,
+      });
 
       expect(messages.length).toBeGreaterThanOrEqual(2);
 
@@ -145,13 +147,14 @@ describe('Messages CRUD Operations', () => {
   describe('fetchMessages', () => {
     it('fetches message history for conversation', async () => {
       // Send a test message
-      const sentMessage = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} History test`,
-      );
+      const sentMessage = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} History test`,
+      });
 
-      const messages = await api.fetchMessages(supabase, conversation.id);
+      const messages = await api.fetchMessages(supabase, {
+        conversationId: conversation.id,
+      });
 
       expect(messages).toBeTruthy();
       expect(messages.length).toBeGreaterThan(0);
@@ -172,7 +175,9 @@ describe('Messages CRUD Operations', () => {
         userC.id,
       );
 
-      const messages = await api.fetchMessages(supabase, emptyConversation.id);
+      const messages = await api.fetchMessages(supabase, {
+        conversationId: emptyConversation.id,
+      });
 
       expect(messages).toHaveLength(0);
     });
@@ -180,11 +185,10 @@ describe('Messages CRUD Operations', () => {
 
   describe('deleteMessage', () => {
     it('soft deletes own message', async () => {
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Delete test`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Delete test`,
+      });
 
       await api.deleteMessage(supabase, message.id);
 
@@ -194,11 +198,10 @@ describe('Messages CRUD Operations', () => {
     });
 
     it("cannot delete other user's message", async () => {
-      const message = await sendTestMessage(
-        supabase,
-        conversation.id,
-        `${TEST_PREFIX} Cannot delete`,
-      );
+      const message = await sendTestMessage(supabase, {
+        conversationId: conversation.id,
+        content: `${TEST_PREFIX} Cannot delete`,
+      });
 
       // Try to delete as userB
       await signInAsUser(supabase, userB);
@@ -219,11 +222,10 @@ describe('Messages CRUD Operations', () => {
       const testConversation = await createTestConversation(supabase, userB.id);
 
       const content = faker.lorem.sentence();
-      const message = await sendTestMessage(
-        supabase,
-        testConversation.id,
+      const message = await sendTestMessage(supabase, {
+        conversationId: testConversation.id,
         content,
-      );
+      });
       expect(message.content).toBe(content);
 
       await api.deleteMessage(supabase, message.id);
