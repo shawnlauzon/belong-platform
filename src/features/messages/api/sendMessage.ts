@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { Message, SendMessageInput, SendCommunityMessageInput } from '../types';
-import { toMessageRow, toCommunityMessageRow, toDomainMessage } from '../transformers';
+import { Message, SendMessageInput } from '../types';
+import { toMessageRow, toDomainMessage } from '../transformers';
 import { logger } from '../../../shared';
 import { MessageRow } from '../types/messageRow';
 
@@ -48,47 +48,6 @@ export async function sendMessage(
     contentLength: input.content?.length || 0,
     messageId: message.id,
   });
-  return message;
-}
 
-export async function sendCommunityMessage(
-  supabase: SupabaseClient<Database>,
-  input: SendCommunityMessageInput,
-): Promise<Message> {
-  logger.info('Sending community message', {
-    communityId: input.communityId,
-    contentLength: input.content?.length || 0,
-  });
-
-  const { data, error } = (await supabase
-    .from('messages')
-    .insert(toCommunityMessageRow(input))
-    .select('*')
-    .single()) as {
-    data: MessageRow;
-    error: Error | null;
-  };
-
-  if (error) {
-    logger.error('Database error while sending community message', {
-      error,
-      communityId: input.communityId,
-    });
-    throw error;
-  }
-
-  if (!data) {
-    logger.error('No data returned from community message insert', {
-      communityId: input.communityId,
-    });
-    throw new Error('Failed to send community message');
-  }
-
-  const message = toDomainMessage(data);
-  logger.info('Community message sent', {
-    communityId: input.communityId,
-    contentLength: input.content?.length || 0,
-    messageId: message.id,
-  });
   return message;
 }

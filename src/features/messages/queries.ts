@@ -20,9 +20,7 @@ export const messageKeys = {
   communityUnreadCount: (communityId: string) =>
     [...messageKeys.all, 'community-unread-count', communityId] as const,
   totalUnreadCount: () => [...messageKeys.all, 'total-unread-count'] as const,
-  totalCommunityUnreadCount: () => [...messageKeys.all, 'total-community-unread-count'] as const,
+  totalCommunityUnreadCount: () =>
+    [...messageKeys.all, 'total-community-unread-count'] as const,
   blockedUsers: () => [...messageKeys.all, 'blocked-users'] as const,
-  conversation: (conversationId: string) =>
-    [...messageKeys.all, 'conversation', conversationId] as const,
-  conversationList: () => [...conversationKeys.all, 'list'] as const,
 } as const;

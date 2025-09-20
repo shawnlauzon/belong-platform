@@ -11,6 +11,5 @@ export * from './useUnblockUser';
 export * from './useReportMessage';
 export * from './useConversation';
 export * from './useCommunityMessages';
-export * from './useSendCommunityMessage';
 export * from './useMessageUnreadCount';
 export * from './useCommunityUnreadCount';
