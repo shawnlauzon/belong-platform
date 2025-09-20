@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
-import { fetchNotifications } from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -59,7 +59,7 @@ describe('Trust & Recognition Notifications', () => {
         type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         userId: trustRecipient.id,
         communityId: expect.any(String),
-        isRead: false,
+        readAt: null,
         metadata: expect.objectContaining({
           amount: expect.any(Number),
         }),
@@ -85,7 +85,6 @@ describe('Trust & Recognition Notifications', () => {
         expect(trustLevelNotifications[0]).toMatchObject({
           type: NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED,
           userId: trustRecipient.id,
-          isRead: expect.any(Boolean),
         });
       } else {
         // This is expected for new users who haven't leveled up yet
@@ -172,7 +171,7 @@ describe('Trust & Recognition Notifications', () => {
       expect(newNotification).toMatchObject({
         type: NOTIFICATION_TYPES.TRUST_POINTS_CHANGED,
         userId: trustRecipient.id,
-        isRead: false,
+        readAt: null,
         metadata: expect.objectContaining({
           amount: expect.any(Number),
         }),

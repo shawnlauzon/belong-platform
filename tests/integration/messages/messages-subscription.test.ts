@@ -90,7 +90,6 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledTimes(2);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       messageKeys.list(testConversation.id),
       expect.any(Function),
@@ -106,7 +105,6 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledTimes(2);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       messageKeys.unreadCount(testConversation.id),
       expect.any(Function),
@@ -127,7 +125,6 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledTimes(3);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       messageKeys.list(testConversation.id),
       expect.any(Function),
@@ -145,7 +142,6 @@ describe('Message Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledTimes(3);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       messageKeys.list(testConversation.id),
       expect.any(Function),

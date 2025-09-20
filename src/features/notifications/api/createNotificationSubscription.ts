@@ -9,10 +9,11 @@ import { notificationKeys } from '../queries';
 import { toDomainNotification } from '../transformers/';
 import type { NotificationDetail } from '../types/';
 import { logger } from '@/shared';
-import { Conversation, toDomainConversation } from '@/features/messages';
+import { Conversation } from '@/features/messages';
 import { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import { ConversationRowWithParticipants } from '@/features/messages/types/messageRow';
 import { conversationKeys } from '@/features/messages/queries';
+import { toDomainConversation } from '@/features/messages/transformers';
 
 export interface CreateNotificationSubscriptionParams {
   supabase: SupabaseClient<Database>;

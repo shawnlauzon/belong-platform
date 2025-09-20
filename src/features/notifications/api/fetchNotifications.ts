@@ -33,7 +33,11 @@ export async function fetchNotifications(
     .order('created_at', { ascending: false });
 
   if (filter?.isRead !== undefined) {
-    query = query.eq('is_read', filter.isRead);
+    if (filter.isRead) {
+      query = query.not('read_at', 'is', null);
+    } else {
+      query = query.is('read_at', null);
+    }
   }
 
   const { data, error } = await query;

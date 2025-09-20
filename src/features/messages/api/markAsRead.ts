@@ -1,27 +1,25 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
+import { getCurrentUserId } from '@/features/auth/api';
 import { logger } from '../../../shared';
 
 export async function markAsRead(
   client: SupabaseClient<Database>,
-  conversationId: string
+  conversationId: string,
 ): Promise<void> {
-  const { data: userData, error: userError } = await client.auth.getUser();
+  const userId = await getCurrentUserId(client);
 
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
+  if (!userId) {
+    throw new Error('User not authenticated');
   }
 
-  const userId = userData.user.id;
-
   const { error } = await client
-    .from('conversation_status')
-    .upsert({
-      conversation_id: conversationId,
-      user_id: userId,
-      last_read_at: new Date().toISOString(),
-    });
+    .from('conversation_participants')
+    .update({
+      read_at: new Date().toISOString(),
+    })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId);
 
   if (error) {
     logger.error('Error marking messages as read', { error });

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
-import { fetchNotifications } from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { joinCommunity, leaveCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -57,7 +57,7 @@ describe('My Communities Notifications', () => {
         type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
         communityId: testCommunity.id,
         actorId: freshJoiningUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
 
@@ -82,7 +82,7 @@ describe('My Communities Notifications', () => {
         type: NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
         communityId: testCommunity.id,
         actorId: leavingUser.id,
-        isRead: false,
+        readAt: null,
       });
     });
 

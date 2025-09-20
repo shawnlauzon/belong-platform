@@ -6,7 +6,7 @@ import {
   createTestCommunity,
   createTestResource,
 } from '../helpers/test-data';
-import { fetchNotifications } from '@/features/notifications';
+import { fetchNotifications } from '@/features/notifications/api';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -70,7 +70,7 @@ describe('Community Activity Notifications', () => {
         resourceId: resource.id,
         communityId: testCommunity.id,
         actorId: resourceCreator.id,
-        isRead: false,
+        readAt: null,
       });
     });
 
@@ -98,7 +98,7 @@ describe('Community Activity Notifications', () => {
         resourceId: event.id,
         communityId: testCommunity.id,
         actorId: resourceCreator.id,
-        isRead: false,
+        readAt: null,
       });
     });
 

@@ -8,10 +8,9 @@ import {
 } from '../helpers/test-data';
 import {
   fetchNotifications,
+  fetchNotificationUnreadCount,
   markNotificationAsRead,
-  markAllNotificationsAsRead,
-  fetchNotificationCount,
-} from '@/features/notifications';
+} from '@/features/notifications/api';
 import { createComment } from '@/features/comments';
 import { createShoutout } from '@/features/shoutouts';
 import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
@@ -80,12 +79,11 @@ describe('Notification Read Status', () => {
       );
 
       expect(commentNotification).toBeDefined();
-      expect(commentNotification!.isRead).toBe(false);
-      expect(commentNotification!.readAt).toBeUndefined();
+      expect(commentNotification!.readAt).toBeNull();
     });
 
     it('should count unread notifications correctly', async () => {
-      const initialCount = await fetchNotificationCount(supabase);
+      const initialCount = await fetchNotificationUnreadCount(supabase);
 
       // Create a resource as testUser
       const resource = await createTestResource(
@@ -104,7 +102,7 @@ describe('Notification Read Status', () => {
       // Switch back to testUser to check count
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      const updatedCount = await fetchNotificationCount(supabase);
+      const updatedCount = await fetchNotificationUnreadCount(supabase);
       expect(updatedCount).toBeGreaterThan(initialCount);
     });
   });
@@ -134,8 +132,7 @@ describe('Notification Read Status', () => {
       expect(unreadNotifications.length).toBeGreaterThan(0);
 
       const notification = unreadNotifications[0];
-      expect(notification.isRead).toBe(false);
-      expect(notification.readAt).toBeUndefined();
+      expect(notification.readAt).toBeNull();
 
       const beforeReadTime = new Date();
 
@@ -150,7 +147,6 @@ describe('Notification Read Status', () => {
       );
 
       expect(readNotification).toBeDefined();
-      expect(readNotification!.isRead).toBe(true);
       expect(readNotification!.readAt).toBeInstanceOf(Date);
       expect(readNotification!.readAt!.getTime()).toBeGreaterThanOrEqual(
         beforeReadTime.getTime(),
@@ -195,8 +191,8 @@ describe('Notification Read Status', () => {
       // Check that only one is marked as read
       const afterReadNotifications = await fetchNotifications(supabase);
 
-      const markedAsRead = afterReadNotifications.filter((n) => n.isRead);
-      const stillUnread = afterReadNotifications.filter((n) => !n.isRead);
+      const markedAsRead = afterReadNotifications.filter((n) => n.readAt);
+      const stillUnread = afterReadNotifications.filter((n) => !n.readAt);
 
       expect(markedAsRead.length).toBeGreaterThanOrEqual(1);
       expect(stillUnread.length).toBeGreaterThanOrEqual(1);
@@ -237,15 +233,13 @@ describe('Notification Read Status', () => {
       expect(unreadNotifications.length).toBeGreaterThanOrEqual(2);
 
       // Mark all as read
-      await markAllNotificationsAsRead(supabase);
+      await markNotificationAsRead(supabase, 'all');
 
       // Verify all are marked as read
       const afterMarkAllNotifications = await fetchNotifications(supabase);
 
       afterMarkAllNotifications.forEach((notification) => {
-        expect(notification.isRead).toBe(true);
         expect(notification.readAt).toBeInstanceOf(Date);
-        // Just verify readAt is a valid date, don't compare exact timing due to potential race conditions
       });
 
       // Verify no unread notifications remain
@@ -273,14 +267,14 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Verify count is greater than 0
-      const beforeCount = await fetchNotificationCount(supabase);
+      const beforeCount = await fetchNotificationUnreadCount(supabase);
       expect(beforeCount).toBeGreaterThan(0);
 
       // Mark all as read
-      await markAllNotificationsAsRead(supabase);
+      await markNotificationAsRead(supabase, 'all');
 
       // Verify count is 0
-      const afterCount = await fetchNotificationCount(supabase);
+      const afterCount = await fetchNotificationUnreadCount(supabase);
       expect(afterCount).toBe(0);
     });
   });
@@ -324,7 +318,7 @@ describe('Notification Read Status', () => {
 
       // All returned notifications should be unread
       unreadNotifications.forEach((notification) => {
-        expect(notification.isRead).toBe(false);
+        expect(notification.readAt).toBeNull();
       });
 
       expect(unreadNotifications.length).toBeLessThan(allNotifications.length);
@@ -358,7 +352,6 @@ describe('Notification Read Status', () => {
 
       // All returned notifications should be read
       readNotifications.forEach((notification) => {
-        expect(notification.isRead).toBe(true);
         expect(notification.readAt).toBeInstanceOf(Date);
       });
 
@@ -408,8 +401,8 @@ describe('Notification Read Status', () => {
       expect(shoutoutNotification).toBeDefined();
 
       // Both should be unread initially
-      expect(commentNotification!.isRead).toBe(false);
-      expect(shoutoutNotification!.isRead).toBe(false);
+      expect(commentNotification!.readAt).toBeNull();
+      expect(shoutoutNotification!.readAt).toBeNull();
 
       // Mark only comment notification as read
       await markNotificationAsRead(supabase, commentNotification!.id);
@@ -424,8 +417,8 @@ describe('Notification Read Status', () => {
         (n) => n.id === shoutoutNotification!.id,
       );
 
-      expect(updatedCommentNotification!.isRead).toBe(true);
-      expect(updatedShoutoutNotification!.isRead).toBe(false);
+      expect(updatedCommentNotification!.readAt).toBeInstanceOf(Date);
+      expect(updatedShoutoutNotification!.readAt).toBeNull();
     });
   });
 });

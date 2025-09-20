@@ -102,6 +102,12 @@ export async function createMessageSubscription({
       messageKeys.unreadCount(conversationId),
       (prev: number | undefined) => (prev || 0) + 1,
     );
+
+    // Increment total unread count
+    queryClient.setQueryData(
+      messageKeys.totalUnreadCount(),
+      (prev: number | undefined) => (prev || 0) + 1,
+    );
   }
 
   function handleMessageUpdated(messageRow: MessageRow) {

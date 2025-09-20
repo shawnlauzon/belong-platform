@@ -3,15 +3,27 @@ import type { Database } from '@/shared/types/database';
 
 export async function markAsRead(
   supabase: SupabaseClient<Database>,
-  notificationId: string
+  notificationId: string | 'all',
 ): Promise<void> {
-  const { error } = await supabase
-    .from('notifications')
-    .update({
-      is_read: true,
-      read_at: new Date().toISOString(),
-    })
-    .eq('id', notificationId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const query = supabase.from('notifications').update({
+    read_at: new Date().toISOString(),
+  });
+
+  if (notificationId === 'all') {
+    query.eq('user_id', user.id);
+  } else {
+    query.eq('id', notificationId);
+  }
+
+  const { error } = await query;
 
   if (error) {
     throw error;

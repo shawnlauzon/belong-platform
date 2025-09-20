@@ -8,14 +8,15 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (notificationId: string) => markAsRead(supabase, notificationId),
+    mutationFn: (notificationId: string | 'all') =>
+      markAsRead(supabase, notificationId),
     onSuccess: () => {
-      // Invalidate notification lists and counts
+      // Invalidate notification lists and unread counts
       queryClient.invalidateQueries({
         queryKey: notificationKeys.lists(),
       });
       queryClient.invalidateQueries({
-        queryKey: notificationKeys.counts(),
+        queryKey: notificationKeys.unreadCount(),
       });
     },
   });

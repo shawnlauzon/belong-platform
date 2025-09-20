@@ -1,8 +1,20 @@
-import type { CommentMetadata, ShoutoutMetadata, TrustPointsMetadata, TrustLevelMetadata, ResourceUpdatedMetadata } from './notificationMetadata';
+import type {
+  CommentMetadata,
+  ShoutoutMetadata,
+  TrustPointsMetadata,
+  TrustLevelMetadata,
+  ResourceUpdatedMetadata,
+} from './notificationMetadata';
 import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
 
 // Union type for all possible metadata types
-export type NotificationMetadata = CommentMetadata | ShoutoutMetadata | TrustPointsMetadata | TrustLevelMetadata | ResourceUpdatedMetadata | Record<string, never>;
+export type NotificationMetadata =
+  | CommentMetadata
+  | ShoutoutMetadata
+  | TrustPointsMetadata
+  | TrustLevelMetadata
+  | ResourceUpdatedMetadata
+  | Record<string, never>;
 
 export interface Notification {
   id: string;
@@ -23,8 +35,7 @@ export interface Notification {
   metadata: NotificationMetadata;
 
   // Status
-  isRead: boolean;
-  readAt?: Date;
+  readAt: Date | null;
 
   // Timestamps
   createdAt: Date;
@@ -44,28 +55,31 @@ export interface NotificationInput {
 
 // Type guards for notification categories
 export const isCommentNotification = (type: NotificationType): boolean =>
-  (type === NOTIFICATION_TYPES.COMMENT || type === NOTIFICATION_TYPES.COMMENT_REPLY);
+  type === NOTIFICATION_TYPES.COMMENT ||
+  type === NOTIFICATION_TYPES.COMMENT_REPLY;
 
 export const isClaimNotification = (type: NotificationType): boolean =>
-  (type === NOTIFICATION_TYPES.CLAIM ||
-   type === NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED ||
-   type === NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED ||
-   type === NOTIFICATION_TYPES.CLAIM_APPROVED ||
-   type === NOTIFICATION_TYPES.CLAIM_REJECTED ||
-   type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED ||
-   type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED);
+  type === NOTIFICATION_TYPES.CLAIM ||
+  type === NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED ||
+  type === NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED ||
+  type === NOTIFICATION_TYPES.CLAIM_APPROVED ||
+  type === NOTIFICATION_TYPES.CLAIM_REJECTED ||
+  type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED ||
+  type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED;
 
 export const isResourceNotification = (type: NotificationType): boolean =>
-  (type === NOTIFICATION_TYPES.NEW_RESOURCE ||
-   type === NOTIFICATION_TYPES.NEW_EVENT ||
-   type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED ||
-   type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT);
+  type === NOTIFICATION_TYPES.NEW_RESOURCE ||
+  type === NOTIFICATION_TYPES.NEW_EVENT ||
+  type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED ||
+  type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT;
 
 export const isSocialNotification = (type: NotificationType): boolean =>
-  (type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED || type === NOTIFICATION_TYPES.CONNECTION_ACCEPTED);
+  type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
+  type === NOTIFICATION_TYPES.CONNECTION_ACCEPTED;
 
 export const isTrustNotification = (type: NotificationType): boolean =>
-  (type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED || type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED);
+  type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED ||
+  type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED;
 
 export const isMessageNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.MESSAGE;

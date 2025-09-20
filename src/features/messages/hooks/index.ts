@@ -1,7 +1,7 @@
 export * from './useConversations';
 export * from './useMessages';
 export * from './useSendMessage';
-export * from './useMarkAsRead';
+export * from './useMarkConversationAsRead';
 export * from './useStartConversation';
 export * from './useDeleteMessage';
 export * from './useBlockUser';
@@ -10,3 +10,4 @@ export * from './useReportMessage';
 export * from './useConversation';
 export * from './useCommunityMessages';
 export * from './useSendCommunityMessage';
+export * from './useMessageUnreadCount';
