@@ -1,6 +1,7 @@
 export interface Message {
   id: string;
-  conversationId: string;
+  conversationId?: string | null;
+  communityId?: string | null;
   senderId: string;
   content: string;
   isEdited: boolean;
@@ -11,7 +12,13 @@ export interface Message {
 }
 
 export interface SendMessageInput {
-  conversationId: string;
+  conversationId?: string;
+  communityId?: string;
+  content: string;
+}
+
+export interface SendCommunityMessageInput {
+  communityId: string;
   content: string;
 }
 

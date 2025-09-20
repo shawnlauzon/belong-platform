@@ -42,7 +42,6 @@ describe('Conversations CRUD Operations', () => {
 
       expect(conversation).toMatchObject({
         id: expect.any(String),
-        conversationType: 'direct',
         participants: expect.arrayContaining([userA.id, userB.id]),
         lastMessage: null,
       });
@@ -119,14 +118,12 @@ describe('Conversations CRUD Operations', () => {
       );
       expect(foundConversation).toBeDefined();
 
-      // Direct conversations should include participants
-      if (foundConversation?.conversationType === 'direct') {
-        expect(foundConversation).toHaveProperty('participants');
-        expect(foundConversation.participants).toEqual(
-          expect.arrayContaining([userA.id, userB.id]),
-        );
-        expect(foundConversation.participants).toHaveLength(2);
-      }
+      // All conversations now include participants (only direct conversations exist)
+      expect(foundConversation).toBeDefined();
+      expect(foundConversation!.participants).toEqual(
+        expect.arrayContaining([userA.id, userB.id]),
+      );
+      expect(foundConversation!.participants).toHaveLength(2);
     });
 
     it('returns empty list for user with no conversations', async () => {

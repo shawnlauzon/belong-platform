@@ -5,18 +5,31 @@ import { toDomainMessage } from '../transformers';
 import { MessageRow } from '../types/messageRow';
 import { logger } from '@/shared';
 
+interface FetchMessagesSource {
+  conversationId?: string;
+  communityId?: string;
+}
+
 /**
- * Fetches messages for a specific conversation, with the newest messages being last.
+ * Fetches messages for a specific conversation or community, with the newest messages being last.
  */
 export async function fetchMessages(
   supabase: SupabaseClient<Database>,
-  conversationId: string,
+  source: FetchMessagesSource,
 ): Promise<Message[]> {
-  const query = supabase
-    .from('messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .eq('is_deleted', false);
+  const { conversationId, communityId } = source;
+
+  if (!conversationId && !communityId) {
+    throw new Error('Either conversationId or communityId must be provided');
+  }
+
+  const query = supabase.from('messages').select('*');
+
+  if (conversationId) {
+    query.eq('conversation_id', conversationId);
+  } else if (communityId) {
+    query.eq('community_id', communityId);
+  }
 
   // Execute the query
   const { data, error } = (await query.order('created_at', {
@@ -36,6 +49,7 @@ export async function fetchMessages(
 
   logger.debug('Fetched messages', {
     conversationId,
+    communityId,
     messages: data,
   });
 

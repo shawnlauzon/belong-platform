@@ -47,7 +47,7 @@ export function createFakeConversation(
     createdAt: now,
     updatedAt: now,
     lastMessage: createFakeMessage(),
-    conversationType: 'direct',
+    participants: [faker.string.uuid(), faker.string.uuid()],
     ...overrides,
   };
 }
@@ -58,15 +58,9 @@ export function createFakeConversation(
 export function createFakeCommunityChat(
   overrides: Partial<CommunityChat> = {},
 ): CommunityChat {
-  const now = faker.date.recent();
-
   return {
-    id: faker.string.uuid(),
-    createdAt: now,
-    updatedAt: now,
-    lastMessage: createFakeMessage(),
     communityId: faker.string.uuid(),
-    conversationType: 'community',
+    lastMessage: createFakeMessage(),
     ...overrides,
   };
 }
@@ -163,8 +157,6 @@ export function createFakeConversationRow(
     id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
-    community_id: null,
-    conversation_type: 'direct',
     ...overrides,
   };
 }
@@ -228,8 +220,6 @@ export function createFakeConversationWithParticipants(
     id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
-    community_id: null,
-    conversation_type: 'direct',
     conversation_participants: [
       {
         user_id: currentUserId,

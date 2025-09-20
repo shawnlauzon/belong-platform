@@ -187,6 +187,7 @@ export type Database = {
       }
       community_memberships: {
         Row: {
+          chat_read_at: string | null
           community_id: string
           created_at: string
           role: Database["public"]["Enums"]["community_membership_role"]
@@ -194,6 +195,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chat_read_at?: string | null
           community_id: string
           created_at?: string
           role?: Database["public"]["Enums"]["community_membership_role"]
@@ -201,6 +203,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chat_read_at?: string | null
           community_id?: string
           created_at?: string
           role?: Database["public"]["Enums"]["community_membership_role"]
@@ -276,35 +279,21 @@ export type Database = {
       }
       conversations: {
         Row: {
-          community_id: string | null
-          conversation_type: Database["public"]["Enums"]["conversation_type"]
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
-          community_id?: string | null
-          conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
-          community_id?: string | null
-          conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       invitation_codes: {
         Row: {
@@ -357,8 +346,9 @@ export type Database = {
       }
       messages: {
         Row: {
+          community_id: string | null
           content: string
-          conversation_id: string
+          conversation_id: string | null
           created_at: string
           encryption_version: number
           id: string
@@ -368,8 +358,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          community_id?: string | null
           content: string
-          conversation_id: string
+          conversation_id?: string | null
           created_at?: string
           encryption_version?: number
           id?: string
@@ -379,8 +370,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          community_id?: string | null
           content?: string
-          conversation_id?: string
+          conversation_id?: string | null
           created_at?: string
           encryption_version?: number
           id?: string
@@ -390,6 +382,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
@@ -1786,21 +1785,6 @@ export type Database = {
       get_boundary_polygon: {
         Args: { community_id: string }
         Returns: Json
-      }
-      get_conversations_with_last_message: {
-        Args: {
-          conversation_type_filter?: Database["public"]["Enums"]["conversation_type"]
-          user_id: string
-        }
-        Returns: {
-          community_id: string
-          conversation_participants: Json
-          conversation_type: Database["public"]["Enums"]["conversation_type"]
-          created_at: string
-          id: string
-          last_message: Json
-          updated_at: string
-        }[]
       }
       get_invitation_details: {
         Args: { connection_code: string }
