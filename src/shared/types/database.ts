@@ -280,9 +280,6 @@ export type Database = {
           conversation_type: Database["public"]["Enums"]["conversation_type"]
           created_at: string
           id: string
-          last_message_at: string | null
-          last_message_preview: string | null
-          last_message_sender_id: string | null
           updated_at: string
         }
         Insert: {
@@ -290,9 +287,6 @@ export type Database = {
           conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          last_message_sender_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -300,9 +294,6 @@ export type Database = {
           conversation_type?: Database["public"]["Enums"]["conversation_type"]
           created_at?: string
           id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          last_message_sender_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -311,20 +302,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_last_message_sender_id_fkey"
-            columns: ["last_message_sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_last_message_sender_id_fkey"
-            columns: ["last_message_sender_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1809,6 +1786,21 @@ export type Database = {
       get_boundary_polygon: {
         Args: { community_id: string }
         Returns: Json
+      }
+      get_conversations_with_last_message: {
+        Args: {
+          conversation_type_filter?: Database["public"]["Enums"]["conversation_type"]
+          user_id: string
+        }
+        Returns: {
+          community_id: string
+          conversation_participants: Json
+          conversation_type: Database["public"]["Enums"]["conversation_type"]
+          created_at: string
+          id: string
+          last_message: Json
+          updated_at: string
+        }[]
       }
       get_invitation_details: {
         Args: { connection_code: string }

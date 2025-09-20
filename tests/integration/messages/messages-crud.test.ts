@@ -16,6 +16,7 @@ import type { Account } from '@/features/auth/types';
 import type { Conversation } from '@/features/messages/types';
 import { joinCommunity } from '@/features/communities/api';
 import { Community } from '@/features';
+import { faker } from '@faker-js/faker';
 
 describe('Messages CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -129,19 +130,15 @@ describe('Messages CRUD Operations', () => {
         content,
       });
 
-      // Check conversation was updated
-      const { data: dbConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', conversation.id)
-        .single();
-
-      expect(dbConversation).toBeTruthy();
-      expect(dbConversation!.last_message_preview).toContain(
-        content.substring(0, 50),
+      const updatedConversation = await api.fetchConversation(
+        supabase,
+        conversation.id,
       );
-      expect(dbConversation!.last_message_sender_id).toBe(userA.id);
-      expect(dbConversation!.last_message_at).toBeTruthy();
+
+      expect(updatedConversation).toBeDefined();
+      expect(updatedConversation!.lastMessage).toBeDefined();
+      expect(updatedConversation!.lastMessage!.content).toBe(content);
+      expect(updatedConversation!.lastMessage!.senderId).toBe(userA.id);
     });
   });
 
@@ -221,22 +218,25 @@ describe('Messages CRUD Operations', () => {
       // Create new conversation for this test
       const testConversation = await createTestConversation(supabase, userB.id);
 
+      const content = faker.lorem.sentence();
       const message = await sendTestMessage(
         supabase,
         testConversation.id,
-        `${TEST_PREFIX} Last message`,
+        content,
       );
+      expect(message.content).toBe(content);
 
       await api.deleteMessage(supabase, message.id);
 
       // Check conversation preview updated
-      const { data: dbConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', testConversation.id)
-        .single();
+      const updatedConversation = await api.fetchConversation(
+        supabase,
+        testConversation.id,
+      );
 
-      expect(dbConversation!.last_message_preview).toBe('[Message deleted]');
+      expect(updatedConversation).toBeDefined();
+      expect(updatedConversation!.lastMessage).toBeDefined();
+      expect(updatedConversation!.lastMessage!.content).not.toBe(content);
     });
   });
 

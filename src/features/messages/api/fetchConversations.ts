@@ -2,11 +2,13 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { DirectConversation, CommunityChat, ConversationType } from '../types';
 import {
-  ConversationRowWithParticipants,
-  SELECT_CONVERSATIONS_JOIN_PARTICIPANTS,
+  ConversationRowWithLastMessage,
 } from '../types/messageRow';
-import { toDomainDirectConversation, toDomainCommunityChat } from '../transformers';
-import { appendQueries, logger } from '../../../shared';
+import {
+  toDomainDirectConversation,
+  toDomainCommunityChat,
+} from '../transformers';
+import { logger } from '../../../shared';
 
 export async function fetchConversations(
   supabase: SupabaseClient<Database>,
@@ -32,26 +34,33 @@ export async function fetchConversations(
 
   const conversationIds = participantData.map(p => p.conversation_id);
 
-  // Now get the full conversations with all participants
+  // Now get the full conversations with all participants and last message
   let conversationQuery = supabase
     .from('conversations')
-    .select(SELECT_CONVERSATIONS_JOIN_PARTICIPANTS)
-    .in('id', conversationIds);
+    .select(`
+      *,
+      conversation_participants!inner(user_id),
+      last_message:messages(
+        id,
+        content,
+        sender_id,
+        created_at,
+        is_deleted,
+        conversation_id,
+        encryption_version,
+        is_edited,
+        updated_at
+      )
+    `)
+    .in('id', conversationIds)
+    .order('created_at', { ascending: false, referencedTable: 'last_message' })
+    .limit(1, { referencedTable: 'last_message' });
 
   if (type) {
-    conversationQuery = appendQueries(conversationQuery, {
-      conversation_type: type,
-    });
+    conversationQuery = conversationQuery.eq('conversation_type', type);
   }
 
-  // Execute the query
-  const { data, error } = (await conversationQuery.order('last_message_at', {
-    ascending: false,
-    nullsFirst: false,
-  })) as {
-    data: ConversationRowWithParticipants[] | null;
-    error: Error | null;
-  };
+  const { data, error } = await conversationQuery;
 
   if (error) {
     logger.error('Error fetching conversations', { error });
@@ -62,7 +71,25 @@ export async function fetchConversations(
     return [];
   }
 
-  return data.map((row) => {
+  // Order by the most recent message timestamp, fallback to conversation created_at
+  const sortedData = data.sort((a, b) => {
+    const aTime = a.last_message?.[0]?.created_at || a.created_at;
+    const bTime = b.last_message?.[0]?.created_at || b.created_at;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+
+  return sortedData.map((dbRow) => {
+    // Transform the database response to our expected type structure
+    const row: ConversationRowWithLastMessage = {
+      id: dbRow.id,
+      created_at: dbRow.created_at,
+      updated_at: dbRow.updated_at,
+      community_id: dbRow.community_id,
+      conversation_type: dbRow.conversation_type,
+      conversation_participants: dbRow.conversation_participants || [],
+      last_message: dbRow.last_message?.[0] || null,
+    };
+
     // Transform based on conversation type
     if (row.conversation_type === 'direct') {
       return toDomainDirectConversation(row);
