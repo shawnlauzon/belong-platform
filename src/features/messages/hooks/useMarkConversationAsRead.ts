@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
-import { messageKeys } from '../queries';
+import { conversationKeys, messageKeys } from '../queries';
 import { markAsRead } from '../api/markAsRead';
 
 export function useMarkAsRead() {
@@ -12,12 +12,7 @@ export function useMarkAsRead() {
     onSuccess: (_, conversationId) => {
       // Invalidate conversation to update unread count
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversation(conversationId),
-      });
-
-      // Invalidate conversations list
-      queryClient.invalidateQueries({
-        queryKey: messageKeys.conversationList(),
+        queryKey: conversationKeys.detail(conversationId),
       });
 
       // Invalidate unread count for this conversation

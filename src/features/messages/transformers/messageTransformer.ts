@@ -1,4 +1,4 @@
-import { Message, SendMessageInput, SendCommunityMessageInput } from '../types';
+import { Message, SendMessageInput } from '../types';
 import { MessageInsert, MessageRow } from '../types/messageRow';
 
 export function toDomainMessage(row: MessageRow): Message {
@@ -20,13 +20,6 @@ export function toMessageRow(message: SendMessageInput): MessageInsert {
   return {
     conversation_id: message.conversationId || null,
     community_id: message.communityId || null,
-    content: message.content,
-  };
-}
-
-export function toCommunityMessageRow(message: SendCommunityMessageInput): MessageInsert {
-  return {
-    community_id: message.communityId,
     content: message.content,
   };
 }

@@ -17,11 +17,6 @@ export interface SendMessageInput {
   content: string;
 }
 
-export interface SendCommunityMessageInput {
-  communityId: string;
-  content: string;
-}
-
 export interface EditMessageInput {
   messageId: string;
   content: string;
@@ -49,7 +44,11 @@ export interface MessageReport {
   reviewedBy?: string | null;
 }
 
-export type MessageReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+export type MessageReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'inappropriate'
+  | 'other';
 
 export type MessageReportStatus = 'pending' | 'approved' | 'rejected';
 

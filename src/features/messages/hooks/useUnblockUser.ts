@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
 import { unblockUser } from '../api';
-import { messageKeys } from '../queries';
+import { conversationKeys, messageKeys } from '../queries';
 import { UnblockUserInput } from '../types';
 
 export function useUnblockUser() {
@@ -15,10 +15,10 @@ export function useUnblockUser() {
       queryClient.invalidateQueries({
         queryKey: messageKeys.blockedUsers(),
       });
-      
+
       // Invalidate conversations as unblocked users' conversations may reappear
       queryClient.invalidateQueries({
-        queryKey: messageKeys.conversationList(),
+        queryKey: conversationKeys.lists(),
       });
     },
   });
