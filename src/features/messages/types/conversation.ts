@@ -13,27 +13,15 @@ export interface Conversation {
 }
 
 export interface DirectConversation extends Conversation {
+  conversationType: 'direct';
   participants: string[];
 }
 
 export interface CommunityChat extends Conversation {
+  conversationType: 'community';
   communityId: string;
 }
 
 export interface StartConversationInput {
   otherUserId: string;
-}
-
-export interface CommunityConversation {
-  id: string;
-  conversationType: 'community';
-  communityId: string;
-  lastMessageAt?: Date;
-  lastMessagePreview?: string;
-  lastMessageSenderId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  unreadCount?: number;
-  lastReadAt?: Date;
-  participantCount?: number;
 }
