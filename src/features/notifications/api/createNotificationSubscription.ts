@@ -123,7 +123,9 @@ export async function createNotificationSubscription({
 
     // Update notifications list cache
     queryClient.setQueryData(
-      conversationKeys.list(newConversation.conversationType),
+      newConversation.conversationType === 'direct'
+        ? conversationKeys.directConversations()
+        : conversationKeys.communityChats(),
       (oldData: Conversation[] | undefined) => {
         if (!oldData) return [newConversation];
         return [newConversation, ...oldData];

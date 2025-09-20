@@ -3,11 +3,31 @@ import { PublicProfileSummaryRow } from '../../users/types/publicProfileRow';
 
 export const SELECT_CONVERSATIONS_JOIN_PARTICIPANTS = `*, conversation_participants!inner(user_id)`;
 
+export const SELECT_CONVERSATIONS_WITH_LAST_MESSAGE = `
+  *,
+  conversation_participants!inner(user_id),
+  last_message:messages!inner(
+    id,
+    content,
+    sender_id,
+    created_at,
+    is_deleted
+  )
+`;
+
 export type ConversationRowWithParticipants =
   Database['public']['Tables']['conversations']['Row'] & {
     conversation_participants: Array<{
       user_id: string;
     }>;
+  };
+
+export type ConversationRowWithLastMessage =
+  Database['public']['Tables']['conversations']['Row'] & {
+    conversation_participants: Array<{
+      user_id: string;
+    }>;
+    last_message?: MessageRow | null;
   };
 
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];

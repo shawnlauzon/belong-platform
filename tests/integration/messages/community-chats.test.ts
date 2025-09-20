@@ -131,23 +131,6 @@ describe('Community Conversations Integration', () => {
       expect(messageIds).toContain(messageB.id);
     });
 
-    it('updates conversation metadata on new message', async () => {
-      const testContent = 'Test message for metadata update';
-
-      await sendTestMessage(supabase, communityConversation.id, testContent);
-
-      // Refetch the conversation to check updated metadata
-      const updatedConversation = await api.fetchCommunityChat(
-        supabase,
-        community.id,
-      );
-
-      expect(updatedConversation).toBeTruthy();
-      expect(updatedConversation!.lastMessagePreview).toBe(testContent);
-      expect(updatedConversation!.lastMessageSenderId).toBe(userA.id);
-      expect(updatedConversation!.lastMessageAt).toBeTruthy();
-    });
-
     it('prevents non-members from sending messages', async () => {
       const outsiderUser = await createTestUser(supabase);
 

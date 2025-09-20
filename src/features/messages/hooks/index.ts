@@ -8,6 +8,7 @@ export * from './useBlockUser';
 export * from './useUnblockUser';
 export * from './useReportMessage';
 export * from './useConversation';
+export * from './useCommunityChat';
 export * from './useCommunityMessages';
 export * from './useSendCommunityMessage';
 export * from './useMessageUnreadCount';

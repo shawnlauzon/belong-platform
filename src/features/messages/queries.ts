@@ -1,13 +1,13 @@
-import { ConversationType } from './types';
-
 export const conversationKeys = {
   all: ['conversations'] as const,
   lists: () => [...conversationKeys.all, 'list'] as const,
-  list: (type?: ConversationType) =>
-    [...conversationKeys.lists(), type] as const,
+  directConversations: () => [...conversationKeys.lists(), 'direct'] as const,
+  communityChats: () => [...conversationKeys.lists(), 'community'] as const,
   details: () => [...conversationKeys.all, 'detail'] as const,
   detail: (conversationId: string) =>
     [...conversationKeys.details(), conversationId] as const,
+  communityChat: (communityId: string) =>
+    [...conversationKeys.details(), communityId] as const,
 } as const;
 
 export const messageKeys = {
@@ -21,5 +21,4 @@ export const messageKeys = {
   blockedUsers: () => [...messageKeys.all, 'blocked-users'] as const,
   conversation: (conversationId: string) =>
     [...messageKeys.all, 'conversation', conversationId] as const,
-  conversationList: () => [...messageKeys.all, 'conversation-list'] as const,
 } as const;

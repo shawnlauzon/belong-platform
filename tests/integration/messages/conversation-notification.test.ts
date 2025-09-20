@@ -66,7 +66,7 @@ describe('Conversation Subscription Tests', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
-      conversationKeys.list('direct'),
+      conversationKeys.directConversations(),
       expect.any(Function),
     );
   });

@@ -1,13 +1,12 @@
 import { Database } from '@/shared/types/database';
+import { Message } from './message';
 
 export type ConversationType = Database['public']['Enums']['conversation_type'];
 
 export interface Conversation {
   id: string;
   conversationType: ConversationType;
-  lastMessageAt?: Date;
-  lastMessagePreview?: string;
-  lastMessageSenderId?: string;
+  lastMessage: Message | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -43,10 +43,8 @@ describe('Conversations CRUD Operations', () => {
       expect(conversation).toMatchObject({
         id: expect.any(String),
         conversationType: 'direct',
-        lastMessageAt: undefined,
-        lastMessagePreview: undefined,
-        lastMessageSenderId: undefined,
         participants: expect.arrayContaining([userA.id, userB.id]),
+        lastMessage: null,
       });
 
       // Verify database record and participants
@@ -116,14 +114,16 @@ describe('Conversations CRUD Operations', () => {
       // Fetch conversations
       const conversations = await api.fetchConversations(supabase, userA.id);
 
-      const foundConversation = conversations.find(c => c.id === conversation.id);
+      const foundConversation = conversations.find(
+        (c) => c.id === conversation.id,
+      );
       expect(foundConversation).toBeDefined();
 
       // Direct conversations should include participants
       if (foundConversation?.conversationType === 'direct') {
         expect(foundConversation).toHaveProperty('participants');
         expect(foundConversation.participants).toEqual(
-          expect.arrayContaining([userA.id, userB.id])
+          expect.arrayContaining([userA.id, userB.id]),
         );
         expect(foundConversation.participants).toHaveLength(2);
       }
