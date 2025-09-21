@@ -460,27 +460,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_notifications_shoutout"
-            columns: ["shoutout_id"]
-            isOneToOne: false
-            referencedRelation: "shoutouts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_claim_id_fkey"
             columns: ["claim_id"]
             isOneToOne: false
@@ -509,17 +488,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notifications_shoutout_id_fkey"
+            columns: ["shoutout_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
+            referencedRelation: "shoutouts"
             referencedColumns: ["id"]
           },
         ]
@@ -1164,27 +1136,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_notifications_shoutout"
-            columns: ["shoutout_id"]
-            isOneToOne: false
-            referencedRelation: "shoutouts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_claim_id_fkey"
             columns: ["claim_id"]
             isOneToOne: false
@@ -1213,17 +1164,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notifications_shoutout_id_fkey"
+            columns: ["shoutout_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
+            referencedRelation: "shoutouts"
             referencedColumns: ["id"]
           },
         ]
@@ -1482,24 +1426,6 @@ export type Database = {
           member_count: number
           name: string
         }[]
-      }
-      create_notification: {
-        Args: {
-          p_action_url?: string
-          p_actor_id?: string
-          p_body?: string
-          p_claim_id?: string
-          p_comment_id?: string
-          p_community_id?: string
-          p_conversation_id?: string
-          p_message_id?: string
-          p_metadata?: Json
-          p_resource_id?: string
-          p_title?: string
-          p_type: Database["public"]["Enums"]["notification_type"]
-          p_user_id: string
-        }
-        Returns: string
       }
       create_notification_base: {
         Args: {
@@ -1869,7 +1795,7 @@ export type Database = {
         Args: {
           p_actor_id: string
           p_claim_id: string
-          p_community_id?: string
+          p_community_id: string
           p_resource_id: string
           p_user_id: string
         }
@@ -1879,7 +1805,7 @@ export type Database = {
         Args: {
           p_actor_id: string
           p_claim_id: string
-          p_community_id?: string
+          p_community_id: string
           p_resource_id: string
           p_user_id: string
         }
@@ -1919,7 +1845,7 @@ export type Database = {
         Args: {
           p_actor_id: string
           p_comment_id: string
-          p_community_id?: string
+          p_community_id: string
           p_content?: string
           p_resource_id: string
           p_user_id: string
@@ -1930,9 +1856,8 @@ export type Database = {
         Args: {
           p_actor_id: string
           p_comment_id: string
-          p_community_id?: string
+          p_community_id: string
           p_content?: string
-          p_parent_comment_id: string
           p_resource_id: string
           p_user_id: string
         }
@@ -2202,13 +2127,6 @@ export type Database = {
       regenerate_invitation_code: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
-      }
-      should_send_notification: {
-        Args: {
-          p_type: Database["public"]["Enums"]["notification_type"]
-          p_user_id: string
-        }
-        Returns: boolean
       }
       spheroid_in: {
         Args: { "": unknown }
@@ -3338,24 +3256,27 @@ export type Database = {
       community_membership_role: "member" | "organizer" | "founder"
       conversation_type: "direct" | "community"
       notification_type:
-        | "comment"
-        | "comment_reply"
-        | "claim"
-        | "message"
-        | "new_resource"
-        | "shoutout_received"
-        | "connection_accepted"
-        | "resource_claim_cancelled"
-        | "resource_claim_completed"
-        | "claim_approved"
-        | "claim_rejected"
-        | "claimed_resource_updated"
-        | "claimed_resource_cancelled"
-        | "community_member_joined"
-        | "community_member_left"
-        | "new_event"
-        | "trust_points_changed"
-        | "trust_level_changed"
+        | "message.created"
+        | "conversation.created"
+        | "comment.created"
+        | "comment.replied"
+        | "claim.created"
+        | "resource.created"
+        | "event.created"
+        | "shoutout.received"
+        | "connection.requested"
+        | "connection.accepted"
+        | "claim.cancelled"
+        | "claim.completed"
+        | "claim.approved"
+        | "claim.rejected"
+        | "resource.updated"
+        | "resource.cancelled"
+        | "member.joined"
+        | "member.left"
+        | "trustpoints.gained"
+        | "trustpoints.lost"
+        | "trustlevel.changed"
       resource_category:
         | "tools"
         | "skills"
@@ -3533,24 +3454,27 @@ export const Constants = {
       community_membership_role: ["member", "organizer", "founder"],
       conversation_type: ["direct", "community"],
       notification_type: [
-        "comment",
-        "comment_reply",
-        "claim",
-        "message",
-        "new_resource",
-        "shoutout_received",
-        "connection_accepted",
-        "resource_claim_cancelled",
-        "resource_claim_completed",
-        "claim_approved",
-        "claim_rejected",
-        "claimed_resource_updated",
-        "claimed_resource_cancelled",
-        "community_member_joined",
-        "community_member_left",
-        "new_event",
-        "trust_points_changed",
-        "trust_level_changed",
+        "message.created",
+        "conversation.created",
+        "comment.created",
+        "comment.replied",
+        "claim.created",
+        "resource.created",
+        "event.created",
+        "shoutout.received",
+        "connection.requested",
+        "connection.accepted",
+        "claim.cancelled",
+        "claim.completed",
+        "claim.approved",
+        "claim.rejected",
+        "resource.updated",
+        "resource.cancelled",
+        "member.joined",
+        "member.left",
+        "trustpoints.gained",
+        "trustpoints.lost",
+        "trustlevel.changed",
       ],
       resource_category: [
         "tools",

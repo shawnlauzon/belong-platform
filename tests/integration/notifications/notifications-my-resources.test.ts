@@ -119,13 +119,13 @@ describe('My Resources Notifications', () => {
       expect(notifications.length).toBeGreaterThan(0);
       const cancelledNotification = notifications.find(
         (n) =>
-          n.type === 'resource_claim_cancelled' &&
+          n.type === NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED &&
           n.resourceId === resource.id &&
           n.actorId === claimingUser.id,
       );
       expect(cancelledNotification).toBeDefined();
       expect(cancelledNotification).toMatchObject({
-        type: 'resource_claim_cancelled',
+        type: NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED,
         resourceId: resource.id,
         claimId: expect.any(String),
         communityId: testCommunity.id,
@@ -173,13 +173,13 @@ describe('My Resources Notifications', () => {
       expect(notifications.length).toBeGreaterThan(0);
       const completedNotification = notifications.find(
         (n) =>
-          n.type === 'resource_claim_completed' &&
+          n.type === NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED &&
           n.resourceId === resource.id &&
           n.actorId === claimingUser.id,
       );
       expect(completedNotification).toBeDefined();
       expect(completedNotification).toMatchObject({
-        type: 'resource_claim_completed',
+        type: NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED,
         resourceId: resource.id,
         claimId: expect.any(String),
         communityId: testCommunity.id,

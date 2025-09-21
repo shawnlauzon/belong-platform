@@ -78,7 +78,8 @@ export const isSocialNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.CONNECTION_ACCEPTED;
 
 export const isTrustNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED ||
+  type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
+  type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
   type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED;
 
 export const isMessageNotification = (type: NotificationType): boolean =>
@@ -124,7 +125,8 @@ export const getNotificationGroup = (
     case NOTIFICATION_TYPES.NEW_EVENT:
       return NotificationGroup.COMMUNITY_ACTIVITY;
 
-    case NOTIFICATION_TYPES.TRUST_POINTS_CHANGED:
+    case NOTIFICATION_TYPES.TRUST_POINTS_GAINED:
+    case NOTIFICATION_TYPES.TRUST_POINTS_LOST:
     case NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED:
       return NotificationGroup.TRUST_RECOGNITION;
 

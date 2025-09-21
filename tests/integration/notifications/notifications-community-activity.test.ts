@@ -94,7 +94,7 @@ describe('Community Activity Notifications', () => {
       );
       expect(eventNotification).toBeDefined();
       expect(eventNotification).toMatchObject({
-        type: 'new_event',
+        type: NOTIFICATION_TYPES.NEW_EVENT,
         resourceId: event.id,
         communityId: testCommunity.id,
         actorId: resourceCreator.id,

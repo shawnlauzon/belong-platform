@@ -57,9 +57,7 @@ export async function fetchNotifications(
     return [];
   }
 
-  logger.debug('Notifications fetched successfully', {
-    count: data.length,
-  });
+  logger.debug('Notifications fetched successfully', data);
 
   // Transform the raw data using the proper transformer
   return data.map(toDomainNotification);

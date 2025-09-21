@@ -32,7 +32,8 @@ export function hasMetadata(type: NotificationType): boolean {
     type === NOTIFICATION_TYPES.COMMENT ||
     type === NOTIFICATION_TYPES.COMMENT_REPLY ||
     type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
-    type === NOTIFICATION_TYPES.TRUST_POINTS_CHANGED ||
+    type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
+    type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
     type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
     type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED
   );
@@ -67,7 +68,8 @@ export function getTypedMetadata(
             : '',
       };
 
-    case NOTIFICATION_TYPES.TRUST_POINTS_CHANGED:
+    case NOTIFICATION_TYPES.TRUST_POINTS_GAINED:
+    case NOTIFICATION_TYPES.TRUST_POINTS_LOST:
       return {
         amount: typeof metadata.amount === 'number' ? metadata.amount : 0,
         old_score:

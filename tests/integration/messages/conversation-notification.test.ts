@@ -65,9 +65,6 @@ describe('Conversation Subscription Tests', () => {
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(
-      conversationKeys.conversations(),
-      expect.any(Function),
-    );
+    expect(queryClient.invalidateQueries).toHaveBeenCalled();
   });
 });
