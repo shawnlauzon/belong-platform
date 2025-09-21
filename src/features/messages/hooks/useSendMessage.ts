@@ -10,9 +10,6 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   const mutate = async (input: SendMessageInput): Promise<Message> => {
-    if (!input.conversationId && !input.communityId) {
-      throw new Error('Must provide either conversationId or communityId');
-    }
     logger.info('useSendMessage: initiating message send', {
       conversationId: input.conversationId,
       communityId: input.communityId,

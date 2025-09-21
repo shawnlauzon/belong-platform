@@ -1,26 +1,27 @@
 export const conversationKeys = {
   all: ['conversations'] as const,
   lists: () => [...conversationKeys.all, 'list'] as const,
-  list: () => [...conversationKeys.lists()] as const,
-  communityChats: () => [...conversationKeys.all, 'community-chats'] as const,
-  details: () => [...conversationKeys.all, 'detail'] as const,
-  detail: (conversationId: string) =>
-    [...conversationKeys.details(), conversationId] as const,
+  conversations: () => [...conversationKeys.lists(), 'conversations'] as const,
+  messages: (conversationId: string) =>
+    [...conversationKeys.conversations(), conversationId] as const,
+  unreadCount: (conversationId: string) =>
+    [
+      ...conversationKeys.conversations(),
+      'unread-count',
+      conversationId,
+    ] as const,
+  totalUnreadCount: () =>
+    [...conversationKeys.conversations(), 'total-unread-count'] as const,
 } as const;
 
-export const messageKeys = {
-  all: ['messages'] as const,
-  lists: () => [...messageKeys.all, 'list'] as const,
-  list: (conversationId: string) =>
-    [...messageKeys.all, 'messages', conversationId] as const,
-  communityMessages: (communityId: string) =>
-    [...messageKeys.all, 'community-messages', communityId] as const,
-  unreadCount: (conversationId: string) =>
-    [...messageKeys.all, 'unread-count', conversationId] as const,
-  communityUnreadCount: (communityId: string) =>
-    [...messageKeys.all, 'community-unread-count', communityId] as const,
-  totalUnreadCount: () => [...messageKeys.all, 'total-unread-count'] as const,
-  totalCommunityUnreadCount: () =>
-    [...messageKeys.all, 'total-community-unread-count'] as const,
-  blockedUsers: () => [...messageKeys.all, 'blocked-users'] as const,
+export const communityChatKeys = {
+  all: ['community-chats'] as const,
+  lists: () => [...communityChatKeys.all, 'list'] as const,
+  chats: () => [...communityChatKeys.lists(), 'chats'] as const,
+  messages: (communityId: string) =>
+    [...communityChatKeys.chats(), communityId] as const,
+  unreadCount: (communityId: string) =>
+    [...communityChatKeys.messages(communityId), 'unread-count'] as const,
+  totalUnreadCount: () =>
+    [...communityChatKeys.chats(), 'total-unread-count'] as const,
 } as const;
