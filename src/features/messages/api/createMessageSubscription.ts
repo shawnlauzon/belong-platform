@@ -5,22 +5,22 @@ import type {
   REALTIME_SUBSCRIBE_STATES,
 } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { messageKeys } from '../queries';
+import { communityChatKeys, conversationKeys } from '../queries';
 import { logger } from '@/shared';
-import { MessageRow } from '../types/messageRow';
-import { toDomainMessage } from '../transformers';
-import { Message } from '../types';
+import {
+  Message,
+  RealtimeBroadcastMessage as RealtimeBroadcastEvent,
+} from '../types';
+import {
+  messagesChannelForConversation,
+  messagesChannelForCommunity,
+} from '../utils';
 
 export interface CreateMessageSubscriptionParams {
   supabase: SupabaseClient<Database>;
   queryClient: QueryClient;
-  conversationId: string;
-}
-
-interface RealtimeBroadcastMessage {
-  event: string;
-  payload: MessageRow;
-  type: string;
+  conversationId?: string;
+  communityId?: string;
 }
 
 /**
@@ -30,105 +30,141 @@ export async function createMessageSubscription({
   supabase,
   queryClient,
   conversationId,
+  communityId,
 }: CreateMessageSubscriptionParams): Promise<RealtimeChannel> {
+  // Validate: exactly one must be provided
+  if ((!conversationId && !communityId) || (conversationId && communityId)) {
+    throw new Error('Provide either conversationId or communityId, not both');
+  }
+
+  const channelName = conversationId
+    ? messagesChannelForConversation(conversationId)
+    : messagesChannelForCommunity(communityId!);
+
+  const isUserChannel = !!conversationId;
+
   logger.info('=== CREATING MESSAGE SUBSCRIPTION ===', {
     conversationId,
-    channelName: `conversation:${conversationId}:messages`,
+    communityId,
+    channelName,
+    isUserChannel,
   });
 
   await supabase.realtime.setAuth();
-  return supabase
-    .channel(`conversation:${conversationId}:messages`, {
+  const channel = supabase
+    .channel(channelName, {
       config: { private: true },
     })
-    .on(
-      'broadcast',
-      { event: '*' },
-      async (message: RealtimeBroadcastMessage) => {
-        try {
-          logger.debug('💬 === BROADCAST MESSAGE RECEIVED ===', {
-            message,
-            conversationId,
-          });
+    .on('broadcast', { event: '*' }, async (event: RealtimeBroadcastEvent) => {
+      try {
+        logger.debug('💬 === BROADCAST MESSAGE RECEIVED ===', {
+          channelName,
+          event,
+          conversationId,
+          communityId,
+        });
 
-          switch (message.event) {
-            case 'created':
-              handleMessageCreated(message.payload);
-              break;
-            case 'updated':
-              handleMessageUpdated(message.payload);
-              break;
-            case 'deleted':
-              handleMessageDeleted(message.payload);
-              break;
-            default:
-              break;
-          }
-        } catch (error) {
-          logger.error('createMessageSubscription: error processing message', {
-            error,
-            message,
-            conversationId,
-          });
+        const message: Message = {
+          id: event.payload.messageId,
+          conversationId,
+          communityId,
+          senderId: event.payload.senderId,
+          content: event.payload.content,
+          isEdited: event.event === 'message.updated',
+          isDeleted: event.event === 'message.deleted',
+          encryptionVersion: 1,
+          createdAt: event.payload.sentAt,
+          updatedAt: event.payload.sentAt,
+        };
+
+        switch (event.event) {
+          case 'message.created':
+            handleCreateReceived(message);
+            break;
+          case 'message.updated':
+            handleUpdateReceived(message);
+            break;
+          case 'message.deleted':
+            handleDeleteReceived(message);
+            break;
+          default:
+            break;
         }
-      },
-    )
+      } catch (error) {
+        logger.error('createMessageSubscription: error processing message', {
+          error,
+          event,
+          conversationId,
+          communityId,
+        });
+      }
+    })
     .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
       logger.info('=== MESSAGE SUBSCRIPTION STATUS CHANGE ===', {
+        channelName,
         status,
         conversationId,
+        communityId,
       });
       if (err) {
         logger.error('=== MESSAGE SUBSCRIPTION ERROR ===', {
+          channelName,
           error: err,
           conversationId,
+          communityId,
         });
         throw err;
       }
     });
 
-  function handleMessageCreated(messageRow: MessageRow) {
-    logger.debug('Handling message created', { messageId: messageRow.id });
+  return channel;
 
-    const message = toDomainMessage(messageRow);
+  function handleCreateReceived(message: Message) {
+    logger.debug('Handling message created', message);
 
     queryClient.setQueryData<Message[]>(
-      messageKeys.list(conversationId),
+      conversationId
+        ? conversationKeys.messages(conversationId)
+        : communityChatKeys.messages(communityId!),
       (prev: Message[] | undefined) => [...(prev || []), message],
     );
 
     // Increment unread count for conversation
     queryClient.setQueryData(
-      messageKeys.unreadCount(conversationId),
+      conversationId
+        ? conversationKeys.unreadCount(conversationId)
+        : communityChatKeys.unreadCount(communityId!),
       (prev: number | undefined) => (prev || 0) + 1,
     );
 
     // Increment total unread count
     queryClient.setQueryData(
-      messageKeys.totalUnreadCount(),
+      conversationId
+        ? conversationKeys.totalUnreadCount()
+        : communityChatKeys.totalUnreadCount(),
       (prev: number | undefined) => (prev || 0) + 1,
     );
   }
 
-  function handleMessageUpdated(messageRow: MessageRow) {
-    logger.debug('Handling message updated', { messageId: messageRow.id });
-
-    const message = toDomainMessage(messageRow);
+  function handleUpdateReceived(message: Message) {
+    logger.debug('Handling message updated', { messageId: message.id });
 
     queryClient.setQueryData<Message[]>(
-      messageKeys.list(conversationId),
+      message.conversationId
+        ? conversationKeys.messages(message.conversationId)
+        : communityChatKeys.messages(message.communityId!),
       (prev: Message[] | undefined) =>
         prev?.map((m) => (m.id === message.id ? message : m)),
     );
   }
 
-  function handleMessageDeleted(messageRow: MessageRow) {
-    logger.debug('Handling message deleted', { messageId: messageRow.id });
-
-    const message = toDomainMessage(messageRow);
+  function handleDeleteReceived(message: Message) {
+    logger.debug('Handling message deleted', { messageId: message.id });
 
     queryClient.setQueryData<Message[]>(
-      messageKeys.list(conversationId),
+      message.conversationId
+        ? conversationKeys.messages(message.conversationId)
+        : communityChatKeys.messages(message.communityId!),
       (prev: Message[] | undefined) => prev?.filter((m) => m.id !== message.id),
     );
   }
