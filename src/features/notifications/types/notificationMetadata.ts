@@ -29,13 +29,13 @@ export interface ResourceUpdatedMetadata {
 // Helper function to check if notification type has metadata
 export function hasMetadata(type: NotificationType): boolean {
   return (
-    type === NOTIFICATION_TYPES.COMMENT ||
+    type === NOTIFICATION_TYPES.COMMENT_CREATED ||
     type === NOTIFICATION_TYPES.COMMENT_REPLY ||
     type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
     type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
     type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
     type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
-    type === NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED
+    type === NOTIFICATION_TYPES.RESOURCE_UPDATED
   );
 }
 
@@ -51,7 +51,7 @@ export function getTypedMetadata(
   | ResourceUpdatedMetadata
   | Record<string, never> {
   switch (type) {
-    case NOTIFICATION_TYPES.COMMENT:
+    case NOTIFICATION_TYPES.COMMENT_CREATED:
     case NOTIFICATION_TYPES.COMMENT_REPLY:
       return {
         content_preview:
@@ -92,7 +92,7 @@ export function getTypedMetadata(
           typeof metadata.new_level === 'number' ? metadata.new_level : 0,
       };
 
-    case NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED:
+    case NOTIFICATION_TYPES.RESOURCE_UPDATED:
       return {
         changes:
           Array.isArray(metadata.changes) &&

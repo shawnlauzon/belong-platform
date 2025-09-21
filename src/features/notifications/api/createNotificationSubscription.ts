@@ -73,7 +73,7 @@ export async function createNotificationSubscription({
           const notificationType = message.event;
 
           switch (notificationType) {
-            case NOTIFICATION_TYPES.COMMENT:
+            case NOTIFICATION_TYPES.COMMENT_CREATED:
             case NOTIFICATION_TYPES.COMMENT_REPLY:
               handleCommentNotification(notificationRow);
               break;
@@ -82,7 +82,7 @@ export async function createNotificationSubscription({
               handleShoutoutNotification(notificationRow);
               break;
 
-            case NOTIFICATION_TYPES.CLAIM:
+            case NOTIFICATION_TYPES.CLAIM_CREATED:
             case NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED:
             case NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED:
             case NOTIFICATION_TYPES.CLAIM_APPROVED:
@@ -90,10 +90,10 @@ export async function createNotificationSubscription({
               handleResourceClaimNotification(notificationRow);
               break;
 
-            case NOTIFICATION_TYPES.NEW_RESOURCE:
-            case NOTIFICATION_TYPES.NEW_EVENT:
-            case NOTIFICATION_TYPES.CLAIMED_RESOURCE_UPDATED:
-            case NOTIFICATION_TYPES.CLAIMED_RESOURCE_CANCELLED:
+            case NOTIFICATION_TYPES.RESOURCE_CREATED:
+            case NOTIFICATION_TYPES.EVENT_CREATED:
+            case NOTIFICATION_TYPES.RESOURCE_UPDATED:
+            case NOTIFICATION_TYPES.RESOURCE_CANCELLED:
               handleResourceNotification(notificationRow);
               break;
 
@@ -108,11 +108,11 @@ export async function createNotificationSubscription({
               handleTrustScoreNotification(notificationRow);
               break;
 
-            case NOTIFICATION_TYPES.MESSAGE:
+            case NOTIFICATION_TYPES.MESSAGE_CREATED:
               handleMessageNotification(notificationRow);
               break;
 
-            case NOTIFICATION_TYPES.CONVERSATION:
+            case NOTIFICATION_TYPES.CONVERSATION_CREATED:
               handleConversationCreatedNotification(notificationRow);
               break;
 
@@ -159,7 +159,7 @@ export async function createNotificationSubscription({
 
     // Update notifications list cache
     queryClient.setQueryData(
-      notificationKeys.list(userId),
+      notificationKeys.list(),
       (oldData: NotificationDetail[] | undefined) => {
         if (!oldData) return [newNotification];
         return [newNotification, ...oldData];
@@ -188,21 +188,14 @@ export async function createNotificationSubscription({
     });
   }
 
-  function handleShoutoutNotification(notificationRow: NotificationDetailsRow) {
-    const { actor_id, user_id } = notificationRow;
-
+  function handleShoutoutNotification(
+    _notificationRow: NotificationDetailsRow,
+  ) {
     // Invalidate shoutout lists for both sender and receiver
-    if (actor_id) {
-      queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listBySender(actor_id),
-      });
-    }
-
-    if (user_id) {
-      queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listByReceiver(user_id),
-      });
-    }
+    // Invalidate all shoutouts cache when shoutout notification received
+    queryClient.invalidateQueries({
+      queryKey: shoutoutKeys.all,
+    });
   }
 
   function handleResourceClaimNotification(

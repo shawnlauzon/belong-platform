@@ -1,6 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { STANDARD_CACHE_TIME } from '@/config';
-import { getCurrentUser } from '../api';
+import { getCurrentUserOrFail } from '../api';
 import { useSupabase } from '@/shared';
 import { logger } from '@/shared';
 import type { CurrentUser } from '@/features/users/types';
@@ -28,13 +28,13 @@ import { authKeys } from '../queries';
  * ```
  */
 export function useCurrentUser(
-  options?: Partial<UseQueryOptions<CurrentUser | null, Error>>,
+  options?: Partial<UseQueryOptions<CurrentUser, Error>>,
 ) {
   const supabase = useSupabase();
 
-  const query = useQuery<CurrentUser | null, Error>({
+  const query = useQuery<CurrentUser, Error>({
     queryKey: authKeys.currentUser(),
-    queryFn: () => getCurrentUser(supabase),
+    queryFn: () => getCurrentUserOrFail(supabase),
     staleTime: STANDARD_CACHE_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {

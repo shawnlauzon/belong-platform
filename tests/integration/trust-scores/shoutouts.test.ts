@@ -17,6 +17,7 @@ import {
   verifyTrustScoreIncrement,
   verifyTrustScoreLog,
 } from './helpers';
+import { NOTIFICATION_TYPES } from '@/features/notifications';
 import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
@@ -90,7 +91,7 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         sender.id,
         community.id,
-        'shoutout_sent',
+        NOTIFICATION_TYPES.SHOUTOUT_SENT,
         POINTS_CONFIG.SHOUTOUT_SENT,
         'Shoutout sent log',
       );
@@ -126,7 +127,7 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         receiver.id,
         community.id,
-        'shoutout_received',
+        NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
         POINTS_CONFIG.SHOUTOUT_RECEIVED,
         'Shoutout received log',
       );

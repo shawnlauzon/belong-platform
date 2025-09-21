@@ -39,7 +39,7 @@ export function useNotifications(
   const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<NotificationDetail[], Error>({
-    queryKey: notificationKeys.list(currentUser?.id || ''),
+    queryKey: notificationKeys.list(),
     queryFn: async () => {
       if (!supabase || !currentUser) {
         throw new Error('Supabase client or user not available');

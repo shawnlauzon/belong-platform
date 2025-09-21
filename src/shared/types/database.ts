@@ -3277,6 +3277,8 @@ export type Database = {
         | "trustpoints.gained"
         | "trustpoints.lost"
         | "trustlevel.changed"
+        | "community.created"
+        | "shoutout.sent"
       resource_category:
         | "tools"
         | "skills"
@@ -3475,6 +3477,8 @@ export const Constants = {
         "trustpoints.gained",
         "trustpoints.lost",
         "trustlevel.changed",
+        "community.created",
+        "shoutout.sent",
       ],
       resource_category: [
         "tools",

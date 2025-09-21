@@ -73,13 +73,13 @@ describe('My Resources Notifications', () => {
       expect(notifications.length).toBeGreaterThan(0);
       const claimNotification = notifications.find(
         (n) =>
-          n.type === NOTIFICATION_TYPES.CLAIM &&
+          n.type === NOTIFICATION_TYPES.CLAIM_CREATED &&
           n.resourceId === resource.id &&
           n.actorId === claimingUser.id,
       );
       expect(claimNotification).toBeDefined();
       expect(claimNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.CLAIM,
+        type: NOTIFICATION_TYPES.CLAIM_CREATED,
         resourceId: resource.id,
         claimId: expect.any(String),
         communityId: testCommunity.id,

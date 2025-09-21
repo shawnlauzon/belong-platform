@@ -48,6 +48,7 @@ CREATE TYPE notification_type AS ENUM (
   'resource.created',
   'event.created',
   'shoutout.received',
+  'shoutout.sent',
   'connection.requested',
   'connection.accepted',
   'claim.cancelled',
@@ -58,6 +59,7 @@ CREATE TYPE notification_type AS ENUM (
   'resource.cancelled',
   'member.joined',
   'member.left',
+  'community.created',
   'trustpoints.gained',
   'trustpoints.lost',
   'trustlevel.changed'
@@ -646,11 +648,16 @@ CREATE POLICY "Users can read their notifications" ON realtime.messages
     AND topic = 'user:' || auth.uid()::text || ':notifications'
   );
 
-CREATE POLICY "Users can read their messages" ON realtime.messages
+CREATE POLICY "Users can read conversation messages they participate in" ON realtime.messages
   FOR SELECT TO authenticated
   USING (
     extension = 'broadcast'
-    AND topic = 'user:' || auth.uid()::text || ':messages'
+    AND topic LIKE 'conversation:%:messages'
+    AND EXISTS (
+      SELECT 1 FROM conversation_participants
+      WHERE conversation_id = split_part(topic, ':', 2)::uuid
+      AND user_id = auth.uid()
+    )
   );
 
 CREATE POLICY "Users can read community messages they are members of" ON realtime.messages
@@ -678,16 +685,15 @@ CREATE POLICY "Users can send messages to communities they are members of" ON re
     )
   );
 
-CREATE POLICY "Users can send messages to users with shared communities" ON realtime.messages
+CREATE POLICY "Users can send messages to conversations they participate in" ON realtime.messages
   FOR INSERT TO authenticated
   WITH CHECK (
     extension = 'broadcast'
-    AND topic LIKE 'user:%:messages'
+    AND topic LIKE 'conversation:%:messages'
     AND EXISTS (
-      SELECT 1 FROM community_memberships cm1
-      JOIN community_memberships cm2 ON cm1.community_id = cm2.community_id
-      WHERE cm1.user_id = auth.uid()
-      AND cm2.user_id = split_part(topic, ':', 2)::uuid
+      SELECT 1 FROM conversation_participants
+      WHERE conversation_id = split_part(topic, ':', 2)::uuid
+      AND user_id = auth.uid()
     )
   );
 
@@ -1063,3 +1069,387 @@ CREATE TRIGGER claim_status_change_notification_trigger
   FOR EACH ROW
   WHEN (OLD.status IS DISTINCT FROM NEW.status)
   EXECUTE FUNCTION notify_on_claim_status_change();
+
+-- =====================================================
+-- UNIFY TRUST SCORE ACTIONS WITH NOTIFICATIONS
+-- =====================================================
+
+-- Update trust_score_logs table to use notification_type instead of trust_score_action_type
+
+-- Add a temporary column with notification_type
+ALTER TABLE trust_score_logs ADD COLUMN new_action_type notification_type;
+
+-- Update the new column with the mapped values
+UPDATE trust_score_logs SET new_action_type =
+  CASE action_type::text
+    WHEN 'community_creation' THEN 'community.created'
+    WHEN 'community_founder_join' THEN 'member.joined'
+    WHEN 'community_member_join' THEN 'member.joined'
+    WHEN 'community_leave' THEN 'member.left'
+    WHEN 'community_organizer_join' THEN 'member.joined'
+    WHEN 'resource_claim' THEN 'claim.created'
+    WHEN 'resource_completion' THEN 'claim.completed'
+    WHEN 'resource_offer' THEN 'resource.created'
+    WHEN 'shoutout_received' THEN 'shoutout.received'
+    WHEN 'shoutout_sent' THEN 'shoutout.sent'
+    ELSE 'claim.created'::notification_type -- fallback
+  END;
+
+-- Drop the old column and rename the new one
+ALTER TABLE trust_score_logs DROP COLUMN action_type;
+ALTER TABLE trust_score_logs RENAME COLUMN new_action_type TO action_type;
+
+-- Make the column NOT NULL
+ALTER TABLE trust_score_logs ALTER COLUMN action_type SET NOT NULL;
+
+-- Drop the old function signature
+DROP FUNCTION IF EXISTS update_trust_score(uuid,uuid,trust_score_action_type,uuid,integer,jsonb);
+
+-- Update the update_trust_score function to use notification_type
+CREATE OR REPLACE FUNCTION update_trust_score(
+  p_user_id UUID,
+  p_community_id UUID,
+  p_action_type notification_type,
+  p_action_id UUID,
+  p_points_change INTEGER,
+  p_metadata JSONB DEFAULT '{}'::JSONB
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_score INTEGER := 0;
+  new_score INTEGER;
+  old_score INTEGER;
+BEGIN
+  -- Get current score for this user in this community
+  SELECT score INTO current_score
+  FROM trust_scores
+  WHERE user_id = p_user_id AND community_id = p_community_id;
+
+  old_score := COALESCE(current_score, 0);
+  new_score := old_score + p_points_change;
+
+  -- Insert or update trust score
+  INSERT INTO trust_scores (user_id, community_id, score, last_calculated_at, created_at, updated_at)
+  VALUES (p_user_id, p_community_id, new_score, NOW(), NOW(), NOW())
+  ON CONFLICT (user_id, community_id)
+  DO UPDATE SET
+    score = new_score,
+    last_calculated_at = NOW(),
+    updated_at = NOW();
+
+  -- Log the trust score change
+  INSERT INTO trust_score_logs (
+    user_id, community_id, action_type, action_id,
+    points_change, score_before, score_after, metadata, created_at
+  ) VALUES (
+    p_user_id, p_community_id, p_action_type, p_action_id,
+    p_points_change, old_score, new_score, p_metadata, NOW()
+  );
+
+  -- Create notification directly with known action_type (only for positive changes)
+  IF p_points_change > 0 THEN
+    PERFORM create_notification_base(
+      p_user_id := p_user_id,
+      p_type := 'trustpoints.gained'::notification_type,
+      p_community_id := p_community_id,
+      p_metadata := jsonb_build_object(
+        'amount', p_points_change,
+        'old_score', old_score,
+        'new_score', new_score,
+        'reason', p_action_type::text
+      )
+    );
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE LOG 'Error in update_trust_score for user % community %: %',
+      p_user_id, p_community_id, SQLERRM;
+END;
+$$;
+
+-- Update all trigger functions to use the new notification types
+CREATE OR REPLACE FUNCTION trust_score_on_membership_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  points_to_award INTEGER;
+  action_type_to_use notification_type;
+BEGIN
+  -- Award different points based on role
+  IF NEW.role = 'founder' THEN
+    points_to_award := 2000;  -- Founder gets 2000 points
+    action_type_to_use := 'member.joined'::notification_type;
+  ELSIF NEW.role = 'organizer' THEN
+    points_to_award := 1000;  -- Organizer gets 1000 points
+    action_type_to_use := 'member.joined'::notification_type;
+  ELSE
+    points_to_award := 50;   -- Regular member joining
+    action_type_to_use := 'member.joined'::notification_type;
+  END IF;
+
+  -- Call the updated function
+  PERFORM update_trust_score(
+    NEW.user_id,
+    NEW.community_id,
+    action_type_to_use,
+    NEW.community_id,
+    points_to_award,
+    jsonb_build_object(
+      'trigger', 'member.joined',
+      'role', NEW.role
+    )
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trust_score_on_membership_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if community still exists (handles cascade delete case)
+  IF NOT EXISTS (SELECT 1 FROM communities WHERE id = OLD.community_id) THEN
+    -- Community was deleted, skip trust score penalty
+    RETURN OLD;
+  END IF;
+
+  -- Only deduct points for voluntary leaves, not cascade deletes
+  PERFORM update_trust_score(
+    OLD.user_id,
+    OLD.community_id,
+    'member.left'::notification_type,
+    OLD.community_id,
+    -50,
+    jsonb_build_object('trigger', 'member.left')
+  );
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trust_score_on_shoutout_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Award points to receiver
+  PERFORM update_trust_score(
+    NEW.receiver_id,
+    NEW.community_id,
+    'shoutout.received'::notification_type,
+    NEW.id,
+    100,
+    jsonb_build_object(
+      'trigger', 'shoutout.received',
+      'role', 'receiver',
+      'sender_id', NEW.sender_id
+    )
+  );
+
+  -- Award points to sender
+  PERFORM update_trust_score(
+    NEW.sender_id,
+    NEW.community_id,
+    'shoutout.sent'::notification_type,
+    NEW.id,
+    10,
+    jsonb_build_object(
+      'trigger', 'shoutout.sent',
+      'role', 'sender',
+      'receiver_id', NEW.receiver_id
+    )
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trust_score_on_resource_community_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_resource RECORD;
+BEGIN
+  -- Get resource details
+  SELECT type, owner_id, title
+  INTO v_resource
+  FROM resources
+  WHERE id = NEW.resource_id;
+
+  -- Only process offers
+  IF v_resource.type != 'offer' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Award points for this community association
+  PERFORM update_trust_score(
+    v_resource.owner_id,
+    NEW.community_id,
+    'resource.created'::notification_type,
+    NEW.resource_id,
+    50,
+    jsonb_build_object(
+      'trigger', 'resource.created',
+      'resource_type', v_resource.type,
+      'resource_title', v_resource.title
+    )
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trust_score_on_claim_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_resource RECORD;
+  v_community_id UUID;
+  v_points INTEGER;
+BEGIN
+  -- Get resource details
+  SELECT r.type, r.owner_id, r.title, r.requires_approval
+  INTO v_resource
+  FROM resources r
+  JOIN resource_timeslots rt ON rt.resource_id = r.id
+  WHERE rt.id = NEW.timeslot_id;
+
+  -- Determine points based on initial status
+  IF v_resource.type = 'event' THEN
+    -- Events that don't require approval start as 'approved' and get 5 points
+    IF NEW.status = 'approved' THEN
+      v_points := 5;
+    ELSE
+      -- 'pending' events don't get points until approved
+      RETURN NEW;
+    END IF;
+  ELSE
+    -- Offers/Requests that don't require approval start as 'approved' and get 25 points
+    IF NEW.status = 'approved' THEN
+      v_points := 25;
+    ELSE
+      -- 'pending' claims don't get points until approved
+      RETURN NEW;
+    END IF;
+  END IF;
+
+  -- Award points for each community the resource is associated with
+  FOR v_community_id IN
+    SELECT rc.community_id
+    FROM resource_communities rc
+    JOIN resource_timeslots rt ON rt.resource_id = rc.resource_id
+    WHERE rt.id = NEW.timeslot_id
+  LOOP
+    PERFORM update_trust_score(
+      NEW.claimant_id,
+      v_community_id,
+      'claim.created'::notification_type,
+      NEW.id,
+      v_points,
+      jsonb_build_object(
+        'trigger', 'claim.created',
+        'resource_type', v_resource.type,
+        'resource_title', v_resource.title,
+        'status', NEW.status,
+        'auto_approved', NOT v_resource.requires_approval
+      )
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trust_score_on_claim_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_resource RECORD;
+  v_community_id UUID;
+  v_points INTEGER;
+  v_action_type TEXT;
+  v_metadata JSONB;
+BEGIN
+  -- Get resource details
+  SELECT r.type, r.owner_id, r.title
+  INTO v_resource
+  FROM resources r
+  JOIN resource_timeslots rt ON rt.resource_id = r.id
+  WHERE rt.id = NEW.timeslot_id;
+
+  -- Determine action based on resource type and status change
+  IF v_resource.type = 'event' THEN
+    -- Events have different states
+    IF OLD.status = 'pending' AND NEW.status = 'approved' THEN
+      v_action_type := 'claim.created';
+      v_points := 5;
+    ELSIF OLD.status = 'approved' AND NEW.status = 'going' THEN
+      v_action_type := 'claim.created';
+      v_points := 25;
+    ELSIF OLD.status = 'going' AND NEW.status = 'attended' THEN
+      v_action_type := 'claim.completed';
+      v_points := 50;
+    ELSE
+      -- No points for other transitions
+      RETURN NEW;
+    END IF;
+  ELSE
+    -- Offers and Requests
+    IF OLD.status = 'pending' AND NEW.status = 'approved' THEN
+      v_action_type := 'claim.created';
+      v_points := 25;
+    ELSIF (OLD.status = 'given' OR OLD.status = 'received') AND NEW.status = 'completed' THEN
+      v_action_type := 'claim.completed';
+      v_points := 50;
+    ELSE
+      -- No points for other transitions
+      RETURN NEW;
+    END IF;
+  END IF;
+
+  v_metadata := jsonb_build_object(
+    'trigger', v_action_type,
+    'resource_type', v_resource.type,
+    'resource_title', v_resource.title,
+    'old_status', OLD.status,
+    'new_status', NEW.status
+  );
+
+  -- Award points for each community the resource is associated with
+  FOR v_community_id IN
+    SELECT rc.community_id
+    FROM resource_communities rc
+    JOIN resource_timeslots rt ON rt.resource_id = rc.resource_id
+    WHERE rt.id = NEW.timeslot_id
+  LOOP
+    PERFORM update_trust_score(
+      NEW.claimant_id,
+      v_community_id,
+      v_action_type::notification_type,
+      NEW.id,
+      v_points,
+      v_metadata
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Drop the now unused trust_score_action_type enum
+DROP TYPE IF EXISTS trust_score_action_type CASCADE;

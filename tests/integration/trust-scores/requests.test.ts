@@ -28,6 +28,7 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
+import { NOTIFICATION_TYPES } from '@/features/notifications';
 import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
@@ -204,7 +205,7 @@ describe('Trust Score Points - Requests', () => {
       serviceClient,
       claimant.id,
       community.id,
-      'resource_completion',
+      NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED,
       POINTS_CONFIG.REQUEST_COMPLETED,
       'Request completion log',
     );

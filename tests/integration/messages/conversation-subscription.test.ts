@@ -49,6 +49,8 @@ describe('Message Subscription Tests', () => {
 
     testConversation = await createTestConversation(supabase, otherUser.id);
 
+    await signInAsUser(supabase, testUser);
+
     // Create mock QueryClient
     queryClient = {
       invalidateQueries: vi.fn().mockResolvedValue(undefined),
@@ -56,8 +58,6 @@ describe('Message Subscription Tests', () => {
       getQueryData: vi.fn().mockReturnValue(0),
       getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
     } as unknown as QueryClient;
-
-    await signInAsUser(otherUserClient, testUser);
 
     // Subscription for the channel user:testUser.id:messages
     testUserChannel = await createMessageSubscription({

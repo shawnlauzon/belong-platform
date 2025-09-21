@@ -31,6 +31,7 @@ describe('Trust Scores - CRUD Operations', () => {
       const account = await createTestUser(supabase);
       const community = await createTestCommunity(supabase);
 
+
       const trustScores = await fetchTrustScores(supabase, account.id);
 
       expect(trustScores).toHaveLength(1);

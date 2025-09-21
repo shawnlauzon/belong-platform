@@ -66,7 +66,7 @@ describe('Community Activity Notifications', () => {
       );
       expect(resourceNotification).toBeDefined();
       expect(resourceNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.NEW_RESOURCE,
+        type: NOTIFICATION_TYPES.RESOURCE_CREATED,
         resourceId: resource.id,
         communityId: testCommunity.id,
         actorId: resourceCreator.id,
@@ -94,7 +94,7 @@ describe('Community Activity Notifications', () => {
       );
       expect(eventNotification).toBeDefined();
       expect(eventNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.NEW_EVENT,
+        type: NOTIFICATION_TYPES.EVENT_CREATED,
         resourceId: event.id,
         communityId: testCommunity.id,
         actorId: resourceCreator.id,

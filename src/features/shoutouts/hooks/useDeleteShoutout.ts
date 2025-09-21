@@ -94,17 +94,9 @@ export function useDeleteShoutout() {
           queryKey: shoutoutKeys.detail(shoutout.id),
         });
 
-        // TODO Only invalidate the affected community
+        // Invalidate all shoutouts cache (covers all lists)
         queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listsByCommunity(),
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listByResource(shoutout.resourceId),
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listBySender(shoutout.senderId),
+          queryKey: shoutoutKeys.all,
         });
 
         // Invalidate trust scores for sender and receiver

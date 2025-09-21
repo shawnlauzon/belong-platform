@@ -71,13 +71,13 @@ describe('Social Interactions Notifications', () => {
       expect(notifications.length).toBeGreaterThan(0);
       const commentNotification = notifications.find(
         (n) =>
-          n.type === NOTIFICATION_TYPES.COMMENT &&
+          n.type === NOTIFICATION_TYPES.COMMENT_CREATED &&
           n.resourceId === resource.id &&
           n.actorId === interactingUser.id,
       );
       expect(commentNotification).toBeDefined();
       expect(commentNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.COMMENT,
+        type: NOTIFICATION_TYPES.COMMENT_CREATED,
         resourceId: resource.id,
         actorId: interactingUser.id,
         readAt: null,

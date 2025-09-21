@@ -101,8 +101,34 @@ describe('Notification Subscription API Tests', () => {
 
     // Check if notification was added to React Query cache and notification was added to cache
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: shoutoutKeys.listByReceiver(testUser.id),
+      queryKey: shoutoutKeys.all,
     });
+  });
+
+  it('should update notification list when new notifications arrive', async () => {
+    const resource = await createTestResource(
+      supabase,
+      testCommunity.id,
+      'offer',
+    );
+
+    await signIn(otherUserClient, anotherUser.email, 'TestPass123!');
+    await createShoutout(otherUserClient, {
+      receiverId: testUser.id,
+      message: `${TEST_PREFIX} count invalidation test`,
+      resourceId: resource.id,
+      communityId: testCommunity.id,
+    });
+
+    await signIn(supabase, testUser.email, 'TestPass123!');
+
+    // Wait for real-time update
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      notificationKeys.list(),
+      expect.any(Function),
+    );
   });
 
   it('should update unread counts query when new notifications arrive', async () => {
@@ -127,7 +153,7 @@ describe('Notification Subscription API Tests', () => {
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       notificationKeys.unreadCount(),
-      expect.any(Number),
+      expect.any(Function),
     );
   });
 });
