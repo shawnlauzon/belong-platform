@@ -81,24 +81,10 @@ export function useUpdateShoutout() {
           updatedShoutout,
         );
 
-        // TODO Only invalidate the affected community
+        // Invalidate all shoutouts cache (covers all lists)
         queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listsByCommunity(),
+          queryKey: shoutoutKeys.all,
         });
-
-        queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listByResource(updatedShoutout.resourceId),
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: shoutoutKeys.listBySender(updatedShoutout.senderId),
-        });
-
-        if (variables.receiverId) {
-          queryClient.invalidateQueries({
-            queryKey: shoutoutKeys.listByReceiver(variables.receiverId),
-          });
-        }
       }
     },
     onError: (error) => {

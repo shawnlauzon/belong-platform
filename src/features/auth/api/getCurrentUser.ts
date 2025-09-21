@@ -8,6 +8,7 @@ import { ERROR_CODES } from '@/shared/constants';
 /**
  * Gets the current user's complete profile (auth + profile data)
  * Returns CurrentUser with private fields (email, location)
+ * Throws an error if not authenticated
  */
 export async function getCurrentUserOrFail(
   supabase: SupabaseClient<Database>,

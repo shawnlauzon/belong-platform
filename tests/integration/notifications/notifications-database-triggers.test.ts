@@ -76,7 +76,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.COMMENT)
+      .eq('type', NOTIFICATION_TYPES.COMMENT_CREATED)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -86,7 +86,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.COMMENT,
+      type: NOTIFICATION_TYPES.COMMENT_CREATED,
       resource_id: resource.id,
       comment_id: comment.id,
       community_id: testCommunity.id,
@@ -120,7 +120,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.CLAIM)
+      .eq('type', NOTIFICATION_TYPES.CLAIM_CREATED)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -130,7 +130,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.CLAIM,
+      type: NOTIFICATION_TYPES.CLAIM_CREATED,
       resource_id: resource.id,
       claim_id: claim.id,
       community_id: testCommunity.id,
@@ -198,7 +198,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.NEW_RESOURCE)
+      .eq('type', NOTIFICATION_TYPES.RESOURCE_CREATED)
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -208,7 +208,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.NEW_RESOURCE,
+      type: NOTIFICATION_TYPES.RESOURCE_CREATED,
       resource_id: resource.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,
@@ -238,7 +238,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.COMMENT)
+      .eq('type', NOTIFICATION_TYPES.COMMENT_CREATED)
       .eq('resource_id', resource.id)
       .eq('actor_id', resourceOwner.id);
 

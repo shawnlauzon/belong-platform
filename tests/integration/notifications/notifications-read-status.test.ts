@@ -73,7 +73,7 @@ describe('Notification Read Status', () => {
 
       const commentNotification = notifications.find(
         (n) =>
-          n.type === NOTIFICATION_TYPES.COMMENT &&
+          n.type === NOTIFICATION_TYPES.COMMENT_CREATED &&
           n.resourceId === resource.id &&
           n.actorId === anotherUser.id,
       );
@@ -391,7 +391,7 @@ describe('Notification Read Status', () => {
       });
 
       const commentNotification = unreadNotifications.find(
-        (n) => n.type === NOTIFICATION_TYPES.COMMENT,
+        (n) => n.type === NOTIFICATION_TYPES.COMMENT_CREATED,
       );
       const shoutoutNotification = unreadNotifications.find(
         (n) => n.type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,

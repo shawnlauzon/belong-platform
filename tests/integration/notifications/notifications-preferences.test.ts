@@ -11,7 +11,7 @@ import {
   fetchNotifications,
   updatePreferences,
   fetchPreferences,
-} from '@/features/notifications';
+} from '@/features/notifications/api';
 import { createComment } from '@/features/comments';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';

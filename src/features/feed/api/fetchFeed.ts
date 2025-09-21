@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserCommunities } from '../../communities/api';
-import { getCurrentUser } from '../../auth/api';
+import { getCurrentUserOrFail } from '../../auth/api';
 import { Feed, FeedItem } from '../types';
 import { logger } from '@/shared';
 
@@ -12,10 +12,7 @@ export async function fetchFeed(
 
   try {
     // Get current user first
-    const currentUser = await getCurrentUser(supabase);
-    if (!currentUser) {
-      throw new Error('User not authenticated');
-    }
+    const currentUser = await getCurrentUserOrFail(supabase);
 
     // Get user's communities
     const userCommunities = await fetchUserCommunities(

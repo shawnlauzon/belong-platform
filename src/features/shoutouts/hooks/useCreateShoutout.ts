@@ -84,17 +84,9 @@ export function useCreateShoutout() {
         newShoutout,
       );
 
-      // TODO Only invalidate the affected community
+      // Invalidate all shoutouts cache (covers all lists including receiver's)
       queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listsByCommunity(),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listByResource(newShoutout.resourceId),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: shoutoutKeys.listBySender(newShoutout.senderId),
+        queryKey: shoutoutKeys.all,
       });
 
       // Invalidate trust scores for sender and receiver

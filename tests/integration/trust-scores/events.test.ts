@@ -20,6 +20,7 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
+import { NOTIFICATION_TYPES } from '@/features/notifications';
 import {
   Account,
   Community,
@@ -49,7 +50,7 @@ describe('Trust Score Points - Events', () => {
     community = await createTestCommunity(supabase);
 
     // Create event and timeslot while organizer is signed in
-    event = await createTestResource(supabase, community.id, 'event', 'other');
+    event = await createTestResource(supabase, community.id, 'event');
     timeslot = await createTestResourceTimeslot(supabase, event.id);
 
     // Create participant (automatically signed in as participant now)
@@ -124,7 +125,7 @@ describe('Trust Score Points - Events', () => {
       serviceClient,
       participant.id,
       community.id,
-      'resource_claim',
+      NOTIFICATION_TYPES.CLAIM_CREATED,
       POINTS_CONFIG.EVENT_CLAIM_INITIAL,
       'Event registration log',
     );
@@ -246,7 +247,7 @@ describe('Trust Score Points - Events', () => {
       serviceClient,
       participant.id,
       community.id,
-      'resource_completion',
+      NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED,
       POINTS_CONFIG.EVENT_ATTENDED,
       'Event attendance log',
     );

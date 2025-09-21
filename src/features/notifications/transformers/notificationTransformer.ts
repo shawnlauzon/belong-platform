@@ -7,7 +7,7 @@ export function toDomainNotification(
   row: NotificationDetailsRow,
 ): NotificationDetail {
   const type = (row.type ||
-    NOTIFICATION_TYPES.NEW_RESOURCE) as NotificationType;
+    NOTIFICATION_TYPES.RESOURCE_CREATED) as NotificationType;
   const rawMetadata = (row.metadata as Record<string, unknown>) || {};
 
   return {

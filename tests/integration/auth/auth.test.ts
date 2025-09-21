@@ -188,12 +188,12 @@ describe('Auth API - Integration Tests', () => {
     });
   });
 
-  describe('getCurrentUser', () => {
+  describe('getCurrentUserOrFail', () => {
     it('returns current authenticated user', async () => {
       // Ensure we're signed in
       await api.signIn(supabase, testUser.email, testPassword);
 
-      const user = await api.getCurrentUser(supabase);
+      const user = await api.getCurrentUserOrFail(supabase);
 
       expect(user).toMatchObject({
         id: testUser.id,
@@ -210,7 +210,7 @@ describe('Auth API - Integration Tests', () => {
       const testUser2 = await createTestUser(supabase);
 
       try {
-        await expect(api.getCurrentUser(supabase)).resolves.toMatchObject({
+        await expect(api.getCurrentUserOrFail(supabase)).resolves.toMatchObject({
           id: testUser2.id,
         });
       } finally {
@@ -218,12 +218,11 @@ describe('Auth API - Integration Tests', () => {
       }
     });
 
-    it('returns null when not authenticated', async () => {
+    it('throws when not authenticated', async () => {
       // Sign out first
       await api.signOut(supabase);
 
-      const user = await api.getCurrentUser(supabase);
-      expect(user).toBeNull();
+      await expect(api.getCurrentUserOrFail(supabase)).rejects.toThrow();
     });
   });
 
@@ -254,9 +253,8 @@ describe('Auth API - Integration Tests', () => {
       // Sign out
       await api.signOut(supabase);
 
-      // getCurrentUser should return null
-      const user = await api.getCurrentUser(supabase);
-      expect(user).toBeNull();
+      // getCurrentUserOrFail should throw when not authenticated
+      await expect(api.getCurrentUserOrFail(supabase)).rejects.toThrow();
     });
 
     it('can sign out multiple times without error', async () => {
@@ -291,15 +289,14 @@ describe('Auth API - Integration Tests', () => {
       });
 
       // 2. User should be automatically signed in after signup
-      const userAfterSignUp = await api.getCurrentUser(supabase);
+      const userAfterSignUp = await api.getCurrentUserOrFail(supabase);
       expect(userAfterSignUp).toMatchObject({
         id: signUpAccount.id,
       });
 
       // 3. Sign out
       await api.signOut(supabase);
-      const userAfterSignOut = await api.getCurrentUser(supabase);
-      expect(userAfterSignOut).toBeNull();
+      await expect(api.getCurrentUserOrFail(supabase)).rejects.toThrow();
 
       // 4. Sign back in
       const signInAccount = await api.signIn(supabase, email, password);
@@ -308,7 +305,7 @@ describe('Auth API - Integration Tests', () => {
       });
 
       // 5. Verify user is authenticated
-      const currentUser = await api.getCurrentUser(supabase);
+      const currentUser = await api.getCurrentUserOrFail(supabase);
       expect(currentUser).toMatchObject({
         id: signUpAccount.id,
         email: email.toLowerCase(), // Supabase converts emails to lowercase
@@ -320,14 +317,14 @@ describe('Auth API - Integration Tests', () => {
     it('tracks different users signing in and out', async () => {
       await api.signIn(supabase, testUser.email, testPassword);
 
-      await expect(api.getCurrentUser(supabase)).resolves.toMatchObject({
+      await expect(api.getCurrentUserOrFail(supabase)).resolves.toMatchObject({
         id: testUser.id,
       });
 
       const testUser2 = await createTestUser(supabase);
 
       try {
-        await expect(api.getCurrentUser(supabase)).resolves.toMatchObject({
+        await expect(api.getCurrentUserOrFail(supabase)).resolves.toMatchObject({
           id: testUser2.id,
         });
       } finally {

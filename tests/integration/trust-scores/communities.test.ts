@@ -4,7 +4,11 @@ import { cleanupAllTestData } from '../helpers/cleanup';
 import { fetchTrustScores } from '@/features/trust-scores/api';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import { signIn } from '@/features/auth/api';
-import { joinCommunity, leaveCommunity, joinCommunityWithCode } from '@/features/communities/api';
+import {
+  joinCommunity,
+  leaveCommunity,
+  joinCommunityWithCode,
+} from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
@@ -13,6 +17,7 @@ import {
   verifyTrustScoreLog,
   createTestConnectionAndJoin,
 } from './helpers';
+import { NOTIFICATION_TYPES } from '@/features/notifications';
 import type { Account } from '@/features/auth/types';
 
 describe('Trust Score Points - Communities', () => {
@@ -61,7 +66,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       testUser.id,
       community.id,
-      'community_founder_join',
+      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_FOUNDER,
       'Community founder log',
     );
@@ -119,7 +124,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      'community_member_join',
+      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_JOIN,
       'Community join log',
     );
@@ -221,7 +226,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      'community_leave',
+      NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
       POINTS_CONFIG.COMMUNITY_LEAVE,
       'Community leave log',
     );
@@ -267,7 +272,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      'community_member_join',
+      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_JOIN,
       'Community join with invitation code log',
     );
