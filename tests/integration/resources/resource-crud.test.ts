@@ -15,7 +15,6 @@ import {
 } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
@@ -539,7 +538,10 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
     });
 
     it('deletes resource offer', async () => {
-      const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+      const deletedResource = await resourcesApi.deleteResource(
+        supabase,
+        offerResource.id,
+      );
 
       // Verify return value
       expect(deletedResource).toBeTruthy();
@@ -557,7 +559,10 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
     });
 
     it('deletes resource request', async () => {
-      const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+      const deletedResource = await resourcesApi.deleteResource(
+        supabase,
+        requestResource.id,
+      );
 
       // Verify return value
       expect(deletedResource).toBeTruthy();
@@ -597,7 +602,10 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         }),
       );
 
-      const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+      const deletedResource = await resourcesApi.deleteResource(
+        supabase,
+        offerResource.id,
+      );
 
       // Verify return value
       expect(deletedResource).toBeTruthy();
@@ -632,7 +640,10 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         }),
       );
 
-      const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+      const deletedResource = await resourcesApi.deleteResource(
+        supabase,
+        requestResource.id,
+      );
 
       // Verify return value
       expect(deletedResource).toBeTruthy();
@@ -679,14 +690,16 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         await resourcesApi.createResourceClaim(supabase, {
           resourceId: offerResource.id,
           timeslotId: timeslot.id,
-          status: 'pending',
         });
 
         // Sign back in as the provider to delete
         await signIn(supabase, testUser.email, 'TestPass123!');
 
         // Delete resource
-        const deletedResource = await resourcesApi.deleteResource(supabase, offerResource.id);
+        const deletedResource = await resourcesApi.deleteResource(
+          supabase,
+          offerResource.id,
+        );
 
         // Verify return value
         expect(deletedResource).toBeTruthy();
@@ -737,14 +750,16 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         await resourcesApi.createResourceClaim(supabase, {
           resourceId: requestResource.id,
           timeslotId: timeslot.id,
-          status: 'pending',
         });
 
         // Sign back in as the provider to delete
         await signIn(supabase, testUser.email, 'TestPass123!');
 
         // Delete resource
-        const deletedResource = await resourcesApi.deleteResource(supabase, requestResource.id);
+        const deletedResource = await resourcesApi.deleteResource(
+          supabase,
+          requestResource.id,
+        );
 
         // Verify return value
         expect(deletedResource).toBeTruthy();

@@ -11,7 +11,6 @@ import { signIn } from '@/features/auth/api';
 import { ResourceTimeslot } from '@/features/resources/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import { createFakeResourceTimeslotInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';

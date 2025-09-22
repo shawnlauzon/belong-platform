@@ -105,7 +105,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
           resourcesApi.deleteResource(
             unauthenticatedClient,
             testResourceOffer.id,
-          )
+          ),
         ).rejects.toThrow();
       });
 
@@ -114,7 +114,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
           resourcesApi.deleteResource(
             unauthenticatedClient,
             '00000000-0000-0000-0000-000000000000',
-          )
+          ),
         ).rejects.toThrow();
       });
     });
@@ -141,7 +141,6 @@ describe('Resource Offers API - Authentication Requirements', () => {
         const claimInput = createFakeResourceClaimInput({
           resourceId: testResourceOffer.id,
           timeslotId: testTimeslot.id,
-          status: 'pending',
         });
 
         await expect(

@@ -15,7 +15,6 @@ import {
 } from '@/features/resources/__fakes__';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource, ResourceTimeslot } from '@/features/resources/types';
@@ -363,7 +362,6 @@ describe('Resource Offers API - CRUD Operations', () => {
       await resourcesApi.createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
-        status: 'pending',
       });
 
       // Sign back in as the provider to delete
