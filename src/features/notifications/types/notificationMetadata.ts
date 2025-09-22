@@ -26,6 +26,11 @@ export interface ResourceUpdatedMetadata {
   changes: string[];
 }
 
+export interface ConversationMetadata {
+  other_participant_id?: string;
+  other_participant_name?: string;
+}
+
 // Helper function to check if notification type has metadata
 export function hasMetadata(type: NotificationType): boolean {
   return (
@@ -35,7 +40,8 @@ export function hasMetadata(type: NotificationType): boolean {
     type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
     type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
     type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
-    type === NOTIFICATION_TYPES.RESOURCE_UPDATED
+    type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
+    type === NOTIFICATION_TYPES.CONVERSATION_CREATED
   );
 }
 
@@ -49,6 +55,7 @@ export function getTypedMetadata(
   | TrustPointsMetadata
   | TrustLevelMetadata
   | ResourceUpdatedMetadata
+  | ConversationMetadata
   | Record<string, never> {
   switch (type) {
     case NOTIFICATION_TYPES.COMMENT_CREATED:
@@ -99,6 +106,18 @@ export function getTypedMetadata(
           metadata.changes.every((c) => typeof c === 'string')
             ? (metadata.changes as string[])
             : [],
+      };
+
+    case NOTIFICATION_TYPES.CONVERSATION_CREATED:
+      return {
+        other_participant_id:
+          typeof metadata.other_participant_id === 'string'
+            ? metadata.other_participant_id
+            : undefined,
+        other_participant_name:
+          typeof metadata.other_participant_name === 'string'
+            ? metadata.other_participant_name
+            : undefined,
       };
 
     default:

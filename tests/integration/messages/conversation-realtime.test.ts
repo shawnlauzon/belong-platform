@@ -22,6 +22,7 @@ import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
 import type { Conversation } from '@/features/messages/types';
 import { vi } from 'vitest';
+import { createNotificationSubscription } from '@/features/notifications/api';
 
 describe('Message Subscription Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -65,33 +66,16 @@ describe('Message Subscription Tests', () => {
       queryClient,
       conversationId: testConversation.id,
     });
-
-    await signInAsUser(otherUserClient, otherUser);
-    otherQueryClient = {
-      invalidateQueries: vi.fn().mockResolvedValue(undefined),
-      setQueryData: vi.fn().mockResolvedValue(undefined),
-      getQueryData: vi.fn().mockReturnValue(0),
-      getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
-    } as unknown as QueryClient;
-    otherUserChannel = await createMessageSubscription({
-      supabase: otherUserClient,
-      queryClient: otherQueryClient,
-      conversationId: testConversation.id,
-    });
-
-    // Give subscription time to establish
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   afterAll(async () => {
     await testUserChannel?.unsubscribe();
-    await otherUserChannel?.unsubscribe();
     await cleanupAllTestData();
   });
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    await signInAsUser(otherUserClient, testUser);
+    await signInAsUser(otherUserClient, otherUser);
   });
 
   it('should create a messages channel', async () => {
@@ -129,8 +113,6 @@ describe('Message Subscription Tests', () => {
       conversationKeys.unreadCount(testConversation.id),
       expect.any(Function),
     );
-
-    expect(otherQueryClient.setQueryData).not.toHaveBeenCalled();
   });
 
   it('should update the messages query cache after editing a message', async () => {

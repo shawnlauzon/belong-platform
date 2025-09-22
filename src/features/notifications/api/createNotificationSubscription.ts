@@ -11,6 +11,7 @@ import type { NotificationDetail } from '../types/';
 import { logger } from '@/shared';
 import { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import { ConversationRowWithParticipants } from '@/features/messages/types/messageRow';
+import type { Conversation } from '@/features/messages/types';
 import {
   conversationKeys,
   communityChatKeys,
@@ -25,6 +26,8 @@ import {
 } from '@/features/communities/queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 import { NOTIFICATION_TYPES } from '../constants';
+import { getAuthUserId } from '@/features/auth/api';
+import { fetchConversation } from '@/features/messages/api';
 
 export interface CreateNotificationSubscriptionParams {
   supabase: SupabaseClient<Database>;
@@ -41,11 +44,11 @@ interface RealtimeBroadcastMessage {
 /**
  * Creates a subscription for new notifications for a given user.
  */
-export async function createNotificationSubscription({
-  supabase,
-  queryClient,
-  userId,
-}: CreateNotificationSubscriptionParams): Promise<RealtimeChannel> {
+export async function createNotificationSubscription(
+  supabase: SupabaseClient<Database>,
+  queryClient: QueryClient,
+): Promise<RealtimeChannel> {
+  const userId = await getAuthUserId(supabase);
   logger.info('=== CREATING NOTIFICATION SUBSCRIPTION ===', {
     userId,
     channelName: `user:${userId}:notifications`,
@@ -174,11 +177,55 @@ export async function createNotificationSubscription({
   }
 
   function handleConversationCreatedNotification(
-    _notificationRow: NotificationDetailsRow,
+    notificationRow: NotificationDetailsRow,
   ) {
-    queryClient.invalidateQueries({
-      queryKey: conversationKeys.conversations(),
-    });
+    const conversationId = notificationRow.conversation_id;
+
+    if (conversationId) {
+      fetchConversation(supabase, conversationId)
+        .then((conversation) => {
+          // Add the new conversation to the cache
+          queryClient.setQueryData<Conversation[]>(
+            conversationKeys.list(),
+            (oldConversations: Conversation[] | undefined) => {
+              if (!oldConversations) return [conversation];
+
+              // Check if conversation already exists to avoid duplicates
+              const existingIndex = oldConversations.findIndex(
+                (c) => c.id === conversation.id,
+              );
+              if (existingIndex === -1) {
+                // Add new conversation at the beginning (most recent first)
+                return [conversation, ...oldConversations];
+              }
+              return oldConversations;
+            },
+          );
+
+          logger.debug('Added new conversation to cache', {
+            conversationId: conversation.id,
+          });
+        })
+        .catch((error) => {
+          logger.error('Failed to fetch new conversation for cache', {
+            error,
+            conversationId,
+          });
+
+          // Fall back to invalidation if fetch fails
+          queryClient.invalidateQueries({
+            queryKey: conversationKeys.list(),
+          });
+        });
+    } else {
+      // No conversation ID in metadata, fall back to invalidation
+      logger.debug(
+        'No conversation ID found in notification metadata, falling back to invalidation',
+      );
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.list(),
+      });
+    }
   }
 
   function handleCommentNotification(_notificationRow: NotificationDetailsRow) {
@@ -296,29 +343,41 @@ export async function createNotificationSubscription({
   }
 
   function handleMessageNotification(notificationRow: NotificationDetailsRow) {
-    const { community_id } = notificationRow;
+    const { conversation_id: conversationId, community_id: communityId } =
+      notificationRow;
 
-    // Invalidate conversation lists and total unread count
-    queryClient.invalidateQueries({
-      queryKey: conversationKeys.conversations(),
-    });
-
-    queryClient.invalidateQueries({
-      queryKey: conversationKeys.totalUnreadCount(),
-    });
-
-    if (community_id) {
-      // Invalidate community chat messages and unread counts
+    if (conversationId) {
+      // Invalidate conversation messages and unread counts
       queryClient.invalidateQueries({
-        queryKey: communityChatKeys.messages(community_id),
+        queryKey: conversationKeys.messages(conversationId),
       });
 
       queryClient.invalidateQueries({
-        queryKey: communityChatKeys.unreadCount(community_id),
+        queryKey: conversationKeys.unreadCount(conversationId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.totalUnreadCount(),
+      });
+    } else if (communityId) {
+      // Invalidate community chat messages and unread counts
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.messages(communityId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.unreadCount(communityId),
       });
 
       queryClient.invalidateQueries({
         queryKey: communityChatKeys.totalUnreadCount(),
+      });
+    } else {
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.all,
       });
     }
   }

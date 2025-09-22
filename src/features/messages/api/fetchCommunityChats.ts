@@ -3,12 +3,12 @@ import { Database } from '../../../shared/types/database';
 import { CommunityChat } from '../types';
 import { MessageRow } from '../types/messageRow';
 import { toDomainMessage } from '../transformers';
-import { logger } from '../../../shared';
+import { getAuthIdOrThrow, logger } from '../../../shared';
 
 export async function fetchCommunityChats(
   supabase: SupabaseClient<Database>,
-  userId: string,
 ): Promise<CommunityChat[]> {
+  const userId = await getAuthIdOrThrow(supabase);
   // Get communities where the user is a member
   const { data: memberships, error: membershipsError } = await supabase
     .from('community_memberships')
@@ -16,7 +16,9 @@ export async function fetchCommunityChats(
     .eq('user_id', userId);
 
   if (membershipsError) {
-    logger.error('Error fetching user community memberships', { error: membershipsError });
+    logger.error('Error fetching user community memberships', {
+      error: membershipsError,
+    });
     throw membershipsError;
   }
 
@@ -24,7 +26,7 @@ export async function fetchCommunityChats(
     return [];
   }
 
-  const communityIds = memberships.map(m => m.community_id);
+  const communityIds = memberships.map((m) => m.community_id);
 
   // For each community, get the latest message
   const chats: CommunityChat[] = [];
@@ -42,15 +44,16 @@ export async function fetchCommunityChats(
     if (messagesError) {
       logger.error('Error fetching community messages', {
         error: messagesError,
-        communityId
+        communityId,
       });
       // Continue with other communities instead of throwing
       continue;
     }
 
-    const lastMessage = messages && messages.length > 0
-      ? toDomainMessage(messages[0] as MessageRow)
-      : null;
+    const lastMessage =
+      messages && messages.length > 0
+        ? toDomainMessage(messages[0] as MessageRow)
+        : null;
 
     chats.push({
       communityId,
@@ -64,7 +67,9 @@ export async function fetchCommunityChats(
     if (!a.lastMessage) return 1;
     if (!b.lastMessage) return -1;
 
-    return new Date(b.lastMessage.createdAt).getTime() -
-           new Date(a.lastMessage.createdAt).getTime();
+    return (
+      new Date(b.lastMessage.createdAt).getTime() -
+      new Date(a.lastMessage.createdAt).getTime()
+    );
   });
 }

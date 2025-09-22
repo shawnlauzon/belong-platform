@@ -281,16 +281,19 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          initiator_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          initiator_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          initiator_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -418,6 +421,7 @@ export type Database = {
           claim_id: string | null
           comment_id: string | null
           community_id: string | null
+          conversation_id: string | null
           created_at: string | null
           id: string
           metadata: Json | null
@@ -433,6 +437,7 @@ export type Database = {
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           metadata?: Json | null
@@ -448,6 +453,7 @@ export type Database = {
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           metadata?: Json | null
@@ -478,6 +484,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
           {
@@ -892,7 +905,7 @@ export type Database = {
       trust_score_logs: {
         Row: {
           action_id: string | null
-          action_type: Database["public"]["Enums"]["trust_score_action_type"]
+          action_type: Database["public"]["Enums"]["notification_type"]
           community_id: string | null
           created_at: string | null
           id: string
@@ -904,7 +917,7 @@ export type Database = {
         }
         Insert: {
           action_id?: string | null
-          action_type: Database["public"]["Enums"]["trust_score_action_type"]
+          action_type: Database["public"]["Enums"]["notification_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -916,7 +929,7 @@ export type Database = {
         }
         Update: {
           action_id?: string | null
-          action_type?: Database["public"]["Enums"]["trust_score_action_type"]
+          action_type?: Database["public"]["Enums"]["notification_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -1121,6 +1134,7 @@ export type Database = {
           community_avatar_url: string | null
           community_id: string | null
           community_name: string | null
+          conversation_id: string | null
           created_at: string | null
           id: string | null
           metadata: Json | null
@@ -1154,6 +1168,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
           {
@@ -1433,6 +1454,7 @@ export type Database = {
           p_claim_id?: string
           p_comment_id?: string
           p_community_id?: string
+          p_conversation_id?: string
           p_metadata?: Json
           p_resource_id?: string
           p_shoutout_id?: string
@@ -3220,7 +3242,7 @@ export type Database = {
       update_trust_score: {
         Args: {
           p_action_id: string
-          p_action_type: Database["public"]["Enums"]["trust_score_action_type"]
+          p_action_type: Database["public"]["Enums"]["notification_type"]
           p_community_id: string
           p_metadata?: Json
           p_points_change: number
@@ -3264,6 +3286,7 @@ export type Database = {
         | "resource.created"
         | "event.created"
         | "shoutout.received"
+        | "shoutout.sent"
         | "connection.requested"
         | "connection.accepted"
         | "claim.cancelled"
@@ -3274,11 +3297,10 @@ export type Database = {
         | "resource.cancelled"
         | "member.joined"
         | "member.left"
+        | "community.created"
         | "trustpoints.gained"
         | "trustpoints.lost"
         | "trustlevel.changed"
-        | "community.created"
-        | "shoutout.sent"
       resource_category:
         | "tools"
         | "skills"
@@ -3304,18 +3326,6 @@ export type Database = {
       resource_status: "open" | "completed" | "cancelled"
       resource_timeslot_status: "active" | "completed" | "cancelled"
       resource_type: "offer" | "request" | "event"
-      trust_score_action_type:
-        | "community_creation"
-        | "community_join"
-        | "resource_offer"
-        | "resource_claim"
-        | "resource_completion"
-        | "shoutout_sent"
-        | "shoutout_received"
-        | "community_leave"
-        | "community_organizer_join"
-        | "community_member_join"
-        | "community_founder_join"
       user_connection_type: "invited_by"
     }
     CompositeTypes: {
@@ -3464,6 +3474,7 @@ export const Constants = {
         "resource.created",
         "event.created",
         "shoutout.received",
+        "shoutout.sent",
         "connection.requested",
         "connection.accepted",
         "claim.cancelled",
@@ -3474,11 +3485,10 @@ export const Constants = {
         "resource.cancelled",
         "member.joined",
         "member.left",
+        "community.created",
         "trustpoints.gained",
         "trustpoints.lost",
         "trustlevel.changed",
-        "community.created",
-        "shoutout.sent",
       ],
       resource_category: [
         "tools",
@@ -3507,19 +3517,6 @@ export const Constants = {
       resource_status: ["open", "completed", "cancelled"],
       resource_timeslot_status: ["active", "completed", "cancelled"],
       resource_type: ["offer", "request", "event"],
-      trust_score_action_type: [
-        "community_creation",
-        "community_join",
-        "resource_offer",
-        "resource_claim",
-        "resource_completion",
-        "shoutout_sent",
-        "shoutout_received",
-        "community_leave",
-        "community_organizer_join",
-        "community_member_join",
-        "community_founder_join",
-      ],
       user_connection_type: ["invited_by"],
     },
   },
