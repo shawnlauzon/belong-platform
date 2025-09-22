@@ -13,3 +13,5 @@ export * from './useConversation';
 export * from './useCommunityMessages';
 export * from './useMessageUnreadCount';
 export * from './useCommunityUnreadCount';
+export * from './useRealtimeConversation';
+export * from './useRealtimeCommunityChat';
