@@ -73,6 +73,7 @@ export function useUser(
     queryKey: userKeys.detail(userId),
     queryFn: () => fetchUserById(supabase, userId),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!userId,
     ...options,
   });
 
