@@ -11,7 +11,6 @@ import * as resourcesApi from '@/features/resources/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import { createFakeResourceClaimInput } from '@/features/resources/__fakes__';
 import { Community } from '@/features/communities/types';
@@ -132,11 +131,8 @@ describe('Resource Claims - Basic Operations', () => {
         timeslotId: testTimeslot2.id,
       });
 
-      testClaim = await resourcesApi.createResourceClaim(
-        supabase,
-        claimInput,
-      );
-      
+      testClaim = await resourcesApi.createResourceClaim(supabase, claimInput);
+
       // Status should be 'approved' for non-approval-required resources
       expect(testClaim.status).toBe('approved');
     });
@@ -275,18 +271,21 @@ describe('Resource Claims - Basic Operations', () => {
           resourcesApi.updateResourceClaim(supabase, {
             id: testClaim2.id,
             status: 'approved',
-          })
+          }),
         ).rejects.toThrow();
       });
 
       it('allows claimant to update claim status to cancelled', async () => {
         // Test that claimant can update to cancelled
-        const cancelledClaim = await resourcesApi.updateResourceClaim(supabase, {
-          id: testClaim2.id,
-          status: 'cancelled',
-        });
+        const cancelledClaim = await resourcesApi.updateResourceClaim(
+          supabase,
+          {
+            id: testClaim2.id,
+            status: 'cancelled',
+          },
+        );
         expect(cancelledClaim.status).toBe('cancelled');
-        
+
         // Verify record exists in database
         await verifyClaimInDatabase(supabase, cancelledClaim);
       });
@@ -404,14 +403,17 @@ describe('Resource Claims - Basic Operations', () => {
 
       it('resource owner can update claim status according to state machine rules', async () => {
         // For offers without approval: approved -> given -> completed
-        
+
         // Create fresh timeslot and claim for this test (claimant creates the claim)
-        const freshTimeslot = await createTestResourceTimeslot(supabase, testResource.id);
+        const freshTimeslot = await createTestResourceTimeslot(
+          supabase,
+          testResource.id,
+        );
         const freshClaim = await resourcesApi.createResourceClaim(supabase, {
           resourceId: testResource.id,
           timeslotId: freshTimeslot.id,
         });
-        
+
         // Switch to resource owner to mark as given
         await signIn(supabase, resourceOwner.email, 'TestPass123!');
         const givenClaim = await resourcesApi.updateResourceClaim(supabase, {
@@ -420,25 +422,20 @@ describe('Resource Claims - Basic Operations', () => {
         });
         expect(givenClaim.status).toBe('given');
         await verifyClaimInDatabase(supabase, givenClaim);
-        
+
         // Clean up - just test the approved -> given transition for now
         await cleanupResourceClaim(givenClaim.id);
       });
 
-      it('expect.fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
-        const claimInput = {
-          resourceId: testResource.id,
-          timeslotId: undefined,
-        };
-
+      it('fails if resource owner attempts to update resource claim status to "cancelled"', async () => {
         try {
           await resourcesApi.updateResourceClaim(supabase, {
             id: testClaim2.id,
-            ...claimInput,
+            status: 'cancelled',
           });
           expect.fail('Should have thrown');
         } catch (error) {
-          expect(error).toBeTruthy();
+          expect(error).toBeDefined();
         }
       });
 
@@ -451,15 +448,13 @@ describe('Resource Claims - Basic Operations', () => {
           await verifyClaimInDatabase(supabase, testClaim2);
         } catch (error) {
           // This would also be a pass, however RLS permissions cause it to delete 0 rows silently
-          expect(error).toBeTruthy();
+          expect(error).toBeDefined();
         }
       });
 
       // TODO: fix this test; RLS permissions cause it to delete 0 rows silently
       it.skip('cannot delete resource claim', async () => {
-        await expect(
-          cleanupResourceClaim(testClaim2.id),
-        ).rejects.toThrow();
+        await expect(cleanupResourceClaim(testClaim2.id)).rejects.toThrow();
       });
     });
   });

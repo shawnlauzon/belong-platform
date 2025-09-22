@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  beforeEach,
-  afterAll,
-} from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -22,14 +15,17 @@ import {
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
+import type { Account } from '@/features/auth/types';
+import type { Community } from '@/features/communities/types';
+import type { Resource, ResourceTimeslot } from '@/features/resources/types';
 
 describe('Resource Offers - Workflow', () => {
   let supabase: SupabaseClient<Database>;
-  let owner: any;
-  let claimant: any;
-  let community: any;
-  let offer: any;
-  let timeslot: any;
+  let owner: Account;
+  let claimant: Account;
+  let community: Community;
+  let offer: Resource;
+  let timeslot: ResourceTimeslot;
 
   beforeAll(async () => {
     supabase = createTestClient();
@@ -79,7 +75,7 @@ describe('Resource Offers - Workflow', () => {
   it('should allow owner to mark as given', async () => {
     // Create fresh timeslot for this test
     const freshTimeslot = await createTestResourceTimeslot(supabase, offer.id);
-    
+
     // Claimant is already signed in from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: offer.id,
@@ -98,7 +94,7 @@ describe('Resource Offers - Workflow', () => {
   it('should allow resource owner to mark as given from approved state', async () => {
     // Create fresh timeslot for this test
     const freshTimeslot = await createTestResourceTimeslot(supabase, offer.id);
-    
+
     // Use shared data from beforeEach
     const claim = await createResourceClaim(supabase, {
       resourceId: offer.id,
@@ -107,7 +103,7 @@ describe('Resource Offers - Workflow', () => {
 
     // Switch to resource owner to mark as given
     await signIn(supabase, owner.email, 'TestPass123!');
-    
+
     // For offers: resource owner can mark as given directly from approved
     const updatedClaim = await updateResourceClaim(supabase, {
       id: claim.id,

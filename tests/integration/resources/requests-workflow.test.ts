@@ -15,10 +15,9 @@ import {
 } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
-import type { Community } from '@/features/communities';
-import type { Resource, ResourceTimeslot } from '@/features/resources';
+import type { Community } from '@/features/communities/types';
+import type { Resource, ResourceTimeslot } from '@/features/resources/types';
 
 describe('Resource Requests - Workflow', () => {
   let supabase: SupabaseClient<Database>;

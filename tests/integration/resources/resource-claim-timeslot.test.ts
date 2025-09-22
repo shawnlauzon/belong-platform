@@ -10,7 +10,6 @@ import * as resourcesApi from '@/features/resources/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import {
   createFakeResourceClaimInput,
@@ -181,7 +180,6 @@ describe('Resource Claims - Timeslot Operations', () => {
     const claimInput = createFakeResourceClaimInput({
       resourceId: testResource.id,
       timeslotId: invalidTimeslotId,
-      status: 'pending',
     });
 
     await expect(
@@ -193,7 +191,6 @@ describe('Resource Claims - Timeslot Operations', () => {
     const claimInput = createFakeResourceClaimInput({
       resourceId: testResource.id,
       timeslotId: undefined,
-      status: 'pending',
     });
 
     await expect(
