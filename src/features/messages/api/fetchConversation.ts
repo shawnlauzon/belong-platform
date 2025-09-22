@@ -3,12 +3,13 @@ import { Database } from '../../../shared/types/database';
 import { Conversation } from '../types';
 import { toDomainConversation } from '../transformers';
 import { logger } from '../../../shared';
+import { ConversationRowWithLastMessage } from '../types/messageRow';
 
 export async function fetchConversation(
   supabase: SupabaseClient<Database>,
   conversationId: string,
 ): Promise<Conversation> {
-  const { data, error } = await supabase
+  const { data, error } = (await supabase
     .from('conversations')
     .select(
       `
@@ -32,7 +33,10 @@ export async function fetchConversation(
     .eq('last_message.is_deleted', false)
     .order('created_at', { ascending: false, referencedTable: 'last_message' })
     .limit(1, { referencedTable: 'last_message' })
-    .single();
+    .single()) as {
+    data: ConversationRowWithLastMessage | null;
+    error: Error | null;
+  };
 
   if (error) {
     logger.error('Error fetching conversation', { error, conversationId });
@@ -44,11 +48,5 @@ export async function fetchConversation(
   }
 
   // Transform to domain conversation (only direct conversations now)
-  return toDomainConversation({
-    id: data.id,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    conversation_participants: data.conversation_participants || [],
-    last_message: data.last_message?.[0] || null,
-  });
+  return toDomainConversation(data);
 }
