@@ -2,6 +2,8 @@ export const conversationKeys = {
   all: ['conversations'] as const,
   lists: () => [...conversationKeys.all, 'list'] as const,
   list: () => [...conversationKeys.lists(), 'conversations'] as const,
+  detail: (conversationId: string) =>
+    [...conversationKeys.all, 'detail', conversationId] as const,
   messages: (conversationId: string) =>
     [...conversationKeys.list(), conversationId] as const,
   unreadCount: (conversationId: string) =>

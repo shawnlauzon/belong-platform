@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { fetchMessages } from '../api';
-import { messageKeys } from '../queries';
+import { communityChatKeys } from '../queries';
 import { useCurrentUser } from '@/features/auth';
 import { STANDARD_CACHE_TIME } from '@/config';
 import type { Message } from '@/features/messages/types';
@@ -43,7 +43,7 @@ export function useCommunityMessages(
   const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<Message[], Error>({
-    queryKey: messageKeys.communityMessages(communityId),
+    queryKey: communityChatKeys.messages(communityId),
     queryFn: () => {
       if (!currentUser) {
         throw new Error('User not authenticated');

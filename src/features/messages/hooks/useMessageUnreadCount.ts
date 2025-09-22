@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { fetchMessageUnreadCount, fetchTotalMessageUnreadCount } from '../api/fetchMessageUnreadCount';
-import { messageKeys } from '../queries';
+import { conversationKeys } from '../queries';
 import { STANDARD_CACHE_TIME } from '@/config';
 
 interface UseMessageUnreadCountResult {
@@ -35,7 +35,7 @@ export function useMessageUnreadCount(conversationId: string): UseMessageUnreadC
   const supabase = useSupabase();
 
   const query = useQuery({
-    queryKey: messageKeys.unreadCount(conversationId),
+    queryKey: conversationKeys.unreadCount(conversationId),
     queryFn: () => fetchMessageUnreadCount(supabase, conversationId),
     enabled: !!supabase && !!conversationId,
     staleTime: STANDARD_CACHE_TIME,
@@ -72,7 +72,7 @@ export function useTotalMessageUnreadCount(): UseMessageUnreadCountResult {
   const supabase = useSupabase();
 
   const query = useQuery({
-    queryKey: messageKeys.totalUnreadCount(),
+    queryKey: conversationKeys.totalUnreadCount(),
     queryFn: () => fetchTotalMessageUnreadCount(supabase),
     enabled: !!supabase,
     staleTime: STANDARD_CACHE_TIME,

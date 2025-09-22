@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { fetchCommunityUnreadCount, fetchTotalCommunityUnreadCount } from '../api/fetchCommunityUnreadCount';
-import { messageKeys } from '../queries';
+import { communityChatKeys } from '../queries';
 import { useCurrentUser } from '@/features/auth';
 import { STANDARD_CACHE_TIME } from '@/config';
 
@@ -20,7 +20,7 @@ export function useCommunityUnreadCount(
   const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<number, Error>({
-    queryKey: messageKeys.communityUnreadCount(communityId),
+    queryKey: communityChatKeys.unreadCount(communityId),
     queryFn: () => {
       if (!currentUser) {
         throw new Error('User not authenticated');
@@ -55,7 +55,7 @@ export function useTotalCommunityUnreadCount(
   const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<number, Error>({
-    queryKey: messageKeys.totalCommunityUnreadCount(),
+    queryKey: communityChatKeys.totalUnreadCount(),
     queryFn: () => {
       if (!currentUser) {
         throw new Error('User not authenticated');

@@ -1,12 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { Conversation } from '../types';
-import {
-  ConversationRowWithLastMessage,
-} from '../types/messageRow';
-import {
-  toDomainConversation,
-} from '../transformers';
+import { ConversationRowWithLastMessage } from '../types/messageRow';
+import { toDomainConversation } from '../transformers';
 import { logger } from '../../../shared';
 
 export async function fetchConversations(
@@ -19,10 +15,13 @@ export async function fetchConversations(
     .select('conversation_id')
     .eq('user_id', userId);
 
-  const { data: participantData, error: participantError } = await participantQuery;
+  const { data: participantData, error: participantError } =
+    await participantQuery;
 
   if (participantError) {
-    logger.error('Error fetching user conversations', { error: participantError });
+    logger.error('Error fetching user conversations', {
+      error: participantError,
+    });
     throw participantError;
   }
 
@@ -30,12 +29,13 @@ export async function fetchConversations(
     return [];
   }
 
-  const conversationIds = participantData.map(p => p.conversation_id);
+  const conversationIds = participantData.map((p) => p.conversation_id);
 
   // Now get the full conversations with all participants and last message
-  const conversationQuery = supabase
+  const { data, error } = (await supabase
     .from('conversations')
-    .select(`
+    .select(
+      `
       *,
       conversation_participants!inner(user_id),
       last_message:messages(
@@ -50,12 +50,14 @@ export async function fetchConversations(
         is_edited,
         updated_at
       )
-    `)
+    `,
+    )
     .in('id', conversationIds)
-    .order('created_at', { ascending: false, referencedTable: 'last_message' })
-    .limit(1, { referencedTable: 'last_message' });
-
-  const { data, error } = await conversationQuery;
+    .order('last_message.updated_at', { ascending: false })
+    .limit(1, { referencedTable: 'last_message' })) as {
+    data: ConversationRowWithLastMessage[];
+    error: Error | null;
+  };
 
   if (error) {
     logger.error('Error fetching conversations', { error });
@@ -66,23 +68,5 @@ export async function fetchConversations(
     return [];
   }
 
-  // Order by the most recent message timestamp, fallback to conversation created_at
-  const sortedData = data.sort((a, b) => {
-    const aTime = a.last_message?.[0]?.created_at || a.created_at;
-    const bTime = b.last_message?.[0]?.created_at || b.created_at;
-    return new Date(bTime).getTime() - new Date(aTime).getTime();
-  });
-
-  return sortedData.map((dbRow) => {
-    // Transform the database response to our expected type structure
-    const row: ConversationRowWithLastMessage = {
-      id: dbRow.id,
-      created_at: dbRow.created_at,
-      updated_at: dbRow.updated_at,
-      conversation_participants: dbRow.conversation_participants || [],
-      last_message: dbRow.last_message?.[0] || null,
-    };
-
-    return toDomainConversation(row);
-  });
+  return data.map(toDomainConversation);
 }

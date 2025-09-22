@@ -2,7 +2,7 @@ import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { fetchMessages } from '../api';
 import { Message } from '../types';
-import { messageKeys } from '../queries';
+import { conversationKeys } from '../queries';
 import { STANDARD_CACHE_TIME } from '@/config';
 
 /**
@@ -39,7 +39,7 @@ export function useMessages(
   const supabase = useSupabase();
 
   const query = useQuery<Message[], Error>({
-    queryKey: messageKeys.list(conversationId),
+    queryKey: conversationKeys.messages(conversationId),
     queryFn: () => fetchMessages(supabase, { conversationId }),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
