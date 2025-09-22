@@ -45,6 +45,7 @@ export function useCommunity(
     queryKey: communityKeys.detail(id),
     queryFn: () => fetchCommunityById(supabase, id),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!id,
     ...options,
   });
 }

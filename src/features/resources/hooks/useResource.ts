@@ -49,6 +49,7 @@ export function useResource(
     queryKey: resourceKeys.detail(id),
     queryFn: () => fetchResourceById(supabase, id),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!id,
     ...options,
   });
 }

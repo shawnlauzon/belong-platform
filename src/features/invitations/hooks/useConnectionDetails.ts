@@ -69,6 +69,7 @@ export function useConnectionDetails(
     queryKey: connectionQueries.detail(memberConnectionCode),
     queryFn: () => fetchInvitationDetails(supabase, memberConnectionCode),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!memberConnectionCode,
     ...options,
   });
 

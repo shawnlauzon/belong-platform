@@ -15,9 +15,10 @@ export function useResourcesById(
     queries: resourceIds.map((id) => ({
       queryKey: resourceKeys.detail(id),
       queryFn: () => fetchResourceById(supabase, id),
-      ...options, 
+      enabled: !!id,
+      ...options,
     })),
-    combine: (results: QueryObserverResult<Resource|null>[]) => {
+    combine: (results: QueryObserverResult<Resource | null>[]) => {
       return {
         data: results.map((result) => result.data),
         isPending: results.some((result) => result.isPending),
