@@ -27,11 +27,7 @@ export function NotificationRealtimeProvider({ children }: PropsWithChildren) {
 
     const setupRealtimeNotifications = async () => {
       try {
-        channel = await createNotificationSubscription({
-          supabase,
-          queryClient,
-          userId,
-        });
+        channel = await createNotificationSubscription(supabase, queryClient);
       } catch (error) {
         logger.error(
           'NotificationRealtimeProvider: failed to setup notifications',

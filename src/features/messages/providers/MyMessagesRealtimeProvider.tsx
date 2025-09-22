@@ -9,10 +9,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
 import { useCurrentUser } from '@/features/auth';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useConversations } from '../hooks/useConversations';
+import { createMessageSubscription } from '../api/createMessageSubscription';
+import type { Conversation } from '../types';
 
 interface MessageRealtimeContextValue {
-  channel: RealtimeChannel | null;
+  channels: Map<string, RealtimeChannel>;
   isConnected: boolean;
+  getChannel: (conversationId: string) => RealtimeChannel | undefined;
 }
 
 const MessageRealtimeContext = createContext<
@@ -20,16 +24,17 @@ const MessageRealtimeContext = createContext<
 >(undefined);
 
 /**
- * Hook to access the message realtime channel.
+ * Hook to access message realtime channels.
  * Must be used within MessageRealtimeProvider.
  *
- * // Access the RealtimeChannel from any component within MessageRealtimeProvider
+ * // Access the RealtimeChannels from any component within MessageRealtimeProvider
  * import { useMyMessagesRealtimeChannel } from '@belongnetwork/platform';
  *
  * function MyComponent() {
- *   const { channel, isConnected } = useMyMessagesRealtimeChannel();
+ *   const { channels, isConnected, getChannel } = useMyMessagesRealtimeChannel();
  *
- *   return <div>Connected: {isConnected}</div>;
+ *   const conversationChannel = getChannel('conversation-id');
+ *   return <div>Connected: {isConnected}, Channels: {channels.size}</div>;
  * }
  */
 export const useMyMessagesRealtimeChannel = (): MessageRealtimeContextValue => {
@@ -53,57 +58,95 @@ export function MyMessagesRealtimeProvider({ children }: PropsWithChildren) {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const { data: conversations } = useConversations();
+  const [channels, setChannels] = useState<Map<string, RealtimeChannel>>(new Map());
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!supabase || !currentUser) {
-      setChannel(null);
+    if (!supabase || !currentUser || !conversations) {
+      // Clean up existing channels
+      setChannels((prevChannels) => {
+        prevChannels.forEach((channel) => {
+          supabase?.removeChannel(channel);
+        });
+        return new Map();
+      });
       setIsConnected(false);
       return;
     }
 
-    const userId = currentUser.id;
-    let currentChannel: RealtimeChannel;
+    const setupConversationSubscriptions = async () => {
+      setChannels((prevChannels) => {
+        const existingIds = new Set(prevChannels.keys());
+        const currentIds = new Set(conversations.map((c: Conversation) => c.id));
 
-    const setupRealtimeMessages = async () => {
-      try {
-        // TODO: Implement user-level message notifications
-        // This should subscribe to user:{userId}:notifications for 'new_conversation' events
-        // For now, create a dummy channel to prevent TypeScript errors
-        currentChannel = supabase.channel(`user:${userId}:messages-placeholder`);
-        setChannel(currentChannel);
-        setIsConnected(true);
+        // Find conversations to unsubscribe from (removed conversations)
+        const toUnsubscribe = [...existingIds].filter(id => !currentIds.has(id));
 
-        logger.info('MyMessagesRealtimeProvider: placeholder channel created', {
-          userId,
-        });
-      } catch (error) {
-        logger.error(
-          'MessageRealtimeProvider: failed to setup message subscription',
-          {
-            error,
-            userId,
-          },
-        );
-        setIsConnected(false);
-      }
+        // Find conversations to subscribe to (new conversations)
+        const toSubscribe = conversations.filter((c: Conversation) => !existingIds.has(c.id));
+
+        const newChannels = new Map(prevChannels);
+
+        // Unsubscribe from removed conversations
+        for (const conversationId of toUnsubscribe) {
+          const channel = newChannels.get(conversationId);
+          if (channel) {
+            logger.info('Unsubscribing from conversation messages', { conversationId });
+            supabase.removeChannel(channel);
+            newChannels.delete(conversationId);
+          }
+        }
+
+        // Subscribe to new conversations
+        for (const conversation of toSubscribe) {
+          logger.info('Subscribing to conversation messages', { conversationId: conversation.id });
+
+          createMessageSubscription({
+            supabase,
+            queryClient,
+            conversationId: conversation.id,
+          }).then((channel: RealtimeChannel) => {
+            setChannels((current) => {
+              const updated = new Map(current);
+              updated.set(conversation.id, channel);
+              return updated;
+            });
+
+            logger.debug('Successfully subscribed to conversation messages', {
+              conversationId: conversation.id
+            });
+          }).catch((error: Error) => {
+            logger.error('Failed to subscribe to conversation messages', {
+              error,
+              conversationId: conversation.id,
+            });
+          });
+        }
+
+        return newChannels;
+      });
+
+      setIsConnected(conversations.length > 0);
     };
 
-    setupRealtimeMessages();
+    setupConversationSubscriptions();
 
     return () => {
-      if (currentChannel) {
-        supabase?.removeChannel(currentChannel);
-        setChannel(null);
-        setIsConnected(false);
-      }
+      // Cleanup all channels on unmount
+      setChannels((currentChannels) => {
+        for (const channel of currentChannels.values()) {
+          supabase?.removeChannel(channel);
+        }
+        return new Map();
+      });
     };
-  }, [supabase, currentUser, queryClient]);
+  }, [supabase, currentUser, conversations, queryClient]);
 
   const contextValue: MessageRealtimeContextValue = {
-    channel,
+    channels,
     isConnected,
+    getChannel: (conversationId: string) => channels.get(conversationId),
   };
 
   return (

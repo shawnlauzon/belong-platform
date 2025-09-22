@@ -14,6 +14,8 @@ export interface BelongClientConfig {
   supabaseAnonKey: string;
   /** Mapbox public access token (optional) */
   mapboxPublicToken?: string;
+  /** Enable realtime subscriptions (default: true) */
+  enableRealtime?: boolean;
 }
 
 /**
