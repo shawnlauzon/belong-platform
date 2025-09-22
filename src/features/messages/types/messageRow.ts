@@ -27,7 +27,7 @@ export type ConversationRowWithLastMessage =
     conversation_participants: Array<{
       user_id: string;
     }>;
-    last_message?: MessageRow | null;
+    last_message: Array<MessageRow>;
   };
 
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];

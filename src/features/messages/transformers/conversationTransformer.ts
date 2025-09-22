@@ -10,7 +10,7 @@ export function toDomainConversation(
 ): Conversation {
   const lastMessage =
     'last_message' in row && row.last_message
-      ? toDomainMessage(row.last_message)
+      ? toDomainMessage(row.last_message[0])
       : null;
 
   return {
@@ -18,6 +18,7 @@ export function toDomainConversation(
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     lastMessage,
+    initiatorId: row.initiator_id!,
     participants: row.conversation_participants.map((p) => p.user_id),
   };
 }

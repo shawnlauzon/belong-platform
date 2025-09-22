@@ -47,6 +47,7 @@ export function createFakeConversation(
     createdAt: now,
     updatedAt: now,
     lastMessage: createFakeMessage(),
+    initiatorId: faker.string.uuid(),
     participants: [faker.string.uuid(), faker.string.uuid()],
     ...overrides,
   };
@@ -157,6 +158,7 @@ export function createFakeConversationRow(
     id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
+    initiator_id: faker.string.uuid(),
     ...overrides,
   };
 }
@@ -220,6 +222,7 @@ export function createFakeConversationWithParticipants(
     id: faker.string.uuid(),
     created_at: now,
     updated_at: now,
+    initiator_id: faker.string.uuid(),
     conversation_participants: [
       {
         user_id: currentUserId,

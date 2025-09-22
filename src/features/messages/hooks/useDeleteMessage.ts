@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
 import { deleteMessage } from '../api';
-import { conversationKeys, messageKeys } from '../queries';
+import { conversationKeys } from '../queries';
 import { DeleteMessageInput } from '../types';
 
 export function useDeleteMessage(conversationId: string) {
@@ -14,7 +14,7 @@ export function useDeleteMessage(conversationId: string) {
     onSuccess: () => {
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({
-        queryKey: messageKeys.list(conversationId),
+        queryKey: conversationKeys.messages(conversationId),
       });
 
       // Invalidate conversation to update last message if needed
