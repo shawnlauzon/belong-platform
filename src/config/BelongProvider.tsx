@@ -4,34 +4,11 @@ import { BelongClient, BelongClientConfig, createBelongClient } from './client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { logger } from '@/shared';
 import { useCurrentUser } from '@/features/auth';
-import { useConversations } from '@/features/messages/hooks/useConversations';
-import { useUserCommunities } from '@/features/communities';
 import { createNotificationSubscription } from '@/features/notifications/api/createNotificationSubscription';
-import { createMessageSubscription } from '@/features/messages/api/createMessageSubscription';
 
 // Client context for dependency injection following architecture pattern
 export const ClientContext = createContext<BelongClient | undefined>(undefined);
 
-// Contexts for realtime providers (for backward compatibility)
-interface MessageRealtimeContextValue {
-  channels: Map<string, RealtimeChannel>;
-  isConnected: boolean;
-  getChannel: (conversationId: string) => RealtimeChannel | undefined;
-}
-
-interface CommunityChatsContextValue {
-  channels: Map<string, RealtimeChannel>;
-  getChannel: (communityId: string) => RealtimeChannel | undefined;
-  isConnected: (communityId: string) => boolean;
-  connectedCommunities: string[];
-}
-
-const MessageRealtimeContext = createContext<
-  MessageRealtimeContextValue | undefined
->(undefined);
-const CommunityChatsContext = createContext<
-  CommunityChatsContextValue | undefined
->(undefined);
 /**
  * Props for the BelongProvider component.
  */
@@ -55,21 +32,10 @@ const RealtimeManager: React.FC<{
 }> = ({ children, client, enableRealtime }) => {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
-  const { data: conversations } = useConversations();
-  const { data: memberships } = useUserCommunities(currentUser?.id);
 
   // Channel states
   const [notificationChannel, setNotificationChannel] =
     useState<RealtimeChannel | null>(null);
-  const [messageChannels, setMessageChannels] = useState<
-    Map<string, RealtimeChannel>
-  >(new Map());
-  const [communityChannels, setCommunityChannels] = useState<
-    Map<string, RealtimeChannel>
-  >(new Map());
-  const [connectionStates, setConnectionStates] = useState<
-    Map<string, boolean>
-  >(new Map());
 
   // 1. Notification subscription
   useEffect(() => {
@@ -107,208 +73,18 @@ const RealtimeManager: React.FC<{
         setNotificationChannel(null);
       }
     };
+  // Note: notificationChannel is intentionally excluded to prevent infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     enableRealtime,
     client.supabase,
     currentUser,
     queryClient,
-    notificationChannel,
   ]);
 
-  // 2. Message subscriptions (dynamic based on conversations)
-  useEffect(() => {
-    if (!enableRealtime || !client.supabase || !currentUser || !conversations) {
-      setMessageChannels((prevChannels) => {
-        prevChannels.forEach((channel) => {
-          client.supabase?.removeChannel(channel);
-        });
-        return new Map();
-      });
-      return;
-    }
 
-    const setupMessageSubscriptions = async () => {
-      setMessageChannels((prevChannels) => {
-        const existingIds = new Set(prevChannels.keys());
-        const currentIds = new Set(conversations.map((c) => c.id));
 
-        // Unsubscribe from removed conversations
-        const toUnsubscribe = [...existingIds].filter(
-          (id) => !currentIds.has(id),
-        );
-        const toSubscribe = conversations.filter((c) => !existingIds.has(c.id));
-
-        const newChannels = new Map(prevChannels);
-
-        for (const conversationId of toUnsubscribe) {
-          const channel = newChannels.get(conversationId);
-          if (channel) {
-            logger.info('Unsubscribing from conversation messages', {
-              conversationId,
-            });
-            client.supabase.removeChannel(channel);
-            newChannels.delete(conversationId);
-          }
-        }
-
-        // Subscribe to new conversations
-        for (const conversation of toSubscribe) {
-          createMessageSubscription({
-            supabase: client.supabase,
-            queryClient,
-            conversationId: conversation.id,
-          })
-            .then((channel: RealtimeChannel) => {
-              setMessageChannels((current) =>
-                new Map(current).set(conversation.id, channel),
-              );
-            })
-            .catch((error: Error) => {
-              logger.error('Failed to subscribe to conversation messages', {
-                error,
-                conversationId: conversation.id,
-              });
-            });
-        }
-
-        return newChannels;
-      });
-    };
-
-    setupMessageSubscriptions();
-
-    return () => {
-      setMessageChannels((currentChannels) => {
-        for (const channel of currentChannels.values()) {
-          client.supabase?.removeChannel(channel);
-        }
-        return new Map();
-      });
-    };
-  }, [
-    enableRealtime,
-    client.supabase,
-    currentUser,
-    conversations,
-    queryClient,
-  ]);
-
-  // 3. Community chat subscriptions
-  useEffect(() => {
-    if (!enableRealtime || !client.supabase || !currentUser || !memberships) {
-      setCommunityChannels((prevChannels) => {
-        prevChannels.forEach((channel) => {
-          client.supabase?.removeChannel(channel);
-        });
-        return new Map();
-      });
-      setConnectionStates(new Map());
-      return;
-    }
-
-    const currentCommunityIds = new Set(memberships.map((m) => m.communityId));
-
-    const setupCommunitySubscriptions = async () => {
-      setCommunityChannels((prevChannels) => {
-        const existingCommunityIds = new Set(prevChannels.keys());
-        const toSubscribe = [...currentCommunityIds].filter(
-          (id) => !existingCommunityIds.has(id),
-        );
-        const toUnsubscribe = [...existingCommunityIds].filter(
-          (id) => !currentCommunityIds.has(id),
-        );
-
-        if (toSubscribe.length === 0 && toUnsubscribe.length === 0) {
-          return prevChannels;
-        }
-
-        const newChannels = new Map(prevChannels);
-
-        // Unsubscribe from left communities
-        for (const communityId of toUnsubscribe) {
-          const channel = newChannels.get(communityId);
-          if (channel) {
-            logger.info('Unsubscribing from community chat', { communityId });
-            client.supabase.removeChannel(channel);
-            newChannels.delete(communityId);
-          }
-        }
-
-        // Update connection states for unsubscribed communities
-        setConnectionStates((prevConnectionStates) => {
-          const updated = new Map(prevConnectionStates);
-          for (const communityId of toUnsubscribe) {
-            updated.delete(communityId);
-          }
-          return updated;
-        });
-
-        // Subscribe to new communities
-        for (const communityId of toSubscribe) {
-          createMessageSubscription({
-            supabase: client.supabase,
-            queryClient,
-            communityId,
-          })
-            .then((channel: RealtimeChannel) => {
-              setCommunityChannels((current) =>
-                new Map(current).set(communityId, channel),
-              );
-              setConnectionStates((current) =>
-                new Map(current).set(communityId, true),
-              );
-            })
-            .catch((error: Error) => {
-              logger.error('Failed to subscribe to community chat', {
-                error,
-                communityId,
-              });
-              setConnectionStates((current) =>
-                new Map(current).set(communityId, false),
-              );
-            });
-        }
-
-        return newChannels;
-      });
-    };
-
-    setupCommunitySubscriptions();
-
-    return () => {
-      setCommunityChannels((currentChannels) => {
-        for (const channel of currentChannels.values()) {
-          client.supabase?.removeChannel(channel);
-        }
-        return new Map();
-      });
-    };
-  }, [enableRealtime, client.supabase, currentUser, memberships, queryClient]);
-
-  // Context values for backward compatibility
-  const messageContextValue: MessageRealtimeContextValue = {
-    channels: messageChannels,
-    isConnected: messageChannels.size > 0,
-    getChannel: (conversationId: string) => messageChannels.get(conversationId),
-  };
-
-  const communityChatsContextValue: CommunityChatsContextValue = {
-    channels: communityChannels,
-    getChannel: (communityId: string) => communityChannels.get(communityId),
-    isConnected: (communityId: string) =>
-      connectionStates.get(communityId) ?? false,
-    connectedCommunities: Array.from(connectionStates.entries())
-      .filter(([, connected]) => connected)
-      .map(([communityId]) => communityId),
-  };
-
-  return (
-    <MessageRealtimeContext.Provider value={messageContextValue}>
-      <CommunityChatsContext.Provider value={communityChatsContextValue}>
-        {children}
-      </CommunityChatsContext.Provider>
-    </MessageRealtimeContext.Provider>
-  );
+  return <>{children}</>;
 };
 
 /**
@@ -428,23 +204,3 @@ export const BelongProvider: React.FC<BelongProviderProps> = ({
   );
 };
 
-// Export hooks for backward compatibility with existing realtime providers
-export const useMyMessagesRealtimeChannel = (): MessageRealtimeContextValue => {
-  const context = React.useContext(MessageRealtimeContext);
-  if (!context) {
-    throw new Error(
-      'useMyMessagesRealtimeChannel must be used within BelongProvider with realtime enabled',
-    );
-  }
-  return context;
-};
-
-export const useCommunityChatsChannels = (): CommunityChatsContextValue => {
-  const context = React.useContext(CommunityChatsContext);
-  if (!context) {
-    throw new Error(
-      'useCommunityChatsChannels must be used within BelongProvider with realtime enabled',
-    );
-  }
-  return context;
-};
