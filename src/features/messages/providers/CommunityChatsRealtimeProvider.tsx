@@ -78,10 +78,12 @@ export function CommunityChatsRealtimeProvider({
   useEffect(() => {
     if (!supabase || !currentUser || !memberships) {
       // Clear all channels if no user or memberships
-      channels.forEach((channel) => {
-        supabase?.removeChannel(channel);
+      setChannels((prevChannels) => {
+        prevChannels.forEach((channel) => {
+          supabase?.removeChannel(channel);
+        });
+        return new Map();
       });
-      setChannels(new Map());
       setConnectionStates(new Map());
       return;
     }
@@ -90,84 +92,111 @@ export function CommunityChatsRealtimeProvider({
     const currentCommunityIds = new Set(
       memberships.map((m) => m.communityId),
     );
-    const existingCommunityIds = new Set(channels.keys());
-
-    // Find communities to subscribe to (new memberships)
-    const toSubscribe = [...currentCommunityIds].filter(
-      (id) => !existingCommunityIds.has(id),
-    );
-
-    // Find communities to unsubscribe from (left communities)
-    const toUnsubscribe = [...existingCommunityIds].filter(
-      (id) => !currentCommunityIds.has(id),
-    );
 
     const setupCommunitySubscriptions = async () => {
-      try {
-        const newChannels = new Map(channels);
-        const newConnectionStates = new Map(connectionStates);
+      // Get current state values
+      setChannels((prevChannels) => {
+        const existingCommunityIds = new Set(prevChannels.keys());
 
-        // Unsubscribe from left communities
-        for (const communityId of toUnsubscribe) {
-          const channel = newChannels.get(communityId);
-          if (channel) {
-            logger.info('Unsubscribing from community chat', { communityId });
-            supabase.removeChannel(channel);
-            newChannels.delete(communityId);
-            newConnectionStates.delete(communityId);
-          }
+        // Find communities to subscribe to (new memberships)
+        const toSubscribe = [...currentCommunityIds].filter(
+          (id) => !existingCommunityIds.has(id),
+        );
+
+        // Find communities to unsubscribe from (left communities)
+        const toUnsubscribe = [...existingCommunityIds].filter(
+          (id) => !currentCommunityIds.has(id),
+        );
+
+        // Early return if no changes needed
+        if (toSubscribe.length === 0 && toUnsubscribe.length === 0) {
+          return prevChannels;
         }
 
-        // Subscribe to new communities
-        for (const communityId of toSubscribe) {
-          logger.info('Subscribing to community chat', { communityId, userId });
-          try {
-            const channel = await createMessageSubscription({
+        try {
+          const newChannels = new Map(prevChannels);
+
+          // Unsubscribe from left communities
+          for (const communityId of toUnsubscribe) {
+            const channel = newChannels.get(communityId);
+            if (channel) {
+              logger.info('Unsubscribing from community chat', { communityId });
+              supabase.removeChannel(channel);
+              newChannels.delete(communityId);
+            }
+          }
+
+          // Update connection states for unsubscribed communities
+          setConnectionStates((prevConnectionStates) => {
+            const updated = new Map(prevConnectionStates);
+            for (const communityId of toUnsubscribe) {
+              updated.delete(communityId);
+            }
+            return updated;
+          });
+
+          // Subscribe to new communities (async)
+          for (const communityId of toSubscribe) {
+            logger.info('Subscribing to community chat', { communityId, userId });
+            createMessageSubscription({
               supabase,
               queryClient,
               communityId,
+            }).then((channel) => {
+              setChannels((current) => {
+                const updated = new Map(current);
+                updated.set(communityId, channel);
+                return updated;
+              });
+              setConnectionStates((current) => {
+                const updated = new Map(current);
+                updated.set(communityId, true);
+                return updated;
+              });
+            }).catch((error) => {
+              logger.error(
+                'CommunityChatsRealtimeProvider: failed to setup community subscription',
+                {
+                  error,
+                  communityId,
+                  userId,
+                },
+              );
+              setConnectionStates((current) => {
+                const updated = new Map(current);
+                updated.set(communityId, false);
+                return updated;
+              });
             });
-
-            newChannels.set(communityId, channel);
-            newConnectionStates.set(communityId, true);
-          } catch (error) {
-            logger.error(
-              'CommunityChatsRealtimeProvider: failed to setup community subscription',
-              {
-                error,
-                communityId,
-                userId,
-              },
-            );
-            newConnectionStates.set(communityId, false);
           }
-        }
 
-        // Update state with new maps
-        setChannels(newChannels);
-        setConnectionStates(newConnectionStates);
-      } catch (error) {
-        logger.error(
-          'CommunityChatsRealtimeProvider: error managing subscriptions',
-          {
-            error,
-            userId,
-            toSubscribe,
-            toUnsubscribe,
-          },
-        );
-      }
+          return newChannels;
+        } catch (error) {
+          logger.error(
+            'CommunityChatsRealtimeProvider: error managing subscriptions',
+            {
+              error,
+              userId,
+              currentCommunityIds: Array.from(currentCommunityIds),
+            },
+          );
+          return prevChannels;
+        }
+      });
     };
 
     setupCommunitySubscriptions();
 
     return () => {
       // Cleanup all channels on unmount
-      for (const channel of channels.values()) {
-        supabase?.removeChannel(channel);
-      }
+      setChannels((currentChannels) => {
+        for (const channel of currentChannels.values()) {
+          supabase?.removeChannel(channel);
+        }
+        return currentChannels;
+      });
     };
-  }, [supabase, currentUser, memberships, queryClient, channels, connectionStates]);
+  }, [supabase, currentUser, memberships, queryClient]);
 
   const contextValue: CommunityChatsContextValue = {
     channels,
