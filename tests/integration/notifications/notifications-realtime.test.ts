@@ -10,7 +10,6 @@ import {
 } from '../helpers/test-data';
 import { createNotificationSubscription } from '@/features/notifications/api/createNotificationSubscription';
 import { notificationKeys } from '@/features/notifications/queries';
-import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createShoutout } from '@/features/shoutouts/api';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -18,9 +17,13 @@ import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
-import { signInAsUser } from '../messages/messaging-helpers';
+import {
+  createTestConversation,
+  signInAsUser,
+} from '../messages/messaging-helpers';
 import { vi } from 'vitest';
 import { shoutoutKeys } from '@/features/shoutouts/queries';
+import { conversationKeys } from '@/features/messages/queries';
 
 describe('Notification Subscription API Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -54,11 +57,10 @@ describe('Notification Subscription API Tests', () => {
     } as unknown as QueryClient;
 
     // Create subscription once for all tests
-    notificationChannel = await createNotificationSubscription({
+    notificationChannel = await createNotificationSubscription(
       supabase,
       queryClient,
-      userId: testUser.id,
-    });
+    );
 
     // Give subscription time to establish
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -71,7 +73,7 @@ describe('Notification Subscription API Tests', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(otherUserClient, anotherUser);
   });
 
   it('should create a notification subscription', async () => {
@@ -79,6 +81,7 @@ describe('Notification Subscription API Tests', () => {
   });
 
   it('should invalidate cache entries', async () => {
+    await signInAsUser(supabase, testUser);
     const resource = await createTestResource(
       supabase,
       testCommunity.id,
@@ -86,7 +89,7 @@ describe('Notification Subscription API Tests', () => {
     );
 
     // Switch to anotherUser and create a shoutout (triggers notification)
-    await signIn(otherUserClient, anotherUser.email, 'TestPass123!');
+    await signInAsUser(otherUserClient, anotherUser);
     await createShoutout(otherUserClient, {
       receiverId: testUser.id,
       message: `${TEST_PREFIX} subscription notification test`,
@@ -94,7 +97,7 @@ describe('Notification Subscription API Tests', () => {
       communityId: testCommunity.id,
     });
 
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
 
     // Wait for real-time update to process
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -106,13 +109,14 @@ describe('Notification Subscription API Tests', () => {
   });
 
   it('should update notification list when new notifications arrive', async () => {
+    await signInAsUser(supabase, testUser);
     const resource = await createTestResource(
       supabase,
       testCommunity.id,
       'offer',
     );
 
-    await signIn(otherUserClient, anotherUser.email, 'TestPass123!');
+    await signInAsUser(otherUserClient, anotherUser);
     await createShoutout(otherUserClient, {
       receiverId: testUser.id,
       message: `${TEST_PREFIX} count invalidation test`,
@@ -120,7 +124,7 @@ describe('Notification Subscription API Tests', () => {
       communityId: testCommunity.id,
     });
 
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
 
     // Wait for real-time update
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -132,13 +136,14 @@ describe('Notification Subscription API Tests', () => {
   });
 
   it('should update unread counts query when new notifications arrive', async () => {
+    await signInAsUser(supabase, testUser);
     const resource = await createTestResource(
       supabase,
       testCommunity.id,
       'offer',
     );
 
-    await signIn(otherUserClient, anotherUser.email, 'TestPass123!');
+    await signInAsUser(otherUserClient, anotherUser);
     await createShoutout(otherUserClient, {
       receiverId: testUser.id,
       message: `${TEST_PREFIX} count invalidation test`,
@@ -146,13 +151,26 @@ describe('Notification Subscription API Tests', () => {
       communityId: testCommunity.id,
     });
 
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
 
     // Wait for real-time update
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(
       notificationKeys.unreadCount(),
+      expect.any(Function),
+    );
+  });
+
+  it('should add new conversations when a conversation notification is received', async () => {
+    // Another user creates a conversation with me
+    await createTestConversation(otherUserClient, testUser.id);
+
+    // Wait for real-time update to process
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(
+      conversationKeys.list(),
       expect.any(Function),
     );
   });

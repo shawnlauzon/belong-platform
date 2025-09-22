@@ -4,6 +4,7 @@ import type {
   TrustPointsMetadata,
   TrustLevelMetadata,
   ResourceUpdatedMetadata,
+  ConversationMetadata,
 } from './notificationMetadata';
 import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
 
@@ -14,6 +15,7 @@ export type NotificationMetadata =
   | TrustPointsMetadata
   | TrustLevelMetadata
   | ResourceUpdatedMetadata
+  | ConversationMetadata
   | Record<string, never>;
 
 export interface Notification {
@@ -27,6 +29,7 @@ export interface Notification {
   claimId?: string;
   communityId?: string;
   shoutoutId?: string;
+  conversationId?: string;
 
   // Actor information
   actorId?: string;
@@ -49,6 +52,7 @@ export interface NotificationInput {
   claimId?: string;
   communityId?: string;
   shoutoutId?: string;
+  conversationId?: string;
   actorId?: string;
   metadata?: Record<string, unknown>;
 }
@@ -84,6 +88,9 @@ export const isTrustNotification = (type: NotificationType): boolean =>
 
 export const isMessageNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.MESSAGE_CREATED;
+
+export const isConversationNotification = (type: NotificationType): boolean =>
+  type === NOTIFICATION_TYPES.CONVERSATION_CREATED;
 
 // Notification permission groups
 export enum NotificationGroup {
@@ -131,6 +138,7 @@ export const getNotificationGroup = (
       return NotificationGroup.TRUST_RECOGNITION;
 
     case NOTIFICATION_TYPES.MESSAGE_CREATED:
+    case NOTIFICATION_TYPES.CONVERSATION_CREATED:
       return NotificationGroup.MESSAGES;
 
     default:

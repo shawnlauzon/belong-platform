@@ -6,7 +6,7 @@ import { logger } from '@/shared';
  * Gets the current authenticated user ID from Supabase auth
  * Lightweight function that returns only the user ID
  */
-export async function getCurrentUserId(
+export async function getAuthUserId(
   supabase: SupabaseClient<Database>,
 ): Promise<string | null> {
   try {

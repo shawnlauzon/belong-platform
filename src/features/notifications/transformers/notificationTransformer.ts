@@ -21,6 +21,7 @@ export function toDomainNotification(
     claimId: row.claim_id || undefined,
     communityId: row.community_id || undefined,
     shoutoutId: row.shoutout_id || undefined,
+    conversationId: row.conversation_id || undefined,
 
     // Actor information (basic + denormalized)
     actorId: row.actor_id || undefined,
