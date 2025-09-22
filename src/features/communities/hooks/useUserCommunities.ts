@@ -58,15 +58,16 @@ import { userCommunitiesKeys } from '../queries';
  * ```
  */
 export function useUserCommunities(
-  userId?: string,
+  userId: string,
   options?: Partial<UseQueryOptions<CommunityMembership[], Error>>,
 ) {
   const supabase = useSupabase();
 
   const query = useQuery<CommunityMembership[], Error>({
-    queryKey: userCommunitiesKeys.list(userId!),
-    queryFn: () => fetchUserCommunities(supabase, userId!),
+    queryKey: userCommunitiesKeys.list(userId),
+    queryFn: () => fetchUserCommunities(supabase, userId),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!userId,
     ...options,
   });
 

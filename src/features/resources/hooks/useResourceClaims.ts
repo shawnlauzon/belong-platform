@@ -53,6 +53,7 @@ export function useResourceClaims(
           : resourceClaimsKeys.all,
     queryFn: () => fetchResourceClaims(supabase, filter),
     staleTime: VERY_SHORT_CACHE_TIME,
+    enabled: !!filter,
     ...options,
   });
 }

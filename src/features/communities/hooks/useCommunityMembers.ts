@@ -47,6 +47,7 @@ export function useCommunityMembers(
     queryKey: communityMembersKeys.list(communityId),
     queryFn: () => fetchCommunityMemberships(supabase, communityId),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!communityId,
     ...options,
   });
 

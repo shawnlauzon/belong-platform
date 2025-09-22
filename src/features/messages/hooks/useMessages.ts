@@ -42,6 +42,7 @@ export function useMessages(
     queryKey: conversationKeys.messages(conversationId),
     queryFn: () => fetchMessages(supabase, { conversationId }),
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!conversationId,
     ...options,
   });
 

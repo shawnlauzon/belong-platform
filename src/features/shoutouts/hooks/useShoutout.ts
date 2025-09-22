@@ -55,6 +55,7 @@ export function useShoutout(
       return fetchShoutoutById(supabase, shoutoutId);
     },
     staleTime: STANDARD_CACHE_TIME,
+    enabled: !!shoutoutId,
     ...options,
   });
 
