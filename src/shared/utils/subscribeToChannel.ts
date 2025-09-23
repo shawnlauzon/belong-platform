@@ -45,7 +45,7 @@ export function subscribeToChannel(
     }
 
     // Check if this is a retry-worthy error state
-    if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
+    if (['CHANNEL_ERROR', 'TIMED_OUT'].includes(status)) {
       // Prevent concurrent retries
       if (isRetrying) {
         logger.debug('=== RETRY ALREADY IN PROGRESS ===', {

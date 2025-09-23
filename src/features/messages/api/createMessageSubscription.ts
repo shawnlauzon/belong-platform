@@ -36,6 +36,10 @@ export async function createMessageSubscription({
     throw new Error('Provide either conversationId or communityId, not both');
   }
 
+  if (!supabase || !queryClient) {
+    throw new Error('Supabase client or query client not available');
+  }
+
   const channelName = conversationId
     ? messagesChannelForConversation(conversationId)
     : messagesChannelForCommunity(communityId!);
