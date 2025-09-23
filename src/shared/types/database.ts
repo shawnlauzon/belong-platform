@@ -1195,7 +1195,6 @@ export type Database = {
           community_avatar_url: string | null
           community_id: string | null
           community_name: string | null
-          conversation_id: string | null
           created_at: string | null
           id: string | null
           metadata: Json | null
@@ -1229,20 +1228,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations_with_last_message"
             referencedColumns: ["id"]
           },
           {
@@ -3353,8 +3338,7 @@ export type Database = {
         | "claim.created"
         | "resource.created"
         | "event.created"
-        | "shoutout.received"
-        | "shoutout.sent"
+        | "shoutout.created"
         | "connection.requested"
         | "connection.accepted"
         | "claim.cancelled"
@@ -3541,8 +3525,7 @@ export const Constants = {
         "claim.created",
         "resource.created",
         "event.created",
-        "shoutout.received",
-        "shoutout.sent",
+        "shoutout.created",
         "connection.requested",
         "connection.accepted",
         "claim.cancelled",

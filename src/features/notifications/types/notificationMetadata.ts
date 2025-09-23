@@ -36,7 +36,7 @@ export function hasMetadata(type: NotificationType): boolean {
   return (
     type === NOTIFICATION_TYPES.COMMENT_CREATED ||
     type === NOTIFICATION_TYPES.COMMENT_REPLY ||
-    type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
+    type === NOTIFICATION_TYPES.SHOUTOUT_CREATED ||
     type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
     type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
     type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
@@ -67,7 +67,7 @@ export function getTypedMetadata(
             : '',
       };
 
-    case NOTIFICATION_TYPES.SHOUTOUT_RECEIVED:
+    case NOTIFICATION_TYPES.SHOUTOUT_CREATED:
       return {
         content_preview:
           typeof metadata.content_preview === 'string'

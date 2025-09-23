@@ -125,3 +125,4 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - Remove old code when it is no longer used
 - When you believe you have fixed a problem, run the test to confirm before continuing
 - Use supabase-local mcp for supabase commands except for gen:db-types to generate types into database.ts
+- In migrations, always start with the current definition from the live database. DO NOT RELY ON OLD MIGRATIONS.
