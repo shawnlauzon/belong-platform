@@ -1,12 +1,8 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type {
-  SupabaseClient,
-  RealtimeChannel,
-  REALTIME_SUBSCRIBE_STATES,
-} from '@supabase/supabase-js';
+import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { communityChatKeys, conversationKeys } from '../queries';
-import { logger } from '@/shared';
+import { logger, subscribeToChannel } from '@/shared';
 import {
   Message,
   RealtimeBroadcastMessage as RealtimeBroadcastEvent,
@@ -44,15 +40,7 @@ export async function createMessageSubscription({
     ? messagesChannelForConversation(conversationId)
     : messagesChannelForCommunity(communityId!);
 
-  const isUserChannel = !!conversationId;
-
-  logger.info('=== CREATING MESSAGE SUBSCRIPTION ===', {
-    conversationId,
-    communityId,
-    channelName,
-    isUserChannel,
-  });
-
+  logger.info('=== CREATING MESSAGE SUBSCRIPTION ===', channelName);
   await supabase.realtime.setAuth();
   const channel = supabase
     .channel(channelName, {
@@ -60,12 +48,11 @@ export async function createMessageSubscription({
     })
     .on('broadcast', { event: '*' }, async (event: RealtimeBroadcastEvent) => {
       try {
-        logger.debug('💬 === BROADCAST MESSAGE RECEIVED ===', {
+        logger.debug(
+          '💬 === BROADCAST MESSAGE RECEIVED ===',
           channelName,
           event,
-          conversationId,
-          communityId,
-        });
+        );
 
         const message: Message = {
           id: event.payload.message_id,
@@ -101,26 +88,10 @@ export async function createMessageSubscription({
           communityId,
         });
       }
-    })
-    .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
-      logger.info('=== MESSAGE SUBSCRIPTION STATUS CHANGE ===', {
-        channelName,
-        status,
-        conversationId,
-        communityId,
-      });
-      if (err) {
-        logger.error('=== MESSAGE SUBSCRIPTION ERROR ===', {
-          channelName,
-          error: err,
-          conversationId,
-          communityId,
-        });
-        throw err;
-      }
     });
 
-  return channel;
+  // Add retry logic and return the channel
+  return subscribeToChannel(channel);
 
   function handleCreateReceived(message: Message) {
     logger.debug('Handling message created', message);

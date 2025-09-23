@@ -1,14 +1,10 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type {
-  SupabaseClient,
-  RealtimeChannel,
-  REALTIME_SUBSCRIBE_STATES,
-} from '@supabase/supabase-js';
+import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { notificationKeys } from '../queries';
 import { toDomainNotification } from '../transformers/';
 import type { NotificationDetail } from '../types/';
-import { logger } from '@/shared';
+import { logger, subscribeToChannel } from '@/shared';
 import { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import { ConversationRowWithParticipants } from '@/features/messages/types/messageRow';
 import type { Conversation } from '@/features/messages/types';
@@ -28,6 +24,7 @@ import { trustScoreKeys } from '@/features/trust-scores/queries';
 import { NOTIFICATION_TYPES } from '../constants';
 import { getAuthUserId } from '@/features/auth/api';
 import { fetchConversation } from '@/features/messages/api';
+import { notificationChannelForUser } from '@/features/messages/utils';
 
 export interface CreateNotificationSubscriptionParams {
   supabase: SupabaseClient<Database>;
@@ -49,10 +46,11 @@ export async function createNotificationSubscription(
   queryClient: QueryClient,
 ): Promise<RealtimeChannel> {
   const userId = await getAuthUserId(supabase);
-  logger.info('=== CREATING NOTIFICATION SUBSCRIPTION ===', {
-    userId,
-    channelName: `user:${userId}:notifications`,
-  });
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  const channelName = notificationChannelForUser(userId);
 
   await supabase.realtime.setAuth();
   const channel = supabase
@@ -64,10 +62,11 @@ export async function createNotificationSubscription(
       { event: '*' },
       async (message: RealtimeBroadcastMessage) => {
         try {
-          logger.debug('🔔 === BROADCAST MESSAGE RECEIVED ===', {
+          logger.debug(
+            '🔔 === BROADCAST MESSAGE RECEIVED ===',
+            channelName,
             message,
-            userId,
-          });
+          );
 
           // All notification events contain NotificationDetailsRow payload
           const notificationRow = message.payload as NotificationDetailsRow;
@@ -139,22 +138,10 @@ export async function createNotificationSubscription(
           );
         }
       },
-    )
-    .subscribe((status: REALTIME_SUBSCRIBE_STATES, err?: Error) => {
-      logger.info('=== SUBSCRIPTION STATUS CHANGE ===', {
-        status,
-        userId,
-      });
-      if (err) {
-        logger.error('=== SUBSCRIPTION ERROR ===', {
-          error: err,
-          userId,
-        });
-        throw err;
-      }
-    });
+    );
 
-  return channel;
+  // Add retry logic and return the channel
+  return subscribeToChannel(channel);
 
   function handleNewNotification(notificationRow: NotificationDetailsRow) {
     // Transform the notification data (no need to fetch since it's in the payload)
