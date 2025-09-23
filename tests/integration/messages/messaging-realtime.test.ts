@@ -59,6 +59,12 @@ describe('Message Subscription Tests', () => {
       getQueryData: vi.fn().mockReturnValue(0),
       getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
     } as unknown as QueryClient;
+    otherQueryClient = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined),
+      setQueryData: vi.fn().mockResolvedValue(undefined),
+      getQueryData: vi.fn().mockReturnValue(0),
+      getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
+    } as unknown as QueryClient;
 
     // Subscription for the channel user:testUser.id:messages
     testUserChannel = await createMessageSubscription({
@@ -66,10 +72,18 @@ describe('Message Subscription Tests', () => {
       queryClient,
       conversationId: testConversation.id,
     });
+
+    await signInAsUser(otherUserClient, otherUser);
+    otherUserChannel = await createMessageSubscription({
+      supabase: otherUserClient,
+      queryClient: otherQueryClient,
+      conversationId: testConversation.id,
+    });
   });
 
   afterAll(async () => {
     await testUserChannel?.unsubscribe();
+    await otherUserChannel?.unsubscribe();
     await cleanupAllTestData();
   });
 
