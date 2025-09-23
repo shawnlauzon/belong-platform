@@ -30,6 +30,13 @@ export type ConversationRowWithLastMessage =
     last_message: Array<MessageRow>;
   };
 
+export type ConversationRowFromView =
+  Database['public']['Views']['conversations_with_last_message']['Row'] & {
+    conversation_participants: Array<{
+      user_id: string;
+    }>;
+  };
+
 export type MessageInsert = Database['public']['Tables']['messages']['Insert'];
 export type MessageUpdate = Database['public']['Tables']['messages']['Update'];
 export type MessageRow = Database['public']['Tables']['messages']['Row'];

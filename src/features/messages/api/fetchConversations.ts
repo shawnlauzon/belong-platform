@@ -1,7 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { Conversation } from '../types';
-import { ConversationRowWithLastMessage } from '../types/messageRow';
 import { toDomainConversation } from '../transformers';
 import { logger } from '../../../shared';
 
@@ -31,33 +30,16 @@ export async function fetchConversations(
 
   const conversationIds = participantData.map((p) => p.conversation_id);
 
-  // Now get the full conversations with all participants and last message
-  const { data, error } = (await supabase
-    .from('conversations')
+  // Now get the full conversations with all participants and last message using the view
+  const { data, error } = await supabase
+    .from('conversations_with_last_message')
     .select(
       `
       *,
-      conversation_participants!inner(user_id),
-      last_message:messages(
-        id,
-        content,
-        sender_id,
-        created_at,
-        is_deleted,
-        conversation_id,
-        community_id,
-        encryption_version,
-        is_edited,
-        updated_at
-      )
+      conversation_participants!inner(user_id)
     `,
     )
-    .in('id', conversationIds)
-    .order('last_message.updated_at', { ascending: false })
-    .limit(1, { referencedTable: 'last_message' })) as {
-    data: ConversationRowWithLastMessage[];
-    error: Error | null;
-  };
+    .in('id', conversationIds);
 
   if (error) {
     logger.error('Error fetching conversations', { error });
@@ -68,5 +50,12 @@ export async function fetchConversations(
     return [];
   }
 
-  return data.map(toDomainConversation);
+  // Sort by last message time in JavaScript (most recent first)
+  const sortedData = data.sort((a, b) => {
+    const aTime = a.last_message_updated_at ? new Date(a.last_message_updated_at).getTime() : 0;
+    const bTime = b.last_message_updated_at ? new Date(b.last_message_updated_at).getTime() : 0;
+    return bTime - aTime; // Descending order (most recent first)
+  });
+
+  return sortedData.map(toDomainConversation);
 }

@@ -262,6 +262,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_with_last_message"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "conversation_participants_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -400,6 +407,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_with_last_message"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
@@ -491,6 +505,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_with_last_message"
             referencedColumns: ["id"]
           },
           {
@@ -1077,6 +1098,46 @@ export type Database = {
       }
     }
     Views: {
+      conversations_with_last_message: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          initiator_id: string | null
+          last_message_community_id: string | null
+          last_message_content: string | null
+          last_message_created_at: string | null
+          last_message_encryption_version: number | null
+          last_message_id: string | null
+          last_message_is_deleted: boolean | null
+          last_message_is_edited: boolean | null
+          last_message_sender_id: string | null
+          last_message_updated_at: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_community_id_fkey"
+            columns: ["last_message_community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["last_message_sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["last_message_sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -1175,6 +1236,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_with_last_message"
             referencedColumns: ["id"]
           },
           {
