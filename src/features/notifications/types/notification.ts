@@ -78,7 +78,7 @@ export const isResourceNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT;
 
 export const isSocialNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
+  type === NOTIFICATION_TYPES.SHOUTOUT_CREATED ||
   type === NOTIFICATION_TYPES.CONNECTION_ACCEPTED;
 
 export const isTrustNotification = (type: NotificationType): boolean =>
@@ -109,7 +109,7 @@ export const getNotificationGroup = (
   switch (type) {
     case NOTIFICATION_TYPES.COMMENT_CREATED:
     case NOTIFICATION_TYPES.COMMENT_REPLY:
-    case NOTIFICATION_TYPES.SHOUTOUT_RECEIVED:
+    case NOTIFICATION_TYPES.SHOUTOUT_CREATED:
     case NOTIFICATION_TYPES.CONNECTION_ACCEPTED:
       return NotificationGroup.SOCIAL_INTERACTIONS;
 

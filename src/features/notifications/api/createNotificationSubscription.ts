@@ -81,7 +81,7 @@ export async function createNotificationSubscription(
               handleCommentNotification(notificationRow);
               break;
 
-            case NOTIFICATION_TYPES.SHOUTOUT_RECEIVED:
+            case NOTIFICATION_TYPES.SHOUTOUT_CREATED:
               handleShoutoutNotification(notificationRow);
               break;
 

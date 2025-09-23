@@ -91,7 +91,7 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         sender.id,
         community.id,
-        NOTIFICATION_TYPES.SHOUTOUT_SENT,
+        NOTIFICATION_TYPES.SHOUTOUT_CREATED,
         POINTS_CONFIG.SHOUTOUT_SENT,
         'Shoutout sent log',
       );
@@ -127,7 +127,7 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         receiver.id,
         community.id,
-        NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
+        NOTIFICATION_TYPES.SHOUTOUT_CREATED,
         POINTS_CONFIG.SHOUTOUT_RECEIVED,
         'Shoutout received log',
       );
