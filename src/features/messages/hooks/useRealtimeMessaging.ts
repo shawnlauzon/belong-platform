@@ -31,13 +31,24 @@ import { createMessageSubscription } from '../api';
  * }
  * ```
  */
-export function useRealtimeCommunityChat(communityId: string) {
+export function useRealtimeMessaging({
+  communityId,
+  conversationId,
+}: {
+  communityId?: string;
+  conversationId?: string;
+}) {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  // Validate: exactly one must be provided
+  if ((!conversationId && !communityId) || (conversationId && communityId)) {
+    throw new Error('Provide either conversationId or communityId, not both');
+  }
+
   useEffect(() => {
-    if (!communityId || !supabase) {
+    if (!supabase) {
       return;
     }
 
@@ -45,12 +56,15 @@ export function useRealtimeCommunityChat(communityId: string) {
 
     const setupSubscription = async () => {
       try {
-        logger.info('Setting up community channel subscription', { communityId });
+        logger.info('Setting up community channel subscription', {
+          communityId,
+        });
 
         const channel = await createMessageSubscription({
           supabase,
           queryClient,
           communityId,
+          conversationId,
         });
 
         if (!isCancelled) {
@@ -72,14 +86,17 @@ export function useRealtimeCommunityChat(communityId: string) {
     return () => {
       isCancelled = true;
       if (channelRef.current) {
-        logger.info('Cleaning up community channel subscription', { communityId });
+        logger.info('Cleaning up community channel subscription', {
+          communityId,
+        });
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [communityId, supabase, queryClient]);
+  }, [communityId, conversationId, supabase, queryClient]);
 
   return {
     isConnected: !!channelRef.current,
+    channel: channelRef.current,
   };
 }
