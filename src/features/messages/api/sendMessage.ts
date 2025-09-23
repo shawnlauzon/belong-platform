@@ -31,35 +31,39 @@ export async function sendMessage(
     ? messagesTopicForConversation(input.conversationId)
     : messagesTopicForCommunity(input.communityId!);
 
-  const channel =
-    supabase.getChannels().find((c: RealtimeChannel) => c.topic === topic) ??
-    supabase.channel(topic, {
+  let channel = supabase
+    .getChannels()
+    .find((c: RealtimeChannel) => c.topic === `realtime:${topic}`);
+  if (channel) {
+    logger.debug('Found existing channel, sending with websockets', topic);
+  } else {
+    channel = supabase.channel(topic, {
       config: { private: true },
     });
-
-  const messageId = uuidv4();
-  console.log('messageId', messageId);
+    logger.debug('Created channel, sending with HTTP', topic);
+  }
 
   const messageEvent: RealtimeBroadcastMessage = {
     event: 'message.created',
     type: 'broadcast',
     payload: {
-      senderId: user.id,
-      messageId,
+      sender_id: user.id,
+      message_id: uuidv4(),
       content: input.content,
-      sentAt: new Date(),
+      sent_at: new Date().toISOString(),
     },
   };
 
   channel
     .send(messageEvent)
+    .then(() => logger.debug('Message sent via realtime', messageEvent))
     .catch((err: Error) =>
       console.error(`Failed to send message ${input.content} to ${topic}`, err),
     );
 
   const { data, error } = (await supabase
     .from('messages')
-    .insert({ ...toMessageRow(input), id: messageId })
+    .insert({ ...toMessageRow(input), id: messageEvent.payload.message_id })
     .select('*')
     .single()) as {
     data: MessageRow;

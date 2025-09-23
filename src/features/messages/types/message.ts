@@ -11,17 +11,17 @@ export interface Message {
   updatedAt: Date;
 }
 
-export interface MessagePayload {
-  senderId: string;
-  messageId: string;
-  content: string;
-  sentAt: Date;
-}
-
 export interface RealtimeBroadcastMessage {
   type: 'broadcast';
   event: string;
   payload: MessagePayload;
+}
+
+export interface MessagePayload {
+  sender_id: string;
+  message_id: string;
+  content: string;
+  sent_at: string;
 }
 
 export interface SendMessageInput {

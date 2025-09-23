@@ -25,6 +25,9 @@ export interface CreateMessageSubscriptionParams {
 
 /**
  * Creates a subscription for new messages in a given conversation.
+ *
+ * Messages are sent manually via the sendMessage function,
+ * as opposed to notifications which are sent by supabase
  */
 export async function createMessageSubscription({
   supabase,
@@ -65,16 +68,16 @@ export async function createMessageSubscription({
         });
 
         const message: Message = {
-          id: event.payload.messageId,
+          id: event.payload.message_id,
           conversationId,
           communityId,
-          senderId: event.payload.senderId,
+          senderId: event.payload.sender_id,
           content: event.payload.content,
           isEdited: event.event === 'message.updated',
           isDeleted: event.event === 'message.deleted',
           encryptionVersion: 1,
-          createdAt: event.payload.sentAt,
-          updatedAt: event.payload.sentAt,
+          createdAt: new Date(event.payload.sent_at),
+          updatedAt: new Date(event.payload.sent_at),
         };
 
         switch (event.event) {

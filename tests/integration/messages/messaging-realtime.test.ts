@@ -59,6 +59,12 @@ describe('Message Subscription Tests', () => {
       getQueryData: vi.fn().mockReturnValue(0),
       getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
     } as unknown as QueryClient;
+    otherQueryClient = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined),
+      setQueryData: vi.fn().mockResolvedValue(undefined),
+      getQueryData: vi.fn().mockReturnValue(0),
+      getQueryState: vi.fn().mockReturnValue({ isInvalidated: true }),
+    } as unknown as QueryClient;
 
     // Subscription for the channel user:testUser.id:messages
     testUserChannel = await createMessageSubscription({
@@ -66,10 +72,24 @@ describe('Message Subscription Tests', () => {
       queryClient,
       conversationId: testConversation.id,
     });
+<<<<<<<< HEAD:tests/integration/messages/conversation-realtime.test.ts
+========
+
+    await signInAsUser(otherUserClient, otherUser);
+    otherUserChannel = await createMessageSubscription({
+      supabase: otherUserClient,
+      queryClient: otherQueryClient,
+      conversationId: testConversation.id,
+    });
+>>>>>>>> belong-platform-qa:tests/integration/messages/messaging-realtime.test.ts
   });
 
   afterAll(async () => {
     await testUserChannel?.unsubscribe();
+<<<<<<<< HEAD:tests/integration/messages/conversation-realtime.test.ts
+========
+    await otherUserChannel?.unsubscribe();
+>>>>>>>> belong-platform-qa:tests/integration/messages/messaging-realtime.test.ts
     await cleanupAllTestData();
   });
 
