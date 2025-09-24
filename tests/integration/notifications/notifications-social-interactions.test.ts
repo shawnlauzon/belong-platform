@@ -156,13 +156,13 @@ describe('Social Interactions Notifications', () => {
       expect(notifications.length).toBeGreaterThan(0);
       const shoutoutNotification = notifications.find(
         (n) =>
-          n.type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED &&
+          n.type === NOTIFICATION_TYPES.SHOUTOUT_CREATED &&
           n.communityId === testCommunity.id &&
           n.actorId === interactingUser.id,
       );
       expect(shoutoutNotification).toBeDefined();
       expect(shoutoutNotification).toMatchObject({
-        type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
+        type: NOTIFICATION_TYPES.SHOUTOUT_CREATED,
         communityId: testCommunity.id,
         actorId: interactingUser.id,
         readAt: null,

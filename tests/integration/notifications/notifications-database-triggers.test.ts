@@ -164,7 +164,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.SHOUTOUT_RECEIVED)
+      .eq('type', NOTIFICATION_TYPES.SHOUTOUT_CREATED)
       .eq('actor_id', communityMember.id);
 
     expect(error).toBeNull();
@@ -173,7 +173,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
+      type: NOTIFICATION_TYPES.SHOUTOUT_CREATED,
       shoutout_id: shoutout.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,

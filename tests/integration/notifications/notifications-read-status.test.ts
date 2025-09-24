@@ -394,7 +394,7 @@ describe('Notification Read Status', () => {
         (n) => n.type === NOTIFICATION_TYPES.COMMENT_CREATED,
       );
       const shoutoutNotification = unreadNotifications.find(
-        (n) => n.type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED,
+        (n) => n.type === NOTIFICATION_TYPES.SHOUTOUT_CREATED,
       );
 
       expect(commentNotification).toBeDefined();
