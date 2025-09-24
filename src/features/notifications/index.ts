@@ -10,4 +10,3 @@ export {
   useUpdateNotificationPreferences,
 } from './hooks/useNotificationPreferences';
 
-export * from './providers';

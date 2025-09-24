@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { fetchNotificationUnreadCount } from '../api/fetchNotificationUnreadCount';
 import { notificationKeys } from '../queries';
-import { STANDARD_CACHE_TIME } from '@/config';
 
 interface UseNotificationUnreadCountResult {
   data: number | undefined;
@@ -14,7 +13,7 @@ interface UseNotificationUnreadCountResult {
 /**
  * Hook for fetching unread notification count.
  *
- * Real-time updates are handled by NotificationRealtimeProvider.
+ * Updates are handled by polling every 5 seconds.
  *
  * @returns Query state for unread notification count
  *
@@ -37,7 +36,7 @@ export function useNotificationUnreadCount(): UseNotificationUnreadCountResult {
     queryKey: notificationKeys.unreadCount(),
     queryFn: () => fetchNotificationUnreadCount(supabase),
     enabled: !!supabase,
-    staleTime: STANDARD_CACHE_TIME,
+    refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
   return {

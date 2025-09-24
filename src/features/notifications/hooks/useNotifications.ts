@@ -8,7 +8,7 @@ import { notificationKeys } from '../queries';
 /**
  * Hook for fetching notifications.
  * 
- * Real-time updates are handled by NotificationRealtimeProvider.
+ * Updates are handled by polling every 5 seconds.
  * 
  * @param options - Optional React Query options
  * @returns Query state for notifications
@@ -59,7 +59,7 @@ export function useNotifications(
       return data;
     },
     enabled: !!supabase && !!currentUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes - real-time updates handle freshness
+    refetchInterval: 5000, // Poll every 5 seconds for updates
     ...options,
   });
 

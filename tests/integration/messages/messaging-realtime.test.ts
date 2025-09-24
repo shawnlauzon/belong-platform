@@ -22,7 +22,6 @@ import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
 import type { Conversation } from '@/features/messages/types';
 import { vi } from 'vitest';
-import { createNotificationSubscription } from '@/features/notifications/api';
 
 describe('Message Subscription Tests', () => {
   let supabase: SupabaseClient<Database>;

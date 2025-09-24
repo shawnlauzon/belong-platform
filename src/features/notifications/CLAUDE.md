@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive notification system for the Belong Platform supporting badge counts, real-time notifications, and user preference controls across 19 notification types. The system is fully implemented with database triggers, React Query hooks, and granular user controls.
+A comprehensive notification system for the Belong Platform supporting badge counts, polling-based notifications, and user preference controls across 19 notification types. The system is fully implemented with database triggers, React Query hooks with 5-second polling, and granular user controls.
 
 ## Notification Types & User Controls
 
@@ -132,4 +132,10 @@ direct_messages               BOOLEAN DEFAULT TRUE
 community_messages            BOOLEAN DEFAULT TRUE
 ```
 
-Channel: `user:{userId}:notifications` - 'new_notification' event with the notification object
+## Polling Implementation
+
+The notification system uses React Query polling with a 5-second interval instead of real-time WebSocket connections for improved reliability and durability:
+
+- `useNotifications` hook polls for notification updates every 5 seconds
+- `useNotificationUnreadCount` hook polls for unread count updates every 5 seconds
+- No WebSocket or real-time channel dependencies required

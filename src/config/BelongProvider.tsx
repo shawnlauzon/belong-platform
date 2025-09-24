@@ -1,10 +1,6 @@
-import React, { useEffect, useMemo, createContext, useState } from 'react';
+import React, { useEffect, useMemo, createContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { BelongClient, BelongClientConfig, createBelongClient } from './client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { logger } from '@/shared';
-import { useCurrentUser } from '@/features/auth';
-import { createNotificationSubscription } from '@/features/notifications/api/createNotificationSubscription';
 
 // Client context for dependency injection following architecture pattern
 export const ClientContext = createContext<BelongClient | undefined>(undefined);
@@ -21,7 +17,7 @@ interface BelongProviderProps {
 
 /**
  * Internal realtime manager that handles all real-time subscriptions.
- * Consolidates notification, message, and community chat subscriptions.
+ * Note: Notification subscriptions have been replaced with polling.
  *
  * @internal
  */
@@ -29,61 +25,8 @@ const RealtimeManager: React.FC<{
   children: React.ReactNode;
   client: BelongClient;
   enableRealtime: boolean;
-}> = ({ children, client, enableRealtime }) => {
-  const queryClient = useQueryClient();
-  const { data: currentUser } = useCurrentUser();
-
-  // Channel states
-  const [notificationChannel, setNotificationChannel] =
-    useState<RealtimeChannel | null>(null);
-
-  // 1. Notification subscription
-  useEffect(() => {
-    if (!enableRealtime || !client.supabase || !currentUser) {
-      if (notificationChannel) {
-        client.supabase?.removeChannel(notificationChannel);
-        setNotificationChannel(null);
-      }
-      return;
-    }
-
-    const setupNotifications = async () => {
-      try {
-        const channel = await createNotificationSubscription(
-          client.supabase,
-          queryClient,
-        );
-        setNotificationChannel(channel);
-        logger.info('Notification subscription established', {
-          userId: currentUser.id,
-        });
-      } catch (error) {
-        logger.error('Failed to setup notification subscription', {
-          error,
-          userId: currentUser.id,
-        });
-      }
-    };
-
-    setupNotifications();
-
-    return () => {
-      if (notificationChannel) {
-        client.supabase?.removeChannel(notificationChannel);
-        setNotificationChannel(null);
-      }
-    };
-  // Note: notificationChannel is intentionally excluded to prevent infinite loop
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    enableRealtime,
-    client.supabase,
-    currentUser,
-    queryClient,
-  ]);
-
-
-
+}> = ({ children }) => {
+  // Notifications now use polling instead of real-time subscriptions
   return <>{children}</>;
 };
 

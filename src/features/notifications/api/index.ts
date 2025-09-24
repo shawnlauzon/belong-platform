@@ -4,4 +4,3 @@ export { markAsRead as markNotificationAsRead } from './markAsRead';
 export { deleteNotification } from './deleteNotification';
 export { fetchPreferences } from './fetchPreferences';
 export { updatePreferences } from './updatePreferences';
-export { createNotificationSubscription } from './createNotificationSubscription';
