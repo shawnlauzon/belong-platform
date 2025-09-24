@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { communityChatKeys, conversationKeys } from '../queries';
-import { logger, subscribeToChannel } from '@/shared';
+import { logger } from '@/shared';
 import {
   Message,
   RealtimeBroadcastMessage as RealtimeBroadcastEvent,
@@ -94,8 +94,8 @@ export async function createMessageSubscription({
       }
     });
 
-  // Add retry logic and return the channel
-  return subscribeToChannel(channel);
+  // Subscribe and return the channel
+  return channel.subscribe();
 
   function handleCreateReceived(message: Message) {
     logger.debug('Handling message created', message);
