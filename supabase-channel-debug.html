@@ -1,1169 +1,1415 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Supabase Dual-Client Chat Debug</title>
     <style>
-        body {
-            font-family: monospace;
-            margin: 0;
-            padding: 20px;
-            background: #0a0a0a;
-            color: #00ff00;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #00ffff;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .config-section {
-            background: #1a1a1a;
-            padding: 20px;
-            border: 1px solid #333;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .clients-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .client-section {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .client1 { border-left: 4px solid #00ff00; }
-        .client2 { border-left: 4px solid #ff6600; }
+      body {
+        font-family: monospace;
+        margin: 0;
+        padding: 20px;
+        background: #0a0a0a;
+        color: #00ff00;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #00ffff;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .config-section {
+        background: #1a1a1a;
+        padding: 20px;
+        border: 1px solid #333;
+        margin-bottom: 20px;
+        border-radius: 5px;
+      }
+      .clients-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .client-section {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .client1 {
+        border-left: 4px solid #00ff00;
+      }
+      .client2 {
+        border-left: 4px solid #ff6600;
+      }
 
-        .subscription-status {
-            background: #0a0a0a;
-            border: 1px solid #444;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 3px;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 11px;
-            line-height: 1.3;
-        }
-        .status-entry {
-            margin: 2px 0;
-            font-family: monospace;
-        }
-        .status-subscribed { color: #00ff00; }
-        .status-channel_error { color: #ff0000; }
-        .status-timed_out { color: #ffaa00; }
-        .status-closed { color: #ff6600; }
-        .status-subscribing { color: #ffff00; }
-        .status-creating { color: #888; }
-        .status-setting_auth { color: #00aaff; }
-        .status-auth_set { color: #00ff88; }
-        .status-auth_error { color: #ff0000; }
-        .status-error { color: #ff0000; }
-        .status-disconnecting { color: #ffaa00; }
-        .status-removed { color: #888; }
+      .subscription-status {
+        background: #0a0a0a;
+        border: 1px solid #444;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 3px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 11px;
+        line-height: 1.3;
+      }
+      .status-entry {
+        margin: 2px 0;
+        font-family: monospace;
+      }
+      .status-subscribed {
+        color: #00ff00;
+      }
+      .status-channel_error {
+        color: #ff0000;
+      }
+      .status-timed_out {
+        color: #ffaa00;
+      }
+      .status-closed {
+        color: #ff6600;
+      }
+      .status-subscribing {
+        color: #ffff00;
+      }
+      .status-creating {
+        color: #888;
+      }
+      .status-setting_auth {
+        color: #00aaff;
+      }
+      .status-auth_set {
+        color: #00ff88;
+      }
+      .status-auth_error {
+        color: #ff0000;
+      }
+      .status-error {
+        color: #ff0000;
+      }
+      .status-disconnecting {
+        color: #ffaa00;
+      }
+      .status-removed {
+        color: #888;
+      }
 
-        .config-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .config-section-compact {
-            background: #1a1a1a;
-            padding: 15px;
-            border: 1px solid #333;
-            border-radius: 5px;
-        }
-        .config-section-compact h4 {
-            margin: 0 0 10px 0;
-            color: #ffff00;
-            font-size: 14px;
-        }
-        .config-status {
-            background: #1a3322;
-            padding: 8px;
-            border-radius: 3px;
-            margin: 5px 0;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        .config-check {
-            color: #00ff00;
-            font-weight: bold;
-        }
+      .config-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .config-section-compact {
+        background: #1a1a1a;
+        padding: 15px;
+        border: 1px solid #333;
+        border-radius: 5px;
+      }
+      .config-section-compact h4 {
+        margin: 0 0 10px 0;
+        color: #ffff00;
+        font-size: 14px;
+      }
+      .config-status {
+        background: #1a3322;
+        padding: 8px;
+        border-radius: 3px;
+        margin: 5px 0;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .config-check {
+        color: #00ff00;
+        font-weight: bold;
+      }
 
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .status-card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .status-card h3 {
-            margin: 0 0 10px 0;
-            color: #ffff00;
-        }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .status-connected { background: #00ff00; }
-        .status-connecting { background: #ffff00; }
-        .status-disconnected { background: #ff0000; }
-        .status-error { background: #ff6600; }
-        input, button, textarea {
-            background: #2a2a2a;
-            border: 1px solid #555;
-            color: #00ff00;
-            padding: 8px 12px;
-            margin: 5px;
-            font-family: monospace;
-        }
-        label {
-            color: #ffff00;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        button {
-            cursor: pointer;
-            background: #3a3a3a;
-        }
-        button:hover {
-            background: #4a4a4a;
-        }
-        .message-area {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .message-area input {
-            flex: 1;
-        }
-        .log-container {
-            background: #000;
-            border: 1px solid #333;
-            height: 300px;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 12px;
-            line-height: 1.4;
-        }
-        .log-entry {
-            margin: 2px 0;
-            white-space: pre-wrap;
-        }
-        .log-info { color: #00ff00; }
-        .log-warn { color: #ffff00; }
-        .log-error { color: #ff0000; }
-        .log-debug { color: #888; }
-        .log-client1 { color: #88ff88; }
-        .log-client2 { color: #ffaa66; }
-        .controls {
-            margin: 10px 0;
-        }
-        .metric {
-            display: inline-block;
-            margin-right: 15px;
-            color: #00ffff;
-        }
-        .channel-name {
-            font-size: 11px;
-            color: #888;
-            word-break: break-all;
-        }
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .status-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .status-card h3 {
+        margin: 0 0 10px 0;
+        color: #ffff00;
+      }
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+      .status-connected {
+        background: #00ff00;
+      }
+      .status-connecting {
+        background: #ffff00;
+      }
+      .status-disconnected {
+        background: #ff0000;
+      }
+      .status-error {
+        background: #ff6600;
+      }
+      input,
+      button,
+      textarea {
+        background: #2a2a2a;
+        border: 1px solid #555;
+        color: #00ff00;
+        padding: 8px 12px;
+        margin: 5px;
+        font-family: monospace;
+      }
+      label {
+        color: #ffff00;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      button {
+        cursor: pointer;
+        background: #3a3a3a;
+      }
+      button:hover {
+        background: #4a4a4a;
+      }
+      .message-area {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .message-area input {
+        flex: 1;
+      }
+      .log-container {
+        background: #000;
+        border: 1px solid #333;
+        height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .log-entry {
+        margin: 2px 0;
+        white-space: pre-wrap;
+      }
+      .log-info {
+        color: #00ff00;
+      }
+      .log-warn {
+        color: #ffff00;
+      }
+      .log-error {
+        color: #ff0000;
+      }
+      .log-debug {
+        color: #888;
+      }
+      .log-client1 {
+        color: #88ff88;
+      }
+      .log-client2 {
+        color: #ffaa66;
+      }
+      .controls {
+        margin: 10px 0;
+      }
+      .metric {
+        display: inline-block;
+        margin-right: 15px;
+        color: #00ffff;
+      }
+      .channel-name {
+        font-size: 11px;
+        color: #888;
+        word-break: break-all;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>💬 Supabase Dual-Client Chat Debug</h1>
+      <h1>💬 Supabase Dual-Client Chat Debug</h1>
 
-        <!-- Configuration Row -->
-        <div class="config-row">
-            <!-- Supabase Config -->
-            <div class="config-section-compact">
-                <h4>🔧 Supabase Config</h4>
-                <div id="configDisplay" style="display: none;">
-                    <div class="config-status">✅ Connected</div>
-                    <button onclick="toggleConfigEdit()" style="background: #666; font-size: 12px;">Edit</button>
-                </div>
-                <div id="configEdit">
-                    <input type="text" id="supabaseUrl" placeholder="Supabase URL" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <input type="password" id="supabaseKey" placeholder="Anon Key" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <button onclick="toggleConfigEdit()" style="background: #4a7c59; font-size: 12px;">Save</button>
-                </div>
-            </div>
-
-            <!-- Client 1 Auth -->
-            <div class="config-section-compact">
-                <h4>👤 Alice (Client 1)</h4>
-                <div id="client1Display" style="display: none;">
-                    <div class="config-status">✅ <span id="displayClient1Email"></span></div>
-                    <button onclick="toggleClient1Edit()" style="background: #666; font-size: 12px;">Edit</button>
-                </div>
-                <div id="client1Edit">
-                    <input type="email" id="client1Email" placeholder="alice@test.com" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <input type="password" id="client1Password" placeholder="password123" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <button onclick="toggleClient1Edit()" style="background: #4a7c59; font-size: 12px;">Save</button>
-                </div>
-            </div>
-
-            <!-- Client 2 Auth -->
-            <div class="config-section-compact">
-                <h4>👤 Bob (Client 2)</h4>
-                <div id="client2Display" style="display: none;">
-                    <div class="config-status">✅ <span id="displayClient2Email"></span></div>
-                    <button onclick="toggleClient2Edit()" style="background: #666; font-size: 12px;">Edit</button>
-                </div>
-                <div id="client2Edit">
-                    <input type="email" id="client2Email" placeholder="bob@test.com" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <input type="password" id="client2Password" placeholder="password123" style="width: 100%; margin-bottom: 8px;" onchange="saveConfig()">
-                    <button onclick="toggleClient2Edit()" style="background: #4a7c59; font-size: 12px;">Save</button>
-                </div>
-            </div>
+      <!-- Configuration Row -->
+      <div class="config-row">
+        <!-- Supabase Config -->
+        <div class="config-section-compact">
+          <h4>🔧 Supabase Config</h4>
+          <div id="configDisplay" style="display: none">
+            <div class="config-status">✅ Connected</div>
+            <button
+              onclick="toggleConfigEdit()"
+              style="background: #666; font-size: 12px"
+            >
+              Edit
+            </button>
+          </div>
+          <div id="configEdit">
+            <input
+              type="text"
+              id="supabaseUrl"
+              placeholder="Supabase URL"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <input
+              type="password"
+              id="supabaseKey"
+              placeholder="Anon Key"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <button
+              onclick="toggleConfigEdit()"
+              style="background: #4a7c59; font-size: 12px"
+            >
+              Save
+            </button>
+          </div>
         </div>
 
-        <!-- Action Buttons Section -->
-        <div class="config-section">
-            <h3>Actions</h3>
-            <div style="margin-bottom: 10px; font-size: 12px; color: #888;">
-                ⚠️ All credentials are stored in localStorage for convenience. Clear them when done testing.
+        <!-- Client 1 Auth -->
+        <div class="config-section-compact">
+          <h4>👤 Alice (Client 1)</h4>
+          <div id="client1Display" style="display: none">
+            <div class="config-status">
+              ✅ <span id="displayClient1Email"></span>
             </div>
-            <button onclick="connectBoth()">Connect & Authenticate Both Clients</button>
-            <button onclick="disconnectBoth()">Disconnect All</button>
-            <button onclick="createChannels()">Create Private Channels</button>
-            <button onclick="clearCredentials()" style="background: #aa3333;">Clear Stored Credentials</button>
-            <button onclick="testErrorLogging()" style="background: #666;">Test Error Logging</button>
-            <button onclick="clearLogs()">Clear Logs</button>
-            <button onclick="exportLogs()">Export Logs</button>
+            <button
+              onclick="toggleClient1Edit()"
+              style="background: #666; font-size: 12px"
+            >
+              Edit
+            </button>
+          </div>
+          <div id="client1Edit">
+            <input
+              type="email"
+              id="client1Email"
+              placeholder="alice@test.com"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <input
+              type="password"
+              id="client1Password"
+              placeholder="password123"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <button
+              onclick="toggleClient1Edit()"
+              style="background: #4a7c59; font-size: 12px"
+            >
+              Save
+            </button>
+          </div>
         </div>
 
-        <div class="clients-grid">
-            <div class="client-section client1">
-                <h3>👤 Client 1 (Alice)</h3>
-                <div id="client1Status">
-                    <span class="status-indicator status-disconnected"></span>Disconnected
-                </div>
-                <div class="metric">Messages Sent: <span id="client1Sent">0</span></div>
-                <div class="metric">Messages Received: <span id="client1Received">0</span></div>
-
-                <h4>Subscription Status</h4>
-                <div class="subscription-status" id="client1SubscriptionStatus">
-                    <div class="status-entry">No subscription yet</div>
-                </div>
-
-                <div class="message-area">
-                    <input type="text" id="client1Message" placeholder="Type message from Alice..." onkeypress="handleEnter(event, 1)">
-                    <button onclick="sendMessage(1)">Send</button>
-                </div>
+        <!-- Client 2 Auth -->
+        <div class="config-section-compact">
+          <h4>👤 Bob (Client 2)</h4>
+          <div id="client2Display" style="display: none">
+            <div class="config-status">
+              ✅ <span id="displayClient2Email"></span>
             </div>
+            <button
+              onclick="toggleClient2Edit()"
+              style="background: #666; font-size: 12px"
+            >
+              Edit
+            </button>
+          </div>
+          <div id="client2Edit">
+            <input
+              type="email"
+              id="client2Email"
+              placeholder="bob@test.com"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <input
+              type="password"
+              id="client2Password"
+              placeholder="password123"
+              style="width: 100%; margin-bottom: 8px"
+              onchange="saveConfig()"
+            />
+            <button
+              onclick="toggleClient2Edit()"
+              style="background: #4a7c59; font-size: 12px"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <div class="client-section client2">
-                <h3>👤 Client 2 (Bob)</h3>
-                <div id="client2Status">
-                    <span class="status-indicator status-disconnected"></span>Disconnected
-                </div>
-                <div class="metric">Messages Sent: <span id="client2Sent">0</span></div>
-                <div class="metric">Messages Received: <span id="client2Received">0</span></div>
+      <!-- Action Buttons Section -->
+      <div class="config-section">
+        <h3>Actions</h3>
+        <div style="margin-bottom: 10px; font-size: 12px; color: #888">
+          ⚠️ All credentials are stored in localStorage for convenience. Clear
+          them when done testing.
+        </div>
+        <button onclick="connectBoth()">
+          Connect & Authenticate Both Clients
+        </button>
+        <button onclick="disconnectBoth()">Disconnect All</button>
+        <button onclick="createChannels()">Create Private Channels</button>
+        <button onclick="clearCredentials()" style="background: #aa3333">
+          Clear Stored Credentials
+        </button>
+        <button onclick="testErrorLogging()" style="background: #666">
+          Test Error Logging
+        </button>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="exportLogs()">Export Logs</button>
+      </div>
 
-                <h4>Subscription Status</h4>
-                <div class="subscription-status" id="client2SubscriptionStatus">
-                    <div class="status-entry">No subscription yet</div>
-                </div>
+      <div class="clients-grid">
+        <div class="client-section client1">
+          <h3>👤 Client 1 (Alice)</h3>
+          <div id="client1Status">
+            <span class="status-indicator status-disconnected"></span
+            >Disconnected
+          </div>
+          <div class="metric">
+            Messages Sent: <span id="client1Sent">0</span>
+          </div>
+          <div class="metric">
+            Messages Received: <span id="client1Received">0</span>
+          </div>
 
-                <div class="message-area">
-                    <input type="text" id="client2Message" placeholder="Type message from Bob..." onkeypress="handleEnter(event, 2)">
-                    <button onclick="sendMessage(2)">Send</button>
-                </div>
-            </div>
+          <h4>Subscription Status</h4>
+          <div class="subscription-status" id="client1SubscriptionStatus">
+            <div class="status-entry">No subscription yet</div>
+          </div>
+
+          <div class="message-area">
+            <input
+              type="text"
+              id="client1Message"
+              placeholder="Type message from Alice..."
+              onkeypress="handleEnter(event, 1)"
+            />
+            <button onclick="sendMessage(1)">Send</button>
+          </div>
         </div>
 
-        <div class="status-grid">
-            <div class="status-card">
-                <h3>Channel Status</h3>
-                <div id="channelStatus">No channels created</div>
-                <div class="channel-name" id="channelName"></div>
-                <div class="metric">Total Messages: <span id="totalMessages">0</span></div>
-            </div>
+        <div class="client-section client2">
+          <h3>👤 Client 2 (Bob)</h3>
+          <div id="client2Status">
+            <span class="status-indicator status-disconnected"></span
+            >Disconnected
+          </div>
+          <div class="metric">
+            Messages Sent: <span id="client2Sent">0</span>
+          </div>
+          <div class="metric">
+            Messages Received: <span id="client2Received">0</span>
+          </div>
 
-            <div class="status-card">
-                <h3>Browser Info</h3>
-                <div id="browserInfo">Loading...</div>
-            </div>
+          <h4>Subscription Status</h4>
+          <div class="subscription-status" id="client2SubscriptionStatus">
+            <div class="status-entry">No subscription yet</div>
+          </div>
 
-            <div class="status-card">
-                <h3>Connection Health</h3>
-                <div class="metric">Reconnects: <span id="reconnectCount">0</span></div>
-                <div class="metric">Errors: <span id="errorCount">0</span></div>
-            </div>
+          <div class="message-area">
+            <input
+              type="text"
+              id="client2Message"
+              placeholder="Type message from Bob..."
+              onkeypress="handleEnter(event, 2)"
+            />
+            <button onclick="sendMessage(2)">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <h3>Channel Status</h3>
+          <div id="channelStatus">No channels created</div>
+          <div class="channel-name" id="channelName"></div>
+          <div class="metric">
+            Total Messages: <span id="totalMessages">0</span>
+          </div>
         </div>
 
-        <div class="controls">
-            <label>
-                <input type="checkbox" id="autoReconnect" checked> Auto Reconnect
-            </label>
-            <label>
-                <input type="checkbox" id="verboseLogging" checked> Verbose Logging
-            </label>
-            <label>
-                <input type="checkbox" id="showTimestamps" checked> Show Timestamps
-            </label>
+        <div class="status-card">
+          <h3>Browser Info</h3>
+          <div id="browserInfo">Loading...</div>
         </div>
 
-        <div class="log-container" id="logContainer"></div>
+        <div class="status-card">
+          <h3>Connection Health</h3>
+          <div class="metric">
+            Reconnects: <span id="reconnectCount">0</span>
+          </div>
+          <div class="metric">Errors: <span id="errorCount">0</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label>
+          <input type="checkbox" id="autoReconnect" checked /> Auto Reconnect
+        </label>
+        <label>
+          <input type="checkbox" id="verboseLogging" checked /> Verbose Logging
+        </label>
+        <label>
+          <input type="checkbox" id="showTimestamps" checked /> Show Timestamps
+        </label>
+      </div>
+
+      <div class="log-container" id="logContainer"></div>
     </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // Configuration storage keys
-        const STORAGE_KEYS = {
-            url: 'supabase_debug_url',
-            key: 'supabase_debug_key',
-            client1Email: 'supabase_debug_client1_email',
-            client1Password: 'supabase_debug_client1_password',
-            client2Email: 'supabase_debug_client2_email',
-            client2Password: 'supabase_debug_client2_password'
-        };
+      // Configuration storage keys
+      const STORAGE_KEYS = {
+        url: 'supabase_debug_url',
+        key: 'supabase_debug_key',
+        client1Email: 'supabase_debug_client1_email',
+        client1Password: 'supabase_debug_client1_password',
+        client2Email: 'supabase_debug_client2_email',
+        client2Password: 'supabase_debug_client2_password',
+      };
 
-        // State management
-        let client1 = null;
-        let client2 = null;
-        let channel1 = null;
-        let channel2 = null;
-        let channelName = '';
-        let configEditMode = true;
-        let client1EditMode = true;
-        let client2EditMode = true;
-        let stats = {
-            client1Sent: 0,
-            client1Received: 0,
-            client2Sent: 0,
-            client2Received: 0,
-            totalMessages: 0,
-            reconnectCount: 0,
-            errorCount: 0
-        };
+      // State management
+      let client1 = null;
+      let client2 = null;
+      let channel1 = null;
+      let channel2 = null;
+      let channelName = '';
+      let configEditMode = true;
+      let client1EditMode = true;
+      let client2EditMode = true;
+      let stats = {
+        client1Sent: 0,
+        client1Received: 0,
+        client2Sent: 0,
+        client2Received: 0,
+        totalMessages: 0,
+        reconnectCount: 0,
+        errorCount: 0,
+      };
 
-        // Initialize browser info
-        function initBrowserInfo() {
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const isChrome = /chrome/i.test(navigator.userAgent);
-            const isFirefox = /firefox/i.test(navigator.userAgent);
+      // Initialize browser info
+      function initBrowserInfo() {
+        const isSafari = /^((?!chrome|android).)*safari/i.test(
+          navigator.userAgent,
+        );
+        const isChrome = /chrome/i.test(navigator.userAgent);
+        const isFirefox = /firefox/i.test(navigator.userAgent);
 
-            const info = [
-                `Browser: ${getBrowserName()}`,
-                `WebSocket: ${window.WebSocket ? '✅' : '❌'}`,
-                `Platform: ${navigator.platform}`,
-                `Language: ${navigator.language}`,
-                `Online: ${navigator.onLine ? '✅' : '❌'}`,
-                `Safari: ${isSafari ? '✅ (May have issues)' : '❌'}`
-            ].join('<br>');
-            document.getElementById('browserInfo').innerHTML = info;
+        const info = [
+          `Browser: ${getBrowserName()}`,
+          `WebSocket: ${window.WebSocket ? '✅' : '❌'}`,
+          `Platform: ${navigator.platform}`,
+          `Language: ${navigator.language}`,
+          `Online: ${navigator.onLine ? '✅' : '❌'}`,
+          `Safari: ${isSafari ? '✅ (May have issues)' : '❌'}`,
+        ].join('<br>');
+        document.getElementById('browserInfo').innerHTML = info;
 
-            if (isSafari) {
-                log('warn', '🍎 Safari detected - may have WebSocket connection issues with private channels');
-            }
+        if (isSafari) {
+          log(
+            'warn',
+            '🍎 Safari detected - may have WebSocket connection issues with private channels',
+          );
+        }
+      }
+
+      function getBrowserName() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome')) return 'Chrome';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+        if (ua.includes('Edge')) return 'Edge';
+        return 'Unknown';
+      }
+
+      function loadConfig() {
+        const savedUrl = localStorage.getItem(STORAGE_KEYS.url) || '';
+        const savedKey = localStorage.getItem(STORAGE_KEYS.key) || '';
+        const savedClient1Email =
+          localStorage.getItem(STORAGE_KEYS.client1Email) || '';
+        const savedClient1Password =
+          localStorage.getItem(STORAGE_KEYS.client1Password) || '';
+        const savedClient2Email =
+          localStorage.getItem(STORAGE_KEYS.client2Email) || '';
+        const savedClient2Password =
+          localStorage.getItem(STORAGE_KEYS.client2Password) || '';
+
+        document.getElementById('supabaseUrl').value = savedUrl;
+        document.getElementById('supabaseKey').value = savedKey;
+        document.getElementById('client1Email').value = savedClient1Email;
+        document.getElementById('client1Password').value = savedClient1Password;
+        document.getElementById('client2Email').value = savedClient2Email;
+        document.getElementById('client2Password').value = savedClient2Password;
+
+        // Update display mode based on saved values
+        updateConfigDisplay();
+        updateClient1Display();
+        updateClient2Display();
+
+        if (savedUrl && savedKey) {
+          log('info', '✅ Loaded saved credentials from localStorage');
+        } else {
+          log(
+            'info',
+            '💡 Enter Supabase URL, Key, and user credentials to get started',
+          );
+        }
+      }
+
+      function saveConfig() {
+        const url = document.getElementById('supabaseUrl').value;
+        const key = document.getElementById('supabaseKey').value;
+        const client1Email = document.getElementById('client1Email').value;
+        const client1Password =
+          document.getElementById('client1Password').value;
+        const client2Email = document.getElementById('client2Email').value;
+        const client2Password =
+          document.getElementById('client2Password').value;
+
+        if (url) localStorage.setItem(STORAGE_KEYS.url, url);
+        if (key) localStorage.setItem(STORAGE_KEYS.key, key);
+        if (client1Email)
+          localStorage.setItem(STORAGE_KEYS.client1Email, client1Email);
+        if (client1Password)
+          localStorage.setItem(STORAGE_KEYS.client1Password, client1Password);
+        if (client2Email)
+          localStorage.setItem(STORAGE_KEYS.client2Email, client2Email);
+        if (client2Password)
+          localStorage.setItem(STORAGE_KEYS.client2Password, client2Password);
+
+        // Update display states
+        updateConfigDisplay();
+        updateClient1Display();
+        updateClient2Display();
+
+        if (url || key || client1Email || client2Email) {
+          log('debug', '💾 Configuration saved to localStorage');
+        }
+      }
+
+      function updateConfigDisplay() {
+        const url = document.getElementById('supabaseUrl').value;
+        const key = document.getElementById('supabaseKey').value;
+
+        if (url && key) {
+          configEditMode = false;
+          document.getElementById('configDisplay').style.display = 'block';
+          document.getElementById('configEdit').style.display = 'none';
+        } else {
+          configEditMode = true;
+          document.getElementById('configDisplay').style.display = 'none';
+          document.getElementById('configEdit').style.display = 'block';
+        }
+      }
+
+      function updateClient1Display() {
+        const email = document.getElementById('client1Email').value;
+        const password = document.getElementById('client1Password').value;
+
+        if (email && password) {
+          client1EditMode = false;
+          document.getElementById('displayClient1Email').textContent = email;
+          document.getElementById('client1Display').style.display = 'block';
+          document.getElementById('client1Edit').style.display = 'none';
+        } else {
+          client1EditMode = true;
+          document.getElementById('client1Display').style.display = 'none';
+          document.getElementById('client1Edit').style.display = 'block';
+        }
+      }
+
+      function updateClient2Display() {
+        const email = document.getElementById('client2Email').value;
+        const password = document.getElementById('client2Password').value;
+
+        if (email && password) {
+          client2EditMode = false;
+          document.getElementById('displayClient2Email').textContent = email;
+          document.getElementById('client2Display').style.display = 'block';
+          document.getElementById('client2Edit').style.display = 'none';
+        } else {
+          client2EditMode = true;
+          document.getElementById('client2Display').style.display = 'none';
+          document.getElementById('client2Edit').style.display = 'block';
+        }
+      }
+
+      function toggleConfigEdit() {
+        configEditMode = !configEditMode;
+        if (configEditMode) {
+          document.getElementById('configDisplay').style.display = 'none';
+          document.getElementById('configEdit').style.display = 'block';
+        } else {
+          updateConfigDisplay();
+        }
+      }
+
+      function toggleClient1Edit() {
+        client1EditMode = !client1EditMode;
+        if (client1EditMode) {
+          document.getElementById('client1Display').style.display = 'none';
+          document.getElementById('client1Edit').style.display = 'block';
+        } else {
+          updateClient1Display();
+        }
+      }
+
+      function toggleClient2Edit() {
+        client2EditMode = !client2EditMode;
+        if (client2EditMode) {
+          document.getElementById('client2Display').style.display = 'none';
+          document.getElementById('client2Edit').style.display = 'block';
+        } else {
+          updateClient2Display();
+        }
+      }
+
+      function clearCredentials() {
+        Object.values(STORAGE_KEYS).forEach((key) =>
+          localStorage.removeItem(key),
+        );
+        document.getElementById('supabaseUrl').value = '';
+        document.getElementById('supabaseKey').value = '';
+        document.getElementById('client1Email').value = '';
+        document.getElementById('client1Password').value = '';
+        document.getElementById('client2Email').value = '';
+        document.getElementById('client2Password').value = '';
+
+        // Reset all sections to edit mode
+        configEditMode = true;
+        client1EditMode = true;
+        client2EditMode = true;
+        updateConfigDisplay();
+        updateClient1Display();
+        updateClient2Display();
+
+        log('info', '🧹 All stored credentials cleared from localStorage');
+      }
+
+      function getConfig() {
+        const url = document.getElementById('supabaseUrl').value;
+        const key = document.getElementById('supabaseKey').value;
+        return { url, key };
+      }
+
+      // Logging system
+      function log(level, message, clientId = null, data = null) {
+        const timestamp = new Date().toISOString();
+        const verbose = document.getElementById('verboseLogging')?.checked;
+        const showTimestamps =
+          document.getElementById('showTimestamps')?.checked;
+
+        if (!verbose && level === 'debug') return;
+
+        const logEntry = document.createElement('div');
+        let logClass = `log-entry log-${level}`;
+        if (clientId) logClass += ` log-client${clientId}`;
+        logEntry.className = logClass;
+
+        let logText = message;
+        if (clientId) {
+          logText = `[Client ${clientId}] ${logText}`;
+        }
+        if (showTimestamps) {
+          logText = `[${timestamp.split('T')[1].split('.')[0]}] ${logText}`;
         }
 
-        function getBrowserName() {
-            const ua = navigator.userAgent;
-            if (ua.includes('Chrome')) return 'Chrome';
-            if (ua.includes('Firefox')) return 'Firefox';
-            if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
-            if (ua.includes('Edge')) return 'Edge';
-            return 'Unknown';
+        // Enhanced data logging for errors
+        if (data) {
+          if (level === 'error' && data.error) {
+            logText += `\n📋 ERROR DETAILS:`;
+            logText += `\n  Message: ${data.error.message || 'No message'}`;
+            logText += `\n  Code: ${data.error.code || 'No code'}`;
+            logText += `\n  Type: ${data.error.type || 'No type'}`;
+            logText += `\n  Name: ${data.error.name || 'No name'}`;
+            if (data.errorCode) logText += `\n  Error Code: ${data.errorCode}`;
+            if (data.errorType) logText += `\n  Error Type: ${data.errorType}`;
+            if (data.status) logText += `\n  Status: ${data.status}`;
+            if (data.realtimeState)
+              logText += `\n  Realtime State: ${data.realtimeState}`;
+            logText += `\n📋 FULL ERROR OBJECT:`;
+            logText += `\n${JSON.stringify(data.error, null, 2)}`;
+            if (data.stack) logText += `\n📋 STACK TRACE:\n${data.stack}`;
+          } else {
+            logText += `\n📋 DATA:\n${JSON.stringify(data, null, 2)}`;
+          }
         }
 
-        function loadConfig() {
-            const savedUrl = localStorage.getItem(STORAGE_KEYS.url) || '';
-            const savedKey = localStorage.getItem(STORAGE_KEYS.key) || '';
-            const savedClient1Email = localStorage.getItem(STORAGE_KEYS.client1Email) || '';
-            const savedClient1Password = localStorage.getItem(STORAGE_KEYS.client1Password) || '';
-            const savedClient2Email = localStorage.getItem(STORAGE_KEYS.client2Email) || '';
-            const savedClient2Password = localStorage.getItem(STORAGE_KEYS.client2Password) || '';
+        logEntry.textContent = logText;
 
-            document.getElementById('supabaseUrl').value = savedUrl;
-            document.getElementById('supabaseKey').value = savedKey;
-            document.getElementById('client1Email').value = savedClient1Email;
-            document.getElementById('client1Password').value = savedClient1Password;
-            document.getElementById('client2Email').value = savedClient2Email;
-            document.getElementById('client2Password').value = savedClient2Password;
+        const container = document.getElementById('logContainer');
+        container.appendChild(logEntry);
+        container.scrollTop = container.scrollHeight;
 
-            // Update display mode based on saved values
-            updateConfigDisplay();
-            updateClient1Display();
-            updateClient2Display();
+        // Also log to console for Safari dev tools with more detail
+        if (level === 'error') {
+          console.error(
+            `${clientId ? `[Client ${clientId}] ` : ''}${message}`,
+            {
+              originalError: data?.error,
+              fullData: data,
+              timestamp: timestamp,
+            },
+          );
+        } else {
+          console[level](
+            `${clientId ? `[Client ${clientId}] ` : ''}${message}`,
+            data,
+          );
+        }
+      }
 
-            if (savedUrl && savedKey) {
-                log('info', '✅ Loaded saved credentials from localStorage');
-            } else {
-                log('info', '💡 Enter Supabase URL, Key, and user credentials to get started');
-            }
+      function updateStatus(elementId, text, statusClass = null) {
+        const element = document.getElementById(elementId);
+        if (statusClass) {
+          element.innerHTML = `<span class="status-indicator status-${statusClass}"></span>${text}`;
+        } else {
+          element.textContent = text;
+        }
+      }
+
+      function updateMetric(metricId, value) {
+        document.getElementById(metricId).textContent = value;
+      }
+
+      function updateStats() {
+        updateMetric('client1Sent', stats.client1Sent);
+        updateMetric('client1Received', stats.client1Received);
+        updateMetric('client2Sent', stats.client2Sent);
+        updateMetric('client2Received', stats.client2Received);
+        updateMetric('totalMessages', stats.totalMessages);
+        updateMetric('reconnectCount', stats.reconnectCount);
+        updateMetric('errorCount', stats.errorCount);
+      }
+
+      function addSubscriptionStatus(clientId, status, error = null) {
+        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+        const containerId = `client${clientId}SubscriptionStatus`;
+        const container = document.getElementById(containerId);
+
+        const statusEntry = document.createElement('div');
+        statusEntry.className = `status-entry status-${status.toLowerCase().replace(' ', '_')}`;
+
+        let statusText = `[${timestamp}] ${status.toUpperCase()}`;
+        if (error) {
+          statusText += ` - ${error}`;
         }
 
-        function saveConfig() {
-            const url = document.getElementById('supabaseUrl').value;
-            const key = document.getElementById('supabaseKey').value;
-            const client1Email = document.getElementById('client1Email').value;
-            const client1Password = document.getElementById('client1Password').value;
-            const client2Email = document.getElementById('client2Email').value;
-            const client2Password = document.getElementById('client2Password').value;
+        statusEntry.textContent = statusText;
 
-            if (url) localStorage.setItem(STORAGE_KEYS.url, url);
-            if (key) localStorage.setItem(STORAGE_KEYS.key, key);
-            if (client1Email) localStorage.setItem(STORAGE_KEYS.client1Email, client1Email);
-            if (client1Password) localStorage.setItem(STORAGE_KEYS.client1Password, client1Password);
-            if (client2Email) localStorage.setItem(STORAGE_KEYS.client2Email, client2Email);
-            if (client2Password) localStorage.setItem(STORAGE_KEYS.client2Password, client2Password);
-
-            // Update display states
-            updateConfigDisplay();
-            updateClient1Display();
-            updateClient2Display();
-
-            if (url || key || client1Email || client2Email) {
-                log('debug', '💾 Configuration saved to localStorage');
-            }
+        // Clear initial "No subscription yet" message
+        if (
+          container.children.length === 1 &&
+          container.children[0].textContent === 'No subscription yet'
+        ) {
+          container.innerHTML = '';
         }
 
-        function updateConfigDisplay() {
-            const url = document.getElementById('supabaseUrl').value;
-            const key = document.getElementById('supabaseKey').value;
+        container.appendChild(statusEntry);
+        container.scrollTop = container.scrollHeight;
+      }
 
-            if (url && key) {
-                configEditMode = false;
-                document.getElementById('configDisplay').style.display = 'block';
-                document.getElementById('configEdit').style.display = 'none';
-            } else {
-                configEditMode = true;
-                document.getElementById('configDisplay').style.display = 'none';
-                document.getElementById('configEdit').style.display = 'block';
-            }
+      function clearSubscriptionStatus(clientId) {
+        const containerId = `client${clientId}SubscriptionStatus`;
+        const container = document.getElementById(containerId);
+        container.innerHTML =
+          '<div class="status-entry">No subscription yet</div>';
+      }
+
+      async function createClient(clientId, name) {
+        const config = getConfig();
+        const email =
+          clientId === 1
+            ? document.getElementById('client1Email').value
+            : document.getElementById('client2Email').value;
+        const password =
+          clientId === 1
+            ? document.getElementById('client1Password').value
+            : document.getElementById('client2Password').value;
+
+        if (!config.url || !config.key) {
+          log('error', 'Please provide Supabase URL and Key', clientId);
+          return null;
         }
 
-        function updateClient1Display() {
-            const email = document.getElementById('client1Email').value;
-            const password = document.getElementById('client1Password').value;
-
-            if (email && password) {
-                client1EditMode = false;
-                document.getElementById('displayClient1Email').textContent = email;
-                document.getElementById('client1Display').style.display = 'block';
-                document.getElementById('client1Edit').style.display = 'none';
-            } else {
-                client1EditMode = true;
-                document.getElementById('client1Display').style.display = 'none';
-                document.getElementById('client1Edit').style.display = 'block';
-            }
+        if (!email || !password) {
+          log(
+            'error',
+            `Please provide email and password for ${name}`,
+            clientId,
+          );
+          return null;
         }
 
-        function updateClient2Display() {
-            const email = document.getElementById('client2Email').value;
-            const password = document.getElementById('client2Password').value;
+        log('info', `🔄 Creating client for ${name}...`, clientId);
 
-            if (email && password) {
-                client2EditMode = false;
-                document.getElementById('displayClient2Email').textContent = email;
-                document.getElementById('client2Display').style.display = 'block';
-                document.getElementById('client2Edit').style.display = 'none';
-            } else {
-                client2EditMode = true;
-                document.getElementById('client2Display').style.display = 'none';
-                document.getElementById('client2Edit').style.display = 'block';
-            }
-        }
-
-        function toggleConfigEdit() {
-            configEditMode = !configEditMode;
-            if (configEditMode) {
-                document.getElementById('configDisplay').style.display = 'none';
-                document.getElementById('configEdit').style.display = 'block';
-            } else {
-                updateConfigDisplay();
-            }
-        }
-
-        function toggleClient1Edit() {
-            client1EditMode = !client1EditMode;
-            if (client1EditMode) {
-                document.getElementById('client1Display').style.display = 'none';
-                document.getElementById('client1Edit').style.display = 'block';
-            } else {
-                updateClient1Display();
-            }
-        }
-
-        function toggleClient2Edit() {
-            client2EditMode = !client2EditMode;
-            if (client2EditMode) {
-                document.getElementById('client2Display').style.display = 'none';
-                document.getElementById('client2Edit').style.display = 'block';
-            } else {
-                updateClient2Display();
-            }
-        }
-
-        function clearCredentials() {
-            Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
-            document.getElementById('supabaseUrl').value = '';
-            document.getElementById('supabaseKey').value = '';
-            document.getElementById('client1Email').value = '';
-            document.getElementById('client1Password').value = '';
-            document.getElementById('client2Email').value = '';
-            document.getElementById('client2Password').value = '';
-
-            // Reset all sections to edit mode
-            configEditMode = true;
-            client1EditMode = true;
-            client2EditMode = true;
-            updateConfigDisplay();
-            updateClient1Display();
-            updateClient2Display();
-
-            log('info', '🧹 All stored credentials cleared from localStorage');
-        }
-
-
-        function getConfig() {
-            const url = document.getElementById('supabaseUrl').value;
-            const key = document.getElementById('supabaseKey').value;
-            return { url, key };
-        }
-
-        // Logging system
-        function log(level, message, clientId = null, data = null) {
-            const timestamp = new Date().toISOString();
-            const verbose = document.getElementById('verboseLogging')?.checked;
-            const showTimestamps = document.getElementById('showTimestamps')?.checked;
-
-            if (!verbose && level === 'debug') return;
-
-            const logEntry = document.createElement('div');
-            let logClass = `log-entry log-${level}`;
-            if (clientId) logClass += ` log-client${clientId}`;
-            logEntry.className = logClass;
-
-            let logText = message;
-            if (clientId) {
-                logText = `[Client ${clientId}] ${logText}`;
-            }
-            if (showTimestamps) {
-                logText = `[${timestamp.split('T')[1].split('.')[0]}] ${logText}`;
-            }
-
-            // Enhanced data logging for errors
-            if (data) {
-                if (level === 'error' && data.error) {
-                    logText += `\n📋 ERROR DETAILS:`;
-                    logText += `\n  Message: ${data.error.message || 'No message'}`;
-                    logText += `\n  Code: ${data.error.code || 'No code'}`;
-                    logText += `\n  Type: ${data.error.type || 'No type'}`;
-                    logText += `\n  Name: ${data.error.name || 'No name'}`;
-                    if (data.errorCode) logText += `\n  Error Code: ${data.errorCode}`;
-                    if (data.errorType) logText += `\n  Error Type: ${data.errorType}`;
-                    if (data.status) logText += `\n  Status: ${data.status}`;
-                    if (data.realtimeState) logText += `\n  Realtime State: ${data.realtimeState}`;
-                    logText += `\n📋 FULL ERROR OBJECT:`;
-                    logText += `\n${JSON.stringify(data.error, null, 2)}`;
-                    if (data.stack) logText += `\n📋 STACK TRACE:\n${data.stack}`;
-                } else {
-                    logText += `\n📋 DATA:\n${JSON.stringify(data, null, 2)}`;
-                }
-            }
-
-            logEntry.textContent = logText;
-
-            const container = document.getElementById('logContainer');
-            container.appendChild(logEntry);
-            container.scrollTop = container.scrollHeight;
-
-            // Also log to console for Safari dev tools with more detail
-            if (level === 'error') {
-                console.error(`${clientId ? `[Client ${clientId}] ` : ''}${message}`, {
-                    originalError: data?.error,
-                    fullData: data,
-                    timestamp: timestamp
-                });
-            } else {
-                console[level](`${clientId ? `[Client ${clientId}] ` : ''}${message}`, data);
-            }
-        }
-
-        function updateStatus(elementId, text, statusClass = null) {
-            const element = document.getElementById(elementId);
-            if (statusClass) {
-                element.innerHTML = `<span class="status-indicator status-${statusClass}"></span>${text}`;
-            } else {
-                element.textContent = text;
-            }
-        }
-
-        function updateMetric(metricId, value) {
-            document.getElementById(metricId).textContent = value;
-        }
-
-        function updateStats() {
-            updateMetric('client1Sent', stats.client1Sent);
-            updateMetric('client1Received', stats.client1Received);
-            updateMetric('client2Sent', stats.client2Sent);
-            updateMetric('client2Received', stats.client2Received);
-            updateMetric('totalMessages', stats.totalMessages);
-            updateMetric('reconnectCount', stats.reconnectCount);
-            updateMetric('errorCount', stats.errorCount);
-        }
-
-        function addSubscriptionStatus(clientId, status, error = null) {
-            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
-            const containerId = `client${clientId}SubscriptionStatus`;
-            const container = document.getElementById(containerId);
-
-            const statusEntry = document.createElement('div');
-            statusEntry.className = `status-entry status-${status.toLowerCase().replace(' ', '_')}`;
-
-            let statusText = `[${timestamp}] ${status.toUpperCase()}`;
-            if (error) {
-                statusText += ` - ${error}`;
-            }
-
-            statusEntry.textContent = statusText;
-
-            // Clear initial "No subscription yet" message
-            if (container.children.length === 1 && container.children[0].textContent === 'No subscription yet') {
-                container.innerHTML = '';
-            }
-
-            container.appendChild(statusEntry);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function clearSubscriptionStatus(clientId) {
-            const containerId = `client${clientId}SubscriptionStatus`;
-            const container = document.getElementById(containerId);
-            container.innerHTML = '<div class="status-entry">No subscription yet</div>';
-        }
-
-        async function createClient(clientId, name) {
-            const config = getConfig();
-            const email = clientId === 1
-                ? document.getElementById('client1Email').value
-                : document.getElementById('client2Email').value;
-            const password = clientId === 1
-                ? document.getElementById('client1Password').value
-                : document.getElementById('client2Password').value;
-
-            if (!config.url || !config.key) {
-                log('error', 'Please provide Supabase URL and Key', clientId);
-                return null;
-            }
-
-            if (!email || !password) {
-                log('error', `Please provide email and password for ${name}`, clientId);
-                return null;
-            }
-
-            log('info', `🔄 Creating client for ${name}...`, clientId);
-
-            try {
-                const client = supabase.createClient(config.url, config.key, {
-                    auth: {
-                        autoRefreshToken: true,
-                        persistSession: false, // Different sessions for each client
-                        detectSessionInUrl: false
-                    },
-                    realtime: {
-                        params: {
-                            eventsPerSecond: 10
-                        },
-                        heartbeatIntervalMs: 30000,
-                        reconnectAfterMs: (tries) => {
-                            stats.reconnectCount++;
-                            updateStats();
-                            return Math.min(tries * 1000, 10000);
-                        }
-                    }
-                });
-
-                log('info', `🔐 Authenticating ${name} with email: ${email}`, clientId);
-                updateStatus(`client${clientId}Status`, `Authenticating (${name})`, 'connecting');
-
-                // Authenticate the client
-                const { data: authData, error: authError } = await client.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                if (authError) {
-                    log('error', `❌ Authentication failed for ${name}: ${authError.message}`, clientId, {
-                        error: authError,
-                        email: email,
-                        errorCode: authError.code || 'No code'
-                    });
-                    updateStatus(`client${clientId}Status`, 'Auth Failed', 'error');
-                    stats.errorCount++;
-                    updateStats();
-                    return null;
-                }
-
-                log('info', `✅ ${name} authenticated successfully`, clientId, {
-                    userId: authData.user?.id,
-                    email: authData.user?.email,
-                    sessionExpires: authData.session?.expires_at
-                });
-
-                updateStatus(`client${clientId}Status`, `Connected (${name})`, 'connected');
-                return client;
-
-            } catch (error) {
-                log('error', `❌ Failed to create client: ${error.message}`, clientId);
-                updateStatus(`client${clientId}Status`, 'Failed', 'error');
-                stats.errorCount++;
+        try {
+          const client = supabase.createClient(config.url, config.key, {
+            auth: {
+              autoRefreshToken: true,
+              persistSession: false, // Different sessions for each client
+              detectSessionInUrl: false,
+            },
+            realtime: {
+              params: {
+                eventsPerSecond: 10,
+              },
+              heartbeatIntervalMs: 30000,
+              heartbeatCallback: (data) => {
+                log(
+                  'info',
+                  `Heartbeat callback: ${JSON.stringify(data)}`,
+                  clientId,
+                );
+              },
+              reconnectAfterMs: (tries) => {
+                stats.reconnectCount++;
                 updateStats();
-                return null;
-            }
-        }
+                return Math.min(tries * 1000, 10000);
+              },
+            },
+          });
 
-        async function connectBoth() {
-            log('info', '🚀 Connecting both clients...');
+          log(
+            'info',
+            `🔐 Authenticating ${name} with email: ${email}`,
+            clientId,
+          );
+          updateStatus(
+            `client${clientId}Status`,
+            `Authenticating (${name})`,
+            'connecting',
+          );
 
-            // Create both clients
-            client1 = await createClient(1, 'Alice');
-            client2 = await createClient(2, 'Bob');
-
-            if (!client1 || !client2) {
-                log('error', '❌ Failed to create one or both clients');
-                return;
-            }
-
-            // Log detailed client state
-            setTimeout(() => {
-                try {
-                    log('debug', '🔍 Client 1 realtime state:', 1, {
-                        hasRealtime: !!client1.realtime,
-                        connectionState: client1.realtime?.connectionState,
-                        isConnected: client1.realtime?.isConnected,
-                        channels: client1.realtime?.channels?.length || 0,
-                        wsUrl: client1.realtime?.endPoint
-                    });
-
-                    log('debug', '🔍 Client 2 realtime state:', 2, {
-                        hasRealtime: !!client2.realtime,
-                        connectionState: client2.realtime?.connectionState,
-                        isConnected: client2.realtime?.isConnected,
-                        channels: client2.realtime?.channels?.length || 0,
-                        wsUrl: client2.realtime?.endPoint
-                    });
-                } catch (error) {
-                    log('warn', 'Could not inspect realtime state', null, error);
-                }
-            }, 1000);
-
-            log('info', '✅ Both clients created successfully');
-        }
-
-        async function createChannels() {
-            if (!client1 || !client2) {
-                log('error', '❌ Both clients must be connected first');
-                return;
-            }
-
-            // Generate a unique test channel name
-            channelName = `test:${Date.now()}:chat`;
-            log('info', `🔄 Creating test channels: ${channelName}`);
-
-            try {
-                // Clear previous subscription status
-                clearSubscriptionStatus(1);
-                clearSubscriptionStatus(2);
-
-                // Add initial status
-                addSubscriptionStatus(1, 'CREATING');
-                addSubscriptionStatus(2, 'CREATING');
-
-                // Set auth for private channels (required for both clients)
-                addSubscriptionStatus(1, 'SETTING_AUTH');
-                addSubscriptionStatus(2, 'SETTING_AUTH');
-
-                try {
-                    await client1.realtime.setAuth();
-                    addSubscriptionStatus(1, 'AUTH_SET');
-                    log('info', '✅ Client 1 auth set for private channel', 1);
-                } catch (error) {
-                    addSubscriptionStatus(1, 'AUTH_ERROR', error.message);
-                    log('error', `❌ Client 1 setAuth failed: ${error.message}`, 1, {
-                        error: error,
-                        errorCode: error.code,
-                        errorType: error.type,
-                        errorName: error.name,
-                        stack: error.stack,
-                        realtimeState: client1.realtime ? client1.realtime.connectionState : 'no realtime',
-                        fullError: JSON.stringify(error, null, 2)
-                    });
-                    stats.errorCount++;
-                    updateStats();
-                }
-
-                try {
-                    await client2.realtime.setAuth();
-                    addSubscriptionStatus(2, 'AUTH_SET');
-                    log('info', '✅ Client 2 auth set for private channel', 2);
-                } catch (error) {
-                    addSubscriptionStatus(2, 'AUTH_ERROR', error.message);
-                    log('error', `❌ Client 2 setAuth failed: ${error.message}`, 2, {
-                        error: error,
-                        errorCode: error.code,
-                        errorType: error.type,
-                        errorName: error.name,
-                        stack: error.stack,
-                        realtimeState: client2.realtime ? client2.realtime.connectionState : 'no realtime',
-                        fullError: JSON.stringify(error, null, 2)
-                    });
-                    stats.errorCount++;
-                    updateStats();
-                }
-
-                // Create channel for client 1
-                channel1 = client1
-                    .channel(channelName, {
-                        config: { private: true },
-                    })
-                    .on('broadcast', { event: 'chat-message' }, (payload) => {
-                        stats.client1Received++;
-                        stats.totalMessages++;
-                        updateStats();
-                        log('info', `📨 Received: "${payload.payload.message}" from ${payload.payload.sender}`, 1, payload);
-                    })
-                    .on('subscribe', (status, err) => {
-                        addSubscriptionStatus(1, status, err?.message);
-                        if (err) {
-                            log('error', `❌ Subscription error: ${err.message}`, 1, {
-                                status,
-                                error: err,
-                                errorCode: err.code,
-                                errorType: err.type,
-                                fullError: JSON.stringify(err, null, 2)
-                            });
-                            stats.errorCount++;
-                        } else {
-                            log('info', `📡 Channel subscription status: ${status}`, 1);
-                        }
-                        updateStats();
-                    })
-                    .on('error', (error) => {
-                        addSubscriptionStatus(1, 'ERROR', error.message);
-                        log('error', `❌ Channel error: ${error.message}`, 1, {
-                            error: error,
-                            errorCode: error.code,
-                            errorType: error.type,
-                            errorName: error.name,
-                            stack: error.stack,
-                            fullError: JSON.stringify(error, null, 2)
-                        });
-                        stats.errorCount++;
-                        updateStats();
-                    })
-                    .subscribe((status, err) => {
-                        addSubscriptionStatus(1, status, err?.message);
-
-                        if (status === 'CHANNEL_ERROR') {
-                            log('error', `📡 Channel ${status.toLowerCase()}`, 1, {
-                                status,
-                                error: err,
-                                errorCode: err?.code,
-                                errorType: err?.type,
-                                errorName: err?.name,
-                                channelState: channel1?.state,
-                                realtimeState: client1.realtime?.connectionState,
-                                fullError: err ? JSON.stringify(err, null, 2) : 'No error object provided'
-                            });
-                        } else {
-                            log('info', `📡 Channel ${status.toLowerCase()}`, 1);
-                        }
-
-                        if (status === 'SUBSCRIBED') {
-                            log('info', '✅ Client 1 channel active', 1);
-                        } else if (status === 'CLOSED') {
-                            log('warn', '⚠️ Client 1 channel closed', 1);
-                        }
-                    });
-
-                // Create channel for client 2
-                channel2 = client2
-                    .channel(channelName, {
-                        config: { private: true },
-                    })
-                    .on('broadcast', { event: 'chat-message' }, (payload) => {
-                        stats.client2Received++;
-                        stats.totalMessages++;
-                        updateStats();
-                        log('info', `📨 Received: "${payload.payload.message}" from ${payload.payload.sender}`, 2, payload);
-                    })
-                    .on('subscribe', (status, err) => {
-                        addSubscriptionStatus(2, status, err?.message);
-                        if (err) {
-                            log('error', `❌ Subscription error: ${err.message}`, 2, {
-                                status,
-                                error: err,
-                                errorCode: err.code,
-                                errorType: err.type,
-                                fullError: JSON.stringify(err, null, 2)
-                            });
-                            stats.errorCount++;
-                        } else {
-                            log('info', `📡 Channel subscription status: ${status}`, 2);
-                        }
-                        updateStats();
-                    })
-                    .on('error', (error) => {
-                        addSubscriptionStatus(2, 'ERROR', error.message);
-                        log('error', `❌ Channel error: ${error.message}`, 2, {
-                            error: error,
-                            errorCode: error.code,
-                            errorType: error.type,
-                            errorName: error.name,
-                            stack: error.stack,
-                            fullError: JSON.stringify(error, null, 2)
-                        });
-                        stats.errorCount++;
-                        updateStats();
-                    })
-                    .subscribe((status, err) => {
-                        addSubscriptionStatus(2, status, err?.message);
-
-                        if (status === 'CHANNEL_ERROR') {
-                            log('error', `📡 Channel ${status.toLowerCase()}`, 2, {
-                                status,
-                                error: err,
-                                errorCode: err?.code,
-                                errorType: err?.type,
-                                errorName: err?.name,
-                                channelState: channel2?.state,
-                                realtimeState: client2.realtime?.connectionState,
-                                fullError: err ? JSON.stringify(err, null, 2) : 'No error object provided'
-                            });
-                        } else {
-                            log('info', `📡 Channel ${status.toLowerCase()}`, 2);
-                        }
-
-                        if (status === 'SUBSCRIBED') {
-                            log('info', '✅ Client 2 channel active', 2);
-                        } else if (status === 'CLOSED') {
-                            log('warn', '⚠️ Client 2 channel closed', 2);
-                        }
-                    });
-
-                updateStatus('channelStatus', 'Channels created and subscribing...');
-                document.getElementById('channelName').textContent = channelName;
-
-                log('info', '✅ Both channels created and subscribing');
-
-            } catch (error) {
-                log('error', `❌ Failed to create channels: ${error.message}`);
-                stats.errorCount++;
-                updateStats();
-            }
-        }
-
-        function sendMessage(clientId) {
-            const client = clientId === 1 ? client1 : client2;
-            const channel = clientId === 1 ? channel1 : channel2;
-            const inputId = `client${clientId}Message`;
-            const senderName = clientId === 1 ? 'Alice' : 'Bob';
-
-            const messageInput = document.getElementById(inputId);
-            const message = messageInput.value.trim();
-
-            if (!message) {
-                log('warn', 'Empty message not sent', clientId);
-                return;
-            }
-
-            if (!client || !channel) {
-                log('error', 'Client or channel not available', clientId);
-                return;
-            }
-
-            const payload = {
-                message: message,
-                sender: senderName,
-                timestamp: Date.now(),
-                clientId: clientId
-            };
-
-            log('info', `📤 Sending: "${message}"`, clientId);
-
-            channel.send({
-                type: 'broadcast',
-                event: 'chat-message',
-                payload: payload
-            }).then(() => {
-                if (clientId === 1) {
-                    stats.client1Sent++;
-                } else {
-                    stats.client2Sent++;
-                }
-                updateStats();
-                log('info', `✅ Message sent successfully`, clientId);
-                messageInput.value = '';
-            }).catch((error) => {
-                log('error', `❌ Failed to send message: ${error.message}`, clientId);
-                stats.errorCount++;
-                updateStats();
+          // Authenticate the client
+          const { data: authData, error: authError } =
+            await client.auth.signInWithPassword({
+              email: email,
+              password: password,
             });
-        }
 
-        function handleEnter(event, clientId) {
-            if (event.key === 'Enter') {
-                sendMessage(clientId);
-            }
-        }
-
-        async function disconnectBoth() {
-            log('info', '🔄 Disconnecting all clients...');
-
-            // Remove channels
-            if (channel1) {
-                try {
-                    addSubscriptionStatus(1, 'DISCONNECTING');
-                    client1?.removeChannel(channel1);
-                    channel1 = null;
-                    addSubscriptionStatus(1, 'REMOVED');
-                    log('info', '✅ Client 1 channel removed', 1);
-                } catch (e) {
-                    addSubscriptionStatus(1, 'ERROR', 'Failed to remove channel');
-                    log('debug', 'Error removing client 1 channel', 1, e);
-                }
-            }
-
-            if (channel2) {
-                try {
-                    addSubscriptionStatus(2, 'DISCONNECTING');
-                    client2?.removeChannel(channel2);
-                    channel2 = null;
-                    addSubscriptionStatus(2, 'REMOVED');
-                    log('info', '✅ Client 2 channel removed', 2);
-                } catch (e) {
-                    addSubscriptionStatus(2, 'ERROR', 'Failed to remove channel');
-                    log('debug', 'Error removing client 2 channel', 2, e);
-                }
-            }
-
-            // Sign out clients
-            if (client1) {
-                try {
-                    await client1.auth.signOut();
-                    log('info', '✅ Client 1 signed out', 1);
-                } catch (e) {
-                    log('debug', 'Error signing out client 1', 1, e);
-                }
-            }
-
-            if (client2) {
-                try {
-                    await client2.auth.signOut();
-                    log('info', '✅ Client 2 signed out', 2);
-                } catch (e) {
-                    log('debug', 'Error signing out client 2', 2, e);
-                }
-            }
-
-            // Clear clients
-            client1 = null;
-            client2 = null;
-
-            updateStatus('client1Status', 'Disconnected', 'disconnected');
-            updateStatus('client2Status', 'Disconnected', 'disconnected');
-            updateStatus('channelStatus', 'No channels');
-            document.getElementById('channelName').textContent = '';
-
-            log('info', '✅ All clients disconnected and signed out');
-        }
-
-        function clearLogs() {
-            document.getElementById('logContainer').innerHTML = '';
-            // Reset message counts but keep connection stats
-            stats.client1Sent = 0;
-            stats.client1Received = 0;
-            stats.client2Sent = 0;
-            stats.client2Received = 0;
-            stats.totalMessages = 0;
+          if (authError) {
+            log(
+              'error',
+              `❌ Authentication failed for ${name}: ${authError.message}`,
+              clientId,
+              {
+                error: authError,
+                email: email,
+                errorCode: authError.code || 'No code',
+              },
+            );
+            updateStatus(`client${clientId}Status`, 'Auth Failed', 'error');
+            stats.errorCount++;
             updateStats();
-            log('info', '🧹 Logs cleared');
+            return null;
+          }
+
+          log('info', `✅ ${name} authenticated successfully`, clientId, {
+            userId: authData.user?.id,
+            email: authData.user?.email,
+            sessionExpires: authData.session?.expires_at,
+          });
+
+          updateStatus(
+            `client${clientId}Status`,
+            `Connected (${name})`,
+            'connected',
+          );
+          return client;
+        } catch (error) {
+          log(
+            'error',
+            `❌ Failed to create client: ${error.message}`,
+            clientId,
+          );
+          updateStatus(`client${clientId}Status`, 'Failed', 'error');
+          stats.errorCount++;
+          updateStats();
+          return null;
+        }
+      }
+
+      async function connectBoth() {
+        log('info', '🚀 Connecting both clients...');
+
+        // Create both clients
+        client1 = await createClient(1, 'Alice');
+        client2 = await createClient(2, 'Bob');
+
+        if (!client1 || !client2) {
+          log('error', '❌ Failed to create one or both clients');
+          return;
         }
 
-        function exportLogs() {
-            const logs = document.getElementById('logContainer').innerText;
-            const blob = new Blob([logs], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `supabase-dual-client-debug-${new Date().toISOString()}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-            log('info', '💾 Logs exported');
-        }
-
-        function testErrorLogging() {
-            log('info', '🧪 Testing error logging...');
-
-            // Test basic error
-            const testError = new Error('Test error message');
-            testError.code = 'TEST_CODE';
-            testError.type = 'TEST_TYPE';
-            testError.name = 'TestError';
-
-            log('error', '❌ Test error log', 1, {
-                error: testError,
-                errorCode: testError.code,
-                errorType: testError.type,
-                status: 'CHANNEL_ERROR',
-                fullError: JSON.stringify(testError, null, 2)
+        // Log detailed client state
+        setTimeout(() => {
+          try {
+            log('debug', '🔍 Client 1 realtime state:', 1, {
+              hasRealtime: !!client1.realtime,
+              connectionState: client1.realtime?.connectionState,
+              isConnected: client1.realtime?.isConnected,
+              channels: client1.realtime?.channels?.length || 0,
+              wsUrl: client1.realtime?.endPoint,
             });
 
-            log('info', '✅ Error logging test complete - check if you see detailed error info above');
+            log('debug', '🔍 Client 2 realtime state:', 2, {
+              hasRealtime: !!client2.realtime,
+              connectionState: client2.realtime?.connectionState,
+              isConnected: client2.realtime?.isConnected,
+              channels: client2.realtime?.channels?.length || 0,
+              wsUrl: client2.realtime?.endPoint,
+            });
+          } catch (error) {
+            log('warn', 'Could not inspect realtime state', null, error);
+          }
+        }, 1000);
+
+        log('info', '✅ Both clients created successfully');
+      }
+
+      async function createChannels() {
+        if (!client1 || !client2) {
+          log('error', '❌ Both clients must be connected first');
+          return;
         }
 
-        // Network status monitoring
-        window.addEventListener('online', () => {
-            log('info', '🌐 Network came online');
-            initBrowserInfo();
-        });
+        // Generate a unique test channel name
+        channelName = `test:${Date.now()}:chat`;
+        log('info', `🔄 Creating test channels: ${channelName}`);
 
-        window.addEventListener('offline', () => {
-            log('warn', '🚫 Network went offline');
-            initBrowserInfo();
-        });
+        try {
+          // Clear previous subscription status
+          clearSubscriptionStatus(1);
+          clearSubscriptionStatus(2);
 
-        // Visibility change handling (for Safari mobile)
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                log('debug', '👁️ Page became visible');
+          // Add initial status
+          addSubscriptionStatus(1, 'CREATING');
+          addSubscriptionStatus(2, 'CREATING');
+
+          // Set auth for private channels (required for both clients)
+          addSubscriptionStatus(1, 'SETTING_AUTH');
+          addSubscriptionStatus(2, 'SETTING_AUTH');
+
+          try {
+            await client1.realtime.setAuth();
+            addSubscriptionStatus(1, 'AUTH_SET');
+            log('info', '✅ Client 1 auth set for private channel', 1);
+          } catch (error) {
+            addSubscriptionStatus(1, 'AUTH_ERROR', error.message);
+            log('error', `❌ Client 1 setAuth failed: ${error.message}`, 1, {
+              error: error,
+              errorCode: error.code,
+              errorType: error.type,
+              errorName: error.name,
+              stack: error.stack,
+              realtimeState: client1.realtime
+                ? client1.realtime.connectionState
+                : 'no realtime',
+              fullError: JSON.stringify(error, null, 2),
+            });
+            stats.errorCount++;
+            updateStats();
+          }
+
+          try {
+            await client2.realtime.setAuth();
+            addSubscriptionStatus(2, 'AUTH_SET');
+            log('info', '✅ Client 2 auth set for private channel', 2);
+          } catch (error) {
+            addSubscriptionStatus(2, 'AUTH_ERROR', error.message);
+            log('error', `❌ Client 2 setAuth failed: ${error.message}`, 2, {
+              error: error,
+              errorCode: error.code,
+              errorType: error.type,
+              errorName: error.name,
+              stack: error.stack,
+              realtimeState: client2.realtime
+                ? client2.realtime.connectionState
+                : 'no realtime',
+              fullError: JSON.stringify(error, null, 2),
+            });
+            stats.errorCount++;
+            updateStats();
+          }
+
+          // Create channel for client 1
+          channel1 = client1
+            .channel(channelName, {
+              config: { private: true },
+            })
+            .on('broadcast', { event: 'chat-message' }, (payload) => {
+              stats.client1Received++;
+              stats.totalMessages++;
+              updateStats();
+              log(
+                'info',
+                `📨 Received: "${payload.payload.message}" from ${payload.payload.sender}`,
+                1,
+                payload,
+              );
+            })
+            .on('subscribe', (status, err) => {
+              addSubscriptionStatus(1, status, err?.message);
+              if (err) {
+                log('error', `❌ Subscription error: ${err.message}`, 1, {
+                  status,
+                  error: err,
+                  errorCode: err.code,
+                  errorType: err.type,
+                  fullError: JSON.stringify(err, null, 2),
+                });
+                stats.errorCount++;
+              } else {
+                log('info', `📡 Channel subscription status: ${status}`, 1);
+              }
+              updateStats();
+            })
+            .on('error', (error) => {
+              addSubscriptionStatus(1, 'ERROR', error.message);
+              log('error', `❌ Channel error: ${error.message}`, 1, {
+                error: error,
+                errorCode: error.code,
+                errorType: error.type,
+                errorName: error.name,
+                stack: error.stack,
+                fullError: JSON.stringify(error, null, 2),
+              });
+              stats.errorCount++;
+              updateStats();
+            })
+            .subscribe((status, err) => {
+              addSubscriptionStatus(1, status, err?.message);
+
+              if (status === 'CHANNEL_ERROR') {
+                log('error', `📡 Channel ${status.toLowerCase()}`, 1, {
+                  status,
+                  error: err,
+                  errorCode: err?.code,
+                  errorType: err?.type,
+                  errorName: err?.name,
+                  channelState: channel1?.state,
+                  realtimeState: client1.realtime?.connectionState,
+                  fullError: err
+                    ? JSON.stringify(err, null, 2)
+                    : 'No error object provided',
+                });
+              } else {
+                log('info', `📡 Channel ${status.toLowerCase()}`, 1);
+              }
+
+              if (status === 'SUBSCRIBED') {
+                log('info', '✅ Client 1 channel active', 1);
+              } else if (status === 'CLOSED') {
+                log('warn', '⚠️ Client 1 channel closed', 1);
+              }
+            });
+
+          // Create channel for client 2
+          channel2 = client2
+            .channel(channelName, {
+              config: { private: true },
+            })
+            .on('broadcast', { event: 'chat-message' }, (payload) => {
+              stats.client2Received++;
+              stats.totalMessages++;
+              updateStats();
+              log(
+                'info',
+                `📨 Received: "${payload.payload.message}" from ${payload.payload.sender}`,
+                2,
+                payload,
+              );
+            })
+            .on('subscribe', (status, err) => {
+              addSubscriptionStatus(2, status, err?.message);
+              if (err) {
+                log('error', `❌ Subscription error: ${err.message}`, 2, {
+                  status,
+                  error: err,
+                  errorCode: err.code,
+                  errorType: err.type,
+                  fullError: JSON.stringify(err, null, 2),
+                });
+                stats.errorCount++;
+              } else {
+                log('info', `📡 Channel subscription status: ${status}`, 2);
+              }
+              updateStats();
+            })
+            .on('error', (error) => {
+              addSubscriptionStatus(2, 'ERROR', error.message);
+              log('error', `❌ Channel error: ${error.message}`, 2, {
+                error: error,
+                errorCode: error.code,
+                errorType: error.type,
+                errorName: error.name,
+                stack: error.stack,
+                fullError: JSON.stringify(error, null, 2),
+              });
+              stats.errorCount++;
+              updateStats();
+            })
+            .subscribe((status, err) => {
+              addSubscriptionStatus(2, status, err?.message);
+
+              if (status === 'CHANNEL_ERROR') {
+                log('error', `📡 Channel ${status.toLowerCase()}`, 2, {
+                  status,
+                  error: err,
+                  errorCode: err?.code,
+                  errorType: err?.type,
+                  errorName: err?.name,
+                  channelState: channel2?.state,
+                  realtimeState: client2.realtime?.connectionState,
+                  fullError: err
+                    ? JSON.stringify(err, null, 2)
+                    : 'No error object provided',
+                });
+              } else {
+                log('info', `📡 Channel ${status.toLowerCase()}`, 2);
+              }
+
+              if (status === 'SUBSCRIBED') {
+                log('info', '✅ Client 2 channel active', 2);
+              } else if (status === 'CLOSED') {
+                log('warn', '⚠️ Client 2 channel closed', 2);
+              }
+            });
+
+          updateStatus('channelStatus', 'Channels created and subscribing...');
+          document.getElementById('channelName').textContent = channelName;
+
+          log('info', '✅ Both channels created and subscribing');
+        } catch (error) {
+          log('error', `❌ Failed to create channels: ${error.message}`);
+          stats.errorCount++;
+          updateStats();
+        }
+      }
+
+      function sendMessage(clientId) {
+        const client = clientId === 1 ? client1 : client2;
+        const channel = clientId === 1 ? channel1 : channel2;
+        const inputId = `client${clientId}Message`;
+        const senderName = clientId === 1 ? 'Alice' : 'Bob';
+
+        const messageInput = document.getElementById(inputId);
+        const message = messageInput.value.trim();
+
+        if (!message) {
+          log('warn', 'Empty message not sent', clientId);
+          return;
+        }
+
+        if (!client || !channel) {
+          log('error', 'Client or channel not available', clientId);
+          return;
+        }
+
+        const payload = {
+          message: message,
+          sender: senderName,
+          timestamp: Date.now(),
+          clientId: clientId,
+        };
+
+        log('info', `📤 Sending: "${message}"`, clientId);
+
+        channel
+          .send({
+            type: 'broadcast',
+            event: 'chat-message',
+            payload: payload,
+          })
+          .then(() => {
+            if (clientId === 1) {
+              stats.client1Sent++;
             } else {
-                log('debug', '👁️ Page became hidden');
+              stats.client2Sent++;
             }
+            updateStats();
+            log('info', `✅ Message sent successfully`, clientId);
+            messageInput.value = '';
+          })
+          .catch((error) => {
+            log(
+              'error',
+              `❌ Failed to send message: ${error.message}`,
+              clientId,
+            );
+            stats.errorCount++;
+            updateStats();
+          });
+      }
+
+      function handleEnter(event, clientId) {
+        if (event.key === 'Enter') {
+          sendMessage(clientId);
+        }
+      }
+
+      async function disconnectBoth() {
+        log('info', '🔄 Disconnecting all clients...');
+
+        // Remove channels
+        if (channel1) {
+          try {
+            addSubscriptionStatus(1, 'DISCONNECTING');
+            client1?.removeChannel(channel1);
+            channel1 = null;
+            addSubscriptionStatus(1, 'REMOVED');
+            log('info', '✅ Client 1 channel removed', 1);
+          } catch (e) {
+            addSubscriptionStatus(1, 'ERROR', 'Failed to remove channel');
+            log('debug', 'Error removing client 1 channel', 1, e);
+          }
+        }
+
+        if (channel2) {
+          try {
+            addSubscriptionStatus(2, 'DISCONNECTING');
+            client2?.removeChannel(channel2);
+            channel2 = null;
+            addSubscriptionStatus(2, 'REMOVED');
+            log('info', '✅ Client 2 channel removed', 2);
+          } catch (e) {
+            addSubscriptionStatus(2, 'ERROR', 'Failed to remove channel');
+            log('debug', 'Error removing client 2 channel', 2, e);
+          }
+        }
+
+        // Sign out clients
+        if (client1) {
+          try {
+            await client1.auth.signOut();
+            log('info', '✅ Client 1 signed out', 1);
+          } catch (e) {
+            log('debug', 'Error signing out client 1', 1, e);
+          }
+        }
+
+        if (client2) {
+          try {
+            await client2.auth.signOut();
+            log('info', '✅ Client 2 signed out', 2);
+          } catch (e) {
+            log('debug', 'Error signing out client 2', 2, e);
+          }
+        }
+
+        // Clear clients
+        client1 = null;
+        client2 = null;
+
+        updateStatus('client1Status', 'Disconnected', 'disconnected');
+        updateStatus('client2Status', 'Disconnected', 'disconnected');
+        updateStatus('channelStatus', 'No channels');
+        document.getElementById('channelName').textContent = '';
+
+        log('info', '✅ All clients disconnected and signed out');
+      }
+
+      function clearLogs() {
+        document.getElementById('logContainer').innerHTML = '';
+        // Reset message counts but keep connection stats
+        stats.client1Sent = 0;
+        stats.client1Received = 0;
+        stats.client2Sent = 0;
+        stats.client2Received = 0;
+        stats.totalMessages = 0;
+        updateStats();
+        log('info', '🧹 Logs cleared');
+      }
+
+      function exportLogs() {
+        const logs = document.getElementById('logContainer').innerText;
+        const blob = new Blob([logs], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `supabase-dual-client-debug-${new Date().toISOString()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        log('info', '💾 Logs exported');
+      }
+
+      function testErrorLogging() {
+        log('info', '🧪 Testing error logging...');
+
+        // Test basic error
+        const testError = new Error('Test error message');
+        testError.code = 'TEST_CODE';
+        testError.type = 'TEST_TYPE';
+        testError.name = 'TestError';
+
+        log('error', '❌ Test error log', 1, {
+          error: testError,
+          errorCode: testError.code,
+          errorType: testError.type,
+          status: 'CHANNEL_ERROR',
+          fullError: JSON.stringify(testError, null, 2),
         });
 
-        // Initialize
+        log(
+          'info',
+          '✅ Error logging test complete - check if you see detailed error info above',
+        );
+      }
+
+      // Network status monitoring
+      window.addEventListener('online', () => {
+        log('info', '🌐 Network came online');
         initBrowserInfo();
-        loadConfig();
-        updateStats();
-        log('info', '🚀 Supabase Dual-Client Chat Debug Tool initialized');
-        log('info', '💡 Click "Connect Both Clients" to start, then "Create Private Channels"');
+      });
+
+      window.addEventListener('offline', () => {
+        log('warn', '🚫 Network went offline');
+        initBrowserInfo();
+      });
+
+      // Visibility change handling (for Safari mobile)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          log('debug', '👁️ Page became visible');
+        } else {
+          log('debug', '👁️ Page became hidden');
+        }
+      });
+
+      // Initialize
+      initBrowserInfo();
+      loadConfig();
+      updateStats();
+      log('info', '🚀 Supabase Dual-Client Chat Debug Tool initialized');
+      log(
+        'info',
+        '💡 Click "Connect Both Clients" to start, then "Create Private Channels"',
+      );
     </script>
-</body>
+  </body>
 </html>
