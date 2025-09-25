@@ -52,39 +52,24 @@ export function useRealtimeMessaging({
       return;
     }
 
-    let isCancelled = false;
-
     const setupSubscription = async () => {
-      try {
-        logger.info('Setting up community channel subscription', {
-          communityId,
-        });
+      logger.info('Setting up community channel subscription', {
+        communityId,
+      });
 
-        const channel = await createMessageSubscription({
-          supabase,
-          queryClient,
-          communityId,
-          conversationId,
-        });
+      const channel = await createMessageSubscription({
+        supabase,
+        queryClient,
+        communityId,
+        conversationId,
+      });
 
-        if (!isCancelled) {
-          channelRef.current = channel;
-        } else {
-          // If effect was cancelled while we were setting up, clean up
-          supabase.removeChannel(channel);
-        }
-      } catch (error) {
-        logger.error('Failed to setup community channel subscription', {
-          error,
-          communityId,
-        });
-      }
+      channelRef.current = channel;
     };
 
     setupSubscription();
 
     return () => {
-      isCancelled = true;
       if (channelRef.current) {
         logger.info('Cleaning up community channel subscription', {
           communityId,
