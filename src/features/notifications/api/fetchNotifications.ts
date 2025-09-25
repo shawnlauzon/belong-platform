@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { NotificationDetail } from '../types/notificationDetail';
 import { toDomainNotification } from '../transformers';
-import { logger } from '@/shared';
+import { getAuthIdOrThrow, logger } from '@/shared';
 
 export interface FetchNotificationsFilter {
   isRead?: boolean;
@@ -12,24 +12,13 @@ export async function fetchNotifications(
   client: SupabaseClient<Database>,
   filter?: FetchNotificationsFilter,
 ): Promise<NotificationDetail[]> {
-  logger.info('Fetching notifications', {
-    filter,
-  });
-
-  // Get the current user to filter notifications
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(client);
 
   // Explicitly filter by user_id since views don't inherit RLS from underlying tables
   let query = client
     .from('notification_details')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (filter?.isRead !== undefined) {
@@ -57,8 +46,5 @@ export async function fetchNotifications(
     return [];
   }
 
-  logger.debug('Notifications fetched successfully', data);
-
-  // Transform the raw data using the proper transformer
   return data.map(toDomainNotification);
 }

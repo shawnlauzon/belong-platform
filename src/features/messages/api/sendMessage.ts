@@ -2,9 +2,8 @@ import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { Message, RealtimeBroadcastMessage, SendMessageInput } from '../types';
 import { toMessageRow, toDomainMessage } from '../transformers';
-import { logger } from '../../../shared';
+import { getAuthIdOrThrow, logger } from '../../../shared';
 import { MessageRow } from '../types/messageRow';
-import { getCurrentUserOrFail } from '@/features/auth/api';
 import {
   messagesChannelForCommunity as messagesTopicForCommunity,
   messagesChannelForConversation as messagesTopicForConversation,
@@ -25,7 +24,7 @@ export async function sendMessage(
     contentLength: input.content?.length || 0,
   });
 
-  const user = await getCurrentUserOrFail(supabase);
+  const authId = await getAuthIdOrThrow(supabase);
 
   const topic = input.conversationId
     ? messagesTopicForConversation(input.conversationId)
@@ -47,7 +46,7 @@ export async function sendMessage(
     event: 'message.created',
     type: 'broadcast',
     payload: {
-      sender_id: user.id,
+      sender_id: authId,
       message_id: uuidv4(),
       content: input.content,
       sent_at: new Date().toISOString(),
