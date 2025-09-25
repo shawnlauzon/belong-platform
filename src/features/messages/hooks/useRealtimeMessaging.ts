@@ -5,20 +5,22 @@ import { useSupabase, logger } from '@/shared';
 import { createMessageSubscription } from '../api';
 
 /**
- * Hook that subscribes to real-time messages for a specific community chat.
+ * Hook that subscribes to real-time messages for a specific community chat or conversation.
  * Automatically subscribes when the component mounts and unsubscribes when it unmounts.
  *
- * This hook should be used in community chat components to receive real-time
- * message updates only when the community chat is actively being viewed.
+ * This hook should be used in chat components to receive real-time
+ * message updates only when the chat is actively being viewed.
  *
- * @param communityId - The ID of the community to subscribe to
- * @returns Object with connection status
+ * @param communityId - The ID of the community to subscribe to (mutually exclusive with conversationId)
+ * @param conversationId - The ID of the conversation to subscribe to (mutually exclusive with communityId)
+ * @returns Ref object containing the RealtimeChannel (or null if not connected)
  *
  * @example
  * ```tsx
  * function CommunityChannelView({ communityId }: { communityId: string }) {
- *   const { isConnected } = useRealtimeCommunityChat(communityId);
+ *   const channelRef = useRealtimeMessaging({ communityId });
  *   const { data: messages } = useCommunityMessages(communityId);
+ *   const isConnected = !!channelRef.current;
  *
  *   return (
  *     <div>
@@ -52,27 +54,45 @@ export function useRealtimeMessaging({
       return;
     }
 
+    let isComponentMounted = true;
+
     const setupSubscription = async () => {
-      logger.info('Setting up community channel subscription', {
-        communityId,
-      });
+      try {
+        logger.info('Setting up message subscription', {
+          communityId,
+          conversationId,
+        });
 
-      const channel = await createMessageSubscription({
-        supabase,
-        queryClient,
-        communityId,
-        conversationId,
-      });
+        const channel = await createMessageSubscription({
+          supabase,
+          queryClient,
+          communityId,
+          conversationId,
+        });
 
-      channelRef.current = channel;
+        if (isComponentMounted) {
+          channelRef.current = channel;
+        } else {
+          // Component unmounted while we were setting up - clean up immediately
+          supabase.removeChannel(channel);
+        }
+      } catch (error) {
+        logger.error('Failed to setup message subscription', {
+          error,
+          communityId,
+          conversationId,
+        });
+      }
     };
 
     setupSubscription();
 
     return () => {
+      isComponentMounted = false;
       if (channelRef.current) {
-        logger.info('Cleaning up community channel subscription', {
+        logger.info('Cleaning up message subscription', {
           communityId,
+          conversationId,
         });
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
