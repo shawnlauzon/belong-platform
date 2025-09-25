@@ -85,7 +85,7 @@ export async function createMessageSubscription({
             break;
         }
       } catch (error) {
-        logger.error('createMessageSubscription: error processing message', {
+        logger.error('Error handling message', {
           error,
           event,
           conversationId,
@@ -95,7 +95,14 @@ export async function createMessageSubscription({
     });
 
   // Subscribe and return the channel
-  return channel.subscribe();
+  return channel.subscribe((status, err) => {
+    logger.info(
+      '=== MESSAGE SUBSCRIPTION STATUS ===',
+      channelName,
+      status,
+      err,
+    );
+  });
 
   function handleCreateReceived(message: Message) {
     logger.debug('Handling message created', message);
