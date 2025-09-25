@@ -81,6 +81,15 @@ export function createSupabaseClient(
       persistSession: true,
       detectSessionInUrl: true,
     },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+      heartbeatIntervalMs: 30000,
+      reconnectAfterMs: (tries: number) => {
+        return Math.min(tries * 1000, 10000);
+      },
+    },
   });
 
   // Test the client connection
