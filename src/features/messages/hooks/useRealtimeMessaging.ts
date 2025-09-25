@@ -95,8 +95,5 @@ export function useRealtimeMessaging({
     };
   }, [communityId, conversationId, supabase, queryClient]);
 
-  return {
-    isConnected: !!channelRef.current,
-    channel: channelRef.current,
-  };
+  return channelRef;
 }
