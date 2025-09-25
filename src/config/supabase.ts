@@ -79,15 +79,7 @@ export function createSupabaseClient(
     throw new Error('Supabase anonymous key is required');
   }
 
-  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    realtime: {
-      timeout: 30000, // default is 10s
-      heartbeatCallback: (status) => {
-        logger.debug('Realtime: ', status);
-      },
-    },
-    ...options,
-  });
+  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, options);
 
   // Test the client connection
   client.auth
