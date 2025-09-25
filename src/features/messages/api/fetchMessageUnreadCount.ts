@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { getAuthUserId } from '@/features/auth/api';
+import { getAuthIdOrThrow } from '@/shared';
 
 /**
  * Fetches the unread message count for a specific conversation
@@ -9,10 +9,7 @@ export async function fetchMessageUnreadCount(
   supabase: SupabaseClient<Database>,
   conversationId: string,
 ): Promise<number> {
-  const userId = await getAuthUserId(supabase);
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(supabase);
 
   // Get the user's last read timestamp for this conversation
   const { data: participantData, error: participantError } = await supabase
@@ -68,10 +65,7 @@ export async function fetchMessageUnreadCount(
 export async function fetchTotalMessageUnreadCount(
   supabase: SupabaseClient<Database>,
 ): Promise<number> {
-  const userId = await getAuthUserId(supabase);
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(supabase);
 
   // Get all conversation participants for this user
   const { data: participants, error: participantsError } = await supabase

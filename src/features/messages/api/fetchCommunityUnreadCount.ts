@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { getAuthUserId } from '@/features/auth/api';
+import { getAuthIdOrThrow } from '@/shared';
 
 /**
  * Fetches the unread message count for a specific community chat
@@ -9,10 +9,7 @@ export async function fetchCommunityUnreadCount(
   supabase: SupabaseClient<Database>,
   communityId: string,
 ): Promise<number> {
-  const userId = await getAuthUserId(supabase);
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(supabase);
 
   // Get the user's last read timestamp for this community
   const { data: membershipData, error: membershipError } = await supabase
@@ -68,10 +65,7 @@ export async function fetchCommunityUnreadCount(
 export async function fetchTotalCommunityUnreadCount(
   supabase: SupabaseClient<Database>,
 ): Promise<number> {
-  const userId = await getAuthUserId(supabase);
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(supabase);
 
   // Get all community memberships for this user
   const { data: memberships, error: membershipsError } = await supabase
