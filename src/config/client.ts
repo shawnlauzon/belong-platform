@@ -1,17 +1,22 @@
 import { createSupabaseClient } from './supabase';
 import { createMapboxClient } from './mapbox';
-import { logger as defaultLogger } from '../shared';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type {
+  SupabaseClient,
+  SupabaseClientOptions,
+} from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
 /**
  * Configuration options for the Belong Network Platform client
  */
 export interface BelongClientConfig {
-  /** Supabase project URL */
-  supabaseUrl: string;
-  /** Supabase anonymous key */
-  supabaseAnonKey: string;
+  supabase: {
+    /** Supabase project URL */
+    supabaseUrl: string;
+    /** Supabase anonymous key */
+    supabaseAnonKey: string;
+    options?: SupabaseClientOptions<'public'>;
+  };
   /** Mapbox public access token (optional) */
   mapboxPublicToken?: string;
   /** Enable realtime subscriptions (default: true) */
@@ -50,7 +55,7 @@ export interface BelongClient {
  * ```
  */
 export function createBelongClient(config: BelongClientConfig): BelongClient {
-  const { supabaseUrl, supabaseAnonKey, mapboxPublicToken } = config;
+  const { supabaseAnonKey, supabaseUrl, options } = config.supabase;
 
   // Validate required configuration
   if (!supabaseUrl) {
@@ -61,13 +66,9 @@ export function createBelongClient(config: BelongClientConfig): BelongClient {
   }
 
   // Create configured instances
-  const supabase = createSupabaseClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    defaultLogger,
-  );
-  const mapbox = mapboxPublicToken 
-    ? createMapboxClient(mapboxPublicToken, defaultLogger)
+  const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, options);
+  const mapbox = config.mapboxPublicToken
+    ? createMapboxClient(config.mapboxPublicToken)
     : null;
 
   return {

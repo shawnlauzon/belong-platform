@@ -1,6 +1,10 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  createClient,
+  SupabaseClientOptions,
+  type SupabaseClient,
+} from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger as defaultLogger } from '@/shared';
+import { logger } from '@/shared';
 
 /**
  * Creates a configured Supabase client instance with type safety for the Belong Network database.
@@ -11,7 +15,7 @@ import { logger as defaultLogger } from '@/shared';
  *
  * @param supabaseUrl - Your Supabase project URL (e.g., 'https://your-project.supabase.co')
  * @param supabaseAnonKey - Your Supabase anonymous/public key
- * @param logger - Logger instance for debugging (optional, uses platform default)
+ * @param options - Optional Supabase client options
  * @returns Configured Supabase client with Belong Network types
  *
  * @example
@@ -53,7 +57,7 @@ import { logger as defaultLogger } from '@/shared';
 export function createSupabaseClient(
   supabaseUrl: string,
   supabaseAnonKey: string,
-  logger = defaultLogger,
+  options?: SupabaseClientOptions<'public'>,
 ): SupabaseClient<Database> {
   // Debug logging for configuration
   logger.debug('🔧 Supabase Client Debug Info:', {
@@ -76,20 +80,13 @@ export function createSupabaseClient(
   }
 
   const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-    },
     realtime: {
-      params: {
-        eventsPerSecond: 10,
-      },
-      heartbeatIntervalMs: 30000,
-      reconnectAfterMs: (tries: number) => {
-        return Math.min(tries * 1000, 10000);
+      timeout: 30000, // default is 10s
+      heartbeatCallback: (status) => {
+        logger.debug('Realtime: ', status);
       },
     },
+    ...options,
   });
 
   // Test the client connection

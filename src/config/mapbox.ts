@@ -1,9 +1,4 @@
-import {
-  Coordinates,
-  logger as defaultLogger,
-  logApiCall,
-  logApiResponse,
-} from '../shared';
+import { Coordinates, logApiCall, logApiResponse, logger } from '../shared';
 
 /**
  * Creates a configured Mapbox client instance for geolocation and mapping services.
@@ -53,10 +48,7 @@ import {
  *
  * @category Client Functions
  */
-export function createMapboxClient(
-  mapboxPublicToken: string,
-  logger = defaultLogger
-) {
+export function createMapboxClient(mapboxPublicToken: string) {
   if (!mapboxPublicToken) {
     throw new Error('Mapbox public token is required');
   }
@@ -84,7 +76,7 @@ export function createMapboxClient(
             `country=US&` +
             `types=address,poi&` +
             `limit=5&` +
-            `autocomplete=true`
+            `autocomplete=true`,
         );
 
         if (!response.ok) {
@@ -117,7 +109,7 @@ export function createMapboxClient(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates.lng},${coordinates.lat}.json?` +
             `access_token=${mapboxPublicToken}&` +
             `types=address&` +
-            `limit=1`
+            `limit=1`,
         );
 
         if (!response.ok) {
@@ -150,7 +142,7 @@ export function createMapboxClient(
         zoom?: number;
         marker?: boolean;
         markerColor?: string;
-      } = {}
+      } = {},
     ): string {
       const {
         width = 800,
@@ -176,7 +168,7 @@ export function createMapboxClient(
      */
     async calculateDrivingTime(
       origin: Coordinates,
-      destination: Coordinates
+      destination: Coordinates,
     ): Promise<number | null> {
       if (!mapboxPublicToken) {
         logger.warn('No Mapbox token available for driving time calculation');
