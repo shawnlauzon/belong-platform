@@ -48,7 +48,13 @@ export async function createMessageSubscription({
   await supabase.realtime.setAuth();
   const channel = supabase
     .channel(channelName, {
-      config: { private: true },
+      config: {
+        private: true,
+        broadcast: {
+          ack: false,
+          self: false,
+        },
+      },
     })
     .on('broadcast', { event: '*' }, async (event: RealtimeBroadcastEvent) => {
       try {
