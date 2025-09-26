@@ -63,6 +63,7 @@ export function createSupabaseClient(
   logger.debug('🔧 Supabase Client Debug Info:', {
     url: supabaseUrl,
     anonKeyPrefix: supabaseAnonKey.substring(0, 20) + '...',
+    options,
     urlIsValid:
       supabaseUrl.startsWith('https://') &&
       supabaseUrl.includes('.supabase.co'),
