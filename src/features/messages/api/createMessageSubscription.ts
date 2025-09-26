@@ -1,22 +1,43 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
-import type { Database } from '@/shared/types/database';
-import { communityChatKeys, conversationKeys } from '../queries';
-import { logger } from '@/shared';
+import { logger } from '@/shared/logger';
 import {
-  Message,
-  RealtimeBroadcastMessage as RealtimeBroadcastEvent,
-} from '../types';
-import {
-  messagesChannelForConversation,
   messagesChannelForCommunity,
+  messagesChannelForConversation,
 } from '../utils';
+import { communityChatKeys, conversationKeys } from '../queries';
+import type { Database } from '@/shared/types/database';
+
+// Simple types for diagnostic version
+interface Message {
+  id: string;
+  conversationId?: string;
+  communityId?: string;
+  senderId: string;
+  content: string;
+  isEdited: boolean;
+  isDeleted: boolean;
+  encryptionVersion: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface RealtimeBroadcastEvent {
+  event: string;
+  payload: {
+    message_id: string;
+    sender_id: string;
+    content: string;
+    sent_at: string;
+  };
+}
 
 export interface CreateMessageSubscriptionParams {
   supabase: SupabaseClient<Database>;
   queryClient: QueryClient;
   conversationId?: string;
   communityId?: string;
+  onStatusChange?: (status: string, isConnecting: boolean) => void;
 }
 
 /**
@@ -30,6 +51,7 @@ export async function createMessageSubscription({
   queryClient,
   conversationId,
   communityId,
+  onStatusChange,
 }: CreateMessageSubscriptionParams): Promise<RealtimeChannel> {
   // Validate: exactly one must be provided
   if ((!conversationId && !communityId) || (conversationId && communityId)) {
@@ -45,7 +67,17 @@ export async function createMessageSubscription({
     : messagesChannelForCommunity(communityId!);
 
   logger.info('=== CREATING MESSAGE SUBSCRIPTION ===', channelName);
-  await supabase.realtime.setAuth();
+
+  // Check current auth state
+  await supabase.auth.getSession();
+
+  try {
+    await supabase.realtime.setAuth();
+  } catch (authError) {
+    logger.error('❌ Failed to set realtime auth:', authError);
+    throw authError;
+  }
+
   const channel = supabase
     .channel(channelName, {
       config: {
@@ -79,19 +111,23 @@ export async function createMessageSubscription({
 
         switch (event.event) {
           case 'message.created':
+            logger.info('📥 MESSAGE CREATED:', message);
             handleCreateReceived(message);
             break;
           case 'message.updated':
+            logger.info('✏️ MESSAGE UPDATED:', message);
             handleUpdateReceived(message);
             break;
           case 'message.deleted':
+            logger.info('🗑️ MESSAGE DELETED:', message);
             handleDeleteReceived(message);
             break;
           default:
+            logger.warn('❓ UNKNOWN MESSAGE EVENT:', event.event, message);
             break;
         }
       } catch (error) {
-        logger.error('Error handling message', {
+        logger.error('❌ Error handling message:', {
           error,
           event,
           conversationId,
@@ -102,12 +138,42 @@ export async function createMessageSubscription({
 
   // Subscribe and return the channel
   return channel.subscribe((status, err) => {
-    logger.info(
+    const timestamp = new Date().toISOString();
+    logger.debug(
       '=== MESSAGE SUBSCRIPTION STATUS ===',
-      channelName,
+      `[${timestamp}] ${channelName}:`,
       status,
-      err,
+      err ? { error: err, errorMessage: err.message } : 'no error',
     );
+
+    // Enhanced status logging and status change callback
+    switch (status) {
+      case 'SUBSCRIBED':
+        logger.info('🟢 Channel successfully subscribed');
+        if (onStatusChange) {
+          // Add a small delay to ensure subscription is fully established
+          setTimeout(() => onStatusChange(status, false), 50);
+        }
+        break;
+      case 'CHANNEL_ERROR':
+        logger.error('🔴 Channel error occurred:', { error: err, timestamp });
+        if (onStatusChange) {
+          setTimeout(() => onStatusChange(status, false), 100);
+        }
+        break;
+      case 'TIMED_OUT':
+        logger.warn('⏰ Channel timed out:', { error: err, timestamp });
+        if (onStatusChange) {
+          setTimeout(() => onStatusChange(status, false), 100);
+        }
+        break;
+      case 'CLOSED':
+        logger.warn('🚪 Channel closed:', { error: err, timestamp });
+        if (onStatusChange) {
+          setTimeout(() => onStatusChange(status, false), 100);
+        }
+        break;
+    }
   });
 
   function handleCreateReceived(message: Message) {
