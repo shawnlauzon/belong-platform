@@ -4,7 +4,7 @@ import { fetchMessages } from '../api';
 import { communityChatKeys } from '../queries';
 import { useCurrentUser } from '@/features/auth';
 import { STANDARD_CACHE_TIME } from '@/config';
-import type { Message } from '@/features/messages/types';
+import type { Message } from '@/features/messaging/types';
 
 /**
  * Hook for fetching community chat messages.

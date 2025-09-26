@@ -12,16 +12,12 @@ import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
-import {
-  createTestConversation,
-  signInAsUser,
-} from '../messages/messaging-helpers';
+import { signInAsUser } from './messaging-helpers';
 import type {
   RealtimeBroadcastMessage,
   MessagePayload,
-  Conversation,
 } from '@/features/messages/types';
-import { messagesChannelForConversation } from '@/features/messages/utils';
+import { messagesChannelForCommunity } from '@/features/messages/utils';
 
 describe('Community Message Realtime Format Validation', () => {
   let supabase: SupabaseClient<Database>;
@@ -29,9 +25,8 @@ describe('Community Message Realtime Format Validation', () => {
   let testUser: Account;
   let testCommunity: Community;
   let otherUser: Account;
-  let conversation: Conversation;
-  let channelForTestUser: RealtimeChannel | null = null;
-  let channelForOtherUser: RealtimeChannel | null = null;
+  let communityChannelForTestUser: RealtimeChannel | null = null;
+  let communityChannelForOtherUser: RealtimeChannel | null = null;
   let receivedMessagesForTestUser: RealtimeBroadcastMessage[] = [];
   let receivedMessagesForOtherUser: RealtimeBroadcastMessage[] = [];
 
@@ -49,12 +44,10 @@ describe('Community Message Realtime Format Validation', () => {
 
     await signInAsUser(supabase, testUser);
 
-    conversation = await createTestConversation(supabase, otherUser.id);
-
     // Set up community message subscription
-    const conversationTopic = messagesChannelForConversation(conversation.id);
-    channelForTestUser = supabase
-      .channel(conversationTopic, {
+    const communityTopic = messagesChannelForCommunity(testCommunity.id);
+    communityChannelForTestUser = supabase
+      .channel(communityTopic, {
         config: { private: true },
       })
       .on('broadcast', { event: '*' }, (message: RealtimeBroadcastMessage) => {
@@ -63,8 +56,8 @@ describe('Community Message Realtime Format Validation', () => {
       .subscribe();
 
     await signInAsUser(otherUserClient, otherUser);
-    channelForOtherUser = otherUserClient
-      .channel(conversationTopic, {
+    communityChannelForOtherUser = otherUserClient
+      .channel(communityTopic, {
         config: { private: true },
       })
       .on('broadcast', { event: '*' }, (message: RealtimeBroadcastMessage) => {
@@ -77,8 +70,8 @@ describe('Community Message Realtime Format Validation', () => {
   });
 
   afterAll(async () => {
-    await channelForTestUser?.unsubscribe();
-    await channelForOtherUser?.unsubscribe();
+    await communityChannelForTestUser?.unsubscribe();
+    await communityChannelForOtherUser?.unsubscribe();
     await cleanupAllTestData();
   });
 
@@ -88,13 +81,13 @@ describe('Community Message Realtime Format Validation', () => {
     await signInAsUser(otherUserClient, otherUser);
   });
 
-  it('validates conversation message realtime format', async () => {
+  it('validates community message realtime format', async () => {
     receivedMessagesForTestUser.length = 0;
     receivedMessagesForOtherUser.length = 0;
     // Send a message in the community
     const sentMessage = await sendMessage(otherUserClient, {
-      conversationId: conversation.id,
-      content: `${TEST_PREFIX} conversation realtime format test`,
+      communityId: testCommunity.id,
+      content: `${TEST_PREFIX} community realtime format test`,
     });
 
     // Wait for real-time update to process
@@ -112,7 +105,7 @@ describe('Community Message Realtime Format Validation', () => {
       payload: {
         sender_id: otherUser.id,
         message_id: sentMessage.id,
-        content: `${TEST_PREFIX} conversation realtime format test`,
+        content: `${TEST_PREFIX} community realtime format test`,
       },
     });
 

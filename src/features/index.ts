@@ -4,7 +4,7 @@ export * from './communities';
 export * from './invitations';
 export * from './feed';
 export * from './images';
-export * from './messages';
+export * from './messaging';
 export * from './notifications';
 export * from './resources';
 export * from './shoutouts';
