@@ -66,6 +66,23 @@ Belong Network Platform is a TypeScript library for building hyper-local communi
 - **Build**: Vite
 - **Testing**: Vitest with jsdom and Testing Library
 
+## Features
+
+The platform is organized into feature modules in `src/features/`. Each feature has its own CLAUDE.md with detailed documentation.
+
+- **[resources](src/features/resources/CLAUDE.md)** - Core resource sharing (offers, requests, events) with timeslots and claim workflows
+- **[auth](src/features/auth/CLAUDE.md)** - Authentication and user account management
+- **[comments](src/features/comments/CLAUDE.md)** - Threading comment system for resources and shoutouts
+- **[communities](src/features/communities/CLAUDE.md)** - Geographic/interest-based communities with boundaries and membership
+- **[feed](src/features/feed/CLAUDE.md)** - Aggregated activity feed of resources, events, and shoutouts
+- **[images](src/features/images/CLAUDE.md)** - Image upload and storage for various entities
+- **[invitations](src/features/invitations/CLAUDE.md)** - Community invitation codes and connection tracking
+- **[messaging](src/features/messaging/CLAUDE.md)** - Direct messaging between users and community chats
+- **[notifications](src/features/notifications/CLAUDE.md)** - Multi-type notification system with user preferences
+- **[shoutouts](src/features/shoutouts/CLAUDE.md)** - Public appreciation posts within communities
+- **[trust-scores](src/features/trust-scores/CLAUDE.md)** - Gamified reputation system per community
+- **[users](src/features/users/CLAUDE.md)** - User profiles with public/private data distinction
+
 ## Development Guidelines
 
 ### Code Patterns

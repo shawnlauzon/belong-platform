@@ -1,98 +1,209 @@
-# Trust Scores Feature
+# Trust Scores
 
-Trust scores track user engagement and contributions within communities through an automated point system.
+Gamified reputation system with points and levels per community.
 
-## Overview
+## Purpose
 
-- Each user has one trust score per community they participate in
-- Points are awarded automatically for various community actions
-- Scores accumulate over time and map to player levels
-- All point awards are logged for audit purposes
+The trust-scores feature provides:
+- Community-specific reputation scores
+- Point-based system for user actions
+- Level progression based on points
+- Action logging for transparency
+- Trust score history tracking
 
-## Point System
+## Key Entities
 
-The system awards points for the following actions:
+### TrustScore
 
-| Action             | Points | Description                               |
-| ------------------ | ------ | ----------------------------------------- |
-| Community Creation | 1000   | Creating a new community                  |
-| Community Join     | 50     | Joining an existing community             |
-| Resource Offer     | 50     | Creating a resource to share              |
-| Event Registration | 5      | Registering for an event                  |
-| Event Approval     | 25     | Having event registration approved        |
-| Event Going        | 25     | Confirming attendance at event            |
-| Event Attended     | 50     | Actually attending an event               |
-| Offer Approved     | 25     | Having resource offer approved            |
-| Offer Completed    | 50     | Successfully completing resource exchange |
-| Request Approved   | 25     | Having resource request approved          |
-| Request Completed  | 50     | Successfully fulfilling resource request  |
-| Shoutout Sent      | 10     | Sending a shoutout to another user        |
-| Shoutout Received  | 100    | Receiving a shoutout from another user    |
+User's trust score within a community.
 
-## Automatic Behaviors
+**Key Fields:**
+- `userId` - User ID
+- `communityId` - Community ID
+- `score` - Current point total
+- `lastCalculatedAt` - Last update timestamp
+- `createdAt`, `updatedAt` - Timestamps
 
-### Community Creation
+**Notes:**
+- Composite key: (userId, communityId)
+- One score per user per community
+- Score persists across sessions
+- Cannot go below zero
 
-When a user creates a community:
+### TrustScoreLog
 
-1. Automatically awards **COMMUNITY_FOUNDER** points (2000)
-2. Automatically awards **COMMUNITY_JOIN** points (50)
-3. Creates a trust_scores entry for the creator
-4. User becomes the community organizer and first member
+Record of trust score changes.
 
-### Community Joining
+**Key Fields:**
+- `id` - Log entry ID
+- `userId` - User whose score changed
+- `communityId` - Community context
+- `actionType` - Type of action (e.g., 'claim_completed', 'event_attended')
+- `actionId` - ID of related entity (optional)
+- `pointsChange` - Points added or removed
+- `scoreBefore` - Score before change
+- `scoreAfter` - Score after change
+- `metadata` - Additional context (optional)
+- `createdAt` - When change occurred
 
-When a user joins a community:
+**Notes:**
+- Immutable audit log
+- Tracks all score changes
+- Includes before/after values
+- Links to source actions
 
-1. Awards **COMMUNITY_JOIN** points (50)
-2. Creates trust_scores entry if none exists for that user-community pair
+### PlayerLevel
 
-### Resource Creation
+Level information based on score thresholds.
 
-When a user creates a resource (offer/request/event):
+**Key Fields:**
+- `level` - Level number (1, 2, 3, etc.)
+- `minPoints` - Minimum points for level
+- `maxPoints` - Maximum points for level (optional)
+- `title` - Level name/title
 
-1. Awards **RESOURCE_OFFER** points (50)
-2. Logs the action in trust_score_logs
+**Notes:**
+- Calculated from score, not stored
+- Multiple levels defined in system
+- Progression encourages engagement
 
-## Database Structure
+## Core Concepts
 
-### trust_scores Table
+### Community-Specific Scores
 
-- `user_id` + `community_id`: Unique constraint (one score per user per community)
-- `score`: Accumulated points total
-- `last_calculated_at`: When score was last updated
+Trust scores are per-community:
+- Same user has different scores in different communities
+- Actions in one community don't affect others
+- Encourages participation across communities
 
-### trust_score_logs Table
+### Point System
 
-- Audit log of all point awards
-- Tracks `action_type`, `points_change`, and context
+Users earn points for positive actions:
+- Creating resources
+- Completing exchanges
+- Attending events
+- Receiving shoutouts
+- Helping others
 
-## Player Levels
+Points can be lost for negative actions:
+- Flaking on events
+- Cancelled claims
+- Community violations
 
-Trust scores map to themed marine life levels:
+### Action Types
 
-- Different score thresholds unlock different levels
-- Each level has a name, emoji, and minimum score requirement
-- Progress calculation shows advancement toward next level
-- Level information used for gamification and user engagement
+Common action types:
+- `claim_completed` - Completed offer/request
+- `event_attended` - Attended event
+- `resource_created` - Created resource
+- `shoutout_received` - Received appreciation
+- `event_flaked` - No-show at event (negative points)
 
-## Key Behaviors for Development
+### Level Progression
 
-1. **Trust scores are created automatically** - you don't need to manually create them
-2. **Points accumulate** - scores increase with each qualifying action
-3. **One score per user-community pair** - enforced by database constraint
-4. **All changes are logged** - every point award creates a log entry
-5. **Calculations happen in real-time** - scores update immediately when actions occur
+Levels based on point thresholds:
+- Level 1: 0-99 points
+- Level 2: 100-299 points
+- Level 3: 300-599 points
+- (Additional levels continue)
 
-## API Surface
+### Trust Score Calculation
 
-- `fetchTrustScores(supabase, userId)` - Get all trust scores for a user
-- `calculateLevel(score)` - Get level information for a score
-- `getProgressToNextLevel(score)` - Get progress information for UI
+Scores calculated by database triggers:
+- Automatic on qualifying actions
+- Atomic updates
+- Log entries created
+- No manual calculation needed
 
-## Business Logic Notes
+## API Reference
 
-- Shoutouts award the most points to recipients (100) to encourage community recognition
-- Community creation awards significant points (1000) as it's a major contribution
-- Event attendance requires confirmation to prevent gaming the system
-- All point values are configurable via POINTS_CONFIG constant
+### Hooks
+- `useTrustScore(userId, communityId)` - Get user's trust score
+- `useTrustScoreLogs(userId, communityId)` - Get score history
+- `usePlayerLevel(score)` - Get level for score
+
+### Key Functions
+- `fetchTrustScore(supabase, userId, communityId)` - Fetch trust score
+- `fetchTrustScoreLogs(supabase, userId, communityId)` - Fetch logs
+- `calculatePlayerLevel(score)` - Calculate level from score
+
+## Important Patterns
+
+### Fetching Trust Scores
+
+```typescript
+// Get current user's score in a community
+const { data: trustScore } = useTrustScore(userId, communityId);
+
+console.log(`Score: ${trustScore?.score}`);
+console.log(`Last updated: ${trustScore?.lastCalculatedAt}`);
+```
+
+### Viewing Score History
+
+```typescript
+const { data: logs } = useTrustScoreLogs(userId, communityId);
+
+logs?.forEach(log => {
+  console.log(`${log.actionType}: ${log.pointsChange > 0 ? '+' : ''}${log.pointsChange}`);
+  console.log(`${log.scoreBefore} → ${log.scoreAfter}`);
+});
+```
+
+### Calculating Level
+
+```typescript
+const { data: trustScore } = useTrustScore(userId, communityId);
+
+if (trustScore) {
+  const level = usePlayerLevel(trustScore.score);
+  console.log(`Level ${level.level}: ${level.title}`);
+  console.log(`Next level at ${level.maxPoints} points`);
+}
+```
+
+### Displaying Score
+
+```typescript
+function TrustScoreBadge({ userId, communityId }: Props) {
+  const { data: score } = useTrustScore(userId, communityId);
+  const level = usePlayerLevel(score?.score ?? 0);
+
+  return (
+    <div>
+      <div>Level {level.level}</div>
+      <div>{score?.score} points</div>
+      <div>{level.title}</div>
+    </div>
+  );
+}
+```
+
+### Score Change Notifications
+
+Trust score changes trigger notifications:
+- `trustpoints.gained` notification type
+- `trustpoints.lost` notification type
+- `trustlevel.changed` notification type
+
+### Automatic Score Updates
+
+Scores update automatically via database triggers:
+- No manual API calls needed
+- Triggered by resource/claim/event actions
+- Immediate updates
+- Atomic transactions
+
+### Filtering Logs
+
+```typescript
+// Get logs for specific action type
+const { data: logs } = useTrustScoreLogs(userId, communityId);
+
+const eventLogs = logs?.filter(log =>
+  log.actionType.includes('event')
+);
+
+const gains = logs?.filter(log => log.pointsChange > 0);
+const losses = logs?.filter(log => log.pointsChange < 0);
+```

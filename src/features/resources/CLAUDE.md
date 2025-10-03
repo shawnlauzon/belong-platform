@@ -1,247 +1,283 @@
-# Resource Claim State Management System - Implementation Documentation
+# Resources
 
-## Executive Summary
+Core resource sharing system enabling community members to create offers, requests, and events with time-based scheduling and claim workflows.
 
-The Belong Platform uses a comprehensive state transition system for resource claims that enforces business rules at the database level. The system distinguishes between three resource types (offers, requests, events) with different state machines and role-based permissions, ensuring data integrity through database-level validation.
+## Purpose
 
-## Current System Architecture
+The resources feature enables community members to:
+- Share items, services, or skills (offers)
+- Request help or items from others (requests)
+- Organize and attend community events
 
-### Entity Relationships
+All resources support time-based availability through timeslots, claim/registration workflows with approval options, and two-party confirmation for completing exchanges.
 
-```
-Resource (1) → (N) ResourceTimeslots (1) → (N) ResourceClaims
-```
+## Key Entities
 
-- **Resources**: Events, offers, or requests with a `requires_approval` flag
-- **Timeslots**: Time-bounded availability windows for resources
-- **Claims**: Individual user claims on timeslots with enforced state transitions
+### Resource
 
-### Database Schema
+The main entity representing an offer, request, or event.
 
-#### Resource Types
+**Key Fields:**
+- `type` - `'offer'` | `'request'` | `'event'`
+- `category` - Optional categorization (e.g., 'tools', 'food', 'skills')
+- `title`, `description` - What's being shared
+- `locationName`, `coordinates` - Where it happens
+- `communityIds` - Which communities can see it (array)
+- `imageUrls` - Visual representation (array)
+- `status` - `'active'` | `'inactive'` | `'expired'`
+- `claimLimit` - Maximum number of claims allowed
+- `claimLimitPer` - `'total'` | `'timeslot'`
+- `requiresApproval` - Whether claims need owner approval
+- `areTimeslotsFlexible` - Whether timing is negotiable
+- `isRecurring` - Whether resource repeats
+- `lastRenewedAt`, `expiresAt` - Lifecycle management
+- `ownerId` - User who created the resource
+- `timeslots` - Array of ResourceTimeslot
+- `commentCount` - Number of comments
 
-- `offer` - User offering something to the community (owner gives to claimant)
-- `request` - User requesting something from the community (claimant gives to owner)
-- `event` - Scheduled gathering or activity
+### ResourceTimeslot
 
-#### Claim Status Enum (Current Implementation)
+Time-based availability windows for resources.
 
-- `pending` - Initial state for claims requiring approval
-- `approved` - Claim has been approved (or initial state when no approval required)
-- `rejected` - Claim has been rejected by resource owner
-- `completed` - Transaction/event completed successfully (requires two-party confirmation)
-- `cancelled` - Claim cancelled by claimant only
-- `interested` - Initial state for events not requiring approval
-- `given` - Resource has been given (by appropriate party based on type)
-- `received` - Resource has been received (by appropriate party based on type)
-- `going` - Event-specific: attendee confirmed they will attend
-- `attended` - Event-specific: owner confirmed attendance
-- `flaked` - Event-specific: no-show or failure to attend
+**Key Fields:**
+- `resourceId` - Parent resource
+- `startTime`, `endTime` - When it's available
+- `status` - `'available'` | `'claimed'` | `'completed'`
 
-## Implemented State Transition Rules
+**Notes:**
+- Resources can have multiple timeslots
+- Flexible resources allow negotiation of timeslot details
 
-### Core Principles
+### ResourceClaim
 
-1. **Role-Based Permissions**: Only specific roles can make certain transitions
-2. **No State Skipping**: Cannot go directly from `approved` to `completed` - requires handshake
-3. **Two-Party Confirmation**: Both parties must participate for completion (offers/requests)
-4. **Type-Specific Rules**: Different state machines for offers, requests, and events
-5. **Database Enforcement**: All rules enforced via database trigger `validate_claim_state_transition()`
+User registrations/claims on timeslots.
 
-### State Machines by Resource Type
+**Key Fields:**
+- `resourceId`, `timeslotId` - What's being claimed
+- `claimantId` - Who's claiming
+- `resourceOwnerId` - Owner of the resource
+- `status` - Current state in workflow
+- `commitmentLevel` - `'interested'` | `'committed'` | `'none'` (separate from status)
+- `notes` - Optional message to owner
+- `timeslot` - Full timeslot object
 
-#### OFFERS (Owner Giving to Claimant)
+**Notes:**
+- `commitment_level` and `status` are separate fields
+- `commitment_level` tracks how committed someone is (can be updated independently)
+- `status` tracks position in the approval/completion workflow
 
-**Initial State Logic:**
+## Core Concepts
 
-- If `requires_approval = true` → `pending`
-- If `requires_approval = false` → `approved`
+### Resource Types
 
-**State Transitions:**
-| From State | To State | Who Can Transition | Description |
-|------------|----------|-------------------|-------------|
-| pending | approved | Owner only | Owner approves the claim |
-| pending | rejected | Owner only | Owner rejects the claim |
-| approved | given | Owner only | Owner marks as given |
-| approved | received | Claimant only | Claimant marks as received |
-| given | completed | Claimant only | Claimant confirms receipt |
-| received | completed | Owner only | Owner confirms handoff |
-| Any (except rejected/completed) | cancelled | Claimant only | Claimant cancels |
+**Offers (Owner Gives to Claimant)**
+- Owner has something to share with community
+- Owner marks as `given`, claimant confirms by marking `completed`
+- Examples: lending tools, sharing food, offering services
 
-**Key Rules:**
+**Requests (Claimant Gives to Owner)**
+- Owner needs something from community
+- Claimant marks as `given`, owner confirms by marking `completed`
+- Examples: asking for help, requesting items, seeking skills
 
-- Owner gives, claimant receives
-- Both parties must confirm for completion
-- Cannot skip from approved directly to completed
+**Events**
+- Scheduled gatherings or activities
+- Uses `going` status for attendance confirmation
+- Owner marks final attendance as `attended` or `flaked`
+- Examples: community BBQ, book club, workshops
 
-#### REQUESTS (Claimant Giving to Owner)
+### Claim Workflows
 
-**Initial State Logic:**
+All resource types support optional approval:
+- `requiresApproval: true` → Claims start as `pending`, must be approved by owner
+- `requiresApproval: false` → Claims start as `approved`, automatically accepted
 
-- If `requires_approval = true` → `pending`
-- If `requires_approval = false` → `approved`
+### Two-Party Completion
 
-**State Transitions:**
-| From State | To State | Who Can Transition | Description |
-|------------|----------|-------------------|-------------|
-| pending | approved | Owner only | Owner approves fulfillment offer |
-| pending | rejected | Owner only | Owner rejects fulfillment offer |
-| approved | given | Claimant only | Claimant marks as given |
-| approved | received | Owner only | Owner marks as received |
-| given | completed | Owner only | Owner confirms receipt |
-| received | completed | Claimant only | Claimant confirms handoff |
-| Any (except rejected/completed) | cancelled | Claimant only | Claimant cancels |
+Offers and requests require both parties to participate:
+- One party marks as `given` or `received`
+- Other party confirms by transitioning to `completed`
+- This prevents disputes and ensures mutual agreement
 
-**Key Rules:**
+### Commitment Levels
 
-- Claimant gives, owner receives (inverse of offers)
-- Both parties must confirm for completion
-- Cannot skip from approved directly to completed
+Separate from status, commitment levels track attendee intent (primarily for events):
+- `interested` - Registered but not firmly committed
+- `committed` - Confirmed attendance
+- `none` - No specific commitment level
 
-#### EVENTS
+Claimants can update their commitment level independently of status changes.
 
-Resources vs Claims:
+### Claim Limits
 
-- Events (Resources) - The actual events themselves (e.g., "Community BBQ", "Book Club Meeting")
-- Event Registrations (Claims) - Individual user registrations/claims for attending those events
+Resources can restrict how many claims are accepted:
+- `claimLimitPer: 'total'` - Total limit across all timeslots
+- `claimLimitPer: 'timeslot'` - Limit per individual timeslot
 
-**Initial State Logic:**
+### Resource Lifecycle
 
-- If `requires_approval = true` → `pending`
-- If `requires_approval = false` → `interested`
+- Resources automatically expire after inactivity
+- `lastRenewedAt` tracks when owner last engaged
+- `expiresAt` is calculated based on renewal
+- Owners can manually renew to extend expiration
 
-**State Transitions:**
-| From State | To State | Who Can Transition | Description |
-|------------|----------|-------------------|-------------|
-| pending | interested | Owner only | Event owner approves registration |
-| pending | rejected | Owner only | Event owner rejects registration |
-| interested | going | Claimant only | Attendee confirms attendance |
-| going | attended | Owner only | Event owner marks as attended |
-| going | flaked | Owner only | Event owner marks as no-show |
-| Any (except rejected/attended/flaked) | cancelled | Claimant only | Attendee cancels |
+## State Machines
 
-**Key Rules:**
+### Claim Status Enum
 
-- One-directional flow (no going back)
-- Only owner can mark final attendance status
-- Transition to attended / flaked can only happen after the event has completed
-- Transition to cancelled can only happen before the event has completed
+`pending` | `approved` | `rejected` | `completed` | `cancelled` | `given` | `received` | `going` | `attended` | `flaked`
 
-## Implementation Details
+### Initial Status
 
-### Initial Status Determination
-
-The initial status is determined automatically by the API based on:
+Determined automatically by API based on resource type and approval requirements:
 
 ```typescript
-// In createResourceClaim API
-let initialStatus: ResourceClaimStatus;
-if (resource.type === 'event') {
-  initialStatus = resource.requiresApproval ? 'pending' : 'interested';
+if (resource.requiresApproval) {
+  initialStatus = 'pending';
 } else {
-  initialStatus = resource.requiresApproval ? 'pending' : 'approved';
+  initialStatus = 'approved'; // applies to all types
 }
 ```
 
-### Database Validation Function
+### Offers (Owner Gives to Claimant)
 
-The `validate_claim_state_transition()` PostgreSQL function enforces all rules:
+| From | To | Who | Description |
+|------|----|----|-------------|
+| pending | approved | Owner | Owner approves claim |
+| pending | rejected | Owner | Owner rejects claim |
+| approved | given | Owner | Owner marks as given |
+| approved | received | Claimant | Claimant marks as received |
+| approved | cancelled | Claimant | Claimant cancels |
+| given | completed | Claimant | Claimant confirms receipt |
+| received | completed | Owner | Owner confirms handoff |
 
-```sql
--- Key validation logic
--- 1. Determines user role (owner vs claimant)
--- 2. Checks resource type
--- 3. Validates transition based on state machine rules
--- 4. Returns clear error messages for violations
+**Terminal States:** `rejected`, `completed`, `cancelled`
 
--- Example error messages:
--- "Only resource owner can approve or reject claims"
--- "Cannot skip to completed. Both parties must confirm the exchange (given/received) first."
--- "Event registrations cannot be cancelled. Please contact the event organizer."
+### Requests (Claimant Gives to Owner)
+
+| From | To | Who | Description |
+|------|----|----|-------------|
+| pending | approved | Owner | Owner approves who will help |
+| pending | rejected | Owner | Owner rejects offer to help |
+| approved | given | Claimant | Claimant marks as given |
+| approved | received | Owner | Owner marks as received |
+| approved | cancelled | Claimant | Claimant cancels |
+| given | completed | Owner | Owner confirms receipt |
+| received | completed | Claimant | Claimant confirms handoff |
+
+**Terminal States:** `rejected`, `completed`, `cancelled`
+
+**Note:** Semantics are reversed from offers - claimant gives, owner receives.
+
+### Events
+
+| From | To | Who | Description |
+|------|----|----|-------------|
+| pending | approved | Owner | Owner approves registration |
+| pending | rejected | Owner | Owner rejects registration |
+| approved | going | Claimant | Attendee confirms they're going |
+| approved | cancelled | Claimant | Attendee cancels registration |
+| going | attended | Owner | Owner marks as attended |
+| going | flaked | Owner | Owner marks as no-show |
+| going | cancelled | Claimant | Attendee cancels before event |
+
+**Terminal States:** `rejected`, `attended`, `flaked`, `cancelled`
+
+**Key Differences:**
+- Uses `going` status instead of `given`/`received`
+- Can be cancelled from both `approved` and `going` states
+- Owner controls final attendance status
+
+## State Transition Rules
+
+1. **Role-Based Permissions** - Only specific roles can make certain transitions
+2. **No State Skipping** - Cannot go from `approved` directly to `completed`
+3. **Terminal States** - Cannot transition from `rejected`, `completed`, `cancelled`, `attended`, or `flaked`
+4. **Database Enforcement** - All rules enforced via `validate_claim_state_transition()` trigger
+5. **Clear Error Messages** - Database returns specific messages for invalid transitions
+
+## API Reference
+
+### Resource Hooks
+- `useResources(filter?)` - Query resources with optional filters
+- `useResource(id)` - Get single resource by ID
+- `useResourcesById(ids)` - Get multiple resources by IDs
+- `useCreateResource()` - Create new resource
+- `useUpdateResource()` - Update resource details
+- `useDeleteResource()` - Delete resource
+- `useRenewResource()` - Extend expiration date
+
+### Timeslot Hooks
+- `useResourceTimeslots(resourceId)` - Query timeslots for resource
+- `useCreateResourceTimeslot()` - Add timeslot to resource
+- `useUpdateResourceTimeslot()` - Update timeslot details
+- `useDeleteResourceTimeslot()` - Remove timeslot
+
+### Claim Hooks
+- `useResourceClaims(filter)` - Query claims with filters
+- `useCreateResourceClaim()` - Create claim/registration
+- `useUpdateResourceClaim()` - Update claim status
+- `useUpdateCommitmentLevel()` - Update commitment level independently
+
+### Transformers
+- `resourceTransformer` - DB row → Resource domain model (with timeslots and communities)
+- `resourceTimeslotTransformer` - DB row → ResourceTimeslot
+- `resourceClaimTransformer` - DB row → ResourceClaim (with timeslot details)
+
+### Key Functions
+- `fetchResources(supabase, filter?)` - Fetch resources with communities and timeslots
+- `fetchResourceById(supabase, id)` - Fetch single resource
+- `fetchResourceClaims(supabase, filter)` - Fetch claims with filters
+- `fetchResourceTimeslots(supabase, resourceId)` - Fetch timeslots for resource
+- `createResourceClaim(supabase, input)` - Create claim (determines initial status automatically)
+- `updateResourceClaim(supabase, update)` - Update claim status (validates transitions)
+- `updateCommitmentLevel(supabase, claimId, level)` - Update commitment level only
+
+## Important Patterns
+
+### Status vs Commitment Level
+
+These are separate, independent fields:
+- **status** - Where in the workflow (pending → approved → going → attended)
+- **commitment_level** - How committed the person is (interested/committed/none)
+
+Commitment level can be updated independently without changing status.
+
+### Database Joins
+
+Resources are typically fetched with related data:
+```typescript
+// Resources include communities and timeslots
+SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS
+
+// Claims include resource owner and timeslot details
+SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT
 ```
 
-### Trust Score Points System
+### Automatic Initial Status
 
-Points are awarded based on state transitions:
+Creating a claim automatically determines the initial status based on:
+1. Resource type (offer, request, or event)
+2. Whether `requiresApproval` is true
 
-#### Events
+The `status` field is not included in `ResourceClaimInput` - it's determined by the API.
 
-| Status     | Points | When Awarded                              |
-| ---------- | ------ | ----------------------------------------- |
-| interested | 5      | Initial registration (no approval needed) |
-| approved   | 25     | When moving from pending to approved      |
-| going      | 25     | When confirming attendance                |
-| attended   | 50     | When marked as attended                   |
+### State Validation
 
-#### Offers/Requests
+State transitions are validated at the database level via triggers. Client code should:
+- Handle validation errors gracefully
+- Display clear error messages to users
+- Use the specific error messages from the database
 
-| Status    | Points | When Awarded                                   |
-| --------- | ------ | ---------------------------------------------- |
-| approved  | 25     | Initial claim (no approval needed) or approval |
-| completed | 50     | When transaction completes                     |
+### Type Discrimination
 
-## API Integration
-
-### Type Changes
-
+Use resource type to determine appropriate workflow:
 ```typescript
-// ResourceClaimInput no longer includes status
-export type ResourceClaimInput = {
-  resourceId: string;
-  timeslotId: string;
-  notes?: string;
-  // status removed - determined by API
-};
-```
-
-### Creating Claims
-
-```typescript
-// API automatically determines initial status
-const claim = await createResourceClaim(supabase, {
-  resourceId: 'xxx',
-  timeslotId: 'yyy',
-  notes: 'optional notes',
-});
-// Status will be set based on resource type and approval requirements
-```
-
-### Updating Claim Status
-
-```typescript
-// Database will validate transitions
-try {
-  await updateResourceClaim(supabase, {
-    id: claimId,
-    status: 'given',
-  });
-} catch (error) {
-  // Database returns clear error messages
-  // e.g., "Only resource owner can mark an offer as given"
+if (resource.type === 'event') {
+  // Use 'going' status and commitment levels
+} else if (resource.type === 'offer') {
+  // Owner gives, claimant receives
+} else {
+  // Owner receives, claimant gives (request)
 }
 ```
-
-## Error Handling
-
-The database provides specific error messages for invalid transitions:
-
-### Common Error Messages
-
-- **Wrong Role**: "Only resource owner can approve or reject claims"
-- **Invalid Transition**: "Approved offer claims can only transition to given or received"
-- **Skipping States**: "Cannot skip to completed. Both parties must confirm the exchange"
-- **Terminal States**: "Cannot transition from completed status"
-- **Event Specific**: "Event registrations cannot be cancelled"
-
-## Summary
-
-The current implementation provides a robust, database-enforced state transition system that:
-
-- Ensures data integrity through validation triggers
-- Provides clear feedback through specific error messages
-- Supports three distinct workflows for different resource types
-- Requires appropriate participation from both parties
-- Awards trust score points to incentivize participation
-- Prevents invalid states through comprehensive validation
-
-The system is designed to be maintainable, extensible, and provides a solid foundation for future enhancements while ensuring current operations are reliable and secure.

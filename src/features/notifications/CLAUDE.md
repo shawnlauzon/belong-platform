@@ -1,141 +1,203 @@
-# Notification System Implementation
+# Notifications
 
-## Overview
+Multi-type notification system with user preferences and grouped categories.
 
-A comprehensive notification system for the Belong Platform supporting badge counts, polling-based notifications, and user preference controls across 19 notification types. The system is fully implemented with database triggers, React Query hooks with 5-second polling, and granular user controls.
+## Purpose
 
-## Notification Types & User Controls
+The notifications feature provides:
+- Real-time notifications for platform activities
+- 20+ notification types covering all user interactions
+- User-configurable preferences by notification group
+- Unread count tracking
+- Read/unread status management
+- Type-safe metadata for each notification type
 
-### Permission Group 1: **Social Interactions**
+## Key Entities
 
-Controls notifications about direct interactions with other users:
+### Notification
 
-- `comment` - Someone comments on your resource
-- `comment_reply` - Someone replies to your comment
-- `shoutout_received` - Someone gives you a shoutout
-- `connection_request` - Someone wants to connect with you
-- `connection_accepted` - Your connection request was accepted
+Main notification entity with polymorphic references.
 
-**Database columns**: `comments_on_resources`, `comment_replies`, `shoutout_received`, `connection_request`, `connection_accepted`
+**Key Fields:**
+- `id` - Notification ID
+- `userId` - Recipient user ID
+- `type` - Notification type (e.g., 'comment.created', 'claim.approved')
+- `resourceId` - Optional resource reference
+- `commentId` - Optional comment reference
+- `claimId` - Optional claim reference
+- `communityId` - Optional community reference
+- `shoutoutId` - Optional shoutout reference
+- `conversationId` - Optional conversation reference
+- `actorId` - User who triggered the notification
+- `metadata` - Type-specific additional data
+- `readAt` - When notification was read (null if unread)
+- `createdAt`, `updatedAt` - Timestamps
 
-### Permission Group 2: **My Resources**
+**Notes:**
+- Polymorphic design supports multiple entity types
+- Metadata structure varies by notification type
+- Uses database triggers for automatic creation
 
-Controls notifications about resources you own:
+### NotificationGroup
 
-- `claim` - Someone claims your resource
-- `resource_claim_cancelled` - Someone cancelled their claim on your resource
-- `resource_claim_completed` - Someone marked their claim as completed on your resource
+Logical groupings of notification types for user preferences.
 
-**Database columns**: `resource_claims`, `resource_claim_cancelled`, `resource_claim_completed`
+**Groups:**
+- `SOCIAL_INTERACTIONS` - Comments, replies, shoutouts, connections
+- `MY_RESOURCES` - Claims on user's resources
+- `MY_REGISTRATIONS` - Updates to user's claims
+- `MY_COMMUNITIES` - Community membership changes
+- `COMMUNITY_ACTIVITY` - New resources and events
+- `TRUST_RECOGNITION` - Trust points and level changes
+- `MESSAGES` - Direct messages and conversations
 
-### Permission Group 3: **My Registrations**
+### NotificationPreferences
 
-Controls notifications about things you've signed up for (claims/event registrations):
+User preferences for each notification group.
 
-- `claim_approved` - Your claim/registration was approved by the resource owner
-- `claim_rejected` - Your claim/registration was rejected by the resource owner
-- `claimed_resource_updated` - A resource/event you claimed/registered for was updated
-- `claimed_resource_cancelled` - A resource/event you claimed/registered for was cancelled
+**Key Fields:**
+- `userId` - User ID
+- `groupName` - Notification group
+- `enabled` - Whether group is enabled
+- `createdAt`, `updatedAt` - Timestamps
 
-**Database columns**: `claim_approved`, `claim_rejected`, `claimed_resource_updated`, `claimed_resource_cancelled`
+**Notes:**
+- Preferences default to enabled
+- Can be configured per group
+- Affects notification delivery
 
-### Permission Group 4: **My Communities** (as organizer)
+## Core Concepts
 
-Controls notifications about communities you organize:
+### Notification Types
 
-- `community_member_joined` - Someone joined your community
-- `community_member_left` - Someone left your community
+Platform supports 20+ notification types:
 
-**Database columns**: `community_member_joined`, `community_member_left`
+**Comments:** `comment.created`, `comment.replied`
+**Claims:** `claim.created`, `claim.approved`, `claim.rejected`, `claim.cancelled`, `claim.completed`
+**Resources:** `resource.created`, `resource.updated`, `resource.cancelled`
+**Events:** `event.created`
+**Communities:** `community.created`, `member.joined`, `member.left`
+**Social:** `shoutout.created`, `connection.requested`, `connection.accepted`
+**Messaging:** `message.created`, `conversation.created`
+**Trust:** `trustpoints.gained`, `trustpoints.lost`, `trustlevel.changed`
 
-### Permission Group 5: **Community Activity** (as member)
+### Type Guards
 
-Controls notifications about communities you're a member of:
+Helper functions to categorize notifications:
+- `isCommentNotification(type)`
+- `isClaimNotification(type)`
+- `isResourceNotification(type)`
+- `isSocialNotification(type)`
+- `isTrustNotification(type)`
+- `isMessageNotification(type)`
+- `isConversationNotification(type)`
 
-- `new_resource` - New resource added to a community you're in
-- `new_event` - New event created in your community
+### Metadata
 
-**Database columns**: `community_resources`, `new_event`
+Each notification type has specific metadata:
+- **CommentMetadata** - Comment text, resource info
+- **ShoutoutMetadata** - Shoutout details
+- **TrustPointsMetadata** - Points change, new total
+- **TrustLevelMetadata** - Old/new level
+- **ResourceUpdatedMetadata** - What changed
+- **ConversationMetadata** - Conversation details
 
-### Permission Group 6: **Trust & Recognition**
+### Unread Counts
 
-Controls notifications about achievements:
+System tracks unread notifications:
+- Per-user unread count
+- Real-time updates
+- Efficient counting queries
 
-- `trust_points_received` - You received trust points from an action
-- `trust_level_changed` - You reached a new trust level
+## API Reference
 
-**Database columns**: `trust_points_received`, `trust_level_changed`
+### Hooks
+- `useNotifications(filter?)` - Query notifications with optional filters
+- `useNotificationUnreadCount()` - Get unread count for current user
+- `useMarkAsRead()` - Mark notification(s) as read
+- `useNotificationPreferences()` - Get user's notification preferences
+- `useGroupedNotificationPreferences()` - Get preferences grouped by category
+- `useUpdateNotificationPreferences()` - Update preference settings
 
-### Permission Group 7: **Messages**
+### Key Functions
+- `fetchNotifications(supabase, filter)` - Fetch notifications
+- `fetchUnreadCount(supabase, userId)` - Get unread count
+- `markAsRead(supabase, notificationIds)` - Mark as read
+- `getNotificationGroup(type)` - Get group for notification type
 
-Controls messaging notifications with granular control:
+## Important Patterns
 
-- `direct_message` - Direct message received (1:1 conversations)
-- `community_message` - Community chat message received
+### Querying Notifications
 
-**Database columns**: `direct_messages`, `community_messages` (both user-controllable)
+```typescript
+// Get all notifications for current user
+const { data: notifications } = useNotifications();
 
-## Key Design Principles
+// Get unread count
+const { data: unreadCount } = useNotificationUnreadCount();
 
-1. **Clear Ownership Separation**: Distinguishes between "my stuff" (resources I own, communities I organize) and "their stuff" (resources I've claimed, communities I'm a member of)
-
-2. **Unified Registrations**: Treats event attendance and resource claims uniformly as "registrations" since they use the same underlying system
-
-3. **Minimal Overlap**: Each notification type belongs to exactly one group with no duplication
-
-4. **User-Friendly Grouping**: Groups make intuitive sense to users managing their notification preferences
-
-5. **Granular Message Control**: Separate user controls for direct messages vs community chat to respect different communication contexts
-
-6. **Trigger-Based Reliability**: All notifications are created automatically via database triggers, ensuring consistency
-
-## Database Implementation
-
-### Notification Triggers (All Functional)
-
-✅ **Implemented Database Triggers:**
-
-- `shoutout_notification_trigger` → `notify_on_shoutout()`
-- `connection_request_notification_trigger` → `notify_on_connection_request()`
-- `connection_acceptance_notification_trigger` → `notify_on_connection_accepted()`
-- `claim_status_notification_trigger` → `notify_on_claim_status_change()`
-- `resource_update_notification_trigger` → `notify_on_resource_update()`
-- `resource_cancellation_notification_trigger` → `notify_on_resource_cancellation()`
-- `membership_join_notification_trigger` → `notify_on_membership_join()`
-- `membership_leave_notification_trigger` → `notify_on_membership_leave()`
-- `trust_points_notification_trigger` → `notify_on_trust_points()`
-- `trust_level_notification_trigger` → `notify_on_trust_level_change()`
-
-### Notification Preferences Schema
-
-```sql
--- notification_preferences table columns (all user-controllable)
-comments_on_resources          BOOLEAN DEFAULT TRUE
-comment_replies                BOOLEAN DEFAULT TRUE
-shoutout_received             BOOLEAN DEFAULT TRUE
-connection_request            BOOLEAN DEFAULT TRUE
-connection_accepted           BOOLEAN DEFAULT TRUE
-resource_claims               BOOLEAN DEFAULT TRUE
-resource_claim_cancelled      BOOLEAN DEFAULT TRUE
-resource_claim_completed      BOOLEAN DEFAULT TRUE
-claim_approved                BOOLEAN DEFAULT TRUE
-claim_rejected                BOOLEAN DEFAULT TRUE
-claimed_resource_updated      BOOLEAN DEFAULT TRUE
-claimed_resource_cancelled    BOOLEAN DEFAULT TRUE
-community_member_joined       BOOLEAN DEFAULT TRUE
-community_member_left         BOOLEAN DEFAULT TRUE
-community_resources           BOOLEAN DEFAULT TRUE
-new_event                     BOOLEAN DEFAULT TRUE
-trust_points_received         BOOLEAN DEFAULT TRUE
-trust_level_changed           BOOLEAN DEFAULT TRUE
-direct_messages               BOOLEAN DEFAULT TRUE
-community_messages            BOOLEAN DEFAULT TRUE
+// Filter by type
+const { data: commentNotifs } = useNotifications({
+  types: ['comment.created', 'comment.replied']
+});
 ```
 
-## Polling Implementation
+### Marking as Read
 
-The notification system uses React Query polling with a 5-second interval instead of real-time WebSocket connections for improved reliability and durability:
+```typescript
+const markAsRead = useMarkAsRead();
 
-- `useNotifications` hook polls for notification updates every 5 seconds
-- `useNotificationUnreadCount` hook polls for unread count updates every 5 seconds
-- No WebSocket or real-time channel dependencies required
+// Mark single notification
+await markAsRead.mutateAsync([notificationId]);
+
+// Mark multiple
+await markAsRead.mutateAsync(notificationIds);
+```
+
+### Notification Preferences
+
+```typescript
+// Get all preferences
+const { data: prefs } = useNotificationPreferences();
+
+// Get grouped preferences
+const { data: grouped } = useGroupedNotificationPreferences();
+
+// Update preference
+const updatePrefs = useUpdateNotificationPreferences();
+await updatePrefs.mutateAsync({
+  groupName: 'SOCIAL_INTERACTIONS',
+  enabled: false
+});
+```
+
+### Type Guards
+
+```typescript
+if (isCommentNotification(notification.type)) {
+  // Handle comment notification
+  const metadata = notification.metadata as CommentMetadata;
+}
+```
+
+### Getting Notification Group
+
+```typescript
+const group = getNotificationGroup(notification.type);
+// Returns: NotificationGroup enum value
+```
+
+### Polymorphic References
+
+Notifications reference different entities based on type:
+```typescript
+if (notification.resourceId) {
+  // Fetch resource
+}
+if (notification.commentId) {
+  // Fetch comment
+}
+if (notification.conversationId) {
+  // Fetch conversation
+}
+```

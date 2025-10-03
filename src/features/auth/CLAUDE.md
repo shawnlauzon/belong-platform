@@ -1,252 +1,186 @@
-# Authentication Module Documentation
+# Auth
 
-This document describes how the authentication system works in the Belong Network platform, including types, flow, and proper usage.
+Authentication and session management using Supabase Auth.
 
-## Core Types
+## Purpose
 
-### Account vs User
+The auth feature handles:
+- User sign up with email/password
+- User sign in with email/password
+- Session management and current user state
+- Profile updates for authenticated users
+- Sign out and session cleanup
 
-The authentication system uses two distinct but related types:
+Integrates with Supabase Auth system for secure authentication.
 
-#### Account (Authentication Domain)
+## Key Entities
 
-```typescript
-interface Account {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName?: string;
-  fullName?: string;
-  avatarUrl?: string;
-  location?: Coordinates;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+### Account
 
-- **Purpose**: Represents authentication data from Supabase Auth
-- **Source**: Comes directly from Supabase `auth.signInWithPassword()` and `auth.getUser()`
-- **Usage**: Internal authentication operations, returned by `signIn`, `signUp` functions
-- **Fields**: All camelCase (our standard), transformed from Supabase snake_case
+Represents the authenticated user's account information from Supabase Auth.
 
-#### User (Application Domain)
+**Key Fields:**
+- `id` - User ID (from auth.users)
+- `email` - User's email address
+- `firstName` - User's first name
+- `lastName` - User's last name
+- `fullName` - Combined full name
+- `avatarUrl` - Profile picture URL
+- `location` - User's coordinates (lat/lng)
+- `createdAt` - Account creation date
+- `updatedAt` - Last update date
 
-```typescript
-interface User {
-  id: string;
-  firstName: string;
-  lastName?: string;
-  fullName?: string;
-  email: string;
-  avatarUrl?: string;
-  location?: Coordinates;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+**Notes:**
+- Returned by sign in/sign up operations
+- Transformed from Supabase snake_case to camelCase
+- Authentication domain entity
+- Not cached - used for auth operations only
 
-- **Purpose**: Represents complete user data for application use
-- **Source**: Combination of Account data + profile table data
-- **Usage**: Application features, UI display, returned by `useCurrentUser`
-- **Fields**: Same structure as Account, but semantically represents a complete user profile
+## Core Concepts
 
-## Authentication Flow
+### Authentication vs User Profile
 
-### 1. Sign Up Flow
+**Account** (Auth Domain)
+- Returned by authentication operations
+- Represents Supabase auth.users data
+- Not cached by auth mutations
+- Used for sign in/sign up responses
 
-```
-User Input (email, password, firstName, lastName)
-    ↓
-useSignUp() → signUp() → supabase.auth.signUp()
-    ↓
-Returns: Account object
-    ↓
-No automatic caching (new architecture)
-```
+**User** (Application Domain)
+- Fetched by `useCurrentUser()`
+- Combines auth data with profile data
+- Cached with React Query
+- Used throughout application
 
-**Implementation**:
+### Sign Up Flow
 
-- `useSignUp()`: React Query mutation hook
-- `signUp()`: Implementation function that calls Supabase
-- Returns `Account` object immediately
-- Does NOT cache User data (clean separation)
+1. User provides email, password, and profile info
+2. Supabase creates auth.users record
+3. Profile metadata stored in user_metadata
+4. Returns Account object
+5. User can then fetch profile with `useCurrentUser()`
 
-### 2. Sign In Flow
+### Sign In Flow
 
-```
-User Input (email, password)
-    ↓
-useSignIn() → signIn() → supabase.auth.signInWithPassword()
-    ↓
-Returns: Account object
-    ↓
-No automatic caching (new architecture)
-```
+1. User provides email and password
+2. Supabase validates credentials
+3. Session established in browser storage
+4. Returns Account object
+5. Session persists for subsequent requests
 
-**Implementation**:
+### Current User
 
-- `useSignIn()`: React Query mutation hook
-- `signIn()`: Implementation function that calls Supabase
-- Returns `Account` object immediately
-- Does NOT cache User data (clean separation)
-- Establishes Supabase auth session for subsequent calls
-
-### 3. Get Current User Flow
-
-```
-useCurrentUser() → fetchCurrentUser() → supabase.auth.getUser() + profile fetch
-    ↓
-Combines Account + Profile data
-    ↓
-Returns: User object (cached)
-```
-
-**Implementation**:
-
-- `useCurrentUser()`: React Query that fetches fresh data
-- `fetchCurrentUser()`: Gets current auth state + profile data
-- Combines Account data with profile table data
-- Transforms to User object
+The `useCurrentUser()` hook:
+- Fetches current auth state from Supabase
+- Combines with profile data
+- Returns User object
 - Cached with 5-minute stale time
+- Automatically invalidated on sign out
 
-### 4. Sign Out Flow
+### Session Management
 
-```
-useSignOut() → signOut() → supabase.auth.signOut()
-    ↓
-Invalidates ['currentUser'] cache
-```
+Sessions handled automatically by Supabase:
+- Stored in browser localStorage
+- Auto-refresh before expiration
+- Persists across page refreshes
+- Cleared on sign out
 
-**Implementation**:
+## API Reference
 
-- `useSignOut()`: React Query mutation hook
-- `signOut()`: Implementation function that calls Supabase
-- Clears auth session and invalidates User cache
+### Hooks
+- `useCurrentUser()` - Get current authenticated user (cached query)
+- `useSignIn()` - Sign in mutation hook
+- `useSignUp()` - Sign up mutation hook
+- `useSignOut()` - Sign out mutation hook
+- `useUpdateProfile()` - Update profile mutation hook
 
-## Architecture Principles
+### Key Functions
+- `signIn(supabase, email, password)` - Authenticate user, returns Account
+- `signUp(supabase, credentials)` - Create new account, returns Account
+- `signOut(supabase)` - End session, invalidates current user cache
+- `getCurrentUser(supabase)` - Fetch current user data as User object
+- `updateProfile(supabase, updates)` - Update user profile
+
+## Important Patterns
 
 ### Clean Domain Separation
 
-1. **Authentication mutations** (`useSignIn`, `useSignUp`, `useSignOut`):
-
-   - Work with `Account` objects
-   - Call Supabase auth directly
-   - Do NOT cache anything
-   - Return immediately after auth operation
-
-2. **User query** (`useCurrentUser`):
-   - Works with `User` objects
-   - Fetches fresh auth state + profile data
-   - Single cache key: `['currentUser']`
-   - Handles complete user profile data
-
-### No Cache Pollution
-
-- Auth mutations don't interfere with User cache
-- Only `useCurrentUser` maintains cached User data
-- Clear separation prevents type conflicts
-- Eliminates timing issues between auth and profile operations
-
-## Proper Usage Patterns
-
-### Sign In + Get Current User
-
+Auth mutations work with Account, queries work with User:
 ```typescript
-// 1. Sign in user
+// Sign in returns Account (not cached)
 const signIn = useSignIn();
-const result = await signIn.mutateAsync({ email, password });
-// result is Account object
+const account = await signIn.mutateAsync({ email, password });
 
-// 2. Get complete user data (separate call)
+// Fetch User profile separately (cached)
 const { data: currentUser } = useCurrentUser();
-// currentUser is User object with profile data
 ```
 
-### Check Authentication Status
+### Current User Hook
 
+Use for reactive current user state:
 ```typescript
-// Use useCurrentUser to check if user is authenticated
 const { data: currentUser, isLoading } = useCurrentUser();
 
 if (isLoading) return <Loading />;
-if (!currentUser) return <SignInForm />;
-return <AuthenticatedApp user={currentUser} />;
+if (!currentUser) return <SignIn />;
+
+return <Profile user={currentUser} />;
 ```
 
-### Error Handling
+### Sign In
 
 ```typescript
 const signIn = useSignIn();
 
-const handleSignIn = async (credentials) => {
-  try {
-    await signIn.mutateAsync(credentials);
-    // Account created, user can now access app
-  } catch (error) {
-    // Handle auth errors
-    console.error("Sign in failed:", error);
-  }
-};
+await signIn.mutateAsync({
+  email: 'user@example.com',
+  password: 'password123'
+});
 ```
 
-## Implementation Files
-
-### Hooks (`/hooks/`)
-
-- `useSignIn.ts`: Sign in mutation hook
-- `useSignUp.ts`: Sign up mutation hook
-- `useSignOut.ts`: Sign out mutation hook
-- `useCurrentUser.ts`: Current user query hook
-
-### Implementation (`/impl/`)
-
-- `signIn.ts`: Core sign in logic with Supabase
-- `signUp.ts`: Core sign up logic with Supabase
-- `signOut.ts`: Core sign out logic with Supabase
-- `getAccount.ts`: Utility for getting Account data
-
-## Testing Guidelines
-
-### Unit Test Patterns
-
-1. **Mock external dependencies only**: Mock Supabase calls, not our platform functions
-2. **Test real code paths**: Let `useSignIn` call real `signIn` implementation
-3. **Verify Supabase calls**: Use spies to ensure correct Supabase functions are called
-4. **Test type transformations**: Verify Account → User transformations work correctly
-
-### Example Test Structure
+### Sign Up
 
 ```typescript
-// ✅ Good: Test real platform code
-mockSupabase.auth.signInWithPassword.mockResolvedValue(mockAuthData);
-const { result } = renderHook(() => useSignIn());
-expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalled();
+const signUp = useSignUp();
 
-// ❌ Bad: Mock our own platform functions
-vi.mock("../../impl/signIn"); // Don't do this
+await signUp.mutateAsync({
+  email: 'user@example.com',
+  password: 'password123',
+  firstName: 'John',
+  lastName: 'Doe',
+  avatarUrl: 'https://...'
+});
 ```
 
-## Session Management
+### Profile Updates
 
-### How It Works
+```typescript
+const updateProfile = useUpdateProfile();
 
-1. `signIn()` establishes Supabase auth session
-2. Session persists in browser storage
-3. `useCurrentUser()` reads session via `supabase.auth.getUser()`
-4. No manual session management required
+await updateProfile.mutateAsync({
+  firstName: 'Jane',
+  avatarUrl: 'https://...',
+  location: { lat: 47.6062, lng: -122.3321 }
+});
+```
 
-### Integration Testing
+### Protected Routes
 
-- Real Supabase maintains session state between calls
-- Unit tests mock session responses appropriately
-- Session persistence handled by Supabase automatically
+Check authentication before rendering:
+```typescript
+const { data: currentUser } = useCurrentUser();
 
-## Migration Notes
+if (!currentUser) {
+  return <Navigate to="/sign-in" />;
+}
 
-This architecture replaced a previous system that had:
+return <ProtectedContent />;
+```
 
-- Cache pollution between auth and user domains
-- Async `onSuccess` callback timing issues
-- Type conflicts between Account and User objects
+### No Cache Pollution
 
-The new clean separation eliminates these issues by keeping auth and user profile concerns completely separate.
+Auth mutations don't interfere with User cache:
+- `useSignIn/useSignUp` return Account but don't cache anything
+- Only `useCurrentUser` maintains cached User data
+- Clear separation prevents timing issues
+- Eliminates type conflicts between Account and User
