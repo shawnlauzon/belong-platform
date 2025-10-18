@@ -2,10 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
 import type { Shoutout, ShoutoutInput } from '../types';
-import { Resource } from '@/features/resources';
 import { createShoutout } from '../api/createShoutout';
 import { shoutoutKeys } from '../queries';
-import { resourceKeys } from '@/features/resources/queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
@@ -13,6 +11,7 @@ import { trustScoreKeys } from '@/features/trust-scores/queries';
  *
  * This hook provides functionality for creating new appreciation posts where
  * users can publicly recognize and thank others for their contributions.
+ * The receiver and community are automatically determined from the resource.
  * Automatically invalidates related queries on successful creation.
  * Must be used within a BelongProvider context.
  *
@@ -20,33 +19,30 @@ import { trustScoreKeys } from '@/features/trust-scores/queries';
  *
  * @example
  * ```tsx
- * function CreateShoutoutForm() {
+ * function CreateShoutoutForm({ resourceId }: { resourceId: string }) {
  *   const createShoutout = useCreateShoutout();
  *
- *   const handleSubmit = useCallback(async (formData: ShoutoutInput) => {
+ *   const handleSubmit = useCallback(async (message: string) => {
  *     try {
- *       const newShoutout = await createShoutout.mutateAsync(formData);
+ *       const newShoutout = await createShoutout.mutateAsync({
+ *         message,
+ *         resourceId
+ *       });
  *       console.log('Created shoutout:', newShoutout.id);
  *       // Handle success (e.g., redirect, show toast)
  *     } catch (error) {
  *       console.error('Failed to create shoutout:', error);
  *       // Handle error (e.g., show error message)
  *     }
- *   }, [createShoutout]);
+ *   }, [createShoutout, resourceId]);
  *
  *   return (
  *     <form onSubmit={(e) => {
  *       e.preventDefault();
  *       const formData = new FormData(e.currentTarget);
- *       handleSubmit({
- *         message: formData.get('message') as string,
- *         receiverId: formData.get('receiverId') as string,
- *         resourceId: formData.get('resourceId') as string,
- *       });
+ *       handleSubmit(formData.get('message') as string);
  *     }}>
  *       <textarea name="message" placeholder="Your appreciation message..." required />
- *       <input name="receiverId" placeholder="Recipient user ID" required />
- *       <input name="resourceId" placeholder="Related resource ID" required />
  *       <button type="submit" disabled={createShoutout.isPending}>
  *         {createShoutout.isPending ? 'Creating...' : 'Create Shoutout'}
  *       </button>
@@ -62,20 +58,9 @@ export function useCreateShoutout() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: (input: ShoutoutInput) => {
+    mutationFn: (input: Omit<ShoutoutInput, 'receiverId' | 'communityId'>) => {
       logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
-      const resource = queryClient.getQueryData<Resource>(
-        resourceKeys.detail(input.resourceId),
-      );
-      if (!resource) {
-        throw new Error('Resource not found');
-      }
-      return createShoutout(supabase, {
-        ...input,
-        ...resource,
-        communityId: resource.communityIds[0] || '',
-        receiverId: resource.ownerId,
-      });
+      return createShoutout(supabase, input);
     },
     onSuccess: (newShoutout: Shoutout) => {
       // Set the new shoutout in cache for immediate access

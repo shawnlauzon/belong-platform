@@ -5,7 +5,7 @@ import { STANDARD_CACHE_TIME } from '@/config';
 import { logger } from '@/shared';
 import { fetchInvitationDetails } from '../api';
 import type { InvitationDetails } from '../types';
-import { connectionQueries } from '../queries';
+import { invitationKeys } from '../queries';
 
 /**
  * Hook for fetching connection details by member connection code.
@@ -66,7 +66,7 @@ export function useConnectionDetails(
   const supabase = useSupabase();
 
   const query = useQuery<InvitationDetails | null, Error>({
-    queryKey: connectionQueries.detail(memberConnectionCode),
+    queryKey: invitationKeys.detail(memberConnectionCode),
     queryFn: () => fetchInvitationDetails(supabase, memberConnectionCode),
     staleTime: STANDARD_CACHE_TIME,
     enabled: !!memberConnectionCode,

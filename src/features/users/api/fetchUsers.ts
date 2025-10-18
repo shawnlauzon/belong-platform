@@ -11,36 +11,22 @@ export async function fetchUsers(
 ): Promise<User[]> {
   logger.debug('👤 API: Fetching users', { filters });
 
-  try {
-    let query = supabase
-      .from('public_profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+  let query = supabase
+    .from('public_profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (filters) {
-      query = appendQueries(query, {
-        community_id: filters.communityId,
-      });
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      logger.error('👤 API: Failed to fetch users', { error });
-      throw error;
-    }
-
-    const users = (data || []).map(toUser);
-
-    logger.debug('👤 API: Successfully fetched users', {
-      count: users.length,
+  if (filters) {
+    query = appendQueries(query, {
+      community_id: filters.communityId,
     });
-    return users;
-  } catch (error) {
-    logger.error('👤 API: Error fetching users', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
     throw error;
   }
+
+  return (data || []).map(toUser);
 }

@@ -1,26 +1,27 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
+import { appendQueries, logger } from '@/shared';
 import type { Comment, CommentFilter } from '../types';
 import { SELECT_COMMENTS_JOIN_AUTHOR, CommentRowJoinAuthor } from '../types';
 import { organizeCommentsIntoThreads } from '../transformers';
 
 export async function fetchComments(
   supabase: SupabaseClient<Database>,
-  filter: CommentFilter,
+  filter?: CommentFilter,
 ): Promise<Comment[]> {
+  logger.debug('💬 API: Fetching comments', filter);
   let query = supabase
     .from('comments')
     .select(SELECT_COMMENTS_JOIN_AUTHOR);
 
-  if (filter.resourceId) {
-    query = query.eq('resource_id', filter.resourceId);
-  }
+  // Use appendQueries for simple eq filters
+  query = appendQueries(query, {
+    resource_id: filter?.resourceId,
+    shoutout_id: filter?.shoutoutId,
+  });
 
-  if (filter.shoutoutId) {
-    query = query.eq('shoutout_id', filter.shoutoutId);
-  }
-
-  if (filter.parentId !== undefined) {
+  // Handle parentId with special null logic
+  if (filter?.parentId !== undefined) {
     if (filter.parentId === null) {
       query = query.is('parent_id', null);
     } else {
@@ -28,7 +29,8 @@ export async function fetchComments(
     }
   }
 
-  if (!filter.includeDeleted) {
+  // Handle includeDeleted boolean flag
+  if (!filter?.includeDeleted) {
     query = query.eq('is_deleted', false);
   }
 

@@ -13,20 +13,31 @@ import {
   ShoutoutInsertRow,
   ShoutoutRow,
 } from '../types/shoutoutRow';
+import { fetchResourceById } from '@/features/resources/api';
 
 /**
  * Creates a new shoutout with the current user as the sender
+ * Fetches the resource to determine receiverId and communityId automatically
  */
 export async function createShoutout(
   supabase: SupabaseClient<Database>,
-  shoutoutData: ShoutoutInput & {
-    receiverId: string;
-    communityId: string;
-  },
+  shoutoutData: Omit<ShoutoutInput, 'receiverId' | 'communityId'>,
 ): Promise<Shoutout> {
   logger.debug('📢 API: Creating shoutout', { shoutoutData });
 
-  return insertShoutout(supabase, toShoutoutInsertRow(shoutoutData));
+  // Fetch the resource to get receiverId (ownerId) and communityId
+  const resource = await fetchResourceById(supabase, shoutoutData.resourceId);
+  if (!resource) {
+    throw new Error(`Resource not found: ${shoutoutData.resourceId}`);
+  }
+
+  const fullShoutoutData: ShoutoutInput = {
+    ...shoutoutData,
+    receiverId: resource.ownerId,
+    communityId: resource.communityIds[0] || '',
+  };
+
+  return insertShoutout(supabase, toShoutoutInsertRow(fullShoutoutData));
 }
 
 /**
