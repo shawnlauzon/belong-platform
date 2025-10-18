@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { getInvitationCode } from '../api';
-import { connectionQueries } from '../queries';
+import { invitationKeys } from '../queries';
 
 export function useInvitation(
   communityId: string,
@@ -10,7 +10,7 @@ export function useInvitation(
   const supabase = useSupabase();
 
   return useQuery({
-    queryKey: connectionQueries.memberCode(communityId),
+    queryKey: invitationKeys.memberCode(communityId),
     queryFn: async (): Promise<string> => {
       const invitation = await getInvitationCode(supabase, communityId);
       return invitation.code;

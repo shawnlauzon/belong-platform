@@ -4,7 +4,7 @@ import { useSupabase } from '@/shared';
 import { joinCommunityWithCode } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
-import { connectionQueries } from '@/features/invitations/queries';
+import { invitationKeys } from '@/features/invitations/queries';
 
 /**
  * Hook for joining a community using a connection code.
@@ -65,11 +65,11 @@ export function useJoinCommunityWithCode() {
 
       // Invalidate connection-related queries since we created a connection request
       queryClient.invalidateQueries({
-        queryKey: connectionQueries.pendingConnections(newMembership.communityId),
+        queryKey: invitationKeys.pendingConnections(newMembership.communityId),
       });
-      
+
       queryClient.invalidateQueries({
-        queryKey: connectionQueries.userConnections(newMembership.communityId),
+        queryKey: invitationKeys.userConnections(newMembership.communityId),
       });
 
       logger.info('🏘️ API: Successfully joined community with code', {

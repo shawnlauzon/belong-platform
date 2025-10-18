@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { fetchUserConnections } from '../api';
-import { connectionQueries } from '../queries';
+import { invitationKeys } from '../queries';
 import type { UserConnection } from '../types';
 
 export function useUserConnections(
@@ -11,7 +11,7 @@ export function useUserConnections(
   const supabase = useSupabase();
 
   return useQuery({
-    queryKey: connectionQueries.userConnections(communityId),
+    queryKey: invitationKeys.userConnections(communityId),
     queryFn: async (): Promise<UserConnection[]> => {
       return await fetchUserConnections(supabase, communityId);
     },
