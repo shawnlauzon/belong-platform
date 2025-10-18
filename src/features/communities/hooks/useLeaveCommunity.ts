@@ -4,6 +4,8 @@ import { useSupabase } from '@/shared';
 import { leaveCommunity } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { useCurrentUser } from '@/features/auth';
+import { feedKeys } from '@/features/feed/queries';
+import { trustScoreKeys } from '@/features/trust-scores/queries';
 
 /**
  * Hook for leaving a community.
@@ -59,7 +61,17 @@ export function useLeaveCommunity() {
         queryClient.invalidateQueries({
           queryKey: userCommunitiesKeys.list(currentUser.id),
         });
+
+        // Invalidate trust scores since user loses points from this community
+        queryClient.invalidateQueries({
+          queryKey: trustScoreKeys.listByUser(currentUser.id),
+        });
       }
+
+      // Invalidate feed since user no longer sees content from this community
+      queryClient.invalidateQueries({
+        queryKey: feedKeys.all,
+      });
 
       logger.info('🏘️ API: Successfully left community', {
         communityId,

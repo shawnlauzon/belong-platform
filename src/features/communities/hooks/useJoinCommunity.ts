@@ -4,6 +4,7 @@ import { useSupabase } from '@/shared';
 import { joinCommunity } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for joining a community.
@@ -58,6 +59,11 @@ export function useJoinCommunity() {
       // Invalidate trust score for the new member (they get +50 points)
       queryClient.invalidateQueries({
         queryKey: trustScoreKeys.listByUser(newMembership.userId),
+      });
+
+      // Invalidate feed since user now sees content from this community
+      queryClient.invalidateQueries({
+        queryKey: feedKeys.all,
       });
 
       logger.info('🏘️ API: Successfully joined community', {
