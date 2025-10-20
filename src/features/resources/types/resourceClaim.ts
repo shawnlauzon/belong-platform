@@ -7,6 +7,8 @@ export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
   timeslot: ResourceTimeslot;
   status: ResourceClaimStatus;
   commitmentLevel: CommitmentLevel;
+  requestText?: string;
+  responseText?: string;
 };
 
 export type ResourceClaimSummary = Pick<
@@ -73,15 +75,17 @@ export type ResourceClaimSummary = Pick<
  * Status is determined automatically by the API based on:
  * - Resource type (offer, request, or event)
  * - Whether the resource requires approval
- * 
+ *
  * @property resourceId - The ID of the resource being claimed
  * @property timeslotId - The ID of the timeslot being claimed
- * @property notes - Optional notes from the claimant
+ * @property requestText - Optional message from the claimant when making the claim
+ * @property responseText - Optional response from the resource owner
  * @property commitmentLevel - Optional commitment level (defaults to 'interested' for events)
  */
 export type ResourceClaimInput = {
   resourceId: string;
   timeslotId: string;
-  notes?: string;
+  requestText?: string;
+  responseText?: string;
   commitmentLevel?: CommitmentLevel;
 };

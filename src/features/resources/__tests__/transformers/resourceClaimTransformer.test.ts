@@ -16,7 +16,8 @@ describe('ResourceClaim Transformer', () => {
     it('should transform a domain resource claim input to database format', () => {
       const claimInput = createFakeResourceClaimInput({
         commitmentLevel: 'committed',
-        notes: 'Test notes',
+        requestText: 'Test request',
+        responseText: 'Test response',
       });
 
       const dbClaim = toResourceClaimInsertRow(claimInput);
@@ -24,7 +25,8 @@ describe('ResourceClaim Transformer', () => {
       expect(dbClaim).toMatchObject({
         resource_id: claimInput.resourceId,
         timeslot_id: claimInput.timeslotId,
-        notes: claimInput.notes,
+        request_text: claimInput.requestText,
+        response_text: claimInput.responseText,
         commitment_level: 'committed',
       });
     });
@@ -39,14 +41,16 @@ describe('ResourceClaim Transformer', () => {
       expect(dbClaim.commitment_level).toBe('interested');
     });
 
-    it('should handle null notes', () => {
+    it('should handle undefined request and response text', () => {
       const claimInput = createFakeResourceClaimInput({
-        notes: undefined,
+        requestText: undefined,
+        responseText: undefined,
       });
 
       const dbClaim = toResourceClaimInsertRow(claimInput);
 
-      expect(dbClaim.notes).toBeUndefined();
+      expect(dbClaim.request_text).toBeUndefined();
+      expect(dbClaim.response_text).toBeUndefined();
     });
   });
 
@@ -75,13 +79,15 @@ describe('ResourceClaim Transformer', () => {
       const updateData = forDbClaimUpdate({
         status: 'going',
         commitmentLevel: 'committed',
-        notes: 'Updated notes',
+        requestText: 'Updated request',
+        responseText: 'Updated response',
       });
 
       expect(updateData).toMatchObject({
         status: 'going',
         commitment_level: 'committed',
-        notes: 'Updated notes',
+        request_text: 'Updated request',
+        response_text: 'Updated response',
       });
     });
 
@@ -91,7 +97,8 @@ describe('ResourceClaim Transformer', () => {
       });
 
       expect(updateData).not.toHaveProperty('commitment_level');
-      expect(updateData).not.toHaveProperty('notes');
+      expect(updateData).not.toHaveProperty('request_text');
+      expect(updateData).not.toHaveProperty('response_text');
     });
   });
 
@@ -102,6 +109,8 @@ describe('ResourceClaim Transformer', () => {
         ...createFakeResourceClaimRow({
           commitment_level: 'committed',
           status: 'approved',
+          request_text: 'Test request',
+          response_text: 'Test response',
         }),
         resources: { owner_id: 'owner-123' },
         resource_timeslots: timeslot,
@@ -117,7 +126,8 @@ describe('ResourceClaim Transformer', () => {
         timeslotId: dbClaim.timeslot_id,
         status: dbClaim.status,
         commitmentLevel: 'committed',
-        notes: dbClaim.notes ?? undefined,
+        requestText: 'Test request',
+        responseText: 'Test response',
       });
       expect(claim.timeslot).toBeDefined();
       expect(claim.createdAt).toBeInstanceOf(Date);
@@ -139,11 +149,12 @@ describe('ResourceClaim Transformer', () => {
       expect(claim.commitmentLevel).toBe('interested');
     });
 
-    it('should handle null notes', () => {
+    it('should handle null request and response text', () => {
       const timeslot = createFakeResourceTimeslotRow();
       const dbClaim = {
         ...createFakeResourceClaimRow({
-          notes: null,
+          request_text: null,
+          response_text: null,
         }),
         resources: { owner_id: 'owner-123' },
         resource_timeslots: timeslot,
@@ -151,7 +162,8 @@ describe('ResourceClaim Transformer', () => {
 
       const claim = toDomainResourceClaim(dbClaim);
 
-      expect(claim.notes).toBeUndefined();
+      expect(claim.requestText).toBeUndefined();
+      expect(claim.responseText).toBeUndefined();
     });
 
     it('should not return any field names with underscores', () => {

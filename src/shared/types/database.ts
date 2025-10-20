@@ -565,8 +565,9 @@ export type Database = {
             | null
           created_at: string
           id: string
-          notes: string | null
+          request_text: string | null
           resource_id: string
+          response_text: string | null
           status: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id: string
           updated_at: string
@@ -578,8 +579,9 @@ export type Database = {
             | null
           created_at?: string
           id?: string
-          notes?: string | null
+          request_text?: string | null
           resource_id: string
+          response_text?: string | null
           status: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id: string
           updated_at?: string
@@ -591,8 +593,9 @@ export type Database = {
             | null
           created_at?: string
           id?: string
-          notes?: string | null
+          request_text?: string | null
           resource_id?: string
+          response_text?: string | null
           status?: Database["public"]["Enums"]["resource_claim_status"]
           timeslot_id?: string
           updated_at?: string

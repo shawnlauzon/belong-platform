@@ -23,7 +23,8 @@ export function toResourceClaimInsertRow(
   return {
     resource_id: claim.resourceId,
     timeslot_id: claim.timeslotId,
-    notes: claim.notes,
+    request_text: claim.requestText,
+    response_text: claim.responseText,
     commitment_level: claim.commitmentLevel ?? 'interested',
   };
 }
@@ -37,8 +38,12 @@ export function forDbClaimUpdate(
 ): ResourceClaimUpdateDbData {
   const updateData: ResourceClaimUpdateDbData = {};
 
-  if (claim.notes !== undefined) {
-    updateData.notes = claim.notes;
+  if (claim.requestText !== undefined) {
+    updateData.request_text = claim.requestText;
+  }
+
+  if (claim.responseText !== undefined) {
+    updateData.response_text = claim.responseText;
   }
 
   if (claim.status !== undefined) {
@@ -67,7 +72,8 @@ export function toDomainResourceClaim(
     timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
     status: dbClaim.status,
     commitmentLevel: dbClaim.commitment_level ?? 'interested',
-    notes: dbClaim.notes ?? undefined,
+    requestText: dbClaim.request_text ?? undefined,
+    responseText: dbClaim.response_text ?? undefined,
     createdAt: new Date(dbClaim.created_at),
     updatedAt: new Date(dbClaim.updated_at),
   };
