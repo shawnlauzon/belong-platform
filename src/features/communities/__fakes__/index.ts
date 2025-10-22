@@ -117,7 +117,9 @@ export function createFakeCommunityRow(
       },
       areaSqKm: faker.number.float({ min: 0.1, max: 100 }),
     },
-    boundary_geometry: null,
+    boundary_geometry: faker.helpers.maybe(() =>
+      `SRID=4326;POLYGON((${faker.location.longitude()} ${faker.location.latitude()},${faker.location.longitude()} ${faker.location.latitude()},${faker.location.longitude()} ${faker.location.latitude()},${faker.location.longitude()} ${faker.location.latitude()}))`
+    ) ?? null,
     ...overrides,
   };
 }

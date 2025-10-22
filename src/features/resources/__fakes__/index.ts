@@ -85,6 +85,8 @@ export function createFakeResource(
     commentCount: 0,
     expiresAt: faker.helpers.maybe(() => faker.date.future()),
     lastRenewedAt: faker.helpers.maybe(() => faker.date.recent()) ?? now,
+    votingDeadline: faker.helpers.maybe(() => faker.date.future()),
+    durationMinutes: faker.helpers.maybe(() => faker.number.int({ min: 30, max: 240 })),
     ...overrides,
   };
 }
@@ -149,6 +151,8 @@ export function createFakeResourceInput(
     ),
     requiresApproval: faker.datatype.boolean(),
     isRecurring: faker.datatype.boolean(),
+    votingDeadline: faker.helpers.maybe(() => faker.date.future()),
+    durationMinutes: faker.helpers.maybe(() => faker.number.int({ min: 30, max: 240 })),
     ...overrides,
   };
 
@@ -216,8 +220,8 @@ export function createFakeResourceRow(
     comment_count: 0,
     expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     is_active: faker.datatype.boolean(),
-    voting_deadline: null,
-    duration_minutes: null,
+    voting_deadline: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
+    duration_minutes: faker.helpers.maybe(() => faker.number.int({ min: 30, max: 240 })) ?? null,
     resource_communities: [],
     resource_timeslots: [],
     ...overrides,

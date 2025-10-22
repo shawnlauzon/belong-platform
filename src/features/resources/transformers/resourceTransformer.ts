@@ -28,6 +28,8 @@ export function toResourceInsertRow(
     areTimeslotsFlexible,
     isRecurring,
     lastRenewedAt,
+    votingDeadline,
+    durationMinutes,
     category,
     ...rest
   } = resource;
@@ -44,6 +46,8 @@ export function toResourceInsertRow(
     timeslots_flexible: areTimeslotsFlexible ?? true,
     is_recurring: isRecurring ?? false,
     last_renewed_at: lastRenewedAt?.toISOString(),
+    voting_deadline: votingDeadline?.toISOString(),
+    duration_minutes: durationMinutes,
   };
 }
 
@@ -72,6 +76,8 @@ export function forDbUpdate(
     timeslots_flexible: resource.areTimeslotsFlexible,
     is_recurring: resource.isRecurring ?? false,
     last_renewed_at: resource.lastRenewedAt?.toISOString(),
+    voting_deadline: resource.votingDeadline?.toISOString(),
+    duration_minutes: resource.durationMinutes,
   };
 }
 
@@ -108,6 +114,10 @@ export function toDomainResource(
     expiresAt: dbResource.expires_at
       ? new Date(dbResource.expires_at)
       : undefined,
+    votingDeadline: dbResource.voting_deadline
+      ? new Date(dbResource.voting_deadline)
+      : undefined,
+    durationMinutes: dbResource.duration_minutes ?? undefined,
     timeslots:
       dbResource.resource_timeslots?.map(toDomainResourceTimeslot) || [],
     commentCount: dbResource.comment_count ?? 0,

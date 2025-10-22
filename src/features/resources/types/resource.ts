@@ -16,6 +16,8 @@ export type Resource = IsPersisted<ResourceInput> & {
   timeslots: ResourceTimeslot[];
   lastRenewedAt: Date;
   expiresAt?: Date;
+  votingDeadline?: Date;
+  durationMinutes?: number;
   commentCount: number;
 };
 
