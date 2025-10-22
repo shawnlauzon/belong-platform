@@ -50,4 +50,6 @@ export type ResourceInput = {
   areTimeslotsFlexible?: boolean;
   isRecurring?: boolean;
   lastRenewedAt?: Date;
+  votingDeadline?: Date;
+  durationMinutes?: number;
 };

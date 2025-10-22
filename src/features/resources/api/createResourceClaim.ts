@@ -18,14 +18,36 @@ export async function createResourceClaim(
 ): Promise<ResourceClaim> {
   // Fetch the resource to determine type and approval requirements
   const resource = await fetchResourceById(supabase, claimInput.resourceId);
-  
+
   if (!resource) {
     throw new Error('Resource not found');
   }
 
-  // Determine initial status based on resource type and approval requirements
+  // Fetch the timeslot to check if this is a voting context
+  const { data: timeslot, error: timeslotError } = await supabase
+    .from('resource_timeslots')
+    .select('status')
+    .eq('id', claimInput.timeslotId)
+    .single();
+
+  if (timeslotError || !timeslot) {
+    logger.error('🏘️ API: Failed to fetch timeslot', {
+      error: timeslotError,
+      timeslotId: claimInput.timeslotId,
+    });
+    throw new Error('Timeslot not found');
+  }
+
+  // Detect voting context: voting event + proposed timeslot = vote
+  const isVotingContext =
+    resource.status === 'voting' &&
+    timeslot.status === 'proposed';
+
+  // Determine initial status
   let initialStatus: ResourceClaimStatus;
-  if (resource.type === 'event') {
+  if (isVotingContext) {
+    initialStatus = 'vote';
+  } else if (resource.type === 'event') {
     initialStatus = resource.requiresApproval ? 'pending' : 'approved';
   } else {
     initialStatus = resource.requiresApproval ? 'pending' : 'approved';

@@ -10,11 +10,49 @@ import {
   ResourceTimeslotRow,
   SELECT_RESOURCE_TIMESLOT_BASIC,
 } from '../types/resourceRow';
+import { fetchResourceById } from './fetchResourceById';
 
 export async function createResourceTimeslot(
   supabase: SupabaseClient<Database>,
   timeslotInput: ResourceTimeslotInput,
 ): Promise<ResourceTimeslot> {
+  // Validation for proposed timeslots
+  if (timeslotInput.status === 'proposed') {
+    const resource = await fetchResourceById(supabase, timeslotInput.resourceId);
+
+    if (!resource) {
+      throw new Error('Resource not found');
+    }
+
+    // Must be a voting event
+    if (resource.status !== 'voting') {
+      throw new Error('Proposed timeslots can only be created for voting events');
+    }
+
+    // Check timeslotsFlexible flag
+    if (!resource.areTimeslotsFlexible) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== resource.ownerId) {
+        throw new Error(
+          'Only the resource owner can propose timeslots when timeslots are not flexible',
+        );
+      }
+    }
+
+    // Validate durationMinutes constraint
+    if (resource.durationMinutes) {
+      const expectedEndTime = new Date(
+        timeslotInput.startTime.getTime() + resource.durationMinutes * 60000,
+      );
+
+      if (timeslotInput.endTime.getTime() !== expectedEndTime.getTime()) {
+        throw new Error(
+          `End time must be ${resource.durationMinutes} minutes after start time`,
+        );
+      }
+    }
+  }
+
   // Transform to database format
   const insertData = toResourceTimeslotInsertRow(timeslotInput);
 

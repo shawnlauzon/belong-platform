@@ -16,3 +16,4 @@ export * from './useUpdateCommitmentLevel';
 export * from './useCreateResourceTimeslot';
 export * from './useUpdateResourceTimeslot';
 export * from './useDeleteResourceTimeslot';
+export * from './useFinalizeVotedTimeslot';

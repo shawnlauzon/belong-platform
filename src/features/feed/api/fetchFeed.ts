@@ -40,7 +40,7 @@ export async function fetchFeed(
         is_active
       `,
     )
-    .eq('status', 'open')
+    .eq('status', 'scheduled')
     .in('resource_communities.community_id', communityIds);
 
   if (resourceError) {

@@ -24,12 +24,14 @@ The main entity representing an offer, request, or event.
 - `locationName`, `coordinates` - Where it happens
 - `communityIds` - Which communities can see it (array)
 - `imageUrls` - Visual representation (array)
-- `status` - `'active'` | `'inactive'` | `'expired'`
+- `status` - `'voting'` | `'scheduled'` | `'completed'` | `'cancelled'`
 - `claimLimit` - Maximum number of claims allowed
 - `claimLimitPer` - `'total'` | `'timeslot'`
 - `requiresApproval` - Whether claims need owner approval
 - `areTimeslotsFlexible` - Whether timing is negotiable
 - `isRecurring` - Whether resource repeats
+- `votingDeadline` - Optional deadline for voting phase (informational)
+- `durationMinutes` - Optional locked duration for voting events
 - `lastRenewedAt`, `expiresAt` - Lifecycle management
 - `ownerId` - User who created the resource
 - `timeslots` - Array of ResourceTimeslot
@@ -42,11 +44,14 @@ Time-based availability windows for resources.
 **Key Fields:**
 - `resourceId` - Parent resource
 - `startTime`, `endTime` - When it's available
-- `status` - `'available'` | `'claimed'` | `'completed'`
+- `status` - `'proposed'` | `'active'` | `'completed'` | `'cancelled'`
+- `voteCount` - Number of vote claims for this timeslot
 
 **Notes:**
 - Resources can have multiple timeslots
 - Flexible resources allow negotiation of timeslot details
+- Voting events use 'proposed' status during voting phase
+- `voteCount` is maintained automatically by database trigger
 
 ### ResourceClaim
 
@@ -85,6 +90,46 @@ User registrations/claims on timeslots.
 - Uses `going` status for attendance confirmation
 - Owner marks final attendance as `attended` or `flaked`
 - Examples: community BBQ, book club, workshops
+
+**Voting Events**
+- Events where attendees vote on proposed timeslots
+- Resource status starts as `'voting'`, moves to `'scheduled'` after finalization
+- Timeslots have status `'proposed'` during voting, winner becomes `'active'`
+- Votes are claims with status `'vote'`
+- Users can vote for multiple timeslots
+- Owner selects winning timeslot, votes convert to attendance
+- Examples: flexible meetups, community decisions on event timing
+
+### Voting-Based Event Scheduling
+
+For events where the exact time needs to be determined by participant availability:
+
+**Setup Phase:**
+1. Create resource with `status='voting'` and optional `votingDeadline`
+2. Optionally set `durationMinutes` to lock event duration
+3. If `areTimeslotsFlexible=true`, anyone can propose timeslots
+4. If `areTimeslotsFlexible=false`, only owner can propose timeslots
+
+**Voting Phase:**
+1. Users create timeslots with `status='proposed'`
+2. Users "vote" by creating claims with `status='vote'`
+3. Users can vote for multiple timeslots (multiple claims per user allowed)
+4. `voteCount` on each timeslot updates automatically via database trigger
+5. Users can delete their vote claims to remove votes
+
+**Finalization Phase:**
+1. Owner calls `finalizeVotedTimeslot(resourceId, chosenTimeslotId)`
+2. Resource status changes: `'voting'` → `'scheduled'`
+3. Chosen timeslot: `'proposed'` → `'active'`
+4. Unchosen timeslots: `'proposed'` → `'cancelled'`
+5. Votes for chosen slot convert based on `requiresApproval`:
+   - If `requiresApproval=false`: `'vote'` → `'going'` (auto-approved)
+   - If `requiresApproval=true`: `'vote'` → `'pending'` (needs approval)
+6. Votes for unchosen slots remain as historical record
+
+**Post-Finalization:**
+- New attendees register via standard claim workflow
+- Event proceeds like normal scheduled event
 
 ### Claim Workflows
 
@@ -125,19 +170,38 @@ Resources can restrict how many claims are accepted:
 
 ### Claim Status Enum
 
-`pending` | `approved` | `rejected` | `completed` | `cancelled` | `given` | `received` | `going` | `attended` | `flaked`
+`vote` | `pending` | `approved` | `rejected` | `completed` | `cancelled` | `given` | `received` | `going` | `attended` | `flaked`
 
 ### Initial Status
 
-Determined automatically by API based on resource type and approval requirements:
+Determined automatically by API based on resource status, timeslot status, type, and approval requirements:
 
 ```typescript
-if (resource.requiresApproval) {
+// Voting context: voting resource + proposed timeslot
+if (resource.status === 'voting' && timeslot.status === 'proposed') {
+  initialStatus = 'vote';
+}
+// Standard workflow
+else if (resource.requiresApproval) {
   initialStatus = 'pending';
 } else {
   initialStatus = 'approved'; // applies to all types
 }
 ```
+
+### Voting Events
+
+| From | To | Who | Description |
+|------|----|----|-------------|
+| vote | pending | System | Finalization converts votes (requiresApproval=true) |
+| vote | going | System | Finalization converts votes (requiresApproval=false) |
+| vote | cancelled | Claimant | User removes their vote |
+
+**Notes:**
+- Vote claims do NOT count against `claimLimit`
+- Users can have multiple vote claims (one per timeslot)
+- Only finalization function can convert vote → pending/going
+- Claimants can cancel their own votes anytime
 
 ### Offers (Owner Gives to Claimant)
 
@@ -215,9 +279,14 @@ if (resource.requiresApproval) {
 
 ### Claim Hooks
 - `useResourceClaims(filter)` - Query claims with filters
-- `useCreateResourceClaim()` - Create claim/registration
+- `useCreateResourceClaim()` - Create claim/registration (auto-detects voting context)
 - `useUpdateResourceClaim()` - Update claim status
 - `useUpdateCommitmentLevel()` - Update commitment level independently
+
+### Voting Hooks
+- `useFinalizeVotedTimeslot()` - Finalize voting event and convert votes to attendance
+- `useResourceTimeslots(resourceId)` - Get timeslots with vote counts
+- `useResourceClaims({ resourceId, status: 'vote' })` - Get user's votes
 
 ### Transformers
 - `resourceTransformer` - DB row → Resource domain model (with timeslots and communities)
@@ -229,9 +298,11 @@ if (resource.requiresApproval) {
 - `fetchResourceById(supabase, id)` - Fetch single resource
 - `fetchResourceClaims(supabase, filter)` - Fetch claims with filters
 - `fetchResourceTimeslots(supabase, resourceId)` - Fetch timeslots for resource
-- `createResourceClaim(supabase, input)` - Create claim (determines initial status automatically)
+- `createResourceClaim(supabase, input)` - Create claim (auto-detects voting/standard context)
+- `createResourceTimeslot(supabase, input)` - Create timeslot (validates proposed status for voting)
 - `updateResourceClaim(supabase, update)` - Update claim status (validates transitions)
 - `updateCommitmentLevel(supabase, claimId, level)` - Update commitment level only
+- `finalizeVotedTimeslot(supabase, resourceId, chosenId)` - Finalize voting event (owner only)
 
 ## Important Patterns
 
@@ -257,10 +328,14 @@ SELECT_RESOURCE_CLAIMS_JOIN_RESOURCE_JOIN_TIMESLOT
 ### Automatic Initial Status
 
 Creating a claim automatically determines the initial status based on:
-1. Resource type (offer, request, or event)
-2. Whether `requiresApproval` is true
+1. **Voting context** - If resource.status='voting' AND timeslot.status='proposed', status='vote'
+2. **Standard context** - Otherwise, based on `requiresApproval`:
+   - If requiresApproval=true → 'pending'
+   - If requiresApproval=false → 'approved'
 
 The `status` field is not included in `ResourceClaimInput` - it's determined by the API.
+
+**Important:** Vote claims do NOT count against `claimLimit`. Limits only apply to attendance statuses.
 
 ### State Validation
 

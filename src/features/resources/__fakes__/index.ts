@@ -69,7 +69,7 @@ export function createFakeResource(
     ownerId: owner.id,
     communityIds: [faker.string.uuid()],
     status: faker.helpers.arrayElement([
-      'open',
+      'scheduled',
       'completed',
       'cancelled',
     ] as const),
@@ -137,7 +137,7 @@ export function createFakeResourceInput(
       lng: faker.location.longitude(),
     },
     status: faker.helpers.arrayElement([
-      'open',
+      'scheduled',
       'completed',
       'cancelled',
     ] as const),
@@ -202,7 +202,7 @@ export function createFakeResourceRow(
     created_at: now,
     updated_at: now,
     status: faker.helpers.arrayElement([
-      'open',
+      'scheduled',
       'completed',
       'cancelled',
     ] as const),
@@ -216,6 +216,8 @@ export function createFakeResourceRow(
     comment_count: 0,
     expires_at: faker.helpers.maybe(() => faker.date.future().toISOString()) ?? null,
     is_active: faker.datatype.boolean(),
+    voting_deadline: null,
+    duration_minutes: null,
     resource_communities: [],
     resource_timeslots: [],
     ...overrides,
@@ -246,6 +248,7 @@ export function createFakeResourceTimeslot(
       'completed',
       'cancelled',
     ] as const),
+    voteCount: 0,
     ...overrides,
   };
 }
@@ -316,6 +319,7 @@ export function createFakeResourceTimeslotRow(
       'completed',
       'cancelled',
     ] as const),
+    vote_count: 0,
     ...overrides,
   };
 }

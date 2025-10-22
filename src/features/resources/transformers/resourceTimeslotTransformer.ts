@@ -42,6 +42,7 @@ export function toDomainResourceTimeslot(
     startTime: new Date(dbTimeslot.start_time),
     endTime: new Date(dbTimeslot.end_time),
     status: dbTimeslot.status,
+    voteCount: dbTimeslot.vote_count,
     createdAt: new Date(dbTimeslot.created_at),
     updatedAt: new Date(dbTimeslot.updated_at),
   };

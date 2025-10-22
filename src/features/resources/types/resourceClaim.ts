@@ -18,14 +18,28 @@ export type ResourceClaimSummary = Pick<
 
 /**
  * Resource Claim State Transitions
- * 
- * The state machine differs based on resource type:
- * 
+ *
+ * The state machine differs based on resource type and status:
+ *
+ * ## VOTING EVENTS (status='voting')
+ * Initial State:
+ * - 'vote' (when claiming a proposed timeslot during voting phase)
+ *
+ * State Transitions:
+ * - vote → pending (finalization, if requires_approval = true)
+ * - vote → going (finalization, if requires_approval = false)
+ * - vote → cancelled (claimant cancels their vote)
+ *
+ * Notes:
+ * - Users can create multiple vote claims (one per timeslot)
+ * - Votes are converted automatically during finalization
+ * - Vote claims do NOT count against claimLimit
+ *
  * ## OFFERS (owner giving something to claimant)
  * Initial State:
  * - If requires_approval = true → 'pending'
  * - If requires_approval = false → 'approved'
- * 
+ *
  * State Transitions:
  * - pending → approved (only resource owner)
  * - pending → rejected (only resource owner)
@@ -34,12 +48,12 @@ export type ResourceClaimSummary = Pick<
  * - given → completed (only claimant completes, confirming receipt)
  * - received → completed (only owner completes, confirming given)
  * - Any state except rejected/completed → cancelled (only claimant)
- * 
+ *
  * ## REQUESTS (owner requesting something from claimant)
  * Initial State:
  * - If requires_approval = true → 'pending'
  * - If requires_approval = false → 'approved'
- * 
+ *
  * State Transitions:
  * - pending → approved (only resource owner)
  * - pending → rejected (only resource owner)
@@ -48,21 +62,20 @@ export type ResourceClaimSummary = Pick<
  * - given → completed (only owner completes, confirming receipt)
  * - received → completed (only claimant completes, confirming given)
  * - Any state except rejected/completed → cancelled (only claimant)
- * 
- * ## EVENTS
+ *
+ * ## EVENTS (status='scheduled')
  * Initial State:
  * - If requires_approval = true → 'pending'
- * - If requires_approval = false → 'interested'
- * 
+ * - If requires_approval = false → 'approved'
+ *
  * State Transitions:
- * - pending → interested (only event owner approves interest)
+ * - pending → approved (only event owner)
  * - pending → rejected (only event owner)
- * - interested → going (only claimant/attendee confirms going)
+ * - approved → going (only claimant/attendee confirms going)
  * - going → attended (only event owner marks as attended)
  * - going → flaked (only event owner marks as no-show)
- * 
- * Note: Events do NOT use 'cancelled' status
- * 
+ * - approved|going → cancelled (only claimant)
+ *
  * ## Key Rules:
  * - Cannot skip states (e.g., approved cannot go directly to completed)
  * - Both parties must participate in the handshake for offers/requests
