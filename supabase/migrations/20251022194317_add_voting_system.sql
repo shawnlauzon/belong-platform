@@ -4,14 +4,18 @@
 -- Drop the default first
 ALTER TABLE resources ALTER COLUMN status DROP DEFAULT;
 
--- Now change the enum type
-ALTER TYPE resource_status RENAME TO resource_status_old;
-CREATE TYPE resource_status AS ENUM ('voting', 'scheduled', 'completed', 'cancelled');
-ALTER TABLE resources ALTER COLUMN status TYPE resource_status USING status::text::resource_status;
-DROP TYPE resource_status_old;
+-- Convert to text, migrate data, then convert to new enum
+ALTER TABLE resources ALTER COLUMN status TYPE TEXT;
 
 -- Migrate existing 'open' resources to 'scheduled'
-UPDATE resources SET status = 'scheduled' WHERE status::text = 'open';
+UPDATE resources SET status = 'scheduled' WHERE status = 'open';
+
+-- Drop old enum and create new one
+DROP TYPE resource_status;
+CREATE TYPE resource_status AS ENUM ('voting', 'scheduled', 'completed', 'cancelled');
+
+-- Convert column back to enum
+ALTER TABLE resources ALTER COLUMN status TYPE resource_status USING status::resource_status;
 
 -- Restore the default with new value
 ALTER TABLE resources ALTER COLUMN status SET DEFAULT 'scheduled'::resource_status;
