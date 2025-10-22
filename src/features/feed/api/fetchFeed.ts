@@ -31,8 +31,8 @@ export async function fetchFeed(
     .from('resources')
     .select(
       `
-        id, 
-        type, 
+        id,
+        type,
         created_at,
         last_renewed_at,
         resource_communities!inner(community_id),
@@ -40,7 +40,7 @@ export async function fetchFeed(
         is_active
       `,
     )
-    .eq('status', 'scheduled')
+    .in('status', ['voting', 'scheduled'])
     .in('resource_communities.community_id', communityIds);
 
   if (resourceError) {
