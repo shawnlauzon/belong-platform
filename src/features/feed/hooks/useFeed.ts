@@ -37,6 +37,9 @@ import { feedKeys } from '../queries';
 export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
   const { data: currentUser } = useCurrentUser();
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
 
   const query = useQuery<Feed, Error>({
     queryKey: feedKeys.feed(),

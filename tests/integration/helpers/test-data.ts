@@ -123,6 +123,12 @@ export async function createTestShoutout(
     resourceId?: string;
   },
 ): Promise<Shoutout> {
+  // Get current user to use as sender
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('No authenticated user for shoutout sender');
+
   // Create a resource if none provided since resource_id is required
   let resourceId = data.resourceId;
   if (!resourceId) {
@@ -134,18 +140,13 @@ export async function createTestShoutout(
     resourceId = resource.id;
   }
 
-  const shoutoutData: ShoutoutInput & {
-    receiverId: string;
-    communityId: string;
-  } = {
+  const shoutoutData: Omit<ShoutoutInput, 'receiverId' | 'communityId'> = {
     resourceId,
     message:
       data.message || `${TEST_PREFIX}Thank you for sharing this resource!`,
-    receiverId: data.receiverId,
-    communityId: data.communityId,
   };
 
-  const shoutout = await createShoutout(supabase, shoutoutData);
+  const shoutout = await createShoutout(supabase, user.id, shoutoutData);
   if (!shoutout) throw new Error('Failed to create shoutout');
 
   return shoutout;

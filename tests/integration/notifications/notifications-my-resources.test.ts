@@ -62,7 +62,7 @@ describe('My Resources Notifications', () => {
       await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
-        notes: 'I would like to claim this resource',
+        requestText: 'I would like to claim this resource',
       });
 
       // Switch back to resourceOwner to check notifications
@@ -102,7 +102,7 @@ describe('My Resources Notifications', () => {
       const claim = await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
-        notes: 'Initial claim',
+        requestText: 'Initial claim',
       });
 
       // claimingUser cancels their claim
@@ -148,7 +148,7 @@ describe('My Resources Notifications', () => {
       const claim = await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
-        notes: 'Initial claim for completion test',
+        requestText: 'Initial claim for completion test',
       });
 
       // Simulate the handshake flow - first mark as given by owner

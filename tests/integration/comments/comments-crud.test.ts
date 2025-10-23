@@ -53,7 +53,7 @@ describe('Comments CRUD', () => {
       );
 
       // Create a comment on the resource
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'This is a test comment',
         resourceId: resource.id,
       });
@@ -74,18 +74,20 @@ describe('Comments CRUD', () => {
 
       // Create receiver user and have them join the community
       const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, receiver.id, community.id);
 
-      // Use existing test user as sender
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
-      // Create a resource and shoutout
+      // Receiver creates a resource (they will be the owner)
       const resource = await createTestResource(
         supabase,
         community.id,
         'offer',
       );
 
+      // Use existing test user as sender
+      await signIn(supabase, testUser.email, 'TestPass123!');
+
+      // Sender gives shoutout for receiver's resource
       const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
@@ -94,7 +96,7 @@ describe('Comments CRUD', () => {
       });
 
       // Create a comment on the shoutout
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'Great shoutout!',
         shoutoutId: shoutout.id,
       });
@@ -116,13 +118,13 @@ describe('Comments CRUD', () => {
       );
 
       // Create a top-level comment
-      const topComment = await createComment(supabase, {
+      const topComment = await createComment(supabase, testUser.id, {
         content: 'Top level comment',
         resourceId: resource.id,
       });
 
       // Create a reply to the top-level comment
-      const reply = await createComment(supabase, {
+      const reply = await createComment(supabase, testUser.id, {
         content: 'This is a reply',
         resourceId: resource.id,
         parentId: topComment.id,
@@ -143,13 +145,13 @@ describe('Comments CRUD', () => {
       );
 
       // Create a top-level comment
-      const topComment = await createComment(supabase, {
+      const topComment = await createComment(supabase, testUser.id, {
         content: 'Top level comment',
         resourceId: resource.id,
       });
 
       // Create a reply to the top-level comment
-      const reply = await createComment(supabase, {
+      const reply = await createComment(supabase, testUser.id, {
         content: 'This is a reply',
         resourceId: resource.id,
         parentId: topComment.id,
@@ -157,7 +159,7 @@ describe('Comments CRUD', () => {
 
       // Try to create a reply to the reply (3rd level) - should fail
       await expect(
-        createComment(supabase, {
+        createComment(supabase, testUser.id, {
           content: 'This should fail',
           resourceId: resource.id,
           parentId: reply.id,
@@ -169,7 +171,7 @@ describe('Comments CRUD', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       await expect(
-        createComment(supabase, {
+        createComment(supabase, testUser.id, {
           content: 'Invalid comment',
         }),
       ).rejects.toThrow(
@@ -181,7 +183,7 @@ describe('Comments CRUD', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       await expect(
-        createComment(supabase, {
+        createComment(supabase, testUser.id, {
           content: 'Invalid comment',
           resourceId: 'some-id',
           shoutoutId: 'another-id',
@@ -204,18 +206,18 @@ describe('Comments CRUD', () => {
       );
 
       // Create top-level comments
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, user1.id, {
         content: 'First comment',
         resourceId: resource.id,
       });
 
-      await createComment(supabase, {
+      await createComment(supabase, user1.id, {
         content: 'Second comment',
         resourceId: resource.id,
       });
 
       // Create replies
-      const reply1 = await createComment(supabase, {
+      const reply1 = await createComment(supabase, user1.id, {
         content: 'Reply to first',
         resourceId: resource.id,
         parentId: comment1.id,
@@ -225,7 +227,7 @@ describe('Comments CRUD', () => {
       const user2 = await createTestUser(supabase);
       await joinCommunity(supabase, user2.id, testCommunity.id);
 
-      const reply2 = await createComment(supabase, {
+      const reply2 = await createComment(supabase, user2.id, {
         content: 'Another reply to first',
         resourceId: resource.id,
         parentId: comment1.id,
@@ -256,18 +258,18 @@ describe('Comments CRUD', () => {
       );
 
       // Create comments
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, testUser.id, {
         content: 'Visible comment',
         resourceId: resource.id,
       });
 
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, testUser.id, {
         content: 'To be deleted',
         resourceId: resource.id,
       });
 
       // Delete comment2
-      await deleteComment(supabase, comment2.id);
+      await deleteComment(supabase, testUser.id, comment2.id);
 
       // Fetch comments without includeDeleted flag
       const comments = await fetchComments(supabase, {
@@ -297,18 +299,18 @@ describe('Comments CRUD', () => {
       );
 
       // Create comments
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, testUser.id, {
         content: 'Visible comment',
         resourceId: resource.id,
       });
 
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, testUser.id, {
         content: 'To be deleted',
         resourceId: resource.id,
       });
 
       // Delete comment2
-      await deleteComment(supabase, comment2.id);
+      await deleteComment(supabase, testUser.id, comment2.id);
 
       // Fetch comments with includeDeleted flag
       const comments = await fetchComments(supabase, {
@@ -333,7 +335,7 @@ describe('Comments CRUD', () => {
       );
 
       // Create a comment
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'Original content',
         resourceId: resource.id,
       });
@@ -341,6 +343,7 @@ describe('Comments CRUD', () => {
       // Update the comment
       const updated = await updateComment(
         supabase,
+        testUser.id,
         comment.id,
         'Updated content',
       );
@@ -365,7 +368,7 @@ describe('Comments CRUD', () => {
       );
 
       // Create a comment as user1
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, user1.id, {
         content: 'Original content',
         resourceId: resource.id,
       });
@@ -374,7 +377,7 @@ describe('Comments CRUD', () => {
       await signIn(supabase, user2.email, 'TestPass123!');
 
       await expect(
-        updateComment(supabase, comment.id, 'Hacked content'),
+        updateComment(supabase, user2.id, comment.id, 'Hacked content'),
       ).rejects.toThrow();
     });
   });
@@ -400,7 +403,7 @@ describe('Comments CRUD', () => {
       expect(initialResource!.comment_count).toBe(0);
 
       // Create a comment
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, testUser.id, {
         content: 'First comment',
         resourceId: resource.id,
       });
@@ -415,7 +418,7 @@ describe('Comments CRUD', () => {
       expect(afterFirst!.comment_count).toBe(1);
 
       // Create another comment
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, testUser.id, {
         content: 'Second comment',
         resourceId: resource.id,
       });
@@ -430,7 +433,7 @@ describe('Comments CRUD', () => {
       expect(afterSecond!.comment_count).toBe(2);
 
       // Delete a comment
-      await deleteComment(supabase, comment1.id);
+      await deleteComment(supabase, testUser.id, comment1.id);
 
       // Check count decreased
       const { data: afterDelete } = await supabase
@@ -444,17 +447,20 @@ describe('Comments CRUD', () => {
 
     it('should update shoutout comment count on comment creation and deletion', async () => {
       const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, receiver.id, testCommunity.id);
 
-      await signIn(supabase, testUser.email, 'TestPass123!');
-
-      // Create required entities
+      // Receiver creates the resource (they will be the owner)
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
         'offer',
       );
 
+      // Sign in as testUser (sender)
+      await signIn(supabase, testUser.email, 'TestPass123!');
+
+      // Sender gives shoutout for receiver's resource
       const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
@@ -472,7 +478,7 @@ describe('Comments CRUD', () => {
       expect(initialShoutout!.comment_count).toBe(0);
 
       // Create a comment
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'Nice shoutout!',
         shoutoutId: shoutout.id,
       });
@@ -487,7 +493,7 @@ describe('Comments CRUD', () => {
       expect(afterComment!.comment_count).toBe(1);
 
       // Delete the comment
-      await deleteComment(supabase, comment.id);
+      await deleteComment(supabase, testUser.id, comment.id);
 
       // Check count decreased
       const { data: afterDelete } = await supabase

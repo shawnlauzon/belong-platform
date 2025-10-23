@@ -86,11 +86,9 @@ describe('Shoutouts API - CRUD Operations', () => {
       const shoutoutInput = {
         resourceId: testResource.id,
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
-        receiverId: testUser.id,
-        communityId: testCommunity.id,
       };
 
-      createdShoutout = await createShoutout(supabase, shoutoutInput);
+      createdShoutout = await createShoutout(supabase, testUser2.id, shoutoutInput);
 
       expect(createdShoutout).toBeTruthy();
       expect(createdShoutout).toMatchObject({
@@ -123,14 +121,12 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('cannot send shoutout to yourself', async () => {
       const shoutoutInput = {
-        communityId: testCommunity.id,
-        resourceId: testResource.id,
-        receiverId: testUser.id,
+        resourceId: testResource2.id, // testResource2 is owned by testUser2
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
       try {
-        createdShoutout = await createShoutout(supabase, shoutoutInput);
+        createdShoutout = await createShoutout(supabase, testUser2.id, shoutoutInput);
         expect.fail('Should not have created shoutout');
       } catch (error) {
         expect(error).toBeTruthy();
@@ -139,14 +135,12 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('should not allow shoutout about a resource you own', async () => {
       const shoutoutInput = {
-        receiverId: testUser.id,
-        communityId: testCommunity.id,
-        resourceId: testResource2.id, // testResource is owned by testUser (signed in user)
+        resourceId: testResource2.id, // testResource2 is owned by testUser2 (signed in user)
         message: `${TEST_PREFIX}Thank you for sharing this resource!`,
       };
 
       try {
-        createdShoutout = await createShoutout(supabase, shoutoutInput);
+        createdShoutout = await createShoutout(supabase, testUser2.id, shoutoutInput);
         expect.fail('Should not have created shoutout');
       } catch (error) {
         expect(error).toBeTruthy();
@@ -226,7 +220,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('updates shoutout message', async () => {
       const newMessage = `${TEST_PREFIX}Updated_Message`;
-      const updatedShoutout = await updateShoutout(supabase, {
+      const updatedShoutout = await updateShoutout(supabase, testUser2.id, {
         id: createdShoutout.id,
         message: newMessage,
       });
@@ -261,7 +255,7 @@ describe('Shoutouts API - CRUD Operations', () => {
 
     it('deletes shoutout successfully', async () => {
       // Delete the shoutout
-      await deleteShoutout(supabase, createdShoutout.id);
+      await deleteShoutout(supabase, testUser2.id, createdShoutout.id);
 
       // Verify shoutout is deleted
       const { data, error } = await supabase
@@ -276,6 +270,7 @@ describe('Shoutouts API - CRUD Operations', () => {
     it('returns null for non-existent shoutout deletion', async () => {
       const result = await deleteShoutout(
         supabase,
+        testUser2.id,
         '00000000-0000-0000-0000-000000000000',
       );
       expect(result).toBeNull();

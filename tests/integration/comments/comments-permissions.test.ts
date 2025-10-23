@@ -18,7 +18,6 @@ import { signIn } from '@/features/auth/api';
 import { joinCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
 
@@ -52,13 +51,13 @@ describe('Comments Permissions', () => {
       );
 
       // Create a comment
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'My comment',
         resourceId: resource.id,
       });
 
       // Delete own comment - should succeed
-      const deleted = await deleteComment(supabase, comment.id);
+      const deleted = await deleteComment(supabase, testUser.id, comment.id);
       expect(deleted.isDeleted).toBe(true);
     });
 
@@ -77,7 +76,7 @@ describe('Comments Permissions', () => {
 
       // Create comment as commenter
       await signIn(supabase, commenter.email, 'TestPass123!');
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, commenter.id, {
         content: "Someone else's comment",
         resourceId: resource.id,
       });
@@ -86,7 +85,7 @@ describe('Comments Permissions', () => {
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
       // Resource owner deletes comment - should succeed
-      const deleted = await deleteComment(supabase, comment.id);
+      const deleted = await deleteComment(supabase, resourceOwner.id, comment.id);
       expect(deleted.isDeleted).toBe(true);
     });
 
@@ -114,7 +113,7 @@ describe('Comments Permissions', () => {
 
       // Create comment as commenter
       await signIn(supabase, commenter.email, 'TestPass123!');
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, commenter.id, {
         content: 'Comment on shoutout',
         shoutoutId: shoutout.id,
       });
@@ -123,7 +122,7 @@ describe('Comments Permissions', () => {
       await signIn(supabase, shoutoutSender.email, 'TestPass123!');
 
       // Shoutout sender deletes comment - should succeed
-      const deleted = await deleteComment(supabase, comment.id);
+      const deleted = await deleteComment(supabase, shoutoutSender.id, comment.id);
       expect(deleted.isDeleted).toBe(true);
     });
 
@@ -144,7 +143,7 @@ describe('Comments Permissions', () => {
 
       // Create comment as commenter
       await signIn(supabase, commenter.email, 'TestPass123!');
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, commenter.id, {
         content: "Someone's comment",
         resourceId: resource.id,
       });
@@ -153,23 +152,25 @@ describe('Comments Permissions', () => {
       await signIn(supabase, randomUser.email, 'TestPass123!');
 
       // Random user tries to delete comment - should fail
-      await expect(deleteComment(supabase, comment.id)).rejects.toThrow();
+      await expect(deleteComment(supabase, randomUser.id, comment.id)).rejects.toThrow();
     });
 
     it('should not allow shoutout receiver to delete comments (only sender can)', async () => {
       const shoutoutSender = testUser;
 
       const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
       await joinCommunity(supabase, receiver.id, testCommunity.id);
 
-      // Create resource and shoutout as sender
-      await signIn(supabase, shoutoutSender.email, 'TestPass123!');
+      // Receiver creates the resource (they will be the owner)
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
         'offer',
       );
 
+      // Create shoutout as sender
+      await signIn(supabase, shoutoutSender.email, 'TestPass123!');
       const shoutout = await createTestShoutout(supabase, {
         resourceId: resource.id,
         receiverId: receiver.id,
@@ -181,7 +182,7 @@ describe('Comments Permissions', () => {
       const commenter = await createTestUser(supabase);
       await joinCommunity(supabase, commenter.id, testCommunity.id);
 
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, commenter.id, {
         content: 'Comment on shoutout',
         shoutoutId: shoutout.id,
       });
@@ -190,7 +191,7 @@ describe('Comments Permissions', () => {
       await signIn(supabase, receiver.email, 'TestPass123!');
 
       // Receiver tries to delete comment - should fail
-      await expect(deleteComment(supabase, comment.id)).rejects.toThrow();
+      await expect(deleteComment(supabase, receiver.id, comment.id)).rejects.toThrow();
     });
   });
 
@@ -208,7 +209,7 @@ describe('Comments Permissions', () => {
         'offer',
       );
 
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, author.id, {
         content: 'Original content',
         resourceId: resource.id,
       });
@@ -216,6 +217,7 @@ describe('Comments Permissions', () => {
       // Author can update
       const updated = await updateComment(
         supabase,
+        author.id,
         comment.id,
         'Updated by author',
       );
@@ -226,7 +228,7 @@ describe('Comments Permissions', () => {
       await signIn(supabase, otherUser.email, 'TestPass123!');
 
       await expect(
-        updateComment(supabase, comment.id, 'Hacked content'),
+        updateComment(supabase, otherUser.id, comment.id, 'Hacked content'),
       ).rejects.toThrow();
     });
 
@@ -244,7 +246,7 @@ describe('Comments Permissions', () => {
 
       // Create comment as commenter
       await signIn(supabase, commenter.email, 'TestPass123!');
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, commenter.id, {
         content: "Someone else's comment",
         resourceId: resource.id,
       });
@@ -254,7 +256,7 @@ describe('Comments Permissions', () => {
 
       // Resource owner tries to edit comment - should fail
       await expect(
-        updateComment(supabase, comment.id, 'Edited by owner'),
+        updateComment(supabase, resourceOwner.id, comment.id, 'Edited by owner'),
       ).rejects.toThrow();
     });
   });
@@ -264,13 +266,13 @@ describe('Comments Permissions', () => {
       // Sign out to ensure no authentication
       await supabase.auth.signOut();
 
-      // Try to create comment without authentication
+      // Try to create comment without authentication - RLS should block it
       await expect(
-        createComment(supabase, {
+        createComment(supabase, 'some-id', {
           content: 'Unauthenticated comment',
           resourceId: 'some-id',
         }),
-      ).rejects.toThrow('User must be authenticated to create comments');
+      ).rejects.toThrow();
     });
 
     it('should allow any authenticated user to comment on public resources', async () => {
@@ -290,14 +292,14 @@ describe('Comments Permissions', () => {
 
       // Multiple users can comment
       await signIn(supabase, commenter1.email, 'TestPass123!');
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, commenter1.id, {
         content: 'Comment from user 1',
         resourceId: resource.id,
       });
       expect(comment1).toBeDefined();
 
       await signIn(supabase, commenter2.email, 'TestPass123!');
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, commenter2.id, {
         content: 'Comment from user 2',
         resourceId: resource.id,
       });

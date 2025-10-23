@@ -131,7 +131,7 @@ describe.skip('Notification Preferences', () => {
 
       // Have another user comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'This comment should not generate notification',
         resourceId: resource.id,
       });
@@ -223,7 +223,7 @@ describe.skip('Notification Preferences', () => {
 
       // Have another user comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'This comment should generate notification',
         resourceId: resource.id,
       });

@@ -13,9 +13,11 @@ import { SELECT_SHOUTOUT_BASIC, ShoutoutRow } from '../types/shoutoutRow';
  */
 export async function updateShoutout(
   supabase: SupabaseClient<Database>,
+  userId: string,
   updateData: Partial<ShoutoutInput> & { id: string },
 ): Promise<Shoutout | null> {
   logger.debug('📢 API: Updating shoutout', {
+    userId,
     id: updateData.id,
     message: updateData.message,
   });

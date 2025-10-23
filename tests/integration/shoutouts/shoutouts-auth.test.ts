@@ -8,16 +8,14 @@ import {
 } from '../helpers/test-data';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import * as api from '@/features/shoutouts/api';
-import { signOut } from '@/features/auth/api';
-import { createFakeShoutoutInput } from '@/features/shoutouts/__fakes__';
+import { signIn, signOut } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
-import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
 import type { Shoutout } from '@/features/shoutouts/types';
 import { joinCommunity } from '@/features/communities/api';
+import { Account } from '@/features';
 
 describe('Shoutouts API - Authentication Requirements', () => {
   let authenticatedClient: SupabaseClient<Database>;
@@ -26,6 +24,7 @@ describe('Shoutouts API - Authentication Requirements', () => {
   let testCommunity: Community;
   let testResource: Resource;
   let testShoutout: Shoutout;
+  let anotherUser: Account;
 
   beforeAll(async () => {
     // Set up authenticated client and test data
@@ -38,16 +37,13 @@ describe('Shoutouts API - Authentication Requirements', () => {
       testCommunity.id,
     );
 
-    // Create test data with authenticated client
-    await createTestUser(authenticatedClient);
-    await joinCommunity(authenticatedClient, testCommunity.id);
+    anotherUser = await createTestUser(authenticatedClient);
+    await joinCommunity(authenticatedClient, anotherUser.id, testCommunity.id);
 
-    // Create a test shoutout (testUser sends shoutout to testUser2 about testUser2's resource)
-    testShoutout = await api.createShoutout(authenticatedClient, {
+    // Create a test shoutout (testUser sends shoutout about testResource)
+    testShoutout = await api.createShoutout(authenticatedClient, testUser.id, {
       resourceId: testResource.id,
       message: `${TEST_PREFIX}Test shoutout for auth tests`,
-      receiverId: testUser.id,
-      communityId: testCommunity.id,
     });
 
     // Set up unauthenticated client
@@ -62,43 +58,53 @@ describe('Shoutouts API - Authentication Requirements', () => {
   describe('Unauthenticated Write Operations', () => {
     describe('createShoutout', () => {
       it('requires authentication', async () => {
-        const data = createFakeShoutoutInput({
+        const data = {
           resourceId: testResource.id,
           message: `${TEST_PREFIX}Unauth_Create_Test`,
-        });
+        };
 
         await expect(
-          api.createShoutout(unauthenticatedClient, {
-            ...data,
-            receiverId: testUser.id,
-            communityId: testCommunity.id,
-          }),
+          api.createShoutout(unauthenticatedClient, testUser.id, data),
         ).rejects.toThrow();
       });
     });
 
     describe('updateShoutout', () => {
-      it('should expect null for unauthenticated update', async () => {
-        const result = await api.updateShoutout(unauthenticatedClient, testShoutout.id, {
-          message: 'Unauthorized Update Attempt',
-        });
-        expect(result).toBeNull();
+      it('should throw error for unauthenticated update', async () => {
+        await expect(
+          api.updateShoutout(
+            unauthenticatedClient,
+            'unauthenticated-test-id',
+            {
+              id: testShoutout.id,
+              message: 'Unauthorized Update Attempt',
+            },
+          ),
+        ).rejects.toThrow();
       });
 
-      it('should expect null for unauthenticated update of non-existent shoutout', async () => {
-        const result = await api.updateShoutout(
-          unauthenticatedClient,
-          '00000000-0000-0000-0000-000000000000',
-          { message: 'Test' },
-        );
-        expect(result).toBeNull();
+      it('should throw error for unauthenticated update of non-existent shoutout', async () => {
+        await expect(
+          api.updateShoutout(
+            unauthenticatedClient,
+            'unauthenticated-test-id',
+            {
+              id: '00000000-0000-0000-0000-000000000000',
+              message: 'Test',
+            },
+          ),
+        ).rejects.toThrow();
       });
     });
 
     describe('deleteShoutout', () => {
       it('should throw error for unauthenticated delete', async () => {
         await expect(
-          api.deleteShoutout(unauthenticatedClient, testShoutout.id)
+          api.deleteShoutout(
+            unauthenticatedClient,
+            testUser.id,
+            testShoutout.id,
+          ),
         ).rejects.toThrow();
       });
 
@@ -106,8 +112,9 @@ describe('Shoutouts API - Authentication Requirements', () => {
         await expect(
           api.deleteShoutout(
             unauthenticatedClient,
+            testUser.id,
             '00000000-0000-0000-0000-000000000000',
-          )
+          ),
         ).rejects.toThrow();
       });
     });

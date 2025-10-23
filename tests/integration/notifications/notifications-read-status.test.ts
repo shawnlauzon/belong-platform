@@ -59,7 +59,7 @@ describe('Notification Read Status', () => {
 
       // Switch to anotherUser and create comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'This should create an unread notification',
         resourceId: resource.id,
       });
@@ -67,7 +67,7 @@ describe('Notification Read Status', () => {
       // Switch back to testUser to check notifications
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase, {
+      const notifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -94,7 +94,7 @@ describe('Notification Read Status', () => {
 
       // Switch to anotherUser and create comment
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'New comment for count test',
         resourceId: resource.id,
       });
@@ -117,7 +117,7 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment for individual read test',
         resourceId: resource.id,
       });
@@ -125,7 +125,7 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get unread notification
-      const unreadNotifications = await fetchNotifications(supabase, {
+      const unreadNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -140,7 +140,7 @@ describe('Notification Read Status', () => {
       await markNotificationAsRead(supabase, notification.id);
 
       // Verify it's marked as read
-      const allNotifications = await fetchNotifications(supabase);
+      const allNotifications = await fetchNotifications(supabase, testUser.id);
 
       const readNotification = allNotifications.find(
         (n) => n.id === notification.id,
@@ -167,11 +167,11 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'First comment',
         resourceId: resource1.id,
       });
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Second comment',
         resourceId: resource2.id,
       });
@@ -179,7 +179,7 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get unread notifications
-      const unreadNotifications = await fetchNotifications(supabase, {
+      const unreadNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -189,7 +189,7 @@ describe('Notification Read Status', () => {
       await markNotificationAsRead(supabase, unreadNotifications[0].id);
 
       // Check that only one is marked as read
-      const afterReadNotifications = await fetchNotifications(supabase);
+      const afterReadNotifications = await fetchNotifications(supabase, testUser.id);
 
       const markedAsRead = afterReadNotifications.filter((n) => n.readAt);
       const stillUnread = afterReadNotifications.filter((n) => !n.readAt);
@@ -214,11 +214,11 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment for mark all test 1',
         resourceId: resource1.id,
       });
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment for mark all test 2',
         resourceId: resource2.id,
       });
@@ -226,7 +226,7 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Verify we have unread notifications
-      const unreadNotifications = await fetchNotifications(supabase, {
+      const unreadNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -236,14 +236,14 @@ describe('Notification Read Status', () => {
       await markNotificationAsRead(supabase, 'all');
 
       // Verify all are marked as read
-      const afterMarkAllNotifications = await fetchNotifications(supabase);
+      const afterMarkAllNotifications = await fetchNotifications(supabase, testUser.id);
 
       afterMarkAllNotifications.forEach((notification) => {
         expect(notification.readAt).toBeInstanceOf(Date);
       });
 
       // Verify no unread notifications remain
-      const unreadAfterMarkAll = await fetchNotifications(supabase, {
+      const unreadAfterMarkAll = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -259,7 +259,7 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment for count test',
         resourceId: resource.id,
       });
@@ -294,11 +294,11 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment 1 for filter test',
         resourceId: resource1.id,
       });
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment 2 for filter test',
         resourceId: resource2.id,
       });
@@ -306,13 +306,13 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get all notifications
-      const allNotifications = await fetchNotifications(supabase);
+      const allNotifications = await fetchNotifications(supabase, testUser.id);
 
       // Mark first one as read
       await markNotificationAsRead(supabase, allNotifications[0].id);
 
       // Filter for unread only
-      const unreadNotifications = await fetchNotifications(supabase, {
+      const unreadNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -333,20 +333,20 @@ describe('Notification Read Status', () => {
       );
 
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Comment for read filter test',
         resourceId: resource.id,
       });
 
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      const allNotifications = await fetchNotifications(supabase);
+      const allNotifications = await fetchNotifications(supabase, testUser.id);
 
       // Mark at least one as read
       await markNotificationAsRead(supabase, allNotifications[0].id);
 
       // Filter for read only
-      const readNotifications = await fetchNotifications(supabase, {
+      const readNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: true,
       });
 
@@ -371,22 +371,20 @@ describe('Notification Read Status', () => {
       await signIn(supabase, anotherUser.email, 'TestPass123!');
 
       // Create different types of notifications
-      await createComment(supabase, {
+      await createComment(supabase, anotherUser.id, {
         content: 'Mixed types test comment',
         resourceId: resource.id,
       });
 
-      await createShoutout(supabase, {
-        receiverId: testUser.id,
+      await createShoutout(supabase, anotherUser.id, {
         message: 'Mixed types test shoutout',
         resourceId: resource.id,
-        communityId: testCommunity.id,
       });
 
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Get all unread notifications
-      const unreadNotifications = await fetchNotifications(supabase, {
+      const unreadNotifications = await fetchNotifications(supabase, testUser.id, {
         isRead: false,
       });
 
@@ -408,7 +406,7 @@ describe('Notification Read Status', () => {
       await markNotificationAsRead(supabase, commentNotification!.id);
 
       // Verify mixed read statuses
-      const mixedNotifications = await fetchNotifications(supabase);
+      const mixedNotifications = await fetchNotifications(supabase, testUser.id);
 
       const updatedCommentNotification = mixedNotifications.find(
         (n) => n.id === commentNotification!.id,

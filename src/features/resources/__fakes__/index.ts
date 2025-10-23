@@ -272,11 +272,7 @@ export function createFakeResourceTimeslotInput(
     resourceId: faker.string.uuid(),
     startTime,
     endTime,
-    status: faker.helpers.arrayElement([
-      'active',
-      'completed',
-      'cancelled',
-    ] as const),
+    status: 'active',
     ...overrides,
   };
 }

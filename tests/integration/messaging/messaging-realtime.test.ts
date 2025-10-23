@@ -45,7 +45,7 @@ describe('Message Subscription Tests', () => {
 
     // Create another user and have them join the community
     otherUser = await createTestUser(otherUserClient);
-    await joinCommunity(otherUserClient, testCommunity.id);
+    await joinCommunity(otherUserClient, otherUser.id, testCommunity.id);
 
     testConversation = await createTestConversation(supabase, otherUser.id);
 
@@ -99,7 +99,7 @@ describe('Message Subscription Tests', () => {
     const testMessage = `${TEST_PREFIX} subscription test`;
 
     // Other user sends a message to me
-    await sendMessage(otherUserClient, {
+    await sendMessage(otherUserClient, otherUser.id, {
       conversationId: testConversation.id,
       content: testMessage,
     });
@@ -114,7 +114,7 @@ describe('Message Subscription Tests', () => {
   });
 
   it('should increment the unread count when new messages arrive', async () => {
-    await sendMessage(otherUserClient, {
+    await sendMessage(otherUserClient, otherUser.id, {
       conversationId: testConversation.id,
       content: `${TEST_PREFIX} unread counts test`,
     });
@@ -129,7 +129,7 @@ describe('Message Subscription Tests', () => {
   });
 
   it('should update the messages query cache after editing a message', async () => {
-    const message = await sendMessage(otherUserClient, {
+    const message = await sendMessage(otherUserClient, otherUser.id, {
       conversationId: testConversation.id,
       content: `${TEST_PREFIX} subscription test`,
     });
@@ -149,7 +149,7 @@ describe('Message Subscription Tests', () => {
   });
 
   it('should update the messages query cache after deleting a message', async () => {
-    const message = await sendMessage(otherUserClient, {
+    const message = await sendMessage(otherUserClient, otherUser.id, {
       conversationId: testConversation.id,
       content: `${TEST_PREFIX} subscription test`,
     });

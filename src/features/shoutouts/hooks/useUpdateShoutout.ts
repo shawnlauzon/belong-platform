@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
+import { useCurrentUser } from '@/features/auth';
 import { updateShoutout } from '../api';
 import type { ShoutoutInput, Shoutout } from '../types';
 import { shoutoutKeys } from '../queries';
@@ -67,11 +68,15 @@ import { shoutoutKeys } from '../queries';
 export function useUpdateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (data: Partial<ShoutoutInput> & { id: string }) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
       logger.debug('📢 useUpdateShoutout: Updating shoutout', data);
-      return updateShoutout(supabase, data);
+      return updateShoutout(supabase, currentUser.id, data);
     },
     onSuccess: (updatedShoutout: Shoutout | null, variables) => {
       // Update the specific shoutout in cache

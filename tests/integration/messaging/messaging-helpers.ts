@@ -31,7 +31,7 @@ export async function setupMessagingUsers(
   // Create first user (will be auto-signed in)
   const userA = await createTestUser(supabase);
 
-  // Create community as userA
+  // Create community as userA (userA becomes owner and auto-joined)
   const community = await createTestCommunity(supabase);
 
   // Create second user (will be auto-signed in as userB)
@@ -40,6 +40,7 @@ export async function setupMessagingUsers(
   // Join userB to the same community
   await joinCommunity(supabase, userB.id, community.id);
 
+  // Sign back in as userA for the tests
   await signInAsUser(supabase, userA);
 
   return { userA, userB, community };

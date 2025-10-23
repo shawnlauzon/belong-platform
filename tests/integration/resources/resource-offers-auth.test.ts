@@ -193,7 +193,7 @@ describe('Resource Offers API - Authentication Requirements', () => {
     it('authenticated client can create and update resource claims', async () => {
       // Create a second user
       const secondUser = await createTestUser(authenticatedClient);
-      await joinCommunity(authenticatedClient, testCommunity.id);
+      await joinCommunity(authenticatedClient, secondUser.id, testCommunity.id);
 
       // Create claim for the resource offer (status no longer in input - determined by API)
       const claimInput = createFakeResourceClaimInput({
@@ -264,8 +264,8 @@ describe('Resource Offers API - Authentication Requirements', () => {
   describe('Authorization Edge Cases', () => {
     it('prevents users from updating resource offers they do not own', async () => {
       // Create a second user
-      await createTestUser(authenticatedClient);
-      await joinCommunity(authenticatedClient, testCommunity.id);
+      const secondUser = await createTestUser(authenticatedClient);
+      await joinCommunity(authenticatedClient, secondUser.id, testCommunity.id);
 
       // Try to update the original test resource offer (owned by testUser)
       await expect(

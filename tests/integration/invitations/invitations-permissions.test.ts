@@ -248,11 +248,13 @@ describe('Invitations API - Permissions and Security', () => {
     it('getInvitationCode only returns user own code', async () => {
       const codeA = await invitationsApi.getInvitationCode(
         supabaseUserA,
+        userA.id,
         testCommunity.id,
       );
 
       const codeB = await invitationsApi.getInvitationCode(
         supabaseUserB,
+        userB.id,
         testCommunity.id,
       );
 

@@ -34,11 +34,11 @@ describe('User Is Conversation Participant Function', () => {
     userB = await createTestUser(supabase);
 
     // Join userB to the same community
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, userB.id, testCommunity.id);
 
     // Create third user that won't be in the conversation
     userC = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, userC.id, testCommunity.id);
 
     // Sign back in as userA to create conversation
     await signIn(supabase, userA.email, 'TestPass123!');

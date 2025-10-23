@@ -43,7 +43,7 @@ describe('Community Chat Message Subscription Tests', () => {
 
     // Create another user and have them join the community
     otherUser = await createTestUser(otherUserClient);
-    await joinCommunity(otherUserClient, testCommunity.id);
+    await joinCommunity(otherUserClient, otherUser.id, testCommunity.id);
 
     // Create mock QueryClient
     queryClient = {
@@ -99,7 +99,7 @@ describe('Community Chat Message Subscription Tests', () => {
 
     // Other user sends a message to me
     console.log('sending message to', testUser.id);
-    await sendMessage(otherUserClient, {
+    await sendMessage(otherUserClient, otherUser.id, {
       communityId: testCommunity.id,
       content: testMessage,
     });
@@ -114,7 +114,7 @@ describe('Community Chat Message Subscription Tests', () => {
   });
 
   it('should increment the unread count when new messages arrive', async () => {
-    await sendMessage(otherUserClient, {
+    await sendMessage(otherUserClient, otherUser.id, {
       communityId: testCommunity.id,
       content: `${TEST_PREFIX} unread counts test`,
     });
@@ -131,7 +131,7 @@ describe('Community Chat Message Subscription Tests', () => {
   });
 
   it('should update the messages query cache after editing a message', async () => {
-    const message = await sendMessage(otherUserClient, {
+    const message = await sendMessage(otherUserClient, otherUser.id, {
       communityId: testCommunity.id,
       content: `${TEST_PREFIX} subscription test`,
     });
@@ -151,7 +151,7 @@ describe('Community Chat Message Subscription Tests', () => {
   });
 
   it('should update the messages query cache after deleting a message', async () => {
-    const message = await sendMessage(otherUserClient, {
+    const message = await sendMessage(otherUserClient, otherUser.id, {
       communityId: testCommunity.id,
       content: `${TEST_PREFIX} subscription test`,
     });

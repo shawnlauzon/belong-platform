@@ -60,7 +60,16 @@ describe('Trust Score Points - Shoutouts', () => {
 
   describe('Basic Shoutout Points', () => {
     it('should award correct points for sending shoutouts', async () => {
-      // Sender is already signed in from beforeEach
+      // Have receiver create a resource first
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      const resource = await createTestResource(
+        supabase,
+        community.id,
+        'offer',
+      );
+
+      // Sign back in as sender
+      await signIn(supabase, sender.email, 'TestPass123!');
 
       // Get sender score before shoutout
       const senderScoreBefore = await getCurrentTrustScore(
@@ -69,20 +78,21 @@ describe('Trust Score Points - Shoutouts', () => {
         community.id,
       );
 
-      // Create shoutout (this will also create a resource since resource_id is required)
+      // Create shoutout for receiver's resource
       await createTestShoutout(supabase, {
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Great job!',
+        resourceId: resource.id,
       });
 
-      // Verify sender increment (shoutout sent + resource created)
+      // Verify sender increment (only shoutout sent, no new resource)
       await verifyTrustScoreIncrement(
         supabase,
         sender.id,
         community.id,
         senderScoreBefore,
-        POINTS_CONFIG.RESOURCE_OFFER + POINTS_CONFIG.SHOUTOUT_SENT,
+        POINTS_CONFIG.SHOUTOUT_SENT,
         'Shoutout sender increment',
       );
 
@@ -98,6 +108,14 @@ describe('Trust Score Points - Shoutouts', () => {
     });
 
     it('should award correct points for receiving shoutouts', async () => {
+      // Have receiver create a resource first
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      const resource = await createTestResource(
+        supabase,
+        community.id,
+        'offer',
+      );
+
       // Get receiver score before shoutout
       const receiverScoreBefore = await getCurrentTrustScore(
         supabase,
@@ -105,11 +123,15 @@ describe('Trust Score Points - Shoutouts', () => {
         community.id,
       );
 
-      // Create shoutout (sender is already signed in from beforeEach)
+      // Sign back in as sender
+      await signIn(supabase, sender.email, 'TestPass123!');
+
+      // Create shoutout for receiver's resource
       await createTestShoutout(supabase, {
         receiverId: receiver.id,
         communityId: community.id,
         message: 'Great work!',
+        resourceId: resource.id,
       });
 
       // Verify receiver increment (shoutout received)
@@ -139,17 +161,17 @@ describe('Trust Score Points - Shoutouts', () => {
       await signIn(supabase, sender.email, 'TestPass123!');
       const community = await createTestCommunity(supabase);
 
-      // Create existing resource
+      // Create receiver
+      const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      await joinCommunity(supabase, receiver.id, community.id);
+
+      // Receiver creates the resource (they will be the owner)
       const existingResource = await createTestResource(
         supabase,
         community.id,
         'offer',
       );
-
-      // Create receiver
-      const receiver = await createTestUser(supabase);
-      await signIn(supabase, receiver.email, 'TestPass123!');
-      await joinCommunity(supabase, receiver.id, community.id);
 
       // Sign back in as sender
       await signIn(supabase, sender.email, 'TestPass123!');
@@ -161,7 +183,7 @@ describe('Trust Score Points - Shoutouts', () => {
         community.id,
       );
 
-      // Create shoutout using existing resource
+      // Create shoutout using existing resource (owned by receiver)
       await createTestShoutout(supabase, {
         receiverId: receiver.id,
         communityId: community.id,
@@ -186,17 +208,17 @@ describe('Trust Score Points - Shoutouts', () => {
       await signIn(supabase, sender.email, 'TestPass123!');
       const community = await createTestCommunity(supabase);
 
-      // Create existing resource
+      // Create receiver
+      const receiver = await createTestUser(supabase);
+      await signIn(supabase, receiver.email, 'TestPass123!');
+      await joinCommunity(supabase, receiver.id, community.id);
+
+      // Receiver creates the resource (they will be the owner)
       const existingResource = await createTestResource(
         supabase,
         community.id,
         'offer',
       );
-
-      // Create receiver
-      const receiver = await createTestUser(supabase);
-      await signIn(supabase, receiver.email, 'TestPass123!');
-      await joinCommunity(supabase, receiver.id, community.id);
 
       // Sign back in as sender
       await signIn(supabase, sender.email, 'TestPass123!');
@@ -208,7 +230,7 @@ describe('Trust Score Points - Shoutouts', () => {
         community.id,
       );
 
-      // Create shoutout using existing resource
+      // Create shoutout using existing resource (owned by receiver)
       await createTestShoutout(supabase, {
         receiverId: receiver.id,
         communityId: community.id,

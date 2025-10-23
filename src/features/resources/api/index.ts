@@ -15,6 +15,7 @@ export * from './deleteResourceTimeslot';
 export * from './createResourceClaim';
 export * from './fetchResourceClaims';
 export * from './updateResourceClaim';
+export * from './deleteResourceClaim';
 export * from './updateCommitmentLevel';
 
 // Voting system

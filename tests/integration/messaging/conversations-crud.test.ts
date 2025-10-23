@@ -197,7 +197,7 @@ describe('Conversations CRUD Operations', () => {
       const userC = await createTestUser(supabase);
 
       try {
-        await joinCommunity(supabase, community.id);
+        await joinCommunity(supabase, userC.id, community.id);
         const { error } = await supabase
           .from('conversation_participants')
           .insert({

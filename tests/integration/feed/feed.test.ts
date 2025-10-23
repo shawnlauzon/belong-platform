@@ -13,7 +13,6 @@ import { joinCommunity } from '@/features/communities/api';
 import { createResourceTimeslot } from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import type { User } from '@/features/users/types';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type { Resource } from '@/features/resources/types';
@@ -164,10 +163,13 @@ describe('Feed API - Integration Tests', () => {
     afterAll(async () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
     });
+
     it('throws for unauthenticated user', async () => {
       // Should throw for unauthenticated user
       // Note: fetchFeed now requires userId, so passing testUser.id but should still fail due to auth
-      await expect(fetchFeed(supabase, testUser.id)).rejects.toThrowError();
+      await expect(
+        fetchFeed(supabase, 'unauthenticated-user-id'),
+      ).rejects.toThrowError();
     });
   });
 

@@ -21,9 +21,10 @@ import { fetchResourceById } from '@/features/resources/api';
  */
 export async function createShoutout(
   supabase: SupabaseClient<Database>,
+  userId: string,
   shoutoutData: Omit<ShoutoutInput, 'receiverId' | 'communityId'>,
 ): Promise<Shoutout> {
-  logger.debug('📢 API: Creating shoutout', { shoutoutData });
+  logger.debug('📢 API: Creating shoutout', { userId, shoutoutData });
 
   // Fetch the resource to get receiverId (ownerId) and communityId
   const resource = await fetchResourceById(supabase, shoutoutData.resourceId);
@@ -37,7 +38,7 @@ export async function createShoutout(
     communityId: resource.communityIds[0] || '',
   };
 
-  return insertShoutout(supabase, toShoutoutInsertRow(fullShoutoutData));
+  return insertShoutout(supabase, userId, toShoutoutInsertRow(fullShoutoutData));
 }
 
 /**
@@ -45,6 +46,7 @@ export async function createShoutout(
  */
 async function insertShoutout(
   supabase: SupabaseClient<Database>,
+  userId: string,
   dbShoutout: ShoutoutInsertRow,
 ): Promise<Shoutout> {
   try {
@@ -78,7 +80,7 @@ async function insertShoutout(
           JSON.stringify(permanentUrls) !==
           JSON.stringify(domainShoutout.imageUrls)
         ) {
-          const updatedShoutout = await updateShoutout(supabase, {
+          const updatedShoutout = await updateShoutout(supabase, userId, {
             id: createdShoutout.id,
             imageUrls: permanentUrls,
           });

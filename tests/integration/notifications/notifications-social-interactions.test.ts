@@ -58,7 +58,7 @@ describe('Social Interactions Notifications', () => {
 
       // Sign in as interacting user and comment
       await signIn(clientB, interactingUser.email, 'TestPass123!');
-      await createComment(clientB, {
+      await createComment(clientB, interactingUser.id, {
         content: 'This is a test comment on your resource',
         resourceId: resource.id,
       });
@@ -93,14 +93,14 @@ describe('Social Interactions Notifications', () => {
       );
 
       // resourceOwner comments on their own resource
-      const parentComment = await createComment(clientA, {
+      const parentComment = await createComment(clientA, resourceOwner.id, {
         content: 'This is my original comment',
         resourceId: resource.id,
       });
 
       // interacting user replies to the comment
       await signIn(clientA, interactingUser.email, 'TestPass123!');
-      await createComment(clientA, {
+      await createComment(clientA, interactingUser.id, {
         content: 'This is a reply to your comment',
         resourceId: resource.id,
         parentId: parentComment.id,
@@ -141,11 +141,9 @@ describe('Social Interactions Notifications', () => {
       // Create a shoutout from interacting user to resourceOwner
       await signIn(clientA, interactingUser.email, 'TestPass123!');
 
-      await createShoutout(clientA, {
-        receiverId: resourceOwner.id,
+      await createShoutout(clientA, interactingUser.id, {
         message: 'Great community member!',
         resourceId: resource.id,
-        communityId: testCommunity.id,
       });
 
       // Switch to resourceOwner to check notifications

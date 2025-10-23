@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase, logger, getAuthIdOrThrow } from '@/shared';
+import { useSupabase, logger } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { updateComment } from '../api';
 import { commentKeys } from '../queries';
 
@@ -47,12 +48,15 @@ import { commentKeys } from '../queries';
 export function useUpdateComment() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
-    mutationFn: async ({ id, content }: { id: string; content: string }) => {
+    mutationFn: ({ id, content }: { id: string; content: string }) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
       logger.debug('💬 useUpdateComment: Updating comment', { id, content });
-      const userId = await getAuthIdOrThrow(supabase, 'update comment');
-      return updateComment(supabase, userId, id, content);
+      return updateComment(supabase, currentUser.id, id, content);
     },
     onSuccess: (comment) => {
       logger.info('💬 useUpdateComment: Successfully updated comment', {

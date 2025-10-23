@@ -9,13 +9,13 @@ import {
   assertMessageDelivered,
   signInAsUser,
 } from './messaging-helpers';
-import * as api from '@/features/messages/api';
+import * as api from '@/features/messaging/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { User } from '@/features/users';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import type { Conversation, Message } from '@/features/messages/types';
+import type { Conversation, Message } from '@/features/messaging/types';
 import { joinCommunity } from '@/features/communities/api';
 
 describe.skip('Messages Read Status & Receipts', () => {

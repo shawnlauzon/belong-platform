@@ -59,7 +59,7 @@ describe('Database triggers', () => {
 
     let comment;
     try {
-      comment = await createComment(supabase, {
+      comment = await createComment(supabase, communityMember.id, {
         content: 'Test comment that should trigger notification',
         resourceId: resource.id,
       });
@@ -150,11 +150,9 @@ describe('Database triggers', () => {
 
     // Sign in as communityMember and create shoutout to resourceOwner
     await signIn(supabase, communityMember.email, 'TestPass123!');
-    const shoutout = await createShoutout(supabase, {
-      receiverId: resourceOwner.id,
+    const shoutout = await createShoutout(supabase, communityMember.id, {
       message: 'Great community member!',
       resourceId: resource.id,
-      communityId: testCommunity.id,
     });
 
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
@@ -226,7 +224,7 @@ describe('Database triggers', () => {
     );
 
     // Comment on own resource (should NOT trigger notification)
-    await createComment(supabase, {
+    await createComment(supabase, resourceOwner.id, {
       content: 'This is my own comment',
       resourceId: resource.id,
     });
@@ -259,7 +257,7 @@ describe('Database triggers', () => {
     );
 
     await signIn(supabase, communityMember.email, 'TestPass123!');
-    await createComment(supabase, {
+    await createComment(supabase, communityMember.id, {
       content: 'Comment that should increment counts',
       resourceId: resource.id,
     });

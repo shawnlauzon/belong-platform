@@ -50,8 +50,12 @@ describe('Communities - Joining Operations', () => {
 
       // Switch to anotherUser and join the community
       await signIn(supabase, anotherUser.email, 'TestPass123!');
-      
-      const membership = await api.joinCommunity(supabase, anotherUser.id, newCommunity.id);
+
+      const membership = await api.joinCommunity(
+        supabase,
+        anotherUser.id,
+        newCommunity.id,
+      );
 
       expect(membership).toBeTruthy();
       expect(membership.communityId).toBe(newCommunity.id);
@@ -70,7 +74,7 @@ describe('Communities - Joining Operations', () => {
 
       // Try to join again - should throw error
       await expect(
-        api.joinCommunity(supabase, newCommunity.id)
+        api.joinCommunity(supabase, anotherUser.id, newCommunity.id),
       ).rejects.toThrow('User is already a member of this community');
     });
 
@@ -82,7 +86,7 @@ describe('Communities - Joining Operations', () => {
       // Switch to anotherUser, join and then leave
       await signIn(supabase, anotherUser.email, 'TestPass123!');
       await api.joinCommunity(supabase, anotherUser.id, newCommunity.id);
-      
+
       await api.leaveCommunity(supabase, anotherUser.id, newCommunity.id);
 
       // Verify membership is gone
@@ -95,17 +99,25 @@ describe('Communities - Joining Operations', () => {
 
     it('requires authentication to join community', async () => {
       const unauthenticatedClient = createTestClient();
-      
+
       await expect(
-        api.joinCommunity(unauthenticatedClient, "test-user-id", testCommunity.id)
+        api.joinCommunity(
+          unauthenticatedClient,
+          'test-user-id',
+          testCommunity.id,
+        ),
       ).rejects.toThrow();
     });
 
     it('requires authentication to leave community', async () => {
       const unauthenticatedClient = createTestClient();
-      
+
       await expect(
-        api.leaveCommunity(unauthenticatedClient, testCommunity.id)
+        api.leaveCommunity(
+          unauthenticatedClient,
+          'test-user-id',
+          testCommunity.id,
+        ),
       ).rejects.toThrow();
     });
   });
@@ -114,14 +126,22 @@ describe('Communities - Joining Operations', () => {
     it('allows user to join community using connection code', async () => {
       // Get testUser's member code (testUser is already in testCommunity as organizer)
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getInvitationCode(supabase, testUser.id, testCommunity.id);
+      const memberCode = await getInvitationCode(
+        supabase,
+        testUser.id,
+        testCommunity.id,
+      );
 
       // Create new user (not joined to any community yet)
       const supabaseNewUser = createTestClient();
       const newUserAccount = await createTestUser(supabaseNewUser);
 
       // New user joins community using connection code
-      const membership = await api.joinCommunityWithCode(supabaseNewUser, newUserAccount.id, memberCode.code);
+      const membership = await api.joinCommunityWithCode(
+        supabaseNewUser,
+        newUserAccount.id,
+        memberCode.code,
+      );
 
       expect(membership).toBeTruthy();
       expect(membership.communityId).toBe(testCommunity.id);
@@ -160,7 +180,7 @@ describe('Communities - Joining Operations', () => {
 
       // Try to join with invalid connection code
       await expect(
-        api.joinCommunityWithCode(supabaseNewUser, testNewUser.id, 'INVALID1')
+        api.joinCommunityWithCode(supabaseNewUser, testNewUser.id, 'INVALID1'),
       ).rejects.toThrow();
     });
 
@@ -171,35 +191,55 @@ describe('Communities - Joining Operations', () => {
 
       // Try to join with valid format but non-existent code
       await expect(
-        api.joinCommunityWithCode(supabaseNewUser, testNewUser.id, 'NVALD234')
+        api.joinCommunityWithCode(supabaseNewUser, testNewUser.id, 'NVALD234'),
       ).rejects.toThrow();
     });
 
     it('prevents user from joining same community twice using connection code', async () => {
       // Get testUser's member code
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getInvitationCode(supabase, testUser.id, testCommunity.id);
+      const memberCode = await getInvitationCode(
+        supabase,
+        testUser.id,
+        testCommunity.id,
+      );
 
       // Create new user and join community
       const supabaseNewUser = createTestClient();
       const newUserAccount = await createTestUser(supabaseNewUser);
-      await api.joinCommunityWithCode(supabaseNewUser, newUserAccount.id, memberCode.code);
+      await api.joinCommunityWithCode(
+        supabaseNewUser,
+        newUserAccount.id,
+        memberCode.code,
+      );
 
       // Try to join again using connection code
       await expect(
-        api.joinCommunityWithCode(supabaseNewUser, newUserAccount.id, memberCode.code)
+        api.joinCommunityWithCode(
+          supabaseNewUser,
+          newUserAccount.id,
+          memberCode.code,
+        ),
       ).rejects.toThrow();
     });
 
     it('requires authentication to join with connection code', async () => {
       // Get testUser's member code
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const memberCode = await getInvitationCode(supabase, testUser.id, testCommunity.id);
+      const memberCode = await getInvitationCode(
+        supabase,
+        testUser.id,
+        testCommunity.id,
+      );
 
       // Try to join without authentication
       const unauthenticatedClient = createTestClient();
       await expect(
-        api.joinCommunityWithCode(unauthenticatedClient, "dummy-user-id", memberCode.code)
+        api.joinCommunityWithCode(
+          unauthenticatedClient,
+          'dummy-user-id',
+          memberCode.code,
+        ),
       ).rejects.toThrow();
     });
   });

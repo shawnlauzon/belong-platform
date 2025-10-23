@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
+import { useCurrentUser } from '@/features/auth';
 import { deleteShoutout } from '../api';
 import { shoutoutKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
@@ -81,11 +82,15 @@ import { trustScoreKeys } from '@/features/trust-scores/queries';
 export function useDeleteShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (shoutoutId: string) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
       logger.debug('📢 useDeleteShoutout: Deleting shoutout', { shoutoutId });
-      return deleteShoutout(supabase, shoutoutId);
+      return deleteShoutout(supabase, currentUser.id, shoutoutId);
     },
     onSuccess: (shoutout) => {
       if (shoutout) {

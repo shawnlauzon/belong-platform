@@ -40,7 +40,7 @@ describe('Community Message Realtime Format Validation', () => {
 
     // Create another user and have them join the community
     otherUser = await createTestUser(otherUserClient);
-    await joinCommunity(otherUserClient, testCommunity.id);
+    await joinCommunity(otherUserClient, otherUser.id, testCommunity.id);
 
     await signInAsUser(supabase, testUser);
 
@@ -85,7 +85,7 @@ describe('Community Message Realtime Format Validation', () => {
     receivedMessagesForTestUser.length = 0;
     receivedMessagesForOtherUser.length = 0;
     // Send a message in the community
-    const sentMessage = await sendMessage(otherUserClient, {
+    const sentMessage = await sendMessage(otherUserClient, otherUser.id, {
       communityId: testCommunity.id,
       content: `${TEST_PREFIX} community realtime format test`,
     });

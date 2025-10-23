@@ -9,15 +9,17 @@ import { toDomainShoutout } from '../transformers/shoutoutsTransformer';
  * Delete a shoutout by ID.
  *
  * @param supabase - The Supabase client
+ * @param userId - The ID of the user performing the deletion
  * @param shoutoutId - The ID of the shoutout to delete
  * @returns Promise that resolves when the shoutout is deleted
  * @throws Error if the shoutout is not found or deletion fails
  */
 export async function deleteShoutout(
   supabase: SupabaseClient<Database>,
+  userId: string,
   shoutoutId: string,
 ): Promise<Shoutout | null> {
-  logger.debug('📢 API: Deleting shoutout', { shoutoutId });
+  logger.debug('📢 API: Deleting shoutout', { userId, shoutoutId });
 
   try {
     const { data, error } = (await supabase

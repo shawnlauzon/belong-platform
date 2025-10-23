@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../../shared';
 import { useSupabase } from '../../../shared';
+import { useCurrentUser } from '@/features/auth';
 import type { Shoutout, ShoutoutInput } from '../types';
 import { createShoutout } from '../api/createShoutout';
 import { shoutoutKeys } from '../queries';
@@ -56,11 +57,15 @@ import { trustScoreKeys } from '@/features/trust-scores/queries';
 export function useCreateShoutout() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const mutation = useMutation({
     mutationFn: (input: Omit<ShoutoutInput, 'receiverId' | 'communityId'>) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
       logger.debug('📢 useCreateShoutout: Creating shoutout', { input });
-      return createShoutout(supabase, input);
+      return createShoutout(supabase, currentUser.id, input);
     },
     onSuccess: (newShoutout: Shoutout) => {
       // Set the new shoutout in cache for immediate access

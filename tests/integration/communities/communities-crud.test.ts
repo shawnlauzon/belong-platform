@@ -282,7 +282,7 @@ describe('Communities API - CRUD Operations', () => {
 
       // Sign in as user2 and join the community
       await signIn(supabase, user2Email, 'TestPass123!');
-      await api.joinCommunity(supabase, communityId);
+      await api.joinCommunity(supabase, user2.id, communityId);
 
       // Sign back in as the owner to delete
       await signIn(supabase, testUser.email, 'TestPass123!');

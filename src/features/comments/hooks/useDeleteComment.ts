@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase, logger, getAuthIdOrThrow } from '@/shared';
+import { useSupabase, logger } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { deleteComment } from '../api';
 import { commentKeys } from '../queries';
 import { resourceKeys } from '@/features/resources/queries';
@@ -51,12 +52,15 @@ import { shoutoutKeys } from '@/features/shoutouts/queries';
 export function useDeleteComment() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: (id: string) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
       logger.debug('💬 useDeleteComment: Deleting comment', { id });
-      const userId = await getAuthIdOrThrow(supabase, 'delete comment');
-      return deleteComment(supabase, userId, id);
+      return deleteComment(supabase, currentUser.id, id);
     },
     onSuccess: (comment) => {
       logger.info('💬 useDeleteComment: Successfully deleted comment', {

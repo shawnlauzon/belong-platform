@@ -75,8 +75,9 @@ describe('Messages Permissions & Authorization', () => {
     it('only participants can send messages', async () => {
       // UserC cannot send message (non-participant)
       await signInAsUser(supabase, userC);
+      const { data: { user: _u } } = await supabase.auth.getUser();
       await expect(
-        const { data: { user: _u } } = await supabase.auth.getUser(); await api.sendMessage(supabase, _u!.id, {
+        api.sendMessage(supabase, _u!.id, {
           conversationId: conversation.id,
           content: `${TEST_PREFIX} Unauthorized message`,
         }),
@@ -85,9 +86,10 @@ describe('Messages Permissions & Authorization', () => {
 
     it('cannot send message to non-existent conversation', async () => {
       const fakeConversationId = '00000000-0000-0000-0000-000000000000';
+      const { data: { user: _u } } = await supabase.auth.getUser();
 
       await expect(
-        const { data: { user: _u } } = await supabase.auth.getUser(); await api.sendMessage(supabase, _u!.id, {
+        api.sendMessage(supabase, _u!.id, {
           conversationId: fakeConversationId,
           content: `${TEST_PREFIX} Message to nowhere`,
         }),

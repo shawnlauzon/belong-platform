@@ -10,6 +10,7 @@ export async function updateComment(
   id: string,
   content: string,
 ): Promise<Comment> {
+
   const updateData: CommentUpdateDbData = {
     content,
     is_edited: true,

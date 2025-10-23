@@ -31,6 +31,7 @@ export async function deleteComment(
   userId: string,
   id: string,
 ): Promise<Comment> {
+
   // Check if this comment has child comments
   const hasChildren = await hasChildComments(supabase, id);
 

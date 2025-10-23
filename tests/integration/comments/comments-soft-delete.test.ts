@@ -47,20 +47,22 @@ describe('Comments Soft Delete Behavior', () => {
       );
 
       // Create a top-level comment
-      const topComment = await createComment(supabase, {
+      const topComment = await createComment(supabase, testUser.id, {
         content: 'This cannot be deleted',
         resourceId: resource.id,
       });
 
       // Create a reply to it
-      const reply = await createComment(supabase, {
+      const reply = await createComment(supabase, testUser.id, {
         content: 'Reply to parent comment',
         resourceId: resource.id,
         parentId: topComment.id,
       });
 
       // Try to delete the top-level comment - should fail
-      await expect(deleteComment(supabase, topComment.id)).rejects.toThrow(
+      await expect(
+        deleteComment(supabase, testUser.id, topComment.id),
+      ).rejects.toThrow(
         'Cannot delete comment with replies. Please delete all replies first.',
       );
 
@@ -89,23 +91,23 @@ describe('Comments Soft Delete Behavior', () => {
       );
 
       // Create comments
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, testUser.id, {
         content: 'This stays visible',
         resourceId: resource.id,
       });
 
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, testUser.id, {
         content: 'This will be deleted and hidden',
         resourceId: resource.id,
       });
 
-      const comment3 = await createComment(supabase, {
+      const comment3 = await createComment(supabase, testUser.id, {
         content: 'This also stays visible',
         resourceId: resource.id,
       });
 
       // Delete comment2 (no replies)
-      await deleteComment(supabase, comment2.id);
+      await deleteComment(supabase, testUser.id, comment2.id);
 
       // Fetch without includeDeleted - deleted comment should not appear
       const visibleComments = await fetchComments(supabase, {
@@ -137,32 +139,32 @@ describe('Comments Soft Delete Behavior', () => {
       );
 
       // Create a top-level comment
-      const topComment = await createComment(supabase, {
+      const topComment = await createComment(supabase, testUser.id, {
         content: 'Parent comment',
         resourceId: resource.id,
       });
 
       // Create multiple replies
-      const reply1 = await createComment(supabase, {
+      const reply1 = await createComment(supabase, testUser.id, {
         content: 'First reply',
         resourceId: resource.id,
         parentId: topComment.id,
       });
 
-      const reply2 = await createComment(supabase, {
+      const reply2 = await createComment(supabase, testUser.id, {
         content: 'Second reply to delete',
         resourceId: resource.id,
         parentId: topComment.id,
       });
 
-      const reply3 = await createComment(supabase, {
+      const reply3 = await createComment(supabase, testUser.id, {
         content: 'Third reply',
         resourceId: resource.id,
         parentId: topComment.id,
       });
 
       // Delete middle reply
-      await deleteComment(supabase, reply2.id);
+      await deleteComment(supabase, testUser.id, reply2.id);
 
       // Fetch comments
       const comments = await fetchComments(supabase, {
@@ -190,17 +192,17 @@ describe('Comments Soft Delete Behavior', () => {
       );
 
       // Create comments
-      const comment1 = await createComment(supabase, {
+      const comment1 = await createComment(supabase, testUser.id, {
         content: 'Comment 1',
         resourceId: resource.id,
       });
 
-      const comment2 = await createComment(supabase, {
+      const comment2 = await createComment(supabase, testUser.id, {
         content: 'Comment 2',
         resourceId: resource.id,
       });
 
-      const reply = await createComment(supabase, {
+      const reply = await createComment(supabase, testUser.id, {
         content: 'Reply to comment 1',
         resourceId: resource.id,
         parentId: comment1.id,
@@ -216,7 +218,7 @@ describe('Comments Soft Delete Behavior', () => {
       expect(resourceData!.comment_count).toBe(3);
 
       // Delete a comment without replies
-      await deleteComment(supabase, comment2.id);
+      await deleteComment(supabase, testUser.id, comment2.id);
 
       // Count should decrease
       ({ data: resourceData } = await supabase
@@ -228,7 +230,7 @@ describe('Comments Soft Delete Behavior', () => {
       expect(resourceData!.comment_count).toBe(2);
 
       // Delete the reply
-      await deleteComment(supabase, reply.id);
+      await deleteComment(supabase, testUser.id, reply.id);
 
       // Count should be 1
       ({ data: resourceData } = await supabase
@@ -240,7 +242,7 @@ describe('Comments Soft Delete Behavior', () => {
       expect(resourceData!.comment_count).toBe(1); // Only the parent remains
 
       // Delete a comment with deleted replies
-      await deleteComment(supabase, comment1.id);
+      await deleteComment(supabase, testUser.id, comment1.id);
 
       // Count should decrease again
       ({ data: resourceData } = await supabase
@@ -263,7 +265,7 @@ describe('Comments Soft Delete Behavior', () => {
       );
 
       // Create a comment
-      const comment = await createComment(supabase, {
+      const comment = await createComment(supabase, testUser.id, {
         content: 'Test comment',
         resourceId: resource.id,
       });
@@ -278,7 +280,7 @@ describe('Comments Soft Delete Behavior', () => {
       expect(resourceData!.comment_count).toBe(1);
 
       // Delete the comment
-      await deleteComment(supabase, comment.id);
+      await deleteComment(supabase, testUser.id, comment.id);
 
       // Count should be 0
       ({ data: resourceData } = await supabase

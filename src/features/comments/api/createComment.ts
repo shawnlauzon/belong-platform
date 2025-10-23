@@ -9,6 +9,7 @@ export async function createComment(
   userId: string,
   input: CommentInput,
 ): Promise<Comment> {
+
   // Validate that either resourceId or shoutoutId is provided, but not both
   if ((!input.resourceId && !input.shoutoutId) || (input.resourceId && input.shoutoutId)) {
     throw new Error('Comment must be associated with either a resource or a shoutout');
