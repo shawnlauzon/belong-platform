@@ -67,7 +67,7 @@ describe('Resource Claims - Timeslot Operations', () => {
 
     // Create user who will make claims
     claimant = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -108,7 +108,7 @@ describe('Resource Claims - Timeslot Operations', () => {
     );
 
     secondClaimUser = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    const { data: { user: u2 } } = await supabase.auth.getUser(); await joinCommunity(supabase, u2!.id, testCommunity.id);
 
     secondClaim = await resourcesApi.createResourceClaim(
       supabase,

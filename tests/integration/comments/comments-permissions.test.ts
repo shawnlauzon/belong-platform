@@ -65,7 +65,7 @@ describe('Comments Permissions', () => {
     it.skip('should allow resource owner to delete comments on their resource', async () => {
       const resourceOwner = testUser;
       const commenter = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter.id, testCommunity.id);
 
       // Create resource as owner
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
@@ -93,9 +93,9 @@ describe('Comments Permissions', () => {
     it.skip('should allow shoutout sender to delete comments on their shoutout', async () => {
       const shoutoutSender = testUser;
       const receiver = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, receiver.id, testCommunity.id);
       const commenter = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter.id, testCommunity.id);
 
       // Create resource and shoutout as sender
       await signIn(supabase, shoutoutSender.email, 'TestPass123!');
@@ -130,9 +130,9 @@ describe('Comments Permissions', () => {
     it('should not allow random user to delete others comments', async () => {
       const resourceOwner = testUser;
       const commenter = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter.id, testCommunity.id);
       const randomUser = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, randomUser.id, testCommunity.id);
 
       // Create resource as owner
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
@@ -160,7 +160,7 @@ describe('Comments Permissions', () => {
       const shoutoutSender = testUser;
 
       const receiver = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, receiver.id, testCommunity.id);
 
       // Create resource and shoutout as sender
       await signIn(supabase, shoutoutSender.email, 'TestPass123!');
@@ -179,7 +179,7 @@ describe('Comments Permissions', () => {
 
       // Create comment as commenter
       const commenter = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter.id, testCommunity.id);
 
       const comment = await createComment(supabase, {
         content: 'Comment on shoutout',
@@ -198,7 +198,7 @@ describe('Comments Permissions', () => {
     it('should only allow comment author to update their comment', async () => {
       const author = testUser;
       const otherUser = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, otherUser.id, testCommunity.id);
 
       // Create resource and comment as author
       await signIn(supabase, author.email, 'TestPass123!');
@@ -276,9 +276,9 @@ describe('Comments Permissions', () => {
     it('should allow any authenticated user to comment on public resources', async () => {
       const resourceOwner = testUser;
       const commenter1 = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter1.id, testCommunity.id);
       const commenter2 = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, commenter2.id, testCommunity.id);
 
       // Create resource as owner
       await signIn(supabase, resourceOwner.email, 'TestPass123!');

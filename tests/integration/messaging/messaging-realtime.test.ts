@@ -7,20 +7,20 @@ import {
   deleteMessage,
   editMessage,
   sendMessage,
-} from '@/features/messages/api';
+} from '@/features/messaging/api';
 import {
   createTestCommunity,
   createTestUser,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import { createMessageSubscription } from '@/features/messages/api/createMessageSubscription';
-import { conversationKeys } from '@/features/messages/queries';
+import { createMessageSubscription } from '@/features/messaging/api/createMessageSubscription';
+import { conversationKeys } from '@/features/messaging/queries';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import { joinCommunity } from '@/features/communities/api';
-import type { Conversation } from '@/features/messages/types';
+import type { Conversation } from '@/features/messaging/types';
 import { vi } from 'vitest';
 
 describe('Message Subscription Tests', () => {

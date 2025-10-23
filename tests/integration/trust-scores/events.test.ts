@@ -57,7 +57,7 @@ describe('Trust Score Points - Events', () => {
     participant = await createTestUser(supabase);
 
     // Participant joins community
-    await joinCommunity(supabase, community.id);
+    await joinCommunity(supabase, participant.id, community.id);
   });
 
   beforeEach(async () => {

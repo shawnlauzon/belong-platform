@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { fetchNotificationUnreadCount } from '../api/fetchNotificationUnreadCount';
 import { notificationKeys } from '../queries';
 
@@ -31,11 +32,12 @@ interface UseNotificationUnreadCountResult {
  */
 export function useNotificationUnreadCount(): UseNotificationUnreadCountResult {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery({
     queryKey: notificationKeys.unreadCount(),
-    queryFn: () => fetchNotificationUnreadCount(supabase),
-    enabled: !!supabase,
+    queryFn: () => fetchNotificationUnreadCount(supabase, currentUser!.id),
+    enabled: !!supabase && !!currentUser,
     refetchInterval: 30000, // Poll every 30 seconds for updates
   });
 

@@ -91,7 +91,7 @@ describe('Trust Score Points - Communities', () => {
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
 
-    await joinCommunity(supabase, community.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
     const trustScores = await fetchTrustScores(supabase, joiner.id);
     expect(trustScores).toHaveLength(1);
@@ -105,7 +105,7 @@ describe('Trust Score Points - Communities', () => {
 
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
     const score = await getCurrentTrustScore(supabase, joiner.id, community.id);
     expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
@@ -118,7 +118,7 @@ describe('Trust Score Points - Communities', () => {
 
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
-    await joinCommunity(supabase, community.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -156,7 +156,7 @@ describe('Trust Score Points - Communities', () => {
     await signIn(inviteeClient, invitee.email, 'TestPass123!');
 
     // Invitee joins community first (gets regular join points)
-    await joinCommunity(inviteeClient, community.id);
+    const { data: { user: u2 } } = await inviteeClient.auth.getUser(); await joinCommunity(inviteeClient, u2!.id, community.id);
 
     // Wait for membership to be processed
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -189,7 +189,7 @@ describe('Trust Score Points - Communities', () => {
     await signIn(supabase, joiner.email, 'TestPass123!');
 
     // Join community first
-    await joinCommunity(supabase, community.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
     // Verify user has 50 points for joining
     const scoreAfterJoin = await getCurrentTrustScore(
@@ -200,7 +200,7 @@ describe('Trust Score Points - Communities', () => {
     expect(scoreAfterJoin).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
 
     // Leave the community
-    await leaveCommunity(supabase, community.id);
+    const { data: { user: u3 } } = await supabase.auth.getUser(); await leaveCommunity(supabase, u3!.id, community.id);
 
     // Verify user lost the 50 points
     const scoreAfterLeave = await getCurrentTrustScore(
@@ -219,8 +219,8 @@ describe('Trust Score Points - Communities', () => {
     const joiner = await createTestUser(supabase);
     await signIn(supabase, joiner.email, 'TestPass123!');
 
-    await joinCommunity(supabase, community.id);
-    await leaveCommunity(supabase, community.id);
+    const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
+    const { data: { user: u3 } } = await supabase.auth.getUser(); await leaveCommunity(supabase, u3!.id, community.id);
 
     await verifyTrustScoreLog(
       serviceClient,
@@ -257,7 +257,7 @@ describe('Trust Score Points - Communities', () => {
     await signIn(joinerClient, joiner.email, 'TestPass123!');
 
     // Join community using invitation code
-    await joinCommunityWithCode(joinerClient, invitationCode!.code);
+    await joinCommunityWithCode(joinerClient, joiner.id, invitationCode!.code);
 
     // Verify joiner received community join points
     const score = await getCurrentTrustScore(

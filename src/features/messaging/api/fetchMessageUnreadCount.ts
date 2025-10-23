@@ -1,15 +1,14 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { getAuthIdOrThrow } from '@/shared';
 
 /**
  * Fetches the unread message count for a specific conversation
  */
 export async function fetchMessageUnreadCount(
   supabase: SupabaseClient<Database>,
+  userId: string,
   conversationId: string,
 ): Promise<number> {
-  const userId = await getAuthIdOrThrow(supabase);
 
   // Get the user's last read timestamp for this conversation
   const { data: participantData, error: participantError } = await supabase
@@ -64,8 +63,8 @@ export async function fetchMessageUnreadCount(
  */
 export async function fetchTotalMessageUnreadCount(
   supabase: SupabaseClient<Database>,
+  userId: string,
 ): Promise<number> {
-  const userId = await getAuthIdOrThrow(supabase);
 
   // Get all conversation participants for this user
   const { data: participants, error: participantsError } = await supabase
@@ -87,6 +86,7 @@ export async function fetchTotalMessageUnreadCount(
   for (const participant of participants) {
     const unreadCount = await fetchMessageUnreadCount(
       supabase,
+      userId,
       participant.conversation_id,
     );
     totalUnread += unreadCount;

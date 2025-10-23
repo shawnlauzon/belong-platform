@@ -8,7 +8,7 @@ import {
   signInAsUser,
 } from './messaging-helpers';
 import { createTestUser } from '../helpers/test-data';
-import * as api from '@/features/messages/api';
+import * as api from '@/features/messaging/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';

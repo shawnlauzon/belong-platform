@@ -2,15 +2,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { fetchUserCommunities } from '../../communities/api';
 import { Feed, FeedItem } from '../types';
-import { logger, getAuthIdOrThrow } from '@/shared';
+import { logger } from '@/shared';
 
 export async function fetchFeed(
   supabase: SupabaseClient<Database>,
+  userId: string,
 ): Promise<Feed> {
   logger.debug('📰 API: Fetching feed data');
 
-  // Get current user first
-  const authId = await getAuthIdOrThrow(supabase);
+  const authId = userId;
 
   // Get user's communities
   const userCommunities = await fetchUserCommunities(supabase, authId);

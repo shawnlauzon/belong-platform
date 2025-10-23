@@ -36,7 +36,7 @@ describe.skip('Notification Preferences', () => {
 
     // Create another user and have them join
     anotherUser = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, anotherUser.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -138,7 +138,7 @@ describe.skip('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, testUser.id);
 
       expect(notifications.length).toBe(0);
     });
@@ -173,7 +173,7 @@ describe.skip('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, testUser.id);
 
       expect(notifications.length).toBe(0);
     });
@@ -197,7 +197,7 @@ describe.skip('Notification Preferences', () => {
 
       // Check that no new notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, testUser.id);
 
       expect(notifications.length).toBe(0);
     });
@@ -230,7 +230,7 @@ describe.skip('Notification Preferences', () => {
 
       // Check that notification was created
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, testUser.id);
 
       expect(notifications.length).toBeGreaterThan(0);
     });

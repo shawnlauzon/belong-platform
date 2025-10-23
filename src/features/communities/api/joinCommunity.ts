@@ -6,16 +6,16 @@ import {
   toCommunityMembershipInsertRow,
 } from '../transformers/communityTransformer';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function joinCommunity(
   supabase: SupabaseClient<Database>,
+  userId: string,
   communityId: string,
 ): Promise<CommunityMembership> {
   logger.debug('🏘️ API: Joining community!', { communityId });
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase);
+    const currentUserId = userId;
 
     // Check if user is already a member of this community
     const { data: existingMembership, error: checkError } = await supabase

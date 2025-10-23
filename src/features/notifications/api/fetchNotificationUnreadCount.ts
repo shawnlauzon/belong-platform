@@ -1,11 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { getAuthIdOrThrow } from '@/shared';
 
 export async function fetchNotificationUnreadCount(
   supabase: SupabaseClient<Database>,
+  userId: string,
 ): Promise<number> {
-  const userId = await getAuthIdOrThrow(supabase);
 
   const { count, error } = await supabase
     .from('notifications')

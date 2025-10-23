@@ -37,17 +37,17 @@ describe('Communities API - Multiple Membership Operations', () => {
 
   it('allows user to join multiple communities', async () => {
     // Join first community
-    const membership1 = await api.joinCommunity(supabase, community1.id);
+    const membership1 = await api.joinCommunity(supabase, testUser.id, community1.id);
     expect(membership1!.userId).toBe(testUser.id);
     expect(membership1!.communityId).toBe(community1.id);
 
     // Join second community
-    const membership2 = await api.joinCommunity(supabase, community2.id);
+    const membership2 = await api.joinCommunity(supabase, testUser.id, community2.id);
     expect(membership2!.userId).toBe(testUser.id);
     expect(membership2!.communityId).toBe(community2.id);
 
     // Join third community
-    const membership3 = await api.joinCommunity(supabase, community3.id);
+    const membership3 = await api.joinCommunity(supabase, testUser.id, community3.id);
     expect(membership3!.userId).toBe(testUser.id);
     expect(membership3!.communityId).toBe(community3.id);
 
@@ -82,7 +82,7 @@ describe('Communities API - Multiple Membership Operations', () => {
     // Note: we don't rejoin here since user should already be a member from previous test
 
     // Leave middle community
-    await api.leaveCommunity(supabase, community2.id);
+    await api.leaveCommunity(supabase, testUser.id, community2.id);
 
     // Verify user still member of other two communities
     const userCommunities = await api.fetchUserCommunities(
@@ -113,7 +113,7 @@ describe('Communities API - Multiple Membership Operations', () => {
   it('prevents duplicate membership across multiple joins', async () => {
     // User should already be a member of community1 from the first test
     // Attempt to join same community again should fail with meaningful error
-    await expect(api.joinCommunity(supabase, community1.id)).rejects.toThrow();
+    await expect(api.joinCommunity(supabase, testUser.id, community1.id)).rejects.toThrow();
 
     // Should still only have one membership for this community
     const { data: dbMemberships } = await supabase

@@ -74,7 +74,7 @@ describe('Comments CRUD', () => {
 
       // Create receiver user and have them join the community
       const receiver = await createTestUser(supabase);
-      await joinCommunity(supabase, community.id);
+      await joinCommunity(supabase, receiver.id, community.id);
 
       // Use existing test user as sender
       await signIn(supabase, testUser.email, 'TestPass123!');
@@ -223,7 +223,7 @@ describe('Comments CRUD', () => {
 
       // Switch to user2 and add a reply
       const user2 = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, user2.id, testCommunity.id);
 
       const reply2 = await createComment(supabase, {
         content: 'Another reply to first',
@@ -353,7 +353,7 @@ describe('Comments CRUD', () => {
     it('should not allow non-author to update comment', async () => {
       const user1 = testUser;
       const user2 = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, user2.id, testCommunity.id);
 
       await signIn(supabase, user1.email, 'TestPass123!');
 
@@ -444,7 +444,7 @@ describe('Comments CRUD', () => {
 
     it('should update shoutout comment count on comment creation and deletion', async () => {
       const receiver = await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      await joinCommunity(supabase, receiver.id, testCommunity.id);
 
       await signIn(supabase, testUser.email, 'TestPass123!');
 

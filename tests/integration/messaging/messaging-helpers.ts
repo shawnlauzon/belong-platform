@@ -6,7 +6,7 @@ import type {
   Conversation,
   Message,
   SendMessageInput,
-} from '@/features/messages/types';
+} from '@/features/messaging/types';
 import {
   createTestUser,
   createTestCommunity,
@@ -14,7 +14,7 @@ import {
 } from '../helpers/test-data';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
-import * as messagesApi from '@/features/messages/api';
+import * as messagesApi from '@/features/messaging/api';
 import { faker } from '@faker-js/faker';
 
 /**
@@ -38,7 +38,7 @@ export async function setupMessagingUsers(
   const userB = await createTestUser(supabase);
 
   // Join userB to the same community
-  await joinCommunity(supabase, community.id);
+  await joinCommunity(supabase, userB.id, community.id);
 
   await signInAsUser(supabase, userA);
 
@@ -86,6 +86,12 @@ export async function sendTestMessage(
     throw new Error('Cannot provide both conversationId and communityId');
   }
 
+  // Get the current authenticated user ID
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('User must be authenticated to send message');
+  }
+
   const messageInput: SendMessageInput = {
     conversationId,
     communityId,
@@ -93,7 +99,7 @@ export async function sendTestMessage(
       content || `${TEST_PREFIX} Test message: ${faker.lorem.sentence()}`,
   };
 
-  const message = await messagesApi.sendMessage(supabase, messageInput);
+  const message = await messagesApi.sendMessage(supabase, user.id, messageInput);
 
   if (!message) {
     throw new Error('Failed to send test message');

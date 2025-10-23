@@ -43,7 +43,7 @@ describe('Trust Score Points - Shoutouts', () => {
     receiver = await createTestUser(supabase);
 
     // Receiver joins community
-    await joinCommunity(supabase, community.id);
+    await joinCommunity(supabase, receiver.id, community.id);
 
     // Switch back to sender for shoutout creation
     await signIn(supabase, sender.email, 'TestPass123!');
@@ -149,7 +149,7 @@ describe('Trust Score Points - Shoutouts', () => {
       // Create receiver
       const receiver = await createTestUser(supabase);
       await signIn(supabase, receiver.email, 'TestPass123!');
-      await joinCommunity(supabase, community.id);
+      await joinCommunity(supabase, receiver.id, community.id);
 
       // Sign back in as sender
       await signIn(supabase, sender.email, 'TestPass123!');
@@ -196,7 +196,7 @@ describe('Trust Score Points - Shoutouts', () => {
       // Create receiver
       const receiver = await createTestUser(supabase);
       await signIn(supabase, receiver.email, 'TestPass123!');
-      await joinCommunity(supabase, community.id);
+      await joinCommunity(supabase, receiver.id, community.id);
 
       // Sign back in as sender
       await signIn(supabase, sender.email, 'TestPass123!');

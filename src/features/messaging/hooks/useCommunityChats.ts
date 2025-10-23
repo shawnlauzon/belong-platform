@@ -1,5 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase, logger } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { fetchCommunityChats } from '../api/fetchCommunityChats';
 import { communityChatKeys } from '../queries';
 import { STANDARD_CACHE_TIME } from '@/config';
@@ -35,12 +36,17 @@ export function useCommunityChats(
   options?: Partial<UseQueryOptions<CommunityChat[], Error>>,
 ) {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<CommunityChat[], Error>({
     queryKey: communityChatKeys.list(),
     queryFn: () => {
-      return fetchCommunityChats(supabase);
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      return fetchCommunityChats(supabase, currentUser.id);
     },
+    enabled: !!supabase && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,
     ...options,
   });

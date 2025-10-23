@@ -5,6 +5,7 @@ import { joinCommunityWithCode } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 import { invitationKeys } from '@/features/invitations/queries';
+import { useCurrentUser } from '@/features/auth';
 
 /**
  * Hook for joining a community using a connection code.
@@ -44,9 +45,15 @@ import { invitationKeys } from '@/features/invitations/queries';
 export function useJoinCommunityWithCode() {
   const queryClient = useQueryClient();
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
-    mutationFn: (code: string) => joinCommunityWithCode(supabase, code),
+    mutationFn: (code: string) => {
+      if (!currentUser) {
+        throw new Error('User must be authenticated to join a community');
+      }
+      return joinCommunityWithCode(supabase, currentUser.id, code);
+    },
     onSuccess: (newMembership) => {
       // Invalidate community members list
       queryClient.invalidateQueries({

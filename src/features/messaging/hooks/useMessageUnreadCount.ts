@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { fetchMessageUnreadCount, fetchTotalMessageUnreadCount } from '../api/fetchMessageUnreadCount';
 import { conversationKeys } from '../queries';
 import { STANDARD_CACHE_TIME } from '@/config';
@@ -33,11 +34,12 @@ interface UseMessageUnreadCountResult {
  */
 export function useMessageUnreadCount(conversationId: string): UseMessageUnreadCountResult {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery({
     queryKey: conversationKeys.unreadCount(conversationId),
-    queryFn: () => fetchMessageUnreadCount(supabase, conversationId),
-    enabled: !!supabase && !!conversationId,
+    queryFn: () => fetchMessageUnreadCount(supabase, currentUser!.id, conversationId),
+    enabled: !!supabase && !!conversationId && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,
   });
 
@@ -70,11 +72,12 @@ export function useMessageUnreadCount(conversationId: string): UseMessageUnreadC
  */
 export function useTotalMessageUnreadCount(): UseMessageUnreadCountResult {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery({
     queryKey: conversationKeys.totalUnreadCount(),
-    queryFn: () => fetchTotalMessageUnreadCount(supabase),
-    enabled: !!supabase,
+    queryFn: () => fetchTotalMessageUnreadCount(supabase, currentUser!.id),
+    enabled: !!supabase && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,
   });
 

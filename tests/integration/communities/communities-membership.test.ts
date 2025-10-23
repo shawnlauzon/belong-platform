@@ -39,6 +39,7 @@ describe('Communities API - Membership Operations', () => {
     it('adds user as member', async () => {
       const membership = await api.joinCommunity(
         supabase,
+        testUser2.id,
         membershipTestCommunity.id,
       );
 
@@ -57,12 +58,12 @@ describe('Communities API - Membership Operations', () => {
 
     it('prevents duplicate membership', async () => {
       // First join
-      await api.joinCommunity(supabase, membershipTestCommunity.id);
+      await api.joinCommunity(supabase, testUser2.id, membershipTestCommunity.id);
 
       try {
         // Second join should fail
         await expect(
-          api.joinCommunity(supabase, membershipTestCommunity.id),
+          api.joinCommunity(supabase, testUser2.id, membershipTestCommunity.id),
         ).rejects.toThrow();
       } finally {
         await cleanupMembership(membershipTestCommunity.id, testUser2.id);
@@ -71,7 +72,7 @@ describe('Communities API - Membership Operations', () => {
 
     it('fails with invalid community id', async () => {
       await expect(
-        api.joinCommunity(supabase, 'invalid-community-id'),
+        api.joinCommunity(supabase, testUser2.id, 'invalid-community-id'),
       ).rejects.toThrow();
     });
   });
@@ -79,12 +80,12 @@ describe('Communities API - Membership Operations', () => {
   describe('community membership tests', () => {
     beforeAll(async () => {
       // First join
-      await api.joinCommunity(supabase, membershipTestCommunity.id);
+      await api.joinCommunity(supabase, testUser2.id, membershipTestCommunity.id);
     });
 
     afterAll(async () => {
       try {
-        await api.leaveCommunity(supabase, membershipTestCommunity.id);
+        await api.leaveCommunity(supabase, testUser2.id, membershipTestCommunity.id);
       } catch {
         // ignore
       }
@@ -170,12 +171,12 @@ describe('Communities API - Membership Operations', () => {
   describe('leaveCommunity', () => {
     beforeEach(async () => {
       // First join
-      await api.joinCommunity(supabase, membershipTestCommunity.id);
+      await api.joinCommunity(supabase, testUser2.id, membershipTestCommunity.id);
     });
 
     afterEach(async () => {
       try {
-        await api.leaveCommunity(supabase, membershipTestCommunity.id);
+        await api.leaveCommunity(supabase, testUser2.id, membershipTestCommunity.id);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         // ignore
@@ -183,7 +184,7 @@ describe('Communities API - Membership Operations', () => {
     });
 
     it('leaving the community removes membership', async () => {
-      await api.leaveCommunity(supabase, membershipTestCommunity.id);
+      await api.leaveCommunity(supabase, testUser2.id, membershipTestCommunity.id);
 
       const { data } = await supabase
         .from('community_memberships')
@@ -203,7 +204,7 @@ describe('Communities API - Membership Operations', () => {
       expect(community).toBeTruthy();
       const numMembers = community!.memberCount;
 
-      await api.leaveCommunity(supabase, membershipTestCommunity.id);
+      await api.leaveCommunity(supabase, testUser2.id, membershipTestCommunity.id);
 
       community = await api.fetchCommunityById(
         supabase,

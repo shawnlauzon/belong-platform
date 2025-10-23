@@ -6,7 +6,7 @@ import {
   createTestUser,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import { sendMessage } from '@/features/messages/api';
+import { sendMessage } from '@/features/messaging/api';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -16,8 +16,8 @@ import { signInAsUser } from './messaging-helpers';
 import type {
   RealtimeBroadcastMessage,
   MessagePayload,
-} from '@/features/messages/types';
-import { messagesChannelForCommunity } from '@/features/messages/utils';
+} from '@/features/messaging/types';
+import { messagesChannelForCommunity } from '@/features/messaging/utils';
 
 describe('Community Message Realtime Format Validation', () => {
   let supabase: SupabaseClient<Database>;

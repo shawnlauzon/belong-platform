@@ -1,4 +1,5 @@
 import { useSupabase } from '../../../shared/hooks';
+import { useCurrentUser } from '@/features/auth';
 import { sendMessage } from '../api';
 import { SendMessageInput, Message } from '../types';
 import { logger } from '../../../shared';
@@ -7,9 +8,14 @@ import { conversationKeys, communityChatKeys } from '../queries';
 
 export function useSendMessage() {
   const client = useSupabase();
+  const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
 
   const mutate = async (input: SendMessageInput): Promise<Message> => {
+    if (!currentUser) {
+      throw new Error('User must be authenticated to send messages');
+    }
+
     logger.info('useSendMessage: initiating message send', {
       conversationId: input.conversationId,
       communityId: input.communityId,
@@ -17,7 +23,7 @@ export function useSendMessage() {
     });
 
     try {
-      const result = await sendMessage(client, input);
+      const result = await sendMessage(client, currentUser.id, input);
 
       logger.info('useSendMessage: message sent successfully', {
         messageId: result.id,

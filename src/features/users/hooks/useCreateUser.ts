@@ -5,6 +5,7 @@ import { createUser } from '../api';
 import type { CurrentUser } from '../types';
 import { userKeys } from '../queries';
 import { authKeys } from '@/features/auth/queries';
+import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 /**
  * Hook for creating new user profiles.
@@ -16,9 +17,10 @@ export function useCreateUser() {
   const supabase = useSupabase();
 
   const mutation = useMutation({
-    mutationFn: (userData: Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'>) => {
+    mutationFn: async (userData: Omit<CurrentUser, 'id' | 'createdAt' | 'updatedAt'>) => {
       logger.debug('👤 useCreateUser: Creating user', { userData });
-      return createUser(supabase, userData);
+      const userId = await getAuthIdOrThrow(supabase);
+      return createUser(supabase, userId, userData);
     },
     onSuccess: (newUser: CurrentUser) => {
       // Invalidate all user queries to refetch lists

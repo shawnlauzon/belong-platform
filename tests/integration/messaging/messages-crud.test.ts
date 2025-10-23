@@ -9,11 +9,11 @@ import {
   assertMessageExists,
   signInAsUser,
 } from './messaging-helpers';
-import * as api from '@/features/messages/api';
+import * as api from '@/features/messaging/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
-import type { Conversation } from '@/features/messages/types';
+import type { Conversation } from '@/features/messaging/types';
 import { joinCommunity } from '@/features/communities/api';
 import { Community } from '@/features';
 import { faker } from '@faker-js/faker';
@@ -46,7 +46,7 @@ describe('Messages CRUD Operations', () => {
       await signInAsUser(supabase, userA);
       const content = `${TEST_PREFIX} Hello from user A`;
 
-      const message = await api.sendMessage(supabase, {
+      const message = await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content,
       });
@@ -67,12 +67,12 @@ describe('Messages CRUD Operations', () => {
     });
 
     it('sends multiple messages in sequence', async () => {
-      const message1 = await api.sendMessage(supabase, {
+      const message1 = await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content: `${TEST_PREFIX} First message`,
       });
 
-      const message2 = await api.sendMessage(supabase, {
+      const message2 = await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content: `${TEST_PREFIX} Second message`,
       });
@@ -99,7 +99,7 @@ describe('Messages CRUD Operations', () => {
       await signInAsUser(supabase, userA);
       const content = `${TEST_PREFIX} Hello! 👋 Unicode: café, naïve, résumé 🌟`;
 
-      const message = await api.sendMessage(supabase, {
+      const message = await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content,
       });
@@ -114,7 +114,7 @@ describe('Messages CRUD Operations', () => {
     it('handles long messages (>1000 characters)', async () => {
       const longContent = `${TEST_PREFIX} ${'A'.repeat(1500)} This is a very long message content to test the system's ability to handle large text payloads.`;
 
-      const message = await api.sendMessage(supabase, {
+      const message = await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content: longContent,
       });
@@ -127,7 +127,7 @@ describe('Messages CRUD Operations', () => {
       await signInAsUser(supabase, userA);
       const content = `${TEST_PREFIX} Metadata update test`;
 
-      await api.sendMessage(supabase, {
+      await const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
         conversationId: conversation.id,
         content,
       });
@@ -165,7 +165,7 @@ describe('Messages CRUD Operations', () => {
 
     it('returns empty array for conversation with no messages', async () => {
       const userC = await createTestUser(supabase);
-      await joinCommunity(supabase, community.id);
+      const { data: { user: currentUser2 } } = await supabase.auth.getUser(); await joinCommunity(supabase, currentUser2!.id, community.id);
 
       await signInAsUser(supabase, userA);
 
@@ -245,7 +245,7 @@ describe('Messages CRUD Operations', () => {
   describe('Message validation', () => {
     it('requires non-empty content', async () => {
       await expect(
-        api.sendMessage(supabase, {
+        const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
           conversationId: conversation.id,
           content: '',
         }),
@@ -256,7 +256,7 @@ describe('Messages CRUD Operations', () => {
       const fakeConversationId = '00000000-0000-0000-0000-000000000000';
 
       await expect(
-        api.sendMessage(supabase, {
+        const { data: { user: currentUser } } = await supabase.auth.getUser(); await api.sendMessage(supabase, currentUser!.id, {
           conversationId: fakeConversationId,
           content: 'Test message',
         }),

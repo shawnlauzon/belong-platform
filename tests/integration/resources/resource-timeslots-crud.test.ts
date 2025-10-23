@@ -123,7 +123,7 @@ describe('Resources API - Resource Timeslots Operations', () => {
       await signIn(supabase, communityMember.email, 'TestPass123!');
 
       // Join the community that contains the resource
-      await joinCommunity(supabase, testCommunity.id);
+      const { data: { user: u3 } } = await supabase.auth.getUser(); await joinCommunity(supabase, u3!.id, testCommunity.id);
 
       // Create timeslot for resource owned by someone else
       const startTime = new Date(Date.now() + 86400000); // Tomorrow

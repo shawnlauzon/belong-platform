@@ -50,7 +50,12 @@ export function useLeaveCommunity() {
   const { data: currentUser } = useCurrentUser();
 
   return useMutation<void, Error, string>({
-    mutationFn: (communityId: string) => leaveCommunity(supabase, communityId),
+    mutationFn: (communityId: string) => {
+      if (!currentUser) {
+        throw new Error('User must be authenticated to leave a community');
+      }
+      return leaveCommunity(supabase, currentUser.id, communityId);
+    },
     onSuccess: (_, communityId) => {
       queryClient.invalidateQueries({
         queryKey: communityMembersKeys.list(communityId),

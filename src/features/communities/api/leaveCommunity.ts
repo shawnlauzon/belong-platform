@@ -1,17 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 import { MESSAGE_ORGANIZER_CANNOT_LEAVE } from '@/shared/constants';
 
 export async function leaveCommunity(
   supabase: SupabaseClient<Database>,
+  userId: string,
   communityId: string,
 ): Promise<void> {
   logger.debug('🏘️ API: Leaving community', { communityId });
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase);
+    const currentUserId = userId;
 
     // Check if user is a member and get their role
     const { data: membership } = await supabase

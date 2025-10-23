@@ -1,6 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { getAuthIdOrThrow } from '@/shared';
 import { logger } from '@/shared';
 
 /**
@@ -8,9 +7,9 @@ import { logger } from '@/shared';
  */
 export async function markChatAsRead(
   supabase: SupabaseClient<Database>,
+  userId: string,
   communityId: string,
 ): Promise<void> {
-  const userId = await getAuthIdOrThrow(supabase);
 
   const { error } = await supabase
     .from('community_memberships')

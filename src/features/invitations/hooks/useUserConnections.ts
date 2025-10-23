@@ -3,19 +3,24 @@ import { useSupabase } from '@/shared';
 import { fetchUserConnections } from '../api';
 import { invitationKeys } from '../queries';
 import type { UserConnection } from '../types';
+import { useCurrentUser } from '@/features/auth';
 
 export function useUserConnections(
   communityId: string,
   options?: Partial<UseQueryOptions<UserConnection[], Error>>
 ) {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   return useQuery({
     queryKey: invitationKeys.userConnections(communityId),
     queryFn: async (): Promise<UserConnection[]> => {
-      return await fetchUserConnections(supabase, communityId);
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      return await fetchUserConnections(supabase, currentUser.id, communityId);
     },
-    enabled: !!communityId,
+    enabled: !!communityId && !!currentUser,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     ...options,

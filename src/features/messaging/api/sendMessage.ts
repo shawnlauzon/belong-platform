@@ -2,7 +2,7 @@ import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
 import { Message, RealtimeBroadcastMessage, SendMessageInput } from '../types';
 import { toMessageRow, toDomainMessage } from '../transformers';
-import { getAuthIdOrThrow, logger } from '../../../shared';
+import { logger } from '../../../shared';
 import { MessageRow } from '../types/messageRow';
 import {
   messagesChannelForCommunity as messagesTopicForCommunity,
@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function sendMessage(
   supabase: SupabaseClient<Database>,
+  userId: string,
   input: SendMessageInput,
 ): Promise<Message> {
   if (!input.conversationId && !input.communityId) {
@@ -24,7 +25,7 @@ export async function sendMessage(
     contentLength: input.content?.length || 0,
   });
 
-  const authId = await getAuthIdOrThrow(supabase);
+  const authId = userId;
 
   const topic = input.conversationId
     ? messagesTopicForConversation(input.conversationId)

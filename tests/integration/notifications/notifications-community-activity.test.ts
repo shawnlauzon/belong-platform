@@ -33,7 +33,7 @@ describe('Community Activity Notifications', () => {
 
     // Create resource creator user
     resourceCreator = await createTestUser(clientB);
-    await joinCommunity(clientB, testCommunity.id);
+    await joinCommunity(clientB, resourceCreator.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -58,7 +58,7 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityMember.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const resourceNotification = notifications.find(
@@ -86,7 +86,7 @@ describe('Community Activity Notifications', () => {
       // Switch back to community member to check notifications
       await signIn(clientA, communityMember.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityMember.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const eventNotification = notifications.find(
@@ -110,7 +110,7 @@ describe('Community Activity Notifications', () => {
         'offer',
       );
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityMember.id);
 
       // Should not have new notifications for own resource
       const ownResourceNotifications = notifications.filter(
@@ -134,7 +134,7 @@ describe('Community Activity Notifications', () => {
 
       // Check that community member didn't receive notification
       await signIn(clientA, communityMember.email, 'TestPass123!');
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityMember.id);
 
       const newNotifications = notifications.filter(
         (n) => n.resourceId === resource.id,

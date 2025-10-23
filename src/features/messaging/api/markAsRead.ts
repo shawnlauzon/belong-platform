@@ -1,13 +1,12 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../../shared/types/database';
-import { getAuthIdOrThrow } from '@/shared';
 import { logger } from '../../../shared';
 
 export async function markAsRead(
   client: SupabaseClient<Database>,
+  userId: string,
   conversationId: string,
 ): Promise<void> {
-  const userId = await getAuthIdOrThrow(client);
 
   const { error } = await client
     .from('conversation_participants')

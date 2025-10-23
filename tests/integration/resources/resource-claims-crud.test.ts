@@ -44,7 +44,7 @@ describe('Resource Claims - Basic Operations', () => {
 
     // Create user who will make claims
     claimant = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, claimant.id, testCommunity.id);
 
     readOnlyClaim = await resourcesApi.createResourceClaim(supabase, {
       resourceId: testResource.id,
@@ -319,8 +319,8 @@ describe('Resource Claims - Basic Operations', () => {
           timeslotId: testTimeslot2.id,
         });
 
-        await createTestUser(supabase);
-        await joinCommunity(supabase, testCommunity.id);
+        const thirdUser = await createTestUser(supabase);
+        await joinCommunity(supabase, thirdUser.id, testCommunity.id);
         testResource3 = await createTestResource(supabase, testCommunity.id);
         const testTimeslot3 = await createTestResourceTimeslot(
           supabase,

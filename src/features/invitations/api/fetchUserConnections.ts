@@ -3,16 +3,16 @@ import type { Database } from '@/shared/types/database';
 import type { UserConnection } from '../types';
 import { toDomainUserConnection } from '../transformers';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function fetchUserConnections(
   supabase: SupabaseClient<Database>,
+  userId: string,
   communityId: string,
 ): Promise<UserConnection[]> {
   logger.debug('🔗 API: Fetching user connections', { communityId });
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase);
+    const currentUserId = userId;
 
     const { data: connections, error } = await supabase
       .from('user_connections')

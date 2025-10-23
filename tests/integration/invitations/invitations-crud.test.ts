@@ -40,7 +40,7 @@ describe('Invitations API - CRUD Operations', () => {
     testCommunity = await createTestCommunity(supabaseUserA);
 
     // UserB joins the community
-    await joinCommunity(supabaseUserB, testCommunity.id);
+    await joinCommunity(supabaseUserB, userB.id, testCommunity.id);
 
     // Wait for triggers to complete
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -84,6 +84,7 @@ describe('Invitations API - CRUD Operations', () => {
     it('retrieves existing invitation code', async () => {
       const invitationCode = await invitationsApi.getInvitationCode(
         supabaseUserA,
+        userA.id,
         testCommunity.id,
       );
 
@@ -100,11 +101,13 @@ describe('Invitations API - CRUD Operations', () => {
     it('returns same code on subsequent calls', async () => {
       const code1 = await invitationsApi.getInvitationCode(
         supabaseUserA,
+        userA.id,
         testCommunity.id,
       );
 
       const code2 = await invitationsApi.getInvitationCode(
         supabaseUserA,
+        userA.id,
         testCommunity.id,
       );
 
@@ -115,11 +118,13 @@ describe('Invitations API - CRUD Operations', () => {
     it('generates unique codes for different users', async () => {
       const codeA = await invitationsApi.getInvitationCode(
         supabaseUserA,
+        userA.id,
         testCommunity.id,
       );
 
       const codeB = await invitationsApi.getInvitationCode(
         supabaseUserB,
+        userB.id,
         testCommunity.id,
       );
 
@@ -131,11 +136,13 @@ describe('Invitations API - CRUD Operations', () => {
     it('regenerates invitation code', async () => {
       const originalCode = await invitationsApi.getInvitationCode(
         supabaseUserB,
+        userB.id,
         testCommunity.id,
       );
 
       const newCode = await invitationsApi.regenerateInvitationCode(
         supabaseUserB,
+        userB.id,
         testCommunity.id,
       );
 

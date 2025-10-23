@@ -42,12 +42,12 @@ describe('My Communities Notifications', () => {
       const freshJoiningUser = await createTestUser(clientB);
 
       // Have fresh user join the community using clientB
-      await joinCommunity(clientB, testCommunity.id);
+      await joinCommunity(clientB, freshJoiningUser.id, testCommunity.id);
 
       // Switch back to community organizer to check notifications
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityOrganizer.id);
 
       const joinNotification = notifications.find(
         (n) => n.actorId === freshJoiningUser.id,
@@ -64,15 +64,15 @@ describe('My Communities Notifications', () => {
     it('should create community_member_left notification when someone leaves my community', async () => {
       // Create a fresh user for this test
       const leavingUser = await createTestUser(clientB);
-      await joinCommunity(clientB, testCommunity.id);
+      await joinCommunity(clientB, leavingUser.id, testCommunity.id);
 
       // Then have them leave
-      await leaveCommunity(clientB, testCommunity.id);
+      await leaveCommunity(clientB, leavingUser.id, testCommunity.id);
 
       // Switch back to community organizer to check notifications
       await signIn(clientA, communityOrganizer.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, communityOrganizer.id);
 
       const leftNotification = notifications.find(
         (n) => n.actorId === leavingUser.id,
@@ -87,13 +87,13 @@ describe('My Communities Notifications', () => {
     });
 
     it('should not notify myself when I join another community', async () => {
-      const initialNotifications = await fetchNotifications(clientA);
+      const initialNotifications = await fetchNotifications(clientA, communityOrganizer.id);
       const initialCount = initialNotifications.length;
 
       // Create another test community and join it as the organizer
       const anotherCommunity = await createTestCommunity(clientA);
 
-      const finalNotifications = await fetchNotifications(clientA);
+      const finalNotifications = await fetchNotifications(clientA, communityOrganizer.id);
 
       // Should not have new notifications for joining own community
       const ownCommunityNotifications = finalNotifications.filter(

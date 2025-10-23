@@ -35,7 +35,7 @@ describe('My Resources Notifications', () => {
 
     // Create claiming user
     claimingUser = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, claimingUser.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -68,7 +68,7 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const claimNotification = notifications.find(
@@ -114,7 +114,7 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const cancelledNotification = notifications.find(
@@ -168,7 +168,7 @@ describe('My Resources Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(supabase);
+      const notifications = await fetchNotifications(supabase, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const completedNotification = notifications.find(

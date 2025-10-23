@@ -43,8 +43,8 @@ describe('Invitations API - Permissions and Security', () => {
 
     // Create community and join all users
     testCommunity = await createTestCommunity(supabaseUserA);
-    await joinCommunity(supabaseUserB, testCommunity.id);
-    await joinCommunity(supabaseUserC, testCommunity.id);
+    await joinCommunity(supabaseUserB, userB.id, testCommunity.id);
+    await joinCommunity(supabaseUserC, userC.id, testCommunity.id);
 
     // Wait for triggers to complete
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -93,7 +93,7 @@ describe('Invitations API - Permissions and Security', () => {
       await signIn(supabaseTestUser, testUser.email, 'TestPass123!');
 
       // Join the community (this creates an invitation code automatically)
-      await joinCommunity(supabaseTestUser, testCommunity.id);
+      await joinCommunity(supabaseTestUser, testUser.id, testCommunity.id);
 
       // Wait for trigger to complete
       await new Promise((resolve) => setTimeout(resolve, 100));

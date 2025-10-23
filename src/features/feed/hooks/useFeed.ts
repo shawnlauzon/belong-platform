@@ -1,5 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
+import { useCurrentUser } from '@/features/auth';
 import { SHORT_CACHE_TIME } from '@/config';
 import { fetchFeed } from '../api';
 
@@ -35,10 +36,17 @@ import { feedKeys } from '../queries';
  */
 export function useFeed(options?: Partial<UseQueryOptions<Feed, Error>>) {
   const supabase = useSupabase();
+  const { data: currentUser } = useCurrentUser();
 
   const query = useQuery<Feed, Error>({
     queryKey: feedKeys.feed(),
-    queryFn: () => fetchFeed(supabase),
+    queryFn: () => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      return fetchFeed(supabase, currentUser.id);
+    },
+    enabled: !!supabase && !!currentUser,
     staleTime: SHORT_CACHE_TIME,
     ...options,
   });

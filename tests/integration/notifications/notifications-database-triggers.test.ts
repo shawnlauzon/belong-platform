@@ -34,7 +34,7 @@ describe('Database triggers', () => {
 
     // Create another user and join community
     communityMember = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, communityMember.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -249,7 +249,7 @@ describe('Database triggers', () => {
 
   it('should reflect notification count changes when notifications are created', async () => {
     // Get initial counts
-    const initialTotal = await fetchNotificationUnreadCount(supabase);
+    const initialTotal = await fetchNotificationUnreadCount(supabase, resourceOwner.id);
 
     // Create a resource and have communityMember comment on it
     const resource = await createTestResource(
@@ -266,7 +266,7 @@ describe('Database triggers', () => {
 
     // Switch back to resourceOwner and check that count increased
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
-    const updatedTotal = await fetchNotificationUnreadCount(supabase);
+    const updatedTotal = await fetchNotificationUnreadCount(supabase, resourceOwner.id);
 
     expect(updatedTotal).toBeGreaterThan(initialTotal);
   });

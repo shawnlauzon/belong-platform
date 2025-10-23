@@ -3,16 +3,16 @@ import type { Database } from '@/shared/types/database';
 import type { InvitationCode } from '../types';
 import { toDomainInvitationCode } from '../transformers';
 import { logger } from '@/shared';
-import { getAuthIdOrThrow } from '@/shared/utils/auth-helpers';
 
 export async function regenerateInvitationCode(
   supabase: SupabaseClient<Database>,
+  userId: string,
   communityId: string,
 ): Promise<InvitationCode> {
   logger.debug('🔗 API: Regenerating invitation code', { communityId });
 
   try {
-    const currentUserId = await getAuthIdOrThrow(supabase);
+    const currentUserId = userId;
 
     // Use the database function to handle regeneration with elevated privileges
     const { data: newCodeData, error: functionError } = await supabase

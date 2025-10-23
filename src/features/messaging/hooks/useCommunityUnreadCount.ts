@@ -25,7 +25,7 @@ export function useCommunityUnreadCount(
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
-      return fetchCommunityUnreadCount(supabase, communityId);
+      return fetchCommunityUnreadCount(supabase, currentUser.id, communityId);
     },
     enabled: !!supabase && !!currentUser && !!communityId,
     staleTime: STANDARD_CACHE_TIME,
@@ -60,7 +60,7 @@ export function useTotalCommunityUnreadCount(
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
-      return fetchTotalCommunityUnreadCount(supabase);
+      return fetchTotalCommunityUnreadCount(supabase, currentUser.id);
     },
     enabled: !!supabase && !!currentUser,
     staleTime: STANDARD_CACHE_TIME,

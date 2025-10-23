@@ -36,7 +36,7 @@ describe('Notification Read Status', () => {
 
     // Create another user and join community
     anotherUser = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, anotherUser.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -83,7 +83,7 @@ describe('Notification Read Status', () => {
     });
 
     it('should count unread notifications correctly', async () => {
-      const initialCount = await fetchNotificationUnreadCount(supabase);
+      const initialCount = await fetchNotificationUnreadCount(supabase, testUser.id);
 
       // Create a resource as testUser
       const resource = await createTestResource(
@@ -102,7 +102,7 @@ describe('Notification Read Status', () => {
       // Switch back to testUser to check count
       await signIn(supabase, testUser.email, 'TestPass123!');
 
-      const updatedCount = await fetchNotificationUnreadCount(supabase);
+      const updatedCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(updatedCount).toBeGreaterThan(initialCount);
     });
   });
@@ -267,14 +267,14 @@ describe('Notification Read Status', () => {
       await signIn(supabase, testUser.email, 'TestPass123!');
 
       // Verify count is greater than 0
-      const beforeCount = await fetchNotificationUnreadCount(supabase);
+      const beforeCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(beforeCount).toBeGreaterThan(0);
 
       // Mark all as read
       await markNotificationAsRead(supabase, 'all');
 
       // Verify count is 0
-      const afterCount = await fetchNotificationUnreadCount(supabase);
+      const afterCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(afterCount).toBe(0);
     });
   });

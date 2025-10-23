@@ -65,7 +65,7 @@ describe('Trust Score Points - Offers', () => {
     claimant = await createTestUser(supabase);
 
     // Claimant joins community
-    await joinCommunity(supabase, community.id);
+    await joinCommunity(supabase, claimant.id, community.id);
   });
 
   beforeEach(async () => {

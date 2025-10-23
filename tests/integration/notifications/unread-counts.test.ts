@@ -24,8 +24,8 @@ import {
   fetchTotalMessageUnreadCount,
   sendMessage,
   startConversation,
-  markMessageAsRead as markConversationAsRead,
-} from '@/features/messages/api';
+  markAsRead as markConversationAsRead,
+} from '@/features/messaging/api';
 
 describe('Unread Counts Integration Tests', () => {
   let supabase: SupabaseClient<Database>;
@@ -44,7 +44,7 @@ describe('Unread Counts Integration Tests', () => {
 
     // Join the community as otherUser (if not already joined)
     otherUser = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, otherUser.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -57,7 +57,7 @@ describe('Unread Counts Integration Tests', () => {
 
   describe('Notification Unread Counts', () => {
     it('should increment unread count when notification is created', async () => {
-      const initialCount = await fetchNotificationUnreadCount(supabase);
+      const initialCount = await fetchNotificationUnreadCount(supabase, testUser.id);
 
       // Create a resource and have otherUser comment on it
       const resource = await createTestResource(
@@ -74,7 +74,7 @@ describe('Unread Counts Integration Tests', () => {
 
       // Switch back to testUser and check count
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const updatedCount = await fetchNotificationUnreadCount(supabase);
+      const updatedCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(updatedCount).toBeGreaterThan(initialCount);
     });
 
@@ -94,7 +94,7 @@ describe('Unread Counts Integration Tests', () => {
 
       // Check initial count
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const beforeCount = await fetchNotificationUnreadCount(supabase);
+      const beforeCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(beforeCount).toBeGreaterThan(0);
 
       // Get the notification to mark it as read
@@ -110,7 +110,7 @@ describe('Unread Counts Integration Tests', () => {
       await markNotificationAsRead(supabase, notifications![0].id);
 
       // Check count decreased
-      const afterCount = await fetchNotificationUnreadCount(supabase);
+      const afterCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(afterCount).toBe(beforeCount - 1);
     });
 
@@ -139,21 +139,21 @@ describe('Unread Counts Integration Tests', () => {
 
       // Check initial count
       await signIn(supabase, testUser.email, 'TestPass123!');
-      const beforeCount = await fetchNotificationUnreadCount(supabase);
+      const beforeCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(beforeCount).toBeGreaterThan(1);
 
       // Mark all as read
       await markNotificationAsRead(supabase, 'all');
 
       // Check count is now zero
-      const afterCount = await fetchNotificationUnreadCount(supabase);
+      const afterCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(afterCount).toBe(0);
     });
   });
 
   describe('Message Unread Counts', () => {
     it('should start with zero unread messages', async () => {
-      const totalCount = await fetchTotalMessageUnreadCount(supabase);
+      const totalCount = await fetchTotalMessageUnreadCount(supabase, testUser.id);
       expect(totalCount).toBe(0);
     });
 
@@ -165,7 +165,7 @@ describe('Unread Counts Integration Tests', () => {
 
       // Send message as otherUser
       await signIn(supabase, otherUser.email, 'TestPass123!');
-      await sendMessage(supabase, {
+      const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation.id,
         content: 'Hello from other user',
       });
@@ -178,7 +178,7 @@ describe('Unread Counts Integration Tests', () => {
       );
       expect(conversationUnreadCount).toBe(1);
 
-      const totalUnreadCount = await fetchTotalMessageUnreadCount(supabase);
+      const totalUnreadCount = await fetchTotalMessageUnreadCount(supabase, testUser.id);
       expect(totalUnreadCount).toBe(1);
     });
 
@@ -193,11 +193,11 @@ describe('Unread Counts Integration Tests', () => {
 
       // Send multiple messages as otherUser
       await signInAsUser(supabase, yetAnotherUser);
-      await sendMessage(supabase, {
+      const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation.id,
         content: 'Message 1',
       });
-      await sendMessage(supabase, {
+      const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation.id,
         content: 'Message 2',
       });
@@ -211,7 +211,7 @@ describe('Unread Counts Integration Tests', () => {
       expect(beforeCount).toBe(2);
 
       // Mark conversation as read
-      await markConversationAsRead(supabase, conversation.id);
+      const { data: { user: _readUser } } = await supabase.auth.getUser(); await markConversationAsRead(supabase, _readUser!.id, conversation.id);
 
       // Check count is now zero
       const afterCount = await fetchMessageUnreadCount(
@@ -239,13 +239,13 @@ describe('Unread Counts Integration Tests', () => {
 
       // Send messages to testUser from both users
       await signInAsUser(supabase, thirdUser);
-      await sendMessage(supabase, {
+      const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation1.id,
         content: 'From third user',
       });
 
       await signInAsUser(supabase, fourthUser);
-      await sendMessage(supabase, {
+      const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation2.id,
         content: 'From fourth user',
       });
@@ -265,10 +265,10 @@ describe('Unread Counts Integration Tests', () => {
       expect(conversation2Count).toBe(1);
 
       // Mark one conversation as read
-      await markConversationAsRead(supabase, conversation1.id);
+      const { data: { user: _readUser } } = await supabase.auth.getUser(); await markConversationAsRead(supabase, _readUser!.id, conversation1.id);
 
-      expect(await fetchMessageUnreadCount(supabase, conversation1.id)).toBe(0);
-      expect(await fetchMessageUnreadCount(supabase, conversation2.id)).toBe(1);
+      expect(await fetchMessageUnreadCount(supabase, testUser.id, conversation1.id)).toBe(0);
+      expect(await fetchMessageUnreadCount(supabase, testUser.id, conversation2.id)).toBe(1);
     });
   });
 });

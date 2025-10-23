@@ -66,7 +66,7 @@ describe('Feed API - Integration Tests', () => {
     testUser2 = await createTestUser(supabase);
 
     // Only a member of testCommunity1
-    await joinCommunity(supabase, testCommunity1.id);
+    await joinCommunity(supabase, testUser2.id, testCommunity1.id);
 
     // Create shoutouts for the resources (testUser2 thanking testUser)
     testShoutout1 = await createTestShoutout(supabase, {
@@ -89,7 +89,7 @@ describe('Feed API - Integration Tests', () => {
 
   describe('single community', () => {
     it('filters content based on community membership', async () => {
-      const feed = await fetchFeed(supabase);
+      const feed = await fetchFeed(supabase, testUser2.id);
 
       expect(feed).toBeTruthy();
       expect(feed.items).toBeTruthy();
@@ -127,7 +127,7 @@ describe('Feed API - Integration Tests', () => {
       await signIn(supabase, testUser2.email, 'TestPass123!');
     });
     it('fetches feed for user with multiple communities', async () => {
-      const feed = await fetchFeed(supabase);
+      const feed = await fetchFeed(supabase, testUser.id);
 
       expect(feed).toBeTruthy();
       expect(feed.items).toBeTruthy();
@@ -166,7 +166,8 @@ describe('Feed API - Integration Tests', () => {
     });
     it('throws for unauthenticated user', async () => {
       // Should throw for unauthenticated user
-      await expect(fetchFeed(supabase)).rejects.toThrowError();
+      // Note: fetchFeed now requires userId, so passing testUser.id but should still fail due to auth
+      await expect(fetchFeed(supabase, testUser.id)).rejects.toThrowError();
     });
   });
 
@@ -214,7 +215,7 @@ describe('Feed API - Integration Tests', () => {
       });
 
       // Fetch the feed
-      const feed = await fetchFeed(supabase);
+      const feed = await fetchFeed(supabase, testUser.id);
 
       // Assert that future event is returned
       expect(feed.items).toContainEqual({
@@ -280,7 +281,7 @@ describe('Feed API - Integration Tests', () => {
       }
 
       // Fetch the feed
-      const feed = await fetchFeed(supabase);
+      const feed = await fetchFeed(supabase, testUser.id);
 
       // Assert that current offer is returned
       expect(feed.items).toContainEqual({
@@ -339,7 +340,7 @@ describe('Feed API - Integration Tests', () => {
       }
 
       // Fetch the feed
-      const feed = await fetchFeed(supabase);
+      const feed = await fetchFeed(supabase, testUser.id);
 
       // Assert that current request is returned
       expect(feed.items).toContainEqual({

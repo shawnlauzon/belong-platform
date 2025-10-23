@@ -44,7 +44,7 @@ describe('Shoutouts API - CRUD Operations', () => {
     testResource = await createTestResource(supabase, testCommunity.id);
 
     testUser2 = await createTestUser(supabase);
-    await joinCommunity(supabase, testCommunity.id);
+    await joinCommunity(supabase, testUser2.id, testCommunity.id);
     testResource2 = await createTestResource(supabase, testCommunity.id);
 
     // signed in as testUser2

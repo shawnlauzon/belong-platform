@@ -9,12 +9,12 @@ import {
   signInAsUser,
 } from './messaging-helpers';
 import { leaveCommunity } from '@/features/communities/api';
-import * as api from '@/features/messages/api';
+import * as api from '@/features/messaging/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import type { Conversation } from '@/features/messages/types';
+import type { Conversation } from '@/features/messaging/types';
 
 describe('Messages Permissions & Authorization', () => {
   let supabase: SupabaseClient<Database>;
@@ -76,7 +76,7 @@ describe('Messages Permissions & Authorization', () => {
       // UserC cannot send message (non-participant)
       await signInAsUser(supabase, userC);
       await expect(
-        api.sendMessage(supabase, {
+        const { data: { user: _u } } = await supabase.auth.getUser(); await api.sendMessage(supabase, _u!.id, {
           conversationId: conversation.id,
           content: `${TEST_PREFIX} Unauthorized message`,
         }),
@@ -87,7 +87,7 @@ describe('Messages Permissions & Authorization', () => {
       const fakeConversationId = '00000000-0000-0000-0000-000000000000';
 
       await expect(
-        api.sendMessage(supabase, {
+        const { data: { user: _u } } = await supabase.auth.getUser(); await api.sendMessage(supabase, _u!.id, {
           conversationId: fakeConversationId,
           content: `${TEST_PREFIX} Message to nowhere`,
         }),

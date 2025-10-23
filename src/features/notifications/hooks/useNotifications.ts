@@ -63,6 +63,7 @@ export function useNotifications(
 
       const newNotifications = await fetchNotifications(
         supabase,
+        currentUser.id,
         filterWithSince,
       );
 

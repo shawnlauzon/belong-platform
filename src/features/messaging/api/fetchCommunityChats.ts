@@ -3,12 +3,12 @@ import { Database } from '../../../shared/types/database';
 import { CommunityChat } from '../types';
 import { MessageRow } from '../types/messageRow';
 import { toDomainMessage } from '../transformers';
-import { getAuthIdOrThrow, logger } from '../../../shared';
+import { logger } from '../../../shared';
 
 export async function fetchCommunityChats(
   supabase: SupabaseClient<Database>,
+  userId: string,
 ): Promise<CommunityChat[]> {
-  const userId = await getAuthIdOrThrow(supabase);
   // Get communities where the user is a member
   const { data: memberships, error: membershipsError } = await supabase
     .from('community_memberships')

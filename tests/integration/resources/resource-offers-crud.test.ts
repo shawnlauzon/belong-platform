@@ -358,7 +358,7 @@ describe('Resource Offers API - CRUD Operations', () => {
 
       // Create another user to claim the resource
       await createTestUser(supabase);
-      await joinCommunity(supabase, testCommunity.id);
+      const { data: { user: u4 } } = await supabase.auth.getUser(); await joinCommunity(supabase, u4!.id, testCommunity.id);
       await resourcesApi.createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,

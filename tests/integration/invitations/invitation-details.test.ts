@@ -30,7 +30,7 @@ describe('Connections API - Connection Details', () => {
     testCommunity = await createTestCommunity(supabase);
 
     memberConnectionCode = (
-      await getInvitationCode(supabase, testCommunity.id)
+      await getInvitationCode(supabase, member.id, testCommunity.id)
     ).code;
 
     await signOut(supabase);

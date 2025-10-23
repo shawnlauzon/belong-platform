@@ -7,14 +7,14 @@ import {
   deleteMessage,
   editMessage,
   sendMessage,
-} from '@/features/messages/api';
+} from '@/features/messaging/api';
 import {
   createTestCommunity,
   createTestUser,
   TEST_PREFIX,
 } from '../helpers/test-data';
-import { createMessageSubscription } from '@/features/messages/api/createMessageSubscription';
-import { communityChatKeys } from '@/features/messages/queries';
+import { createMessageSubscription } from '@/features/messaging/api/createMessageSubscription';
+import { communityChatKeys } from '@/features/messaging/queries';
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';

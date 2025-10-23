@@ -686,7 +686,7 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
         // Create another user to claim the resource
         await createTestUser(supabase);
 
-        await joinCommunity(supabase, testCommunity.id);
+        const { data: { user: u5 } } = await supabase.auth.getUser(); await joinCommunity(supabase, u5!.id, testCommunity.id);
         await resourcesApi.createResourceClaim(supabase, {
           resourceId: offerResource.id,
           timeslotId: timeslot.id,
@@ -746,7 +746,7 @@ describe('Resource API - CRUD Operations (Both Offers and Requests)', () => {
 
         // Create another user to claim the resource
         await createTestUser(supabase);
-        await joinCommunity(supabase, testCommunity.id);
+        const { data: { user: u6 } } = await supabase.auth.getUser(); await joinCommunity(supabase, u6!.id, testCommunity.id);
         await resourcesApi.createResourceClaim(supabase, {
           resourceId: requestResource.id,
           timeslotId: timeslot.id,

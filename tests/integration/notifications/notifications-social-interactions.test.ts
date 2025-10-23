@@ -35,7 +35,7 @@ describe('Social Interactions Notifications', () => {
 
     // Create interacting user
     interactingUser = await createTestUser(clientB);
-    await joinCommunity(clientB, testCommunity.id);
+    await joinCommunity(clientB, interactingUser.id, testCommunity.id);
   });
 
   afterAll(async () => {
@@ -66,7 +66,7 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const commentNotification = notifications.find(
@@ -109,7 +109,7 @@ describe('Social Interactions Notifications', () => {
       // Switch back to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const replyNotification = notifications.find(
@@ -151,7 +151,7 @@ describe('Social Interactions Notifications', () => {
       // Switch to resourceOwner to check notifications
       await signIn(clientA, resourceOwner.email, 'TestPass123!');
 
-      const notifications = await fetchNotifications(clientA);
+      const notifications = await fetchNotifications(clientA, resourceOwner.id);
 
       expect(notifications.length).toBeGreaterThan(0);
       const shoutoutNotification = notifications.find(
