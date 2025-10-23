@@ -13,6 +13,7 @@ export function toResourceTimeslotInsertRow(
 ): ResourceTimeslotInsertDbData {
   return {
     resource_id: timeslot.resourceId,
+    status: timeslot.status,
     start_time: timeslot.startTime.toISOString(),
     end_time: timeslot.endTime.toISOString(),
   };
@@ -25,6 +26,7 @@ export function forDbTimeslotUpdate(
   timeslot: Partial<ResourceTimeslotInput>,
 ): ResourceTimeslotUpdateDbData {
   return {
+    status: timeslot.status,
     start_time: timeslot.startTime?.toISOString(),
     end_time: timeslot.endTime?.toISOString(),
   };
