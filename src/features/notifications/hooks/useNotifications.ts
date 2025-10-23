@@ -1,4 +1,5 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { useSupabase, logger } from '@/shared';
 import type { NotificationDetail } from '../types/notificationDetail';
 import {
@@ -11,7 +12,8 @@ import { notificationKeys } from '../queries';
 /**
  * Hook for fetching notifications.
  *
- * Updates are handled by polling every 5 seconds.
+ * Updates are handled by polling every 30 seconds with incremental fetching.
+ * Only new notifications since the last fetch are retrieved to minimize bandwidth.
  *
  * @param options - Optional React Query options
  * @returns Query state for notifications
@@ -40,6 +42,8 @@ export function useNotifications(
 ) {
   const supabase = useSupabase();
   const { data: currentUser } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const lastFetchTimeRef = useRef<Date | null>(null);
 
   const query = useQuery<NotificationDetail[], Error>({
     queryKey: notificationKeys.list(),
@@ -48,12 +52,49 @@ export function useNotifications(
         throw new Error('Supabase client or user not available');
       }
 
-      const data = await fetchNotifications(supabase, filter);
+      // For incremental fetching, use the last fetch time
+      const filterWithSince: FetchNotificationsFilter = {
+        ...filter,
+        since: lastFetchTimeRef.current ?? undefined,
+      };
 
-      return data;
+      // Capture timestamp at START of fetch to avoid missing notifications created during the fetch
+      const fetchStartTime = new Date();
+
+      const newNotifications = await fetchNotifications(
+        supabase,
+        filterWithSince,
+      );
+
+      // Update last fetch time to when we STARTED this fetch
+      lastFetchTimeRef.current = fetchStartTime;
+
+      // If this is an incremental fetch, merge with existing data
+      if (filterWithSince.since) {
+        const existingData =
+          queryClient.getQueryData<NotificationDetail[]>(
+            notificationKeys.list(),
+          ) ?? [];
+
+        // Merge new notifications with existing ones
+        // Prepend new notifications and deduplicate by ID
+        const merged = [...newNotifications, ...existingData];
+        const deduped = Array.from(
+          new Map(merged.map((n) => [n.id, n])).values(),
+        );
+
+        // Sort by created_at descending (newest first)
+        return deduped.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      }
+
+      // Initial fetch - return all notifications
+      return newNotifications;
     },
     enabled: !!supabase && !!currentUser,
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    refetchInterval: 30000, // Poll every 30 seconds for updates
     ...options,
   });
 

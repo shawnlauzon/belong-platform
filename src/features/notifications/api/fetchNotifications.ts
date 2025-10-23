@@ -6,6 +6,7 @@ import { getAuthIdOrThrow, logger } from '@/shared';
 
 export interface FetchNotificationsFilter {
   isRead?: boolean;
+  since?: Date;
 }
 
 export async function fetchNotifications(
@@ -27,6 +28,10 @@ export async function fetchNotifications(
     } else {
       query = query.is('read_at', null);
     }
+  }
+
+  if (filter?.since) {
+    query = query.gt('created_at', filter.since.toISOString());
   }
 
   const { data, error } = await query;

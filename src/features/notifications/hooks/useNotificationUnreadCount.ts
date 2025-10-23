@@ -13,7 +13,7 @@ interface UseNotificationUnreadCountResult {
 /**
  * Hook for fetching unread notification count.
  *
- * Updates are handled by polling every 5 seconds.
+ * Updates are handled by polling every 30 seconds.
  *
  * @returns Query state for unread notification count
  *
@@ -36,7 +36,7 @@ export function useNotificationUnreadCount(): UseNotificationUnreadCountResult {
     queryKey: notificationKeys.unreadCount(),
     queryFn: () => fetchNotificationUnreadCount(supabase),
     enabled: !!supabase,
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    refetchInterval: 30000, // Poll every 30 seconds for updates
   });
 
   return {
