@@ -6,15 +6,9 @@ import { toDomainComment } from '../transformers';
 
 export async function createComment(
   supabase: SupabaseClient<Database>,
+  userId: string,
   input: CommentInput,
 ): Promise<Comment> {
-  // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user) {
-    throw new Error('User must be authenticated to create comments');
-  }
-
   // Validate that either resourceId or shoutoutId is provided, but not both
   if ((!input.resourceId && !input.shoutoutId) || (input.resourceId && input.shoutoutId)) {
     throw new Error('Comment must be associated with either a resource or a shoutout');
@@ -40,7 +34,7 @@ export async function createComment(
 
   const insertData: CommentInsertDbData = {
     content: input.content,
-    author_id: user.id,
+    author_id: userId,
     parent_id: input.parentId ?? null,
     resource_id: input.resourceId ?? null,
     shoutout_id: input.shoutoutId ?? null,

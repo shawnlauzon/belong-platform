@@ -5,17 +5,9 @@ import { logger } from '../../../shared';
 
 export async function unblockUser(
   client: SupabaseClient<Database>,
+  userId: string,
   input: UnblockUserInput
 ): Promise<void> {
-  const { data: userData, error: userError } = await client.auth.getUser();
-  
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
-  }
-
-  const userId = userData.user.id;
-
   const { error } = await client
     .from('blocked_users')
     .delete()

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
+import { getAuthIdOrThrow } from '../../../shared';
 import { unblockUser } from '../api';
 import { conversationKeys, messageKeys } from '../queries';
 import { UnblockUserInput } from '../types';
@@ -9,7 +10,10 @@ export function useUnblockUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: UnblockUserInput) => unblockUser(client, input),
+    mutationFn: async (input: UnblockUserInput) => {
+      const userId = await getAuthIdOrThrow(client, 'unblock user');
+      return unblockUser(client, userId, input);
+    },
     onSuccess: () => {
       // Invalidate blocked users list
       queryClient.invalidateQueries({

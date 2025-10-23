@@ -28,11 +28,12 @@ async function hasChildComments(
 
 export async function deleteComment(
   supabase: SupabaseClient<Database>,
+  userId: string,
   id: string,
 ): Promise<Comment> {
   // Check if this comment has child comments
   const hasChildren = await hasChildComments(supabase, id);
-  
+
   if (hasChildren) {
     throw new Error('Cannot delete comment with replies. Please delete all replies first.');
   }
@@ -51,6 +52,7 @@ export async function deleteComment(
     .from('comments')
     .update(updateData)
     .eq('id', id)
+    .eq('author_id', userId)
     .select(SELECT_COMMENTS_JOIN_AUTHOR)
     .maybeSingle()) as {
     data: CommentRowJoinAuthor | null;

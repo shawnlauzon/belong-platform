@@ -1,6 +1,6 @@
 import type { QueryError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { logger, getAuthIdOrThrow } from '@/shared';
 import { ResourceTimeslotInput, ResourceTimeslot } from '../types';
 import {
   toResourceTimeslotInsertRow,
@@ -31,8 +31,8 @@ export async function createResourceTimeslot(
 
     // Check timeslotsFlexible flag
     if (!resource.areTimeslotsFlexible) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.id !== resource.ownerId) {
+      const userId = await getAuthIdOrThrow(supabase, 'create resource timeslot');
+      if (userId !== resource.ownerId) {
         throw new Error(
           'Only the resource owner can propose timeslots when timeslots are not flexible',
         );

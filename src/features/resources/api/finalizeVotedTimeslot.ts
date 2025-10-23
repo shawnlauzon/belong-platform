@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { logger } from '@/shared';
+import { logger, getAuthIdOrThrow } from '@/shared';
 import { fetchResourceById } from './fetchResourceById';
 
 /**
@@ -22,13 +22,7 @@ export async function finalizeVotedTimeslot(
   chosenTimeslotId: string,
 ): Promise<void> {
   // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  const userId = await getAuthIdOrThrow(supabase, 'finalize voted timeslot');
 
   // Verify ownership and status
   const resource = await fetchResourceById(supabase, resourceId);
@@ -37,7 +31,7 @@ export async function finalizeVotedTimeslot(
     throw new Error('Resource not found');
   }
 
-  if (resource.ownerId !== user.id) {
+  if (resource.ownerId !== userId) {
     throw new Error('Only the resource owner can finalize voting');
   }
 

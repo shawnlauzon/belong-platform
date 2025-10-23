@@ -5,17 +5,9 @@ import { logger } from '../../../shared';
 
 export async function blockUser(
   client: SupabaseClient<Database>,
+  userId: string,
   input: BlockUserInput
 ): Promise<void> {
-  const { data: userData, error: userError } = await client.auth.getUser();
-  
-  if (userError) {
-    logger.error('Error fetching user', { error: userError });
-    throw userError;
-  }
-
-  const userId = userData.user.id;
-
   if (userId === input.blockedUserId) {
     throw new Error('Cannot block yourself');
   }

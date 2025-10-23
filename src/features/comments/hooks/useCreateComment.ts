@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSupabase, logger } from '@/shared';
+import { useSupabase, logger, getAuthIdOrThrow } from '@/shared';
 import type { CommentInput } from '../types';
 import { createComment } from '../api';
 import { commentKeys } from '../queries';
@@ -55,9 +55,10 @@ export function useCreateComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CommentInput) => {
+    mutationFn: async (input: CommentInput) => {
       logger.debug('💬 useCreateComment: Creating comment', { input });
-      return createComment(supabase, input);
+      const userId = await getAuthIdOrThrow(supabase, 'create comment');
+      return createComment(supabase, userId, input);
     },
     onSuccess: (comment) => {
       logger.info('💬 useCreateComment: Successfully created comment', {

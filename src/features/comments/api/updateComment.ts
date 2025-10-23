@@ -6,16 +6,10 @@ import { toDomainComment } from '../transformers';
 
 export async function updateComment(
   supabase: SupabaseClient<Database>,
+  userId: string,
   id: string,
   content: string,
 ): Promise<Comment> {
-  // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user) {
-    throw new Error('User must be authenticated to update comments');
-  }
-
   const updateData: CommentUpdateDbData = {
     content,
     is_edited: true,
@@ -26,7 +20,7 @@ export async function updateComment(
     .from('comments')
     .update(updateData)
     .eq('id', id)
-    .eq('author_id', user.id) // Only author can update their comment
+    .eq('author_id', userId) // Only author can update their comment
     .select(SELECT_COMMENTS_JOIN_AUTHOR)
     .single() as {
     data: CommentRowJoinAuthor | null;

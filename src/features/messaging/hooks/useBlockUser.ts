@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from '../../../shared/hooks';
+import { getAuthIdOrThrow } from '../../../shared';
 import { blockUser } from '../api';
 import { messageKeys } from '../queries';
 import { BlockUserInput } from '../types';
@@ -9,7 +10,10 @@ export function useBlockUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: BlockUserInput) => blockUser(client, input),
+    mutationFn: async (input: BlockUserInput) => {
+      const userId = await getAuthIdOrThrow(client, 'block user');
+      return blockUser(client, userId, input);
+    },
     onSuccess: () => {
       // Invalidate blocked users list
       queryClient.invalidateQueries({
