@@ -233,11 +233,21 @@ export async function cleanupResourceClaim(claimId: string) {
 export async function cleanupCommunityConnections(communityId: string) {
   const serviceClient = createServiceClient();
 
-  // Delete user connections for this community
-  await serviceClient
-    .from('user_connections')
-    .delete()
+  // Get all users in this community
+  const { data: memberships } = await serviceClient
+    .from('community_memberships')
+    .select('user_id')
     .eq('community_id', communityId);
+
+  if (memberships && memberships.length > 0) {
+    const userIds = memberships.map(m => m.user_id);
+
+    // Delete platform-level connections where either user is from this community
+    await serviceClient
+      .from('user_connections')
+      .delete()
+      .or(`user_id.in.(${userIds.join(',')}),other_id.in.(${userIds.join(',')})`);
+  }
 
   // Delete connection requests for this community
   await serviceClient

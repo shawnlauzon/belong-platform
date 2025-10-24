@@ -5,8 +5,7 @@ export function toDomainUserConnection(row: UserConnectionRow): UserConnection {
     id: row.id,
     userId: row.user_id,
     otherId: row.other_id,
-    communityId: row.community_id,
-    type: row.type as 'invited_by',
+    type: row.type as 'invited',
     strength: row.strength,
     createdAt: new Date(row.created_at),
   };

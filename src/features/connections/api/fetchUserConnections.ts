@@ -7,9 +7,8 @@ import { logger } from '@/shared';
 export async function fetchUserConnections(
   supabase: SupabaseClient<Database>,
   userId: string,
-  communityId: string,
 ): Promise<UserConnection[]> {
-  logger.debug('🔗 API: Fetching user connections', { communityId });
+  logger.debug('🔗 API: Fetching user connections', { userId });
 
   try {
     const currentUserId = userId;
@@ -18,13 +17,11 @@ export async function fetchUserConnections(
       .from('user_connections')
       .select('*')
       .eq('user_id', currentUserId)
-      .eq('community_id', communityId)
       .order('created_at', { ascending: false });
 
     if (error) {
       logger.error('🔗 API: Failed to fetch user connections', {
         error,
-        communityId,
         userId: currentUserId,
       });
       throw error;
@@ -32,14 +29,14 @@ export async function fetchUserConnections(
 
     const userConnections = connections.map(toDomainUserConnection);
     logger.debug('🔗 API: Found user connections', {
-      communityId,
+      userId,
       count: userConnections.length,
     });
     return userConnections;
   } catch (error) {
     logger.error('🔗 API: Error fetching user connections', {
       error,
-      communityId,
+      userId,
     });
     throw error;
   }

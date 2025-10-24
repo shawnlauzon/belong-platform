@@ -1,34 +1,35 @@
 # Connections
 
-User connection tracking with trust assessment.
+Platform-level user connection tracking with trust assessment.
 
 ## Purpose
 
 The connections feature provides:
-- Tracking relationships between users
-- Trust-based assessment of connections
-- Connection history per community
-- Foundation for trust score calculations
+- Platform-wide relationship tracking between users
+- Personal trust-based assessment of people you invited
+- Foundation for trust score calculations and recommendations
+- Transparent social graph
 
 ## Key Entities
 
 ### UserConnection
 
-Tracks relationships between users with trust assessment.
+Tracks platform-level relationships between users with trust assessment.
 
 **Key Fields:**
 - `id` - Connection ID
-- `userId` - User who was invited
-- `otherId` - User who sent the invitation
-- `communityId` - Community context
-- `type` - Connection type (currently only `'invited_by'`)
+- `userId` - User who invited (the inviter)
+- `otherId` - User who was invited (the invitee)
+- `type` - Connection type (currently only `'invited'`)
 - `strength` - Trust level assessment (see ConnectionStrength below), `null` if not assessed
 - `createdAt` - When connection was created
 
 **Notes:**
-- Created when invitation code is used (see invitations feature)
-- Permanent record of relationship
-- One connection per user pair per community
+- Platform-level: one connection per user pair (not community-specific)
+- Created automatically when invitation code is accepted (see invitations feature)
+- Permanent record of "I invited this person" relationship
+- Only system can create `'invited'` connections (SECURITY DEFINER function)
+- Only the inviter (userId) can assess trust strength
 - `strength` defaults to `null` (not yet assessed)
 
 ### ConnectionStrength
@@ -53,47 +54,66 @@ Trust assessment levels for user connections:
 Input for updating connection properties.
 
 **Fields:**
-- `otherId` - The other user in the connection
-- `communityId` - The community context
+- `otherId` - The user you invited
 - `strength` - The trust level assessment
 
 ## Core Concepts
 
 ### Connection Lifecycle
 
-1. User accepts invitation code → Connection created automatically
+1. User accepts invitation code → Platform-level connection created automatically
 2. Connection starts with `strength: null` (not yet assessed)
 3. Inviter can assess trust level at any time
 4. Connection is permanent (cannot be deleted)
+5. Only one connection exists per user pair (platform-wide)
 
 ### Trust Assessment
 
-Users can assess their trust level for connections:
+Inviters can assess their trust level for people they invited:
 - Assessment is optional (can remain `null`)
 - Can be updated at any time
-- Only the `userId` (invited person's inviter) can assess
+- Only the inviter (`userId`) can assess their invitees
+- Assessment is personal, not community-specific
 - Used to weight trust scores and recommendations
+
+### Platform-Level Design
+
+Connections are NOT community-specific:
+- One connection per relationship (not per community)
+- Trust is personal, not contextual
+- Simpler model: "I invited this person to the platform"
+- Prevents duplicate assessments across communities
+
+### Public Transparency
+
+All authenticated users can view all connections:
+- Promotes trust and accountability
+- Enables social graph analysis
+- Shows who vouched for whom
+- Only creation of `'invited'` connections is system-controlled
 
 ## API Reference
 
 ### Hooks
-- `useUserConnections(communityId)` - Get user's connections for a community
-- `useUpdateConnection()` - Update connection properties
+- `useUserConnections()` - Get all your platform-level connections
+- `useUpdateConnection()` - Update connection trust assessment
 
 ### Key Functions
-- `fetchUserConnections(supabase, userId, communityId)` - Get user's connections
-- `updateConnection(supabase, userId, input)` - Update connection
+- `fetchUserConnections(supabase, userId)` - Get user's connections
+- `updateConnection(supabase, userId, input)` - Update connection strength
 
 ## Important Patterns
 
 ### Fetching User Connections
 
 ```typescript
-const { data: connections } = useUserConnections(communityId);
+// Get all people you invited to the platform
+const { data: connections } = useUserConnections();
 
 connections?.forEach(conn => {
-  console.log(`Connected to ${conn.otherId}`);
-  console.log(`Trust level: ${conn.strength ?? 'Not assessed'}`);
+  console.log(`I invited ${conn.otherId}`);
+  console.log(`My trust assessment: ${conn.strength ?? 'Not assessed yet'}`);
+  console.log(`Connection created: ${conn.createdAt}`);
 });
 ```
 
@@ -102,21 +122,19 @@ connections?.forEach(conn => {
 ```typescript
 const updateConnection = useUpdateConnection();
 
-// Update trust assessment
+// Update trust assessment for someone you invited
 await updateConnection.mutateAsync({
   otherId: 'user-id',
-  communityId: 'community-id',
   strength: 'trusted' // or 'positive', 'neutral', 'negative', 'unknown', null
 });
 
-// Example: Prompt user to assess after invitation accepted
-const handleInvitationAccepted = async (inviterId: string) => {
+// Example: Prompt user to assess people they invited
+const handleAssessConnection = async (inviteeId: string) => {
   const strength = await promptUserForTrustLevel(); // UI implementation
 
   if (strength) {
     await updateConnection.mutateAsync({
-      otherId: inviterId,
-      communityId: currentCommunityId,
+      otherId: inviteeId,
       strength,
     });
   }
@@ -132,6 +150,6 @@ Connections influence trust scores:
 
 ## Related Features
 
-- **Invitations** - Creates connections when invitation codes are accepted
+- **Invitations** - Creates platform-level connections when invitation codes are accepted
 - **Trust Scores** - Uses connection strength to calculate trust between users
-- **Communities** - Connections are scoped to specific communities
+- **Communities** - Invitations bring users to communities, but connections are platform-level

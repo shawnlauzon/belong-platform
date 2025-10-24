@@ -173,8 +173,7 @@ describe('Invitations API - CRUD Operations', () => {
 
       expect(connection).toBeTruthy();
       expect(connection.id).toBeTruthy();
-      expect(connection.communityId).toBe(testCommunity.id);
-      expect(connection.type).toBe('invited_by');
+      expect(connection.type).toBe('invited');
 
       // Check that the connection exists in the database
       const { data: dbConnection } = await supabaseUserA
@@ -186,83 +185,86 @@ describe('Invitations API - CRUD Operations', () => {
       expect(dbConnection).toBeTruthy();
       expect(dbConnection!.user_id).toBeTruthy();
       expect(dbConnection!.other_id).toBeTruthy();
-      expect(dbConnection!.community_id).toBe(testCommunity.id);
-      expect(dbConnection!.type).toBe('invited_by');
+      expect(dbConnection!.type).toBe('invited');
     });
 
     it('prevents duplicate connections', async () => {
-      // Create first connection
+      // Create first connection UserB -> UserA (opposite direction from first test)
       const connection1 = await createTestConnection(
-        supabaseUserA,
         supabaseUserB,
+        supabaseUserA,
         testCommunity.id,
       );
 
       expect(connection1.id).toBeTruthy();
-      expect(connection1.communityId).toBe(testCommunity.id);
 
       // Try to create duplicate - should throw an error
       await expect(
-        createTestConnection(supabaseUserA, supabaseUserB, testCommunity.id),
+        createTestConnection(supabaseUserB, supabaseUserA, testCommunity.id),
       ).rejects.toThrow('Connection was not created (possibly already exists)');
     });
   });
 
   describe('Connection Data Validation', () => {
     it('stores connection data correctly', async () => {
+      // Create a fresh connection for this test
       const connection = await createTestConnection(
         supabaseUserA,
         supabaseUserB,
         testCommunity.id,
       );
 
-      // Direct database check
+      // Query it back from the database
       const { data: dbConnection } = await supabaseUserA
         .from('user_connections')
         .select('*')
         .eq('id', connection.id)
         .single();
 
-      expect(dbConnection!.user_id).toBeTruthy();
-      expect(dbConnection!.other_id).toBeTruthy();
-      expect(dbConnection!.community_id).toBe(testCommunity.id);
-      expect(dbConnection!.type).toBe('invited_by');
+      expect(dbConnection).toBeTruthy();
+      expect(dbConnection!.user_id).toBe(userA.id);
+      expect(dbConnection!.other_id).toBe(userB.id);
+      expect(dbConnection!.type).toBe('invited');
     });
 
     it('maintains referential integrity', async () => {
+      // Create a fresh connection for this test
       const connection = await createTestConnection(
-        supabaseUserA,
         supabaseUserB,
+        supabaseUserA,
         testCommunity.id,
       );
 
-      // Verify all foreign keys are properly set
-      expect(connection.userId).toBeTruthy();
-      expect(connection.otherId).toBeTruthy();
-      expect(connection.communityId).toBe(testCommunity.id);
-
-      // Verify referenced records exist
-      const { data: userProfile } = await supabaseUserA
-        .from('profiles')
-        .select('id')
-        .eq('id', connection.userId)
+      // Query it back as database row
+      const { data: dbConnection } = await supabaseUserB
+        .from('user_connections')
+        .select('*')
+        .eq('id', connection.id)
         .single();
 
-      const { data: otherProfile } = await supabaseUserB
+      expect(dbConnection).toBeTruthy();
+
+      // Verify the connection has valid user IDs
+      expect(dbConnection!.user_id).toBe(userB.id);
+      expect(dbConnection!.other_id).toBe(userA.id);
+
+      // Verify referenced users exist by querying their own profiles
+      const { data: userProfile } = await supabaseUserB
         .from('profiles')
         .select('id')
-        .eq('id', connection.otherId)
+        .eq('id', userB.id)
         .single();
 
-      const { data: community } = await supabaseUserA
-        .from('communities')
+      const { data: otherProfile } = await supabaseUserA
+        .from('profiles')
         .select('id')
-        .eq('id', connection.communityId)
+        .eq('id', userA.id)
         .single();
 
       expect(userProfile).toBeTruthy();
+      expect(userProfile!.id).toBe(userB.id);
       expect(otherProfile).toBeTruthy();
-      expect(community).toBeTruthy();
+      expect(otherProfile!.id).toBe(userA.id);
     });
   });
 });

@@ -23,7 +23,6 @@ export async function updateConnection(
       .update({ strength: input.strength })
       .eq('user_id', currentUserId)
       .eq('other_id', input.otherId)
-      .eq('community_id', input.communityId)
       .select()
       .single();
 

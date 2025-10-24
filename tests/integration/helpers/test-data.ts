@@ -205,9 +205,8 @@ export async function createTestConnection(
   const { data: connectionId, error } = await initiatorSupabase.rpc(
     'create_user_connection',
     {
-      p_user_id: initiatorUser.id,
-      p_other_id: requesterUser.id,
-      p_community_id: communityId,
+      p_inviter_id: initiatorUser.id,
+      p_invitee_id: requesterUser.id,
     },
   );
 

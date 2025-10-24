@@ -9,8 +9,7 @@ describe('connectionTransformer', () => {
         id: 'connection-123',
         user_id: 'user-123',
         other_id: 'user-456',
-        community_id: 'community-789',
-        type: 'invited_by',
+        type: 'invited',
         strength: 'trusted',
         created_at: '2024-01-01T12:00:00Z',
       });
@@ -21,8 +20,7 @@ describe('connectionTransformer', () => {
         id: 'connection-123',
         userId: 'user-123',
         otherId: 'user-456',
-        communityId: 'community-789',
-        type: 'invited_by',
+        type: 'invited',
         strength: 'trusted',
         createdAt: new Date('2024-01-01T12:00:00Z'),
       });

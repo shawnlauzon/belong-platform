@@ -1047,7 +1047,6 @@ export type Database = {
       }
       user_connections: {
         Row: {
-          community_id: string
           created_at: string
           id: string
           other_id: string
@@ -1056,7 +1055,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          community_id: string
           created_at?: string
           id?: string
           other_id: string
@@ -1065,7 +1063,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          community_id?: string
           created_at?: string
           id?: string
           other_id?: string
@@ -1074,13 +1071,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "user_connections_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "user_connections_other_id_fkey"
             columns: ["other_id"]
@@ -1481,7 +1471,7 @@ export type Database = {
         Returns: string
       }
       create_user_connection: {
-        Args: { p_community_id: string; p_other_id: string; p_user_id: string }
+        Args: { p_invitee_id: string; p_inviter_id: string }
         Returns: string
       }
       disablelongtransactions: { Args: never; Returns: string }
@@ -2567,7 +2557,7 @@ export type Database = {
         | "cancelled"
         | "proposed"
       resource_type: "offer" | "request" | "event"
-      user_connection_type: "invited_by"
+      user_connection_type: "invited"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2770,7 +2760,7 @@ export const Constants = {
         "proposed",
       ],
       resource_type: ["offer", "request", "event"],
-      user_connection_type: ["invited_by"],
+      user_connection_type: ["invited"],
     },
   },
 } as const

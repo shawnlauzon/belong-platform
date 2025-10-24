@@ -4,8 +4,7 @@ export interface UserConnection {
   id: string;
   userId: string;
   otherId: string;
-  communityId: string;
-  type: 'invited_by';
+  type: 'invited';
   strength: ConnectionStrength | null;
   createdAt: Date;
 }
@@ -17,6 +16,5 @@ export interface ConnectionSummary {
 
 export interface UpdateConnectionInput {
   otherId: string;
-  communityId: string;
   strength: ConnectionStrength | null;
 }

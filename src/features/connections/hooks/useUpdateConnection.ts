@@ -17,10 +17,10 @@ export function useUpdateConnection() {
       }
       return await updateConnection(supabase, currentUser.id, input);
     },
-    onSuccess: (_data, input) => {
+    onSuccess: () => {
       // Invalidate the user connections query to refetch with updated data
       queryClient.invalidateQueries({
-        queryKey: connectionKeys.userConnections(input.communityId),
+        queryKey: connectionKeys.userConnections(),
       });
     },
   });

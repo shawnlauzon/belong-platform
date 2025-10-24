@@ -77,7 +77,7 @@ export function useJoinCommunityWithCode() {
       });
 
       queryClient.invalidateQueries({
-        queryKey: connectionKeys.userConnections(newMembership.communityId),
+        queryKey: connectionKeys.userConnections(),
       });
 
       logger.info('🏘️ API: Successfully joined community with code', {

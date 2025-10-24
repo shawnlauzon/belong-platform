@@ -123,28 +123,10 @@ export async function joinCommunityWithCode(
 
     const membership = toDomainMembershipInfo(data);
 
-    // Create direct connection with the code owner
-    const { error: connectionError } = await supabase.rpc('create_user_connection', {
-      p_user_id: currentUserId,
-      p_other_id: memberCode.user_id,
-      p_community_id: communityId,
-    });
-
-    if (connectionError) {
-      logger.error('🏘️ API: Failed to create direct connection', {
-        error: connectionError,
-        communityId,
-        codeOwnerId: memberCode.user_id,
-        userId: currentUserId,
-      });
-      // Don't throw here - community join succeeded, connection is bonus
-    } else {
-      logger.debug('🏘️ API: Successfully created direct connection', {
-        communityId,
-        codeOwnerId: memberCode.user_id,
-        userId: currentUserId,
-      });
-    }
+    // Note: Connections are only created for new user signups with invitation codes
+    // (handled by handle_new_user trigger). Existing users joining communities
+    // do not create new connections since connections are platform-level relationships
+    // established at signup time.
 
     logger.debug('🏘️ API: Successfully joined community with code', {
       communityId,
