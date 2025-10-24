@@ -1,10 +1,5 @@
 import { faker } from '@faker-js/faker';
-import type {
-  InvitationCode,
-  UserConnection,
-  InvitationCodeRow,
-  UserConnectionRow,
-} from '../types';
+import type { InvitationCode, InvitationCodeRow } from '../types';
 
 export function createFakeInvitationCode(
   overrides?: Partial<InvitationCode>,
@@ -20,20 +15,6 @@ export function createFakeInvitationCode(
   };
 }
 
-export function createFakeUserConnection(
-  overrides?: Partial<UserConnection>,
-): UserConnection {
-  return {
-    id: faker.string.uuid(),
-    userId: faker.string.uuid(),
-    otherId: faker.string.uuid(),
-    communityId: faker.string.uuid(),
-    type: 'invited_by',
-    createdAt: faker.date.recent(),
-    ...overrides,
-  };
-}
-
 // Database row fakes
 export function createFakeInvitationCodeRow(
   overrides?: Partial<InvitationCodeRow>,
@@ -45,20 +26,6 @@ export function createFakeInvitationCodeRow(
     is_active: true,
     created_at: faker.date.recent().toISOString(),
     updated_at: faker.date.recent().toISOString(),
-    ...overrides,
-  };
-}
-
-export function createFakeUserConnectionRow(
-  overrides?: Partial<UserConnectionRow>,
-): UserConnectionRow {
-  return {
-    id: faker.string.uuid(),
-    user_id: faker.string.uuid(),
-    other_id: faker.string.uuid(),
-    community_id: faker.string.uuid(),
-    type: 'invited_by',
-    created_at: faker.date.recent().toISOString(),
     ...overrides,
   };
 }

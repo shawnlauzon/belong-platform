@@ -14,10 +14,10 @@ import {
   Shoutout,
   ShoutoutInput,
   createShoutout,
-  toDomainUserConnection,
 } from '@/features';
 import { getInvitationCode } from '@/features/invitations/api';
-import type { UserConnection } from '@/features/invitations/types';
+import { toDomainUserConnection } from '@/features/connections';
+import type { UserConnection } from '@/features/connections/types';
 
 // Test data prefix to identify test records
 export const TEST_PREFIX = 'test_int_';

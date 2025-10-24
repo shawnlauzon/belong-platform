@@ -9,15 +9,6 @@ export interface InvitationCode {
   updatedAt: Date;
 }
 
-export interface UserConnection {
-  id: string;
-  userId: string;
-  otherId: string;
-  communityId: string;
-  type: 'invited_by';
-  createdAt: Date;
-}
-
 export interface ProcessInvitationResponse {
   success: boolean;
   connectionId?: string;
@@ -25,11 +16,6 @@ export interface ProcessInvitationResponse {
   requiresJoinCommunity?: boolean;
   communityId?: string;
   communityName?: string;
-}
-
-export interface ConnectionSummary {
-  totalConnections: number;
-  recentConnections: UserConnection[];
 }
 
 export interface InvitationDetails {

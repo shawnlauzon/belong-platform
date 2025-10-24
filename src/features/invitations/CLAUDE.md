@@ -30,7 +30,7 @@ Unique code for joining a community.
 
 ### UserConnection
 
-Tracks invitation relationships between users.
+Tracks invitation relationships between users with trust assessment.
 
 **Key Fields:**
 - `id` - Connection ID
@@ -38,12 +38,25 @@ Tracks invitation relationships between users.
 - `otherId` - User who sent the invitation
 - `communityId` - Community context
 - `type` - Always `'invited_by'`
+- `strength` - Trust level (see ConnectionStrength below), `null` if not assessed
 - `createdAt` - When connection was created
 
 **Notes:**
 - Created when invitation code is used
 - Permanent record of invitation
 - One connection per user per community
+- `strength` defaults to `null` (not yet assessed)
+
+### ConnectionStrength
+
+Trust assessment levels for user connections:
+
+- `'trusted'` - "I know and trust them well"
+- `'positive'` - "Don't know them well but seems trustworthy"
+- `'neutral'` - "Don't know them well enough to say" / "No strong opinion"
+- `'negative'` - "Had a bad experience / don't trust them"
+- `'unknown'` - "Don't know them at all"
+- `null` - Not yet answered (default)
 
 ### InvitationDetails
 
@@ -105,6 +118,7 @@ When a code is used:
 - `useProcessInvitationCode()` - Process/redeem invitation code
 - `useInvitationDetails(code)` - Get details about an invitation code
 - `useUserConnections(userId?)` - Get connections for user
+- `useUpdateConnection()` - Update connection properties (currently: trust assessment)
 
 ### Key Functions
 - `fetchInvitationCode(supabase, communityId)` - Fetch user's code
@@ -112,6 +126,7 @@ When a code is used:
 - `processInvitationCode(supabase, code)` - Redeem invitation code
 - `fetchInvitationDetails(supabase, code)` - Get code details
 - `fetchUserConnections(supabase, userId)` - Get user's connections
+- `updateConnectionStrength(supabase, userId, otherId, communityId, strength)` - Update connection strength
 
 ## Important Patterns
 
@@ -180,6 +195,35 @@ connections?.recentConnections.forEach(conn => {
 
 // Get another user's connections
 const { data: userConns } = useUserConnections('user-id');
+```
+
+### Updating Connection Strength
+
+```typescript
+const updateConnection = useUpdateConnection();
+
+// Update trust assessment for a connection
+await updateConnection.mutateAsync({
+  otherId: 'user-id',
+  communityId: 'community-id',
+  strength: 'trusted' // or 'positive', 'neutral', 'negative', 'unknown', null
+});
+
+// Example: After accepting an invitation, prompt inviter to assess trust
+const handleAcceptInvitation = async (inviterId: string) => {
+  // ... invitation acceptance logic ...
+
+  // Prompt user to assess their connection
+  const strength = await promptUserForTrustLevel(); // UI implementation
+
+  if (strength) {
+    await updateConnection.mutateAsync({
+      otherId: inviterId,
+      communityId: currentCommunityId,
+      strength,
+    });
+  }
+};
 ```
 
 ### Sharing Codes

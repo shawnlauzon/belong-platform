@@ -1051,6 +1051,7 @@ export type Database = {
           created_at: string
           id: string
           other_id: string
+          strength: Database["public"]["Enums"]["connection_strength"] | null
           type: Database["public"]["Enums"]["user_connection_type"] | null
           user_id: string
         }
@@ -1059,6 +1060,7 @@ export type Database = {
           created_at?: string
           id?: string
           other_id: string
+          strength?: Database["public"]["Enums"]["connection_strength"] | null
           type?: Database["public"]["Enums"]["user_connection_type"] | null
           user_id: string
         }
@@ -1067,6 +1069,7 @@ export type Database = {
           created_at?: string
           id?: string
           other_id?: string
+          strength?: Database["public"]["Enums"]["connection_strength"] | null
           type?: Database["public"]["Enums"]["user_connection_type"] | null
           user_id?: string
         }
@@ -2504,6 +2507,12 @@ export type Database = {
     Enums: {
       commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
+      connection_strength:
+        | "trusted"
+        | "positive"
+        | "neutral"
+        | "negative"
+        | "unknown"
       conversation_type: "direct" | "community"
       notification_type:
         | "message.created"
@@ -2696,6 +2705,13 @@ export const Constants = {
     Enums: {
       commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],
+      connection_strength: [
+        "trusted",
+        "positive",
+        "neutral",
+        "negative",
+        "unknown",
+      ],
       conversation_type: ["direct", "community"],
       notification_type: [
         "message.created",

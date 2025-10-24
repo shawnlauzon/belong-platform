@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSupabase } from '@/shared';
 import { fetchUserConnections } from '../api';
-import { invitationKeys } from '../queries';
+import { connectionKeys } from '../queries';
 import type { UserConnection } from '../types';
 import { useCurrentUser } from '@/features/auth';
 
@@ -13,7 +13,7 @@ export function useUserConnections(
   const { data: currentUser } = useCurrentUser();
 
   return useQuery({
-    queryKey: invitationKeys.userConnections(communityId),
+    queryKey: connectionKeys.userConnections(communityId),
     queryFn: async (): Promise<UserConnection[]> => {
       if (!currentUser) {
         throw new Error('User not authenticated');

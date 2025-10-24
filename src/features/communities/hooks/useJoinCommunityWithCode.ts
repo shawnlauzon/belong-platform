@@ -5,6 +5,7 @@ import { joinCommunityWithCode } from '@/features/communities/api';
 import { communityMembersKeys, userCommunitiesKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 import { invitationKeys } from '@/features/invitations/queries';
+import { connectionKeys } from '@/features/connections/queries';
 import { useCurrentUser } from '@/features/auth';
 
 /**
@@ -76,7 +77,7 @@ export function useJoinCommunityWithCode() {
       });
 
       queryClient.invalidateQueries({
-        queryKey: invitationKeys.userConnections(newMembership.communityId),
+        queryKey: connectionKeys.userConnections(newMembership.communityId),
       });
 
       logger.info('🏘️ API: Successfully joined community with code', {

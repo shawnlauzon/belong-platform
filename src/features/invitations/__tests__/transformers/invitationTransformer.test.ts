@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  toDomainInvitationCode,
-  toDomainUserConnection,
-} from '../../transformers/invitationTransformer';
-import {
-  createFakeInvitationCodeRow,
-  createFakeUserConnectionRow,
-} from '../../__fakes__';
+import { toDomainInvitationCode } from '../../transformers/invitationTransformer';
+import { createFakeInvitationCodeRow } from '../../__fakes__';
 
 describe('invitationTransformer', () => {
   describe('toDomainInvitationCode', () => {
@@ -40,30 +34,6 @@ describe('invitationTransformer', () => {
       const result = toDomainInvitationCode(dbRow);
 
       expect(result.isActive).toBe(false);
-    });
-  });
-
-  describe('toDomainUserConnection', () => {
-    it('should transform database row to domain format', () => {
-      const dbRow = createFakeUserConnectionRow({
-        id: 'connection-123',
-        user_id: 'user-123',
-        other_id: 'user-456',
-        community_id: 'community-789',
-        type: 'invited_by',
-        created_at: '2024-01-01T12:00:00Z',
-      });
-
-      const result = toDomainUserConnection(dbRow);
-
-      expect(result).toEqual({
-        id: 'connection-123',
-        userId: 'user-123',
-        otherId: 'user-456',
-        communityId: 'community-789',
-        type: 'invited_by',
-        createdAt: new Date('2024-01-01T12:00:00Z'),
-      });
     });
   });
 });
