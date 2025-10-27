@@ -243,7 +243,7 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', testUser.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
@@ -276,7 +276,7 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', testUser.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(0);

@@ -306,16 +306,13 @@ describe('Push Subscriptions', () => {
         auth_key: mockSubscription2.auth_key,
       });
 
-      // anotherUser tries to delete testUser's subscription (should fail with RLS)
-      const { error } = await supabase
+      // anotherUser tries to delete testUser's subscription (RLS silently filters, no error)
+      await supabase
         .from('push_subscriptions')
         .delete()
         .eq('id', testUserSub!.id);
 
-      // RLS should prevent this
-      expect(error).not.toBeNull();
-
-      // Verify testUser's subscription still exists
+      // Verify testUser's subscription still exists (RLS prevented the delete)
       await signInAsUser(supabase, testUser);
       const { data: stillExists } = await supabase
         .from('push_subscriptions')
