@@ -236,28 +236,28 @@ CREATE TABLE notification_preferences (
 
   -- Per-type preferences (JSONB with {in_app: boolean, push: boolean, email: boolean})
   -- Comments
-  "comment.replied" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.commented" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  comment_replied JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_commented JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   -- Claims
-  "claim.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "claim.cancelled" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "claim.responded" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  claim_created JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  claim_cancelled JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  claim_responded JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   -- Transaction confirmation
-  "resource.given" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_given JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_received JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   -- Resources & Events
-  "resource.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "event.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "event.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "event.cancelled" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.expiring" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "event.starting" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_created JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  event_created JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_updated JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  event_updated JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  event_cancelled JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  resource_expiring JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  event_starting JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   -- Social
-  "message.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "conversation.requested" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "shoutout.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "membership.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  message_received JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  conversation_requested JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  shoutout_received JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  membership_updated JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -403,17 +403,24 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  prefs RECORD;
+  prefs JSONB;
   type_pref JSONB;
-  action_val TEXT;
+  notification_type_val TEXT;
+  push_enabled_val BOOLEAN;
 BEGIN
-  -- Get user preferences
-  SELECT * INTO prefs
-  FROM notification_preferences
+  -- Get user preferences as JSONB
+  SELECT to_jsonb(np.*) INTO prefs
+  FROM notification_preferences np
   WHERE user_id = p_user_id;
 
-  -- If no preferences or push disabled globally, don't send
-  IF prefs IS NULL OR prefs.push_enabled = false THEN
+  -- If no preferences, default to true
+  IF prefs IS NULL THEN
+    RETURN true;
+  END IF;
+
+  -- Check global push enabled flag
+  push_enabled_val := (prefs->>'push_enabled')::boolean;
+  IF push_enabled_val = false THEN
     RETURN false;
   END IF;
 
@@ -423,17 +430,25 @@ BEGIN
   END IF;
 
   -- Look up notification type from action
-  SELECT notification_type INTO action_val
+  SELECT notification_type INTO notification_type_val
   FROM action_to_notification_type_mapping
   WHERE action = p_action;
 
   -- If no mapping found, default to true
-  IF action_val IS NULL THEN
+  IF notification_type_val IS NULL THEN
     RETURN true;
   END IF;
 
-  -- Get type-specific preference
-  EXECUTE format('SELECT $1.%I', action_val) INTO type_pref USING prefs;
+  -- Replace dots with underscores to match column names
+  notification_type_val := replace(notification_type_val, '.', '_');
+
+  -- Get type-specific preference using JSONB accessor
+  type_pref := prefs -> notification_type_val;
+
+  -- If preference not found, default to true
+  IF type_pref IS NULL THEN
+    RETURN true;
+  END IF;
 
   -- Check if push is enabled for this notification type
   RETURN (type_pref->>'push')::boolean = true;
@@ -493,13 +508,13 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  prefs RECORD;
+  prefs JSONB;
   type_pref JSONB;
   notification_type_val TEXT;
 BEGIN
-  -- Get user preferences
-  SELECT * INTO prefs
-  FROM notification_preferences
+  -- Get user preferences as JSONB
+  SELECT to_jsonb(np.*) INTO prefs
+  FROM notification_preferences np
   WHERE user_id = p_user_id;
 
   -- If no preferences exist, default to true (create notification)
@@ -522,8 +537,16 @@ BEGIN
     RETURN true;
   END IF;
 
-  -- Get type-specific preference
-  EXECUTE format('SELECT $1.%I', notification_type_val) INTO type_pref USING prefs;
+  -- Replace dots with underscores to match column names
+  notification_type_val := replace(notification_type_val, '.', '_');
+
+  -- Get type-specific preference using JSONB accessor
+  type_pref := prefs -> notification_type_val;
+
+  -- If preference not found, default to true
+  IF type_pref IS NULL THEN
+    RETURN true;
+  END IF;
 
   -- Check if in_app is enabled for this notification type
   RETURN (type_pref->>'in_app')::boolean = true;
@@ -1055,30 +1078,46 @@ DECLARE
   participant_id UUID;
   notification_id UUID;
 BEGIN
-  -- Notify all participants except the creator (fixed: use initiator_id instead of created_by)
+  RAISE NOTICE 'notify_on_new_conversation: Starting for conversation %', NEW.id;
+  RAISE NOTICE 'notify_on_new_conversation: NEW.initiator_id = %', NEW.initiator_id;
+
+  -- Notify all participants except the creator (fixed: use initiator_id instead of created_by, check in_app)
   FOR participant_id IN
     SELECT user_id
     FROM conversation_participants
     WHERE conversation_id = NEW.id
       AND user_id != NEW.initiator_id
   LOOP
-    notification_id := create_notification_base(
-      p_user_id := participant_id,
-      p_action := 'conversation.requested',
-      p_actor_id := NEW.initiator_id,
-      p_conversation_id := NEW.id
-    );
+    RAISE NOTICE 'notify_on_new_conversation: Processing participant %', participant_id;
 
-    PERFORM send_push_notification_async(
-      participant_id,
-      notification_id,
-      'conversation.requested',
-      'New conversation',
-      'Someone started a conversation with you'
-    );
+    IF should_create_in_app_notification(participant_id, 'conversation.requested') THEN
+      RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', participant_id;
+
+      notification_id := create_notification_base(
+        p_user_id := participant_id,
+        p_action := 'conversation.requested',
+        p_actor_id := NEW.initiator_id,
+        p_conversation_id := NEW.id
+      );
+
+      PERFORM send_push_notification_async(
+        participant_id,
+        notification_id,
+        'conversation.requested',
+        'New conversation',
+        'Someone started a conversation with you'
+      );
+    ELSE
+      RAISE NOTICE 'notify_on_new_conversation: Skipping notification (in_app disabled) for participant %', participant_id;
+    END IF;
   END LOOP;
 
+  RAISE NOTICE 'notify_on_new_conversation: Completed successfully';
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'notify_on_new_conversation: ERROR - % %', SQLERRM, SQLSTATE;
+    RAISE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -1088,27 +1127,29 @@ DECLARE
   participant_id UUID;
   notification_id UUID;
 BEGIN
-  -- Notify all participants except the sender
+  -- Notify all participants except the sender (only if in_app enabled)
   FOR participant_id IN
     SELECT user_id
     FROM conversation_participants
     WHERE conversation_id = NEW.conversation_id
       AND user_id != NEW.sender_id
   LOOP
-    notification_id := create_notification_base(
-      p_user_id := participant_id,
-      p_action := 'message.received',
-      p_actor_id := NEW.sender_id,
-      p_conversation_id := NEW.conversation_id
-    );
+    IF should_create_in_app_notification(participant_id, 'message.received') THEN
+      notification_id := create_notification_base(
+        p_user_id := participant_id,
+        p_action := 'message.received',
+        p_actor_id := NEW.sender_id,
+        p_conversation_id := NEW.conversation_id
+      );
 
-    PERFORM send_push_notification_async(
-      participant_id,
-      notification_id,
-      'message.received',
-      'New message',
-      'You received a new message'
-    );
+      PERFORM send_push_notification_async(
+        participant_id,
+        notification_id,
+        'message.received',
+        'New message',
+        'You received a new message'
+      );
+    END IF;
   END LOOP;
 
   RETURN NEW;
@@ -1129,8 +1170,10 @@ RETURNS TRIGGER AS $$
 DECLARE
   notification_id UUID;
 BEGIN
-  -- Notify the recipient (fixed: use receiver_id instead of to_user_id)
-  IF NEW.receiver_id IS NOT NULL AND NEW.receiver_id != NEW.sender_id THEN
+  -- Notify the recipient (fixed: use receiver_id instead of to_user_id, check in_app)
+  IF NEW.receiver_id IS NOT NULL
+     AND NEW.receiver_id != NEW.sender_id
+     AND should_create_in_app_notification(NEW.receiver_id, 'shoutout.received') THEN
     notification_id := create_notification_base(
       p_user_id := NEW.receiver_id,
       p_action := 'shoutout.received',
@@ -1620,7 +1663,10 @@ CREATE TRIGGER notify_on_resource_community_insert_trigger
   FOR EACH ROW
   EXECUTE FUNCTION notify_on_resource_community_insert();
 
--- Add missing conversation INSERT trigger
+-- Drop old conversation trigger on conversation_participants table
+DROP TRIGGER IF EXISTS conversation_creation_notification_trigger ON conversation_participants;
+
+-- Add new conversation INSERT trigger on conversations table
 CREATE TRIGGER notify_on_conversation_insert_trigger
   AFTER INSERT ON conversations
   FOR EACH ROW

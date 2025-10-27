@@ -66,7 +66,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
       await supabase
         .from('notification_preferences')
         .update({
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: false,
             email: false,
@@ -88,18 +88,18 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
-      expect(notifications![0].type).toBe('resource.commented');
+      expect(notifications![0].action).toBe('resource.commented');
     });
 
     it('does not deliver in-app notification when type preference in_app is false', async () => {
       await supabase
         .from('notification_preferences')
         .update({
-          'resource.commented': {
+          resource_commented: {
             in_app: false,
             push: false,
             email: false,
@@ -121,7 +121,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(0);
@@ -144,7 +144,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           push_enabled: true,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: true,
             email: false,
@@ -155,12 +155,12 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
       // Verify preference setup
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('push_enabled, "resource.commented"')
+        .select('push_enabled, resource_commented')
         .eq('user_id', resourceOwner.id)
         .single();
 
       expect(prefs!.push_enabled).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).push).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).push).toBe(true);
 
       // Note: Actual push delivery verification would require
       // checking edge function invocation logs or push_notifications table
@@ -204,11 +204,11 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('"resource.commented"')
+        .select('resource_commented')
         .eq('user_id', resourceOwner.id)
         .single();
 
-      const channelPrefs = parseChannelPreferences(prefs!['resource.commented']);
+      const channelPrefs = parseChannelPreferences(prefs!.resource_commented);
       expect(channelPrefs.push).toBe(false);
       // Push should NOT be sent
     });
@@ -259,7 +259,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           push_enabled: true,
-          'event.cancelled': {
+          event_cancelled: {
             in_app: true,
             push: false, // User disabled it, but should still push (critical)
             email: false,
@@ -283,7 +283,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
       // Verify push would be sent despite type preference
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('push_enabled, "event.cancelled"')
+        .select('push_enabled, event_cancelled')
         .eq('user_id', resourceOwner.id)
         .single();
 
@@ -296,7 +296,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           push_enabled: false, // Global switch off
-          'event.cancelled': {
+          event_cancelled: {
             in_app: true,
             push: true,
             email: false,
@@ -321,7 +321,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           email_enabled: true,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: false,
             email: true,
@@ -331,12 +331,12 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('email_enabled, "resource.commented"')
+        .select('email_enabled, resource_commented')
         .eq('user_id', resourceOwner.id)
         .single();
 
       expect(prefs!.email_enabled).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).email).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).email).toBe(true);
       // Email should be sent
     });
 
@@ -345,7 +345,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           email_enabled: false,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: false,
             email: true, // Type allows it, but global switch is off
@@ -368,7 +368,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .from('notification_preferences')
         .update({
           email_enabled: true, // Global switch on
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: false,
             email: false, // But type disables it
@@ -378,11 +378,11 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('"resource.commented"')
+        .select('resource_commented')
         .eq('user_id', resourceOwner.id)
         .single();
 
-      expect((prefs!['resource.commented'] as Record<string, unknown>).email).toBe(false);
+      expect((prefs!.resource_commented as Record<string, unknown>).email).toBe(false);
       // Email should NOT be sent
     });
   });
@@ -401,7 +401,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .update({
           push_enabled: true,
           email_enabled: true,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: true,
             email: true,
@@ -417,9 +417,9 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       expect(prefs!.push_enabled).toBe(true);
       expect(prefs!.email_enabled).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).in_app).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).push).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).email).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).in_app).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).push).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).email).toBe(true);
       // All three channels should deliver
     });
 
@@ -429,7 +429,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .update({
           push_enabled: false,
           email_enabled: true,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: true,
             email: false,
@@ -444,9 +444,9 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .single();
 
       // Only in-app should deliver (push disabled globally, email disabled for type)
-      expect((prefs!['resource.commented'] as Record<string, unknown>).in_app).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).in_app).toBe(true);
       expect(prefs!.push_enabled).toBe(false); // Push blocked by global switch
-      expect((prefs!['resource.commented'] as Record<string, unknown>).email).toBe(false); // Email blocked by type pref
+      expect((prefs!.resource_commented as Record<string, unknown>).email).toBe(false); // Email blocked by type pref
     });
 
     it('supports different channel combinations per notification type', async () => {
@@ -455,12 +455,12 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
         .update({
           push_enabled: true,
           email_enabled: true,
-          'resource.commented': {
+          resource_commented: {
             in_app: true,
             push: true,
             email: false,
           },
-          'claim.created': {
+          claim_created: {
             in_app: true,
             push: false,
             email: true,
@@ -470,19 +470,19 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('"resource.commented", "claim.created"')
+        .select('resource_commented, claim_created')
         .eq('user_id', resourceOwner.id)
         .single();
 
       // resource.commented: in-app + push
-      expect((prefs!['resource.commented'] as Record<string, unknown>).in_app).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).push).toBe(true);
-      expect((prefs!['resource.commented'] as Record<string, unknown>).email).toBe(false);
+      expect((prefs!.resource_commented as Record<string, unknown>).in_app).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).push).toBe(true);
+      expect((prefs!.resource_commented as Record<string, unknown>).email).toBe(false);
 
       // claim.created: in-app + email
-      expect((prefs!['claim.created'] as Record<string, unknown>).in_app).toBe(true);
-      expect((prefs!['claim.created'] as Record<string, unknown>).push).toBe(false);
-      expect((prefs!['claim.created'] as Record<string, unknown>).email).toBe(true);
+      expect((prefs!.claim_created as Record<string, unknown>).in_app).toBe(true);
+      expect((prefs!.claim_created as Record<string, unknown>).push).toBe(false);
+      expect((prefs!.claim_created as Record<string, unknown>).email).toBe(true);
     });
   });
 });
