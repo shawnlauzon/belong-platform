@@ -25,14 +25,16 @@ describe('Push Subscriptions', () => {
   // Fake push subscription data (simulating browser Web Push API)
   const mockSubscription1 = {
     endpoint: 'https://fcm.googleapis.com/fcm/send/test-endpoint-1',
-    p256dh_key: 'BM7w1Q2eJp8K3vX4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2',
+    p256dh_key:
+      'BM7w1Q2eJp8K3vX4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2',
     auth_key: 'auth-key-test-1',
     user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
   };
 
   const mockSubscription2 = {
     endpoint: 'https://fcm.googleapis.com/fcm/send/test-endpoint-2',
-    p256dh_key: 'BN8x2R3fKq9L4wY5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z3',
+    p256dh_key:
+      'BN8x2R3fKq9L4wY5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z3',
     auth_key: 'auth-key-test-2',
     user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
   };
@@ -105,8 +107,12 @@ describe('Push Subscriptions', () => {
         .eq('user_id', testUser.id);
 
       expect(subscriptions).toHaveLength(2);
-      expect(subscriptions!.map(s => s.endpoint)).toContain(mockSubscription1.endpoint);
-      expect(subscriptions!.map(s => s.endpoint)).toContain(mockSubscription2.endpoint);
+      expect(subscriptions!.map((s) => s.endpoint)).toContain(
+        mockSubscription1.endpoint,
+      );
+      expect(subscriptions!.map((s) => s.endpoint)).toContain(
+        mockSubscription2.endpoint,
+      );
     });
 
     it('allows optional user_agent field', async () => {
@@ -150,7 +156,8 @@ describe('Push Subscriptions', () => {
     });
 
     it('allows same endpoint for different users', async () => {
-      const sharedEndpoint = 'https://fcm.googleapis.com/fcm/send/shared-endpoint';
+      const sharedEndpoint =
+        'https://fcm.googleapis.com/fcm/send/shared-endpoint';
 
       // testUser subscribes
       await supabase.from('push_subscriptions').insert({
@@ -161,7 +168,7 @@ describe('Push Subscriptions', () => {
       });
 
       // anotherUser subscribes to same endpoint (different device type, etc.)
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
       const { data: subscription2, error } = await supabase
         .from('push_subscriptions')
         .insert({
@@ -291,7 +298,7 @@ describe('Push Subscriptions', () => {
         .single();
 
       // anotherUser creates subscription
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
       await supabase.from('push_subscriptions').insert({
         user_id: anotherUser.id,
         endpoint: 'https://fcm.googleapis.com/fcm/send/another-user',

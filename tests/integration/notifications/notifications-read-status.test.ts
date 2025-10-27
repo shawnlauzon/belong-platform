@@ -72,7 +72,7 @@ describe('Notification Read Status', () => {
 
       const commentNotification = notifications.find(
         (n) =>
-          n.type === 'resource.commented' &&
+          n.action === 'resource.commented' &&
           n.resourceId === resource.id &&
           n.actorId === anotherUser.id,
       );
@@ -388,10 +388,10 @@ describe('Notification Read Status', () => {
       });
 
       const commentNotification = unreadNotifications.find(
-        (n) => n.type === 'resource.commented',
+        (n) => n.action === 'resource.commented',
       );
       const shoutoutNotification = unreadNotifications.find(
-        (n) => n.type === 'shoutout.received',
+        (n) => n.action === 'shoutout.received',
       );
 
       expect(commentNotification).toBeDefined();
