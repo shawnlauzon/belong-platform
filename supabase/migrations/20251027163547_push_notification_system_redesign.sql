@@ -512,7 +512,10 @@ BEGIN
         p_actor_id := NEW.author_id,
         p_resource_id := NEW.resource_id,
         p_comment_id := NEW.id,
-        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
+        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+        p_metadata := jsonb_build_object(
+          'content_preview', LEFT(NEW.content, 200)
+        )
       );
 
       -- Send push notification
@@ -529,14 +532,17 @@ BEGIN
   -- Notify resource owner (if not commenter and not already notified as parent author)
   IF resource_owner_id IS NOT NULL
      AND resource_owner_id != NEW.author_id
-     AND resource_owner_id != parent_comment_author_id THEN
+     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id) THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'resource.commented',
       p_actor_id := NEW.author_id,
       p_resource_id := NEW.resource_id,
       p_comment_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
+      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+      p_metadata := jsonb_build_object(
+        'content_preview', LEFT(NEW.content, 200)
+      )
     );
 
     -- Send push notification
@@ -1200,8 +1206,8 @@ BEGIN
       p_community_id := p_community_id,
       p_metadata := jsonb_build_object(
         'amount', p_points_change,
-        'old_score', old_score,
-        'new_score', new_score,
+        'old_level', old_score,
+        'new_level', new_score,
         'reason', p_action_type::text
       )
     );

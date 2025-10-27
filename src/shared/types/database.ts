@@ -2646,6 +2646,17 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_trust_score: {
+        Args: {
+          p_action_id: string
+          p_action_type: Database["public"]["Enums"]["action_type"]
+          p_community_id: string
+          p_metadata?: Json
+          p_points_change: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -2677,6 +2688,7 @@ export type Database = {
         | "claim.approved"
         | "claim.rejected"
         | "claim.cancelled"
+        | "claim.completed"
         | "resource.given"
         | "resource.received"
         | "resource.created"
@@ -2689,6 +2701,7 @@ export type Database = {
         | "message.received"
         | "conversation.requested"
         | "shoutout.received"
+        | "shoutout.sent"
         | "member.joined"
         | "member.left"
         | "trustlevel.changed"
@@ -2874,6 +2887,7 @@ export const Constants = {
         "claim.approved",
         "claim.rejected",
         "claim.cancelled",
+        "claim.completed",
         "resource.given",
         "resource.received",
         "resource.created",
@@ -2886,6 +2900,7 @@ export const Constants = {
         "message.received",
         "conversation.requested",
         "shoutout.received",
+        "shoutout.sent",
         "member.joined",
         "member.left",
         "trustlevel.changed",
