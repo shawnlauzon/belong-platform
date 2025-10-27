@@ -82,12 +82,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.commented',
+        action: 'resource.commented',
         user_id: resourceOwner.id,
         actor_id: commenter.id,
         resource_id: resource.id,
@@ -125,12 +125,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', commenter.id)
-        .eq('type', 'comment.replied')
+        .eq('action', 'comment.replied')
         .eq('comment_id', reply.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'comment.replied',
+        action: 'comment.replied',
         user_id: commenter.id,
         actor_id: claimant.id,
         comment_id: reply.id,
@@ -162,12 +162,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'claim.created')
+        .eq('action', 'claim.created')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'claim.created',
+        action: 'claim.created',
         user_id: resourceOwner.id,
         actor_id: claimant.id,
         resource_id: resource.id,
@@ -203,12 +203,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'claim.cancelled')
+        .eq('action', 'claim.cancelled')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'claim.cancelled',
+        action: 'claim.cancelled',
         user_id: resourceOwner.id,
         actor_id: claimant.id,
         claim_id: claim.id,
@@ -216,7 +216,7 @@ describe('All 19 Notification Types', () => {
       });
     });
 
-    it('claim.responded - notifies claimant when owner approves/rejects', async () => {
+    it('claim.approved - notifies claimant when owner approves', async () => {
       const resource = await createTestResource(
         supabase,
         testCommunity.id,
@@ -241,12 +241,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'claim.responded')
+        .eq('action', 'claim.approved')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'claim.responded',
+        action: 'claim.approved',
         user_id: claimant.id,
         actor_id: resourceOwner.id,
         claim_id: claim.id,
@@ -287,12 +287,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.given')
+        .eq('action', 'resource.given')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.given',
+        action: 'resource.given',
         user_id: claimant.id,
         actor_id: resourceOwner.id,
         claim_id: claim.id,
@@ -327,12 +327,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.received')
+        .eq('action', 'resource.received')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.received',
+        action: 'resource.received',
         user_id: resourceOwner.id,
         actor_id: claimant.id,
         claim_id: claim.id,
@@ -357,12 +357,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.created')
+        .eq('action', 'resource.created')
         .eq('resource_id', resource.id);
 
       expect(notifications!.length).toBeGreaterThan(0);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.created',
+        action: 'resource.created',
         actor_id: commenter.id,
         resource_id: resource.id,
         community_id: testCommunity.id,
@@ -384,12 +384,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'event.created')
+        .eq('action', 'event.created')
         .eq('resource_id', event.id);
 
       expect(notifications!.length).toBeGreaterThan(0);
       expect(notifications![0]).toMatchObject({
-        type: 'event.created',
+        action: 'event.created',
         actor_id: commenter.id,
         resource_id: event.id,
         community_id: testCommunity.id,
@@ -425,12 +425,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.updated')
+        .eq('action', 'resource.updated')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.updated',
+        action: 'resource.updated',
         user_id: claimant.id,
         actor_id: resourceOwner.id,
         resource_id: resource.id,
@@ -466,12 +466,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'event.updated')
+        .eq('action', 'event.updated')
         .eq('resource_id', event.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'event.updated',
+        action: 'event.updated',
         user_id: claimant.id,
         actor_id: resourceOwner.id,
         resource_id: event.id,
@@ -507,12 +507,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'event.cancelled')
+        .eq('action', 'event.cancelled')
         .eq('resource_id', event.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'event.cancelled',
+        action: 'event.cancelled',
         user_id: claimant.id,
         actor_id: resourceOwner.id,
         resource_id: event.id,
@@ -530,7 +530,7 @@ describe('All 19 Notification Types', () => {
       // Simulate expiry notification (typically triggered by scheduled job)
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'resource.expiring',
+        action: 'resource.expiring',
         resource_id: resource.id,
         community_id: testCommunity.id,
         actor_id: null, // System notification
@@ -540,12 +540,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.expiring')
+        .eq('action', 'resource.expiring')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.expiring',
+        action: 'resource.expiring',
         user_id: resourceOwner.id,
         actor_id: null,
         resource_id: resource.id,
@@ -572,14 +572,14 @@ describe('All 19 Notification Types', () => {
       await supabase.from('notifications').insert([
         {
           user_id: resourceOwner.id,
-          type: 'event.starting',
+          action: 'event.starting',
           resource_id: event.id,
           community_id: testCommunity.id,
           actor_id: null,
         },
         {
           user_id: claimant.id,
-          type: 'event.starting',
+          action: 'event.starting',
           resource_id: event.id,
           community_id: testCommunity.id,
           actor_id: null,
@@ -591,7 +591,7 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'event.starting')
+        .eq('action', 'event.starting')
         .eq('resource_id', event.id);
 
       expect(ownerNotifications).toHaveLength(1);
@@ -601,7 +601,7 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'event.starting')
+        .eq('action', 'event.starting')
         .eq('resource_id', event.id);
 
       expect(participantNotifications).toHaveLength(1);
@@ -629,12 +629,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'message.received')
+        .eq('action', 'message.received')
         .eq('conversation_id', conversation.id);
 
       expect(notifications!.length).toBeGreaterThan(0);
       expect(notifications![0]).toMatchObject({
-        type: 'message.received',
+        action: 'message.received',
         user_id: resourceOwner.id,
         actor_id: commenter.id,
         conversation_id: conversation.id,
@@ -654,12 +654,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'conversation.requested')
+        .eq('action', 'conversation.requested')
         .eq('conversation_id', conversation.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'conversation.requested',
+        action: 'conversation.requested',
         user_id: claimant.id,
         actor_id: commenter.id,
         conversation_id: conversation.id,
@@ -686,12 +686,12 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'shoutout.received')
+        .eq('action', 'shoutout.received')
         .eq('shoutout_id', shoutout.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'shoutout.received',
+        action: 'shoutout.received',
         user_id: resourceOwner.id,
         actor_id: commenter.id,
         shoutout_id: shoutout.id,
@@ -699,7 +699,7 @@ describe('All 19 Notification Types', () => {
       });
     });
 
-    it('membership.updated - notifies organizers when member joins', async () => {
+    it('member.joined - notifies organizers when member joins', async () => {
       const newUser = await createTestUser(supabase);
 
       // New user joins community
@@ -712,13 +712,13 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'membership.updated')
+        .eq('action', 'member.joined')
         .eq('community_id', testCommunity.id)
         .eq('actor_id', newUser.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'membership.updated',
+        action: 'member.joined',
         user_id: resourceOwner.id,
         actor_id: newUser.id,
         community_id: testCommunity.id,
@@ -731,7 +731,7 @@ describe('All 19 Notification Types', () => {
       expect(metadata.action).toBe('joined');
     });
 
-    it('membership.updated - notifies organizers when member leaves', async () => {
+    it('member.left - notifies organizers when member leaves', async () => {
       // Commenter leaves community
       await signIn(supabase, commenter.email, 'TestPass123!');
       await leaveCommunity(supabase, commenter.id, testCommunity.id);
@@ -743,25 +743,26 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'membership.updated')
+        .eq('action', 'member.left')
         .eq('community_id', testCommunity.id)
         .eq('actor_id', commenter.id);
 
       expect(notifications!.length).toBeGreaterThan(0);
 
-      const leaveNotification = notifications!.find((n) => {
-        const metadata = n.metadata as unknown as MembershipMetadata;
-        return metadata?.action === 'left';
-      });
+      const leaveNotification = notifications![0];
 
       expect(leaveNotification).toBeDefined();
       expect(leaveNotification).toMatchObject({
-        type: 'membership.updated',
+        action: 'member.left',
         user_id: resourceOwner.id,
         actor_id: commenter.id,
         community_id: testCommunity.id,
         read_at: null,
       });
+
+      // Verify metadata contains action
+      const metadata = leaveNotification.metadata as unknown as MembershipMetadata;
+      expect(metadata.action).toBe('left');
     });
   });
 
@@ -770,7 +771,7 @@ describe('All 19 Notification Types', () => {
       // Simulate trust level change (typically triggered by trust score calculation)
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'trustlevel.changed',
+        action: 'trustlevel.changed',
         actor_id: null, // System notification
         metadata: {
           old_level: 1,
@@ -782,11 +783,11 @@ describe('All 19 Notification Types', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'trustlevel.changed');
+        .eq('action', 'trustlevel.changed');
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'trustlevel.changed',
+        action: 'trustlevel.changed',
         user_id: resourceOwner.id,
         actor_id: null,
         read_at: null,

@@ -78,7 +78,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'claim.responded')
+        .eq('action', 'claim.approved')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
@@ -107,7 +107,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'claim.responded')
+        .eq('action', 'claim.rejected')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
@@ -131,7 +131,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'membership.updated')
+        .eq('action', 'member.joined')
         .eq('community_id', testCommunity.id)
         .eq('actor_id', newMember.id);
 
@@ -152,18 +152,13 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'membership.updated')
+        .eq('action', 'member.left')
         .eq('community_id', testCommunity.id)
         .eq('actor_id', claimant.id);
 
-      const leftNotifications = notifications!.filter(n => {
-        const metadata = n.metadata as unknown as MembershipMetadata;
-        return metadata?.action === 'left';
-      });
+      expect(notifications!.length).toBeGreaterThan(0);
 
-      expect(leftNotifications.length).toBeGreaterThan(0);
-
-      const metadata = leftNotifications[0].metadata as unknown as MembershipMetadata;
+      const metadata = notifications![0].metadata as unknown as MembershipMetadata;
       expect(metadata.action).toBe('left');
     });
   });
@@ -195,7 +190,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.updated')
+        .eq('action', 'resource.updated')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
@@ -231,7 +226,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.updated')
+        .eq('action', 'resource.updated')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
@@ -247,7 +242,7 @@ describe('Notification Metadata Structures', () => {
       // Simulate trust level change notification
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'trustlevel.changed',
+        action: 'trustlevel.changed',
         actor_id: null, // System notification
         metadata: {
           old_level: 1,
@@ -259,7 +254,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'trustlevel.changed');
+        .eq('action', 'trustlevel.changed');
 
       expect(notifications!.length).toBeGreaterThan(0);
 
@@ -272,7 +267,7 @@ describe('Notification Metadata Structures', () => {
     it('handles level decrease (old_level > new_level)', async () => {
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'trustlevel.changed',
+        action: 'trustlevel.changed',
         actor_id: null,
         metadata: {
           old_level: 3,
@@ -284,7 +279,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'trustlevel.changed')
+        .eq('action', 'trustlevel.changed')
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -312,7 +307,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
@@ -342,7 +337,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       expect(notifications).toHaveLength(1);
@@ -358,7 +353,7 @@ describe('Notification Metadata Structures', () => {
     it('preserves metadata structure across queries', async () => {
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'trustlevel.changed',
+        action: 'trustlevel.changed',
         actor_id: null,
         metadata: {
           old_level: 1,
@@ -371,7 +366,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('metadata')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'trustlevel.changed')
+        .eq('action', 'trustlevel.changed')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -380,7 +375,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('metadata')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'trustlevel.changed')
+        .eq('action', 'trustlevel.changed')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -403,7 +398,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.commented')
+        .eq('action', 'resource.commented')
         .eq('resource_id', resource.id);
 
       // Metadata can be null or contain data depending on implementation
@@ -426,7 +421,7 @@ describe('Notification Metadata Structures', () => {
 
       await supabase.from('notifications').insert({
         user_id: resourceOwner.id,
-        type: 'resource.updated',
+        action: 'resource.updated',
         actor_id: claimant.id,
         metadata: complexMetadata,
       });
@@ -435,7 +430,7 @@ describe('Notification Metadata Structures', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id)
-        .eq('type', 'resource.updated')
+        .eq('action', 'resource.updated')
         .order('created_at', { ascending: false })
         .limit(1);
 
