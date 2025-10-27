@@ -302,12 +302,12 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
       // Actual push delivery would be tested in notifications-channels.test.ts
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('push_enabled, "claim.created"')
+        .select('push_enabled, claim_created')
         .eq('user_id', testUser.id)
         .single();
 
       expect(prefs!.push_enabled).toBe(true);
-      expect(parseChannelPreferences(prefs!['claim.created']).push).toBe(true);
+      expect(parseChannelPreferences(prefs!.claim_created).push).toBe(true);
     });
 
     it('does not send push when push_enabled=false (even if type preference push=true)', async () => {
@@ -350,12 +350,12 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('push_enabled, "claim.created"')
+        .select('push_enabled, claim_created')
         .eq('user_id', testUser.id)
         .single();
 
       expect(prefs!.push_enabled).toBe(true);
-      expect(parseChannelPreferences(prefs!['claim.created']).push).toBe(false);
+      expect(parseChannelPreferences(prefs!.claim_created).push).toBe(false);
       // Push should NOT be sent
     });
   });
@@ -376,12 +376,12 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('email_enabled, "shoutout.received"')
+        .select('email_enabled, shoutout_received')
         .eq('user_id', testUser.id)
         .single();
 
       expect(prefs!.email_enabled).toBe(true);
-      expect(parseChannelPreferences(prefs!['shoutout.received']).email).toBe(true);
+      expect(parseChannelPreferences(prefs!.shoutout_received).email).toBe(true);
     });
 
     it('does not send email when email_enabled=false', async () => {
@@ -450,11 +450,11 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
-        .select('"resource.commented"')
+        .select('resource_commented')
         .eq('user_id', testUser.id)
         .single();
 
-      const typedPrefs = parseChannelPreferences(prefs!['resource.commented']);
+      const typedPrefs = parseChannelPreferences(prefs!.resource_commented);
       expect(typedPrefs.in_app).toBe(true);
       expect(typedPrefs.push).toBe(false);
       expect(typedPrefs.email).toBe(true);

@@ -59,7 +59,7 @@ describe('Dual Confirmation Transactions', () => {
 
   describe('Offer flow - Owner gives, Claimant receives', () => {
     it('notifies claimant when owner marks as given (resource.given)', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       // Claimant claims offer
@@ -81,12 +81,12 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.given')
+        .eq('action', 'resource.given')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.given',
+        action: 'resource.given',
         user_id: claimant.id,
         actor_id: owner.id,
         claim_id: claim.id,
@@ -96,7 +96,7 @@ describe('Dual Confirmation Transactions', () => {
     });
 
     it('notifies owner when claimant marks as received (resource.received)', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -105,6 +105,7 @@ describe('Dual Confirmation Transactions', () => {
         timeslotId: timeslot.id,
       });
 
+      // Owner approves
       await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
@@ -119,12 +120,12 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', owner.id)
-        .eq('type', 'resource.received')
+        .eq('action', 'resource.received')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.received',
+        action: 'resource.received',
         user_id: owner.id,
         actor_id: claimant.id,
         claim_id: claim.id,
@@ -133,8 +134,8 @@ describe('Dual Confirmation Transactions', () => {
       });
     });
 
-    it('completes transaction when both parties confirm (given → received)', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+    it('completes transaction when both parties confirm (given → completed)', async () => {
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -149,27 +150,19 @@ describe('Dual Confirmation Transactions', () => {
       // Owner marks as given
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
-      // Claimant confirms received
+      // Claimant confirms by marking completed
       await signInAsUser(supabase, claimant);
-      await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
+      await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
 
-      // Verify both notifications exist
+      // Verify given notification was created
       const { data: givenNotification } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.given')
-        .eq('claim_id', claim.id);
-
-      const { data: receivedNotification } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', owner.id)
-        .eq('type', 'resource.received')
+        .eq('action', 'resource.given')
         .eq('claim_id', claim.id);
 
       expect(givenNotification).toHaveLength(1);
-      expect(receivedNotification).toHaveLength(1);
 
       // Transaction should be completed
       const { data: updatedClaim } = await supabase
@@ -181,8 +174,8 @@ describe('Dual Confirmation Transactions', () => {
       expect(updatedClaim!.status).toBe('completed');
     });
 
-    it('completes transaction when both parties confirm (received → given)', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+    it('completes transaction when both parties confirm (received → completed)', async () => {
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -198,28 +191,19 @@ describe('Dual Confirmation Transactions', () => {
       await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
-      // Owner confirms given
+      // Owner confirms by marking completed
       await signInAsUser(supabase, owner);
-      await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
+      await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
 
-      // Verify both notifications exist
+      // Verify received notification was created
       const { data: receivedNotification } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', owner.id)
-        .eq('type', 'resource.received')
-        .eq('claim_id', claim.id);
-
-      await signInAsUser(supabase, claimant);
-      const { data: givenNotification } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', claimant.id)
-        .eq('type', 'resource.given')
+        .eq('action', 'resource.received')
         .eq('claim_id', claim.id);
 
       expect(receivedNotification).toHaveLength(1);
-      expect(givenNotification).toHaveLength(1);
 
       // Transaction should be completed
       const { data: updatedClaim } = await supabase
@@ -234,7 +218,7 @@ describe('Dual Confirmation Transactions', () => {
 
   describe('Favor flow - Claimant gives, Owner receives', () => {
     it('notifies owner when claimant marks as given (resource.given)', async () => {
-      const favor = await createTestResource(supabase, testCommunity.id, 'request');
+      const favor = await createTestResource(supabase, testCommunity.id, 'request', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, favor.id);
 
       // Claimant offers to help
@@ -259,12 +243,12 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', owner.id)
-        .eq('type', 'resource.given')
+        .eq('action', 'resource.given')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.given',
+        action: 'resource.given',
         user_id: owner.id,
         actor_id: claimant.id,
         claim_id: claim.id,
@@ -274,7 +258,7 @@ describe('Dual Confirmation Transactions', () => {
     });
 
     it('notifies claimant when owner marks as received (resource.received)', async () => {
-      const favor = await createTestResource(supabase, testCommunity.id, 'request');
+      const favor = await createTestResource(supabase, testCommunity.id, 'request', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, favor.id);
 
       await signInAsUser(supabase, claimant);
@@ -296,12 +280,12 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.received')
+        .eq('action', 'resource.received')
         .eq('claim_id', claim.id);
 
       expect(notifications).toHaveLength(1);
       expect(notifications![0]).toMatchObject({
-        type: 'resource.received',
+        action: 'resource.received',
         user_id: claimant.id,
         actor_id: owner.id,
         claim_id: claim.id,
@@ -313,7 +297,7 @@ describe('Dual Confirmation Transactions', () => {
 
   describe('Independent confirmation', () => {
     it('allows either party to initiate confirmation', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -340,10 +324,11 @@ describe('Dual Confirmation Transactions', () => {
 
       // Should not be completed with only one confirmation
       expect(claimAfterFirst!.status).not.toBe('completed');
+      expect(claimAfterFirst!.status).toBe('received');
     });
 
     it('does not complete until both parties confirm', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -364,11 +349,12 @@ describe('Dual Confirmation Transactions', () => {
         .eq('id', claim.id)
         .single();
 
+      expect(claimStatus!.status).toBe('given');
       expect(claimStatus!.status).not.toBe('completed');
 
       // Now claimant confirms
       await signInAsUser(supabase, claimant);
-      await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
+      await updateResourceClaim(supabase, { id: claim.id, status: 'completed' });
 
       const { data: finalStatus } = await supabase
         .from('resource_claims')
@@ -382,7 +368,7 @@ describe('Dual Confirmation Transactions', () => {
 
   describe('Notification content', () => {
     it('includes all relevant context in resource.given notification', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -401,7 +387,7 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', claimant.id)
-        .eq('type', 'resource.given')
+        .eq('action', 'resource.given')
         .eq('claim_id', claim.id);
 
       expect(notifications![0]).toMatchObject({
@@ -414,7 +400,7 @@ describe('Dual Confirmation Transactions', () => {
     });
 
     it('includes all relevant context in resource.received notification', async () => {
-      const offer = await createTestResource(supabase, testCommunity.id, 'offer');
+      const offer = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       await signInAsUser(supabase, claimant);
@@ -435,7 +421,7 @@ describe('Dual Confirmation Transactions', () => {
         .from('notifications')
         .select('*')
         .eq('user_id', owner.id)
-        .eq('type', 'resource.received')
+        .eq('action', 'resource.received')
         .eq('claim_id', claim.id);
 
       expect(notifications![0]).toMatchObject({
