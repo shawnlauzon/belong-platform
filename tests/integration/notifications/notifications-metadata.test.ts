@@ -60,7 +60,7 @@ describe('Notification Metadata Structures', () => {
 
   describe('ClaimResponseMetadata', () => {
     it('includes response="approved" when claim is approved', async () => {
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
       await signIn(supabase, claimant.email, 'TestPass123!');
@@ -89,7 +89,7 @@ describe('Notification Metadata Structures', () => {
     });
 
     it('includes response="rejected" when claim is rejected', async () => {
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
       await signIn(supabase, claimant.email, 'TestPass123!');
@@ -307,12 +307,14 @@ describe('Notification Metadata Structures', () => {
 
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const { data: notifications } = await supabase
+      const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', resourceOwner.id)
-        .eq('action', 'resource.commented')
-        .eq('resource_id', resource.id);
+        .eq('user_id', resourceOwner.id);
+
+      const notifications = allNotifications?.filter(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
 
       expect(notifications).toHaveLength(1);
 
@@ -337,12 +339,14 @@ describe('Notification Metadata Structures', () => {
 
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const { data: notifications } = await supabase
+      const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', resourceOwner.id)
-        .eq('action', 'resource.commented')
-        .eq('resource_id', resource.id);
+        .eq('user_id', resourceOwner.id);
+
+      const notifications = allNotifications?.filter(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
 
       expect(notifications).toHaveLength(1);
 
@@ -398,12 +402,14 @@ describe('Notification Metadata Structures', () => {
 
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
-      const { data: notifications } = await supabase
+      const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', resourceOwner.id)
-        .eq('action', 'resource.commented')
-        .eq('resource_id', resource.id);
+        .eq('user_id', resourceOwner.id);
+
+      const notifications = allNotifications?.filter(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
 
       // Metadata can be null or contain data depending on implementation
       expect(notifications).toHaveLength(1);
