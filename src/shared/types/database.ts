@@ -446,80 +446,83 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
-          "claim.cancelled": Json
-          "claim.created": Json
-          "claim.responded": Json
-          "comment.replied": Json
-          "conversation.requested": Json
+          claim_cancelled: Json
+          claim_created: Json
+          claim_responded: Json
+          comment_replied: Json
+          conversation_requested: Json
           created_at: string
           email_enabled: boolean
-          "event.cancelled": Json
-          "event.created": Json
-          "event.starting": Json
-          "event.updated": Json
+          event_cancelled: Json
+          event_created: Json
+          event_starting: Json
+          event_updated: Json
           id: string
-          "membership.updated": Json
-          "message.received": Json
+          membership_updated: Json
+          message_received: Json
           push_enabled: boolean
-          "resource.commented": Json
-          "resource.created": Json
-          "resource.expiring": Json
-          "resource.given": Json
-          "resource.received": Json
-          "resource.updated": Json
-          "shoutout.received": Json
+          resource_commented: Json
+          resource_created: Json
+          resource_expiring: Json
+          resource_given: Json
+          resource_received: Json
+          resource_updated: Json
+          shoutout_received: Json
+          trustlevel_changed: Json
           updated_at: string
           user_id: string
         }
         Insert: {
-          "claim.cancelled"?: Json
-          "claim.created"?: Json
-          "claim.responded"?: Json
-          "comment.replied"?: Json
-          "conversation.requested"?: Json
+          claim_cancelled?: Json
+          claim_created?: Json
+          claim_responded?: Json
+          comment_replied?: Json
+          conversation_requested?: Json
           created_at?: string
           email_enabled?: boolean
-          "event.cancelled"?: Json
-          "event.created"?: Json
-          "event.starting"?: Json
-          "event.updated"?: Json
+          event_cancelled?: Json
+          event_created?: Json
+          event_starting?: Json
+          event_updated?: Json
           id?: string
-          "membership.updated"?: Json
-          "message.received"?: Json
+          membership_updated?: Json
+          message_received?: Json
           push_enabled?: boolean
-          "resource.commented"?: Json
-          "resource.created"?: Json
-          "resource.expiring"?: Json
-          "resource.given"?: Json
-          "resource.received"?: Json
-          "resource.updated"?: Json
-          "shoutout.received"?: Json
+          resource_commented?: Json
+          resource_created?: Json
+          resource_expiring?: Json
+          resource_given?: Json
+          resource_received?: Json
+          resource_updated?: Json
+          shoutout_received?: Json
+          trustlevel_changed?: Json
           updated_at?: string
           user_id: string
         }
         Update: {
-          "claim.cancelled"?: Json
-          "claim.created"?: Json
-          "claim.responded"?: Json
-          "comment.replied"?: Json
-          "conversation.requested"?: Json
+          claim_cancelled?: Json
+          claim_created?: Json
+          claim_responded?: Json
+          comment_replied?: Json
+          conversation_requested?: Json
           created_at?: string
           email_enabled?: boolean
-          "event.cancelled"?: Json
-          "event.created"?: Json
-          "event.starting"?: Json
-          "event.updated"?: Json
+          event_cancelled?: Json
+          event_created?: Json
+          event_starting?: Json
+          event_updated?: Json
           id?: string
-          "membership.updated"?: Json
-          "message.received"?: Json
+          membership_updated?: Json
+          message_received?: Json
           push_enabled?: boolean
-          "resource.commented"?: Json
-          "resource.created"?: Json
-          "resource.expiring"?: Json
-          "resource.given"?: Json
-          "resource.received"?: Json
-          "resource.updated"?: Json
-          "shoutout.received"?: Json
+          resource_commented?: Json
+          resource_created?: Json
+          resource_expiring?: Json
+          resource_given?: Json
+          resource_received?: Json
+          resource_updated?: Json
+          shoutout_received?: Json
+          trustlevel_changed?: Json
           updated_at?: string
           user_id?: string
         }
@@ -2044,6 +2047,13 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      should_create_in_app_notification: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_user_id: string
+        }
+        Returns: boolean
       }
       should_send_push: {
         Args: {

@@ -134,7 +134,9 @@ INSERT INTO action_to_notification_type_mapping (action, notification_type) VALU
   ('shoutout.received', 'shoutout.received'),
   -- Membership (many-to-one)
   ('member.joined', 'membership.updated'),
-  ('member.left', 'membership.updated');
+  ('member.left', 'membership.updated'),
+  -- System (1:1)
+  ('trustlevel.changed', 'trustlevel.changed');
 
 -- Convert notifications.type to action_type
 ALTER TABLE notifications
@@ -231,7 +233,7 @@ CREATE TABLE notification_preferences (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
 
   -- Global switches
-  push_enabled BOOLEAN NOT NULL DEFAULT true,
+  push_enabled BOOLEAN NOT NULL DEFAULT false,
   email_enabled BOOLEAN NOT NULL DEFAULT false,
 
   -- Per-type preferences (JSONB with {in_app: boolean, push: boolean, email: boolean})
@@ -258,6 +260,8 @@ CREATE TABLE notification_preferences (
   conversation_requested JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   shoutout_received JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   membership_updated JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  -- System
+  trustlevel_changed JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -1075,42 +1079,45 @@ CREATE TRIGGER notify_on_membership_change_delete
 CREATE OR REPLACE FUNCTION notify_on_new_conversation()
 RETURNS TRIGGER AS $$
 DECLARE
-  participant_id UUID;
+  conv_initiator_id UUID;
   notification_id UUID;
 BEGIN
-  RAISE NOTICE 'notify_on_new_conversation: Starting for conversation %', NEW.id;
-  RAISE NOTICE 'notify_on_new_conversation: NEW.initiator_id = %', NEW.initiator_id;
+  RAISE NOTICE 'notify_on_new_conversation: Starting for participant % in conversation %', NEW.user_id, NEW.conversation_id;
 
-  -- Notify all participants except the creator (fixed: use initiator_id instead of created_by, check in_app)
-  FOR participant_id IN
-    SELECT user_id
-    FROM conversation_participants
-    WHERE conversation_id = NEW.id
-      AND user_id != NEW.initiator_id
-  LOOP
-    RAISE NOTICE 'notify_on_new_conversation: Processing participant %', participant_id;
+  -- Get the conversation initiator
+  SELECT initiator_id INTO conv_initiator_id
+  FROM conversations
+  WHERE id = NEW.conversation_id;
 
-    IF should_create_in_app_notification(participant_id, 'conversation.requested') THEN
-      RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', participant_id;
+  RAISE NOTICE 'notify_on_new_conversation: conv_initiator_id = %, NEW.user_id = %', conv_initiator_id, NEW.user_id;
+
+  -- Only notify if this participant is NOT the initiator
+  IF NEW.user_id != conv_initiator_id THEN
+    RAISE NOTICE 'notify_on_new_conversation: Processing participant % (not initiator)', NEW.user_id;
+
+    IF should_create_in_app_notification(NEW.user_id, 'conversation.requested') THEN
+      RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', NEW.user_id;
 
       notification_id := create_notification_base(
-        p_user_id := participant_id,
+        p_user_id := NEW.user_id,
         p_action := 'conversation.requested',
-        p_actor_id := NEW.initiator_id,
-        p_conversation_id := NEW.id
+        p_actor_id := conv_initiator_id,
+        p_conversation_id := NEW.conversation_id
       );
 
       PERFORM send_push_notification_async(
-        participant_id,
+        NEW.user_id,
         notification_id,
         'conversation.requested',
         'New conversation',
         'Someone started a conversation with you'
       );
     ELSE
-      RAISE NOTICE 'notify_on_new_conversation: Skipping notification (in_app disabled) for participant %', participant_id;
+      RAISE NOTICE 'notify_on_new_conversation: Skipping notification (in_app disabled) for participant %', NEW.user_id;
     END IF;
-  END LOOP;
+  ELSE
+    RAISE NOTICE 'notify_on_new_conversation: Skipping initiator %', NEW.user_id;
+  END IF;
 
   RAISE NOTICE 'notify_on_new_conversation: Completed successfully';
   RETURN NEW;
@@ -1666,9 +1673,9 @@ CREATE TRIGGER notify_on_resource_community_insert_trigger
 -- Drop old conversation trigger on conversation_participants table
 DROP TRIGGER IF EXISTS conversation_creation_notification_trigger ON conversation_participants;
 
--- Add new conversation INSERT trigger on conversations table
+-- Add new conversation INSERT trigger on conversation_participants table
 CREATE TRIGGER notify_on_conversation_insert_trigger
-  AFTER INSERT ON conversations
+  AFTER INSERT ON conversation_participants
   FOR EACH ROW
   EXECUTE FUNCTION notify_on_new_conversation();
 
