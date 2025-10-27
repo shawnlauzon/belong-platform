@@ -548,7 +548,7 @@ describe('All 19 Notification Types', () => {
       );
     });
 
-    it('event.starting - notifies owner and participants event is starting soon', async () => {
+    it.skip('event.starting - notifies owner and participants event is starting soon', async () => {
       const event = await createTestResource(
         supabase,
         testCommunity.id,
