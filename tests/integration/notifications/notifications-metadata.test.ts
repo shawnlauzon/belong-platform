@@ -143,8 +143,12 @@ describe('Notification Metadata Structures', () => {
     });
 
     it('includes action="left" when member leaves community', async () => {
-      await signIn(supabase, claimant.email, 'TestPass123!');
-      await leaveCommunity(supabase, claimant.id, testCommunity.id);
+      // Create a separate user for this test to avoid breaking subsequent tests
+      const leavingMember = await createTestUser(supabase);
+      await joinCommunity(supabase, leavingMember.id, testCommunity.id);
+
+      // Member leaves
+      await leaveCommunity(supabase, leavingMember.id, testCommunity.id);
 
       await signIn(supabase, resourceOwner.email, 'TestPass123!');
 
@@ -154,7 +158,7 @@ describe('Notification Metadata Structures', () => {
         .eq('user_id', resourceOwner.id)
         .eq('action', 'member.left')
         .eq('community_id', testCommunity.id)
-        .eq('actor_id', claimant.id);
+        .eq('actor_id', leavingMember.id);
 
       expect(notifications!.length).toBeGreaterThan(0);
 
