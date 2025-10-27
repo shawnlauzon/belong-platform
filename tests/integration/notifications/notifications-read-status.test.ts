@@ -13,7 +13,6 @@ import {
 } from '@/features/notifications/api';
 import { createComment } from '@/features/comments';
 import { createShoutout } from '@/features/shoutouts';
-import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -73,7 +72,7 @@ describe('Notification Read Status', () => {
 
       const commentNotification = notifications.find(
         (n) =>
-          n.type === NOTIFICATION_TYPES.COMMENT_CREATED &&
+          n.type === 'resource.commented' &&
           n.resourceId === resource.id &&
           n.actorId === anotherUser.id,
       );
@@ -389,10 +388,10 @@ describe('Notification Read Status', () => {
       });
 
       const commentNotification = unreadNotifications.find(
-        (n) => n.type === NOTIFICATION_TYPES.COMMENT_CREATED,
+        (n) => n.type === 'resource.commented',
       );
       const shoutoutNotification = unreadNotifications.find(
-        (n) => n.type === NOTIFICATION_TYPES.SHOUTOUT_CREATED,
+        (n) => n.type === 'shoutout.received',
       );
 
       expect(commentNotification).toBeDefined();

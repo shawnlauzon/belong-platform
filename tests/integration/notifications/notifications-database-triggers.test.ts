@@ -8,7 +8,6 @@ import {
   createTestResourceTimeslot,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
-import { NOTIFICATION_TYPES } from '@/features/notifications/constants';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
 import { signIn } from '@/features/auth/api';
@@ -76,7 +75,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.COMMENT_CREATED)
+      .eq('type', 'resource.commented')
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -86,7 +85,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.COMMENT_CREATED,
+      type: 'resource.commented',
       resource_id: resource.id,
       comment_id: comment.id,
       community_id: testCommunity.id,
@@ -110,7 +109,7 @@ describe('Database triggers', () => {
     const claim = await createResourceClaim(supabase, {
       resourceId: resource.id,
       timeslotId: timeslot.id,
-      notes: 'Test claim that should trigger notification',
+      requestText: 'Test claim that should trigger notification',
     });
 
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
@@ -120,7 +119,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.CLAIM_CREATED)
+      .eq('type', 'claim.created')
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -130,7 +129,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.CLAIM_CREATED,
+      type: 'claim.created',
       resource_id: resource.id,
       claim_id: claim.id,
       community_id: testCommunity.id,
@@ -162,7 +161,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.SHOUTOUT_CREATED)
+      .eq('type', 'shoutout.received')
       .eq('actor_id', communityMember.id);
 
     expect(error).toBeNull();
@@ -171,7 +170,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.SHOUTOUT_CREATED,
+      type: 'shoutout.received',
       shoutout_id: shoutout.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,
@@ -196,7 +195,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.RESOURCE_CREATED)
+      .eq('type', 'resource.created')
       .eq('resource_id', resource.id)
       .eq('actor_id', communityMember.id);
 
@@ -206,7 +205,7 @@ describe('Database triggers', () => {
 
     const notification = notifications![0];
     expect(notification).toMatchObject({
-      type: NOTIFICATION_TYPES.RESOURCE_CREATED,
+      type: 'resource.created',
       resource_id: resource.id,
       community_id: testCommunity.id,
       actor_id: communityMember.id,
@@ -236,7 +235,7 @@ describe('Database triggers', () => {
       .from('notifications')
       .select('*')
       .eq('user_id', resourceOwner.id)
-      .eq('type', NOTIFICATION_TYPES.COMMENT_CREATED)
+      .eq('type', 'resource.commented')
       .eq('resource_id', resource.id)
       .eq('actor_id', resourceOwner.id);
 
@@ -247,7 +246,10 @@ describe('Database triggers', () => {
 
   it('should reflect notification count changes when notifications are created', async () => {
     // Get initial counts
-    const initialTotal = await fetchNotificationUnreadCount(supabase, resourceOwner.id);
+    const initialTotal = await fetchNotificationUnreadCount(
+      supabase,
+      resourceOwner.id,
+    );
 
     // Create a resource and have communityMember comment on it
     const resource = await createTestResource(
@@ -264,7 +266,10 @@ describe('Database triggers', () => {
 
     // Switch back to resourceOwner and check that count increased
     await signIn(supabase, resourceOwner.email, 'TestPass123!');
-    const updatedTotal = await fetchNotificationUnreadCount(supabase, resourceOwner.id);
+    const updatedTotal = await fetchNotificationUnreadCount(
+      supabase,
+      resourceOwner.id,
+    );
 
     expect(updatedTotal).toBeGreaterThan(initialTotal);
   });
