@@ -6,11 +6,11 @@ import {
   createTestCommunity,
   createTestResource,
   createTestResourceTimeslot,
+  signInAsUser,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import { createShoutout } from '@/features/shoutouts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
@@ -42,7 +42,7 @@ describe('Database triggers', () => {
 
   beforeEach(async () => {
     // Sign in as resource owner for consistency
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
   });
 
   it('should create notification record via database trigger when someone comments', async () => {
@@ -54,7 +54,7 @@ describe('Database triggers', () => {
     );
 
     // Sign in as communityMember and create comment
-    await signIn(supabase, communityMember.email, 'TestPass123!');
+    await signInAsUser(supabase, communityMember);
 
     let comment;
     try {
@@ -68,7 +68,7 @@ describe('Database triggers', () => {
       throw error;
     }
 
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
 
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
@@ -105,14 +105,14 @@ describe('Database triggers', () => {
     const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
     // Sign in as communityMember and create claim
-    await signIn(supabase, communityMember.email, 'TestPass123!');
+    await signInAsUser(supabase, communityMember);
     const claim = await createResourceClaim(supabase, {
       resourceId: resource.id,
       timeslotId: timeslot.id,
       requestText: 'Test claim that should trigger notification',
     });
 
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
 
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
@@ -148,13 +148,13 @@ describe('Database triggers', () => {
     );
 
     // Sign in as communityMember and create shoutout to resourceOwner
-    await signIn(supabase, communityMember.email, 'TestPass123!');
+    await signInAsUser(supabase, communityMember);
     const shoutout = await createShoutout(supabase, communityMember.id, {
       message: 'Great community member!',
       resourceId: resource.id,
     });
 
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
 
     // Query database directly to verify trigger created notification
     const { data: notifications, error } = await supabase
@@ -181,14 +181,14 @@ describe('Database triggers', () => {
 
   it('should create notification record via database trigger when new resource is added to community', async () => {
     // Sign in as communityMember and create a resource
-    await signIn(supabase, communityMember.email, 'TestPass123!');
+    await signInAsUser(supabase, communityMember);
     const resource = await createTestResource(
       supabase,
       testCommunity.id,
       'request',
     );
 
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
 
     // Query database directly to verify trigger created notification for resourceOwner
     const { data: notifications, error } = await supabase
@@ -228,7 +228,7 @@ describe('Database triggers', () => {
       resourceId: resource.id,
     });
 
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
 
     // Query database to verify no notification was created
     const { data: notifications, error } = await supabase
@@ -258,14 +258,14 @@ describe('Database triggers', () => {
       'offer',
     );
 
-    await signIn(supabase, communityMember.email, 'TestPass123!');
+    await signInAsUser(supabase, communityMember);
     await createComment(supabase, communityMember.id, {
       content: 'Comment that should increment counts',
       resourceId: resource.id,
     });
 
     // Switch back to resourceOwner and check that count increased
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
     const updatedTotal = await fetchNotificationUnreadCount(
       supabase,
       resourceOwner.id,

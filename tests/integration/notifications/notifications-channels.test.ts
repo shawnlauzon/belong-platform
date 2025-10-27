@@ -6,11 +6,11 @@ import {
   createTestCommunity,
   createTestResource,
   createTestResourceTimeslot,
+  signInAsUser,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
 import { createResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -57,7 +57,7 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
   });
 
   beforeEach(async () => {
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
   });
 
   describe('In-App channel', () => {
@@ -76,13 +76,13 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createComment(supabase, claimant.id, {
         content: 'Test in-app delivery',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -109,13 +109,13 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
 
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createComment(supabase, claimant.id, {
         content: 'Should not appear in-app',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -270,14 +270,14 @@ describe('Notification Channels - Multi-Channel Delivery', () => {
       const event = await createTestResource(supabase, testCommunity.id, 'event');
       const timeslot = await createTestResourceTimeslot(supabase, event.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createResourceClaim(supabase, {
         resourceId: event.id,
         timeslotId: timeslot.id,
       });
 
       // Owner cancels event
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
       await supabase.from('resources').update({ status: 'cancelled' }).eq('id', event.id);
 
       // Verify push would be sent despite type preference

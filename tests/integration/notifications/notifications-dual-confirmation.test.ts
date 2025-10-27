@@ -6,10 +6,10 @@ import {
   createTestCommunity,
   createTestResource,
   createTestResourceTimeslot,
+  signInAsUser,
 } from '../helpers/test-data';
 import { createResourceClaim, updateResourceClaim } from '@/features/resources/api';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -54,7 +54,7 @@ describe('Dual Confirmation Transactions', () => {
   });
 
   beforeEach(async () => {
-    await signIn(supabase, owner.email, 'TestPass123!');
+    await signInAsUser(supabase, owner);
   });
 
   describe('Offer flow - Owner gives, Claimant receives', () => {
@@ -63,19 +63,19 @@ describe('Dual Confirmation Transactions', () => {
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
       // Claimant claims offer
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
       // Owner approves and marks as given
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
       // Claimant should receive resource.given notification
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -99,21 +99,21 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Claimant marks as received
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       // Owner should receive resource.received notification
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -137,20 +137,20 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Owner marks as given
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
       // Claimant confirms received
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       // Verify both notifications exist
@@ -185,21 +185,21 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Claimant marks as received first
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       // Owner confirms given
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
       // Verify both notifications exist
@@ -210,7 +210,7 @@ describe('Dual Confirmation Transactions', () => {
         .eq('type', 'resource.received')
         .eq('claim_id', claim.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const { data: givenNotification } = await supabase
         .from('notifications')
         .select('*')
@@ -238,22 +238,22 @@ describe('Dual Confirmation Transactions', () => {
       const timeslot = await createTestResourceTimeslot(supabase, favor.id);
 
       // Claimant offers to help
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: favor.id,
         timeslotId: timeslot.id,
       });
 
       // Owner approves
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Claimant marks as given (provided the help)
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
       // Owner should receive resource.given notification
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -277,20 +277,20 @@ describe('Dual Confirmation Transactions', () => {
       const favor = await createTestResource(supabase, testCommunity.id, 'request');
       const timeslot = await createTestResourceTimeslot(supabase, favor.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: favor.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Owner marks as received (received the help)
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       // Claimant should receive resource.received notification
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -316,20 +316,20 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Either party can mark first
       // This is tested by both "given first" and "received first" flows above
 
       // Verify claim is still pending after single confirmation
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       const { data: claimAfterFirst } = await supabase
@@ -346,13 +346,13 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
       // Only owner confirms
@@ -367,7 +367,7 @@ describe('Dual Confirmation Transactions', () => {
       expect(claimStatus!.status).not.toBe('completed');
 
       // Now claimant confirms
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
       const { data: finalStatus } = await supabase
@@ -385,17 +385,17 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
       await updateResourceClaim(supabase, { id: claim.id, status: 'given' });
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -417,19 +417,19 @@ describe('Dual Confirmation Transactions', () => {
       const offer = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, offer.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: offer.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
 
-      await signIn(supabase, owner.email, 'TestPass123!');
+      await signInAsUser(supabase, owner);
 
       const { data: notifications } = await supabase
         .from('notifications')

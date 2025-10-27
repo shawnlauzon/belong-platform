@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestUser } from '../helpers/test-data';
-import { signIn } from '@/features/auth/api';
+import { createTestUser, signInAsUser } from '../helpers/test-data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -50,7 +49,7 @@ describe('Push Subscriptions', () => {
   });
 
   beforeEach(async () => {
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
   });
 
   describe('Registering push subscriptions', () => {
@@ -181,7 +180,7 @@ describe('Push Subscriptions', () => {
 
   describe('Fetching subscriptions', () => {
     it('fetches all subscriptions for a user', async () => {
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       // Register multiple devices
       await supabase.from('push_subscriptions').insert([
@@ -279,7 +278,7 @@ describe('Push Subscriptions', () => {
 
     it('only removes subscriptions for the authenticated user', async () => {
       // testUser creates subscription
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const { data: testUserSub } = await supabase
         .from('push_subscriptions')
         .insert({
@@ -310,7 +309,7 @@ describe('Push Subscriptions', () => {
       expect(error).not.toBeNull();
 
       // Verify testUser's subscription still exists
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const { data: stillExists } = await supabase
         .from('push_subscriptions')
         .select('*')
@@ -392,7 +391,7 @@ describe('Push Subscriptions', () => {
       await supabase.from('profiles').delete().eq('id', tempUser.id);
 
       // Verify subscription was deleted
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const { data: remaining } = await supabase
         .from('push_subscriptions')
         .select('*')

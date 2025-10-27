@@ -5,11 +5,11 @@ import {
   createTestUser,
   createTestCommunity,
   createTestResource,
+  signInAsUser,
 } from '../helpers/test-data';
 import { fetchNotifications } from '@/features/notifications/api';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -41,7 +41,7 @@ describe('Notifications CRUD', () => {
 
   beforeEach(async () => {
     // Sign back in as testUser for consistency
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
   });
 
   describe('Mark as read functionality', () => {
@@ -53,13 +53,13 @@ describe('Notifications CRUD', () => {
         'offer',
       );
 
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
       await createComment(supabase, anotherUser.id, {
         content: 'Comment for read test',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       // Get the notification
       const notifications = await fetchNotifications(supabase, testUser.id, {
@@ -97,7 +97,7 @@ describe('Notifications CRUD', () => {
         'request',
       );
 
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
 
       await createComment(supabase, anotherUser.id, {
         content: 'Comment 1',
@@ -109,7 +109,7 @@ describe('Notifications CRUD', () => {
         resourceId: resource2.id,
       });
 
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       // Verify we have unread notifications
       const unreadNotifications = await fetchNotifications(supabase, testUser.id, {

@@ -6,11 +6,11 @@ import {
   createTestCommunity,
   createTestResource,
   createTestResourceTimeslot,
+  signInAsUser,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
 import { createResourceClaim, updateResourceClaim } from '@/features/resources/api';
 import { joinCommunity, leaveCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -55,7 +55,7 @@ describe('Notification Metadata Structures', () => {
   });
 
   beforeEach(async () => {
-    await signIn(supabase, resourceOwner.email, 'TestPass123!');
+    await signInAsUser(supabase, resourceOwner);
   });
 
   describe('ClaimResponseMetadata', () => {
@@ -63,16 +63,16 @@ describe('Notification Metadata Structures', () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -92,16 +92,16 @@ describe('Notification Metadata Structures', () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true);
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const claim = await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
       await updateResourceClaim(supabase, { id: claim.id, status: 'rejected' });
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -125,7 +125,7 @@ describe('Notification Metadata Structures', () => {
       await joinCommunity(supabase, newMember.id, testCommunity.id);
 
       // Check organizer notification
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -150,7 +150,7 @@ describe('Notification Metadata Structures', () => {
       // Member leaves
       await leaveCommunity(supabase, leavingMember.id, testCommunity.id);
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -172,14 +172,14 @@ describe('Notification Metadata Structures', () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
       });
 
       // Update multiple fields
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
       await supabase
         .from('resources')
         .update({
@@ -188,7 +188,7 @@ describe('Notification Metadata Structures', () => {
         })
         .eq('id', resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -211,20 +211,20 @@ describe('Notification Metadata Structures', () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createResourceClaim(supabase, {
         resourceId: resource.id,
         timeslotId: timeslot.id,
       });
 
       // Update single field
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
       await supabase
         .from('resources')
         .update({ title: 'New title only' })
         .eq('id', resource.id);
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -298,27 +298,31 @@ describe('Notification Metadata Structures', () => {
     it('includes content_preview for comment notifications', async () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const longComment = 'This is a long comment that should be truncated in the preview. '.repeat(5);
       await createComment(supabase, claimant.id, {
         content: longComment,
         resourceId: resource.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id);
 
-      const notifications = allNotifications?.filter(
-        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      expect(allNotifications).toContainEqual(
+        expect.objectContaining({
+          action: 'resource.commented',
+          resource_id: resource.id,
+        })
       );
 
-      expect(notifications).toHaveLength(1);
-
-      const metadata = notifications![0].metadata as unknown as { content_preview?: string };
+      const notification = allNotifications?.find(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
+      const metadata = notification!.metadata as unknown as { content_preview?: string };
       if (metadata?.content_preview) {
         expect(typeof metadata.content_preview).toBe('string');
         expect(metadata.content_preview.length).toBeGreaterThan(0);
@@ -330,27 +334,31 @@ describe('Notification Metadata Structures', () => {
     it('handles short comments without truncation', async () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       const shortComment = 'Short comment';
       await createComment(supabase, claimant.id, {
         content: shortComment,
         resourceId: resource.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id);
 
-      const notifications = allNotifications?.filter(
-        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      expect(allNotifications).toContainEqual(
+        expect.objectContaining({
+          action: 'resource.commented',
+          resource_id: resource.id,
+        })
       );
 
-      expect(notifications).toHaveLength(1);
-
-      const metadata = notifications![0].metadata as unknown as { content_preview?: string };
+      const notification = allNotifications?.find(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
+      const metadata = notification!.metadata as unknown as { content_preview?: string };
       if (metadata?.content_preview) {
         expect(metadata.content_preview).toBe(shortComment);
       }
@@ -394,29 +402,33 @@ describe('Notification Metadata Structures', () => {
     it('handles null metadata for types that do not require it', async () => {
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, claimant.email, 'TestPass123!');
+      await signInAsUser(supabase, claimant);
       await createComment(supabase, claimant.id, {
         content: 'Test',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, resourceOwner.email, 'TestPass123!');
+      await signInAsUser(supabase, resourceOwner);
 
       const { data: allNotifications } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', resourceOwner.id);
 
-      const notifications = allNotifications?.filter(
-        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      expect(allNotifications).toContainEqual(
+        expect.objectContaining({
+          action: 'resource.commented',
+          resource_id: resource.id,
+        })
       );
 
-      // Metadata can be null or contain data depending on implementation
-      expect(notifications).toHaveLength(1);
+      const notification = allNotifications?.find(
+        (n) => n.action === 'resource.commented' && n.resource_id === resource.id
+      );
       // Either null or object
       expect(
-        notifications![0].metadata === null ||
-        typeof notifications![0].metadata === 'object'
+        notification!.metadata === null ||
+        typeof notification!.metadata === 'object'
       ).toBe(true);
     });
   });

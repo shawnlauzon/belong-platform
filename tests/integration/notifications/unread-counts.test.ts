@@ -14,7 +14,6 @@ import {
 
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth';
@@ -66,14 +65,14 @@ describe('Unread Counts Integration Tests', () => {
         'offer',
       );
 
-      await signIn(supabase, otherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, otherUser);
       await createComment(supabase, otherUser.id, {
         content: 'Test comment to generate notification',
         resourceId: resource.id,
       });
 
       // Switch back to testUser and check count
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const updatedCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(updatedCount).toBeGreaterThan(initialCount);
     });
@@ -86,14 +85,14 @@ describe('Unread Counts Integration Tests', () => {
         'offer',
       );
 
-      await signIn(supabase, otherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, otherUser);
       await createComment(supabase, otherUser.id, {
         content: 'Test comment',
         resourceId: resource.id,
       });
 
       // Check initial count
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const beforeCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(beforeCount).toBeGreaterThan(0);
 
@@ -127,7 +126,7 @@ describe('Unread Counts Integration Tests', () => {
         'request',
       );
 
-      await signIn(supabase, otherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, otherUser);
       await createComment(supabase, otherUser.id, {
         content: 'Comment 1',
         resourceId: resource1.id,
@@ -138,7 +137,7 @@ describe('Unread Counts Integration Tests', () => {
       });
 
       // Check initial count
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const beforeCount = await fetchNotificationUnreadCount(supabase, testUser.id);
       expect(beforeCount).toBeGreaterThan(1);
 
@@ -164,14 +163,14 @@ describe('Unread Counts Integration Tests', () => {
       });
 
       // Send message as otherUser
-      await signIn(supabase, otherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, otherUser);
       const { data: { user: _msgUser } } = await supabase.auth.getUser(); await sendMessage(supabase, _msgUser!.id, {
         conversationId: conversation.id,
         content: 'Hello from other user',
       });
 
       // Check unread count for testUser
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
       const conversationUnreadCount = await fetchMessageUnreadCount(
         supabase,
         testUser.id,

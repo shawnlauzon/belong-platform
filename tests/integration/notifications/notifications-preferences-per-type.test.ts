@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
-import { createTestUser, createTestCommunity, createTestResource } from '../helpers/test-data';
+import { createTestUser, createTestCommunity, createTestResource, signInAsUser } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
-import { signIn } from '@/features/auth/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -44,7 +43,7 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
   });
 
   beforeEach(async () => {
-    await signIn(supabase, testUser.email, 'TestPass123!');
+    await signInAsUser(supabase, testUser);
   });
 
   describe('Default preferences', () => {
@@ -232,13 +231,13 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
       await createComment(supabase, anotherUser.id, {
         content: 'Test comment',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -265,13 +264,13 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      await signIn(supabase, anotherUser.email, 'TestPass123!');
+      await signInAsUser(supabase, anotherUser);
       await createComment(supabase, anotherUser.id, {
         content: 'Test comment',
         resourceId: resource.id,
       });
 
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       const { data: notifications } = await supabase
         .from('notifications')
@@ -477,7 +476,7 @@ describe('Notification Preferences - Per Type, Per Channel', () => {
 
       // Sign out and back in
       await supabase.auth.signOut();
-      await signIn(supabase, testUser.email, 'TestPass123!');
+      await signInAsUser(supabase, testUser);
 
       const { data: prefs } = await supabase
         .from('notification_preferences')
