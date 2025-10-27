@@ -1763,16 +1763,28 @@ export type Database = {
         Args: { p_actor_id: string; p_user_id: string }
         Returns: string
       }
-      notify_new_resource: {
-        Args: {
-          p_actor_id: string
-          p_community_id: string
-          p_resource_id: string
-          p_resource_type: Database["public"]["Enums"]["resource_type"]
-          p_user_id: string
-        }
-        Returns: string
-      }
+      notify_new_resource:
+        | {
+            Args: {
+              p_actor_id: string
+              p_community_id: string
+              p_resource_id: string
+              p_resource_title: string
+              p_resource_type: Database["public"]["Enums"]["resource_type"]
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_actor_id: string
+              p_community_id: string
+              p_resource_id: string
+              p_resource_type: Database["public"]["Enums"]["resource_type"]
+              p_user_id: string
+            }
+            Returns: string
+          }
       notify_resource_cancelled: {
         Args: {
           p_actor_id: string
