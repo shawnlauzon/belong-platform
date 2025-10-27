@@ -285,6 +285,60 @@ ON CONFLICT (user_id) DO NOTHING;
 ALTER TABLE profiles DROP COLUMN IF EXISTS notification_preferences;
 
 -- ============================================================================
+-- STEP 3.5: Update handle_new_user to create notification_preferences
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+  user_email text;
+  user_meta jsonb;
+BEGIN
+  -- Get the email, handling potential null values
+  user_email := COALESCE(NEW.email, '');
+
+  -- Ensure user_metadata is never null
+  user_meta := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
+
+  -- Log the attempt for debugging
+  RAISE LOG 'Creating profile for user: % with email: % and metadata: %', NEW.id, user_email, user_meta;
+
+  -- Insert the profile - ON CONFLICT handles race conditions
+  -- If this fails, the entire auth.users insert will be rolled back
+  INSERT INTO public.profiles (
+    id,
+    email,
+    user_metadata,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    user_email,
+    user_meta,
+    COALESCE(NEW.created_at, now()),
+    now()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    user_metadata = EXCLUDED.user_metadata,
+    updated_at = now();
+
+  -- Create default notification preferences for the new user
+  INSERT INTO public.notification_preferences (user_id)
+  VALUES (NEW.id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RAISE LOG 'Successfully created/updated profile and preferences for user: %', NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+-- ============================================================================
 -- STEP 4: Create push_subscriptions table
 -- ============================================================================
 
