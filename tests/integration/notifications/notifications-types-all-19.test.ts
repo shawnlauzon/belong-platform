@@ -265,6 +265,8 @@ describe('All 19 Notification Types', () => {
         supabase,
         testCommunity.id,
         'offer',
+        undefined,
+        true, // requiresApproval
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
@@ -303,6 +305,8 @@ describe('All 19 Notification Types', () => {
         supabase,
         testCommunity.id,
         'offer',
+        undefined,
+        true, // requiresApproval
       );
       const timeslot = await createTestResourceTimeslot(supabase, resource.id);
 
