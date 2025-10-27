@@ -482,6 +482,54 @@ EXCEPTION
 END;
 $$;
 
+-- Helper function to check if in_app notifications should be created
+CREATE OR REPLACE FUNCTION should_create_in_app_notification(
+  p_user_id UUID,
+  p_action action_type
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  prefs RECORD;
+  type_pref JSONB;
+  notification_type_val TEXT;
+BEGIN
+  -- Get user preferences
+  SELECT * INTO prefs
+  FROM notification_preferences
+  WHERE user_id = p_user_id;
+
+  -- If no preferences exist, default to true (create notification)
+  IF prefs IS NULL THEN
+    RETURN true;
+  END IF;
+
+  -- System notifications (trustlevel.changed) always create in-app notifications
+  IF p_action = 'trustlevel.changed' THEN
+    RETURN true;
+  END IF;
+
+  -- Look up notification type from action
+  SELECT notification_type INTO notification_type_val
+  FROM action_to_notification_type_mapping
+  WHERE action = p_action;
+
+  -- If no mapping found, default to true
+  IF notification_type_val IS NULL THEN
+    RETURN true;
+  END IF;
+
+  -- Get type-specific preference
+  EXECUTE format('SELECT $1.%I', notification_type_val) INTO type_pref USING prefs;
+
+  -- Check if in_app is enabled for this notification type
+  RETURN (type_pref->>'in_app')::boolean = true;
+END;
+$$;
+
 -- ============================================================================
 -- STEP 6: Update notification triggers - Comments
 -- ============================================================================
@@ -504,8 +552,10 @@ BEGIN
     FROM comments
     WHERE id = NEW.parent_id;
 
-    -- Notify parent comment author (if not self-reply)
-    IF parent_comment_author_id IS NOT NULL AND parent_comment_author_id != NEW.author_id THEN
+    -- Notify parent comment author (if not self-reply and in_app enabled)
+    IF parent_comment_author_id IS NOT NULL
+       AND parent_comment_author_id != NEW.author_id
+       AND should_create_in_app_notification(parent_comment_author_id, 'comment.replied') THEN
       notification_id := create_notification_base(
         p_user_id := parent_comment_author_id,
         p_action := 'comment.replied',
@@ -529,10 +579,11 @@ BEGIN
     END IF;
   END IF;
 
-  -- Notify resource owner (if not commenter and not already notified as parent author)
+  -- Notify resource owner (if not commenter, not already notified, and in_app enabled)
   IF resource_owner_id IS NOT NULL
      AND resource_owner_id != NEW.author_id
-     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id) THEN
+     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id)
+     AND should_create_in_app_notification(resource_owner_id, 'resource.commented') THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'resource.commented',
@@ -574,8 +625,18 @@ BEGIN
   FROM resources
   WHERE id = NEW.resource_id;
 
-  -- Notify resource owner
-  IF resource_owner_id IS NOT NULL AND resource_owner_id != NEW.claimant_id THEN
+  -- Skip if owner is claiming their own resource
+  IF resource_owner_id = NEW.claimant_id THEN
+    RETURN NEW;
+  END IF;
+
+  -- Skip vote claims (they don't generate notifications)
+  IF NEW.status = 'vote' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Notify resource owner only if in_app enabled
+  IF resource_owner_id IS NOT NULL AND should_create_in_app_notification(resource_owner_id, 'claim.created') THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.created',
@@ -606,6 +667,7 @@ DECLARE
   resource_type_val resource_type;
   notification_id UUID;
   notification_metadata JSONB;
+  action_to_notify action_type;
 BEGIN
   -- Skip if status didn't change
   IF OLD.status = NEW.status THEN
@@ -617,40 +679,40 @@ BEGIN
   FROM resources
   WHERE id = NEW.resource_id;
 
-  -- Handle approved/rejected � claim.approved or claim.rejected
+  -- Handle approved/rejected – claim.approved or claim.rejected
   IF NEW.status IN ('approved', 'rejected') THEN
     notification_metadata := jsonb_build_object('response', NEW.status::text);
+    action_to_notify := CASE NEW.status
+      WHEN 'approved' THEN 'claim.approved'::action_type
+      ELSE 'claim.rejected'::action_type
+    END;
 
-    notification_id := create_notification_base(
-      p_user_id := NEW.claimant_id,
-      p_action := CASE NEW.status
-        WHEN 'approved' THEN 'claim.approved'::action_type
-        ELSE 'claim.rejected'::action_type
-      END,
-      p_actor_id := resource_owner_id,
-      p_resource_id := NEW.resource_id,
-      p_claim_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
-      p_metadata := notification_metadata
-    );
+    IF should_create_in_app_notification(NEW.claimant_id, action_to_notify) THEN
+      notification_id := create_notification_base(
+        p_user_id := NEW.claimant_id,
+        p_action := action_to_notify,
+        p_actor_id := resource_owner_id,
+        p_resource_id := NEW.resource_id,
+        p_claim_id := NEW.id,
+        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+        p_metadata := notification_metadata
+      );
 
-    PERFORM send_push_notification_async(
-      NEW.claimant_id,
-      notification_id,
-      CASE NEW.status
-        WHEN 'approved' THEN 'claim.approved'::action_type
-        ELSE 'claim.rejected'::action_type
-      END,
-      'Response to your claim',
-      CASE NEW.status
-        WHEN 'approved' THEN 'Your claim was approved'
-        ELSE 'Your claim was rejected'
-      END
-    );
+      PERFORM send_push_notification_async(
+        NEW.claimant_id,
+        notification_id,
+        action_to_notify,
+        'Response to your claim',
+        CASE NEW.status
+          WHEN 'approved' THEN 'Your claim was approved'
+          ELSE 'Your claim was rejected'
+        END
+      );
+    END IF;
   END IF;
 
-  -- Handle cancelled � claim.cancelled
-  IF NEW.status = 'cancelled' THEN
+  -- Handle cancelled – claim.cancelled
+  IF NEW.status = 'cancelled' AND should_create_in_app_notification(resource_owner_id, 'claim.cancelled') THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.cancelled',
@@ -669,8 +731,8 @@ BEGIN
     );
   END IF;
 
-  -- Handle going � resource.given (to receiver)
-  IF OLD.status = 'going' AND NEW.status = 'given' THEN
+  -- Handle going → given – resource.given (to receiver)
+  IF OLD.status = 'going' AND NEW.status = 'given' AND should_create_in_app_notification(NEW.claimant_id, 'resource.given') THEN
     notification_id := create_notification_base(
       p_user_id := NEW.claimant_id,
       p_action := 'resource.given',
@@ -689,8 +751,8 @@ BEGIN
     );
   END IF;
 
-  -- Handle given � received � resource.received (to giver)
-  IF OLD.status = 'given' AND NEW.status = 'received' THEN
+  -- Handle given → received – resource.received (to giver)
+  IF OLD.status = 'given' AND NEW.status = 'received' AND should_create_in_app_notification(resource_owner_id, 'resource.received') THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'resource.received',
@@ -767,6 +829,7 @@ RETURNS TRIGGER AS $$
 DECLARE
   resource_record RECORD;
   member_record RECORD;
+  action_val action_type;
 BEGIN
   -- Get resource details
   SELECT * INTO resource_record
@@ -778,21 +841,30 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Notify all community members about new resource
+  -- Determine action type
+  IF resource_record.type = 'event' THEN
+    action_val := 'event.created';
+  ELSE
+    action_val := 'resource.created';
+  END IF;
+
+  -- Notify all community members about new resource (only if in_app enabled)
   FOR member_record IN
     SELECT user_id
     FROM community_memberships
     WHERE community_id = NEW.community_id
       AND user_id != resource_record.owner_id
   LOOP
-    PERFORM notify_new_resource(
-      member_record.user_id,
-      resource_record.owner_id,
-      NEW.resource_id,
-      NEW.community_id,
-      resource_record.type,
-      resource_record.title
-    );
+    IF should_create_in_app_notification(member_record.user_id, action_val) THEN
+      PERFORM notify_new_resource(
+        member_record.user_id,
+        resource_record.owner_id,
+        NEW.resource_id,
+        NEW.community_id,
+        resource_record.type,
+        resource_record.title
+      );
+    END IF;
   END LOOP;
 
   RETURN NEW;
@@ -983,17 +1055,17 @@ DECLARE
   participant_id UUID;
   notification_id UUID;
 BEGIN
-  -- Notify all participants except the creator
+  -- Notify all participants except the creator (fixed: use initiator_id instead of created_by)
   FOR participant_id IN
     SELECT user_id
     FROM conversation_participants
     WHERE conversation_id = NEW.id
-      AND user_id != NEW.created_by
+      AND user_id != NEW.initiator_id
   LOOP
     notification_id := create_notification_base(
       p_user_id := participant_id,
       p_action := 'conversation.requested',
-      p_actor_id := NEW.created_by,
+      p_actor_id := NEW.initiator_id,
       p_conversation_id := NEW.id
     );
 
@@ -1057,18 +1129,18 @@ RETURNS TRIGGER AS $$
 DECLARE
   notification_id UUID;
 BEGIN
-  -- Notify the recipient
-  IF NEW.to_user_id IS NOT NULL AND NEW.to_user_id != NEW.from_user_id THEN
+  -- Notify the recipient (fixed: use receiver_id instead of to_user_id)
+  IF NEW.receiver_id IS NOT NULL AND NEW.receiver_id != NEW.sender_id THEN
     notification_id := create_notification_base(
-      p_user_id := NEW.to_user_id,
+      p_user_id := NEW.receiver_id,
       p_action := 'shoutout.received',
-      p_actor_id := NEW.from_user_id,
+      p_actor_id := NEW.sender_id,
       p_shoutout_id := NEW.id,
       p_community_id := NEW.community_id
     );
 
     PERFORM send_push_notification_async(
-      NEW.to_user_id,
+      NEW.receiver_id,
       notification_id,
       'shoutout.received',
       'New shoutout',
@@ -1537,3 +1609,42 @@ CREATE TRIGGER broadcast_notification_trigger
   AFTER INSERT ON notifications
   FOR EACH ROW
   EXECUTE FUNCTION broadcast_new_notification();
+
+-- ============================================================================
+-- STEP 15: Add missing triggers
+-- ============================================================================
+
+-- Add missing resource_communities INSERT trigger
+CREATE TRIGGER notify_on_resource_community_insert_trigger
+  AFTER INSERT ON resource_communities
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_on_resource_community_insert();
+
+-- Add missing conversation INSERT trigger
+CREATE TRIGGER notify_on_conversation_insert_trigger
+  AFTER INSERT ON conversations
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_on_new_conversation();
+
+-- ============================================================================
+-- STEP 16: Fix RLS policies on notifications table to use 'action' column
+-- ============================================================================
+
+-- Drop old policies that might reference 'type' column
+DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can update their own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can insert their own notifications" ON notifications;
+
+-- Recreate policies (they now work with 'action' column)
+CREATE POLICY "Users can view their own notifications"
+  ON notifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON notifications FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own notifications"
+  ON notifications FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
