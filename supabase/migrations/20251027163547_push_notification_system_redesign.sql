@@ -222,7 +222,7 @@ $$;
 
 CREATE TABLE notification_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
 
   -- Global switches
   push_enabled BOOLEAN NOT NULL DEFAULT true,
@@ -276,9 +276,9 @@ CREATE TRIGGER set_notification_preferences_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Create default preferences for all existing users
+-- Create default preferences for all existing users with profiles
 INSERT INTO notification_preferences (user_id)
-SELECT id FROM auth.users
+SELECT id FROM profiles
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Drop old notification_preferences column from profiles
@@ -290,7 +290,7 @@ ALTER TABLE profiles DROP COLUMN IF EXISTS notification_preferences;
 
 CREATE TABLE push_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   endpoint TEXT NOT NULL,
   p256dh_key TEXT NOT NULL,
   auth_key TEXT NOT NULL,
