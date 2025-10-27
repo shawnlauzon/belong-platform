@@ -101,7 +101,6 @@ export function createFakeProfileRow(
     created_at: now,
     updated_at: now,
     email: faker.internet.email(),
-    notification_preferences: {},
     user_metadata: {
       first_name: firstName,
       last_name: lastName,

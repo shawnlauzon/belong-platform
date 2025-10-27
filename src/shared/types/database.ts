@@ -429,6 +429,90 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          "claim.cancelled": Json
+          "claim.created": Json
+          "claim.responded": Json
+          "comment.replied": Json
+          "conversation.requested": Json
+          created_at: string
+          email_enabled: boolean
+          "event.cancelled": Json
+          "event.created": Json
+          "event.starting": Json
+          "event.updated": Json
+          id: string
+          "membership.updated": Json
+          "message.received": Json
+          push_enabled: boolean
+          "resource.commented": Json
+          "resource.created": Json
+          "resource.expiring": Json
+          "resource.given": Json
+          "resource.received": Json
+          "resource.updated": Json
+          "shoutout.received": Json
+          "trustlevel.changed": Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          "claim.cancelled"?: Json
+          "claim.created"?: Json
+          "claim.responded"?: Json
+          "comment.replied"?: Json
+          "conversation.requested"?: Json
+          created_at?: string
+          email_enabled?: boolean
+          "event.cancelled"?: Json
+          "event.created"?: Json
+          "event.starting"?: Json
+          "event.updated"?: Json
+          id?: string
+          "membership.updated"?: Json
+          "message.received"?: Json
+          push_enabled?: boolean
+          "resource.commented"?: Json
+          "resource.created"?: Json
+          "resource.expiring"?: Json
+          "resource.given"?: Json
+          "resource.received"?: Json
+          "resource.updated"?: Json
+          "shoutout.received"?: Json
+          "trustlevel.changed"?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          "claim.cancelled"?: Json
+          "claim.created"?: Json
+          "claim.responded"?: Json
+          "comment.replied"?: Json
+          "conversation.requested"?: Json
+          created_at?: string
+          email_enabled?: boolean
+          "event.cancelled"?: Json
+          "event.created"?: Json
+          "event.starting"?: Json
+          "event.updated"?: Json
+          id?: string
+          "membership.updated"?: Json
+          "message.received"?: Json
+          push_enabled?: boolean
+          "resource.commented"?: Json
+          "resource.created"?: Json
+          "resource.expiring"?: Json
+          "resource.given"?: Json
+          "resource.received"?: Json
+          "resource.updated"?: Json
+          "shoutout.received"?: Json
+          "trustlevel.changed"?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -535,7 +619,6 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          notification_preferences: Json | null
           updated_at: string
           user_metadata: Json
         }
@@ -543,7 +626,6 @@ export type Database = {
           created_at?: string
           email: string
           id: string
-          notification_preferences?: Json | null
           updated_at?: string
           user_metadata: Json
         }
@@ -551,9 +633,41 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          notification_preferences?: Json | null
           updated_at?: string
           user_metadata?: Json
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh_key: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh_key: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh_key?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1769,7 +1883,6 @@ export type Database = {
               p_actor_id: string
               p_community_id: string
               p_resource_id: string
-              p_resource_title: string
               p_resource_type: Database["public"]["Enums"]["resource_type"]
               p_user_id: string
             }
@@ -1780,6 +1893,7 @@ export type Database = {
               p_actor_id: string
               p_community_id: string
               p_resource_id: string
+              p_resource_title: string
               p_resource_type: Database["public"]["Enums"]["resource_type"]
               p_user_id: string
             }
@@ -1877,6 +1991,24 @@ export type Database = {
       regenerate_invitation_code: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
+      }
+      send_push_notification_async: {
+        Args: {
+          p_body: string
+          p_metadata?: Json
+          p_notification_id: string
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      should_send_push: {
+        Args: {
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
+        }
+        Returns: boolean
       }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
@@ -2474,11 +2606,11 @@ export type Database = {
       unlockrows: { Args: { "": string }; Returns: number }
       update_trust_score: {
         Args: {
-          p_action_id: string
           p_action_type: Database["public"]["Enums"]["notification_type"]
           p_community_id: string
           p_metadata?: Json
-          p_points_change: number
+          p_points?: number
+          p_related_user_id?: string
           p_user_id: string
         }
         Returns: undefined
@@ -2517,28 +2649,25 @@ export type Database = {
         | "unknown"
       conversation_type: "direct" | "community"
       notification_type:
-        | "message.created"
-        | "conversation.created"
-        | "comment.created"
         | "comment.replied"
         | "claim.created"
         | "resource.created"
         | "event.created"
-        | "shoutout.created"
-        | "connection.requested"
-        | "connection.accepted"
-        | "claim.cancelled"
-        | "claim.completed"
-        | "claim.approved"
-        | "claim.rejected"
         | "resource.updated"
-        | "resource.cancelled"
-        | "member.joined"
-        | "member.left"
-        | "community.created"
-        | "trustpoints.gained"
-        | "trustpoints.lost"
         | "trustlevel.changed"
+        | "resource.commented"
+        | "claim.cancelled"
+        | "claim.responded"
+        | "resource.given"
+        | "resource.received"
+        | "event.updated"
+        | "event.cancelled"
+        | "resource.expiring"
+        | "event.starting"
+        | "membership.updated"
+        | "conversation.requested"
+        | "message.received"
+        | "shoutout.received"
       resource_category:
         | "tools"
         | "skills"
@@ -2716,28 +2845,25 @@ export const Constants = {
       ],
       conversation_type: ["direct", "community"],
       notification_type: [
-        "message.created",
-        "conversation.created",
-        "comment.created",
         "comment.replied",
         "claim.created",
         "resource.created",
         "event.created",
-        "shoutout.created",
-        "connection.requested",
-        "connection.accepted",
-        "claim.cancelled",
-        "claim.completed",
-        "claim.approved",
-        "claim.rejected",
         "resource.updated",
-        "resource.cancelled",
-        "member.joined",
-        "member.left",
-        "community.created",
-        "trustpoints.gained",
-        "trustpoints.lost",
         "trustlevel.changed",
+        "resource.commented",
+        "claim.cancelled",
+        "claim.responded",
+        "resource.given",
+        "resource.received",
+        "event.updated",
+        "event.cancelled",
+        "resource.expiring",
+        "event.starting",
+        "membership.updated",
+        "conversation.requested",
+        "message.received",
+        "shoutout.received",
       ],
       resource_category: [
         "tools",

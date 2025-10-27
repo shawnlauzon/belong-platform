@@ -1,61 +1,154 @@
-// Notification preferences are now stored as JSONB in profiles table
-// Define the interface directly since it's no longer a separate table
+import type { Database } from "../../../shared/types/database";
+import type { NotificationType } from "../constants";
 
-export interface NotificationPreferences {
-  // Group-level notification controls (7 groups)
-  social_interactions: boolean;      // Controls: comments, replies, shoutouts, connections
-  my_resources: boolean;            // Controls: resource claims, cancellations, completions
-  my_registrations: boolean;        // Controls: claim approvals, rejections, resource updates/cancellations
-  my_communities: boolean;          // Controls: member joins/leaves for communities you organize
-  community_activity: boolean;      // Controls: new resources/events in communities you're a member of
-  trust_recognition: boolean;       // Controls: trust points and level changes
+/**
+ * Channel preferences for a notification type
+ */
+export interface ChannelPreferences {
+  in_app: boolean;
+  push: boolean;
+  email: boolean;
+}
 
-  // Messages (granular control)
-  direct_messages: boolean;         // Direct 1:1 messages
-  community_messages: boolean;      // Community chat messages
+/**
+ * Full notification preferences row from database
+ */
+export type NotificationPreferences =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
 
-  // Global settings
-  email_enabled: boolean;
+/**
+ * Update type for notification preferences
+ */
+export type NotificationPreferencesUpdate =
+  Database["public"]["Tables"]["notification_preferences"]["Update"];
+
+/**
+ * Insert type for notification preferences
+ */
+export type NotificationPreferencesInsert =
+  Database["public"]["Tables"]["notification_preferences"]["Insert"];
+
+/**
+ * Type-safe notification preferences with proper typing for each notification type
+ */
+export interface TypedNotificationPreferences {
+  // Global switches
   push_enabled: boolean;
+  email_enabled: boolean;
+
+  // Per-type preferences
+  "comment.replied": ChannelPreferences;
+  "claim.created": ChannelPreferences;
+  "resource.created": ChannelPreferences;
+  "event.created": ChannelPreferences;
+  "resource.updated": ChannelPreferences;
+  "trustlevel.changed": ChannelPreferences;
+  "resource.commented": ChannelPreferences;
+  "claim.cancelled": ChannelPreferences;
+  "claim.responded": ChannelPreferences;
+  "resource.given": ChannelPreferences;
+  "resource.received": ChannelPreferences;
+  "event.updated": ChannelPreferences;
+  "event.cancelled": ChannelPreferences;
+  "resource.expiring": ChannelPreferences;
+  "event.starting": ChannelPreferences;
+  "membership.updated": ChannelPreferences;
+  "conversation.requested": ChannelPreferences;
+  "message.received": ChannelPreferences;
+  "shoutout.received": ChannelPreferences;
+
+  // Metadata
+  user_id: string;
+  id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export type NotificationPreferencesUpdate = Partial<NotificationPreferences>;
-export type NotificationPreferencesInsert = NotificationPreferences;
+/**
+ * Helper to parse JSONB channel preferences from database
+ */
+export function parseChannelPreferences(json: unknown): ChannelPreferences {
+  if (!json || typeof json !== "object") {
+    return { in_app: true, push: true, email: false };
+  }
 
-// Group-level preference interface matching database schema
-export interface GroupedNotificationPreferences {
-  social_interactions: boolean;      // Controls: comments, replies, shoutouts, connections
-  my_resources: boolean;            // Controls: resource claims, cancellations, completions
-  my_registrations: boolean;        // Controls: claim approvals, rejections, resource updates/cancellations
-  my_communities: boolean;          // Controls: member joins/leaves for communities you organize
-  community_activity: boolean;      // Controls: new resources/events in communities you're a member of
-  trust_recognition: boolean;       // Controls: trust points and level changes
-  direct_messages: boolean;         // Direct 1:1 messages
-  community_messages: boolean;      // Community chat messages
+  const obj = json as Record<string, unknown>;
+
+  return {
+    in_app: obj.in_app === true,
+    push: obj.push === true,
+    email: obj.email === true,
+  };
 }
 
-// Helper function to convert database preferences to grouped format
-// Since the database now uses group-level columns, this is mostly a direct mapping
-export const groupPreferences = (preferences: NotificationPreferences): GroupedNotificationPreferences => ({
-  social_interactions: preferences.social_interactions ?? true,
-  my_resources: preferences.my_resources ?? true,
-  my_registrations: preferences.my_registrations ?? true,
-  my_communities: preferences.my_communities ?? true,
-  community_activity: preferences.community_activity ?? true,
-  trust_recognition: preferences.trust_recognition ?? true,
-  direct_messages: preferences.direct_messages ?? true,
-  community_messages: preferences.community_messages ?? true,
-});
+/**
+ * Helper to convert database row to typed preferences
+ */
+export function toTypedPreferences(
+  row: NotificationPreferences
+): TypedNotificationPreferences {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    push_enabled: row.push_enabled,
+    email_enabled: row.email_enabled,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
 
-// Helper function to flatten grouped preferences back to database format
-// Since the database uses the same group-level structure, this is mostly a direct mapping
-export const flattenPreferences = (grouped: Partial<GroupedNotificationPreferences>): Partial<NotificationPreferencesUpdate> => ({
-  social_interactions: grouped.social_interactions,
-  my_resources: grouped.my_resources,
-  my_registrations: grouped.my_registrations,
-  my_communities: grouped.my_communities,
-  community_activity: grouped.community_activity,
-  trust_recognition: grouped.trust_recognition,
-  direct_messages: grouped.direct_messages,
-  community_messages: grouped.community_messages,
-});
+    "comment.replied": parseChannelPreferences(row["comment.replied"]),
+    "claim.created": parseChannelPreferences(row["claim.created"]),
+    "resource.created": parseChannelPreferences(row["resource.created"]),
+    "event.created": parseChannelPreferences(row["event.created"]),
+    "resource.updated": parseChannelPreferences(row["resource.updated"]),
+    "trustlevel.changed": parseChannelPreferences(row["trustlevel.changed"]),
+    "resource.commented": parseChannelPreferences(row["resource.commented"]),
+    "claim.cancelled": parseChannelPreferences(row["claim.cancelled"]),
+    "claim.responded": parseChannelPreferences(row["claim.responded"]),
+    "resource.given": parseChannelPreferences(row["resource.given"]),
+    "resource.received": parseChannelPreferences(row["resource.received"]),
+    "event.updated": parseChannelPreferences(row["event.updated"]),
+    "event.cancelled": parseChannelPreferences(row["event.cancelled"]),
+    "resource.expiring": parseChannelPreferences(row["resource.expiring"]),
+    "event.starting": parseChannelPreferences(row["event.starting"]),
+    "membership.updated": parseChannelPreferences(row["membership.updated"]),
+    "conversation.requested": parseChannelPreferences(
+      row["conversation.requested"]
+    ),
+    "message.received": parseChannelPreferences(row["message.received"]),
+    "shoutout.received": parseChannelPreferences(row["shoutout.received"]),
+  };
+}
+
+/**
+ * Helper to get channel preferences for a specific notification type
+ */
+export function getChannelPreferences(
+  preferences: TypedNotificationPreferences,
+  type: NotificationType
+): ChannelPreferences {
+  return preferences[type];
+}
+
+/**
+ * Helper to check if a specific channel is enabled for a notification type
+ */
+export function isChannelEnabled(
+  preferences: TypedNotificationPreferences,
+  type: NotificationType,
+  channel: keyof ChannelPreferences
+): boolean {
+  // Check global switch first
+  if (channel === "push" && !preferences.push_enabled) {
+    return false;
+  }
+  if (channel === "email" && !preferences.email_enabled) {
+    return false;
+  }
+
+  // Special case: event.cancelled always enabled if push globally enabled
+  if (type === "event.cancelled" && channel === "push") {
+    return preferences.push_enabled;
+  }
+
+  return preferences[type][channel];
+}

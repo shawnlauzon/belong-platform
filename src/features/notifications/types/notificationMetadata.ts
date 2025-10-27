@@ -1,20 +1,18 @@
-import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
+import { NOTIFICATION_TYPES, type NotificationType } from "../constants";
 
 // Specific metadata interfaces for each notification type
 
-export interface CommentMetadata {
-  content_preview: string;
+export interface ClaimResponseMetadata {
+  response: "approved" | "rejected";
 }
 
-export interface ShoutoutMetadata {
-  content_preview: string;
+export interface MembershipMetadata {
+  action: "joined" | "left";
 }
 
-export interface TrustPointsMetadata {
-  amount: number;
-  old_score?: number;
-  new_score?: number;
-  reason?: string;
+export interface ResourceUpdatedMetadata {
+  changes: string[];
+  resource_title?: string;
 }
 
 export interface TrustLevelMetadata {
@@ -22,102 +20,81 @@ export interface TrustLevelMetadata {
   new_level: number;
 }
 
-export interface ResourceUpdatedMetadata {
-  changes: string[];
-}
-
-export interface ConversationMetadata {
-  other_participant_id?: string;
-  other_participant_name?: string;
+export interface ResourceTitleMetadata {
+  resource_title: string;
 }
 
 // Helper function to check if notification type has metadata
 export function hasMetadata(type: NotificationType): boolean {
   return (
-    type === NOTIFICATION_TYPES.COMMENT_CREATED ||
-    type === NOTIFICATION_TYPES.COMMENT_REPLY ||
-    type === NOTIFICATION_TYPES.SHOUTOUT_CREATED ||
-    type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
-    type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
-    type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
+    type === NOTIFICATION_TYPES.CLAIM_RESPONDED ||
+    type === NOTIFICATION_TYPES.MEMBERSHIP_UPDATED ||
     type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
-    type === NOTIFICATION_TYPES.CONVERSATION_CREATED
+    type === NOTIFICATION_TYPES.EVENT_UPDATED ||
+    type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
+    type === NOTIFICATION_TYPES.RESOURCE_CREATED ||
+    type === NOTIFICATION_TYPES.EVENT_CREATED
   );
 }
 
 // Helper function to get typed metadata for any notification
 export function getTypedMetadata(
   type: NotificationType,
-  metadata: Record<string, unknown>,
+  metadata: Record<string, unknown>
 ):
-  | CommentMetadata
-  | ShoutoutMetadata
-  | TrustPointsMetadata
-  | TrustLevelMetadata
+  | ClaimResponseMetadata
+  | MembershipMetadata
   | ResourceUpdatedMetadata
-  | ConversationMetadata
+  | TrustLevelMetadata
+  | ResourceTitleMetadata
   | Record<string, never> {
   switch (type) {
-    case NOTIFICATION_TYPES.COMMENT_CREATED:
-    case NOTIFICATION_TYPES.COMMENT_REPLY:
+    case NOTIFICATION_TYPES.CLAIM_RESPONDED:
       return {
-        content_preview:
-          typeof metadata.content_preview === 'string'
-            ? metadata.content_preview
-            : '',
+        response:
+          metadata.response === "approved" ||
+          metadata.response === "rejected"
+            ? metadata.response
+            : "approved",
       };
 
-    case NOTIFICATION_TYPES.SHOUTOUT_CREATED:
+    case NOTIFICATION_TYPES.MEMBERSHIP_UPDATED:
       return {
-        content_preview:
-          typeof metadata.content_preview === 'string'
-            ? metadata.content_preview
-            : '',
+        action:
+          metadata.action === "joined" || metadata.action === "left"
+            ? metadata.action
+            : "joined",
       };
 
-    case NOTIFICATION_TYPES.TRUST_POINTS_GAINED:
-    case NOTIFICATION_TYPES.TRUST_POINTS_LOST:
+    case NOTIFICATION_TYPES.RESOURCE_UPDATED:
+    case NOTIFICATION_TYPES.EVENT_UPDATED:
       return {
-        amount: typeof metadata.amount === 'number' ? metadata.amount : 0,
-        old_score:
-          typeof metadata.old_score === 'number'
-            ? metadata.old_score
+        changes:
+          Array.isArray(metadata.changes) &&
+          metadata.changes.every((c) => typeof c === "string")
+            ? (metadata.changes as string[])
+            : [],
+        resource_title:
+          typeof metadata.resource_title === "string"
+            ? metadata.resource_title
             : undefined,
-        new_score:
-          typeof metadata.new_score === 'number'
-            ? metadata.new_score
-            : undefined,
-        reason:
-          typeof metadata.reason === 'string' ? metadata.reason : undefined,
       };
 
     case NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED:
       return {
         old_level:
-          typeof metadata.old_level === 'number' ? metadata.old_level : 0,
+          typeof metadata.old_level === "number" ? metadata.old_level : 0,
         new_level:
-          typeof metadata.new_level === 'number' ? metadata.new_level : 0,
+          typeof metadata.new_level === "number" ? metadata.new_level : 0,
       };
 
-    case NOTIFICATION_TYPES.RESOURCE_UPDATED:
+    case NOTIFICATION_TYPES.RESOURCE_CREATED:
+    case NOTIFICATION_TYPES.EVENT_CREATED:
       return {
-        changes:
-          Array.isArray(metadata.changes) &&
-          metadata.changes.every((c) => typeof c === 'string')
-            ? (metadata.changes as string[])
-            : [],
-      };
-
-    case NOTIFICATION_TYPES.CONVERSATION_CREATED:
-      return {
-        other_participant_id:
-          typeof metadata.other_participant_id === 'string'
-            ? metadata.other_participant_id
-            : undefined,
-        other_participant_name:
-          typeof metadata.other_participant_name === 'string'
-            ? metadata.other_participant_name
-            : undefined,
+        resource_title:
+          typeof metadata.resource_title === "string"
+            ? metadata.resource_title
+            : "",
       };
 
     default:

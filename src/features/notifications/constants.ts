@@ -4,27 +4,35 @@ export type NotificationType = Database['public']['Enums']['notification_type'];
 
 // Notification type constants from database - single source of truth
 export const NOTIFICATION_TYPES = {
-  COMMUNITY_CREATED: 'community.created',
-  COMMENT_CREATED: 'comment.created',
-  COMMENT_REPLY: 'comment.replied',
+  // Comments
+  COMMENT_REPLIED: 'comment.replied',
+  RESOURCE_COMMENTED: 'resource.commented',
+
+  // Claims
   CLAIM_CREATED: 'claim.created',
-  MESSAGE_CREATED: 'message.created',
-  CONVERSATION_CREATED: 'conversation.created',
+  CLAIM_CANCELLED: 'claim.cancelled',
+  CLAIM_RESPONDED: 'claim.responded',
+
+  // Transaction Confirmation
+  RESOURCE_GIVEN: 'resource.given',
+  RESOURCE_RECEIVED: 'resource.received',
+
+  // Resources & Events
   RESOURCE_CREATED: 'resource.created',
-  SHOUTOUT_CREATED: 'shoutout.created',
-  CONNECTION_REQUESTED: 'connection.requested',
-  CONNECTION_ACCEPTED: 'connection.accepted',
-  RESOURCE_CLAIM_CANCELLED: 'claim.cancelled',
-  RESOURCE_CLAIM_COMPLETED: 'claim.completed',
-  CLAIM_APPROVED: 'claim.approved',
-  CLAIM_REJECTED: 'claim.rejected',
-  RESOURCE_UPDATED: 'resource.updated',
-  RESOURCE_CANCELLED: 'resource.cancelled',
-  COMMUNITY_MEMBER_JOINED: 'member.joined',
-  COMMUNITY_MEMBER_LEFT: 'member.left',
   EVENT_CREATED: 'event.created',
-  TRUST_POINTS_GAINED: 'trustpoints.gained',
-  TRUST_POINTS_LOST: 'trustpoints.lost',
+  RESOURCE_UPDATED: 'resource.updated',
+  EVENT_UPDATED: 'event.updated',
+  EVENT_CANCELLED: 'event.cancelled',
+  RESOURCE_EXPIRING: 'resource.expiring',
+  EVENT_STARTING: 'event.starting',
+
+  // Social
+  MESSAGE_RECEIVED: 'message.received',
+  CONVERSATION_REQUESTED: 'conversation.requested',
+  SHOUTOUT_RECEIVED: 'shoutout.received',
+  MEMBERSHIP_UPDATED: 'membership.updated',
+
+  // System
   TRUST_LEVEL_CHANGED: 'trustlevel.changed',
 } as const satisfies Record<string, NotificationType>;
 

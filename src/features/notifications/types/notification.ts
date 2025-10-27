@@ -1,21 +1,19 @@
 import type {
-  CommentMetadata,
-  ShoutoutMetadata,
-  TrustPointsMetadata,
+  ClaimResponseMetadata,
+  MembershipMetadata,
   TrustLevelMetadata,
   ResourceUpdatedMetadata,
-  ConversationMetadata,
-} from './notificationMetadata';
-import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
+  ResourceTitleMetadata,
+} from "./notificationMetadata";
+import { NOTIFICATION_TYPES, type NotificationType } from "../constants";
 
 // Union type for all possible metadata types
 export type NotificationMetadata =
-  | CommentMetadata
-  | ShoutoutMetadata
-  | TrustPointsMetadata
+  | ClaimResponseMetadata
+  | MembershipMetadata
   | TrustLevelMetadata
   | ResourceUpdatedMetadata
-  | ConversationMetadata
+  | ResourceTitleMetadata
   | Record<string, never>;
 
 export interface Notification {
@@ -59,90 +57,36 @@ export interface NotificationInput {
 
 // Type guards for notification categories
 export const isCommentNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.COMMENT_CREATED ||
-  type === NOTIFICATION_TYPES.COMMENT_REPLY;
+  type === NOTIFICATION_TYPES.COMMENT_REPLIED ||
+  type === NOTIFICATION_TYPES.RESOURCE_COMMENTED;
 
 export const isClaimNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.CLAIM_CREATED ||
-  type === NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED ||
-  type === NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED ||
-  type === NOTIFICATION_TYPES.CLAIM_APPROVED ||
-  type === NOTIFICATION_TYPES.CLAIM_REJECTED ||
-  type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
-  type === NOTIFICATION_TYPES.RESOURCE_CANCELLED;
+  type === NOTIFICATION_TYPES.CLAIM_CANCELLED ||
+  type === NOTIFICATION_TYPES.CLAIM_RESPONDED;
+
+export const isTransactionNotification = (type: NotificationType): boolean =>
+  type === NOTIFICATION_TYPES.RESOURCE_GIVEN ||
+  type === NOTIFICATION_TYPES.RESOURCE_RECEIVED;
 
 export const isResourceNotification = (type: NotificationType): boolean =>
   type === NOTIFICATION_TYPES.RESOURCE_CREATED ||
   type === NOTIFICATION_TYPES.EVENT_CREATED ||
-  type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED ||
-  type === NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT;
+  type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
+  type === NOTIFICATION_TYPES.EVENT_UPDATED ||
+  type === NOTIFICATION_TYPES.EVENT_CANCELLED ||
+  type === NOTIFICATION_TYPES.RESOURCE_EXPIRING ||
+  type === NOTIFICATION_TYPES.EVENT_STARTING;
 
 export const isSocialNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.SHOUTOUT_CREATED ||
-  type === NOTIFICATION_TYPES.CONNECTION_ACCEPTED;
+  type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
+  type === NOTIFICATION_TYPES.MEMBERSHIP_UPDATED;
 
 export const isTrustNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.TRUST_POINTS_GAINED ||
-  type === NOTIFICATION_TYPES.TRUST_POINTS_LOST ||
   type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED;
 
 export const isMessageNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.MESSAGE_CREATED;
+  type === NOTIFICATION_TYPES.MESSAGE_RECEIVED;
 
 export const isConversationNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.CONVERSATION_CREATED;
-
-// Notification permission groups
-export enum NotificationGroup {
-  SOCIAL_INTERACTIONS = 'social_interactions',
-  MY_RESOURCES = 'my_resources',
-  MY_REGISTRATIONS = 'my_registrations',
-  MY_COMMUNITIES = 'my_communities',
-  COMMUNITY_ACTIVITY = 'community_activity',
-  TRUST_RECOGNITION = 'trust_recognition',
-  MESSAGES = 'messages',
-}
-
-export const getNotificationGroup = (
-  type: NotificationType,
-): NotificationGroup => {
-  switch (type) {
-    case NOTIFICATION_TYPES.COMMENT_CREATED:
-    case NOTIFICATION_TYPES.COMMENT_REPLY:
-    case NOTIFICATION_TYPES.SHOUTOUT_CREATED:
-    case NOTIFICATION_TYPES.CONNECTION_ACCEPTED:
-      return NotificationGroup.SOCIAL_INTERACTIONS;
-
-    case NOTIFICATION_TYPES.CLAIM_CREATED:
-    case NOTIFICATION_TYPES.RESOURCE_CLAIM_CANCELLED:
-    case NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED:
-      return NotificationGroup.MY_RESOURCES;
-
-    case NOTIFICATION_TYPES.CLAIM_APPROVED:
-    case NOTIFICATION_TYPES.CLAIM_REJECTED:
-    case NOTIFICATION_TYPES.RESOURCE_UPDATED:
-    case NOTIFICATION_TYPES.RESOURCE_CANCELLED:
-      return NotificationGroup.MY_REGISTRATIONS;
-
-    case NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED:
-    case NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT:
-      return NotificationGroup.MY_COMMUNITIES;
-
-    case NOTIFICATION_TYPES.RESOURCE_CREATED:
-    case NOTIFICATION_TYPES.EVENT_CREATED:
-      return NotificationGroup.COMMUNITY_ACTIVITY;
-
-    case NOTIFICATION_TYPES.TRUST_POINTS_GAINED:
-    case NOTIFICATION_TYPES.TRUST_POINTS_LOST:
-    case NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED:
-      return NotificationGroup.TRUST_RECOGNITION;
-
-    case NOTIFICATION_TYPES.MESSAGE_CREATED:
-    case NOTIFICATION_TYPES.CONVERSATION_CREATED:
-      return NotificationGroup.MESSAGES;
-
-    default:
-      // This should never happen due to TypeScript exhaustiveness checking
-      return NotificationGroup.SOCIAL_INTERACTIONS;
-  }
-};
+  type === NOTIFICATION_TYPES.CONVERSATION_REQUESTED;
