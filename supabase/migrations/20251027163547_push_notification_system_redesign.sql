@@ -1,10 +1,11 @@
--- Push Notification System and Notification Redesign
+-- Push Notification System and Action-Based Notification Redesign
 -- This migration implements:
--- 1. Updated notification_type enum with new types
--- 2. notification_preferences table for per-type preferences
--- 3. push_subscriptions table for Web Push subscriptions
--- 4. Updated notification triggers
--- 5. Push notification delivery functions
+-- 1. action_type enum for granular event tracking
+-- 2. action_to_notification_type_mapping table to map actions to preference categories
+-- 3. notification_preferences table for per-type preferences
+-- 4. push_subscriptions table for Web Push subscriptions
+-- 5. Updated notification triggers to use actions
+-- 6. Push notification delivery functions
 
 -- ============================================================================
 -- STEP 1: Drop notification_details view (will recreate later)
@@ -13,90 +14,155 @@
 DROP VIEW IF EXISTS notification_details;
 
 -- ============================================================================
--- STEP 2: Update notification_type enum
+-- STEP 2: Create action_type enum and mapping table
 -- ============================================================================
 
--- First, convert columns and functions using the enum to use text temporarily
-
--- Convert trust_score_logs.action_type to text
+-- First, convert columns using the old enum to text temporarily
 ALTER TABLE trust_score_logs
   ALTER COLUMN action_type TYPE TEXT
   USING action_type::text;
 
--- Convert notifications.type to text
 ALTER TABLE notifications
   ALTER COLUMN type TYPE TEXT
   USING (
     CASE type::text
-      -- Map old types to new types
+      -- Map old types to action types
       WHEN 'comment.created' THEN 'resource.commented'
-      WHEN 'claim.approved' THEN 'claim.responded'
-      WHEN 'claim.rejected' THEN 'claim.responded'
+      WHEN 'claim.approved' THEN 'claim.approved'
+      WHEN 'claim.rejected' THEN 'claim.rejected'
       WHEN 'claim.completed' THEN 'resource.received'
       WHEN 'resource.cancelled' THEN 'event.cancelled'
       WHEN 'conversation.created' THEN 'conversation.requested'
       WHEN 'message.created' THEN 'message.received'
       WHEN 'shoutout.created' THEN 'shoutout.received'
-      WHEN 'member.joined' THEN 'membership.updated'
-      WHEN 'member.left' THEN 'membership.updated'
-      -- Keep types that exist in both
+      -- Keep types that map 1:1
+      WHEN 'member.joined' THEN 'member.joined'
+      WHEN 'member.left' THEN 'member.left'
       WHEN 'comment.replied' THEN 'comment.replied'
       WHEN 'claim.created' THEN 'claim.created'
       WHEN 'resource.created' THEN 'resource.created'
       WHEN 'event.created' THEN 'event.created'
       WHEN 'resource.updated' THEN 'resource.updated'
-      WHEN 'trustlevel.changed' THEN 'trustlevel.changed'
+      WHEN 'trustlevel.changed' THEN 'trustpoints.gained'
       WHEN 'claim.cancelled' THEN 'claim.cancelled'
       -- Default for any unmapped types
       ELSE 'resource.updated'
     END
   );
 
--- Drop functions that depend on the enum
+-- Drop functions that depend on the old enum
 DROP FUNCTION IF EXISTS create_notification_base(UUID, notification_type, UUID, UUID, UUID, UUID, UUID, UUID, UUID, JSONB);
-DROP FUNCTION IF EXISTS update_trust_score(UUID, UUID, notification_type, UUID, INTEGER, JSONB);
+DROP FUNCTION IF EXISTS update_trust_score(UUID, UUID, notification_type, UUID, INTEGER, JSONB) CASCADE;
 
 -- Drop old enum
-DROP TYPE notification_type;
+DROP TYPE IF EXISTS notification_type;
 
--- Create new enum with all notification types
-CREATE TYPE notification_type AS ENUM (
-  -- Keep existing
+-- Create action_type enum with all granular actions
+CREATE TYPE action_type AS ENUM (
+  -- Comments
+  'resource.commented',
   'comment.replied',
+  -- Claims
   'claim.created',
+  'claim.approved',
+  'claim.rejected',
+  'claim.cancelled',
+  -- Transaction confirmation
+  'resource.given',
+  'resource.received',
+  -- Resources & Events
   'resource.created',
   'event.created',
   'resource.updated',
-  'trustlevel.changed',
-  -- Add new
-  'resource.commented',
-  'claim.cancelled',
-  'claim.responded',
-  'resource.given',
-  'resource.received',
   'event.updated',
   'event.cancelled',
   'resource.expiring',
   'event.starting',
-  'membership.updated',
-  'conversation.requested',
+  -- Social
   'message.received',
-  'shoutout.received'
+  'conversation.requested',
+  'shoutout.received',
+  'member.joined',
+  'member.left',
+  -- System
+  'trustlevel.changed'
 );
 
--- Convert columns back to new enum
+-- Create mapping table from actions to notification type preferences
+CREATE TABLE action_to_notification_type_mapping (
+  action action_type PRIMARY KEY,
+  notification_type TEXT NOT NULL
+);
+
+-- Seed the mapping table (many actions → one notification type)
+INSERT INTO action_to_notification_type_mapping (action, notification_type) VALUES
+  -- Comments (1:1)
+  ('resource.commented', 'resource.commented'),
+  ('comment.replied', 'comment.replied'),
+  -- Claims
+  ('claim.created', 'claim.created'),
+  ('claim.cancelled', 'claim.cancelled'),
+  ('claim.approved', 'claim.responded'),  -- many-to-one
+  ('claim.rejected', 'claim.responded'),  -- many-to-one
+  -- Transaction confirmation (1:1)
+  ('resource.given', 'resource.given'),
+  ('resource.received', 'resource.received'),
+  -- Resources & Events (1:1)
+  ('resource.created', 'resource.created'),
+  ('event.created', 'event.created'),
+  ('resource.updated', 'resource.updated'),
+  ('event.updated', 'event.updated'),
+  ('event.cancelled', 'event.cancelled'),
+  ('resource.expiring', 'resource.expiring'),
+  ('event.starting', 'event.starting'),
+  -- Social (1:1)
+  ('message.received', 'message.received'),
+  ('conversation.requested', 'conversation.requested'),
+  ('shoutout.received', 'shoutout.received'),
+  -- Membership (many-to-one)
+  ('member.joined', 'membership.updated'),
+  ('member.left', 'membership.updated');
+
+-- Convert notifications.type to action_type
 ALTER TABLE notifications
-  ALTER COLUMN type TYPE notification_type
-  USING type::notification_type;
+  RENAME COLUMN type TO action;
 
+ALTER TABLE notifications
+  ALTER COLUMN action TYPE action_type
+  USING action::action_type;
+
+-- Map old trust_score_logs action_type values to new action_type enum
 ALTER TABLE trust_score_logs
-  ALTER COLUMN action_type TYPE notification_type
-  USING action_type::notification_type;
+  ALTER COLUMN action_type TYPE action_type
+  USING (
+    CASE action_type
+      -- Map old types to action types
+      WHEN 'comment.created' THEN 'resource.commented'
+      WHEN 'claim.approved' THEN 'claim.approved'
+      WHEN 'claim.rejected' THEN 'claim.rejected'
+      WHEN 'claim.completed' THEN 'resource.received'
+      WHEN 'resource.cancelled' THEN 'event.cancelled'
+      WHEN 'conversation.created' THEN 'conversation.requested'
+      WHEN 'message.created' THEN 'message.received'
+      WHEN 'shoutout.created' THEN 'shoutout.received'
+      WHEN 'member.joined' THEN 'member.joined'
+      WHEN 'member.left' THEN 'member.left'
+      WHEN 'comment.replied' THEN 'comment.replied'
+      WHEN 'claim.created' THEN 'claim.created'
+      WHEN 'resource.created' THEN 'resource.created'
+      WHEN 'event.created' THEN 'event.created'
+      WHEN 'resource.updated' THEN 'resource.updated'
+      WHEN 'trustlevel.changed' THEN 'trustpoints.gained'
+      WHEN 'claim.cancelled' THEN 'claim.cancelled'
+      -- Default for any unmapped types
+      ELSE 'resource.updated'
+    END::action_type
+  );
 
--- Recreate create_notification_base function
+-- Recreate create_notification_base function with action_type
 CREATE OR REPLACE FUNCTION create_notification_base(
   p_user_id UUID,
-  p_type notification_type,
+  p_action action_type,
   p_actor_id UUID DEFAULT NULL,
   p_resource_id UUID DEFAULT NULL,
   p_comment_id UUID DEFAULT NULL,
@@ -115,7 +181,7 @@ DECLARE
 BEGIN
   INSERT INTO notifications (
     user_id,
-    type,
+    action,
     actor_id,
     resource_id,
     comment_id,
@@ -126,7 +192,7 @@ BEGIN
     metadata
   ) VALUES (
     p_user_id,
-    p_type,
+    p_action,
     p_actor_id,
     p_resource_id,
     p_comment_id,
@@ -142,79 +208,6 @@ BEGIN
 END;
 $$;
 
--- Recreate update_trust_score function
-CREATE OR REPLACE FUNCTION update_trust_score(
-  p_user_id UUID,
-  p_community_id UUID,
-  p_action_type notification_type,
-  p_related_user_id UUID DEFAULT NULL,
-  p_points INTEGER DEFAULT 0,
-  p_metadata JSONB DEFAULT '{}'::jsonb
-)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_current_score INTEGER;
-  v_current_level INTEGER;
-  v_new_score INTEGER;
-  v_new_level INTEGER;
-BEGIN
-  -- Get current score
-  SELECT score, level INTO v_current_score, v_current_level
-  FROM trust_scores
-  WHERE user_id = p_user_id AND community_id = p_community_id;
-
-  -- Calculate new score
-  v_new_score := GREATEST(0, v_current_score + p_points);
-
-  -- Calculate new level (simple formula: level = floor(score / 100))
-  v_new_level := FLOOR(v_new_score / 100);
-
-  -- Update trust score
-  UPDATE trust_scores
-  SET
-    score = v_new_score,
-    level = v_new_level,
-    last_calculated_at = NOW()
-  WHERE user_id = p_user_id AND community_id = p_community_id;
-
-  -- Log the change
-  INSERT INTO trust_score_logs (
-    user_id,
-    community_id,
-    action_type,
-    related_user_id,
-    points_change,
-    score_before,
-    score_after,
-    metadata
-  ) VALUES (
-    p_user_id,
-    p_community_id,
-    p_action_type,
-    p_related_user_id,
-    p_points,
-    v_current_score,
-    v_new_score,
-    p_metadata
-  );
-
-  -- Create notification if level changed
-  IF v_new_level != v_current_level THEN
-    PERFORM create_notification_base(
-      p_user_id := p_user_id,
-      p_type := 'trustlevel.changed',
-      p_community_id := p_community_id,
-      p_metadata := jsonb_build_object(
-        'old_level', v_current_level,
-        'new_level', v_new_level
-      )
-    );
-  END IF;
-END;
-$$;
 
 -- ============================================================================
 -- STEP 3: Create notification_preferences table
@@ -229,25 +222,29 @@ CREATE TABLE notification_preferences (
   email_enabled BOOLEAN NOT NULL DEFAULT false,
 
   -- Per-type preferences (JSONB with {in_app: boolean, push: boolean, email: boolean})
+  -- Comments
   "comment.replied" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "resource.commented" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  -- Claims
   "claim.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "claim.cancelled" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "claim.responded" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  -- Transaction confirmation
+  "resource.given" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "resource.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  -- Resources & Events
   "resource.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "event.created" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "resource.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "trustlevel.changed" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.commented" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "claim.cancelled" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "claim.responded" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.given" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "resource.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "event.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "event.cancelled" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "resource.expiring" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "event.starting" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "membership.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
-  "conversation.requested" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  -- Social
   "message.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "conversation.requested" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
   "shoutout.received" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
+  "membership.updated" JSONB NOT NULL DEFAULT '{"in_app": true, "push": true, "email": false}'::jsonb,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -386,7 +383,7 @@ CREATE TRIGGER set_push_subscriptions_updated_at
 -- Helper function to check if push should be sent
 CREATE OR REPLACE FUNCTION should_send_push(
   p_user_id UUID,
-  p_type notification_type
+  p_action action_type
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -395,6 +392,7 @@ AS $$
 DECLARE
   prefs RECORD;
   type_pref JSONB;
+  action_val TEXT;
 BEGIN
   -- Get user preferences
   SELECT * INTO prefs
@@ -406,15 +404,25 @@ BEGIN
     RETURN false;
   END IF;
 
-  -- Special case: event.cancelled always sends if push is enabled globally
-  IF p_type = 'event.cancelled' THEN
+  -- System notifications (trustlevel.changed) always send if push globally enabled
+  IF p_action = 'trustlevel.changed' THEN
+    RETURN true;
+  END IF;
+
+  -- Look up notification type from action
+  SELECT notification_type INTO action_val
+  FROM action_to_notification_type_mapping
+  WHERE action = p_action;
+
+  -- If no mapping found, default to true
+  IF action_val IS NULL THEN
     RETURN true;
   END IF;
 
   -- Get type-specific preference
-  EXECUTE format('SELECT $1.%I', p_type::text) INTO type_pref USING prefs;
+  EXECUTE format('SELECT $1.%I', action_val) INTO type_pref USING prefs;
 
-  -- Check if push is enabled for this type
+  -- Check if push is enabled for this notification type
   RETURN (type_pref->>'push')::boolean = true;
 END;
 $$;
@@ -423,7 +431,7 @@ $$;
 CREATE OR REPLACE FUNCTION send_push_notification_async(
   p_user_id UUID,
   p_notification_id UUID,
-  p_type notification_type,
+  p_action action_type,
   p_title TEXT,
   p_body TEXT,
   p_metadata JSONB DEFAULT '{}'::jsonb
@@ -434,7 +442,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   -- Check if should send push
-  IF NOT should_send_push(p_user_id, p_type) THEN
+  IF NOT should_send_push(p_user_id, p_action) THEN
     RETURN;
   END IF;
 
@@ -448,7 +456,7 @@ BEGIN
     body := jsonb_build_object(
       'user_id', p_user_id,
       'notification_id', p_notification_id,
-      'type', p_type,
+      'action', p_action,
       'title', p_title,
       'body', p_body,
       'metadata', p_metadata
@@ -487,7 +495,7 @@ BEGIN
     IF parent_comment_author_id IS NOT NULL AND parent_comment_author_id != NEW.author_id THEN
       notification_id := create_notification_base(
         p_user_id := parent_comment_author_id,
-        p_type := 'comment.replied',
+        p_action := 'comment.replied',
         p_actor_id := NEW.author_id,
         p_resource_id := NEW.resource_id,
         p_comment_id := NEW.id,
@@ -511,7 +519,7 @@ BEGIN
      AND resource_owner_id != parent_comment_author_id THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
-      p_type := 'resource.commented',
+      p_action := 'resource.commented',
       p_actor_id := NEW.author_id,
       p_resource_id := NEW.resource_id,
       p_comment_id := NEW.id,
@@ -551,7 +559,7 @@ BEGIN
   IF resource_owner_id IS NOT NULL AND resource_owner_id != NEW.claimant_id THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
-      p_type := 'claim.created',
+      p_action := 'claim.created',
       p_actor_id := NEW.claimant_id,
       p_resource_id := NEW.resource_id,
       p_claim_id := NEW.id,
@@ -590,13 +598,16 @@ BEGIN
   FROM resources
   WHERE id = NEW.resource_id;
 
-  -- Handle approved/rejected � claim.responded
+  -- Handle approved/rejected � claim.approved or claim.rejected
   IF NEW.status IN ('approved', 'rejected') THEN
     notification_metadata := jsonb_build_object('response', NEW.status::text);
 
     notification_id := create_notification_base(
       p_user_id := NEW.claimant_id,
-      p_type := 'claim.responded',
+      p_action := CASE NEW.status
+        WHEN 'approved' THEN 'claim.approved'::action_type
+        ELSE 'claim.rejected'::action_type
+      END,
       p_actor_id := resource_owner_id,
       p_resource_id := NEW.resource_id,
       p_claim_id := NEW.id,
@@ -607,7 +618,10 @@ BEGIN
     PERFORM send_push_notification_async(
       NEW.claimant_id,
       notification_id,
-      'claim.responded',
+      CASE NEW.status
+        WHEN 'approved' THEN 'claim.approved'::action_type
+        ELSE 'claim.rejected'::action_type
+      END,
       'Response to your claim',
       CASE NEW.status
         WHEN 'approved' THEN 'Your claim was approved'
@@ -620,7 +634,7 @@ BEGIN
   IF NEW.status = 'cancelled' THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
-      p_type := 'claim.cancelled',
+      p_action := 'claim.cancelled',
       p_actor_id := NEW.claimant_id,
       p_resource_id := NEW.resource_id,
       p_claim_id := NEW.id,
@@ -640,7 +654,7 @@ BEGIN
   IF OLD.status = 'going' AND NEW.status = 'given' THEN
     notification_id := create_notification_base(
       p_user_id := NEW.claimant_id,
-      p_type := 'resource.given',
+      p_action := 'resource.given',
       p_actor_id := resource_owner_id,
       p_resource_id := NEW.resource_id,
       p_claim_id := NEW.id,
@@ -660,7 +674,7 @@ BEGIN
   IF OLD.status = 'given' AND NEW.status = 'received' THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
-      p_type := 'resource.received',
+      p_action := 'resource.received',
       p_actor_id := NEW.claimant_id,
       p_resource_id := NEW.resource_id,
       p_claim_id := NEW.id,
@@ -697,19 +711,19 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  notification_type_val notification_type;
+  action_val action_type;
   notification_id UUID;
 BEGIN
   -- Determine notification type based on resource type
   IF p_resource_type = 'event' THEN
-    notification_type_val := 'event.created';
+    action_val := 'event.created';
   ELSE
-    notification_type_val := 'resource.created';
+    action_val := 'resource.created';
   END IF;
 
   notification_id := create_notification_base(
     p_user_id := p_user_id,
-    p_type := notification_type_val,
+    p_type := action_val,
     p_actor_id := p_actor_id,
     p_resource_id := p_resource_id,
     p_community_id := p_community_id,
@@ -720,7 +734,7 @@ BEGIN
   PERFORM send_push_notification_async(
     p_user_id,
     notification_id,
-    notification_type_val,
+    action_val,
     CASE WHEN p_resource_type = 'event' THEN 'New event' ELSE 'New resource' END,
     p_resource_title
   );
@@ -769,7 +783,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION notify_on_resource_update()
 RETURNS TRIGGER AS $$
 DECLARE
-  notification_type_val notification_type;
+  action_val action_type;
   claim_record RECORD;
   changes TEXT[];
   notification_id UUID;
@@ -796,9 +810,9 @@ BEGIN
 
   -- Determine notification type
   IF NEW.type = 'event' THEN
-    notification_type_val := 'event.updated';
+    action_val := 'event.updated';
   ELSE
-    notification_type_val := 'resource.updated';
+    action_val := 'resource.updated';
   END IF;
 
   -- Notify all active claimants
@@ -811,7 +825,7 @@ BEGIN
   LOOP
     notification_id := create_notification_base(
       p_user_id := claim_record.claimant_id,
-      p_type := notification_type_val,
+      p_action := action_val,
       p_actor_id := NEW.owner_id,
       p_resource_id := NEW.id,
       p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1),
@@ -821,7 +835,7 @@ BEGIN
     PERFORM send_push_notification_async(
       claim_record.claimant_id,
       notification_id,
-      notification_type_val,
+      action_val,
       CASE WHEN NEW.type = 'event' THEN 'Event updated' ELSE 'Resource updated' END,
       NEW.title
     );
@@ -857,7 +871,7 @@ BEGIN
   LOOP
     notification_id := create_notification_base(
       p_user_id := claim_record.claimant_id,
-      p_type := 'event.cancelled',
+      p_action := 'event.cancelled',
       p_actor_id := NEW.owner_id,
       p_resource_id := NEW.id,
       p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1)
@@ -885,13 +899,13 @@ RETURNS TRIGGER AS $$
 DECLARE
   admin_record RECORD;
   notification_id UUID;
-  action_text TEXT;
+  action_val action_type;
 BEGIN
-  -- Determine if this is a join or leave
+  -- Determine notification type based on operation
   IF TG_OP = 'INSERT' THEN
-    action_text := 'joined';
+    action_val := 'member.joined';
   ELSIF TG_OP = 'DELETE' THEN
-    action_text := 'left';
+    action_val := 'member.left';
   ELSE
     RETURN NEW;
   END IF;
@@ -906,18 +920,18 @@ BEGIN
   LOOP
     notification_id := create_notification_base(
       p_user_id := admin_record.user_id,
-      p_type := 'membership.updated',
+      p_action := action_val,
       p_actor_id := COALESCE(NEW.user_id, OLD.user_id),
       p_community_id := COALESCE(NEW.community_id, OLD.community_id),
-      p_metadata := jsonb_build_object('action', action_text)
+      p_metadata := jsonb_build_object('action', CASE WHEN TG_OP = 'INSERT' THEN 'joined' ELSE 'left' END)
     );
 
     PERFORM send_push_notification_async(
       admin_record.user_id,
       notification_id,
-      'membership.updated',
+      action_val,
       'Membership change',
-      'A member ' || action_text || ' the community'
+      'A member ' || CASE WHEN TG_OP = 'INSERT' THEN 'joined' ELSE 'left' END || ' the community'
     );
   END LOOP;
 
@@ -959,7 +973,7 @@ BEGIN
   LOOP
     notification_id := create_notification_base(
       p_user_id := participant_id,
-      p_type := 'conversation.requested',
+      p_action := 'conversation.requested',
       p_actor_id := NEW.created_by,
       p_conversation_id := NEW.id
     );
@@ -992,7 +1006,7 @@ BEGIN
   LOOP
     notification_id := create_notification_base(
       p_user_id := participant_id,
-      p_type := 'message.received',
+      p_action := 'message.received',
       p_actor_id := NEW.sender_id,
       p_conversation_id := NEW.conversation_id
     );
@@ -1028,7 +1042,7 @@ BEGIN
   IF NEW.to_user_id IS NOT NULL AND NEW.to_user_id != NEW.from_user_id THEN
     notification_id := create_notification_base(
       p_user_id := NEW.to_user_id,
-      p_type := 'shoutout.received',
+      p_action := 'shoutout.received',
       p_actor_id := NEW.from_user_id,
       p_shoutout_id := NEW.id,
       p_community_id := NEW.community_id
@@ -1066,7 +1080,7 @@ CREATE VIEW notification_details AS
 SELECT
     n.id,
     n.user_id,
-    n.type,
+    n.action,
     n.resource_id,
     n.comment_id,
     n.claim_id,

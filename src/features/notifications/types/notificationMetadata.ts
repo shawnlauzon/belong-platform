@@ -1,6 +1,6 @@
-import { NOTIFICATION_TYPES, type NotificationType } from "../constants";
+import { ACTION_TYPES, type ActionType } from "../constants";
 
-// Specific metadata interfaces for each notification type
+// Specific metadata interfaces for each action type
 
 export interface ClaimResponseMetadata {
   response: "approved" | "rejected";
@@ -24,22 +24,24 @@ export interface ResourceTitleMetadata {
   resource_title: string;
 }
 
-// Helper function to check if notification type has metadata
-export function hasMetadata(type: NotificationType): boolean {
+// Helper function to check if action has metadata
+export function hasMetadata(action: ActionType): boolean {
   return (
-    type === NOTIFICATION_TYPES.CLAIM_RESPONDED ||
-    type === NOTIFICATION_TYPES.MEMBERSHIP_UPDATED ||
-    type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
-    type === NOTIFICATION_TYPES.EVENT_UPDATED ||
-    type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED ||
-    type === NOTIFICATION_TYPES.RESOURCE_CREATED ||
-    type === NOTIFICATION_TYPES.EVENT_CREATED
+    action === ACTION_TYPES.CLAIM_APPROVED ||
+    action === ACTION_TYPES.CLAIM_REJECTED ||
+    action === ACTION_TYPES.MEMBER_JOINED ||
+    action === ACTION_TYPES.MEMBER_LEFT ||
+    action === ACTION_TYPES.RESOURCE_UPDATED ||
+    action === ACTION_TYPES.EVENT_UPDATED ||
+    action === ACTION_TYPES.TRUSTLEVEL_CHANGED ||
+    action === ACTION_TYPES.RESOURCE_CREATED ||
+    action === ACTION_TYPES.EVENT_CREATED
   );
 }
 
-// Helper function to get typed metadata for any notification
+// Helper function to get typed metadata for any notification action
 export function getTypedMetadata(
-  type: NotificationType,
+  action: ActionType,
   metadata: Record<string, unknown>
 ):
   | ClaimResponseMetadata
@@ -48,26 +50,28 @@ export function getTypedMetadata(
   | TrustLevelMetadata
   | ResourceTitleMetadata
   | Record<string, never> {
-  switch (type) {
-    case NOTIFICATION_TYPES.CLAIM_RESPONDED:
+  switch (action) {
+    case ACTION_TYPES.CLAIM_APPROVED:
+    case ACTION_TYPES.CLAIM_REJECTED:
       return {
         response:
           metadata.response === "approved" ||
           metadata.response === "rejected"
             ? metadata.response
-            : "approved",
+            : action === ACTION_TYPES.CLAIM_APPROVED ? "approved" : "rejected",
       };
 
-    case NOTIFICATION_TYPES.MEMBERSHIP_UPDATED:
+    case ACTION_TYPES.MEMBER_JOINED:
+    case ACTION_TYPES.MEMBER_LEFT:
       return {
         action:
           metadata.action === "joined" || metadata.action === "left"
             ? metadata.action
-            : "joined",
+            : action === ACTION_TYPES.MEMBER_JOINED ? "joined" : "left",
       };
 
-    case NOTIFICATION_TYPES.RESOURCE_UPDATED:
-    case NOTIFICATION_TYPES.EVENT_UPDATED:
+    case ACTION_TYPES.RESOURCE_UPDATED:
+    case ACTION_TYPES.EVENT_UPDATED:
       return {
         changes:
           Array.isArray(metadata.changes) &&
@@ -80,7 +84,7 @@ export function getTypedMetadata(
             : undefined,
       };
 
-    case NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED:
+    case ACTION_TYPES.TRUSTLEVEL_CHANGED:
       return {
         old_level:
           typeof metadata.old_level === "number" ? metadata.old_level : 0,
@@ -88,8 +92,8 @@ export function getTypedMetadata(
           typeof metadata.new_level === "number" ? metadata.new_level : 0,
       };
 
-    case NOTIFICATION_TYPES.RESOURCE_CREATED:
-    case NOTIFICATION_TYPES.EVENT_CREATED:
+    case ACTION_TYPES.RESOURCE_CREATED:
+    case ACTION_TYPES.EVENT_CREATED:
       return {
         resource_title:
           typeof metadata.resource_title === "string"

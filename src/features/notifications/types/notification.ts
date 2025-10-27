@@ -5,7 +5,7 @@ import type {
   ResourceUpdatedMetadata,
   ResourceTitleMetadata,
 } from "./notificationMetadata";
-import { NOTIFICATION_TYPES, type NotificationType } from "../constants";
+import { ACTION_TYPES, type ActionType } from "../constants";
 
 // Union type for all possible metadata types
 export type NotificationMetadata =
@@ -19,7 +19,7 @@ export type NotificationMetadata =
 export interface Notification {
   id: string;
   userId: string;
-  type: NotificationType;
+  action: ActionType;
 
   // Polymorphic references
   resourceId?: string;
@@ -32,7 +32,7 @@ export interface Notification {
   // Actor information
   actorId?: string;
 
-  // Typed metadata - will be properly typed based on notification type
+  // Typed metadata - will be properly typed based on action
   metadata: NotificationMetadata;
 
   // Status
@@ -44,7 +44,7 @@ export interface Notification {
 }
 
 export interface NotificationInput {
-  type: NotificationType;
+  action: ActionType;
   resourceId?: string;
   commentId?: string;
   claimId?: string;
@@ -56,37 +56,39 @@ export interface NotificationInput {
 }
 
 // Type guards for notification categories
-export const isCommentNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.COMMENT_REPLIED ||
-  type === NOTIFICATION_TYPES.RESOURCE_COMMENTED;
+export const isCommentNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.COMMENT_REPLIED ||
+  action === ACTION_TYPES.RESOURCE_COMMENTED;
 
-export const isClaimNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.CLAIM_CREATED ||
-  type === NOTIFICATION_TYPES.CLAIM_CANCELLED ||
-  type === NOTIFICATION_TYPES.CLAIM_RESPONDED;
+export const isClaimNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.CLAIM_CREATED ||
+  action === ACTION_TYPES.CLAIM_APPROVED ||
+  action === ACTION_TYPES.CLAIM_REJECTED ||
+  action === ACTION_TYPES.CLAIM_CANCELLED;
 
-export const isTransactionNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.RESOURCE_GIVEN ||
-  type === NOTIFICATION_TYPES.RESOURCE_RECEIVED;
+export const isTransactionNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.RESOURCE_GIVEN ||
+  action === ACTION_TYPES.RESOURCE_RECEIVED;
 
-export const isResourceNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.RESOURCE_CREATED ||
-  type === NOTIFICATION_TYPES.EVENT_CREATED ||
-  type === NOTIFICATION_TYPES.RESOURCE_UPDATED ||
-  type === NOTIFICATION_TYPES.EVENT_UPDATED ||
-  type === NOTIFICATION_TYPES.EVENT_CANCELLED ||
-  type === NOTIFICATION_TYPES.RESOURCE_EXPIRING ||
-  type === NOTIFICATION_TYPES.EVENT_STARTING;
+export const isResourceNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.RESOURCE_CREATED ||
+  action === ACTION_TYPES.EVENT_CREATED ||
+  action === ACTION_TYPES.RESOURCE_UPDATED ||
+  action === ACTION_TYPES.EVENT_UPDATED ||
+  action === ACTION_TYPES.EVENT_CANCELLED ||
+  action === ACTION_TYPES.RESOURCE_EXPIRING ||
+  action === ACTION_TYPES.EVENT_STARTING;
 
-export const isSocialNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.SHOUTOUT_RECEIVED ||
-  type === NOTIFICATION_TYPES.MEMBERSHIP_UPDATED;
+export const isSocialNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.SHOUTOUT_RECEIVED ||
+  action === ACTION_TYPES.MEMBER_JOINED ||
+  action === ACTION_TYPES.MEMBER_LEFT;
 
-export const isTrustNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.TRUST_LEVEL_CHANGED;
+export const isTrustNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.TRUSTLEVEL_CHANGED;
 
-export const isMessageNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.MESSAGE_RECEIVED;
+export const isMessageNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.MESSAGE_RECEIVED;
 
-export const isConversationNotification = (type: NotificationType): boolean =>
-  type === NOTIFICATION_TYPES.CONVERSATION_REQUESTED;
+export const isConversationNotification = (action: ActionType): boolean =>
+  action === ACTION_TYPES.CONVERSATION_REQUESTED;

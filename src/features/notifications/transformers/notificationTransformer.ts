@@ -1,19 +1,19 @@
 import type { NotificationDetail } from '../types/notificationDetail';
 import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
-import { NOTIFICATION_TYPES, type NotificationType } from '../constants';
+import { ACTION_TYPES, type ActionType } from '../constants';
 import { getTypedMetadata } from '../types/notificationMetadata';
 
 export function toDomainNotification(
   row: NotificationDetailsRow,
 ): NotificationDetail {
-  const type = (row.type ||
-    NOTIFICATION_TYPES.RESOURCE_CREATED) as NotificationType;
+  const action = (row.action ||
+    ACTION_TYPES.RESOURCE_CREATED) as ActionType;
   const rawMetadata = (row.metadata as Record<string, unknown>) || {};
 
   return {
     id: row.id || '',
     userId: row.user_id || '',
-    type,
+    action,
 
     // Polymorphic references from view
     resourceId: row.resource_id || undefined,
@@ -45,8 +45,8 @@ export function toDomainNotification(
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,
 
-    // Typed metadata based on notification type
-    metadata: getTypedMetadata(type, rawMetadata),
+    // Typed metadata based on action
+    metadata: getTypedMetadata(action, rawMetadata),
 
     // Status
     readAt: row.read_at ? new Date(row.read_at) : null,

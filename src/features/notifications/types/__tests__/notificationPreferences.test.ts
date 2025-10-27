@@ -69,7 +69,6 @@ describe("isChannelEnabled", () => {
     "resource.created": { in_app: true, push: true, email: true },
     "event.created": { in_app: true, push: true, email: false },
     "resource.updated": { in_app: true, push: true, email: false },
-    "trustlevel.changed": { in_app: true, push: true, email: false },
     "resource.commented": { in_app: true, push: true, email: false },
     "claim.cancelled": { in_app: true, push: true, email: false },
     "claim.responded": { in_app: true, push: true, email: false },
@@ -121,34 +120,6 @@ describe("isChannelEnabled", () => {
     );
     expect(result).toBe(false);
   });
-
-  it("should return true for event.cancelled push even if type pref is false", () => {
-    const prefsWithEventCancelledDisabled = {
-      ...mockPreferences,
-      "event.cancelled": { in_app: true, push: false, email: false },
-    };
-
-    const result = isChannelEnabled(
-      prefsWithEventCancelledDisabled,
-      "event.cancelled",
-      "push"
-    );
-    expect(result).toBe(true);
-  });
-
-  it("should return false for event.cancelled push if globally disabled", () => {
-    const prefsWithPushDisabled = {
-      ...mockPreferences,
-      push_enabled: false,
-    };
-
-    const result = isChannelEnabled(
-      prefsWithPushDisabled,
-      "event.cancelled",
-      "push"
-    );
-    expect(result).toBe(false);
-  });
 });
 
 describe("getChannelPreferences", () => {
@@ -164,7 +135,6 @@ describe("getChannelPreferences", () => {
     "resource.created": { in_app: true, push: true, email: true },
     "event.created": { in_app: true, push: true, email: false },
     "resource.updated": { in_app: true, push: true, email: false },
-    "trustlevel.changed": { in_app: true, push: true, email: false },
     "resource.commented": { in_app: true, push: true, email: false },
     "claim.cancelled": { in_app: true, push: true, email: false },
     "claim.responded": { in_app: true, push: true, email: false },
@@ -205,7 +175,6 @@ describe("toTypedPreferences", () => {
       "resource.created": { in_app: true, push: true, email: true },
       "event.created": { in_app: true, push: true, email: false },
       "resource.updated": { in_app: true, push: true, email: false },
-      "trustlevel.changed": { in_app: true, push: true, email: false },
       "resource.commented": { in_app: true, push: true, email: false },
       "claim.cancelled": { in_app: true, push: true, email: false },
       "claim.responded": { in_app: true, push: true, email: false },

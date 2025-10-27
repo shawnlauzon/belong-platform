@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      action_to_notification_type_mapping: {
+        Row: {
+          action: Database["public"]["Enums"]["action_type"]
+          notification_type: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["action_type"]
+          notification_type: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["action_type"]
+          notification_type?: string
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_at: string
@@ -453,7 +468,6 @@ export type Database = {
           "resource.received": Json
           "resource.updated": Json
           "shoutout.received": Json
-          "trustlevel.changed": Json
           updated_at: string
           user_id: string
         }
@@ -480,7 +494,6 @@ export type Database = {
           "resource.received"?: Json
           "resource.updated"?: Json
           "shoutout.received"?: Json
-          "trustlevel.changed"?: Json
           updated_at?: string
           user_id: string
         }
@@ -507,7 +520,6 @@ export type Database = {
           "resource.received"?: Json
           "resource.updated"?: Json
           "shoutout.received"?: Json
-          "trustlevel.changed"?: Json
           updated_at?: string
           user_id?: string
         }
@@ -530,6 +542,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          action: Database["public"]["Enums"]["action_type"]
           actor_id: string | null
           claim_id: string | null
           comment_id: string | null
@@ -541,11 +554,11 @@ export type Database = {
           read_at: string | null
           resource_id: string | null
           shoutout_id: string | null
-          type: Database["public"]["Enums"]["notification_type"]
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          action: Database["public"]["Enums"]["action_type"]
           actor_id?: string | null
           claim_id?: string | null
           comment_id?: string | null
@@ -557,11 +570,11 @@ export type Database = {
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
-          type: Database["public"]["Enums"]["notification_type"]
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          action?: Database["public"]["Enums"]["action_type"]
           actor_id?: string | null
           claim_id?: string | null
           comment_id?: string | null
@@ -573,7 +586,6 @@ export type Database = {
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
-          type?: Database["public"]["Enums"]["notification_type"]
           updated_at?: string | null
           user_id?: string
         }
@@ -1082,7 +1094,7 @@ export type Database = {
       trust_score_logs: {
         Row: {
           action_id: string | null
-          action_type: Database["public"]["Enums"]["notification_type"]
+          action_type: Database["public"]["Enums"]["action_type"]
           community_id: string | null
           created_at: string | null
           id: string
@@ -1094,7 +1106,7 @@ export type Database = {
         }
         Insert: {
           action_id?: string | null
-          action_type: Database["public"]["Enums"]["notification_type"]
+          action_type: Database["public"]["Enums"]["action_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -1106,7 +1118,7 @@ export type Database = {
         }
         Update: {
           action_id?: string | null
-          action_type?: Database["public"]["Enums"]["notification_type"]
+          action_type?: Database["public"]["Enums"]["action_type"]
           community_id?: string | null
           created_at?: string | null
           id?: string
@@ -1331,6 +1343,7 @@ export type Database = {
       }
       notification_details: {
         Row: {
+          action: Database["public"]["Enums"]["action_type"] | null
           actor_avatar_url: string | null
           actor_display_name: string | null
           actor_id: string | null
@@ -1354,7 +1367,6 @@ export type Database = {
           resource_type: Database["public"]["Enums"]["resource_type"] | null
           shoutout_id: string | null
           shoutout_message: string | null
-          type: Database["public"]["Enums"]["notification_type"] | null
           updated_at: string | null
           user_id: string | null
         }
@@ -1601,6 +1613,7 @@ export type Database = {
       }
       create_notification_base: {
         Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
           p_actor_id?: string
           p_claim_id?: string
           p_comment_id?: string
@@ -1609,7 +1622,6 @@ export type Database = {
           p_metadata?: Json
           p_resource_id?: string
           p_shoutout_id?: string
-          p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
         }
         Returns: string
@@ -2024,18 +2036,18 @@ export type Database = {
       }
       send_push_notification_async: {
         Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
           p_body: string
           p_metadata?: Json
           p_notification_id: string
           p_title: string
-          p_type: Database["public"]["Enums"]["notification_type"]
           p_user_id: string
         }
         Returns: undefined
       }
       should_send_push: {
         Args: {
-          p_type: Database["public"]["Enums"]["notification_type"]
+          p_action: Database["public"]["Enums"]["action_type"]
           p_user_id: string
         }
         Returns: boolean
@@ -2634,17 +2646,6 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
-      update_trust_score: {
-        Args: {
-          p_action_type: Database["public"]["Enums"]["notification_type"]
-          p_community_id: string
-          p_metadata?: Json
-          p_points?: number
-          p_related_user_id?: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -2669,6 +2670,28 @@ export type Database = {
       }
     }
     Enums: {
+      action_type:
+        | "resource.commented"
+        | "comment.replied"
+        | "claim.created"
+        | "claim.approved"
+        | "claim.rejected"
+        | "claim.cancelled"
+        | "resource.given"
+        | "resource.received"
+        | "resource.created"
+        | "event.created"
+        | "resource.updated"
+        | "event.updated"
+        | "event.cancelled"
+        | "resource.expiring"
+        | "event.starting"
+        | "message.received"
+        | "conversation.requested"
+        | "shoutout.received"
+        | "member.joined"
+        | "member.left"
+        | "trustlevel.changed"
       commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
       connection_strength:
@@ -2678,26 +2701,6 @@ export type Database = {
         | "negative"
         | "unknown"
       conversation_type: "direct" | "community"
-      notification_type:
-        | "comment.replied"
-        | "claim.created"
-        | "resource.created"
-        | "event.created"
-        | "resource.updated"
-        | "trustlevel.changed"
-        | "resource.commented"
-        | "claim.cancelled"
-        | "claim.responded"
-        | "resource.given"
-        | "resource.received"
-        | "event.updated"
-        | "event.cancelled"
-        | "resource.expiring"
-        | "event.starting"
-        | "membership.updated"
-        | "conversation.requested"
-        | "message.received"
-        | "shoutout.received"
       resource_category:
         | "tools"
         | "skills"
@@ -2864,6 +2867,29 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      action_type: [
+        "resource.commented",
+        "comment.replied",
+        "claim.created",
+        "claim.approved",
+        "claim.rejected",
+        "claim.cancelled",
+        "resource.given",
+        "resource.received",
+        "resource.created",
+        "event.created",
+        "resource.updated",
+        "event.updated",
+        "event.cancelled",
+        "resource.expiring",
+        "event.starting",
+        "message.received",
+        "conversation.requested",
+        "shoutout.received",
+        "member.joined",
+        "member.left",
+        "trustlevel.changed",
+      ],
       commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],
       connection_strength: [
@@ -2874,27 +2900,6 @@ export const Constants = {
         "unknown",
       ],
       conversation_type: ["direct", "community"],
-      notification_type: [
-        "comment.replied",
-        "claim.created",
-        "resource.created",
-        "event.created",
-        "resource.updated",
-        "trustlevel.changed",
-        "resource.commented",
-        "claim.cancelled",
-        "claim.responded",
-        "resource.given",
-        "resource.received",
-        "event.updated",
-        "event.cancelled",
-        "resource.expiring",
-        "event.starting",
-        "membership.updated",
-        "conversation.requested",
-        "message.received",
-        "shoutout.received",
-      ],
       resource_category: [
         "tools",
         "skills",

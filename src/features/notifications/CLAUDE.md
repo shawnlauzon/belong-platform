@@ -5,8 +5,9 @@ Multi-channel notification system with push notification support, dual confirmat
 ## Purpose
 
 The notifications feature provides:
+
 - Real-time notifications for platform activities
-- 19 notification types covering all user interactions
+- Action-based architecture with granular event tracking
 - Multi-channel delivery: in-app, push notifications (email-ready)
 - User-configurable preferences per notification type per channel
 - Unread count tracking
@@ -15,6 +16,45 @@ The notifications feature provides:
 - Push notification support via Web Push API
 - Dual confirmation system for transactions
 
+## Architecture
+
+The notification system uses an **action-based architecture** that separates what happened from how users control notifications:
+
+### Actions vs Notification Types
+
+- **Actions** = Granular events that actually occurred (e.g., `member.joined`, `claim.approved`, `claim.rejected`)
+- **Notification Types** = User-facing preference categories that group related actions (e.g., `membership.updated`, `claim.responded`)
+
+### Why This Separation?
+
+This architecture provides:
+
+1. **Granular event tracking** - Know exactly what happened (`member.joined` vs `member.left`)
+2. **Simplified user preferences** - Users control broader categories instead of dozens of individual toggles
+3. **Flexibility** - Add new granular actions without changing user preferences
+4. **Decoupling** - Trust score system and notifications can independently track the same actions
+
+### Mapping Table
+
+The `action_to_notification_type_mapping` table links actions to notification types:
+
+```sql
+action (action_type)     → notification_type (TEXT)
+'member.joined'          → 'membership.updated'
+'member.left'            → 'membership.updated'
+'claim.approved'         → 'claim.responded'
+'claim.rejected'         → 'claim.responded'
+'resource.created'       → 'resource.created'  -- 1:1 mapping
+```
+
+### How It Works
+
+1. User performs action → Database trigger fires
+2. Trigger creates notification with `action` field (e.g., `member.joined`)
+3. Trigger looks up notification type from mapping table (e.g., `membership.updated`)
+4. Trigger checks user preferences for that notification type
+5. If enabled, notification is created and/or push sent
+
 ## Key Entities
 
 ### Notification
@@ -22,9 +62,10 @@ The notifications feature provides:
 Main notification entity with polymorphic references.
 
 **Key Fields:**
+
 - `id` - Notification ID
 - `userId` - Recipient user ID
-- `type` - Notification type (e.g., 'resource.commented', 'claim.responded')
+- `action` - Action type that triggered this notification (e.g., `member.joined`, `claim.approved`)
 - `resourceId` - Optional resource reference
 - `commentId` - Optional comment reference
 - `claimId` - Optional claim reference
@@ -32,46 +73,57 @@ Main notification entity with polymorphic references.
 - `shoutoutId` - Optional shoutout reference
 - `conversationId` - Optional conversation reference
 - `actorId` - User who triggered the notification (null for system notifications)
-- `metadata` - Type-specific additional data
+- `metadata` - Action-specific additional data
 - `readAt` - When notification was read (null if unread)
 - `createdAt`, `updatedAt` - Timestamps
 
 **Notes:**
+
+- Stores the **granular action** that occurred, not the notification type
 - Polymorphic design supports multiple entity types
-- Metadata structure varies by notification type
+- Metadata structure varies by action type
 - Uses database triggers for automatic creation
 - Push notifications sent asynchronously via Edge Functions
+- Actions are mapped to notification types for preference checking
 
 ### NotificationPreferences
 
-Per-type, per-channel notification preferences stored in separate table.
+Per-type, per-channel notification preferences stored in separate table. Preferences are organized by **notification types**, not individual actions.
 
 **Structure:**
+
 - One row per user
-- One JSONB column per notification type (19 total)
+- One JSONB column per **notification type** (user-facing categories)
 - Each JSONB contains: `{"in_app": bool, "push": bool, "email": bool}`
 - Global switches: `push_enabled`, `email_enabled`
 
 **Key Fields:**
+
 - `userId` - User ID
-- `resource_commented` - JSONB preferences
+- `membership_updated` - JSONB preferences (controls `member.joined` and `member.left` actions)
+- `claim_responded` - JSONB preferences (controls `claim.approved` and `claim.rejected` actions)
+- `resource_commented` - JSONB preferences (controls `resource.commented` action)
 - `comment_replied` - JSONB preferences
 - `claim_created` - JSONB preferences
-- ... (19 notification types total)
+- ... (notification types, see mapping table for action→type relationships)
 - `push_enabled` - Global push master switch (default: false)
 - `email_enabled` - Global email master switch (default: false)
 
 **Notes:**
+
+- Preferences control **notification types**, which may map to multiple actions
 - All notifications default to enabled (true) for all channels
 - User must explicitly enable `push_enabled` to receive ANY push notifications
-- `event.cancelled` always pushes if `push_enabled=true` (critical notification)
+- Critical notifications (e.g., `event.cancelled`) have preferences but UI does not expose toggles
 - JSONB design allows future channel additions without schema changes
+- Adding new actions doesn't require changing preferences if they map to existing types
 
 ### PushSubscription
 
 Web Push subscription endpoints for push notification delivery.
 
 **Key Fields:**
+
 - `id` - Subscription ID
 - `userId` - User ID
 - `endpoint` - Push service endpoint URL
@@ -81,25 +133,46 @@ Web Push subscription endpoints for push notification delivery.
 - `createdAt`, `updatedAt` - Timestamps
 
 **Notes:**
+
 - One user can have multiple subscriptions (multiple devices)
 - Unique constraint on `(user_id, endpoint)`
 - Invalid subscriptions automatically cleaned up on 410 Gone responses
 
 ## Core Concepts
 
-### Notification Types (19 Total)
+### Actions and Notification Types
+
+The system uses two parallel type systems:
+
+1. **Actions** (`action_type` enum) - Granular events (e.g., `member.joined`, `claim.approved`)
+2. **Notification Types** (preference columns) - User-facing categories (e.g., `membership.updated`, `claim.responded`)
+
+**Actions are stored in notifications**, **notification types control preferences**.
+
+### Action Catalog
+
+Below are the actions grouped by their notification type mappings:
 
 #### Comments (2)
+
 - `resource.commented` - Someone commented on your resource → Resource owner
 - `comment.replied` - Someone replied to your comment → Comment author
 
-#### Claims (3)
-- `claim.created` - Someone claimed your resource → Resource owner
-- `claim.cancelled` - Someone cancelled their claim → Resource owner
-- `claim.responded` - Owner approved/rejected your claim → Claimant
-  - Metadata includes: `{"response": "approved" | "rejected"}`
+#### Claims
+
+**Notification Type: `claim.created`** (1:1 mapping)
+- **Action**: `claim.created` - Someone claimed your resource → Resource owner
+
+**Notification Type: `claim.cancelled`** (1:1 mapping)
+- **Action**: `claim.cancelled` - Someone cancelled their claim → Resource owner
+
+**Notification Type: `claim.responded`** (many-to-one mapping)
+- **Action**: `claim.approved` - Owner approved your claim → Claimant
+- **Action**: `claim.rejected` - Owner rejected your claim → Claimant
+- Metadata includes: `{"response": "approved" | "rejected"}`
 
 #### Transaction Confirmation (2 - Dual System)
+
 - `resource.given` - Other party marked as given, confirm you received → **Receiver**
   - Favor: Claimant gives help → Owner receives (owner gets notification)
   - Offer: Owner gives item → Claimant receives (claimant gets notification)
@@ -111,34 +184,35 @@ Web Push subscription endpoints for push notification delivery.
 Both parties must independently confirm the transaction. Either party can initiate by marking "given" or "received", and the other party must confirm.
 
 #### Resources & Events (6)
+
 - `resource.created` - New resource in community → Community members
 - `event.created` - New event in community → Community members
 - `resource.updated` - Resource you claimed was updated → Active claimants
 - `event.updated` - Event you claimed was updated → Active claimants
 - `event.cancelled` - Event you claimed was cancelled → Active claimants
-  - **Special**: Always pushes if `push_enabled=true` (critical notification)
+  - **Note**: Has separate preference but UI does not expose toggle (defaults to enabled for critical notifications)
 - `resource.expiring` - Your resource expiring soon → Resource owner
 - `event.starting` - Event starting soon → Event owner + Active claimants
 
-#### Social (4)
-- `message.received` - You received a message → Conversation participant
-- `conversation.requested` - Someone requested to chat → Other participant
-- `shoutout.received` - You received a shoutout → Shoutout receiver
-- `membership.updated` - Member joined/left your community → Organizers/founders
-  - Metadata includes: `{"action": "joined" | "left"}`
+#### Social
+
+**Notification Type: `message.received`** (1:1 mapping)
+- **Action**: `message.received` - You received a message → Conversation participant
+
+**Notification Type: `conversation.requested`** (1:1 mapping)
+- **Action**: `conversation.requested` - Someone requested to chat → Other participant
+
+**Notification Type: `shoutout.received`** (1:1 mapping)
+- **Action**: `shoutout.received` - You received a shoutout → Shoutout receiver
+
+**Notification Type: `membership.updated`** (many-to-one mapping)
+- **Action**: `member.joined` - Member joined your community → Organizers/founders
+- **Action**: `member.left` - Member left your community → Organizers/founders
+- Metadata includes: `{"action": "joined" | "left"}`
 
 #### System (1)
+
 - `trustlevel.changed` - Your trust level changed → User
-
-### Removed Types (from previous system)
-
-These notification types were **removed** in the redesign:
-- `connection.requested` - Connection request system obsolete
-- `connection.accepted` - Connection request system obsolete
-- `community.created` - Never implemented
-- `trustpoints.gained` - User's own action, no notification needed
-- `trustpoints.lost` - User's own action, no notification needed
-- `claim.completed` - Replaced by dual confirmation system
 
 ### Notification Channels
 
@@ -149,18 +223,21 @@ Each notification type supports multiple delivery channels:
 3. **Email** - Email notifications (default: OFF, future implementation)
 
 **Channel Logic:**
+
 ```
 Send in-app IF:
   notification_preferences->'type'->>'in_app' = 'true'
 
 Send push IF:
   push_enabled = true
-  AND (type = 'event.cancelled' OR notification_preferences->'type'->>'push' = 'true')
+  AND notification_preferences->'type'->>'push' = 'true'
 
 Send email IF:
   email_enabled = true
   AND notification_preferences->'type'->>'email' = 'true'
 ```
+
+**Note**: Critical notification types like `event.cancelled` have preferences in the database but are not exposed in the UI, ensuring they remain enabled by default.
 
 ### Metadata
 
@@ -175,6 +252,7 @@ Each notification type has specific metadata:
 ### Unread Counts
 
 System tracks unread notifications:
+
 - Per-user unread count
 - Real-time updates via database triggers
 - Efficient counting queries
@@ -228,7 +306,7 @@ const { data: unreadCount } = useNotificationUnreadCount();
 
 // Filter by type
 const { data: commentNotifs } = useNotifications({
-  types: ['resource.commented', 'comment.replied']
+  types: ['resource.commented', 'comment.replied'],
 });
 ```
 
@@ -256,13 +334,13 @@ await updatePrefs.mutateAsync({
   resource_commented: {
     in_app: true,
     push: true,
-    email: false
-  }
+    email: false,
+  },
 });
 
 // Enable push notifications globally (required for ANY push)
 await updatePrefs.mutateAsync({
-  push_enabled: true
+  push_enabled: true,
 });
 ```
 
@@ -283,7 +361,7 @@ if (permission !== 'granted') return;
 const registration = await navigator.serviceWorker.ready;
 const subscription = await registration.pushManager.subscribe({
   userVisibleOnly: true,
-  applicationServerKey: VAPID_PUBLIC_KEY
+  applicationServerKey: VAPID_PUBLIC_KEY,
 });
 
 // 3. Register with backend
@@ -291,7 +369,7 @@ await register.mutateAsync({
   endpoint: subscription.endpoint,
   p256dhKey: arrayBufferToBase64(subscription.getKey('p256dh')),
   authKey: arrayBufferToBase64(subscription.getKey('auth')),
-  userAgent: navigator.userAgent
+  userAgent: navigator.userAgent,
 });
 
 // Unregister device
@@ -302,6 +380,7 @@ await unregister.mutateAsync(subscriptionId);
 ### Polymorphic References
 
 Notifications reference different entities based on type:
+
 ```typescript
 if (notification.resourceId) {
   // Fetch resource
@@ -409,6 +488,7 @@ CREATE INDEX idx_push_subscriptions_user_id ON push_subscriptions(user_id);
 ### Environment Variables
 
 Required for push notifications:
+
 - `VAPID_PUBLIC_KEY` - Public key for client subscription (exposed to frontend)
 - `VAPID_PRIVATE_KEY` - Private key for server signing (secret)
 - `VAPID_SUBJECT` - Contact URL or mailto: (e.g., `mailto:admin@example.com`)

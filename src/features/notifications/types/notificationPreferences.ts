@@ -1,5 +1,5 @@
 import type { Database } from "../../../shared/types/database";
-import type { NotificationType } from "../constants";
+import type { NotificationTypePreference } from "../constants";
 
 /**
  * Channel preferences for a notification type
@@ -29,20 +29,20 @@ export type NotificationPreferencesInsert =
   Database["public"]["Tables"]["notification_preferences"]["Insert"];
 
 /**
- * Type-safe notification preferences with proper typing for each notification type
+ * Type-safe notification preferences with proper typing for each notification type preference
  */
 export interface TypedNotificationPreferences {
   // Global switches
   push_enabled: boolean;
   email_enabled: boolean;
 
-  // Per-type preferences
+  // Per-type preferences (notification type categories, not actions)
+  // Note: trustlevel.changed has no preference column (always enabled)
   "comment.replied": ChannelPreferences;
   "claim.created": ChannelPreferences;
   "resource.created": ChannelPreferences;
   "event.created": ChannelPreferences;
   "resource.updated": ChannelPreferences;
-  "trustlevel.changed": ChannelPreferences;
   "resource.commented": ChannelPreferences;
   "claim.cancelled": ChannelPreferences;
   "claim.responded": ChannelPreferences;
@@ -100,7 +100,6 @@ export function toTypedPreferences(
     "resource.created": parseChannelPreferences(row["resource.created"]),
     "event.created": parseChannelPreferences(row["event.created"]),
     "resource.updated": parseChannelPreferences(row["resource.updated"]),
-    "trustlevel.changed": parseChannelPreferences(row["trustlevel.changed"]),
     "resource.commented": parseChannelPreferences(row["resource.commented"]),
     "claim.cancelled": parseChannelPreferences(row["claim.cancelled"]),
     "claim.responded": parseChannelPreferences(row["claim.responded"]),
@@ -120,21 +119,21 @@ export function toTypedPreferences(
 }
 
 /**
- * Helper to get channel preferences for a specific notification type
+ * Helper to get channel preferences for a specific notification type preference
  */
 export function getChannelPreferences(
   preferences: TypedNotificationPreferences,
-  type: NotificationType
+  type: NotificationTypePreference
 ): ChannelPreferences {
   return preferences[type];
 }
 
 /**
- * Helper to check if a specific channel is enabled for a notification type
+ * Helper to check if a specific channel is enabled for a notification type preference
  */
 export function isChannelEnabled(
   preferences: TypedNotificationPreferences,
-  type: NotificationType,
+  type: NotificationTypePreference,
   channel: keyof ChannelPreferences
 ): boolean {
   // Check global switch first
@@ -143,11 +142,6 @@ export function isChannelEnabled(
   }
   if (channel === "email" && !preferences.email_enabled) {
     return false;
-  }
-
-  // Special case: event.cancelled always enabled if push globally enabled
-  if (type === "event.cancelled" && channel === "push") {
-    return preferences.push_enabled;
   }
 
   return preferences[type][channel];
