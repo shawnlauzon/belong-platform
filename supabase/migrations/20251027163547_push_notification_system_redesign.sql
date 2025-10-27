@@ -896,12 +896,12 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Notify community admins
+  -- Notify community admins (organizers and founders)
   FOR admin_record IN
     SELECT user_id
     FROM community_memberships
     WHERE community_id = COALESCE(NEW.community_id, OLD.community_id)
-      AND role IN ('admin', 'owner')
+      AND role IN ('organizer', 'founder')
       AND user_id != COALESCE(NEW.user_id, OLD.user_id)
   LOOP
     notification_id := create_notification_base(
