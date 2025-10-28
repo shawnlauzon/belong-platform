@@ -100,6 +100,86 @@ describe('Communities API - CRUD Operations', () => {
         await cleanupCommunity(community);
       }
     });
+
+    it('creates virtual community without location data', async () => {
+      const data = createFakeCommunityInput({
+        name: `${TEST_PREFIX}Virtual_Test_${Date.now()}`,
+        type: 'virtual',
+      });
+
+      let community;
+      try {
+        community = await api.createCommunity(supabase, data);
+
+        expect(community).toBeTruthy();
+        expect(community!.id).toBeTruthy();
+        expect(community!.name).toBe(data.name);
+        expect(community!.type).toBe('virtual');
+
+        // Verify database record has NULL location fields
+        const { data: dbRecord } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', community!.id)
+          .single();
+
+        expect(dbRecord).toMatchObject({
+          id: community!.id,
+          name: data.name,
+          type: 'virtual',
+          center: null,
+          time_zone: null,
+          boundary: null,
+          boundary_geometry: null,
+        });
+      } finally {
+        await cleanupCommunity(community);
+      }
+    });
+
+    it('prevents changing community type to/from virtual', async () => {
+      // Test 1: Virtual -> Non-virtual is prevented
+      const virtualData = createFakeCommunityInput({
+        name: `${TEST_PREFIX}Virtual_Change_Test_${Date.now()}`,
+        type: 'virtual',
+      });
+
+      let virtualCommunity;
+      try {
+        virtualCommunity = await api.createCommunity(supabase, virtualData);
+
+        // Attempt to change virtual community to close
+        await expect(
+          api.updateCommunity(supabase, {
+            id: virtualCommunity!.id,
+            type: 'close',
+          }),
+        ).rejects.toThrow();
+      } finally {
+        await cleanupCommunity(virtualCommunity);
+      }
+
+      // Test 2: Non-virtual -> Virtual is prevented
+      const nonVirtualData = createFakeCommunityInput({
+        name: `${TEST_PREFIX}NonVirtual_Change_Test_${Date.now()}`,
+        type: 'close',
+      });
+
+      let nonVirtualCommunity;
+      try {
+        nonVirtualCommunity = await api.createCommunity(supabase, nonVirtualData);
+
+        // Attempt to change non-virtual community to virtual
+        await expect(
+          api.updateCommunity(supabase, {
+            id: nonVirtualCommunity!.id,
+            type: 'virtual',
+          }),
+        ).rejects.toThrow();
+      } finally {
+        await cleanupCommunity(nonVirtualCommunity);
+      }
+    });
   });
 
   describe('fetchCommunities', () => {

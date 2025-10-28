@@ -764,34 +764,28 @@ describe('All 19 Notification Types', () => {
   describe('System (1 type)', () => {
     it('trustlevel.changed - notifies user of trust level change', async () => {
       // Simulate trust level change (typically triggered by trust score calculation)
-      await supabase.from('notifications').insert({
-        user_id: resourceOwner.id,
+      const { data: notification } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: resourceOwner.id,
+          action: 'trustlevel.changed',
+          actor_id: null, // System notification
+          metadata: {
+            old_level: 1,
+            new_level: 2,
+          },
+        })
+        .select()
+        .single();
+
+      expect(notification).toMatchObject({
         action: 'trustlevel.changed',
-        actor_id: null, // System notification
-        metadata: {
-          old_level: 1,
-          new_level: 2,
-        },
+        user_id: resourceOwner.id,
+        actor_id: null,
+        read_at: null,
       });
 
-      const { data: allNotifications } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', resourceOwner.id);
-
-      expect(allNotifications).toContainEqual(
-        expect.objectContaining({
-          action: 'trustlevel.changed',
-          user_id: resourceOwner.id,
-          actor_id: null,
-          read_at: null,
-        })
-      );
-
       // Verify metadata
-      const notification = allNotifications?.find(
-        (n) => n.action === 'trustlevel.changed'
-      );
       const metadata = notification!.metadata as unknown as TrustLevelMetadata;
       expect(metadata.old_level).toBe(1);
       expect(metadata.new_level).toBe(2);

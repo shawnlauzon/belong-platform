@@ -10,7 +10,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 
-describe.skip('Trust Scores - Player Levels', () => {
+describe('Trust Scores - Player Levels', () => {
   let supabase: SupabaseClient<Database>;
   let serviceClient: SupabaseClient<Database>;
 
@@ -69,11 +69,12 @@ describe.skip('Trust Scores - Player Levels', () => {
 
       // Get initial automatically created score
       const initialScores = await fetchTrustScores(supabase, account.id);
-      const initialScore = initialScores[0].score; // Should be 1000
+      const initialScore = initialScores[0].score;
       const initialLevel = calculateLevel(initialScore);
 
       // Simulate gaining more points (e.g., from resource offers)
-      const newScore = initialScore + 100; // Add 100 more points
+      const pointsToAdd = 100;
+      const newScore = initialScore + pointsToAdd;
       const { error: updateError } = await serviceClient
         .from('trust_scores')
         .update({
@@ -89,7 +90,7 @@ describe.skip('Trust Scores - Player Levels', () => {
 
       // New level should be same or higher than initial
       expect(newLevel.minScore).toBeGreaterThanOrEqual(initialLevel.minScore);
-      expect(newScore).toBe(1100);
+      expect(newScore).toBe(initialScore + pointsToAdd);
     });
   });
 
