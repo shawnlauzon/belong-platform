@@ -160,15 +160,15 @@ export type Database = {
           id: string
           member_count: number
           name: string
-          time_zone: string
-          type: string
+          time_zone: string | null
+          type: Database["public"]["Enums"]["community_type"]
           updated_at: string
         }
         Insert: {
           banner_image_url?: string | null
           boundary?: Json | null
           boundary_geometry?: unknown
-          center: unknown
+          center?: unknown
           center_name?: string | null
           color?: string | null
           created_at?: string
@@ -177,8 +177,8 @@ export type Database = {
           id?: string
           member_count?: number
           name: string
-          time_zone: string
-          type?: string
+          time_zone?: string | null
+          type: Database["public"]["Enums"]["community_type"]
           updated_at?: string
         }
         Update: {
@@ -194,8 +194,8 @@ export type Database = {
           id?: string
           member_count?: number
           name?: string
-          time_zone?: string
-          type?: string
+          time_zone?: string | null
+          type?: Database["public"]["Enums"]["community_type"]
           updated_at?: string
         }
         Relationships: []
@@ -2129,10 +2129,6 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geom: unknown
               id?: string
@@ -2141,6 +2137,10 @@ export type Database = {
               options?: number
               version: number
             }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
             Returns: string
           }
         | {
@@ -2351,11 +2351,11 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
@@ -2558,8 +2558,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geog: unknown; srid: number }; Returns: unknown }
         | { Args: { geom: unknown; srid: number }; Returns: unknown }
+        | { Args: { geog: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -2718,6 +2718,7 @@ export type Database = {
         | "connection.accepted"
       commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
+      community_type: "neighbors" | "close" | "far" | "virtual"
       connection_strength:
         | "trusted"
         | "positive"
@@ -2919,6 +2920,7 @@ export const Constants = {
       ],
       commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],
+      community_type: ["neighbors", "close", "far", "virtual"],
       connection_strength: [
         "trusted",
         "positive",
