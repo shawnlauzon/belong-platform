@@ -14,7 +14,11 @@ This Edge Function is called by database triggers when notifications are created
 
 ### Step 1: Generate VAPID Keys
 
-Use the `web-push` npm package to generate VAPID keys:
+**Best Practice:** Generate separate keys for development and production for better security isolation.
+
+#### Development Keys
+
+Generate keys for local development:
 
 ```bash
 npx web-push generate-vapid-keys
@@ -33,31 +37,46 @@ XXxXX...
 =======================================
 ```
 
-**Save both keys** - you'll need them for the next step.
+**Save these keys** - you'll add them to `.env` in Step 2.
+
+#### Production Keys
+
+Generate a separate set of keys for production:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+**Save these keys separately** - you'll set them via Supabase CLI in Step 2.
+
+**Why separate keys?**
+- ✅ Security isolation - compromised dev keys don't affect production
+- ✅ Clear environment separation
+- ✅ Industry best practice for secrets management
 
 ### Step 2: Set Environment Variables
 
 #### For Local Development
 
-Add to your `.env` file:
+Add your **development keys** to your `.env` file:
 ```bash
-VAPID_PUBLIC_KEY=your_public_key_here
-VAPID_PRIVATE_KEY=your_private_key_here
+VAPID_PUBLIC_KEY=<dev_public_key_from_step_1>
+VAPID_PRIVATE_KEY=<dev_private_key_from_step_1>
 VAPID_SUBJECT=mailto:your-email@example.com
 ```
 
 #### For Production
 
-Set via Supabase CLI:
+Set your **production keys** (different from dev) via Supabase CLI:
 ```bash
-pnpx supabase secrets set VAPID_PUBLIC_KEY=your_public_key_here
-pnpx supabase secrets set VAPID_PRIVATE_KEY=your_private_key_here
+pnpx supabase secrets set VAPID_PUBLIC_KEY=<prod_public_key_from_step_1>
+pnpx supabase secrets set VAPID_PRIVATE_KEY=<prod_private_key_from_step_1>
 pnpx supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
 ```
 
 Or via Supabase Dashboard:
 1. Go to Project Settings > Edge Functions
-2. Add the environment variables
+2. Add the environment variables (use production keys)
 
 ### Step 3: Deploy the Edge Function
 

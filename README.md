@@ -491,6 +491,7 @@ export function TestWrapper({ children }: { children: React.ReactNode }) {
 - **[Usage Guide](./USAGE.md)** - Complete API documentation and examples
 - **[Architecture](./ARCHITECTURE.md)** - Internal architecture and patterns
 - **[Contributing](./CONTRIBUTING.md)** - Development guidelines
+- **[Push Notifications Setup](./supabase/functions/send-push-notification/README.md)** - Configure Web Push notifications
 
 ## Requirements
 
