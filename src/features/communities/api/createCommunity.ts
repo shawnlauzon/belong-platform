@@ -9,11 +9,34 @@ import { logger } from '@/shared';
 import { commitImageUrls } from '@/features/images/api/imageCommit';
 import { updateCommunity } from './updateCommunity';
 
+/**
+ * Validates community input based on type
+ * Virtual communities cannot have location data
+ * Non-virtual communities require center and timeZone
+ */
+function validateCommunityInput(communityData: CommunityInput): void {
+  if (communityData.type === 'virtual') {
+    if (communityData.center || communityData.timeZone || communityData.boundary) {
+      throw new Error('Virtual communities cannot have location data (center, timeZone, or boundary)');
+    }
+  } else {
+    if (!communityData.center) {
+      throw new Error(`${communityData.type} communities require a center point`);
+    }
+    if (!communityData.timeZone) {
+      throw new Error(`${communityData.type} communities require a timeZone`);
+    }
+  }
+}
+
 export async function createCommunity(
   supabase: SupabaseClient<Database>,
   communityData: CommunityInput,
 ): Promise<Community> {
   logger.debug('🏘️ API: Creating community', { name: communityData.name });
+
+  // Validate input
+  validateCommunityInput(communityData);
 
   try {
     const { data, error } = await supabase

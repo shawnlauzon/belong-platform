@@ -1,5 +1,6 @@
 import { Polygon } from './geojson';
 import { Coordinates, IsPersisted } from '@/shared';
+import type { Database } from '@/shared/types/database';
 
 export type Community = IsPersisted<CommunityInput> & {
   memberCount: number;
@@ -27,22 +28,22 @@ export type CommunityInput = {
   description?: string;
   bannerImageUrl?: string; // Banner image for the community
 
-  // Location (mandatory center point)
-  center: Coordinates;
+  // Location fields (required for non-virtual communities)
+  center?: Coordinates;
   centerName?: string; // Human-readable name for the community center location
 
-  // Boundary configuration (new isochrone support)
+  // Boundary configuration (optional isochrone support)
   boundary?: CommunityBoundary;
 
-  // Status & Metadata
-  timeZone: string;
+  // Time zone (required for non-virtual communities)
+  timeZone?: string;
 
   // Color customization
   color?: string;
 };
 
-// Community types
-export type CommunityType = 'place' | 'interest';
+// Community types (scale-based: neighbors, close, far, virtual)
+export type CommunityType = Database['public']['Enums']['community_type'];
 
 // Boundary types for communities
 export type TravelMode = 'walking' | 'cycling' | 'driving';

@@ -17,7 +17,7 @@ export function createFakeCommunity(
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
-    type: faker.helpers.arrayElement(['place', 'interest']),
+    type: faker.helpers.arrayElement(['neighbors', 'close', 'far']),
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -47,12 +47,28 @@ export function createFakeCommunity(
 export function createFakeCommunityInput(
   overrides: Partial<CommunityInput> = {},
 ): CommunityInput {
+  const type = overrides.type ?? faker.helpers.arrayElement(['neighbors', 'close', 'far']);
+
+  // Virtual communities don't have location data
+  if (type === 'virtual') {
+    return {
+      name: faker.company.name(),
+      description: faker.lorem.sentence(),
+      icon: faker.helpers.arrayElement(['🌐', '💻', '🎮', '📚', '🎨']),
+      bannerImageUrl: faker.image.url(),
+      type: 'virtual',
+      color: faker.helpers.arrayElement([faker.internet.color(), undefined]),
+      ...overrides,
+    };
+  }
+
+  // Non-virtual communities have location data
   return {
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳']),
     bannerImageUrl: faker.image.url(),
-    type: faker.helpers.arrayElement(['place', 'interest']),
+    type,
     center: {
       lat: faker.location.latitude(),
       lng: faker.location.longitude(),
@@ -86,14 +102,38 @@ export function createFakeCommunityRow(
   const now = faker.date.recent().toISOString();
   const lat = faker.location.latitude();
   const lng = faker.location.longitude();
+  const type = overrides.type ?? faker.helpers.arrayElement(['neighbors', 'close', 'far']);
 
+  // Virtual communities have null location data
+  if (type === 'virtual') {
+    return {
+      id: faker.string.uuid(),
+      name: faker.company.name(),
+      description: faker.lorem.sentence(),
+      icon: faker.helpers.arrayElement(['🌐', '💻', '🎮', '📚', '🎨', null]),
+      banner_image_url: faker.helpers.arrayElement([faker.image.url(), null]),
+      type: 'virtual',
+      center: null,
+      center_name: null,
+      member_count: faker.number.int({ min: 1, max: 10000 }),
+      created_at: now,
+      updated_at: now,
+      time_zone: null,
+      color: faker.helpers.arrayElement([faker.internet.color(), null]),
+      boundary: null,
+      boundary_geometry: null,
+      ...overrides,
+    };
+  }
+
+  // Non-virtual communities have location data
   return {
     id: faker.string.uuid(),
     name: faker.location.city(),
     description: faker.lorem.sentence(),
     icon: faker.helpers.arrayElement(['🏘️', '🏙️', '🌆', '🏞️', '🌳', null]),
     banner_image_url: faker.helpers.arrayElement([faker.image.url(), null]),
-    type: faker.helpers.arrayElement(['place', 'interest']),
+    type,
     center: {
       type: 'Point',
       crs: { type: 'name', properties: { name: 'EPSG:4326' } },
@@ -133,28 +173,28 @@ export function createFakeCommunityHierarchy() {
   const country = createFakeCommunityRow({
     name: faker.location.country(),
     description: `Community for ${faker.location.country()} residents`,
-    type: 'place',
+    type: 'far',
     created_at: now,
   });
 
   const state = createFakeCommunityRow({
     name: faker.location.state(),
     description: `Community for ${faker.location.state()} residents`,
-    type: 'place',
+    type: 'far',
     created_at: now,
   });
 
   const city = createFakeCommunityRow({
     name: faker.location.city(),
     description: `Community for ${faker.location.city()} residents`,
-    type: 'place',
+    type: 'close',
     created_at: now,
   });
 
   const neighborhood = createFakeCommunityRow({
     name: faker.location.street(),
     description: `Community for ${faker.location.street()} neighborhood`,
-    type: 'place',
+    type: 'neighbors',
     created_at: now,
   });
 
