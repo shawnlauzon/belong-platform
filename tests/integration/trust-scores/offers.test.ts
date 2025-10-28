@@ -28,7 +28,7 @@ import {
   getCurrentTrustScore,
   verifyTrustScoreLog,
 } from './helpers';
-import { NOTIFICATION_TYPES } from '@/features/notifications';
+import { ACTION_TYPES } from '@/features/notifications';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities/types';
 import type {
@@ -115,7 +115,7 @@ describe('Trust Score Points - Offers', () => {
       serviceClient,
       owner.id,
       community.id,
-      NOTIFICATION_TYPES.RESOURCE_CREATED,
+      ACTION_TYPES.RESOURCE_CREATED,
       POINTS_CONFIG.RESOURCE_OFFER,
       'Resource offer creation log',
     );
@@ -294,7 +294,7 @@ describe('Trust Score Points - Offers', () => {
       serviceClient,
       claimant.id,
       community.id,
-      NOTIFICATION_TYPES.RESOURCE_CLAIM_COMPLETED,
+      ACTION_TYPES.CLAIM_COMPLETED,
       POINTS_CONFIG.OFFER_COMPLETED,
       'Offer completion log',
     );
