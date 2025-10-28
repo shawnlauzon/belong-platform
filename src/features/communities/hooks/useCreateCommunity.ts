@@ -73,7 +73,7 @@ export function useCreateCommunity() {
       return result;
     },
     onSuccess: async (newCommunity) => {
-      // Invalidate all lists of communities
+      // Invalidate community lists (both filtered and unfiltered)
       queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
 
       // Invalidate trust score for the current user (community creator gets +1000 points)

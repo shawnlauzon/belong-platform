@@ -60,6 +60,10 @@ export function useUpdateCommunity() {
     mutationFn: (updateData: Partial<CommunityInput> & { id: string }) =>
       updateCommunity(supabase, updateData),
     onSuccess: (updatedCommunity) => {
+      // Invalidate community lists to update any lists showing this community
+      queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+
+      // Invalidate the specific community detail
       queryClient.invalidateQueries({
         queryKey: communityKeys.detail(updatedCommunity.id),
       });

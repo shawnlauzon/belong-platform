@@ -48,7 +48,7 @@ export function useDeleteCommunity() {
   return useMutation({
     mutationFn: (id: string) => deleteCommunity(supabase, id),
     onSuccess: (_, communityId) => {
-      // Invalidate all lists of communities
+      // Invalidate community lists
       queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
 
       // And remove this one specifically

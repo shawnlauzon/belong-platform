@@ -55,7 +55,7 @@ export function useUsers(
   const supabase = useSupabase();
 
   const query = useQuery<User[], Error>({
-    queryKey: filter ? userKeys.list(filter) : userKeys.all,
+    queryKey: filter ? userKeys.list(filter) : userKeys.lists(),
     queryFn: () => fetchUsers(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
     ...options,

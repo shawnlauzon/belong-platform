@@ -67,7 +67,7 @@ export function useResources(
   const query = useQuery<ResourceSummary[], Error>({
     queryKey: filter
       ? resourceKeys.list(filter as ResourceFilter)
-      : resourceKeys.all,
+      : resourceKeys.lists(),
     queryFn: () =>
       fetchResources(supabase, filter as ResourceFilter | undefined),
     staleTime: STANDARD_CACHE_TIME,

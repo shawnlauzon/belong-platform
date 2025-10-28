@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { leaveCommunity } from '@/features/communities/api';
-import { communityMembersKeys, userCommunitiesKeys } from '../queries';
+import {
+  communityKeys,
+  communityMembersKeys,
+  userCommunitiesKeys,
+} from '../queries';
 import { useCurrentUser } from '@/features/auth';
 import { feedKeys } from '@/features/feed/queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
@@ -57,6 +61,9 @@ export function useLeaveCommunity() {
       return leaveCommunity(supabase, currentUser.id, communityId);
     },
     onSuccess: (_, communityId) => {
+      // Invalidate community lists (memberCount changed)
+      queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+
       queryClient.invalidateQueries({
         queryKey: communityMembersKeys.list(communityId),
       });

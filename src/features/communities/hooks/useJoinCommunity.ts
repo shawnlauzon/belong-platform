@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/shared';
 import { useSupabase } from '@/shared';
 import { joinCommunity } from '@/features/communities/api';
-import { communityMembersKeys, userCommunitiesKeys } from '../queries';
+import {
+  communityKeys,
+  communityMembersKeys,
+  userCommunitiesKeys,
+} from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
 import { feedKeys } from '@/features/feed/queries';
 import { useCurrentUser } from '@/features/auth';
@@ -54,6 +58,9 @@ export function useJoinCommunity() {
       return joinCommunity(supabase, currentUser.id, communityId);
     },
     onSuccess: (newMembership) => {
+      // Invalidate community lists (memberCount changed)
+      queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+
       queryClient.invalidateQueries({
         queryKey: communityMembersKeys.list(newMembership.communityId),
       });

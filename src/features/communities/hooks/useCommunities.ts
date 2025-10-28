@@ -59,7 +59,7 @@ export function useCommunities(
   const supabase = useSupabase();
 
   const query = useQuery<Community[], Error>({
-    queryKey: filter ? communityKeys.list(filter) : communityKeys.all,
+    queryKey: filter ? communityKeys.list(filter) : communityKeys.lists(),
     queryFn: () => fetchCommunities(supabase, filter),
     staleTime: STANDARD_CACHE_TIME,
     ...options,
