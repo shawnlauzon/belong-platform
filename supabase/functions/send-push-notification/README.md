@@ -5,6 +5,7 @@ Supabase Edge Function for sending Web Push notifications to users' devices.
 ## Overview
 
 This Edge Function is called by database triggers when notifications are created. It:
+
 1. Checks user's notification preferences
 2. Retrieves user's push subscriptions
 3. Sends push notifications via Web Push API
@@ -25,6 +26,7 @@ npx web-push generate-vapid-keys
 ```
 
 This will output:
+
 ```
 =======================================
 
@@ -50,6 +52,7 @@ npx web-push generate-vapid-keys
 **Save these keys separately** - you'll set them via Supabase CLI in Step 2.
 
 **Why separate keys?**
+
 - ✅ Security isolation - compromised dev keys don't affect production
 - ✅ Clear environment separation
 - ✅ Industry best practice for secrets management
@@ -59,6 +62,7 @@ npx web-push generate-vapid-keys
 #### For Local Development
 
 Add your **development keys** to your `.env` file:
+
 ```bash
 VAPID_PUBLIC_KEY=<dev_public_key_from_step_1>
 VAPID_PRIVATE_KEY=<dev_private_key_from_step_1>
@@ -68,6 +72,7 @@ VAPID_SUBJECT=mailto:your-email@example.com
 #### For Production
 
 Set your **production keys** (different from dev) via Supabase CLI:
+
 ```bash
 pnpx supabase secrets set VAPID_PUBLIC_KEY=<prod_public_key_from_step_1>
 pnpx supabase secrets set VAPID_PRIVATE_KEY=<prod_private_key_from_step_1>
@@ -75,12 +80,14 @@ pnpx supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
 ```
 
 Or via Supabase Dashboard:
+
 1. Go to Project Settings > Edge Functions
 2. Add the environment variables (use production keys)
 
 ### Step 3: Deploy the Edge Function
 
 Deploy the function to Supabase:
+
 ```bash
 pnpx supabase functions deploy send-push-notification
 ```
@@ -88,6 +95,7 @@ pnpx supabase functions deploy send-push-notification
 ### Step 4: Run Database Migration
 
 Apply the push notification migration to your database:
+
 ```bash
 pnpx supabase db push
 ```
@@ -95,6 +103,7 @@ pnpx supabase db push
 ### Step 5: Verify Deployment
 
 Test that the function is deployed and accessible:
+
 ```bash
 curl https://your-project-ref.supabase.co/functions/v1/send-push-notification \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
@@ -125,11 +134,13 @@ The following environment variables are required:
 ## Testing
 
 Test the function locally:
+
 ```bash
 pnpx supabase functions serve send-push-notification
 ```
 
 Then send a test request:
+
 ```bash
 curl -X POST http://localhost:54321/functions/v1/send-push-notification \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
@@ -173,12 +184,6 @@ curl -X POST http://localhost:54321/functions/v1/send-push-notification \
 - **Other errors**: Logged but don't fail the function
 - **Missing preferences**: Returns success with `sent: 0`
 - **Push disabled**: Returns success with reason
-
-## Special Cases
-
-- `event.cancelled` notifications **always send** if `push_enabled=true` (critical notification)
-- All other types respect per-type push preferences
-- Global `push_enabled` switch must be true for any push
 
 ## Dependencies
 
