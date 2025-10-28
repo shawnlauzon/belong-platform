@@ -191,7 +191,7 @@ describe('caseTransform', () => {
           created_at: '2024-01-01',
           preferences: {
             notification_settings: {
-              email_enabled: true
+              notifications_enabled: true
             }
           }
         },

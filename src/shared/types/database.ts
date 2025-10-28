@@ -450,9 +450,9 @@ export type Database = {
           claim_created: Json
           claim_responded: Json
           comment_replied: Json
+          connection_accepted: Json
           conversation_requested: Json
           created_at: string
-          email_enabled: boolean
           event_cancelled: Json
           event_created: Json
           event_starting: Json
@@ -460,7 +460,7 @@ export type Database = {
           id: string
           membership_updated: Json
           message_received: Json
-          push_enabled: boolean
+          notifications_enabled: boolean
           resource_commented: Json
           resource_created: Json
           resource_expiring: Json
@@ -477,9 +477,9 @@ export type Database = {
           claim_created?: Json
           claim_responded?: Json
           comment_replied?: Json
+          connection_accepted?: Json
           conversation_requested?: Json
           created_at?: string
-          email_enabled?: boolean
           event_cancelled?: Json
           event_created?: Json
           event_starting?: Json
@@ -487,7 +487,7 @@ export type Database = {
           id?: string
           membership_updated?: Json
           message_received?: Json
-          push_enabled?: boolean
+          notifications_enabled?: boolean
           resource_commented?: Json
           resource_created?: Json
           resource_expiring?: Json
@@ -504,9 +504,9 @@ export type Database = {
           claim_created?: Json
           claim_responded?: Json
           comment_replied?: Json
+          connection_accepted?: Json
           conversation_requested?: Json
           created_at?: string
-          email_enabled?: boolean
           event_cancelled?: Json
           event_created?: Json
           event_starting?: Json
@@ -514,7 +514,7 @@ export type Database = {
           id?: string
           membership_updated?: Json
           message_received?: Json
-          push_enabled?: boolean
+          notifications_enabled?: boolean
           resource_commented?: Json
           resource_created?: Json
           resource_expiring?: Json
@@ -2715,6 +2715,7 @@ export type Database = {
         | "member.joined"
         | "member.left"
         | "trustlevel.changed"
+        | "connection.accepted"
       commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
       connection_strength:
@@ -2914,6 +2915,7 @@ export const Constants = {
         "member.joined",
         "member.left",
         "trustlevel.changed",
+        "connection.accepted",
       ],
       commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],

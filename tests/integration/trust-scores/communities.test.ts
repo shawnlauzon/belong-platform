@@ -17,7 +17,7 @@ import {
   verifyTrustScoreLog,
   createTestConnectionAndJoin,
 } from './helpers';
-import { NOTIFICATION_TYPES } from '@/features/notifications';
+import { ACTION_TYPES } from '@/features/notifications';
 import type { Account } from '@/features/auth/types';
 
 describe('Trust Score Points - Communities', () => {
@@ -66,7 +66,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       testUser.id,
       community.id,
-      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
+      ACTION_TYPES.MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_FOUNDER,
       'Community founder log',
     );
@@ -124,7 +124,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
+      ACTION_TYPES.MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_JOIN,
       'Community join log',
     );
@@ -226,7 +226,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      NOTIFICATION_TYPES.COMMUNITY_MEMBER_LEFT,
+      ACTION_TYPES.MEMBER_LEFT,
       POINTS_CONFIG.COMMUNITY_LEAVE,
       'Community leave log',
     );
@@ -272,7 +272,7 @@ describe('Trust Score Points - Communities', () => {
       serviceClient,
       joiner.id,
       community.id,
-      NOTIFICATION_TYPES.COMMUNITY_MEMBER_JOINED,
+      ACTION_TYPES.MEMBER_JOINED,
       POINTS_CONFIG.COMMUNITY_JOIN,
       'Community join with invitation code log',
     );

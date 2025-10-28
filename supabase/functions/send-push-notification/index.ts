@@ -56,10 +56,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if user has push enabled and type is enabled
+    // Check if user has notifications enabled and type is enabled
     const { data: preferences } = await supabase
       .from("notification_preferences")
-      .select("push_enabled, " + `"${type}"`)
+      .select("notifications_enabled, " + `"${type}"`)
       .eq("user_id", user_id)
       .single();
 
@@ -78,14 +78,14 @@ serve(async (req) => {
       );
     }
 
-    // Check global push enabled
-    if (!preferences.push_enabled) {
+    // Check global notifications enabled
+    if (!preferences.notifications_enabled) {
       return new Response(
         JSON.stringify({
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: "Push disabled globally",
+          reason: "Notifications disabled globally",
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

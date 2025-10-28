@@ -14,6 +14,7 @@ export const ACTION_TYPES = {
   CLAIM_APPROVED: 'claim.approved',
   CLAIM_REJECTED: 'claim.rejected',
   CLAIM_CANCELLED: 'claim.cancelled',
+  CLAIM_COMPLETED: 'claim.completed',
 
   // Transaction Confirmation
   RESOURCE_GIVEN: 'resource.given',
@@ -31,9 +32,11 @@ export const ACTION_TYPES = {
   // Social
   MESSAGE_RECEIVED: 'message.received',
   CONVERSATION_REQUESTED: 'conversation.requested',
+  SHOUTOUT_SENT: 'shoutout.sent',
   SHOUTOUT_RECEIVED: 'shoutout.received',
   MEMBER_JOINED: 'member.joined',
   MEMBER_LEFT: 'member.left',
+  CONNECTION_ACCEPTED: 'connection.accepted',
 
   // System
   TRUSTLEVEL_CHANGED: 'trustlevel.changed',

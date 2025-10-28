@@ -60,9 +60,8 @@ async function backfillNotificationPreferences() {
       // Messages (granular control as documented)
       direct_messages: true,         // Direct 1:1 messages
       community_messages: true,      // Community chat messages
-      // Global settings (disabled by default for privacy)
-      email_enabled: false,
-      push_enabled: false,
+      // Global settings (enabled by default)
+      notifications_enabled: true,
     };
 
     // Prepare batch insert data

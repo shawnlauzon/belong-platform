@@ -60,8 +60,7 @@ describe("isChannelEnabled", () => {
   const mockPreferences: TypedNotificationPreferences = {
     id: "test-id",
     user_id: "test-user",
-    push_enabled: true,
-    email_enabled: false,
+    notifications_enabled: true,
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     "comment.replied": { in_app: true, push: true, email: false },
@@ -98,23 +97,28 @@ describe("isChannelEnabled", () => {
     expect(result).toBe(false);
   });
 
-  it("should return false when push is globally disabled", () => {
-    const prefsWithPushDisabled = {
+  it("should return false when notifications are globally disabled", () => {
+    const prefsWithNotificationsDisabled = {
       ...mockPreferences,
-      push_enabled: false,
+      notifications_enabled: false,
     };
 
     const result = isChannelEnabled(
-      prefsWithPushDisabled,
+      prefsWithNotificationsDisabled,
       "comment.replied",
       "push"
     );
     expect(result).toBe(false);
   });
 
-  it("should return false when email is globally disabled", () => {
+  it("should return false for any channel when notifications are globally disabled", () => {
+    const prefsWithNotificationsDisabled = {
+      ...mockPreferences,
+      notifications_enabled: false,
+    };
+
     const result = isChannelEnabled(
-      mockPreferences,
+      prefsWithNotificationsDisabled,
       "resource.created",
       "email"
     );
@@ -126,8 +130,7 @@ describe("getChannelPreferences", () => {
   const mockPreferences: TypedNotificationPreferences = {
     id: "test-id",
     user_id: "test-user",
-    push_enabled: true,
-    email_enabled: false,
+    notifications_enabled: true,
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     "comment.replied": { in_app: true, push: true, email: false },
@@ -166,36 +169,36 @@ describe("toTypedPreferences", () => {
     const dbRow: NotificationPreferences = {
       id: "test-id",
       user_id: "test-user",
-      push_enabled: true,
-      email_enabled: false,
+      notifications_enabled: true,
       created_at: "2024-01-01",
       updated_at: "2024-01-01",
-      "comment.replied": { in_app: true, push: true, email: false },
-      "claim.created": { in_app: true, push: false, email: false },
-      "resource.created": { in_app: true, push: true, email: true },
-      "event.created": { in_app: true, push: true, email: false },
-      "resource.updated": { in_app: true, push: true, email: false },
-      "resource.commented": { in_app: true, push: true, email: false },
-      "claim.cancelled": { in_app: true, push: true, email: false },
-      "claim.responded": { in_app: true, push: true, email: false },
-      "resource.given": { in_app: true, push: true, email: false },
-      "resource.received": { in_app: true, push: true, email: false },
-      "event.updated": { in_app: true, push: true, email: false },
-      "event.cancelled": { in_app: true, push: true, email: false },
-      "resource.expiring": { in_app: true, push: true, email: false },
-      "event.starting": { in_app: true, push: true, email: false },
-      "membership.updated": { in_app: true, push: true, email: false },
-      "conversation.requested": { in_app: true, push: true, email: false },
-      "message.received": { in_app: true, push: true, email: false },
-      "shoutout.received": { in_app: true, push: true, email: false },
+      comment_replied: { in_app: true, push: true, email: false },
+      claim_created: { in_app: true, push: false, email: false },
+      resource_created: { in_app: true, push: true, email: true },
+      event_created: { in_app: true, push: true, email: false },
+      resource_updated: { in_app: true, push: true, email: false },
+      resource_commented: { in_app: true, push: true, email: false },
+      claim_cancelled: { in_app: true, push: true, email: false },
+      claim_responded: { in_app: true, push: true, email: false },
+      resource_given: { in_app: true, push: true, email: false },
+      resource_received: { in_app: true, push: true, email: false },
+      event_updated: { in_app: true, push: true, email: false },
+      event_cancelled: { in_app: true, push: true, email: false },
+      resource_expiring: { in_app: true, push: true, email: false },
+      event_starting: { in_app: true, push: true, email: false },
+      membership_updated: { in_app: true, push: true, email: false },
+      conversation_requested: { in_app: true, push: true, email: false },
+      message_received: { in_app: true, push: true, email: false },
+      shoutout_received: { in_app: true, push: true, email: false },
+      connection_accepted: { in_app: true, push: true, email: false },
+      trustlevel_changed: { in_app: true, push: true, email: false },
     };
 
     const result = toTypedPreferences(dbRow);
 
     expect(result.id).toBe("test-id");
     expect(result.user_id).toBe("test-user");
-    expect(result.push_enabled).toBe(true);
-    expect(result.email_enabled).toBe(false);
+    expect(result.notifications_enabled).toBe(true);
     expect(result["comment.replied"]).toEqual({
       in_app: true,
       push: true,

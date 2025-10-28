@@ -32,9 +32,8 @@ export type NotificationPreferencesInsert =
  * Type-safe notification preferences with proper typing for each notification type preference
  */
 export interface TypedNotificationPreferences {
-  // Global switches
-  push_enabled: boolean;
-  email_enabled: boolean;
+  // Global switch - master toggle for all notifications
+  notifications_enabled: boolean;
 
   // Per-type preferences (notification type categories, not actions)
   // Note: trustlevel.changed has no preference column (always enabled)
@@ -90,31 +89,30 @@ export function toTypedPreferences(
   return {
     id: row.id,
     user_id: row.user_id,
-    push_enabled: row.push_enabled,
-    email_enabled: row.email_enabled,
+    notifications_enabled: row.notifications_enabled,
     created_at: row.created_at,
     updated_at: row.updated_at,
 
-    "comment.replied": parseChannelPreferences(row["comment.replied"]),
-    "claim.created": parseChannelPreferences(row["claim.created"]),
-    "resource.created": parseChannelPreferences(row["resource.created"]),
-    "event.created": parseChannelPreferences(row["event.created"]),
-    "resource.updated": parseChannelPreferences(row["resource.updated"]),
-    "resource.commented": parseChannelPreferences(row["resource.commented"]),
-    "claim.cancelled": parseChannelPreferences(row["claim.cancelled"]),
-    "claim.responded": parseChannelPreferences(row["claim.responded"]),
-    "resource.given": parseChannelPreferences(row["resource.given"]),
-    "resource.received": parseChannelPreferences(row["resource.received"]),
-    "event.updated": parseChannelPreferences(row["event.updated"]),
-    "event.cancelled": parseChannelPreferences(row["event.cancelled"]),
-    "resource.expiring": parseChannelPreferences(row["resource.expiring"]),
-    "event.starting": parseChannelPreferences(row["event.starting"]),
-    "membership.updated": parseChannelPreferences(row["membership.updated"]),
+    "comment.replied": parseChannelPreferences(row.comment_replied),
+    "claim.created": parseChannelPreferences(row.claim_created),
+    "resource.created": parseChannelPreferences(row.resource_created),
+    "event.created": parseChannelPreferences(row.event_created),
+    "resource.updated": parseChannelPreferences(row.resource_updated),
+    "resource.commented": parseChannelPreferences(row.resource_commented),
+    "claim.cancelled": parseChannelPreferences(row.claim_cancelled),
+    "claim.responded": parseChannelPreferences(row.claim_responded),
+    "resource.given": parseChannelPreferences(row.resource_given),
+    "resource.received": parseChannelPreferences(row.resource_received),
+    "event.updated": parseChannelPreferences(row.event_updated),
+    "event.cancelled": parseChannelPreferences(row.event_cancelled),
+    "resource.expiring": parseChannelPreferences(row.resource_expiring),
+    "event.starting": parseChannelPreferences(row.event_starting),
+    "membership.updated": parseChannelPreferences(row.membership_updated),
     "conversation.requested": parseChannelPreferences(
-      row["conversation.requested"]
+      row.conversation_requested
     ),
-    "message.received": parseChannelPreferences(row["message.received"]),
-    "shoutout.received": parseChannelPreferences(row["shoutout.received"]),
+    "message.received": parseChannelPreferences(row.message_received),
+    "shoutout.received": parseChannelPreferences(row.shoutout_received),
   };
 }
 
@@ -136,11 +134,8 @@ export function isChannelEnabled(
   type: NotificationTypePreference,
   channel: keyof ChannelPreferences
 ): boolean {
-  // Check global switch first
-  if (channel === "push" && !preferences.push_enabled) {
-    return false;
-  }
-  if (channel === "email" && !preferences.email_enabled) {
+  // Check global master switch first
+  if (!preferences.notifications_enabled) {
     return false;
   }
 

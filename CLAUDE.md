@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - ALL instructions within this document MUST BE FOLLOWED, these are not optional unless explicitly stated.
 - DO NOT edit more code than you have to.
 - DO NOT WASTE TOKENS, be succinct and concise.
+- DO NOT USE WORKAROUNDS UNLESS EXPLICITLY INSTRUCTED TO DO SO.
+- DO NOT ADD CODE "FOR NOW" UNLESS EXPLICITLY INSTRUCTED TO DO SO.
 - **Always use IDE diagnostics to validate code (including tests!) after implementation**
 - **Confirm a enum / function / variable / type exists before using it**: Do not just guess!
 - **If any MCP resource is unavailable, restart the MCP**
