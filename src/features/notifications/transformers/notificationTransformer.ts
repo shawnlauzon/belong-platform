@@ -1,7 +1,47 @@
 import type { NotificationDetail } from '../types/notificationDetail';
+import type { ClaimDetails } from '../types/claimDetails';
 import type { NotificationDetailsRow } from '../types/notificationDetailsRow';
 import { ACTION_TYPES, type ActionType } from '../constants';
 import { getTypedMetadata } from '../types/notificationMetadata';
+
+function parseClaimDetails(
+  claimDetailsJson: unknown,
+): ClaimDetails | undefined {
+  if (!claimDetailsJson || typeof claimDetailsJson !== 'object') {
+    return undefined;
+  }
+
+  const details = claimDetailsJson as Record<string, unknown>;
+
+  // Required fields check
+  if (
+    !details.resource_id ||
+    !details.status ||
+    !details.resource_title ||
+    !details.resource_type ||
+    !details.claimant_name ||
+    !details.owner_name
+  ) {
+    return undefined;
+  }
+
+  return {
+    resourceId: details.resource_id as string,
+    timeslotId: (details.timeslot_id as string) || undefined,
+    timeslotStartTime: details.timeslot_start_time
+      ? new Date(details.timeslot_start_time as string)
+      : undefined,
+    timeslotEndTime: details.timeslot_end_time
+      ? new Date(details.timeslot_end_time as string)
+      : undefined,
+    status: details.status as ClaimDetails['status'],
+    commitmentLevel: (details.commitment_level as string) || undefined,
+    resourceTitle: details.resource_title as string,
+    resourceType: details.resource_type as ClaimDetails['resourceType'],
+    claimantName: details.claimant_name as string,
+    ownerName: details.owner_name as string,
+  };
+}
 
 export function toDomainNotification(
   row: NotificationDetailsRow,
@@ -37,6 +77,7 @@ export function toDomainNotification(
 
     // Claim information (denormalized from resource_claims table)
     claimStatus: row.claim_status || undefined,
+    claimDetails: parseClaimDetails(row.claim_details),
 
     // Community information (denormalized from communities table)
     communityName: row.community_name || undefined,

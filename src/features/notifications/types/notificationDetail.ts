@@ -1,4 +1,5 @@
 import type { Notification } from './notification';
+import type { ClaimDetails } from './claimDetails';
 import { ResourceClaimStatus, ResourceType } from '@/features/resources';
 
 /**
@@ -20,6 +21,7 @@ export interface NotificationDetail extends Notification {
 
   // Claim information (denormalized from resource_claims table)
   claimStatus?: ResourceClaimStatus;
+  claimDetails?: ClaimDetails;
 
   // Community information (denormalized from communities table)
   communityName?: string;
