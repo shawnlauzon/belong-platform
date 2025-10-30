@@ -147,6 +147,112 @@ describe('Messages CRUD Operations', () => {
       expect(updatedConversation!.lastMessage!.content).toBe(content);
       expect(updatedConversation!.lastMessage!.senderId).toBe(userA.id);
     });
+
+    it('updates conversations list when new message is sent', async () => {
+      // Fetch initial conversations list
+      const initialConversations = await api.fetchConversations(
+        supabase,
+        userA.id,
+      );
+
+      const initialConversation = initialConversations.find(
+        (c) => c.id === conversation.id,
+      );
+      expect(initialConversation).toBeDefined();
+      const initialLastMessage = initialConversation!.lastMessage;
+
+      // Send a new message
+      const newMessageContent = `${TEST_PREFIX} New message for list update test`;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      await api.sendMessage(supabase, currentUser!.id, {
+        conversationId: conversation.id,
+        content: newMessageContent,
+      });
+
+      // Fetch conversations list again
+      const updatedConversations = await api.fetchConversations(
+        supabase,
+        userA.id,
+      );
+
+      const updatedConversation = updatedConversations.find(
+        (c) => c.id === conversation.id,
+      );
+      expect(updatedConversation).toBeDefined();
+
+      // Verify the lastMessage is updated in the conversations list
+      expect(updatedConversation!.lastMessage).toBeDefined();
+      expect(updatedConversation!.lastMessage!.content).toBe(newMessageContent);
+      expect(updatedConversation!.lastMessage!.senderId).toBe(userA.id);
+
+      // Verify it's different from the initial lastMessage
+      if (initialLastMessage) {
+        expect(updatedConversation!.lastMessage!.id).not.toBe(
+          initialLastMessage.id,
+        );
+      }
+    });
+
+    it('updates conversations_with_last_message view in database', async () => {
+      // Send a new message
+      const messageContent = `${TEST_PREFIX} Database view test message`;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const sentMessage = await api.sendMessage(supabase, currentUser!.id, {
+        conversationId: conversation.id,
+        content: messageContent,
+      });
+
+      // Query the conversations_with_last_message view directly
+      const { data: conversationFromView, error } = await supabase
+        .from('conversations_with_last_message')
+        .select('*')
+        .eq('id', conversation.id)
+        .single();
+
+      expect(error).toBeNull();
+      expect(conversationFromView).toBeDefined();
+
+      // Verify the last_message_* fields are updated
+      expect(conversationFromView!.last_message_id).toBe(sentMessage.id);
+      expect(conversationFromView!.last_message_content).toBe(messageContent);
+      expect(conversationFromView!.last_message_sender_id).toBe(userA.id);
+      expect(conversationFromView!.last_message_is_deleted).toBe(false);
+    });
+
+    it('shows updated lastMessage for both participants', async () => {
+      // Send a message from userA
+      const messageContent = `${TEST_PREFIX} Message from userA`;
+      await signInAsUser(supabase, userA);
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      await api.sendMessage(supabase, currentUser!.id, {
+        conversationId: conversation.id,
+        content: messageContent,
+      });
+
+      // Fetch conversations list as userA
+      const conversationsA = await api.fetchConversations(supabase, userA.id);
+      const conversationForA = conversationsA.find(
+        (c) => c.id === conversation.id,
+      );
+
+      expect(conversationForA).toBeDefined();
+      expect(conversationForA!.lastMessage).toBeDefined();
+      expect(conversationForA!.lastMessage!.content).toBe(messageContent);
+
+      // Sign in as userB and fetch conversations list
+      await signInAsUser(supabase, userB);
+      const conversationsB = await api.fetchConversations(supabase, userB.id);
+      const conversationForB = conversationsB.find(
+        (c) => c.id === conversation.id,
+      );
+
+      expect(conversationForB).toBeDefined();
+      expect(conversationForB!.lastMessage).toBeDefined();
+      expect(conversationForB!.lastMessage!.content).toBe(messageContent);
+
+      // Reset to userA for other tests
+      await signInAsUser(supabase, userA);
+    });
   });
 
   describe('fetchMessages', () => {
@@ -245,6 +351,42 @@ describe('Messages CRUD Operations', () => {
       expect(updatedConversation).toBeDefined();
       expect(updatedConversation!.lastMessage).toBeDefined();
       expect(updatedConversation!.lastMessage!.content).not.toBe(content);
+    });
+
+    it('excludes deleted messages from lastMessage in database view', async () => {
+      // Send a new message
+      const messageContent = `${TEST_PREFIX} Message to be deleted`;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const sentMessage = await api.sendMessage(supabase, currentUser!.id, {
+        conversationId: conversation.id,
+        content: messageContent,
+      });
+
+      // Verify the message is the lastMessage
+      const { data: beforeDelete } = await supabase
+        .from('conversations_with_last_message')
+        .select('last_message_id, last_message_content')
+        .eq('id', conversation.id)
+        .single();
+
+      expect(beforeDelete!.last_message_id).toBe(sentMessage.id);
+      expect(beforeDelete!.last_message_content).toBe(messageContent);
+
+      // Delete the message
+      await api.deleteMessage(supabase, sentMessage.id);
+
+      // Verify the lastMessage is now different (previous non-deleted message)
+      const { data: afterDelete } = await supabase
+        .from('conversations_with_last_message')
+        .select('last_message_id, last_message_content, last_message_is_deleted')
+        .eq('id', conversation.id)
+        .single();
+
+      // The last message should either be null or a different message
+      if (afterDelete!.last_message_id) {
+        expect(afterDelete!.last_message_id).not.toBe(sentMessage.id);
+        expect(afterDelete!.last_message_is_deleted).toBe(false);
+      }
     });
   });
 
