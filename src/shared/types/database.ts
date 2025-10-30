@@ -2175,7 +2175,6 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -2186,6 +2185,7 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -2384,8 +2384,8 @@ export type Database = {
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
         | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -2583,8 +2583,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geom: unknown; srid: number }; Returns: unknown }
         | { Args: { geog: unknown; srid: number }; Returns: unknown }
+        | { Args: { geom: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -2607,8 +2607,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geom: unknown }; Returns: number }
         | { Args: { geog: unknown }; Returns: number }
+        | { Args: { geom: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -2774,7 +2774,12 @@ export type Database = {
         | "flaked"
         | "received"
         | "vote"
-      resource_status: "voting" | "active" | "completed" | "cancelled"
+      resource_status:
+        | "voting"
+        | "scheduled"
+        | "completed"
+        | "cancelled"
+        | "active"
       resource_timeslot_status:
         | "active"
         | "completed"
@@ -2979,7 +2984,13 @@ export const Constants = {
         "received",
         "vote",
       ],
-      resource_status: ["voting", "active", "completed", "cancelled"],
+      resource_status: [
+        "voting",
+        "scheduled",
+        "completed",
+        "cancelled",
+        "active",
+      ],
       resource_timeslot_status: [
         "active",
         "completed",
