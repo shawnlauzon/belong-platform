@@ -11,6 +11,7 @@ import {
 import { createComment } from '@/features/comments';
 import { createResourceClaim, updateResourceClaim } from '@/features/resources/api';
 import { joinCommunity, leaveCommunity } from '@/features/communities/api';
+import { calculateLevel } from '@/features/trust-scores/utils/levelCalculator';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -243,25 +244,27 @@ describe('Notification Metadata Structures', () => {
 
   describe('TrustLevelMetadata', () => {
     it('includes old_level and new_level when trust level increases', async () => {
-      // Create a fresh user who starts at level 1
-      const newUser = await createTestUser(supabase);
-      await joinCommunity(supabase, newUser.id, testCommunity.id);
+      // Create a NEW non-founder user who starts at level 0 (0 points)
+      // resourceOwner is the founder with founder points, use different user
+      const regularUser = await createTestUser(supabase);
+      await joinCommunity(supabase, regularUser.id, testCommunity.id);
 
-      // Get initial level
-      const { data: initialScore } = await supabase
+      // Get initial score (should be 0 for non-founder)
+      const { data: initialScoreData } = await supabase
         .from('trust_scores')
-        .select('level')
-        .eq('user_id', newUser.id)
+        .select('score')
+        .eq('user_id', regularUser.id)
         .eq('community_id', testCommunity.id)
         .single();
 
-      const initialLevel = initialScore?.level ?? 1;
+      const initialScore = initialScoreData?.score ?? 0;
+      const initialLevel = calculateLevel(initialScore);
 
-      // Create a resource and receive multiple shoutouts to trigger level up
-      await signInAsUser(supabase, newUser);
+      // Regular user creates a resource
+      await signInAsUser(supabase, regularUser);
       const resource = await createTestResource(supabase, testCommunity.id, 'offer');
 
-      // Multiple shoutouts to accumulate points
+      // OTHER users give shoutouts to regular user (need 50+ to reach level 1)
       await signInAsUser(supabase, resourceOwner);
       await createComment(supabase, resourceOwner.id, {
         content: 'Great!',
@@ -280,7 +283,7 @@ describe('Notification Metadata Structures', () => {
         .from('shoutouts')
         .insert({
           user_id: resourceOwner.id,
-          receiver_id: newUser.id,
+          receiver_id: regularUser.id,
           resource_id: resource.id,
           community_id: testCommunity.id,
           message: 'Excellent work!',
@@ -293,7 +296,7 @@ describe('Notification Metadata Structures', () => {
         .from('shoutouts')
         .insert({
           user_id: claimant.id,
-          receiver_id: newUser.id,
+          receiver_id: regularUser.id,
           resource_id: resource.id,
           community_id: testCommunity.id,
           message: 'Very helpful!',
@@ -302,35 +305,34 @@ describe('Notification Metadata Structures', () => {
         .single();
 
       // Check if level changed
-      const { data: updatedScore } = await supabase
+      const { data: updatedScoreData } = await supabase
         .from('trust_scores')
-        .select('level')
-        .eq('user_id', newUser.id)
+        .select('score')
+        .eq('user_id', regularUser.id)
         .eq('community_id', testCommunity.id)
         .single();
 
-      const newLevel = updatedScore?.level ?? 1;
+      const newScore = updatedScoreData?.score ?? 0;
+      const newLevel = calculateLevel(newScore);
 
-      // If level changed, verify metadata
-      if (newLevel > initialLevel) {
-        await signInAsUser(supabase, newUser);
+      // User should have leveled up
+      expect(newLevel.index).toBeGreaterThan(initialLevel.index);
 
-        const { data: notifications } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', newUser.id)
-          .eq('action', 'trustlevel.changed');
+      await signInAsUser(supabase, regularUser);
 
-        expect(notifications!.length).toBeGreaterThan(0);
+      const { data: notifications } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', regularUser.id)
+        .eq('action', 'trustlevel.changed');
 
-        const metadata = notifications![0].metadata as unknown as TrustLevelMetadata;
-        expect(metadata).toBeDefined();
-        expect(metadata.old_level).toBe(initialLevel);
-        expect(metadata.new_level).toBe(newLevel);
-        expect(metadata.new_level).toBeGreaterThan(metadata.old_level);
-      } else {
-        console.warn('Level did not change - may need more actions to trigger level up');
-      }
+      expect(notifications!.length).toBeGreaterThan(0);
+
+      const metadata = notifications![0].metadata as unknown as TrustLevelMetadata;
+      expect(metadata).toBeDefined();
+      expect(metadata.old_level).toBe(initialLevel.index);
+      expect(metadata.new_level).toBe(newLevel.index);
+      expect(metadata.new_level).toBeGreaterThan(metadata.old_level);
     });
   });
 
