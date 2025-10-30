@@ -29,7 +29,7 @@ describe("parseChannelPreferences", () => {
     expect(result).toEqual({
       in_app: true,
       push: true,
-      email: false,
+      email: true,
     });
   });
 

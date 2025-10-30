@@ -2059,6 +2059,17 @@ export type Database = {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
       }
+      send_email_notification_async: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_body: string
+          p_metadata?: Json
+          p_notification_id: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       send_push_notification_async: {
         Args: {
           p_action: Database["public"]["Enums"]["action_type"]
@@ -2071,6 +2082,13 @@ export type Database = {
         Returns: undefined
       }
       should_create_in_app_notification: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      should_send_email: {
         Args: {
           p_action: Database["public"]["Enums"]["action_type"]
           p_user_id: string
@@ -2151,10 +2169,6 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geom: unknown
               id?: string
@@ -2163,6 +2177,10 @@ export type Database = {
               options?: number
               version: number
             }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
             Returns: string
           }
         | {
@@ -2373,11 +2391,11 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
@@ -2580,8 +2598,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geog: unknown; srid: number }; Returns: unknown }
         | { Args: { geom: unknown; srid: number }; Returns: unknown }
+        | { Args: { geog: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
