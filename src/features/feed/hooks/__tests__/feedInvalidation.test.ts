@@ -11,9 +11,11 @@ import * as sharedHooks from '@/shared/hooks';
 import { useCreateResource } from '@/features/resources/hooks/useCreateResource';
 import { useDeleteResource } from '@/features/resources/hooks/useDeleteResource';
 import { useUpdateResource } from '@/features/resources/hooks/useUpdateResource';
+import { useRenewResource } from '@/features/resources/hooks/useRenewResource';
 import { createResource } from '@/features/resources/api/createResource';
 import { deleteResource } from '@/features/resources/api/deleteResource';
 import { updateResource } from '@/features/resources/api/updateResource';
+import { renewResource } from '@/features/resources/api/renewResource';
 import {
   createFakeResource,
   createFakeResourceInput,
@@ -43,6 +45,7 @@ import { createFakeUser } from '@/features/users/__fakes__';
 vi.mock('@/features/resources/api/createResource');
 vi.mock('@/features/resources/api/deleteResource');
 vi.mock('@/features/resources/api/updateResource');
+vi.mock('@/features/resources/api/renewResource');
 vi.mock('@/features/communities/api/joinCommunity');
 vi.mock('@/features/communities/api/leaveCommunity');
 vi.mock('@/features/shoutouts/api/createShoutout');
@@ -158,6 +161,36 @@ describe('Feed Cache Invalidation', () => {
       await result.current.mutateAsync({ id: resource.id, ...updates });
 
       // Assert - Feed should be invalidated when resource is updated
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: feedKeys.all,
+        });
+      });
+    });
+
+    it('should invalidate feed when renewing a resource', async () => {
+      // Arrange
+      const resource = createFakeResource({
+        id: 'resource-123',
+        expiresAt: new Date(),
+      });
+      const renewedResource = {
+        ...resource,
+        lastRenewedAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days later
+      };
+
+      vi.mocked(renewResource).mockResolvedValue(renewedResource);
+
+      const { wrapper, queryClient } = createTestWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      // Act
+      const { result } = renderHook(() => useRenewResource(), { wrapper });
+      await result.current.mutateAsync(resource.id);
+
+      // Assert - Feed SHOULD be invalidated when resource is renewed
+      // ❌ THIS TEST WILL FAIL - resource renewal doesn't invalidate feed
       await waitFor(() => {
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: feedKeys.all,
