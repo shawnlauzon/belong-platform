@@ -24,9 +24,10 @@ export async function createResourceTimeslot(
       throw new Error('Resource not found');
     }
 
-    // Must be a voting event
-    if (resource.status !== 'voting') {
-      throw new Error('Proposed timeslots can only be created for voting events');
+    // Allow proposed timeslots for voting or active resources
+    const allowedStatuses = ['voting', 'active'];
+    if (!allowedStatuses.includes(resource.status)) {
+      throw new Error('Proposed timeslots only allowed for voting or active resources');
     }
 
     // Check timeslotsFlexible flag

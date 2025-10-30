@@ -40,7 +40,7 @@ export async function fetchFeed(
         is_active
       `,
     )
-    .in('status', ['voting', 'scheduled'])
+    .in('status', ['voting', 'active'])
     .in('resource_communities.community_id', communityIds);
 
   if (resourceError) {

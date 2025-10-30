@@ -24,7 +24,7 @@ The main entity representing an offer, request, or event.
 - `locationName`, `coordinates` - Where it happens
 - `communityIds` - Which communities can see it (array)
 - `imageUrls` - Visual representation (array)
-- `status` - `'voting'` | `'scheduled'` | `'completed'` | `'cancelled'`
+- `status` - `'voting'` | `'active'` | `'completed'` | `'cancelled'`
 - `claimLimit` - Maximum number of claims allowed
 - `claimLimitPer` - `'total'` | `'timeslot'`
 - `requiresApproval` - Whether claims need owner approval
@@ -93,7 +93,7 @@ User registrations/claims on timeslots.
 
 **Voting Events**
 - Events where attendees vote on proposed timeslots
-- Resource status starts as `'voting'`, moves to `'scheduled'` after finalization
+- Resource status starts as `'voting'`, moves to `'active'` after finalization
 - Timeslots have status `'proposed'` during voting, winner becomes `'active'`
 - Votes are claims with status `'vote'`
 - Users can vote for multiple timeslots
@@ -119,7 +119,7 @@ For events where the exact time needs to be determined by participant availabili
 
 **Finalization Phase:**
 1. Owner calls `finalizeVotedTimeslot(resourceId, chosenTimeslotId)`
-2. Resource status changes: `'voting'` → `'scheduled'`
+2. Resource status changes: `'voting'` → `'active'`
 3. Chosen timeslot: `'proposed'` → `'active'`
 4. Unchosen timeslots: `'proposed'` → `'cancelled'`
 5. Votes for chosen slot convert based on `requiresApproval`:

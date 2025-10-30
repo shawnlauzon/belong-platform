@@ -63,7 +63,7 @@ export type ResourceClaimSummary = Pick<
  * - received → completed (only claimant completes, confirming given)
  * - Any state except rejected/completed → cancelled (only claimant)
  *
- * ## EVENTS (status='scheduled')
+ * ## EVENTS (status='active')
  * Initial State:
  * - If requires_approval = true → 'pending'
  * - If requires_approval = false → 'approved'

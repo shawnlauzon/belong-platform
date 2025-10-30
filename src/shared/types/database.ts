@@ -644,6 +644,30 @@ export type Database = {
           },
         ]
       }
+      player_levels: {
+        Row: {
+          emoji: string
+          level_index: number
+          max_score: number | null
+          min_score: number
+          name: string
+        }
+        Insert: {
+          emoji: string
+          level_index: number
+          max_score?: number | null
+          min_score: number
+          name: string
+        }
+        Update: {
+          emoji?: string
+          level_index?: number
+          max_score?: number | null
+          min_score?: number
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1602,6 +1626,7 @@ export type Database = {
         }
         Returns: string
       }
+      calculate_trust_level: { Args: { p_score: number }; Returns: number }
       communities_containing_point: {
         Args: { lat: number; lng: number }
         Returns: {
@@ -2129,6 +2154,10 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
             Args: {
               geom: unknown
               id?: string
@@ -2140,16 +2169,13 @@ export type Database = {
             Returns: string
           }
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geog: unknown
               id?: string
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -2160,7 +2186,6 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -2351,16 +2376,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
         | { Args: { geom: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -2582,8 +2607,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geog: unknown }; Returns: number }
         | { Args: { geom: unknown }; Returns: number }
+        | { Args: { geog: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -2749,7 +2774,7 @@ export type Database = {
         | "flaked"
         | "received"
         | "vote"
-      resource_status: "voting" | "scheduled" | "completed" | "cancelled"
+      resource_status: "voting" | "active" | "completed" | "cancelled"
       resource_timeslot_status:
         | "active"
         | "completed"
@@ -2954,7 +2979,7 @@ export const Constants = {
         "received",
         "vote",
       ],
-      resource_status: ["voting", "scheduled", "completed", "cancelled"],
+      resource_status: ["voting", "active", "completed", "cancelled"],
       resource_timeslot_status: [
         "active",
         "completed",

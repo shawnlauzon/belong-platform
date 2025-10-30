@@ -78,7 +78,7 @@ export async function createTestResource(
     type: type as 'offer' | 'request' | 'event',
     communityIds: [communityId],
     category: defaultCategory,
-    status: 'scheduled' as const,
+    status: 'active' as const,
     locationName: 'Test Location',
     requiresApproval,
     lastRenewedAt: new Date(),

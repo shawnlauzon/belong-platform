@@ -7,7 +7,7 @@ import { fetchResourceById } from './fetchResourceById';
  * Finalizes a voting event by selecting a winning timeslot.
  * This function:
  * 1. Verifies the current user is the resource owner
- * 2. Changes resource status from 'voting' to 'scheduled'
+ * 2. Changes resource status from 'voting' to 'active'
  * 3. Changes chosen timeslot status from 'proposed' to 'active'
  * 4. Cancels all other proposed timeslots
  * 5. Converts vote claims to attendance (pending/going based on requiresApproval)

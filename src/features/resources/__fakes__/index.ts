@@ -69,7 +69,7 @@ export function createFakeResource(
     ownerId: owner.id,
     communityIds: [faker.string.uuid()],
     status: faker.helpers.arrayElement([
-      'scheduled',
+      'active',
       'completed',
       'cancelled',
     ] as const),
@@ -139,7 +139,7 @@ export function createFakeResourceInput(
       lng: faker.location.longitude(),
     },
     status: faker.helpers.arrayElement([
-      'scheduled',
+      'active',
       'completed',
       'cancelled',
     ] as const),
@@ -206,7 +206,7 @@ export function createFakeResourceRow(
     created_at: now,
     updated_at: now,
     status: faker.helpers.arrayElement([
-      'scheduled',
+      'active',
       'completed',
       'cancelled',
     ] as const),
