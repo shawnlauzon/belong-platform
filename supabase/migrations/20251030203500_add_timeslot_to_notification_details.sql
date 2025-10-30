@@ -26,7 +26,6 @@ SELECT
   c.icon AS community_avatar_url,
   comm.content AS comment_content,
   s.message AS shoutout_message,
-  rc.status AS claim_status,
   CASE
     WHEN n.claim_id IS NOT NULL THEN (
       SELECT jsonb_build_object(
@@ -55,5 +54,4 @@ LEFT JOIN public_profiles up_actor ON n.actor_id = up_actor.id
 LEFT JOIN resources r ON n.resource_id = r.id
 LEFT JOIN communities c ON n.community_id = c.id
 LEFT JOIN comments comm ON n.comment_id = comm.id
-LEFT JOIN shoutouts s ON n.shoutout_id = s.id
-LEFT JOIN resource_claims rc ON n.claim_id = rc.id;
+LEFT JOIN shoutouts s ON n.shoutout_id = s.id;

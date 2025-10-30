@@ -1,6 +1,6 @@
 import type { Notification } from './notification';
 import type { ClaimDetails } from './claimDetails';
-import { ResourceClaimStatus, ResourceType } from '@/features/resources';
+import { ResourceType } from '@/features/resources';
 
 /**
  * Enhanced notification type that includes all the rich denormalized data
@@ -20,7 +20,6 @@ export interface NotificationDetail extends Notification {
   commentContent?: string;
 
   // Claim information (denormalized from resource_claims table)
-  claimStatus?: ResourceClaimStatus;
   claimDetails?: ClaimDetails;
 
   // Community information (denormalized from communities table)

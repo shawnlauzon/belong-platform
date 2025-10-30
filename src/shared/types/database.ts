@@ -1376,9 +1376,6 @@ export type Database = {
           actor_id: string | null
           claim_details: Json | null
           claim_id: string | null
-          claim_status:
-            | Database["public"]["Enums"]["resource_claim_status"]
-            | null
           comment_content: string | null
           comment_id: string | null
           community_avatar_url: string | null

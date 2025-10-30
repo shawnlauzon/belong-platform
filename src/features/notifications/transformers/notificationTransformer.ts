@@ -76,7 +76,6 @@ export function toDomainNotification(
     commentContent: row.comment_content || undefined,
 
     // Claim information (denormalized from resource_claims table)
-    claimStatus: row.claim_status || undefined,
     claimDetails: parseClaimDetails(row.claim_details),
 
     // Community information (denormalized from communities table)
