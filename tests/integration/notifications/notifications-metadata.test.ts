@@ -328,11 +328,23 @@ describe('Notification Metadata Structures', () => {
 
       expect(notifications!.length).toBeGreaterThan(0);
 
-      const metadata = notifications![0].metadata as unknown as TrustLevelMetadata;
+      // Find ANY notification showing user leveled up from initial level
+      // Note: User may go through multiple levels (1→2, 2→3, 3→4)
+      // We just need one notification starting from initialLevel
+      const levelUpNotification = notifications!.find(n => {
+        const metadata = n.metadata as unknown as TrustLevelMetadata;
+        return metadata.old_level === initialLevel.index && metadata.new_level > initialLevel.index;
+      });
+
+      expect(levelUpNotification).toBeDefined();
+
+      const metadata = levelUpNotification!.metadata as unknown as TrustLevelMetadata;
       expect(metadata).toBeDefined();
       expect(metadata.old_level).toBe(initialLevel.index);
-      expect(metadata.new_level).toBe(newLevel.index);
-      expect(metadata.new_level).toBeGreaterThan(metadata.old_level);
+      expect(metadata.new_level).toBeGreaterThan(initialLevel.index);
+
+      // Verify final level is higher than initial
+      expect(newLevel.index).toBeGreaterThan(initialLevel.index);
     });
   });
 
