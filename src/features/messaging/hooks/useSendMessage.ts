@@ -43,6 +43,17 @@ export function useSendMessage() {
         },
       );
 
+      // Invalidate conversations list to update last message
+      if (input.conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.list(),
+        });
+      } else if (input.communityId) {
+        queryClient.invalidateQueries({
+          queryKey: communityChatKeys.list(),
+        });
+      }
+
       return result;
     } catch (error) {
       logger.error('useSendMessage: failed to send message', {

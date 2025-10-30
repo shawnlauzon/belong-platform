@@ -201,6 +201,17 @@ export async function createMessageSubscription({
         : communityChatKeys.totalUnreadCount(),
       (prev: number | undefined) => (prev || 0) + 1,
     );
+
+    // Invalidate conversations list to update last message
+    if (conversationId) {
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.list(),
+      });
+    } else if (communityId) {
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.list(),
+      });
+    }
   }
 
   function handleUpdateReceived(message: Message) {
@@ -213,6 +224,17 @@ export async function createMessageSubscription({
       (prev: Message[] | undefined) =>
         prev?.map((m) => (m.id === message.id ? message : m)),
     );
+
+    // Invalidate conversations list to update last message if edited
+    if (message.conversationId) {
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.list(),
+      });
+    } else if (message.communityId) {
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.list(),
+      });
+    }
   }
 
   function handleDeleteReceived(message: Message) {
@@ -224,5 +246,16 @@ export async function createMessageSubscription({
         : communityChatKeys.messages(message.communityId!),
       (prev: Message[] | undefined) => prev?.filter((m) => m.id !== message.id),
     );
+
+    // Invalidate conversations list to update last message if deleted
+    if (message.conversationId) {
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.list(),
+      });
+    } else if (message.communityId) {
+      queryClient.invalidateQueries({
+        queryKey: communityChatKeys.list(),
+      });
+    }
   }
 }
