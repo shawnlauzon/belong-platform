@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/features/auth';
 import { deleteShoutout } from '../api';
 import { shoutoutKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for deleting shoutouts.
@@ -110,6 +111,11 @@ export function useDeleteShoutout() {
         });
         queryClient.invalidateQueries({
           queryKey: trustScoreKeys.listByUser(shoutout.receiverId),
+        });
+
+        // Invalidate feed since shoutouts appear in feed
+        queryClient.invalidateQueries({
+          queryKey: feedKeys.all,
         });
 
         logger.info('📢 useDeleteShoutout: Successfully deleted shoutout', {

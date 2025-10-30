@@ -6,6 +6,7 @@ import type { Shoutout, ShoutoutInput } from '../types';
 import { createShoutout } from '../api/createShoutout';
 import { shoutoutKeys } from '../queries';
 import { trustScoreKeys } from '@/features/trust-scores/queries';
+import { feedKeys } from '@/features/feed/queries';
 
 /**
  * Hook for creating new shoutouts.
@@ -85,6 +86,11 @@ export function useCreateShoutout() {
       });
       queryClient.invalidateQueries({
         queryKey: trustScoreKeys.listByUser(newShoutout.receiverId),
+      });
+
+      // Invalidate feed since shoutouts appear in feed
+      queryClient.invalidateQueries({
+        queryKey: feedKeys.all,
       });
 
       logger.info('📢 useCreateShoutout: Successfully created shoutout', {
