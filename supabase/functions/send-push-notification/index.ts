@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: 'Notifications disabled globally',
+          reason: 'User has disabled notifications',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1371,8 +1371,6 @@ export type Database = {
       notification_details: {
         Row: {
           action: Database["public"]["Enums"]["action_type"] | null
-          actor_avatar_url: string | null
-          actor_display_name: string | null
           actor_id: string | null
           claim_details: Json | null
           claim_id: string | null

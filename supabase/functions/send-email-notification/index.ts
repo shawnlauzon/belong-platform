@@ -176,8 +176,7 @@ Deno.serve(async (req) => {
 
     const {
       action,
-      actor_display_name,
-      actor_avatar_url,
+      resource_id,
       resource_title,
       resource_type,
       community_name,
@@ -192,16 +191,24 @@ Deno.serve(async (req) => {
     // Format timestamp
     const notificationTimestamp = formatTimestamp(notification.created_at);
 
-    const { timeslot_start_time, resource_status, voting_deadline } = metadata;
+    const {
+      timeslot_start_time,
+      resource_status,
+      voting_deadline,
+      actor_display_name,
+      actor_full_name,
+      actor_avatar_url,
+    } = metadata || {};
 
     // Prepare Postmark template request
     const postmarkRequest: PostmarkTemplateRequest = {
       From: `${actor_display_name} via Juntos <${postmarkFrom}>`,
       To: profile.email,
-      TemplateId: postmarkTemplateId,
+      TemplateId: 42024291,
       TemplateModel: {
         subject: 'A new event has been created',
-        actor_name: actor_display_name,
+        actor_display_name,
+        actor_full_name,
         notification_timestamp: notificationTimestamp,
         event_timestamp: formatEventTimestamp(timeslot_start_time),
         sent_to: `members of the ${community_name} community`,
@@ -210,6 +217,9 @@ Deno.serve(async (req) => {
         details_url: `${appUrl}/events/${resource_id}`,
         manage_preferences_url: `${appUrl}/notifications/settings`,
       },
+      TrackOpens: true,
+      TrackLinks: 'HtmlOnly',
+      MessageStream: postmarkMessageStream,
     };
 
     console.log('Sending to Postmark: ', JSON.stringify(postmarkRequest));
@@ -223,7 +233,6 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
           'X-Postmark-Server-Token': postmarkToken,
-          'X-PM-Message-Stream': postmarkMessageStream,
         },
         body: JSON.stringify(postmarkRequest),
       },
@@ -243,6 +252,8 @@ Deno.serve(async (req) => {
         },
       );
     }
+
+    console.log('Email response', JSON.stringify(postmarkResponse));
 
     return new Response(
       JSON.stringify({
