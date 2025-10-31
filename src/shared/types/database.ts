@@ -1376,9 +1376,6 @@ export type Database = {
           actor_id: string | null
           claim_details: Json | null
           claim_id: string | null
-          claim_status:
-            | Database["public"]["Enums"]["resource_claim_status"]
-            | null
           comment_content: string | null
           comment_id: string | null
           community_avatar_url: string | null
@@ -2062,6 +2059,17 @@ export type Database = {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
       }
+      send_email_notification_async: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_body: string
+          p_metadata?: Json
+          p_notification_id: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       send_push_notification_async: {
         Args: {
           p_action: Database["public"]["Enums"]["action_type"]
@@ -2074,6 +2082,13 @@ export type Database = {
         Returns: undefined
       }
       should_create_in_app_notification: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      should_send_email: {
         Args: {
           p_action: Database["public"]["Enums"]["action_type"]
           p_user_id: string
@@ -2154,10 +2169,6 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geom: unknown
               id?: string
@@ -2169,13 +2180,16 @@ export type Database = {
             Returns: string
           }
         | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
             Args: {
               geog: unknown
               id?: string
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -2186,6 +2200,7 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -2376,16 +2391,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
         | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -2607,8 +2622,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geom: unknown }; Returns: number }
         | { Args: { geog: unknown }; Returns: number }
+        | { Args: { geom: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -2774,7 +2789,12 @@ export type Database = {
         | "flaked"
         | "received"
         | "vote"
-      resource_status: "voting" | "active" | "completed" | "cancelled"
+      resource_status:
+        | "voting"
+        | "scheduled"
+        | "completed"
+        | "cancelled"
+        | "active"
       resource_timeslot_status:
         | "active"
         | "completed"
@@ -2979,7 +2999,13 @@ export const Constants = {
         "received",
         "vote",
       ],
-      resource_status: ["voting", "active", "completed", "cancelled"],
+      resource_status: [
+        "voting",
+        "scheduled",
+        "completed",
+        "cancelled",
+        "active",
+      ],
       resource_timeslot_status: [
         "active",
         "completed",

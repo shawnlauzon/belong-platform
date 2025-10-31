@@ -1,6 +1,6 @@
 # Notifications
 
-Multi-channel notification system with push notification support, dual confirmation, and granular per-type preferences.
+Multi-channel notification system with push and email delivery, dual confirmation, and granular per-type preferences.
 
 ## Purpose
 
@@ -8,12 +8,13 @@ The notifications feature provides:
 
 - Real-time notifications for platform activities
 - Action-based architecture with granular event tracking
-- Multi-channel delivery: in-app, push notifications (email-ready)
+- Multi-channel delivery: in-app, push notifications, and email
 - User-configurable preferences per notification type per channel
 - Unread count tracking
 - Read/unread status management
 - Type-safe metadata for each notification type
 - Push notification support via Web Push API
+- Email notification support via Postmark API
 - Dual confirmation system for transactions
 
 ## Architecture
@@ -219,8 +220,8 @@ Both parties must independently confirm the transaction. Either party can initia
 Each notification type supports multiple delivery channels:
 
 1. **In-App** - Shown in notification center (default: ON)
-2. **Push** - Web Push API notifications (default: ON, requires `push_enabled=true`)
-3. **Email** - Email notifications (default: OFF, future implementation)
+2. **Push** - Web Push API notifications (default: ON, requires `notifications_enabled=true`)
+3. **Email** - Email via Postmark (default: ON except messages, requires `notifications_enabled=true`)
 
 **Channel Logic:**
 
@@ -229,15 +230,18 @@ Send in-app IF:
   notification_preferences->'type'->>'in_app' = 'true'
 
 Send push IF:
-  push_enabled = true
+  notifications_enabled = true
   AND notification_preferences->'type'->>'push' = 'true'
 
 Send email IF:
-  email_enabled = true
+  notifications_enabled = true
   AND notification_preferences->'type'->>'email' = 'true'
+  AND user has valid email address
 ```
 
-**Note**: Critical notification types like `event.cancelled` have preferences in the database but are not exposed in the UI, ensuring they remain enabled by default.
+**Note**:
+- Critical notification types like `event.cancelled` have preferences in the database but are not exposed in the UI, ensuring they remain enabled by default.
+- Direct messages (`message.received`) have email disabled by default to avoid notification overload.
 
 ### Metadata
 
@@ -494,3 +498,58 @@ Required for push notifications:
 - `VAPID_SUBJECT` - Contact URL or mailto: (e.g., `mailto:admin@example.com`)
 
 Generate keys with: `npx web-push generate-vapid-keys`
+
+## Email Notification Architecture
+
+### Components
+
+1. **Postmark API** - Transactional email service provider
+2. **Edge Function** - `send-email-notification` handles delivery via Postmark REST API
+3. **Database Trigger** - Calls Edge Function via `pg_net` when notification created
+4. **Postmark Templates** - Server-side email templates with variable substitution
+5. **Message Stream** - Dedicated transactional notification stream in Postmark
+
+### Flow
+
+1. Event occurs → Database trigger creates notification
+2. Trigger checks preferences → Calls Edge Function if email enabled
+3. Edge Function fetches user email from `profiles` table
+4. Edge Function fetches notification details (for entity IDs and actor info)
+5. Edge Function generates deep link URL and CTA text based on notification type
+6. Edge Function calls Postmark API with template ID and variables
+7. Postmark renders template and sends email
+8. Email includes CTA button and preference management link
+
+### Environment Variables
+
+Required for email notifications:
+
+- `POSTMARK_NOTIFICATION_SERVER_TOKEN` - Postmark Server API token (secret)
+- `POSTMARK_NOTIFICATION_FROM_EMAIL` - Verified sender email address
+- `POSTMARK_NOTIFICATION_TEMPLATE_ID` - Postmark template ID or alias
+- `POSTMARK_NOTIFICATION_MESSAGE_STREAM` - Message stream name (e.g., `notification-transaction-stream`)
+- `VITE_APP_URL` - Frontend base URL for deep links and preference URLs
+
+### Template Requirements
+
+Postmark template must accept these variables:
+
+- `actor_name` - Person or system who triggered the notification
+- `notification_title` - Email subject/headline
+- `notification_body` - Description or preview text
+- `cta_text` - Call-to-action button text
+- `cta_url` - Deep link to the relevant entity
+- `manage_preferences_url` - Link to `/settings/notifications` page
+
+Template must include prominent CTA button and preference management link in footer.
+
+### Deep Link Generation
+
+Email CTAs link to specific entities:
+
+- Resources/Events → `/resources/{id}`
+- Messages → `/messages/{conversation_id}`
+- Comments → `/resources/{id}#comment-{comment_id}`
+- Shoutouts → `/shoutouts/{id}`
+- Communities → `/communities/{id}`
+- Default → `/notifications`

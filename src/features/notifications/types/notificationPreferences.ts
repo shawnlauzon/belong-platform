@@ -68,7 +68,7 @@ export interface TypedNotificationPreferences {
  */
 export function parseChannelPreferences(json: unknown): ChannelPreferences {
   if (!json || typeof json !== "object") {
-    return { in_app: true, push: true, email: false };
+    return { in_app: true, push: true, email: true };
   }
 
   const obj = json as Record<string, unknown>;

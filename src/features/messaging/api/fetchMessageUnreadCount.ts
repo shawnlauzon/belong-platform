@@ -16,14 +16,15 @@ export async function fetchMessageUnreadCount(
     .select('read_at')
     .eq('conversation_id', conversationId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (participantError) {
     throw participantError;
   }
 
+  // If no participant row exists, user is not in this conversation - return 0
   if (!participantData) {
-    throw new Error('User is not a participant in this conversation');
+    return 0;
   }
 
   // If read_at is null, all messages are unread

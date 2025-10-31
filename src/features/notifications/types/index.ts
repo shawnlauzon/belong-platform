@@ -6,6 +6,7 @@ export type * from "./notificationCount";
 export type * from "./notificationPreferences";
 export type * from "./notificationMetadata";
 export type * from "./pushSubscription";
+export type * from "./claimDetails";
 
 // Re-export utility functions that are not types
 export { getTypedMetadata, hasMetadata } from "./notificationMetadata";
