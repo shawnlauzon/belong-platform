@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
 
     // Prepare Postmark template request
     const postmarkRequest: PostmarkTemplateRequest = {
-      From: `${actor_display_name} via Juntos <${postmarkFrom}>`,
+      From: `${actor_full_name} via Juntos <${postmarkFrom}>`,
       To: profile.email,
       TemplateId: 42024291,
       TemplateModel: {
