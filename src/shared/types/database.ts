@@ -71,6 +71,33 @@ export type Database = {
           },
         ]
       }
+      claim_status_transition_rules: {
+        Row: {
+          allowed_actor: string
+          description: string | null
+          from_status: Database["public"]["Enums"]["resource_claim_status"]
+          id: number
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          to_status: Database["public"]["Enums"]["resource_claim_status"]
+        }
+        Insert: {
+          allowed_actor: string
+          description?: string | null
+          from_status: Database["public"]["Enums"]["resource_claim_status"]
+          id?: number
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          to_status: Database["public"]["Enums"]["resource_claim_status"]
+        }
+        Update: {
+          allowed_actor?: string
+          description?: string | null
+          from_status?: Database["public"]["Enums"]["resource_claim_status"]
+          id?: number
+          resource_type?: Database["public"]["Enums"]["resource_type"]
+          to_status?: Database["public"]["Enums"]["resource_claim_status"]
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           author_id: string
