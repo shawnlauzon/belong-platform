@@ -37,7 +37,7 @@
  * NOTE: Tests are skipped when TEST_EMAIL_PREVIEW is not set to avoid accidental email sends in CI
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -46,7 +46,6 @@ import {
   createTestResource,
   createTestResourceTimeslot,
   createTestShoutout,
-  createTestConnection,
   signInAsUser,
 } from '../helpers/test-data';
 import { createComment } from '@/features/comments';
@@ -57,8 +56,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
 import type { Community } from '@/features/communities';
-import type { Resource } from '@/features/resources';
-import { faker } from '@faker-js/faker';
 
 // Skip all tests in this suite unless TEST_EMAIL_PREVIEW is explicitly set
 const describeIf = process.env.TEST_EMAIL_PREVIEW === 'true' ? describe : describe.skip;
@@ -201,7 +198,7 @@ describeIf('Email Preview - Manual Verification', () => {
         await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I would love to use this resource!',
+          requestText: 'I would love to use this resource!',
         });
 
         console.log('✉️  Email sent for claim.created (standard case)');
@@ -217,7 +214,7 @@ describeIf('Email Preview - Manual Verification', () => {
         await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I am very interested in this resource because it would really help me with my project. I have been looking for something like this for a long time and I think it would be perfect for what I need. Please let me know if it is still available.',
+          requestText: 'I am very interested in this resource because it would really help me with my project. I have been looking for something like this for a long time and I think it would be perfect for what I need. Please let me know if it is still available.',
         });
 
         console.log('✉️  Email sent for claim.created (long message)');
@@ -236,7 +233,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'Actually I need to cancel this',
+          requestText: 'Actually I need to cancel this',
         });
 
         await updateResourceClaim(supabase, { id: claim.id, status: 'cancelled' });
@@ -256,7 +253,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I would like this resource',
+          requestText: 'I would like this resource',
         });
 
         await signInAsUser(supabase, resourceOwner);
@@ -275,7 +272,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'Can I claim this?',
+          requestText: 'Can I claim this?',
         });
 
         await signInAsUser(supabase, resourceOwner);
@@ -298,7 +295,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I would like this',
+          requestText: 'I would like this',
         });
 
         await signInAsUser(supabase, resourceOwner);
@@ -318,7 +315,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I can help with this',
+          requestText: 'I can help with this',
         });
 
         // Claimant (giver in favor) marks as given
@@ -339,7 +336,7 @@ describeIf('Email Preview - Manual Verification', () => {
         const claim = await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I need this',
+          requestText: 'I need this',
         });
 
         // Claimant marks as received
@@ -442,7 +439,7 @@ describeIf('Email Preview - Manual Verification', () => {
         await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I want this',
+          requestText: 'I want this',
         });
 
         await signInAsUser(supabase, resourceOwner);
@@ -468,7 +465,7 @@ describeIf('Email Preview - Manual Verification', () => {
         await createResourceClaim(supabase, {
           resourceId: event.id,
           timeslotId: timeslot.id,
-          notes: 'I will attend',
+          requestText: 'I will attend',
         });
 
         await signInAsUser(supabase, resourceOwner);
@@ -494,14 +491,14 @@ describeIf('Email Preview - Manual Verification', () => {
         await createResourceClaim(supabase, {
           resourceId: event.id,
           timeslotId: timeslot.id,
-          notes: 'Count me in!',
+          requestText: 'Count me in!',
         });
 
         await signInAsUser(supabase, resourceOwner);
         await supabase
           .from('resources')
           .update({
-            status: 'inactive',
+            status: 'cancelled',
           })
           .eq('id', event.id);
 
@@ -692,7 +689,7 @@ describeIf('Email Preview - Manual Verification', () => {
         // Manually update trust score to trigger level change
         const { data: currentScore } = await supabase
           .from('trust_scores')
-          .select('total_score')
+          .select('score')
           .eq('user_id', resourceOwner.id)
           .eq('community_id', testCommunity.id)
           .single();
@@ -702,7 +699,7 @@ describeIf('Email Preview - Manual Verification', () => {
           await supabase
             .from('trust_scores')
             .update({
-              total_score: currentScore.total_score + 150,
+              score: currentScore.score + 150,
             })
             .eq('user_id', resourceOwner.id)
             .eq('community_id', testCommunity.id);
