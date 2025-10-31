@@ -22,7 +22,6 @@ import { messagesChannelForConversation } from '@/features/messaging/utils';
 import { faker } from '@faker-js/faker';
 
 describe('Messaging Real-time Reliability Tests', () => {
-  let supabase: SupabaseClient<Database>;
   let userAClient: SupabaseClient<Database>;
   let userBClient: SupabaseClient<Database>;
   let userCClient: SupabaseClient<Database>;
@@ -37,7 +36,6 @@ describe('Messaging Real-time Reliability Tests', () => {
   let receivedMessagesUserB: RealtimeBroadcastMessage[] = [];
 
   beforeAll(async () => {
-    supabase = createTestClient();
     userAClient = createTestClient();
     userBClient = createTestClient();
     userCClient = createTestClient();
@@ -220,7 +218,7 @@ describe('Messaging Real-time Reliability Tests', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Query database for these messages
-      const { data: dbMessages, error } = await supabase
+      const { data: dbMessages, error } = await userAClient
         .from('messages')
         .select('id, content')
         .eq('conversation_id', conversation.id)
@@ -578,7 +576,7 @@ describe('Messaging Real-time Reliability Tests', () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Query database
-      const { data: dbMessages } = await supabase
+      const { data: dbMessages } = await userAClient
         .from('messages')
         .select('id, content, sender_id')
         .eq('conversation_id', conversation.id)
@@ -617,7 +615,7 @@ describe('Messaging Real-time Reliability Tests', () => {
       expect(rtPayload.content).toBe(specialContent);
 
       // Check database
-      const { data: dbMessage } = await supabase
+      const { data: dbMessage } = await userAClient
         .from('messages')
         .select('content')
         .eq('id', msg.id)
@@ -642,7 +640,7 @@ describe('Messaging Real-time Reliability Tests', () => {
       );
 
       // Verify no messages exist
-      const { data: existingMessages } = await supabase
+      const { data: existingMessages } = await userAClient
         .from('messages')
         .select('id')
         .eq('conversation_id', freshConversation.id);
