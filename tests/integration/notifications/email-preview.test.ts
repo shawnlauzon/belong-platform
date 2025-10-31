@@ -52,7 +52,10 @@ import {
 import { createComment } from '@/features/comments';
 import { joinCommunity } from '@/features/communities/api';
 import { startConversation, sendMessage } from '@/features/messaging/api';
-import { createResourceClaim, updateResourceClaim } from '@/features/resources/api';
+import {
+  createResourceClaim,
+  updateResourceClaim,
+} from '@/features/resources/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import type { Account } from '@/features/auth/types';
@@ -61,7 +64,8 @@ import type { Resource } from '@/features/resources';
 import { faker } from '@faker-js/faker';
 
 // Skip all tests in this suite unless TEST_EMAIL_PREVIEW is explicitly set
-const describeIf = process.env.TEST_EMAIL_PREVIEW === 'true' ? describe : describe.skip;
+const describeIf =
+  process.env.TEST_EMAIL_PREVIEW === 'true' ? describe : describe.skip;
 
 describeIf('Email Preview - Manual Verification', () => {
   let supabase: SupabaseClient<Database>;
@@ -81,7 +85,7 @@ describeIf('Email Preview - Manual Verification', () => {
   });
 
   afterAll(async () => {
-    await cleanupAllTestData();
+    // await cleanupAllTestData();
   });
 
   beforeEach(async () => {
@@ -91,12 +95,20 @@ describeIf('Email Preview - Manual Verification', () => {
 
   /**
    * Helper: Enable email notifications for a specific type
+   * Note: Must be called while signed in as the user whose preferences are being updated
    */
   async function enableEmailForType(
     userId: string,
     notificationType: string,
   ): Promise<void> {
-    await supabase
+    // Get current user to restore later
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+    // Sign in as the target user (required for RLS)
+    const userAccount = userId === resourceOwner.id ? resourceOwner : otherUser;
+    await signInAsUser(supabase, userAccount);
+
+    const { error } = await supabase
       .from('notification_preferences')
       .update({
         notifications_enabled: true,
@@ -107,6 +119,31 @@ describeIf('Email Preview - Manual Verification', () => {
         },
       })
       .eq('user_id', userId);
+
+    if (error) {
+      throw new Error(
+        `Failed to enable email for ${notificationType}: ${error.message}`,
+      );
+    }
+
+    // Verify the update succeeded
+    const { data, error: verifyError } = await supabase
+      .from('notification_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (verifyError || !data) {
+      throw new Error(
+        `No notification preferences found for user ${userId}. Preferences should be created automatically when user is created.`,
+      );
+    }
+
+    // Restore original user if needed
+    if (currentUser && currentUser.id !== userId) {
+      const originalAccount = currentUser.id === resourceOwner.id ? resourceOwner : otherUser;
+      await signInAsUser(supabase, originalAccount);
+    }
   }
 
   describe('Comments', () => {
@@ -114,7 +151,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when someone comments on your resource (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_commented');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         await signInAsUser(supabase, otherUser);
         await createComment(supabase, otherUser.id, {
@@ -129,13 +170,18 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email with long resource title', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_commented');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         // Update to have very long title
         await supabase
           .from('resources')
           .update({
-            title: 'This is an extremely long resource title that might wrap or get truncated in the email template and we want to see how it renders',
+            title:
+              'This is an extremely long resource title that might wrap or get truncated in the email template and we want to see how it renders',
           })
           .eq('id', resource.id);
 
@@ -151,15 +197,22 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email with special characters in content', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_commented');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         await signInAsUser(supabase, otherUser);
         await createComment(supabase, otherUser.id, {
-          content: 'Great resource! 🎉 Can\'t wait to use it. Price: $10-$20 @ 50% off',
+          content:
+            "Great resource! 🎉 Can't wait to use it. Price: $10-$20 @ 50% off",
           resourceId: resource.id,
         });
 
-        console.log('✉️  Email sent for resource.commented (special characters)');
+        console.log(
+          '✉️  Email sent for resource.commented (special characters)',
+        );
       });
     });
 
@@ -167,7 +220,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when someone replies to your comment (standard)', async () => {
         await enableEmailForType(otherUser.id, 'comment_replied');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         // otherUser makes original comment
         await signInAsUser(supabase, otherUser);
@@ -194,8 +251,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when someone claims your resource (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'claim_created');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         await createResourceClaim(supabase, {
@@ -210,14 +274,22 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email with long claim message', async () => {
         await enableEmailForType(resourceOwner.id, 'claim_created');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         await createResourceClaim(supabase, {
           resourceId: resource.id,
           timeslotId: timeslot.id,
-          notes: 'I am very interested in this resource because it would really help me with my project. I have been looking for something like this for a long time and I think it would be perfect for what I need. Please let me know if it is still available.',
+          notes:
+            'I am very interested in this resource because it would really help me with my project. I have been looking for something like this for a long time and I think it would be perfect for what I need. Please let me know if it is still available.',
         });
 
         console.log('✉️  Email sent for claim.created (long message)');
@@ -228,8 +300,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when someone cancels their claim (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'claim_cancelled');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         // Create and cancel claim
         await signInAsUser(supabase, otherUser);
@@ -239,7 +318,10 @@ describeIf('Email Preview - Manual Verification', () => {
           notes: 'Actually I need to cancel this',
         });
 
-        await updateResourceClaim(supabase, { id: claim.id, status: 'cancelled' });
+        await updateResourceClaim(supabase, {
+          id: claim.id,
+          status: 'cancelled',
+        });
 
         console.log('✉️  Email sent for claim.cancelled (standard case)');
       });
@@ -249,8 +331,17 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when owner approves your claim (standard)', async () => {
         await enableEmailForType(otherUser.id, 'claim_responded');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true); // requiresApproval=true
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+          undefined,
+          true,
+        ); // requiresApproval=true
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         const claim = await createResourceClaim(supabase, {
@@ -260,7 +351,10 @@ describeIf('Email Preview - Manual Verification', () => {
         });
 
         await signInAsUser(supabase, resourceOwner);
-        await updateResourceClaim(supabase, { id: claim.id, status: 'approved' });
+        await updateResourceClaim(supabase, {
+          id: claim.id,
+          status: 'approved',
+        });
 
         console.log('✉️  Email sent for claim.responded (approved)');
       });
@@ -268,8 +362,17 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when owner rejects your claim (standard)', async () => {
         await enableEmailForType(otherUser.id, 'claim_responded');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer', undefined, true); // requiresApproval=true
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+          undefined,
+          true,
+        ); // requiresApproval=true
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         const claim = await createResourceClaim(supabase, {
@@ -279,7 +382,10 @@ describeIf('Email Preview - Manual Verification', () => {
         });
 
         await signInAsUser(supabase, resourceOwner);
-        await updateResourceClaim(supabase, { id: claim.id, status: 'rejected' });
+        await updateResourceClaim(supabase, {
+          id: claim.id,
+          status: 'rejected',
+        });
 
         console.log('✉️  Email sent for claim.responded (rejected)');
       });
@@ -291,8 +397,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when other party marks as given (offer - claimant confirms)', async () => {
         await enableEmailForType(otherUser.id, 'resource_given');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         const claim = await createResourceClaim(supabase, {
@@ -311,8 +424,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when other party marks as given (favor - owner confirms)', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_given');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'request');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'request',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         const claim = await createResourceClaim(supabase, {
@@ -332,8 +452,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when other party marks as received (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_received');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         const claim = await createResourceClaim(supabase, {
@@ -343,7 +470,10 @@ describeIf('Email Preview - Manual Verification', () => {
         });
 
         // Claimant marks as received
-        await updateResourceClaim(supabase, { id: claim.id, status: 'received' });
+        await updateResourceClaim(supabase, {
+          id: claim.id,
+          status: 'received',
+        });
 
         console.log('✉️  Email sent for resource.received (standard case)');
       });
@@ -378,37 +508,125 @@ describeIf('Email Preview - Manual Verification', () => {
         await signInAsUser(supabase, resourceOwner);
         await createTestResource(supabase, longNameCommunity.id, 'offer');
 
-        console.log('✉️  Email sent for resource.created (long community name)');
+        console.log(
+          '✉️  Email sent for resource.created (long community name)',
+        );
       });
     });
 
     describe('event.created', () => {
       it('sends email when new event created in community (standard)', async () => {
+        console.log('🔍 Starting email test for event.created');
+
+        // Enable email for otherUser (will throw if preferences don't exist)
+        console.log('🔍 Enabling email for user:', otherUser.id);
         await enableEmailForType(otherUser.id, 'event_created');
+        console.log('✅ Email preferences enabled successfully');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
-        await createTestResourceTimeslot(supabase, event.id);
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
+        console.log('🔍 Created event:', event.id);
 
-        console.log('✉️  Email sent for event.created (standard case)');
+        const timeslot = await createTestResourceTimeslot(supabase, event.id);
+        console.log('🔍 Created timeslot:', timeslot.id);
+
+        // Wait a bit for async notification processing
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Check if notification was created
+        const { data: notifications, error: notifError } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', otherUser.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (notifError) {
+          console.error('❌ Failed to query notifications:', notifError);
+          throw notifError;
+        }
+
+        console.log(
+          `📬 Found ${notifications?.length || 0} notification(s) for user`,
+        );
+        if (notifications && notifications.length > 0) {
+          console.log(
+            '🔍 Most recent notification:',
+            JSON.stringify(notifications[0], null, 2),
+          );
+        } else {
+          console.warn(
+            '⚠️  No notifications found - notification may not have been created',
+          );
+        }
+
+        // Check pg_net responses (Edge Function calls)
+        const { data: httpResponses, error: httpError } = await supabase.rpc(
+          'exec_sql',
+          {
+            sql_query: `SELECT id, status_code, content::text, error_msg, created
+                        FROM net._http_response
+                        ORDER BY created DESC
+                        LIMIT 5;`,
+          },
+        );
+
+        if (httpError) {
+          console.log(
+            '🔍 Could not query pg_net responses (trying direct query)',
+          );
+          // Try direct query as fallback
+          const { data: directData, error: directError } = await supabase
+            .schema('net')
+            .from('_http_response')
+            .select('*')
+            .order('created', { ascending: false })
+            .limit(5);
+
+          if (!directError && directData) {
+            console.log(
+              '📡 Recent HTTP responses:',
+              JSON.stringify(directData, null, 2),
+            );
+          } else {
+            console.log(
+              '⚠️  Cannot access pg_net responses - check logs manually',
+            );
+          }
+        } else {
+          console.log(
+            '📡 Recent HTTP responses:',
+            JSON.stringify(httpResponses, null, 2),
+          );
+        }
+
+        console.log('✉️  Test completed - check Postmark for email');
       });
 
       it('sends email with future event timestamp', async () => {
         await enableEmailForType(otherUser.id, 'event_created');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
 
         // Create timeslot in future
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + 7);
 
-        await supabase
-          .from('resource_timeslots')
-          .insert({
-            resource_id: event.id,
-            start_time: futureDate.toISOString(),
-            end_time: new Date(futureDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-            status: 'active',
-          });
+        await supabase.from('resource_timeslots').insert({
+          resource_id: event.id,
+          start_time: futureDate.toISOString(),
+          end_time: new Date(
+            futureDate.getTime() + 2 * 60 * 60 * 1000,
+          ).toISOString(),
+          status: 'active',
+        });
 
         console.log('✉️  Email sent for event.created (future timestamp)');
       });
@@ -416,12 +634,17 @@ describeIf('Email Preview - Manual Verification', () => {
       it('sends email with long event title', async () => {
         await enableEmailForType(otherUser.id, 'event_created');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
 
         await supabase
           .from('resources')
           .update({
-            title: 'Community Garden Spring Planting Day and Potluck Celebration with Live Music and Kids Activities',
+            title:
+              'Community Garden Spring Planting Day and Potluck Celebration with Live Music and Kids Activities',
           })
           .eq('id', event.id);
 
@@ -435,8 +658,15 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when claimed resource is updated (standard)', async () => {
         await enableEmailForType(otherUser.id, 'resource_updated');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-        const timeslot = await createTestResourceTimeslot(supabase, resource.id);
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
+        const timeslot = await createTestResourceTimeslot(
+          supabase,
+          resource.id,
+        );
 
         await signInAsUser(supabase, otherUser);
         await createResourceClaim(supabase, {
@@ -461,7 +691,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when claimed event is updated (standard)', async () => {
         await enableEmailForType(otherUser.id, 'event_updated');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
         const timeslot = await createTestResourceTimeslot(supabase, event.id);
 
         await signInAsUser(supabase, otherUser);
@@ -487,7 +721,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when claimed event is cancelled (standard)', async () => {
         await enableEmailForType(otherUser.id, 'event_cancelled');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
         const timeslot = await createTestResourceTimeslot(supabase, event.id);
 
         await signInAsUser(supabase, otherUser);
@@ -513,7 +751,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when your resource is expiring soon (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'resource_expiring');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         // Manually trigger expiring notification by setting last_renewed_at to old date
         const oldDate = new Date();
@@ -536,20 +778,24 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when your event is starting soon (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'event_starting');
 
-        const event = await createTestResource(supabase, testCommunity.id, 'event');
+        const event = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'event',
+        );
 
         // Create timeslot starting in 1 hour
         const soonDate = new Date();
         soonDate.setHours(soonDate.getHours() + 1);
 
-        await supabase
-          .from('resource_timeslots')
-          .insert({
-            resource_id: event.id,
-            start_time: soonDate.toISOString(),
-            end_time: new Date(soonDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-            status: 'active',
-          });
+        await supabase.from('resource_timeslots').insert({
+          resource_id: event.id,
+          start_time: soonDate.toISOString(),
+          end_time: new Date(
+            soonDate.getTime() + 2 * 60 * 60 * 1000,
+          ).toISOString(),
+          status: 'active',
+        });
 
         // Note: This notification is typically triggered by a scheduled job
         console.log('✉️  Email sent for event.starting (standard case)');
@@ -598,7 +844,8 @@ describeIf('Email Preview - Manual Verification', () => {
 
         await sendMessage(supabase, user.id, {
           conversationId: conversation.id,
-          content: 'I wanted to reach out because I saw your post and I think it would be really helpful for my situation. I have been looking for something like this for quite some time now and I believe this could be exactly what I need. Would you be available to discuss this further? I am flexible with timing and can work around your schedule.',
+          content:
+            'I wanted to reach out because I saw your post and I think it would be really helpful for my situation. I have been looking for something like this for quite some time now and I believe this could be exactly what I need. Would you be available to discuss this further? I am flexible with timing and can work around your schedule.',
         });
 
         console.log('✉️  Email sent for message.received (long message)');
@@ -616,7 +863,9 @@ describeIf('Email Preview - Manual Verification', () => {
           otherUserId: resourceOwner.id,
         });
 
-        console.log('✉️  Email sent for conversation.requested (standard case)');
+        console.log(
+          '✉️  Email sent for conversation.requested (standard case)',
+        );
       });
     });
 
@@ -624,7 +873,11 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email when you receive a shoutout (standard)', async () => {
         await enableEmailForType(resourceOwner.id, 'shoutout_received');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         await signInAsUser(supabase, otherUser);
         await createTestShoutout(supabase, {
@@ -640,14 +893,19 @@ describeIf('Email Preview - Manual Verification', () => {
       it.skip('sends email with long shoutout message', async () => {
         await enableEmailForType(resourceOwner.id, 'shoutout_received');
 
-        const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+        const resource = await createTestResource(
+          supabase,
+          testCommunity.id,
+          'offer',
+        );
 
         await signInAsUser(supabase, otherUser);
         await createTestShoutout(supabase, {
           receiverId: resourceOwner.id,
           communityId: testCommunity.id,
           resourceId: resource.id,
-          message: 'I just wanted to take a moment to express my sincere gratitude for sharing this wonderful resource with our community. It has been incredibly helpful and has made a real difference in my life. Thank you so much for your generosity and kindness!',
+          message:
+            'I just wanted to take a moment to express my sincere gratitude for sharing this wonderful resource with our community. It has been incredibly helpful and has made a real difference in my life. Thank you so much for your generosity and kindness!',
         });
 
         console.log('✉️  Email sent for shoutout.received (long message)');

@@ -10,7 +10,7 @@ const corsHeaders = {
 interface PushNotificationRequest {
   user_id: string;
   notification_id: string;
-  type: string;
+  action: string;
   title: string;
   body: string;
   metadata?: Record<string, unknown>;
@@ -45,19 +45,22 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const request: PushNotificationRequest = await req.json();
-    const { user_id, notification_id, type, title, body, metadata } = request;
+    const { user_id, notification_id, action, title, body, metadata } = request;
+
+    // Convert action (e.g., 'event.created') to column name (e.g., 'event_created')
+    const notificationType = action.replace(/\./g, '_');
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Checking preferences for user ${user_id} and type ${type}`);
+    console.log(`Checking preferences for user ${user_id} and action ${action} (column: ${notificationType})`);
 
-    // Check if user has notifications enabled and type is enabled
+    // Check if user has notifications enabled and action type is enabled
     const { data: preferences } = await supabase
       .from('notification_preferences')
-      .select('notifications_enabled, ' + `"${type}"`)
+      .select('notifications_enabled, ' + notificationType)
       .eq('user_id', user_id)
       .single();
 
@@ -77,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('Notifications enabled:', preferences.notifications_enabled);
-    console.log(`${type} enabled:`, JSON.stringify(preferences[type]));
+    console.log(`${action} (${notificationType}) enabled:`, JSON.stringify(preferences[notificationType]));
 
     // Check global notifications enabled
     if (!preferences.notifications_enabled) {
@@ -95,16 +98,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check type-specific preference (unless it's event.cancelled which always sends)
-    if (type !== 'event.cancelled') {
-      const typePref = preferences[type] as { push?: boolean } | undefined;
+    // Check action-specific preference (unless it's event.cancelled which always sends)
+    if (action !== 'event.cancelled') {
+      const typePref = preferences[notificationType] as { push?: boolean } | undefined;
       if (!typePref || typePref.push !== true) {
         return new Response(
           JSON.stringify({
             sent: 0,
             failed: 0,
             removed: 0,
-            reason: 'Push disabled for this type',
+            reason: 'Push disabled for this action type',
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -145,7 +148,7 @@ Deno.serve(async (req) => {
       body,
       data: {
         notification_id,
-        type,
+        action,
         metadata: metadata || {},
       },
     });
