@@ -19,6 +19,7 @@
     "test:integration": "vitest run --config tests/integration/vitest.config.ts",
     "test:integration:watch": "vitest --config tests/integration/vitest.config.ts --watch",
     "test:integration:cleanup": "node tests/integration/scripts/cleanup-database.js",
+    "test:email-preview": "TEST_EMAIL_PREVIEW=true vitest run --config tests/integration/vitest.config.ts email-preview",
     "test:complete": "pnpm test && pnpm test:integration",
     "typecheck": "tsc -p tsconfig.app.json",
     "typecheck:tests": "tsc -p tsconfig.tests.json",
