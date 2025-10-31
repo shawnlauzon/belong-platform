@@ -80,7 +80,6 @@ export function toDomainNotification(
 
     // Community information (denormalized from communities table)
     communityName: row.community_name || undefined,
-    communityAvatar: row.community_avatar_url || undefined,
 
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,

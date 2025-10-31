@@ -1,14 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// Web Push library for sending push notifications
-// Using the npm: specifier for Deno's node compatibility layer
-import webpush from "npm:web-push@3.6.6";
+import { createClient } from 'supabase';
+import webpush from 'web-push';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
 };
 
 interface PushNotificationRequest {
@@ -28,20 +24,20 @@ interface PushSubscription {
   auth_key: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     // Get environment variables
-    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
-    const vapidSubject = Deno.env.get("VAPID_SUBJECT");
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT');
 
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      throw new Error("VAPID keys not configured");
+      throw new Error('VAPID keys not configured');
     }
 
     // Configure web-push
@@ -52,15 +48,17 @@ serve(async (req) => {
     const { user_id, notification_id, type, title, body, metadata } = request;
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log(`Checking preferences for user ${user_id} and type ${type}`);
 
     // Check if user has notifications enabled and type is enabled
     const { data: preferences } = await supabase
-      .from("notification_preferences")
-      .select("notifications_enabled, " + `"${type}"`)
-      .eq("user_id", user_id)
+      .from('notification_preferences')
+      .select('notifications_enabled, ' + `"${type}"`)
+      .eq('user_id', user_id)
       .single();
 
     if (!preferences) {
@@ -69,14 +67,17 @@ serve(async (req) => {
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: "No preferences found",
+          reason: 'No preferences found',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
+
+    console.log('Notifications enabled:', preferences.notifications_enabled);
+    console.log(`${type} enabled:`, JSON.stringify(preferences[type]));
 
     // Check global notifications enabled
     if (!preferences.notifications_enabled) {
@@ -85,17 +86,17 @@ serve(async (req) => {
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: "Notifications disabled globally",
+          reason: 'Notifications disabled globally',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
 
     // Check type-specific preference (unless it's event.cancelled which always sends)
-    if (type !== "event.cancelled") {
+    if (type !== 'event.cancelled') {
       const typePref = preferences[type] as { push?: boolean } | undefined;
       if (!typePref || typePref.push !== true) {
         return new Response(
@@ -103,21 +104,21 @@ serve(async (req) => {
             sent: 0,
             failed: 0,
             removed: 0,
-            reason: "Push disabled for this type",
+            reason: 'Push disabled for this type',
           }),
           {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
-          }
+          },
         );
       }
     }
 
     // Get user's push subscriptions
     const { data: subscriptions, error: subsError } = await supabase
-      .from("push_subscriptions")
-      .select("*")
-      .eq("user_id", user_id);
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', user_id);
 
     if (subsError) {
       throw subsError;
@@ -129,12 +130,12 @@ serve(async (req) => {
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: "No subscriptions found",
+          reason: 'No subscriptions found',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
 
@@ -168,14 +169,14 @@ serve(async (req) => {
         sent++;
       } catch (error: unknown) {
         // Check if subscription is expired (410 Gone)
-        if (error && typeof error === "object" && "statusCode" in error) {
+        if (error && typeof error === 'object' && 'statusCode' in error) {
           const statusCode = (error as { statusCode: number }).statusCode;
           if (statusCode === 410) {
             // Remove expired subscription
             await supabase
-              .from("push_subscriptions")
+              .from('push_subscriptions')
               .delete()
-              .eq("id", subscription.id);
+              .eq('id', subscription.id);
             removed++;
           } else {
             failed++;
@@ -186,7 +187,7 @@ serve(async (req) => {
 
         console.error(
           `Failed to send push to subscription ${subscription.id}:`,
-          error
+          error,
         );
       }
     }
@@ -198,20 +199,20 @@ serve(async (req) => {
         removed,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      }
+      },
     );
   } catch (error) {
-    console.error("Error in send-push-notification:", error);
+    console.error('Error in send-push-notification:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-      }
+      },
     );
   }
 });

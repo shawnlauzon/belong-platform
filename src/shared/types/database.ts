@@ -1378,7 +1378,6 @@ export type Database = {
           claim_id: string | null
           comment_content: string | null
           comment_id: string | null
-          community_avatar_url: string | null
           community_id: string | null
           community_name: string | null
           conversation_id: string | null
@@ -1387,6 +1386,7 @@ export type Database = {
           metadata: Json | null
           read_at: string | null
           resource_id: string | null
+          resource_image_url: string | null
           resource_title: string | null
           resource_type: Database["public"]["Enums"]["resource_type"] | null
           shoutout_id: string | null
@@ -2169,6 +2169,10 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
             Args: {
               geom: unknown
               id?: string
@@ -2177,10 +2181,6 @@ export type Database = {
               options?: number
               version: number
             }
-            Returns: string
-          }
-        | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
             Returns: string
           }
         | {
@@ -2391,11 +2391,11 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
@@ -2598,8 +2598,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geom: unknown; srid: number }; Returns: unknown }
         | { Args: { geog: unknown; srid: number }; Returns: unknown }
+        | { Args: { geom: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown

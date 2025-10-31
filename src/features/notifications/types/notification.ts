@@ -3,7 +3,7 @@ import type {
   MembershipMetadata,
   TrustLevelMetadata,
   ResourceUpdatedMetadata,
-  ResourceTitleMetadata,
+  EventMetadata,
 } from "./notificationMetadata";
 import { ACTION_TYPES, type ActionType } from "../constants";
 
@@ -13,7 +13,7 @@ export type NotificationMetadata =
   | MembershipMetadata
   | TrustLevelMetadata
   | ResourceUpdatedMetadata
-  | ResourceTitleMetadata
+  | EventMetadata
   | Record<string, never>;
 
 export interface Notification {
