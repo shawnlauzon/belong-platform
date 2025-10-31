@@ -17,7 +17,7 @@ const notificationTemplates = {
 interface EmailNotificationRequest {
   user_id: string;
   notification_id: string;
-  type: string;
+  action: string;
   title: string;
   body: string;
   metadata?: Record<string, unknown>;
@@ -69,19 +69,22 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const request: EmailNotificationRequest = await req.json();
-    const { user_id, notification_id, type } = request;
+    const { user_id, notification_id, action } = request;
+
+    // Convert action (e.g., 'event.created') to column name (e.g., 'event_created')
+    const notificationType = action.replace(/\./g, '_');
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Checking preferences for user ${user_id} and type ${type}`);
+    console.log(`Checking preferences for user ${user_id} and action ${action} (column: ${notificationType})`);
 
-    // Check if user has notifications enabled and type is enabled
+    // Check if user has notifications enabled and action type is enabled
     const { data: preferences } = await supabase
       .from('notification_preferences')
-      .select('notifications_enabled, ' + `"${type}"`)
+      .select('notifications_enabled, ' + notificationType)
       .eq('user_id', user_id)
       .single();
 
@@ -99,7 +102,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('Notifications enabled:', preferences.notifications_enabled);
-    console.log(`${type} enabled:`, JSON.stringify(preferences[type]));
+    console.log(`${action} (${notificationType}) enabled:`, JSON.stringify(preferences[notificationType]));
 
     // Check global notifications enabled
     if (!preferences.notifications_enabled) {
@@ -115,12 +118,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const typePref = preferences[type] as { email?: boolean } | undefined;
+    const typePref = preferences[notificationType] as { email?: boolean } | undefined;
     if (!typePref || typePref.email !== true) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: 'Email disabled for this type',
+          reason: 'Email disabled for this action type',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
