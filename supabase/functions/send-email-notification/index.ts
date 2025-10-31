@@ -1,10 +1,17 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'supabase';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+};
+
+const notificationTemplates = {
+  'event.created': {
+    templateId: 42024291,
+    subject: 'New Event Created',
+    body: 'A new event has been created by {actor_name}. Would you like to attend?',
+  },
 };
 
 interface EmailNotificationRequest {
@@ -25,212 +32,248 @@ interface PostmarkTemplateRequest {
     notification_title: string;
     notification_body: string;
     notification_timestamp: string;
+    sent_to: string;
     cta_text: string;
     cta_url: string;
     manage_preferences_url: string;
   };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     // Get environment variables
-    const postmarkToken = Deno.env.get("POSTMARK_NOTIFICATION_SERVER_TOKEN");
-    const postmarkFrom = Deno.env.get("POSTMARK_NOTIFICATION_FROM_EMAIL");
-    const postmarkTemplateId = Deno.env.get("POSTMARK_NOTIFICATION_TEMPLATE_ID");
-    const postmarkMessageStream = Deno.env.get("POSTMARK_NOTIFICATION_MESSAGE_STREAM");
-    const appUrl = Deno.env.get("VITE_APP_URL");
+    const postmarkToken = Deno.env.get('POSTMARK_NOTIFICATION_SERVER_TOKEN');
+    const postmarkFrom = Deno.env.get('POSTMARK_NOTIFICATION_FROM_EMAIL');
+    const postmarkTemplateId = Deno.env.get(
+      'POSTMARK_NOTIFICATION_TEMPLATE_ID',
+    );
+    const postmarkMessageStream = Deno.env.get(
+      'POSTMARK_NOTIFICATION_MESSAGE_STREAM',
+    );
+    const appUrl = Deno.env.get('VITE_APP_URL');
 
-    if (!postmarkToken || !postmarkFrom || !postmarkTemplateId || !postmarkMessageStream || !appUrl) {
-      throw new Error("Postmark configuration incomplete");
+    if (
+      !postmarkToken ||
+      !postmarkFrom ||
+      !postmarkTemplateId ||
+      !postmarkMessageStream ||
+      !appUrl
+    ) {
+      throw new Error('Postmark configuration incomplete');
     }
 
     // Parse request body
     const request: EmailNotificationRequest = await req.json();
-    const { user_id, notification_id, type, title, body, metadata } = request;
+    const { user_id, notification_id, type } = request;
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log(`Checking preferences for user ${user_id} and type ${type}`);
 
     // Check if user has notifications enabled and type is enabled
     const { data: preferences } = await supabase
-      .from("notification_preferences")
-      .select("notifications_enabled, " + `"${type}"`)
-      .eq("user_id", user_id)
+      .from('notification_preferences')
+      .select('notifications_enabled, ' + `"${type}"`)
+      .eq('user_id', user_id)
       .single();
 
     if (!preferences) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: "No preferences found",
+          reason: 'No preferences found',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
+
+    console.log('Notifications enabled:', preferences.notifications_enabled);
+    console.log(`${type} enabled:`, JSON.stringify(preferences[type]));
 
     // Check global notifications enabled
     if (!preferences.notifications_enabled) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: "Notifications disabled globally",
+          reason: 'Notifications disabled globally',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
 
-    // Check type-specific preference (unless it's event.cancelled which always sends)
-    if (type !== "event.cancelled") {
-      const typePref = preferences[type] as { email?: boolean } | undefined;
-      if (!typePref || typePref.email !== true) {
-        return new Response(
-          JSON.stringify({
-            sent: 0,
-            reason: "Email disabled for this type",
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          }
-        );
-      }
+    const typePref = preferences[type] as { email?: boolean } | undefined;
+    if (!typePref || typePref.email !== true) {
+      return new Response(
+        JSON.stringify({
+          sent: 0,
+          reason: 'Email disabled for this type',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      );
     }
 
     // Get user's email from profile
     const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", user_id)
+      .from('profiles')
+      .select('email')
+      .eq('id', user_id)
       .single();
 
     if (profileError || !profile?.email) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: "No email address found",
+          reason: 'No email address found',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
 
     // Fetch notification details to get all entity IDs
     const { data: notification } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("id", notification_id)
+      .from('notification_details')
+      .select('*')
+      .eq('id', notification_id)
       .single();
+
+    console.log(
+      `Found notification ${notification_id}:`,
+      JSON.stringify(notification),
+    );
 
     if (!notification) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: "Notification not found",
+          reason: 'Notification not found',
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
 
-    // Get actor name for the email body
-    let actorName = "Juntos";
-    if (notification.actor_id) {
-      const { data: actor } = await supabase
-        .from("public_profiles")
-        .select("display_name")
-        .eq("id", notification.actor_id)
-        .single();
-
-      if (actor?.display_name) {
-        actorName = actor.display_name;
-      }
-    }
+    const {
+      action,
+      resource_id,
+      resource_title,
+      resource_type,
+      community_name,
+      shoutout_message,
+      claim_details,
+      metadata,
+    } = notification;
 
     // Generate CTA URL and text based on notification
     const { ctaText, ctaUrl } = generateCTA(notification, appUrl);
 
     // Format timestamp
-    const timestamp = formatTimestamp(notification.created_at);
+    const notificationTimestamp = formatTimestamp(notification.created_at);
+
+    const {
+      timeslot_start_time,
+      resource_status,
+      voting_deadline,
+      actor_display_name,
+      actor_full_name,
+      actor_avatar_url,
+    } = metadata || {};
 
     // Prepare Postmark template request
     const postmarkRequest: PostmarkTemplateRequest = {
-      From: `Juntos <${postmarkFrom}>`,
+      From: `${actor_full_name} via Juntos <${postmarkFrom}>`,
       To: profile.email,
-      TemplateId: postmarkTemplateId,
+      TemplateId: 42024291,
       TemplateModel: {
-        actor_name: actorName,
-        notification_title: title,
-        notification_body: body,
-        notification_timestamp: timestamp,
-        cta_text: ctaText,
+        subject: 'A new event has been created',
+        actor_display_name,
+        actor_full_name,
+        notification_timestamp: notificationTimestamp,
+        event_timestamp: formatEventTimestamp(timeslot_start_time),
+        sent_to: `members of the ${community_name} community`,
         cta_url: ctaUrl,
-        manage_preferences_url: `${appUrl}/settings/notifications`,
+        resource_title,
+        details_url: `${appUrl}/events/${resource_id}`,
+        manage_preferences_url: `${appUrl}/notifications/settings`,
       },
+      TrackOpens: true,
+      TrackLinks: 'HtmlOnly',
+      MessageStream: postmarkMessageStream,
     };
 
+    console.log('Sending to Postmark: ', JSON.stringify(postmarkRequest));
+
     // Send email via Postmark API
-    const postmarkResponse = await fetch("https://api.postmarkapp.com/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Postmark-Server-Token": postmarkToken,
-        "X-PM-Message-Stream": postmarkMessageStream,
+    const postmarkResponse = await fetch(
+      'https://api.postmarkapp.com/email/withTemplate',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Postmark-Server-Token': postmarkToken,
+        },
+        body: JSON.stringify(postmarkRequest),
       },
-      body: JSON.stringify(postmarkRequest),
-    });
+    );
 
     if (!postmarkResponse.ok) {
       const errorBody = await postmarkResponse.text();
-      console.error("Postmark API error:", postmarkResponse.status, errorBody);
+      console.error('Postmark API error:', postmarkResponse.status, errorBody);
       return new Response(
         JSON.stringify({
           sent: 0,
           reason: `Postmark API error: ${postmarkResponse.status}`,
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
-        }
+        },
       );
     }
+
+    console.log('Email response', JSON.stringify(postmarkResponse));
 
     return new Response(
       JSON.stringify({
         sent: 1,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      }
+      },
     );
   } catch (error) {
-    console.error("Error in send-email-notification:", error);
+    console.error('Error in send-email-notification:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-      }
+      },
     );
   }
 });
@@ -261,7 +304,19 @@ function formatTimestamp(isoString: string): string {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+  };
+
+  return date.toLocaleString('en-US', options);
+}
+
+function formatEventTimestamp(isoString: string): string {
+  const date = new Date(isoString);
+
+  // Format: "January 15, 2025 at 3:45 PM"
+  const options: Intl.DateTimeFormatOptions = {
+    dateStyle: 'full',
+    timeStyle: 'short',
   };
 
   return date.toLocaleString('en-US', options);
@@ -272,40 +327,44 @@ function formatTimestamp(isoString: string): string {
  */
 function generateCTA(
   notification: Notification,
-  appUrl: string
+  appUrl: string,
 ): { ctaText: string; ctaUrl: string } {
   const action = notification.action;
 
   // Default fallback
-  let ctaText = "View Notification";
+  let ctaText = 'View Notification';
   let ctaUrl = `${appUrl}/notifications`;
 
   // Generate specific CTAs based on notification action
-  if (action.includes("resource.") || action.includes("event.") || action.includes("claim.")) {
+  if (
+    action.includes('resource.') ||
+    action.includes('event.') ||
+    action.includes('claim.')
+  ) {
     if (notification.resource_id) {
-      ctaText = action.includes("event.") ? "View Event" : "View Resource";
+      ctaText = action.includes('event.') ? 'View Event' : 'View Resource';
       ctaUrl = `${appUrl}/resources/${notification.resource_id}`;
     }
-  } else if (action.includes("message.") || action.includes("conversation.")) {
+  } else if (action.includes('message.') || action.includes('conversation.')) {
     if (notification.conversation_id) {
-      ctaText = "View Conversation";
+      ctaText = 'View Conversation';
       ctaUrl = `${appUrl}/messages/${notification.conversation_id}`;
     }
-  } else if (action.includes("comment.")) {
+  } else if (action.includes('comment.')) {
     if (notification.resource_id) {
-      ctaText = "View Comment";
+      ctaText = 'View Comment';
       ctaUrl = `${appUrl}/resources/${notification.resource_id}${
-        notification.comment_id ? `#comment-${notification.comment_id}` : ""
+        notification.comment_id ? `#comment-${notification.comment_id}` : ''
       }`;
     }
-  } else if (action.includes("shoutout.")) {
+  } else if (action.includes('shoutout.')) {
     if (notification.shoutout_id) {
-      ctaText = "View Shoutout";
+      ctaText = 'View Shoutout';
       ctaUrl = `${appUrl}/shoutouts/${notification.shoutout_id}`;
     }
-  } else if (action.includes("membership.")) {
+  } else if (action.includes('membership.')) {
     if (notification.community_id) {
-      ctaText = "View Community";
+      ctaText = 'View Community';
       ctaUrl = `${appUrl}/communities/${notification.community_id}`;
     }
   }

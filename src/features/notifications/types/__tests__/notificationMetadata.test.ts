@@ -10,15 +10,17 @@ describe("hasMetadata", () => {
     expect(hasMetadata(ACTION_TYPES.MEMBER_LEFT)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.RESOURCE_UPDATED)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.EVENT_UPDATED)).toBe(true);
-    expect(hasMetadata(ACTION_TYPES.TRUSTLEVEL_CHANGED)).toBe(true);
-    expect(hasMetadata(ACTION_TYPES.RESOURCE_CREATED)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.EVENT_CREATED)).toBe(true);
+    expect(hasMetadata(ACTION_TYPES.EVENT_CANCELLED)).toBe(true);
+    expect(hasMetadata(ACTION_TYPES.EVENT_STARTING)).toBe(true);
+    expect(hasMetadata(ACTION_TYPES.TRUSTLEVEL_CHANGED)).toBe(true);
   });
 
   it("should return false for actions without metadata", () => {
     expect(hasMetadata(ACTION_TYPES.COMMENT_REPLIED)).toBe(false);
     expect(hasMetadata(ACTION_TYPES.CLAIM_CREATED)).toBe(false);
     expect(hasMetadata(ACTION_TYPES.MESSAGE_RECEIVED)).toBe(false);
+    expect(hasMetadata(ACTION_TYPES.RESOURCE_CREATED)).toBe(false);
   });
 });
 
@@ -95,36 +97,13 @@ describe("getTypedMetadata", () => {
     it("should parse resource updated metadata with changes", () => {
       const result = getTypedMetadata(ACTION_TYPES.RESOURCE_UPDATED, {
         changes: ["title", "description"],
-        resource_title: "Test Resource",
       });
 
       expect(result).toEqual({
         changes: ["title", "description"],
-        resource_title: "Test Resource",
       });
     });
 
-    it("should handle missing resource_title", () => {
-      const result = getTypedMetadata(ACTION_TYPES.RESOURCE_UPDATED, {
-        changes: ["status"],
-      });
-
-      expect(result).toEqual({
-        changes: ["status"],
-        resource_title: undefined,
-      });
-    });
-
-    it("should default to empty array for invalid changes", () => {
-      const result = getTypedMetadata(ACTION_TYPES.EVENT_UPDATED, {
-        changes: "not an array",
-      });
-
-      expect(result).toEqual({
-        changes: [],
-        resource_title: undefined,
-      });
-    });
 
     it("should filter out non-string changes", () => {
       const result = getTypedMetadata(ACTION_TYPES.RESOURCE_UPDATED, {
@@ -133,7 +112,6 @@ describe("getTypedMetadata", () => {
 
       expect(result).toEqual({
         changes: [],
-        resource_title: undefined,
       });
     });
   });
@@ -158,27 +136,47 @@ describe("getTypedMetadata", () => {
     });
   });
 
-  describe("RESOURCE_CREATED and EVENT_CREATED", () => {
-    it("should parse resource title for resource created", () => {
-      const result = getTypedMetadata(ACTION_TYPES.RESOURCE_CREATED, {
-        resource_title: "New Resource",
-      });
-
-      expect(result).toEqual({ resource_title: "New Resource" });
-    });
-
-    it("should parse resource title for event created", () => {
+  describe("Event actions (EVENT_CREATED, EVENT_UPDATED, EVENT_CANCELLED, EVENT_STARTING)", () => {
+    it("should parse event metadata with all fields", () => {
       const result = getTypedMetadata(ACTION_TYPES.EVENT_CREATED, {
-        resource_title: "New Event",
+        timeslot_start_time: "2025-01-01T10:00:00Z",
+        timeslot_end_time: "2025-01-01T12:00:00Z",
+        resource_status: "active",
+        voting_deadline: "2024-12-31T23:59:59Z",
       });
 
-      expect(result).toEqual({ resource_title: "New Event" });
+      expect(result).toEqual({
+        timeslot_start_time: "2025-01-01T10:00:00Z",
+        timeslot_end_time: "2025-01-01T12:00:00Z",
+        resource_status: "active",
+        voting_deadline: "2024-12-31T23:59:59Z",
+      });
     });
 
-    it("should default to empty string for missing title", () => {
-      const result = getTypedMetadata(ACTION_TYPES.RESOURCE_CREATED, {});
+    it("should handle EVENT_UPDATED with changes", () => {
+      const result = getTypedMetadata(ACTION_TYPES.EVENT_UPDATED, {
+        changes: ["title", "resource_status"],
+        resource_status: "cancelled",
+      });
 
-      expect(result).toEqual({ resource_title: "" });
+      expect(result).toEqual({
+        changes: ["title", "resource_status"],
+        timeslot_start_time: undefined,
+        timeslot_end_time: undefined,
+        resource_status: "cancelled",
+        voting_deadline: undefined,
+      });
+    });
+
+    it("should default resource_status to unknown if missing", () => {
+      const result = getTypedMetadata(ACTION_TYPES.EVENT_CANCELLED, {});
+
+      expect(result).toEqual({
+        timeslot_start_time: undefined,
+        timeslot_end_time: undefined,
+        resource_status: "unknown",
+        voting_deadline: undefined,
+      });
     });
   });
 
@@ -193,6 +191,12 @@ describe("getTypedMetadata", () => {
       const result = getTypedMetadata(ACTION_TYPES.CLAIM_CREATED, {
         some: "data",
       });
+
+      expect(result).toEqual({});
+    });
+
+    it("should return empty object for resource created", () => {
+      const result = getTypedMetadata(ACTION_TYPES.RESOURCE_CREATED, {});
 
       expect(result).toEqual({});
     });

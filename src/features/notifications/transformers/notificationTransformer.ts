@@ -63,10 +63,10 @@ export function toDomainNotification(
     shoutoutId: row.shoutout_id || undefined,
     conversationId: row.conversation_id || undefined,
 
-    // Actor information (basic + denormalized)
+    // Actor information (from metadata)
     actorId: row.actor_id || undefined,
-    actorName: row.actor_display_name || undefined,
-    actorAvatar: row.actor_avatar_url || undefined,
+    actorName: (rawMetadata.actor_display_name as string) || undefined,
+    actorAvatar: (rawMetadata.actor_avatar_url as string) || undefined,
 
     // Resource information (denormalized from resources table)
     resourceTitle: row.resource_title || undefined,
@@ -80,7 +80,6 @@ export function toDomainNotification(
 
     // Community information (denormalized from communities table)
     communityName: row.community_name || undefined,
-    communityAvatar: row.community_avatar_url || undefined,
 
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,
