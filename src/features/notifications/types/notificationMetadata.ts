@@ -1,13 +1,9 @@
-import { ACTION_TYPES, type ActionType } from "../constants";
+import { ACTION_TYPES, type ActionType } from '../constants';
 
 // Specific metadata interfaces for each action type
 
 export interface ClaimResponseMetadata {
-  response: "approved" | "rejected";
-}
-
-export interface MembershipMetadata {
-  action: "joined" | "left";
+  response: 'approved' | 'rejected';
 }
 
 export interface ResourceUpdatedMetadata {
@@ -46,10 +42,9 @@ export function hasMetadata(action: ActionType): boolean {
 // Helper function to get typed metadata for any notification action
 export function getTypedMetadata(
   action: ActionType,
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
 ):
   | ClaimResponseMetadata
-  | MembershipMetadata
   | ResourceUpdatedMetadata
   | EventMetadata
   | TrustLevelMetadata
@@ -59,26 +54,18 @@ export function getTypedMetadata(
     case ACTION_TYPES.CLAIM_REJECTED:
       return {
         response:
-          metadata.response === "approved" ||
-          metadata.response === "rejected"
+          metadata.response === 'approved' || metadata.response === 'rejected'
             ? metadata.response
-            : action === ACTION_TYPES.CLAIM_APPROVED ? "approved" : "rejected",
-      };
-
-    case ACTION_TYPES.MEMBER_JOINED:
-    case ACTION_TYPES.MEMBER_LEFT:
-      return {
-        action:
-          metadata.action === "joined" || metadata.action === "left"
-            ? metadata.action
-            : action === ACTION_TYPES.MEMBER_JOINED ? "joined" : "left",
+            : action === ACTION_TYPES.CLAIM_APPROVED
+              ? 'approved'
+              : 'rejected',
       };
 
     case ACTION_TYPES.RESOURCE_UPDATED:
       return {
         changes:
           Array.isArray(metadata.changes) &&
-          metadata.changes.every((c) => typeof c === "string")
+          metadata.changes.every((c) => typeof c === 'string')
             ? (metadata.changes as string[])
             : [],
       };
@@ -88,19 +75,19 @@ export function getTypedMetadata(
     case ACTION_TYPES.EVENT_STARTING:
       return {
         timeslot_start_time:
-          typeof metadata.timeslot_start_time === "string"
+          typeof metadata.timeslot_start_time === 'string'
             ? metadata.timeslot_start_time
             : undefined,
         timeslot_end_time:
-          typeof metadata.timeslot_end_time === "string"
+          typeof metadata.timeslot_end_time === 'string'
             ? metadata.timeslot_end_time
             : undefined,
         resource_status:
-          typeof metadata.resource_status === "string"
+          typeof metadata.resource_status === 'string'
             ? metadata.resource_status
-            : "unknown",
+            : 'unknown',
         voting_deadline:
-          typeof metadata.voting_deadline === "string"
+          typeof metadata.voting_deadline === 'string'
             ? metadata.voting_deadline
             : undefined,
       };
@@ -109,23 +96,23 @@ export function getTypedMetadata(
       return {
         changes:
           Array.isArray(metadata.changes) &&
-          metadata.changes.every((c) => typeof c === "string")
+          metadata.changes.every((c) => typeof c === 'string')
             ? (metadata.changes as string[])
             : [],
         timeslot_start_time:
-          typeof metadata.timeslot_start_time === "string"
+          typeof metadata.timeslot_start_time === 'string'
             ? metadata.timeslot_start_time
             : undefined,
         timeslot_end_time:
-          typeof metadata.timeslot_end_time === "string"
+          typeof metadata.timeslot_end_time === 'string'
             ? metadata.timeslot_end_time
             : undefined,
         resource_status:
-          typeof metadata.resource_status === "string"
+          typeof metadata.resource_status === 'string'
             ? metadata.resource_status
-            : "unknown",
+            : 'unknown',
         voting_deadline:
-          typeof metadata.voting_deadline === "string"
+          typeof metadata.voting_deadline === 'string'
             ? metadata.voting_deadline
             : undefined,
       };
@@ -133,9 +120,9 @@ export function getTypedMetadata(
     case ACTION_TYPES.TRUSTLEVEL_CHANGED:
       return {
         old_level:
-          typeof metadata.old_level === "number" ? metadata.old_level : 0,
+          typeof metadata.old_level === 'number' ? metadata.old_level : 0,
         new_level:
-          typeof metadata.new_level === "number" ? metadata.new_level : 0,
+          typeof metadata.new_level === 'number' ? metadata.new_level : 0,
       };
 
     default:

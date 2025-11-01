@@ -692,6 +692,55 @@ BEGIN
 END;
 $$;
 
+-- 3.9: Resource-Community Association (triggers notify_new_resource)
+CREATE OR REPLACE FUNCTION notify_on_resource_community_insert()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  resource_record RECORD;
+  member_record RECORD;
+  action_val action_type;
+BEGIN
+  -- Get resource details
+  SELECT * INTO resource_record
+  FROM resources
+  WHERE id = NEW.resource_id;
+
+  -- Skip if resource doesn't exist or is not active
+  IF resource_record IS NULL OR resource_record.status != 'active' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Determine action type
+  IF resource_record.type = 'event' THEN
+    action_val := 'event.created';
+  ELSE
+    action_val := 'resource.created';
+  END IF;
+
+  -- Notify all community members about new resource
+  FOR member_record IN
+    SELECT user_id
+    FROM community_memberships
+    WHERE community_id = NEW.community_id
+      AND user_id != resource_record.owner_id
+  LOOP
+    PERFORM notify_new_resource(
+      member_record.user_id,
+      resource_record.owner_id,
+      NEW.resource_id,
+      NEW.community_id,
+      resource_record.type,
+      resource_record.title
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
 -- ============================================================================
 -- PART 5: Refactor State Validation to Use Rules Table
 -- ============================================================================
@@ -973,7 +1022,7 @@ DROP FUNCTION IF EXISTS should_create_in_app_notification(UUID, action_type);
 -- ============================================================================
 -- Architecture now has clean separation:
 -- 1. State validation driven by rules table (validate_claim_state_transition)
--- 2. Business logic determines WHO to notify (in 8 triggers)
+-- 2. Business logic determines WHO to notify (in 10 triggers)
 -- 3. Metadata construction is automatic (create_notification_base)
 -- 4. Notification record is created (just INSERT)
 -- 5. Universal delivery handles HOW (push/email via one trigger)

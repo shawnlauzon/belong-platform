@@ -1,16 +1,14 @@
 import type {
   ClaimResponseMetadata,
-  MembershipMetadata,
   TrustLevelMetadata,
   ResourceUpdatedMetadata,
   EventMetadata,
-} from "./notificationMetadata";
-import { ACTION_TYPES, type ActionType } from "../constants";
+} from './notificationMetadata';
+import { ACTION_TYPES, type ActionType } from '../constants';
 
 // Union type for all possible metadata types
 export type NotificationMetadata =
   | ClaimResponseMetadata
-  | MembershipMetadata
   | TrustLevelMetadata
   | ResourceUpdatedMetadata
   | EventMetadata

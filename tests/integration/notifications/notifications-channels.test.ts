@@ -52,20 +52,12 @@ describe('In-App Notification Delivery', () => {
   });
 
   describe('In-app preference enforcement', () => {
-    it('creates in-app notification when type preference in_app is true', async () => {
-      // Set up preferences: in_app enabled
-      await supabase
-        .from('notification_preferences')
-        .update({
-          resource_commented: {
-            in_app: true,
-            push: false,
-            email: false,
-          },
-        })
-        .eq('user_id', resourceOwner.id);
-
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+    it('creates in-app notification', async () => {
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       await signInAsUser(supabase, commenter);
       await createComment(supabase, commenter.id, {
@@ -86,38 +78,6 @@ describe('In-App Notification Delivery', () => {
       expect(notifications![0].action).toBe('resource.commented');
     });
 
-    it('does not create in-app notification when type preference in_app is false', async () => {
-      await supabase
-        .from('notification_preferences')
-        .update({
-          resource_commented: {
-            in_app: false,
-            push: false,
-            email: false,
-          },
-        })
-        .eq('user_id', resourceOwner.id);
-
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
-
-      await signInAsUser(supabase, commenter);
-      await createComment(supabase, commenter.id, {
-        content: 'Should not appear in-app',
-        resourceId: resource.id,
-      });
-
-      await signInAsUser(supabase, resourceOwner);
-
-      const { data: notifications } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', resourceOwner.id)
-        .eq('action', 'resource.commented')
-        .eq('resource_id', resource.id);
-
-      expect(notifications).toHaveLength(0);
-    });
-
     it('respects different in_app preferences for different notification types', async () => {
       // Enable in_app for resource.commented but disable for claim.created
       await supabase
@@ -136,7 +96,11 @@ describe('In-App Notification Delivery', () => {
         })
         .eq('user_id', resourceOwner.id);
 
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       // Trigger resource.commented notification
       await signInAsUser(supabase, commenter);
@@ -170,7 +134,11 @@ describe('In-App Notification Delivery', () => {
         })
         .eq('user_id', resourceOwner.id);
 
-      const resource = await createTestResource(supabase, testCommunity.id, 'offer');
+      const resource = await createTestResource(
+        supabase,
+        testCommunity.id,
+        'offer',
+      );
 
       await signInAsUser(supabase, commenter);
       await createComment(supabase, commenter.id, {
