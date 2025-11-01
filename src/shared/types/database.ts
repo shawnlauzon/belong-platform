@@ -1665,11 +1665,11 @@ export type Database = {
         Args: {
           p_action: Database["public"]["Enums"]["action_type"]
           p_actor_id?: string
+          p_changes?: string[]
           p_claim_id?: string
           p_comment_id?: string
           p_community_id?: string
           p_conversation_id?: string
-          p_metadata?: Json
           p_resource_id?: string
           p_shoutout_id?: string
           p_user_id: string
@@ -1885,157 +1885,13 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: undefined
       }
-      notify_claim: {
-        Args: {
-          p_actor_id: string
-          p_claim_id: string
-          p_community_id: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_claim_approved: {
-        Args: {
-          p_actor_id: string
-          p_claim_id: string
-          p_community_id: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_claim_cancelled: {
-        Args: {
-          p_actor_id: string
-          p_claim_id: string
-          p_community_id?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_claim_completed: {
-        Args: {
-          p_actor_id: string
-          p_claim_id: string
-          p_community_id?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_claim_rejected: {
-        Args: {
-          p_actor_id: string
-          p_claim_id: string
-          p_community_id?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_comment: {
-        Args: {
-          p_actor_id: string
-          p_comment_id: string
-          p_community_id: string
-          p_content?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_comment_reply: {
-        Args: {
-          p_actor_id: string
-          p_comment_id: string
-          p_community_id: string
-          p_content?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_community_member_joined: {
-        Args: { p_actor_id: string; p_community_id: string; p_user_id: string }
-        Returns: string
-      }
-      notify_community_member_left: {
-        Args: { p_actor_id: string; p_community_id: string; p_user_id: string }
-        Returns: string
-      }
-      notify_connection_accepted: {
-        Args: { p_actor_id: string; p_user_id: string }
-        Returns: string
-      }
-      notify_new_resource:
-        | {
-            Args: {
-              p_actor_id: string
-              p_community_id: string
-              p_resource_id: string
-              p_resource_type: Database["public"]["Enums"]["resource_type"]
-              p_user_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_actor_id: string
-              p_community_id: string
-              p_resource_id: string
-              p_resource_title: string
-              p_resource_type: Database["public"]["Enums"]["resource_type"]
-              p_user_id: string
-            }
-            Returns: string
-          }
-      notify_resource_cancelled: {
-        Args: {
-          p_actor_id: string
-          p_community_id?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_resource_updated: {
-        Args: {
-          p_actor_id: string
-          p_changes?: string[]
-          p_claim_id?: string
-          p_community_id?: string
-          p_resource_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_shoutout: {
+      notify_new_resource: {
         Args: {
           p_actor_id: string
           p_community_id: string
-          p_content?: string
-          p_shoutout_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_trust_level_change: {
-        Args: {
-          p_community_id: string
-          p_new_level?: number
-          p_old_level?: number
-          p_user_id: string
-        }
-        Returns: string
-      }
-      notify_trust_points: {
-        Args: {
-          p_community_id: string
-          p_new_score?: number
-          p_old_score?: number
-          p_points_change?: number
+          p_resource_id: string
+          p_resource_title: string
+          p_resource_type: Database["public"]["Enums"]["resource_type"]
           p_user_id: string
         }
         Returns: string
@@ -2105,13 +1961,6 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
-      }
-      should_create_in_app_notification: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_user_id: string
-        }
-        Returns: boolean
       }
       should_send_email: {
         Args: {

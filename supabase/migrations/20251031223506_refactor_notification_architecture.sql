@@ -300,7 +300,7 @@ BEGIN
   END IF;
 
   -- Notify resource owner (just create the notification record)
-  IF resource_owner_id IS NOT NULL AND should_create_in_app_notification(resource_owner_id, 'claim.created') THEN
+  IF resource_owner_id IS NOT NULL THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.created',
@@ -346,20 +346,18 @@ BEGIN
       ELSE 'claim.rejected'::action_type
     END;
 
-    IF should_create_in_app_notification(NEW.claimant_id, action_to_notify) THEN
-      PERFORM create_notification_base(
-        p_user_id := NEW.claimant_id,
-        p_action := action_to_notify,
-        p_actor_id := resource_owner_id,
-        p_resource_id := NEW.resource_id,
-        p_claim_id := NEW.id,
-        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
-      );
-    END IF;
+    PERFORM create_notification_base(
+      p_user_id := NEW.claimant_id,
+      p_action := action_to_notify,
+      p_actor_id := resource_owner_id,
+      p_resource_id := NEW.resource_id,
+      p_claim_id := NEW.id,
+      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
+    );
   END IF;
 
   -- Handle cancelled
-  IF NEW.status = 'cancelled' AND should_create_in_app_notification(resource_owner_id, 'claim.cancelled') THEN
+  IF NEW.status = 'cancelled' THEN
     PERFORM create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.cancelled',
@@ -379,7 +377,7 @@ BEGIN
       WHEN 'request' THEN resource_owner_id
     END;
 
-    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'resource.given') THEN
+    IF recipient_id IS NOT NULL THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'resource.given',
@@ -403,7 +401,7 @@ BEGIN
       WHEN 'request' THEN NEW.claimant_id
     END;
 
-    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'resource.received') THEN
+    IF recipient_id IS NOT NULL THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'resource.received',
@@ -427,7 +425,7 @@ BEGIN
       WHEN 'request' THEN NEW.claimant_id
     END;
 
-    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'claim.completed') THEN
+    IF recipient_id IS NOT NULL THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'claim.completed',
@@ -451,7 +449,7 @@ BEGIN
       WHEN 'request' THEN resource_owner_id
     END;
 
-    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'claim.completed') THEN
+    IF recipient_id IS NOT NULL THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'claim.completed',
@@ -494,8 +492,7 @@ BEGIN
 
     -- Notify parent comment author
     IF parent_comment_author_id IS NOT NULL
-       AND parent_comment_author_id != NEW.author_id
-       AND should_create_in_app_notification(parent_comment_author_id, 'comment.replied') THEN
+       AND parent_comment_author_id != NEW.author_id THEN
       PERFORM create_notification_base(
         p_user_id := parent_comment_author_id,
         p_action := 'comment.replied',
@@ -510,8 +507,7 @@ BEGIN
   -- Notify resource owner
   IF resource_owner_id IS NOT NULL
      AND resource_owner_id != NEW.author_id
-     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id)
-     AND should_create_in_app_notification(resource_owner_id, 'resource.commented') THEN
+     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id) THEN
     PERFORM create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'resource.commented',
@@ -535,15 +531,13 @@ AS $$
 DECLARE
   notification_id UUID;
 BEGIN
-  IF should_create_in_app_notification(NEW.receiver_id, 'shoutout.received') THEN
-    PERFORM create_notification_base(
-      p_user_id := NEW.receiver_id,
-      p_action := 'shoutout.received',
-      p_actor_id := NEW.sender_id,
-      p_shoutout_id := NEW.id,
-      p_community_id := NEW.community_id
-    );
-  END IF;
+  PERFORM create_notification_base(
+    p_user_id := NEW.receiver_id,
+    p_action := 'shoutout.received',
+    p_actor_id := NEW.sender_id,
+    p_shoutout_id := NEW.id,
+    p_community_id := NEW.community_id
+  );
 
   RETURN NEW;
 END;
@@ -566,14 +560,12 @@ BEGIN
     WHERE conversation_id = NEW.conversation_id
       AND user_id != NEW.sender_id
   LOOP
-    IF should_create_in_app_notification(participant_id, 'message.received') THEN
-      PERFORM create_notification_base(
-        p_user_id := participant_id,
-        p_action := 'message.received',
-        p_actor_id := NEW.sender_id,
-        p_conversation_id := NEW.conversation_id
-      );
-    END IF;
+    PERFORM create_notification_base(
+      p_user_id := participant_id,
+      p_action := 'message.received',
+      p_actor_id := NEW.sender_id,
+      p_conversation_id := NEW.conversation_id
+    );
   END LOOP;
 
   RETURN NEW;
@@ -602,19 +594,14 @@ BEGIN
   -- Only notify if this participant is NOT the initiator
   IF NEW.user_id != conv_initiator_id THEN
     RAISE NOTICE 'notify_on_new_conversation: Processing participant % (not initiator)', NEW.user_id;
+    RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', NEW.user_id;
 
-    IF should_create_in_app_notification(NEW.user_id, 'conversation.requested') THEN
-      RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', NEW.user_id;
-
-      PERFORM create_notification_base(
-        p_user_id := NEW.user_id,
-        p_action := 'conversation.requested',
-        p_actor_id := conv_initiator_id,
-        p_conversation_id := NEW.conversation_id
-      );
-    ELSE
-      RAISE NOTICE 'notify_on_new_conversation: Skipping notification (in_app disabled) for participant %', NEW.user_id;
-    END IF;
+    PERFORM create_notification_base(
+      p_user_id := NEW.user_id,
+      p_action := 'conversation.requested',
+      p_actor_id := conv_initiator_id,
+      p_conversation_id := NEW.conversation_id
+    );
   ELSE
     RAISE NOTICE 'notify_on_new_conversation: Skipping initiator %', NEW.user_id;
   END IF;
@@ -896,16 +883,14 @@ BEGIN
       AND rc.claimant_id != NEW.owner_id
   LOOP
     -- Create notification - metadata built automatically including changes
-    IF should_create_in_app_notification(claim_record.claimant_id, action_val) THEN
-      PERFORM create_notification_base(
-        p_user_id := claim_record.claimant_id,
-        p_action := action_val,
-        p_actor_id := NEW.owner_id,
-        p_resource_id := NEW.id,
-        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1),
-        p_changes := changes
-      );
-    END IF;
+    PERFORM create_notification_base(
+      p_user_id := claim_record.claimant_id,
+      p_action := action_val,
+      p_actor_id := NEW.owner_id,
+      p_resource_id := NEW.id,
+      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1),
+      p_changes := changes
+    );
   END LOOP;
 
   RETURN NEW;
@@ -940,15 +925,13 @@ BEGIN
       AND rc.claimant_id != NEW.owner_id
   LOOP
     -- Create notification - metadata built automatically
-    IF should_create_in_app_notification(claim_record.claimant_id, 'event.cancelled') THEN
-      PERFORM create_notification_base(
-        p_user_id := claim_record.claimant_id,
-        p_action := 'event.cancelled',
-        p_actor_id := NEW.owner_id,
-        p_resource_id := NEW.id,
-        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1)
-      );
-    END IF;
+    PERFORM create_notification_base(
+      p_user_id := claim_record.claimant_id,
+      p_action := 'event.cancelled',
+      p_actor_id := NEW.owner_id,
+      p_resource_id := NEW.id,
+      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1)
+    );
   END LOOP;
 
   RETURN NEW;
@@ -981,6 +964,9 @@ DROP FUNCTION IF EXISTS notify_trust_points(uuid, uuid, integer, integer, intege
 DROP FUNCTION IF EXISTS notify_new_message();
 DROP FUNCTION IF EXISTS notify_on_message_received();
 DROP FUNCTION IF EXISTS notify_on_trust_points();
+
+-- Drop the in-app notification check function (always enabled now)
+DROP FUNCTION IF EXISTS should_create_in_app_notification(UUID, action_type);
 
 -- ============================================================================
 -- Migration Complete
