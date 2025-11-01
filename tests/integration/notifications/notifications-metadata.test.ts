@@ -138,9 +138,10 @@ describe('Notification Metadata Structures', () => {
 
       expect(notifications).toHaveLength(1);
 
+      // Note: metadata.action was removed as it's redundant with notification.action field
+      // The notification.action field already indicates 'member.joined'
       const metadata = notifications![0].metadata as unknown as MembershipMetadata;
       expect(metadata).toBeDefined();
-      expect(metadata.action).toBe('joined');
     });
 
     it('includes action="left" when member leaves community', async () => {

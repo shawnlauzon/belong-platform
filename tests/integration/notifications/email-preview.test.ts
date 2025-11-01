@@ -37,7 +37,7 @@
  * NOTE: Tests are skipped when TEST_EMAIL_PREVIEW is not set to avoid accidental email sends in CI
  */
 
-import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient } from '../helpers/test-client';
 import { cleanupAllTestData } from '../helpers/cleanup';
 import {
@@ -82,7 +82,7 @@ describeIf('Email Preview - Manual Verification', () => {
   });
 
   afterAll(async () => {
-    // await cleanupAllTestData();
+    await cleanupAllTestData();
   });
 
   beforeEach(async () => {
@@ -516,12 +516,15 @@ describeIf('Email Preview - Manual Verification', () => {
 
     describe('event.created', () => {
       it('sends email when new event created in community (standard)', async () => {
-        console.log('🔍 Starting email test for event.created');
-
-        // Enable email for otherUser (will throw if preferences don't exist)
-        console.log('🔍 Enabling email for user:', otherUser.id);
         await enableEmailForType(otherUser.id, 'event_created');
-        console.log('✅ Email preferences enabled successfully');
+
+        // Debug: Check notification preferences
+        const { data: prefs } = await supabase
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', otherUser.id)
+          .single();
+        console.log('🔍 Notification preferences:', JSON.stringify(prefs, null, 2));
 
         const event = await createTestResource(
           supabase,
@@ -530,80 +533,42 @@ describeIf('Email Preview - Manual Verification', () => {
         );
         console.log('🔍 Created event:', event.id);
 
-        const timeslot = await createTestResourceTimeslot(supabase, event.id);
-        console.log('🔍 Created timeslot:', timeslot.id);
+        await createTestResourceTimeslot(supabase, event.id);
 
-        // Wait a bit for async notification processing
+        // Debug: Check if resource_communities entry was created
+        const { data: resourceCommunities } = await supabase
+          .from('resource_communities')
+          .select('*')
+          .eq('resource_id', event.id);
+        console.log('🔍 Resource communities:', resourceCommunities);
+
+        // Debug: Check all community members
+        const { data: members } = await supabase
+          .from('community_memberships')
+          .select('user_id')
+          .eq('community_id', testCommunity.id);
+        console.log('🔍 Community members:', members);
+
+        // Wait for async notification processing
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // Check if notification was created
-        const { data: notifications, error: notifError } = await supabase
+        // Verify notification was created
+        const { data: notifications } = await supabase
           .from('notifications')
           .select('*')
           .eq('user_id', otherUser.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (notifError) {
-          console.error('❌ Failed to query notifications:', notifError);
-          throw notifError;
-        }
+        console.log('🔍 All notifications for otherUser:', JSON.stringify(notifications, null, 2));
 
-        console.log(
-          `📬 Found ${notifications?.length || 0} notification(s) for user`,
-        );
-        if (notifications && notifications.length > 0) {
-          console.log(
-            '🔍 Most recent notification:',
-            JSON.stringify(notifications[0], null, 2),
-          );
-        } else {
-          console.warn(
-            '⚠️  No notifications found - notification may not have been created',
-          );
-        }
+        expect(notifications).toBeDefined();
+        expect(notifications?.length).toBeGreaterThan(0);
 
-        // Check pg_net responses (Edge Function calls)
-        const { data: httpResponses, error: httpError } = await supabase.rpc(
-          'exec_sql',
-          {
-            sql_query: `SELECT id, status_code, content::text, error_msg, created
-                        FROM net._http_response
-                        ORDER BY created DESC
-                        LIMIT 5;`,
-          },
-        );
+        const eventNotification = notifications?.find(n => n.action === 'event.created');
+        expect(eventNotification).toBeDefined();
 
-        if (httpError) {
-          console.log(
-            '🔍 Could not query pg_net responses (trying direct query)',
-          );
-          // Try direct query as fallback
-          const { data: directData, error: directError } = await supabase
-            .schema('net')
-            .from('_http_response')
-            .select('*')
-            .order('created', { ascending: false })
-            .limit(5);
-
-          if (!directError && directData) {
-            console.log(
-              '📡 Recent HTTP responses:',
-              JSON.stringify(directData, null, 2),
-            );
-          } else {
-            console.log(
-              '⚠️  Cannot access pg_net responses - check logs manually',
-            );
-          }
-        } else {
-          console.log(
-            '📡 Recent HTTP responses:',
-            JSON.stringify(httpResponses, null, 2),
-          );
-        }
-
-        console.log('✉️  Test completed - check Postmark for email');
+        console.log('✉️  Email sent for event.created (standard case)');
       });
 
       it('sends email with future event timestamp', async () => {
@@ -628,6 +593,21 @@ describeIf('Email Preview - Manual Verification', () => {
           status: 'active',
         });
 
+        // Wait for async notification processing
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Verify notification was created
+        const { data: notifications } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', otherUser.id)
+          .eq('action', 'event.created')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        expect(notifications).toBeDefined();
+        expect(notifications?.length).toBeGreaterThan(0);
+
         console.log('✉️  Email sent for event.created (future timestamp)');
       });
 
@@ -649,6 +629,21 @@ describeIf('Email Preview - Manual Verification', () => {
           .eq('id', event.id);
 
         await createTestResourceTimeslot(supabase, event.id);
+
+        // Wait for async notification processing
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Verify notification was created
+        const { data: notifications } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', otherUser.id)
+          .eq('action', 'event.created')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        expect(notifications).toBeDefined();
+        expect(notifications?.length).toBeGreaterThan(0);
 
         console.log('✉️  Email sent for event.created (long title)');
       });
