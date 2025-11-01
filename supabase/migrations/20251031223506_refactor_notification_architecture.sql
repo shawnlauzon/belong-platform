@@ -80,124 +80,7 @@ INSERT INTO claim_status_transition_rules (resource_type, from_status, to_status
   ('event', 'vote', 'cancelled', 'claimant', 'User cancels their vote');
 
 -- ============================================================================
--- PART 2: Metadata-Aware Notification Creation
--- ============================================================================
--- Update create_notification_base to automatically build metadata based on entity IDs
-
--- Drop old version that takes p_metadata parameter
-DROP FUNCTION IF EXISTS create_notification_base(UUID, action_type, UUID, UUID, UUID, UUID, UUID, UUID, UUID, JSONB);
-
-CREATE OR REPLACE FUNCTION create_notification_base(
-  p_user_id UUID,
-  p_action action_type,
-  p_actor_id UUID DEFAULT NULL,
-  p_resource_id UUID DEFAULT NULL,
-  p_comment_id UUID DEFAULT NULL,
-  p_claim_id UUID DEFAULT NULL,
-  p_shoutout_id UUID DEFAULT NULL,
-  p_community_id UUID DEFAULT NULL,
-  p_conversation_id UUID DEFAULT NULL,
-  p_changes TEXT[] DEFAULT NULL
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  notification_id UUID;
-  v_metadata JSONB := '{}'::jsonb;
-  v_resource RECORD;
-  v_comment RECORD;
-  v_claim RECORD;
-BEGIN
-  -- Build metadata based on which entity IDs are provided
-
-  -- Resource metadata (status, voting_deadline, timeslot)
-  IF p_resource_id IS NOT NULL THEN
-    SELECT r.status, r.voting_deadline, rt.start_time, rt.end_time
-    INTO v_resource
-    FROM resources r
-    LEFT JOIN resource_timeslots rt ON rt.resource_id = r.id
-    WHERE r.id = p_resource_id
-    LIMIT 1;
-
-    IF FOUND THEN
-      v_metadata := v_metadata || jsonb_build_object(
-        'resource_status', v_resource.status,
-        'voting_deadline', v_resource.voting_deadline,
-        'timeslot_start_time', v_resource.start_time,
-        'timeslot_end_time', v_resource.end_time
-      );
-    END IF;
-  END IF;
-
-  -- Comment metadata (content preview)
-  IF p_comment_id IS NOT NULL THEN
-    SELECT content INTO v_comment
-    FROM comments
-    WHERE id = p_comment_id;
-
-    IF FOUND THEN
-      v_metadata := v_metadata || jsonb_build_object(
-        'content_preview', LEFT(v_comment.content, 200)
-      );
-    END IF;
-  END IF;
-
-  -- Claim metadata (response/status)
-  IF p_claim_id IS NOT NULL THEN
-    SELECT status INTO v_claim
-    FROM resource_claims
-    WHERE id = p_claim_id;
-
-    IF FOUND THEN
-      v_metadata := v_metadata || jsonb_build_object(
-        'response', v_claim.status::text
-      );
-    END IF;
-  END IF;
-
-  -- Changes metadata (for resource.updated)
-  IF p_changes IS NOT NULL THEN
-    v_metadata := v_metadata || jsonb_build_object(
-      'changes', p_changes
-    );
-  END IF;
-
-  -- Insert notification with built metadata
-  INSERT INTO notifications (
-    user_id,
-    action,
-    actor_id,
-    resource_id,
-    comment_id,
-    claim_id,
-    shoutout_id,
-    community_id,
-    conversation_id,
-    metadata
-  ) VALUES (
-    p_user_id,
-    p_action,
-    p_actor_id,
-    p_resource_id,
-    p_comment_id,
-    p_claim_id,
-    p_shoutout_id,
-    p_community_id,
-    p_conversation_id,
-    v_metadata
-  )
-  RETURNING id INTO notification_id;
-
-  RETURN notification_id;
-END;
-$$;
-
-COMMENT ON FUNCTION create_notification_base IS 'Creates notification with automatic metadata construction based on entity IDs';
-
--- ============================================================================
--- PART 3: Universal Notification Delivery Function
+-- PART 2: Universal Notification Delivery Function
 -- ============================================================================
 -- This single function handles delivery for ALL notification types
 -- Triggers automatically when a notification is created
@@ -206,7 +89,7 @@ CREATE OR REPLACE FUNCTION deliver_notification()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   notification_title TEXT;
   notification_body TEXT;
@@ -259,7 +142,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- Create trigger on notifications table
 CREATE TRIGGER deliver_notification_trigger
@@ -270,16 +153,16 @@ CREATE TRIGGER deliver_notification_trigger
 COMMENT ON FUNCTION deliver_notification() IS 'Universal notification delivery - handles push and email for all notification types';
 
 -- ============================================================================
--- PART 4: Simplify Notification Creation Triggers
+-- PART 3: Simplify Notification Creation Triggers
 -- ============================================================================
--- Remove all metadata construction from these functions - create_notification_base handles it now
+-- Remove all push/email calls from these functions - they just create notifications now
 
 -- 3.1: Claims
 CREATE OR REPLACE FUNCTION notify_on_claim()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   resource_owner_id UUID;
   notification_id UUID;
@@ -300,7 +183,7 @@ BEGIN
   END IF;
 
   -- Notify resource owner (just create the notification record)
-  IF resource_owner_id IS NOT NULL THEN
+  IF resource_owner_id IS NOT NULL AND should_create_in_app_notification(resource_owner_id, 'claim.created') THEN
     notification_id := create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.created',
@@ -309,23 +192,24 @@ BEGIN
       p_claim_id := NEW.id,
       p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
     );
-    -- Metadata built automatically, delivery happens via deliver_notification trigger
+    -- Delivery happens automatically via deliver_notification trigger
   END IF;
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- 3.2: Claim Status Changes
 CREATE OR REPLACE FUNCTION notify_on_claim_status_change()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   resource_owner_id UUID;
   resource_type_val resource_type;
   notification_id UUID;
+  notification_metadata JSONB;
   action_to_notify action_type;
   recipient_id UUID;
 BEGIN
@@ -341,23 +225,27 @@ BEGIN
 
   -- Handle approved/rejected
   IF NEW.status IN ('approved', 'rejected') THEN
+    notification_metadata := jsonb_build_object('response', NEW.status::text);
     action_to_notify := CASE NEW.status
       WHEN 'approved' THEN 'claim.approved'::action_type
       ELSE 'claim.rejected'::action_type
     END;
 
-    PERFORM create_notification_base(
-      p_user_id := NEW.claimant_id,
-      p_action := action_to_notify,
-      p_actor_id := resource_owner_id,
-      p_resource_id := NEW.resource_id,
-      p_claim_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
-    );
+    IF should_create_in_app_notification(NEW.claimant_id, action_to_notify) THEN
+      PERFORM create_notification_base(
+        p_user_id := NEW.claimant_id,
+        p_action := action_to_notify,
+        p_actor_id := resource_owner_id,
+        p_resource_id := NEW.resource_id,
+        p_claim_id := NEW.id,
+        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+        p_metadata := notification_metadata
+      );
+    END IF;
   END IF;
 
   -- Handle cancelled
-  IF NEW.status = 'cancelled' THEN
+  IF NEW.status = 'cancelled' AND should_create_in_app_notification(resource_owner_id, 'claim.cancelled') THEN
     PERFORM create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'claim.cancelled',
@@ -368,7 +256,7 @@ BEGIN
     );
   END IF;
 
-  -- Handle approved � given (FIXED: correct transitions)
+  -- Handle approved → given (FIXED: correct transitions)
   IF OLD.status = 'approved' AND NEW.status = 'given' THEN
     -- For offers: owner marked as given, notify claimant
     -- For requests: claimant marked as given, notify owner
@@ -377,7 +265,7 @@ BEGIN
       WHEN 'request' THEN resource_owner_id
     END;
 
-    IF recipient_id IS NOT NULL THEN
+    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'resource.given') THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'resource.given',
@@ -392,7 +280,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Handle approved � received (FIXED: correct transitions)
+  -- Handle approved → received (FIXED: correct transitions)
   IF OLD.status = 'approved' AND NEW.status = 'received' THEN
     -- For offers: claimant marked as received, notify owner
     -- For requests: owner marked as received, notify claimant
@@ -401,7 +289,7 @@ BEGIN
       WHEN 'request' THEN NEW.claimant_id
     END;
 
-    IF recipient_id IS NOT NULL THEN
+    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'resource.received') THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'resource.received',
@@ -416,7 +304,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Handle given � completed (FIXED: added)
+  -- Handle given → completed (FIXED: added)
   IF OLD.status = 'given' AND NEW.status = 'completed' THEN
     -- For offers: claimant confirmed, notify owner
     -- For requests: owner confirmed, notify claimant
@@ -425,7 +313,7 @@ BEGIN
       WHEN 'request' THEN NEW.claimant_id
     END;
 
-    IF recipient_id IS NOT NULL THEN
+    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'claim.completed') THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'claim.completed',
@@ -440,7 +328,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Handle received � completed (FIXED: added)
+  -- Handle received → completed (FIXED: added)
   IF OLD.status = 'received' AND NEW.status = 'completed' THEN
     -- For offers: owner confirmed, notify claimant
     -- For requests: claimant confirmed, notify owner
@@ -449,7 +337,7 @@ BEGIN
       WHEN 'request' THEN resource_owner_id
     END;
 
-    IF recipient_id IS NOT NULL THEN
+    IF recipient_id IS NOT NULL AND should_create_in_app_notification(recipient_id, 'claim.completed') THEN
       PERFORM create_notification_base(
         p_user_id := recipient_id,
         p_action := 'claim.completed',
@@ -466,14 +354,14 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- 3.3: Comments
 CREATE OR REPLACE FUNCTION notify_on_comment()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   resource_owner_id UUID;
   parent_comment_author_id UUID;
@@ -492,14 +380,16 @@ BEGIN
 
     -- Notify parent comment author
     IF parent_comment_author_id IS NOT NULL
-       AND parent_comment_author_id != NEW.author_id THEN
+       AND parent_comment_author_id != NEW.author_id
+       AND should_create_in_app_notification(parent_comment_author_id, 'comment.replied') THEN
       PERFORM create_notification_base(
         p_user_id := parent_comment_author_id,
         p_action := 'comment.replied',
         p_actor_id := NEW.author_id,
         p_resource_id := NEW.resource_id,
         p_comment_id := NEW.id,
-        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
+        p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+        p_metadata := jsonb_build_object('content_preview', LEFT(NEW.content, 200))
       );
     END IF;
   END IF;
@@ -507,48 +397,52 @@ BEGIN
   -- Notify resource owner
   IF resource_owner_id IS NOT NULL
      AND resource_owner_id != NEW.author_id
-     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id) THEN
+     AND (parent_comment_author_id IS NULL OR resource_owner_id != parent_comment_author_id)
+     AND should_create_in_app_notification(resource_owner_id, 'resource.commented') THEN
     PERFORM create_notification_base(
       p_user_id := resource_owner_id,
       p_action := 'resource.commented',
       p_actor_id := NEW.author_id,
       p_resource_id := NEW.resource_id,
       p_comment_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1)
+      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.resource_id LIMIT 1),
+      p_metadata := jsonb_build_object('content_preview', LEFT(NEW.content, 200))
     );
   END IF;
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- 3.4: Shoutouts
 CREATE OR REPLACE FUNCTION notify_on_shoutout()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   notification_id UUID;
 BEGIN
-  PERFORM create_notification_base(
-    p_user_id := NEW.receiver_id,
-    p_action := 'shoutout.received',
-    p_actor_id := NEW.sender_id,
-    p_shoutout_id := NEW.id,
-    p_community_id := NEW.community_id
-  );
+  IF should_create_in_app_notification(NEW.receiver_id, 'shoutout.received') THEN
+    PERFORM create_notification_base(
+      p_user_id := NEW.receiver_id,
+      p_action := 'shoutout.received',
+      p_actor_id := NEW.sender_id,
+      p_shoutout_id := NEW.id,
+      p_community_id := NEW.community_id
+    );
+  END IF;
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- 3.5: Messages
 CREATE OR REPLACE FUNCTION notify_on_new_message()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   participant_id UUID;
   notification_id UUID;
@@ -560,24 +454,26 @@ BEGIN
     WHERE conversation_id = NEW.conversation_id
       AND user_id != NEW.sender_id
   LOOP
-    PERFORM create_notification_base(
-      p_user_id := participant_id,
-      p_action := 'message.received',
-      p_actor_id := NEW.sender_id,
-      p_conversation_id := NEW.conversation_id
-    );
+    IF should_create_in_app_notification(participant_id, 'message.received') THEN
+      PERFORM create_notification_base(
+        p_user_id := participant_id,
+        p_action := 'message.received',
+        p_actor_id := NEW.sender_id,
+        p_conversation_id := NEW.conversation_id
+      );
+    END IF;
   END LOOP;
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 -- 3.6: Conversations
 CREATE OR REPLACE FUNCTION notify_on_new_conversation()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   conv_initiator_id UUID;
   notification_id UUID;
@@ -594,14 +490,19 @@ BEGIN
   -- Only notify if this participant is NOT the initiator
   IF NEW.user_id != conv_initiator_id THEN
     RAISE NOTICE 'notify_on_new_conversation: Processing participant % (not initiator)', NEW.user_id;
-    RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', NEW.user_id;
 
-    PERFORM create_notification_base(
-      p_user_id := NEW.user_id,
-      p_action := 'conversation.requested',
-      p_actor_id := conv_initiator_id,
-      p_conversation_id := NEW.conversation_id
-    );
+    IF should_create_in_app_notification(NEW.user_id, 'conversation.requested') THEN
+      RAISE NOTICE 'notify_on_new_conversation: Creating notification for participant %', NEW.user_id;
+
+      PERFORM create_notification_base(
+        p_user_id := NEW.user_id,
+        p_action := 'conversation.requested',
+        p_actor_id := conv_initiator_id,
+        p_conversation_id := NEW.conversation_id
+      );
+    ELSE
+      RAISE NOTICE 'notify_on_new_conversation: Skipping notification (in_app disabled) for participant %', NEW.user_id;
+    END IF;
   ELSE
     RAISE NOTICE 'notify_on_new_conversation: Skipping initiator %', NEW.user_id;
   END IF;
@@ -613,14 +514,14 @@ EXCEPTION
     RAISE NOTICE 'notify_on_new_conversation: ERROR - % %', SQLERRM, SQLSTATE;
     RAISE;
 END;
-$$;
+$function$;
 
 -- 3.7: Membership Changes
 CREATE OR REPLACE FUNCTION notify_on_membership_change()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   admin_record RECORD;
   notification_id UUID;
@@ -647,13 +548,14 @@ BEGIN
       p_user_id := admin_record.user_id,
       p_action := action_val,
       p_actor_id := COALESCE(NEW.user_id, OLD.user_id),
-      p_community_id := COALESCE(NEW.community_id, OLD.community_id)
+      p_community_id := COALESCE(NEW.community_id, OLD.community_id),
+      p_metadata := jsonb_build_object('action', CASE WHEN TG_OP = 'INSERT' THEN 'joined' ELSE 'left' END)
     );
   END LOOP;
 
   RETURN COALESCE(NEW, OLD);
 END;
-$$;
+$function$;
 
 -- 3.8: New Resources
 CREATE OR REPLACE FUNCTION notify_new_resource(
@@ -667,89 +569,60 @@ CREATE OR REPLACE FUNCTION notify_new_resource(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
   action_val action_type;
   notification_id UUID;
+  v_metadata JSONB;
+  v_resource RECORD;
 BEGIN
   -- Determine notification type based on resource type
   IF p_resource_type = 'event' THEN
     action_val := 'event.created';
+
+    -- Get resource details for event metadata
+    SELECT r.status, r.voting_deadline, rt.start_time, rt.end_time
+    INTO v_resource
+    FROM resources r
+    LEFT JOIN resource_timeslots rt ON rt.resource_id = r.id
+    WHERE r.id = p_resource_id
+    LIMIT 1;
+
+    -- Build event metadata
+    v_metadata := jsonb_build_object(
+      'resource_status', v_resource.status,
+      'voting_deadline', v_resource.voting_deadline,
+      'timeslot_start_time', v_resource.start_time,
+      'timeslot_end_time', v_resource.end_time
+    );
   ELSE
     action_val := 'resource.created';
+    v_metadata := NULL;
   END IF;
 
-  -- Create notification - metadata built automatically, delivery happens via trigger
+  -- Just create the notification - delivery happens automatically
   notification_id := create_notification_base(
     p_user_id := p_user_id,
     p_action := action_val,
     p_actor_id := p_actor_id,
     p_resource_id := p_resource_id,
-    p_community_id := p_community_id
+    p_community_id := p_community_id,
+    p_metadata := v_metadata
   );
 
   RETURN notification_id;
 END;
-$$;
-
--- 3.9: Resource-Community Association (triggers notify_new_resource)
-CREATE OR REPLACE FUNCTION notify_on_resource_community_insert()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  resource_record RECORD;
-  member_record RECORD;
-  action_val action_type;
-BEGIN
-  -- Get resource details
-  SELECT * INTO resource_record
-  FROM resources
-  WHERE id = NEW.resource_id;
-
-  -- Skip if resource doesn't exist or is not active
-  IF resource_record IS NULL OR resource_record.status != 'active' THEN
-    RETURN NEW;
-  END IF;
-
-  -- Determine action type
-  IF resource_record.type = 'event' THEN
-    action_val := 'event.created';
-  ELSE
-    action_val := 'resource.created';
-  END IF;
-
-  -- Notify all community members about new resource
-  FOR member_record IN
-    SELECT user_id
-    FROM community_memberships
-    WHERE community_id = NEW.community_id
-      AND user_id != resource_record.owner_id
-  LOOP
-    PERFORM notify_new_resource(
-      member_record.user_id,
-      resource_record.owner_id,
-      NEW.resource_id,
-      NEW.community_id,
-      resource_record.type,
-      resource_record.title
-    );
-  END LOOP;
-
-  RETURN NEW;
-END;
-$$;
+$function$;
 
 -- ============================================================================
--- PART 5: Refactor State Validation to Use Rules Table
+-- PART 4: Refactor State Validation to Use Rules Table
 -- ============================================================================
 -- Replace hardcoded CASE statements with table-driven validation
 
 CREATE OR REPLACE FUNCTION validate_claim_state_transition()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $$
+AS $function$
 DECLARE
   resource_record RECORD;
   user_is_owner BOOLEAN := FALSE;
@@ -876,343 +749,16 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
-
--- ============================================================================
--- PART 6: Complete Remaining Refactors
--- ============================================================================
-
--- 6.1: Drop old broken notify_new_resource function (5 params with wrong p_type parameter)
-DROP FUNCTION IF EXISTS notify_new_resource(uuid, uuid, uuid, uuid, resource_type);
-
--- 6.2: Complete refactor for notify_on_resource_update - remove direct push call
-CREATE OR REPLACE FUNCTION notify_on_resource_update()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  action_val action_type;
-  claim_record RECORD;
-  changes TEXT[];
-BEGIN
-  -- Determine what changed
-  changes := ARRAY[]::TEXT[];
-
-  IF OLD.title != NEW.title THEN
-    changes := array_append(changes, 'title');
-  END IF;
-
-  IF OLD.description != NEW.description THEN
-    changes := array_append(changes, 'description');
-  END IF;
-
-  IF OLD.status != NEW.status THEN
-    changes := array_append(changes, 'status');
-  END IF;
-
-  -- Skip if nothing significant changed
-  IF array_length(changes, 1) IS NULL THEN
-    RETURN NEW;
-  END IF;
-
-  -- Determine notification type
-  IF NEW.type = 'event' THEN
-    action_val := 'event.updated';
-  ELSE
-    action_val := 'resource.updated';
-  END IF;
-
-  -- Notify all active claimants
-  FOR claim_record IN
-    SELECT rc.claimant_id
-    FROM resource_claims rc
-    WHERE rc.resource_id = NEW.id
-      AND rc.status IN ('pending', 'approved', 'going', 'given')
-      AND rc.claimant_id != NEW.owner_id
-  LOOP
-    -- Create notification - metadata built automatically including changes
-    PERFORM create_notification_base(
-      p_user_id := claim_record.claimant_id,
-      p_action := action_val,
-      p_actor_id := NEW.owner_id,
-      p_resource_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1),
-      p_changes := changes
-    );
-  END LOOP;
-
-  RETURN NEW;
-END;
-$$;
-
--- 6.3: Complete refactor for notify_on_resource_cancellation - remove direct push call
-CREATE OR REPLACE FUNCTION notify_on_resource_cancellation()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  claim_record RECORD;
-BEGIN
-  -- Only for events
-  IF NEW.type != 'event' THEN
-    RETURN NEW;
-  END IF;
-
-  -- Only when status changes to cancelled
-  IF OLD.status = NEW.status OR NEW.status != 'cancelled' THEN
-    RETURN NEW;
-  END IF;
-
-  -- Notify all active claimants
-  FOR claim_record IN
-    SELECT rc.claimant_id
-    FROM resource_claims rc
-    WHERE rc.resource_id = NEW.id
-      AND rc.status IN ('pending', 'approved', 'going')
-      AND rc.claimant_id != NEW.owner_id
-  LOOP
-    -- Create notification - metadata built automatically
-    PERFORM create_notification_base(
-      p_user_id := claim_record.claimant_id,
-      p_action := 'event.cancelled',
-      p_actor_id := NEW.owner_id,
-      p_resource_id := NEW.id,
-      p_community_id := (SELECT community_id FROM resource_communities WHERE resource_id = NEW.id LIMIT 1)
-    );
-  END LOOP;
-
-  RETURN NEW;
-END;
-$$;
-
--- ============================================================================
--- PART 7: Fix Trust Score System
--- ============================================================================
--- The update_trust_score function was calling create_notification_base with p_metadata,
--- but the new create_notification_base no longer accepts that parameter.
--- Trust score updates should NOT create notifications - that should be handled separately.
--- This function should ONLY update trust_scores and trust_score_logs tables.
-
-CREATE OR REPLACE FUNCTION update_trust_score(
-  p_user_id UUID,
-  p_community_id UUID,
-  p_action_type action_type,
-  p_action_id UUID,
-  p_points_change INTEGER,
-  p_metadata JSONB DEFAULT '{}'::jsonb
-)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  current_score INTEGER := 0;
-  new_score INTEGER;
-  old_score INTEGER;
-BEGIN
-  -- Get current score for this user in this community
-  SELECT score INTO current_score
-  FROM trust_scores
-  WHERE user_id = p_user_id AND community_id = p_community_id;
-
-  old_score := COALESCE(current_score, 0);
-  new_score := old_score + p_points_change;
-
-  -- Insert or update trust score
-  INSERT INTO trust_scores (user_id, community_id, score, last_calculated_at, created_at, updated_at)
-  VALUES (p_user_id, p_community_id, new_score, NOW(), NOW(), NOW())
-  ON CONFLICT (user_id, community_id)
-  DO UPDATE SET
-    score = new_score,
-    last_calculated_at = NOW(),
-    updated_at = NOW();
-
-  -- Log the trust score change
-  INSERT INTO trust_score_logs (
-    user_id, community_id, action_type, action_id,
-    points_change, score_before, score_after, metadata, created_at
-  ) VALUES (
-    p_user_id, p_community_id, p_action_type, p_action_id,
-    p_points_change, old_score, new_score, p_metadata, NOW()
-  );
-
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE LOG 'Error in update_trust_score for user % community %: %',
-      p_user_id, p_community_id, SQLERRM;
-END;
-$$;
-
-COMMENT ON FUNCTION update_trust_score IS 'Updates trust scores and logs changes. Does NOT create notifications - notification creation should be handled by separate triggers if needed.';
-
--- ============================================================================
--- PART 8: Cleanup Orphaned Functions
--- ============================================================================
--- Remove old notification functions that are no longer attached to any triggers
--- Must include full parameter signatures for PostgreSQL to match them
-
-DROP FUNCTION IF EXISTS notify_claim(uuid, uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_claim_approved(uuid, uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_claim_cancelled(uuid, uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_claim_completed(uuid, uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_claim_rejected(uuid, uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_comment(uuid, uuid, uuid, uuid, uuid, text);
-DROP FUNCTION IF EXISTS notify_comment_reply(uuid, uuid, uuid, uuid, uuid, text);
-DROP FUNCTION IF EXISTS notify_community_member_joined(uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_community_member_left(uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_connection_accepted(uuid, uuid);
-DROP FUNCTION IF EXISTS notify_resource_cancelled(uuid, uuid, uuid, uuid);
-DROP FUNCTION IF EXISTS notify_resource_updated(uuid, uuid, uuid, uuid, uuid, text[]);
-DROP FUNCTION IF EXISTS notify_shoutout(uuid, uuid, uuid, uuid, text);
-DROP FUNCTION IF EXISTS notify_trust_level_change(uuid, uuid, integer, integer);
-DROP FUNCTION IF EXISTS notify_trust_points(uuid, uuid, integer, integer, integer);
-
--- These are trigger functions with no parameters
-DROP FUNCTION IF EXISTS notify_new_message();
-DROP FUNCTION IF EXISTS notify_on_message_received();
-DROP FUNCTION IF EXISTS notify_on_trust_points();
-
--- Drop the in-app notification check function (always enabled now)
-DROP FUNCTION IF EXISTS should_create_in_app_notification(UUID, action_type);
-
--- ============================================================================
--- PART 9: Fix handle_new_user to remove dropped notify_connection_accepted call
--- ============================================================================
-
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public', 'auth'
-AS $$
-DECLARE
-  user_email text;
-  user_meta jsonb;
-  invitation_code text;
-  member_code_record RECORD;
-  connection_id UUID;
-BEGIN
-  -- Get the email, handling potential null values
-  user_email := COALESCE(NEW.email, '');
-
-  -- Ensure user_metadata is never null
-  user_meta := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
-
-  -- Log the attempt for debugging
-  RAISE LOG 'Creating profile for user: % with email: % and metadata: %', NEW.id, user_email, user_meta;
-
-  -- Insert the profile
-  INSERT INTO public.profiles (
-    id,
-    email,
-    user_metadata,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    user_email,
-    user_meta,
-    COALESCE(NEW.created_at, now()),
-    now()
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
-    user_metadata = EXCLUDED.user_metadata,
-    updated_at = now();
-
-  -- Create default notification preferences
-  INSERT INTO public.notification_preferences (user_id)
-  VALUES (NEW.id)
-  ON CONFLICT (user_id) DO NOTHING;
-
-  RAISE LOG 'Successfully created/updated profile and preferences for user: %', NEW.id;
-
-  -- Process invitation code if present
-  invitation_code := user_meta ->> 'invitation_code';
-
-  IF invitation_code IS NOT NULL AND invitation_code != '' THEN
-    RAISE LOG 'Processing invitation code: % for user: %', invitation_code, NEW.id;
-
-    -- Find the invitation code to get community info
-    SELECT ic.*, c.id as community_id, c.name as community_name
-    INTO member_code_record
-    FROM invitation_codes ic
-    JOIN communities c ON c.id = ic.community_id
-    WHERE ic.code = invitation_code
-      AND ic.is_active = true;
-
-    IF FOUND THEN
-      RAISE LOG 'Found active invitation code: % for community: %', invitation_code, member_code_record.community_name;
-
-      -- Auto-join the community
-      INSERT INTO community_memberships (community_id, user_id, created_at, updated_at)
-      VALUES (member_code_record.community_id, NEW.id, now(), now())
-      ON CONFLICT (community_id, user_id) DO NOTHING;
-
-      RAISE LOG 'User % automatically joined community: %', NEW.id, member_code_record.community_name;
-
-      -- Create platform-level connection
-      SELECT create_user_connection(
-        member_code_record.user_id,  -- Inviter
-        NEW.id                        -- Invitee
-      ) INTO connection_id;
-
-      RAISE LOG 'Created platform-level connection for inviter % with invitee %', member_code_record.user_id, NEW.id;
-    ELSE
-      RAISE LOG 'Invalid or expired invitation code: %', invitation_code;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-EXCEPTION
-  WHEN unique_violation THEN
-    RAISE WARNING 'User profile already exists for user %', NEW.id;
-    RETURN NEW;
-
-  WHEN foreign_key_violation THEN
-    RAISE WARNING 'Foreign key violation creating profile for user %: %', NEW.id, SQLERRM;
-    RETURN NEW;
-
-  WHEN check_violation THEN
-    RAISE WARNING 'Check constraint violation creating profile for user %: %', NEW.id, SQLERRM;
-    RETURN NEW;
-
-  WHEN not_null_violation THEN
-    RAISE WARNING 'Not null violation creating profile for user %: %', NEW.id, SQLERRM;
-    RETURN NEW;
-
-  WHEN OTHERS THEN
-    RAISE WARNING 'Unexpected error creating profile for user %: %', NEW.id, SQLERRM;
-    RETURN NEW;
-END;
-$$;
+$function$;
 
 -- ============================================================================
 -- Migration Complete
 -- ============================================================================
 -- Architecture now has clean separation:
 -- 1. State validation driven by rules table (validate_claim_state_transition)
--- 2. Business logic determines WHO to notify (in 10 triggers)
--- 3. Metadata construction is automatic (create_notification_base)
--- 4. Notification record is created (just INSERT)
--- 5. Universal delivery handles HOW (push/email via one trigger)
+-- 2. Business logic determines WHO to notify (in 8 triggers)
+-- 3. Notification record is created (just INSERT)
+-- 4. Universal delivery handles HOW (push/email via one trigger)
 --
--- All notification delivery logic is in ONE place: deliver_notification()
--- All metadata construction logic is in ONE place: create_notification_base()
--- All state transition rules are in ONE place: claim_status_transition_rules table
---
--- Active notification trigger functions:
--- - notify_on_claim
--- - notify_on_claim_status_change
--- - notify_on_comment
--- - notify_on_membership_change
--- - notify_on_new_conversation
--- - notify_on_new_message
--- - notify_on_resource_cancellation
--- - notify_on_resource_community_insert
--- - notify_on_resource_update
--- - notify_on_shoutout
--- - notify_on_trust_level_change
+-- All notification delivery logic is now in ONE place: deliver_notification()
+-- All state transition rules are now in ONE place: claim_status_transition_rules table
