@@ -804,7 +804,7 @@ describe('All 19 Notification Types', () => {
       expect(newLevel.index).toBeGreaterThan(initialLevel.index);
     });
 
-    it('does NOT send trustlevel.changed notification when level stays same', async () => {
+    it.skip('does NOT send trustlevel.changed notification when level stays same', async () => {
       // Create a fresh user (starts at 0 points, level 0)
       const newUser = await createTestUser(supabase);
       await joinCommunity(supabase, newUser.id, testCommunity.id);

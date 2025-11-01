@@ -988,7 +988,67 @@ END;
 $$;
 
 -- ============================================================================
--- PART 7: Cleanup Orphaned Functions
+-- PART 7: Fix Trust Score System
+-- ============================================================================
+-- The update_trust_score function was calling create_notification_base with p_metadata,
+-- but the new create_notification_base no longer accepts that parameter.
+-- Trust score updates should NOT create notifications - that should be handled separately.
+-- This function should ONLY update trust_scores and trust_score_logs tables.
+
+CREATE OR REPLACE FUNCTION update_trust_score(
+  p_user_id UUID,
+  p_community_id UUID,
+  p_action_type action_type,
+  p_action_id UUID,
+  p_points_change INTEGER,
+  p_metadata JSONB DEFAULT '{}'::jsonb
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_score INTEGER := 0;
+  new_score INTEGER;
+  old_score INTEGER;
+BEGIN
+  -- Get current score for this user in this community
+  SELECT score INTO current_score
+  FROM trust_scores
+  WHERE user_id = p_user_id AND community_id = p_community_id;
+
+  old_score := COALESCE(current_score, 0);
+  new_score := old_score + p_points_change;
+
+  -- Insert or update trust score
+  INSERT INTO trust_scores (user_id, community_id, score, last_calculated_at, created_at, updated_at)
+  VALUES (p_user_id, p_community_id, new_score, NOW(), NOW(), NOW())
+  ON CONFLICT (user_id, community_id)
+  DO UPDATE SET
+    score = new_score,
+    last_calculated_at = NOW(),
+    updated_at = NOW();
+
+  -- Log the trust score change
+  INSERT INTO trust_score_logs (
+    user_id, community_id, action_type, action_id,
+    points_change, score_before, score_after, metadata, created_at
+  ) VALUES (
+    p_user_id, p_community_id, p_action_type, p_action_id,
+    p_points_change, old_score, new_score, p_metadata, NOW()
+  );
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE LOG 'Error in update_trust_score for user % community %: %',
+      p_user_id, p_community_id, SQLERRM;
+END;
+$$;
+
+COMMENT ON FUNCTION update_trust_score IS 'Updates trust scores and logs changes. Does NOT create notifications - notification creation should be handled by separate triggers if needed.';
+
+-- ============================================================================
+-- PART 8: Cleanup Orphaned Functions
 -- ============================================================================
 -- Remove old notification functions that are no longer attached to any triggers
 -- Must include full parameter signatures for PostgreSQL to match them
@@ -1018,7 +1078,7 @@ DROP FUNCTION IF EXISTS notify_on_trust_points();
 DROP FUNCTION IF EXISTS should_create_in_app_notification(UUID, action_type);
 
 -- ============================================================================
--- PART 7: Fix handle_new_user to remove dropped notify_connection_accepted call
+-- PART 9: Fix handle_new_user to remove dropped notify_connection_accepted call
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
