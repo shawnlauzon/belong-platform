@@ -17,7 +17,7 @@ const notificationTemplates = {
 interface EmailNotificationRequest {
   user_id: string;
   notification_id: string;
-  action: string;
+  type: string;
   title: string;
   body: string;
   metadata?: Record<string, unknown>;
@@ -28,10 +28,15 @@ interface PostmarkTemplateRequest {
   To: string;
   TemplateId: string | number;
   TemplateModel: {
-    actor_name: string;
+    subject: string;
+    actor_display_name: string;
+    actor_full_name: string;
+    actor_avatar_url: string;
     notification_title: string;
     notification_body: string;
     notification_timestamp: string;
+    event_timestamp: string;
+    resource_title: string;
     sent_to: string;
     cta_text: string;
     cta_url: string;
@@ -69,17 +74,32 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const request: EmailNotificationRequest = await req.json();
-    const { user_id, notification_id, action } = request;
+    const { user_id, notification_id, type } = request;
 
-    // Convert action (e.g., 'event.created') to column name (e.g., 'event_created')
-    const notificationType = action.replace(/\./g, '_');
+    if (type !== 'event.created') {
+      return new Response(
+        JSON.stringify({
+          sent: 0,
+          reason: 'Email notifications are only supported for event.created',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      );
+    }
+
+    // Convert type (e.g., 'event.created') to column name (e.g., 'event_created')
+    const notificationType = type.replace(/\./g, '_');
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Checking preferences for user ${user_id} and action ${action} (column: ${notificationType})`);
+    console.log(
+      `Checking preferences for user ${user_id} and type ${type} (column: ${notificationType})`,
+    );
 
     // Check if user has notifications enabled and action type is enabled
     const { data: preferences } = await supabase
@@ -102,7 +122,10 @@ Deno.serve(async (req) => {
     }
 
     console.log('Notifications enabled:', preferences.notifications_enabled);
-    console.log(`${action} (${notificationType}) enabled:`, JSON.stringify(preferences[notificationType]));
+    console.log(
+      `${type} (${notificationType}) enabled:`,
+      JSON.stringify(preferences[notificationType]),
+    );
 
     // Check global notifications enabled
     if (!preferences.notifications_enabled) {
@@ -118,12 +141,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const typePref = preferences[notificationType] as { email?: boolean } | undefined;
+    const typePref = preferences[notificationType] as
+      | { email?: boolean }
+      | undefined;
     if (!typePref || typePref.email !== true) {
       return new Response(
         JSON.stringify({
           sent: 0,
-          reason: 'Email disabled for this action type',
+          reason: 'Email disabled for this type',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -178,7 +203,6 @@ Deno.serve(async (req) => {
     }
 
     const {
-      action,
       resource_id,
       resource_title,
       resource_type,
