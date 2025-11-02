@@ -6,8 +6,6 @@ describe("hasMetadata", () => {
   it("should return true for actions with metadata", () => {
     expect(hasMetadata(ACTION_TYPES.CLAIM_APPROVED)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.CLAIM_REJECTED)).toBe(true);
-    expect(hasMetadata(ACTION_TYPES.MEMBER_JOINED)).toBe(true);
-    expect(hasMetadata(ACTION_TYPES.MEMBER_LEFT)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.RESOURCE_UPDATED)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.EVENT_UPDATED)).toBe(true);
     expect(hasMetadata(ACTION_TYPES.EVENT_CREATED)).toBe(true);
@@ -21,6 +19,8 @@ describe("hasMetadata", () => {
     expect(hasMetadata(ACTION_TYPES.CLAIM_CREATED)).toBe(false);
     expect(hasMetadata(ACTION_TYPES.MESSAGE_RECEIVED)).toBe(false);
     expect(hasMetadata(ACTION_TYPES.RESOURCE_CREATED)).toBe(false);
+    expect(hasMetadata(ACTION_TYPES.MEMBER_JOINED)).toBe(false);
+    expect(hasMetadata(ACTION_TYPES.MEMBER_LEFT)).toBe(false);
   });
 });
 
@@ -60,36 +60,22 @@ describe("getTypedMetadata", () => {
   });
 
   describe("MEMBER_JOINED and MEMBER_LEFT", () => {
-    it("should parse joined action metadata for MEMBER_JOINED", () => {
+    it("should return empty object for MEMBER_JOINED (action field contains the info)", () => {
       const result = getTypedMetadata(ACTION_TYPES.MEMBER_JOINED, {
         action: "joined",
       });
 
-      expect(result).toEqual({ action: "joined" });
+      // No metadata needed - the notification's action field already tells us it's member.joined
+      expect(result).toEqual({});
     });
 
-    it("should default to joined for MEMBER_JOINED with invalid action", () => {
-      const result = getTypedMetadata(ACTION_TYPES.MEMBER_JOINED, {
-        action: "invalid",
-      });
-
-      expect(result).toEqual({ action: "joined" });
-    });
-
-    it("should parse left action metadata for MEMBER_LEFT", () => {
+    it("should return empty object for MEMBER_LEFT (action field contains the info)", () => {
       const result = getTypedMetadata(ACTION_TYPES.MEMBER_LEFT, {
         action: "left",
       });
 
-      expect(result).toEqual({ action: "left" });
-    });
-
-    it("should default to left for MEMBER_LEFT with invalid action", () => {
-      const result = getTypedMetadata(ACTION_TYPES.MEMBER_LEFT, {
-        action: "invalid",
-      });
-
-      expect(result).toEqual({ action: "left" });
+      // No metadata needed - the notification's action field already tells us it's member.left
+      expect(result).toEqual({});
     });
   });
 

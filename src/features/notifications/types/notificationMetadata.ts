@@ -28,8 +28,6 @@ export function hasMetadata(action: ActionType): boolean {
   return (
     action === ACTION_TYPES.CLAIM_APPROVED ||
     action === ACTION_TYPES.CLAIM_REJECTED ||
-    action === ACTION_TYPES.MEMBER_JOINED ||
-    action === ACTION_TYPES.MEMBER_LEFT ||
     action === ACTION_TYPES.RESOURCE_UPDATED ||
     action === ACTION_TYPES.EVENT_UPDATED ||
     action === ACTION_TYPES.EVENT_CREATED ||
