@@ -153,6 +153,8 @@ curl -X POST http://localhost:54321/functions/v1/send-email-notification \
 
 ## Deployment
 
+### Step 1: Configure Edge Function Secrets
+
 ```bash
 # Set secrets
 supabase secrets set POSTMARK_NOTIFICATION_SERVER_TOKEN=your_token
@@ -164,6 +166,29 @@ supabase secrets set VITE_APP_URL=https://juntos.community
 # Deploy function
 supabase functions deploy send-email-notification
 ```
+
+### Step 2: Configure Vault Secrets (REQUIRED for Production)
+
+**⚠️ IMPORTANT**: The database triggers that call this Edge Function require two secrets to be stored in Supabase Vault. Without these, email notifications will NOT be sent.
+
+Open the [SQL Editor](https://supabase.com/dashboard/project/_/sql/new) in your production project and run:
+
+```sql
+-- Add project URL (replace with your actual project URL)
+select vault.create_secret('https://mhgyzaxhaxrwprtiymhs.supabase.co', 'project_url');
+
+-- Add anon key (get from Project Settings → API → anon public key)
+select vault.create_secret('YOUR_ACTUAL_ANON_KEY_HERE', 'anon_key');
+```
+
+**How to get your anon key**:
+1. Go to [Project Settings → API](https://supabase.com/dashboard/project/_/settings/api)
+2. Copy the `anon` `public` key
+3. Use it in the second SQL command above
+
+**Why Vault?** This follows [Supabase's official best practice](https://supabase.com/docs/guides/ai/automatic-embeddings#step-2-create-utility-functions) for database functions calling Edge Functions. The database functions `get_project_url()` and `get_anon_key()` retrieve these secrets from Vault to make authenticated HTTP requests via `pg_net`.
+
+**Verify Setup**: After adding secrets, create a test notification and confirm you receive an email within 10 seconds.
 
 ## Monitoring
 

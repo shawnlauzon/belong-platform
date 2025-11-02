@@ -92,7 +92,30 @@ Deploy the function to Supabase:
 pnpx supabase functions deploy send-push-notification
 ```
 
-### Step 4: Run Database Migration
+### Step 4: Configure Vault Secrets (REQUIRED for Production)
+
+**⚠️ IMPORTANT**: The database triggers that call this Edge Function require two secrets to be stored in Supabase Vault. Without these, push notifications will NOT be sent.
+
+Open the [SQL Editor](https://supabase.com/dashboard/project/_/sql/new) in your production project and run:
+
+```sql
+-- Add project URL (replace with your actual project URL)
+select vault.create_secret('https://mhgyzaxhaxrwprtiymhs.supabase.co', 'project_url');
+
+-- Add anon key (get from Project Settings → API → anon public key)
+select vault.create_secret('YOUR_ACTUAL_ANON_KEY_HERE', 'anon_key');
+```
+
+**How to get your anon key**:
+1. Go to [Project Settings → API](https://supabase.com/dashboard/project/_/settings/api)
+2. Copy the `anon` `public` key
+3. Use it in the second SQL command above
+
+**Why Vault?** This follows [Supabase's official best practice](https://supabase.com/docs/guides/ai/automatic-embeddings#step-2-create-utility-functions) for database functions calling Edge Functions. The database functions `get_project_url()` and `get_anon_key()` retrieve these secrets from Vault to make authenticated HTTP requests via `pg_net`.
+
+**Verify Setup**: After adding secrets, create a test notification and confirm push notifications are sent.
+
+### Step 5: Run Database Migration
 
 Apply the push notification migration to your database:
 
@@ -100,7 +123,7 @@ Apply the push notification migration to your database:
 pnpx supabase db push
 ```
 
-### Step 5: Verify Deployment
+### Step 6: Verify Deployment
 
 Test that the function is deployed and accessible:
 
