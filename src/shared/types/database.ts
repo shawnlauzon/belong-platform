@@ -478,7 +478,6 @@ export type Database = {
           claim_responded: Json
           comment_replied: Json
           connection_accepted: Json
-          conversation_requested: Json
           created_at: string
           event_cancelled: Json
           event_created: Json
@@ -505,7 +504,6 @@ export type Database = {
           claim_responded?: Json
           comment_replied?: Json
           connection_accepted?: Json
-          conversation_requested?: Json
           created_at?: string
           event_cancelled?: Json
           event_created?: Json
@@ -532,7 +530,6 @@ export type Database = {
           claim_responded?: Json
           comment_replied?: Json
           connection_accepted?: Json
-          conversation_requested?: Json
           created_at?: string
           event_cancelled?: Json
           event_created?: Json
@@ -1660,21 +1657,6 @@ export type Database = {
           name: string
         }[]
       }
-      create_notification_base: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_actor_id?: string
-          p_changes?: string[]
-          p_claim_id?: string
-          p_comment_id?: string
-          p_community_id?: string
-          p_conversation_id?: string
-          p_resource_id?: string
-          p_shoutout_id?: string
-          p_user_id: string
-        }
-        Returns: string
-      }
       create_user_connection: {
         Args: { p_invitee_id: string; p_inviter_id: string }
         Returns: string
@@ -2524,17 +2506,6 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
-      update_trust_score: {
-        Args: {
-          p_action_id: string
-          p_action_type: Database["public"]["Enums"]["action_type"]
-          p_community_id: string
-          p_metadata?: Json
-          p_points_change: number
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -2577,7 +2548,6 @@ export type Database = {
         | "resource.expiring"
         | "event.starting"
         | "message.received"
-        | "conversation.requested"
         | "shoutout.received"
         | "shoutout.sent"
         | "member.joined"
@@ -2783,7 +2753,6 @@ export const Constants = {
         "resource.expiring",
         "event.starting",
         "message.received",
-        "conversation.requested",
         "shoutout.received",
         "shoutout.sent",
         "member.joined",

@@ -87,6 +87,3 @@ export const isTrustNotification = (action: ActionType): boolean =>
 
 export const isMessageNotification = (action: ActionType): boolean =>
   action === ACTION_TYPES.MESSAGE_RECEIVED;
-
-export const isConversationNotification = (action: ActionType): boolean =>
-  action === ACTION_TYPES.CONVERSATION_REQUESTED;

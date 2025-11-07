@@ -52,7 +52,6 @@ export interface TypedNotificationPreferences {
   "resource.expiring": ChannelPreferences;
   "event.starting": ChannelPreferences;
   "membership.updated": ChannelPreferences;
-  "conversation.requested": ChannelPreferences;
   "message.received": ChannelPreferences;
   "shoutout.received": ChannelPreferences;
 
@@ -108,9 +107,6 @@ export function toTypedPreferences(
     "resource.expiring": parseChannelPreferences(row.resource_expiring),
     "event.starting": parseChannelPreferences(row.event_starting),
     "membership.updated": parseChannelPreferences(row.membership_updated),
-    "conversation.requested": parseChannelPreferences(
-      row.conversation_requested
-    ),
     "message.received": parseChannelPreferences(row.message_received),
     "shoutout.received": parseChannelPreferences(row.shoutout_received),
   };

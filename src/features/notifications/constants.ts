@@ -31,7 +31,6 @@ export const ACTION_TYPES = {
 
   // Social
   MESSAGE_RECEIVED: 'message.received',
-  CONVERSATION_REQUESTED: 'conversation.requested',
   SHOUTOUT_SENT: 'shoutout.sent',
   SHOUTOUT_RECEIVED: 'shoutout.received',
   MEMBER_JOINED: 'member.joined',
@@ -60,7 +59,6 @@ export type NotificationTypePreference =
   | 'resource.expiring'
   | 'event.starting'
   | 'message.received'
-  | 'conversation.requested'
   | 'shoutout.received'
   | 'membership.updated';
 
@@ -95,7 +93,6 @@ export const ACTION_TO_NOTIFICATION_TYPE_MAP: Partial<
 
   // Social (1:1)
   'message.received': 'message.received',
-  'conversation.requested': 'conversation.requested',
   'shoutout.received': 'shoutout.received',
 
   // Membership (many-to-one)

@@ -200,9 +200,6 @@ Both parties must independently confirm the transaction. Either party can initia
 **Notification Type: `message.received`** (1:1 mapping)
 - **Action**: `message.received` - You received a message → Conversation participant
 
-**Notification Type: `conversation.requested`** (1:1 mapping)
-- **Action**: `conversation.requested` - Someone requested to chat → Other participant
-
 **Notification Type: `shoutout.received`** (1:1 mapping)
 - **Action**: `shoutout.received` - You received a shoutout → Shoutout receiver
 
@@ -420,7 +417,7 @@ if (needsConfirmation) {
 CREATE TABLE notification_preferences (
   user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
 
-  -- 19 notification type columns (JSONB)
+  -- 18 notification type columns (JSONB)
   resource_commented JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   comment_replied JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   claim_created JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
@@ -436,7 +433,6 @@ CREATE TABLE notification_preferences (
   resource_expiring JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   event_starting JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   message_received JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  conversation_requested JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   shoutout_received JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   membership_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
   trustlevel_changed JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',

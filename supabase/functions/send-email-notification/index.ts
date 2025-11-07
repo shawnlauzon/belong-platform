@@ -458,9 +458,8 @@ function notificationTitle(notification: NotificationDetail): string | undefined
     case 'member.left':
       return community_name;
 
-    // Message/conversation - no title
+    // Message - no title
     case 'message.received':
-    case 'conversation.requested':
       return undefined;
 
     // These don't need additional title detail
@@ -510,8 +509,6 @@ function sentTo(notification: NotificationDetail): string {
     // Message notifications
     case 'message.received':
       return 'you and other conversation participants';
-    case 'conversation.requested':
-      return 'only you';
 
     // Shoutout notifications
     case 'shoutout.received':

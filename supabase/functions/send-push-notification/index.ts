@@ -221,8 +221,6 @@ function generatePushTitle(action: string): string {
       return 'New reply to your comment';
     case 'message.received':
       return 'New message';
-    case 'conversation.requested':
-      return 'New conversation';
     case 'shoutout.received':
       return 'You received a shoutout!';
     case 'member.joined':

@@ -78,7 +78,6 @@ describe("isChannelEnabled", () => {
     "resource.expiring": { in_app: true, push: true, email: false },
     "event.starting": { in_app: true, push: true, email: false },
     "membership.updated": { in_app: true, push: true, email: false },
-    "conversation.requested": { in_app: true, push: true, email: false },
     "message.received": { in_app: true, push: true, email: false },
     "shoutout.received": { in_app: true, push: true, email: false },
   };
@@ -148,7 +147,6 @@ describe("getChannelPreferences", () => {
     "resource.expiring": { in_app: true, push: true, email: false },
     "event.starting": { in_app: true, push: true, email: false },
     "membership.updated": { in_app: true, push: true, email: false },
-    "conversation.requested": { in_app: true, push: true, email: false },
     "message.received": { in_app: true, push: true, email: false },
     "shoutout.received": { in_app: true, push: true, email: false },
   };
@@ -187,7 +185,6 @@ describe("toTypedPreferences", () => {
       resource_expiring: { in_app: true, push: true, email: false },
       event_starting: { in_app: true, push: true, email: false },
       membership_updated: { in_app: true, push: true, email: false },
-      conversation_requested: { in_app: true, push: true, email: false },
       message_received: { in_app: true, push: true, email: false },
       shoutout_received: { in_app: true, push: true, email: false },
       connection_accepted: { in_app: true, push: true, email: false },
