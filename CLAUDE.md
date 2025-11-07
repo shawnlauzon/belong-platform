@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - DO NOT WASTE TOKENS, be succinct and concise.
 - DO NOT USE WORKAROUNDS UNLESS EXPLICITLY INSTRUCTED TO DO SO.
 - DO NOT ADD CODE "FOR NOW" UNLESS EXPLICITLY INSTRUCTED TO DO SO.
+- ALWAYS Use supabase-local MCP to get current database content when making any changes.
 - **Always use IDE diagnostics to validate code (including tests!) after implementation**
 - **Confirm a enum / function / variable / type exists before using it**: Do not just guess!
 - **If any MCP resource is unavailable, restart the MCP**

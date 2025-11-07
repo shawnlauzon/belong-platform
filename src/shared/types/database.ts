@@ -574,13 +574,13 @@ export type Database = {
         Row: {
           action: Database["public"]["Enums"]["action_type"]
           actor_id: string | null
+          changes: string[] | null
           claim_id: string | null
           comment_id: string | null
           community_id: string | null
           conversation_id: string | null
           created_at: string | null
           id: string
-          metadata: Json | null
           read_at: string | null
           resource_id: string | null
           shoutout_id: string | null
@@ -590,13 +590,13 @@ export type Database = {
         Insert: {
           action: Database["public"]["Enums"]["action_type"]
           actor_id?: string | null
+          changes?: string[] | null
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
           id?: string
-          metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
@@ -606,13 +606,13 @@ export type Database = {
         Update: {
           action?: Database["public"]["Enums"]["action_type"]
           actor_id?: string | null
+          changes?: string[] | null
           claim_id?: string | null
           comment_id?: string | null
           community_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
           id?: string
-          metadata?: Json | null
           read_at?: string | null
           resource_id?: string | null
           shoutout_id?: string | null
@@ -1398,22 +1398,21 @@ export type Database = {
       notification_details: {
         Row: {
           action: Database["public"]["Enums"]["action_type"] | null
+          actor_data: Json | null
           actor_id: string | null
-          claim_details: Json | null
+          changes: string[] | null
+          claim_data: Json | null
           claim_id: string | null
-          comment_content: string | null
+          comment_data: Json | null
           comment_id: string | null
           community_id: string | null
           community_name: string | null
           conversation_id: string | null
           created_at: string | null
           id: string | null
-          metadata: Json | null
           read_at: string | null
+          resource_data: Json | null
           resource_id: string | null
-          resource_image_url: string | null
-          resource_title: string | null
-          resource_type: Database["public"]["Enums"]["resource_type"] | null
           shoutout_id: string | null
           shoutout_message: string | null
           updated_at: string | null
@@ -1829,6 +1828,7 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_anon_key: { Args: never; Returns: string }
       get_boundary_polygon: { Args: { community_id: string }; Returns: Json }
       get_invitation_details: {
         Args: { connection_code: string }
@@ -1847,6 +1847,7 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      get_project_url: { Args: never; Returns: string }
       get_resource_renewal_days: {
         Args: { resource_type: Database["public"]["Enums"]["resource_type"] }
         Returns: number
@@ -1884,17 +1885,6 @@ export type Database = {
       mark_conversation_as_read: {
         Args: { p_conversation_id: string }
         Returns: undefined
-      }
-      notify_new_resource: {
-        Args: {
-          p_actor_id: string
-          p_community_id: string
-          p_resource_id: string
-          p_resource_title: string
-          p_resource_type: Database["public"]["Enums"]["resource_type"]
-          p_user_id: string
-        }
-        Returns: string
       }
       populate_geometry_columns:
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1939,42 +1929,6 @@ export type Database = {
       regenerate_invitation_code: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: string
-      }
-      send_email_notification_async: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_body: string
-          p_metadata?: Json
-          p_notification_id: string
-          p_title: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      send_push_notification_async: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_body: string
-          p_metadata?: Json
-          p_notification_id: string
-          p_title: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      should_send_email: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_user_id: string
-        }
-        Returns: boolean
-      }
-      should_send_push: {
-        Args: {
-          p_action: Database["public"]["Enums"]["action_type"]
-          p_user_id: string
-        }
-        Returns: boolean
       }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }

@@ -1,6 +1,21 @@
 import { createClient } from 'supabase';
 import webpush from 'web-push';
 
+/**
+ * Push Notification Edge Function
+ *
+ * This function is responsible ONLY for sending push notifications.
+ * All business logic (preference checking, deciding what to send) happens in the
+ * database trigger function (deliver_notification).
+ *
+ * Input: user_id, notification_id
+ * Process:
+ *   1. Fetch user's push subscriptions from push_subscriptions table
+ *   2. Fetch notification details from notification_details view
+ *   3. Generate title/body based on notification.action
+ *   4. Send via Web Push Protocol
+ */
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -10,10 +25,6 @@ const corsHeaders = {
 interface PushNotificationRequest {
   user_id: string;
   notification_id: string;
-  action: string;
-  title: string;
-  body: string;
-  metadata?: Record<string, unknown>;
 }
 
 interface PushSubscription {
@@ -45,32 +56,31 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const request: PushNotificationRequest = await req.json();
-    const { user_id, notification_id, action, title, body, metadata } = request;
-
-    // Convert action (e.g., 'event.created') to column name (e.g., 'event_created')
-    const notificationType = action.replace(/\./g, '_');
+    const { user_id, notification_id } = request;
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Checking preferences for user ${user_id} and action ${action} (column: ${notificationType})`);
+    console.log(
+      `Processing push notification for user ${user_id}, notification ${notification_id}`,
+    );
 
-    // Check if user has notifications enabled and action type is enabled
-    const { data: preferences } = await supabase
-      .from('notification_preferences')
-      .select('notifications_enabled, ' + notificationType)
-      .eq('user_id', user_id)
+    // Fetch notification details
+    const { data: notification, error: notificationError } = await supabase
+      .from('notification_details')
+      .select('*')
+      .eq('id', notification_id)
       .single();
 
-    if (!preferences) {
+    if (notificationError || !notification) {
       return new Response(
         JSON.stringify({
           sent: 0,
           failed: 0,
           removed: 0,
-          reason: 'No preferences found',
+          reason: 'Notification not found',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -79,43 +89,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Notifications enabled:', preferences.notifications_enabled);
-    console.log(`${action} (${notificationType}) enabled:`, JSON.stringify(preferences[notificationType]));
-
-    // Check global notifications enabled
-    if (!preferences.notifications_enabled) {
-      return new Response(
-        JSON.stringify({
-          sent: 0,
-          failed: 0,
-          removed: 0,
-          reason: 'User has disabled notifications',
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      );
-    }
-
-    // Check action-specific preference (unless it's event.cancelled which always sends)
-    if (action !== 'event.cancelled') {
-      const typePref = preferences[notificationType] as { push?: boolean } | undefined;
-      if (!typePref || typePref.push !== true) {
-        return new Response(
-          JSON.stringify({
-            sent: 0,
-            failed: 0,
-            removed: 0,
-            reason: 'Push disabled for this action type',
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          },
-        );
-      }
-    }
+    // Generate title and body based on action type
+    const action = notification.action;
+    const title = generatePushTitle(action);
+    const body = generatePushBody(notification);
 
     // Get user's push subscriptions
     const { data: subscriptions, error: subsError } = await supabase
@@ -149,7 +126,6 @@ Deno.serve(async (req) => {
       data: {
         notification_id,
         action,
-        metadata: metadata || {},
       },
     });
 
@@ -219,3 +195,52 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+/**
+ * Generate push notification title based on action type
+ */
+function generatePushTitle(action: string): string {
+  switch (action) {
+    case 'claim.created':
+      return 'New claim on your resource';
+    case 'claim.approved':
+      return 'Your claim was approved';
+    case 'claim.rejected':
+      return 'Your claim was rejected';
+    case 'claim.cancelled':
+      return 'Claim cancelled';
+    case 'claim.completed':
+      return 'Claim completed';
+    case 'resource.given':
+      return 'Resource marked as given';
+    case 'resource.received':
+      return 'Resource confirmed received';
+    case 'resource.commented':
+      return 'New comment on your resource';
+    case 'comment.replied':
+      return 'New reply to your comment';
+    case 'message.received':
+      return 'New message';
+    case 'conversation.requested':
+      return 'New conversation';
+    case 'shoutout.received':
+      return 'You received a shoutout!';
+    case 'member.joined':
+      return 'New member joined';
+    case 'member.left':
+      return 'Member left';
+    case 'resource.created':
+      return 'New resource';
+    case 'event.created':
+      return 'New event';
+    default:
+      return 'Notification';
+  }
+}
+
+/**
+ * Generate push notification body based on notification details
+ */
+function generatePushBody(notification: any): string {
+  return 'You have a new notification';
+}

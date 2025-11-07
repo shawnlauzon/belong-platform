@@ -48,7 +48,11 @@ export function toDomainNotification(
 ): NotificationDetail {
   const action = (row.action ||
     ACTION_TYPES.RESOURCE_CREATED) as ActionType;
-  const rawMetadata = (row.metadata as Record<string, unknown>) || {};
+
+  // Extract typed data from new columns
+  const actor_data = (row.actor_data as Record<string, unknown>) || {};
+  const resource_data = (row.resource_data as Record<string, unknown>) || {};
+  const comment_data = (row.comment_data as Record<string, unknown>) || {};
 
   return {
     id: row.id || '',
@@ -63,20 +67,20 @@ export function toDomainNotification(
     shoutoutId: row.shoutout_id || undefined,
     conversationId: row.conversation_id || undefined,
 
-    // Actor information (from metadata)
+    // Actor information (from actor_data)
     actorId: row.actor_id || undefined,
-    actorName: (rawMetadata.actor_display_name as string) || undefined,
-    actorAvatar: (rawMetadata.actor_avatar_url as string) || undefined,
+    actorName: (actor_data.display_name as string) || undefined,
+    actorAvatar: (actor_data.avatar_url as string) || undefined,
 
-    // Resource information (denormalized from resources table)
-    resourceTitle: row.resource_title || undefined,
-    resourceType: row.resource_type || undefined,
+    // Resource information (from resource_data)
+    resourceTitle: (resource_data.title as string) || undefined,
+    resourceType: (resource_data.type as 'offer' | 'request' | 'event') || undefined,
 
-    // Comment information (denormalized from comments table)
-    commentContent: row.comment_content || undefined,
+    // Comment information (from comment_data)
+    commentContent: (comment_data.content_preview as string) || undefined,
 
-    // Claim information (denormalized from resource_claims table)
-    claimDetails: parseClaimDetails(row.claim_details),
+    // Claim information (from claim_data)
+    claimDetails: parseClaimDetails(row.claim_data),
 
     // Community information (denormalized from communities table)
     communityName: row.community_name || undefined,
@@ -84,8 +88,13 @@ export function toDomainNotification(
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,
 
-    // Typed metadata based on action
-    metadata: getTypedMetadata(action, rawMetadata),
+    // Typed metadata based on action (build from typed columns)
+    metadata: getTypedMetadata(action, {
+      changes: row.changes,
+      ...actor_data,
+      ...resource_data,
+      ...comment_data,
+    }),
 
     // Status
     readAt: row.read_at ? new Date(row.read_at) : null,
