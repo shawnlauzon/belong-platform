@@ -524,7 +524,10 @@ describeIf('Email Preview - Manual Verification', () => {
           .select('*')
           .eq('user_id', otherUser.id)
           .single();
-        console.log('🔍 Notification preferences:', JSON.stringify(prefs, null, 2));
+        console.log(
+          '🔍 Notification preferences:',
+          JSON.stringify(prefs, null, 2),
+        );
 
         const event = await createTestResource(
           supabase,
@@ -560,12 +563,17 @@ describeIf('Email Preview - Manual Verification', () => {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        console.log('🔍 All notifications for otherUser:', JSON.stringify(notifications, null, 2));
+        console.log(
+          '🔍 All notifications for otherUser:',
+          JSON.stringify(notifications, null, 2),
+        );
 
         expect(notifications).toBeDefined();
         expect(notifications?.length).toBeGreaterThan(0);
 
-        const eventNotification = notifications?.find(n => n.action === 'event.created');
+        const eventNotification = notifications?.find(
+          (n) => n.action === 'event.created',
+        );
         expect(eventNotification).toBeDefined();
 
         console.log('✉️  Email sent for event.created (standard case)');
@@ -844,23 +852,6 @@ describeIf('Email Preview - Manual Verification', () => {
         });
 
         console.log('✉️  Email sent for message.received (long message)');
-      });
-    });
-
-    describe('conversation.requested', () => {
-      it.skip('sends email when someone requests to chat (standard)', async () => {
-        await enableEmailForType(resourceOwner.id, 'conversation_requested');
-
-        await signInAsUser(supabase, otherUser);
-
-        // Starting a conversation triggers conversation.requested notification
-        await startConversation(supabase, {
-          otherUserId: resourceOwner.id,
-        });
-
-        console.log(
-          '✉️  Email sent for conversation.requested (standard case)',
-        );
       });
     });
 

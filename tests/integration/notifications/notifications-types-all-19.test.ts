@@ -605,30 +605,6 @@ describe('All 19 Notification Types', () => {
       );
     });
 
-    it('conversation.requested - notifies user of new conversation request', async () => {
-      await signInAsUser(supabase, commenter);
-      const conversation = await startConversation(supabase, {
-        otherUserId: claimant.id,
-      });
-
-      await signInAsUser(supabase, claimant);
-
-      const { data: allNotifications } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', claimant.id);
-
-      expect(allNotifications).toContainEqual(
-        expect.objectContaining({
-          action: 'conversation.requested',
-          user_id: claimant.id,
-          actor_id: commenter.id,
-          conversation_id: conversation.id,
-          read_at: null,
-        }),
-      );
-    });
-
     it('shoutout.received - notifies user of shoutout', async () => {
       const resource = await createTestResource(
         supabase,

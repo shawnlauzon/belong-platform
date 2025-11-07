@@ -71,6 +71,111 @@ ALTER TYPE action_type_new RENAME TO action_type;
 -- Recreate functions with the new action_type enum
 -- These will be automatically recreated with the new type since we're using the same name
 
+-- Recreate update_trust_score function that was dropped by CASCADE
+CREATE OR REPLACE FUNCTION update_trust_score(
+  p_user_id UUID,
+  p_community_id UUID,
+  p_action_type action_type,
+  p_action_id UUID,
+  p_points_change INTEGER,
+  p_metadata JSONB DEFAULT '{}'::jsonb
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_score INTEGER := 0;
+  new_score INTEGER;
+  old_score INTEGER;
+BEGIN
+  -- Get current score for this user in this community
+  SELECT score INTO current_score
+  FROM trust_scores
+  WHERE user_id = p_user_id AND community_id = p_community_id;
+
+  old_score := COALESCE(current_score, 0);
+  new_score := old_score + p_points_change;
+
+  -- Insert or update trust score
+  INSERT INTO trust_scores (user_id, community_id, score, last_calculated_at, created_at, updated_at)
+  VALUES (p_user_id, p_community_id, new_score, NOW(), NOW(), NOW())
+  ON CONFLICT (user_id, community_id)
+  DO UPDATE SET
+    score = new_score,
+    last_calculated_at = NOW(),
+    updated_at = NOW();
+
+  -- Log the trust score change
+  INSERT INTO trust_score_logs (
+    user_id, community_id, action_type, action_id,
+    points_change, score_before, score_after, metadata, created_at
+  ) VALUES (
+    p_user_id, p_community_id, p_action_type, p_action_id,
+    p_points_change, old_score, new_score, p_metadata, NOW()
+  );
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE LOG 'Error in update_trust_score for user % community %: %',
+      p_user_id, p_community_id, SQLERRM;
+END;
+$$;
+
+COMMENT ON FUNCTION update_trust_score IS 'Updates trust scores and logs changes. Does NOT create notifications - notification creation should be handled by separate triggers if needed.';
+
+-- Recreate create_notification_base function that was dropped by CASCADE
+CREATE OR REPLACE FUNCTION create_notification_base(
+  p_user_id UUID,
+  p_action action_type,
+  p_actor_id UUID DEFAULT NULL,
+  p_resource_id UUID DEFAULT NULL,
+  p_comment_id UUID DEFAULT NULL,
+  p_claim_id UUID DEFAULT NULL,
+  p_shoutout_id UUID DEFAULT NULL,
+  p_community_id UUID DEFAULT NULL,
+  p_conversation_id UUID DEFAULT NULL,
+  p_changes TEXT[] DEFAULT NULL
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  notification_id UUID;
+BEGIN
+  -- Insert notification with only changes array (no metadata)
+  INSERT INTO notifications (
+    user_id,
+    action,
+    actor_id,
+    resource_id,
+    comment_id,
+    claim_id,
+    shoutout_id,
+    community_id,
+    conversation_id,
+    changes
+  ) VALUES (
+    p_user_id,
+    p_action,
+    p_actor_id,
+    p_resource_id,
+    p_comment_id,
+    p_claim_id,
+    p_shoutout_id,
+    p_community_id,
+    p_conversation_id,
+    p_changes
+  )
+  RETURNING id INTO notification_id;
+
+  RETURN notification_id;
+END;
+$$;
+
+COMMENT ON FUNCTION create_notification_base IS 'Creates notification with changes array only - all other data derived from JOINs in notification_details view';
+
 -- Recreate the notification_details view
 CREATE VIEW notification_details AS
 SELECT
