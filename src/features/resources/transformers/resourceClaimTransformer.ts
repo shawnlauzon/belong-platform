@@ -25,7 +25,7 @@ export function toResourceClaimInsertRow(
     timeslot_id: claim.timeslotId,
     request_text: claim.requestText,
     response_text: claim.responseText,
-    commitment_level: claim.commitmentLevel ?? 'interested',
+    commitment_level: claim.commitmentLevel ?? null,
   };
 }
 
@@ -71,7 +71,7 @@ export function toDomainResourceClaim(
     timeslotId: dbClaim.timeslot_id,
     timeslot: toDomainResourceTimeslot(dbClaim.resource_timeslots),
     status: dbClaim.status,
-    commitmentLevel: dbClaim.commitment_level ?? 'interested',
+    commitmentLevel: dbClaim.commitment_level,
     requestText: dbClaim.request_text ?? undefined,
     responseText: dbClaim.response_text ?? undefined,
     createdAt: new Date(dbClaim.created_at),

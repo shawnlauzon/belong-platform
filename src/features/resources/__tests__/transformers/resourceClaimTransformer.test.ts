@@ -31,14 +31,14 @@ describe('ResourceClaim Transformer', () => {
       });
     });
 
-    it('should default commitment level to interested when not provided', () => {
+    it('should default commitment level to null when not provided', () => {
       const claimInput = createFakeResourceClaimInput({
         commitmentLevel: undefined,
       });
 
       const dbClaim = toResourceClaimInsertRow(claimInput);
 
-      expect(dbClaim.commitment_level).toBe('interested');
+      expect(dbClaim.commitment_level).toBeNull();
     });
 
     it('should handle undefined request and response text', () => {
@@ -134,7 +134,7 @@ describe('ResourceClaim Transformer', () => {
       expect(claim.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should handle null commitment level by defaulting to interested', () => {
+    it('should preserve null commitment level', () => {
       const timeslot = createFakeResourceTimeslotRow();
       const dbClaim = {
         ...createFakeResourceClaimRow({
@@ -146,7 +146,7 @@ describe('ResourceClaim Transformer', () => {
 
       const claim = toDomainResourceClaim(dbClaim);
 
-      expect(claim.commitmentLevel).toBe('interested');
+      expect(claim.commitmentLevel).toBeNull();
     });
 
     it('should handle null request and response text', () => {

@@ -62,7 +62,7 @@ User registrations/claims on timeslots.
 - `claimantId` - Who's claiming
 - `resourceOwnerId` - Owner of the resource
 - `status` - Current state in workflow
-- `commitmentLevel` - `'interested'` | `'committed'` | `'none'` (separate from status)
+- `commitmentLevel` - `'interested'` | `'committed'` | `'none'` | `null` (separate from status)
 - `notes` - Optional message to owner
 - `timeslot` - Full timeslot object
 
@@ -147,9 +147,10 @@ Offers and requests require both parties to participate:
 ### Commitment Levels
 
 Separate from status, commitment levels track attendee intent (primarily for events):
-- `interested` - Registered but not firmly committed
-- `committed` - Confirmed attendance
-- `none` - No specific commitment level
+- `'interested'` - Interested but not firmly committed
+- `'committed'` - Committed to attend
+- `'none'` - No interest
+- `null` - Unspecified/not set
 
 Claimants can update their commitment level independently of status changes.
 
@@ -310,7 +311,7 @@ else if (resource.requiresApproval) {
 
 These are separate, independent fields:
 - **status** - Where in the workflow (pending → approved → going → attended)
-- **commitment_level** - How committed the person is (interested/committed/none)
+- **commitment_level** - How committed the person is ('interested' | 'committed' | 'none' | null)
 
 Commitment level can be updated independently without changing status.
 

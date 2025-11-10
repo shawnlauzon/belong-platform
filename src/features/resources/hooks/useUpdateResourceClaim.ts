@@ -13,9 +13,9 @@ export function useUpdateResourceClaim() {
   return useMutation<
     ResourceClaim,
     Error,
-    Partial<ResourceClaimInput> & { id: string; status: ResourceClaimStatus }
+    Partial<ResourceClaimInput> & { id: string; status?: ResourceClaimStatus }
   >({
-    mutationFn: (update: Partial<ResourceClaimInput> & { id: string; status: ResourceClaimStatus }) => updateResourceClaim(supabase, update),
+    mutationFn: (update: Partial<ResourceClaimInput> & { id: string; status?: ResourceClaimStatus }) => updateResourceClaim(supabase, update),
     onSuccess: (claim: ResourceClaim) => {
       queryClient.setQueryData(resourceClaimsKeys.detail(claim.id), claim);
 

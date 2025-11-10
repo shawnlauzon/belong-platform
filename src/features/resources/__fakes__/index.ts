@@ -349,7 +349,7 @@ export function createFakeResourceClaim(
       'going',
       'attended',
     ] as const),
-    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed', 'none'] as CommitmentLevel[]),
+    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed', 'none', null] as (CommitmentLevel | null)[]),
     requestText: faker.helpers.maybe(() => faker.lorem.sentence()),
     responseText: faker.helpers.maybe(() => faker.lorem.sentence()),
     createdAt: now,
@@ -369,7 +369,7 @@ export function createFakeResourceClaimInput(
     timeslotId: faker.string.uuid(),
     requestText: faker.helpers.maybe(() => faker.lorem.sentence()),
     responseText: faker.helpers.maybe(() => faker.lorem.sentence()),
-    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed', 'none'] as CommitmentLevel[]),
+    commitmentLevel: faker.helpers.arrayElement(['interested', 'committed', 'none', null] as (CommitmentLevel | null)[]),
     ...overrides,
   };
 }
@@ -397,7 +397,7 @@ export function createFakeResourceClaimRow(
       'going',
       'attended',
     ] as const),
-    commitment_level: faker.helpers.arrayElement(['interested', 'committed', 'none'] as CommitmentLevel[]),
+    commitment_level: faker.helpers.arrayElement(['interested', 'committed', 'none', null] as (CommitmentLevel | null)[]),
     request_text: faker.helpers.maybe(() => faker.lorem.sentence()) ?? null,
     response_text: faker.helpers.maybe(() => faker.lorem.sentence()) ?? null,
     created_at: now,

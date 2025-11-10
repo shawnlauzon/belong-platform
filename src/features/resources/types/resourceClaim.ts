@@ -6,7 +6,7 @@ export type ResourceClaim = IsPersisted<ResourceClaimInput> & {
   resourceOwnerId: string;
   timeslot: ResourceTimeslot;
   status: ResourceClaimStatus;
-  commitmentLevel: CommitmentLevel;
+  commitmentLevel: CommitmentLevel | null;
   requestText?: string;
   responseText?: string;
 };
@@ -93,12 +93,12 @@ export type ResourceClaimSummary = Pick<
  * @property timeslotId - The ID of the timeslot being claimed
  * @property requestText - Optional message from the claimant when making the claim
  * @property responseText - Optional response from the resource owner
- * @property commitmentLevel - Optional commitment level (defaults to 'interested' for events)
+ * @property commitmentLevel - Optional commitment level ('interested', 'committed', 'none', or null for unspecified)
  */
 export type ResourceClaimInput = {
   resourceId: string;
   timeslotId: string;
   requestText?: string;
   responseText?: string;
-  commitmentLevel?: CommitmentLevel;
+  commitmentLevel?: CommitmentLevel | null;
 };
