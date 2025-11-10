@@ -53,6 +53,7 @@ export function toDomainNotification(
   const actor_data = (row.actor_data as Record<string, unknown>) || {};
   const resource_data = (row.resource_data as Record<string, unknown>) || {};
   const comment_data = (row.comment_data as Record<string, unknown>) || {};
+  const community_data = (row.community_data as Record<string, unknown>) || {};
 
   return {
     id: row.id || '',
@@ -82,8 +83,8 @@ export function toDomainNotification(
     // Claim information (from claim_data)
     claimDetails: parseClaimDetails(row.claim_data),
 
-    // Community information (denormalized from communities table)
-    communityName: row.community_name || undefined,
+    // Community information (from community_data)
+    communityName: (community_data.name as string) || undefined,
 
     // Shoutout information (denormalized from shoutouts table)
     shoutoutMessage: row.shoutout_message || undefined,

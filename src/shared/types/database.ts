@@ -1424,8 +1424,8 @@ export type Database = {
           claim_id: string | null
           comment_data: Json | null
           comment_id: string | null
+          community_data: Json | null
           community_id: string | null
-          community_name: string | null
           conversation_id: string | null
           created_at: string | null
           id: string | null

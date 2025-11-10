@@ -35,6 +35,75 @@ interface PushSubscription {
   auth_key: string;
 }
 
+interface ActorData {
+  display_name?: string;
+  full_name?: string;
+  avatar_url?: string;
+}
+
+interface ResourceData {
+  title?: string;
+  type?: string;
+  status?: string;
+  voting_deadline?: string;
+  image_url?: string;
+  timeslot_start_time?: string;
+  timeslot_end_time?: string;
+}
+
+interface CommentData {
+  content_preview?: string;
+}
+
+interface ClaimData {
+  status?: string;
+  commitment_level?: 'none' | 'interested' | 'committed';
+  timeslot_id?: string;
+  timeslot_start_time?: string;
+  timeslot_end_time?: string;
+  resource_id?: string;
+  resource_title?: string;
+  resource_type?: string;
+  claimant_id?: string;
+  claimant_name?: string;
+  owner_id?: string;
+  owner_name?: string;
+}
+
+interface CommunityData {
+  name?: string;
+  time_zone?: string;
+  icon?: string;
+  color?: string;
+  type?: string;
+  description?: string;
+  banner_image_url?: string;
+}
+
+interface NotificationDetail {
+  id: string;
+  action: string;
+  resource_id?: string;
+  comment_id?: string;
+  claim_id?: string;
+  community_id?: string;
+  shoutout_id?: string;
+  conversation_id?: string;
+  actor_id?: string;
+  created_at: string;
+
+  // Typed data columns
+  actor_data?: ActorData;
+  resource_data?: ResourceData;
+  comment_data?: CommentData;
+  claim_data?: ClaimData;
+  community_data?: CommunityData;
+
+  // Simple columns
+  changes?: string[];
+  shoutout_message?: string;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -239,6 +308,6 @@ function generatePushTitle(action: string): string {
 /**
  * Generate push notification body based on notification details
  */
-function generatePushBody(notification: any): string {
+function generatePushBody(notification: NotificationDetail): string {
   return 'You have a new notification';
 }

@@ -35,16 +35,18 @@ interface PostmarkTemplateRequest {
     subject: string;
     actor_display_name: string;
     actor_full_name: string;
-    actor_avatar_url: string;
+    actor_avatar_url?: string;
     actor_operation: string;
+    community_name: string;
+    notification_type: string;
     notification_title?: string;
     timeslot?: string;
     sent_to: string;
+    sent_because: string;
     actions: {
       name: string;
       url: string;
     }[];
-    details_url: string;
     manage_preferences_url: string;
   };
   TrackOpens: boolean;
@@ -243,7 +245,7 @@ interface CommentData {
 
 interface ClaimData {
   status?: string;
-  commitment_level?: string;
+  commitment_level?: 'none' | 'interested' | 'committed';
   timeslot_id?: string;
   timeslot_start_time?: string;
   timeslot_end_time?: string;
@@ -256,16 +258,26 @@ interface ClaimData {
   owner_name?: string;
 }
 
+interface CommunityData {
+  name?: string;
+  time_zone?: string;
+  icon?: string;
+  color?: string;
+  type?: string;
+  description?: string;
+  banner_image_url?: string;
+}
+
 interface NotificationDetail extends Notification {
   // Typed data columns
   actor_data?: ActorData;
   resource_data?: ResourceData;
   comment_data?: CommentData;
   claim_data?: ClaimData;
+  community_data?: CommunityData;
 
   // Simple columns
   changes?: string[];
-  community_name?: string;
   shoutout_message?: string;
 }
 
@@ -276,7 +288,7 @@ function createEmailTemplateModel(
   notification: NotificationDetail,
   appUrl: string,
 ): PostmarkTemplateRequest['TemplateModel'] {
-  const { resource_id, actor_data, resource_data } = notification;
+  const { actor_data, resource_data } = notification;
   const timeslot_start_time = resource_data?.timeslot_start_time;
   const actor_display_name = actor_data?.display_name || 'Someone';
   const actor_full_name = actor_data?.full_name || 'Someone';
@@ -288,22 +300,32 @@ function createEmailTemplateModel(
     ? `${actor_display_name} ${operation}: ${title}`
     : `${actor_display_name} ${operation}`;
 
+  const sent = sentText(notification);
+
   return {
     subject,
     actor_display_name,
     actor_full_name,
     actor_avatar_url,
     actor_operation: operation,
+    community_name: notification.community_data?.name || '',
     notification_title: title,
-    timeslot: formatEventTimestamp(timeslot_start_time),
-    sent_to: sentTo(notification),
+    notification_type: notification.action,
+    timeslot: formatEventTimestamp(
+      notification.community_data,
+      timeslot_start_time,
+    ),
+    sent_to: sent.to,
+    sent_because: sent.because,
     actions: actions(notification, appUrl),
-    details_url: `${appUrl}/events/${resource_id}`,
     manage_preferences_url: `${appUrl}/notifications/settings`,
   };
 }
 
-function formatEventTimestamp(isoString?: string): string | undefined {
+function formatEventTimestamp(
+  communityData?: CommunityData,
+  isoString?: string,
+): string | undefined {
   if (!isoString) {
     return undefined;
   }
@@ -314,17 +336,20 @@ function formatEventTimestamp(isoString?: string): string | undefined {
   const options: Intl.DateTimeFormatOptions = {
     dateStyle: 'full',
     timeStyle: 'short',
+    timeZone: communityData?.time_zone,
   };
 
   return date.toLocaleString('en-US', options);
 }
 
 function actions(notification: NotificationDetail, appUrl: string) {
+  const resourceType = notification.resource_data?.type;
+
   switch (notification.action) {
     case 'resource.created':
       return [
         {
-          name: 'View Resource',
+          name: resourceType === 'offer' ? 'View Offer' : 'View Request',
           url: `${appUrl}/resources/${notification.resource_id}`,
         },
       ];
@@ -332,17 +357,31 @@ function actions(notification: NotificationDetail, appUrl: string) {
       return [
         {
           name: 'Accept',
-          url: `${appUrl}/events/${notification.resource_id}`,
+          url: `${appUrl}/resources/${notification.resource_id}`,
         },
         {
           name: 'Decline',
-          url: `${appUrl}/events/${notification.resource_id}`,
+          url: `${appUrl}/resources/${notification.resource_id}`,
         },
       ];
     case 'claim.created':
       return [
         {
-          name: 'View Claim',
+          name:
+            resourceType === 'event'
+              ? 'Approve attendance'
+              : resourceType === 'request'
+                ? 'Approve offer'
+                : 'Approve request',
+          url: `${appUrl}/claims/${notification.claim_id}`,
+        },
+        {
+          name:
+            resourceType === 'event'
+              ? 'Decline attendance'
+              : resourceType === 'request'
+                ? 'Decline offer'
+                : 'Decline request',
           url: `${appUrl}/claims/${notification.claim_id}`,
         },
       ];
@@ -354,27 +393,44 @@ function actions(notification: NotificationDetail, appUrl: string) {
 function actorOperation(notification: NotificationDetail): string {
   const action = notification.action;
   const resourceType = notification.resource_data?.type;
+  const commitmentLevel = notification.claim_data?.commitment_level;
 
   // Resource and event actions
   if (action === 'resource.created') {
-    return 'shared a resource';
+    return 'shared something you might like';
   }
   if (action === 'event.created') {
     return 'posted a new event';
   }
   if (action.startsWith('event.')) {
-    return 'updated an event';
+    return 'updated their event';
   }
   if (action.startsWith('resource.')) {
-    return 'updated a resource';
+    if (resourceType === 'offer') {
+      return 'updated an offer';
+    } else if (resourceType === 'request') {
+      return 'updated their favor request';
+    } else {
+      return 'updated their resource';
+    }
   }
 
   // Claim actions - differentiate between offers and requests
   if (action === 'claim.created') {
-    if (resourceType === 'offer') {
-      return 'accepted your offer';
-    } else if (resourceType === 'request') {
-      return 'offered to help';
+    switch (resourceType) {
+      case 'offer':
+        return 'accepted your offer';
+      case 'request':
+        return 'offered to help';
+      case 'event':
+        switch (commitmentLevel) {
+          case 'none':
+            return 'is a no to your event';
+          case 'interested':
+            return 'is a maybe to your event';
+          case 'committed':
+            return 'is a yes to your event';
+        }
     }
     return 'responded to your resource';
   }
@@ -390,7 +446,7 @@ function actorOperation(notification: NotificationDetail): string {
     return "can't make the time you proposed";
   }
   if (action.startsWith('claim.')) {
-    return 'updated a response';
+    return 'updated their response';
   }
 
   // Comment actions
@@ -408,7 +464,7 @@ function actorOperation(notification: NotificationDetail): string {
     return 'gave you a shoutout';
   }
   if (action.startsWith('shoutout.')) {
-    return 'updated a shoutout';
+    return 'updated their shoutout';
   }
 
   // Membership actions
@@ -426,8 +482,10 @@ function actorOperation(notification: NotificationDetail): string {
   return 'performed an action';
 }
 
-function notificationTitle(notification: NotificationDetail): string | undefined {
-  const { action, resource_data, community_name } = notification;
+function notificationTitle(
+  notification: NotificationDetail,
+): string | undefined {
+  const { action, resource_data, community_data } = notification;
   const resource_title = resource_data?.title;
 
   switch (action) {
@@ -456,7 +514,7 @@ function notificationTitle(notification: NotificationDetail): string | undefined
     // Membership changes - use community name
     case 'member.joined':
     case 'member.left':
-      return community_name;
+      return community_data?.name;
 
     // Message - no title
     case 'message.received':
@@ -471,118 +529,116 @@ function notificationTitle(notification: NotificationDetail): string | undefined
   }
 }
 
-function sentTo(notification: NotificationDetail): string {
-  const { action, community_name } = notification;
+function sentText(notification: NotificationDetail): {
+  to: string;
+  because: string;
+} {
+  const { action, community_data } = notification;
 
   switch (action) {
     // New resource/event notifications - sent to all community members
     case 'resource.created':
     case 'event.created':
-      return `members of the ${community_name || 'community'}`;
+      return {
+        to: `members of the ${community_data?.name || 'community'}`,
+        because: 'because you are a member',
+      };
 
     // Claim notifications - sent to specific individuals
     case 'claim.created':
-      return 'only you, the resource owner';
+      return {
+        to: 'only you, the resource owner',
+        because: 'because you are the owner',
+      };
     case 'claim.approved':
     case 'claim.rejected':
     case 'claim.cancelled':
     case 'claim.completed':
-      return 'only you';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
 
     // Resource handoff notifications - sent to the other party
     case 'resource.given':
     case 'resource.received':
-      return 'only you';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
 
     // Resource update/cancellation - sent to claimants
     case 'resource.updated':
     case 'event.updated':
     case 'event.cancelled':
-      return 'you and others who registered';
+      return {
+        to: 'you and others who registered',
+        because: 'because you are the owner',
+      };
 
     // Comment notifications
     case 'resource.commented':
-      return 'you, the resource owner';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
     case 'comment.replied':
-      return 'you, the comment author';
+      return {
+        to: 'only you',
+        because: 'because you are the author',
+      };
 
     // Message notifications
     case 'message.received':
-      return 'you and other conversation participants';
+      return {
+        to: 'you and other conversation participants',
+        because: 'because you are the owner',
+      };
 
     // Shoutout notifications
     case 'shoutout.received':
-      return 'only you';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
 
     // Membership notifications - sent to admins
     case 'member.joined':
     case 'member.left':
-      return `community admins of ${community_name || 'the community'}`;
+      return {
+        to: `community admins of ${community_data?.name || 'the community'}`,
+        because: 'because you are the owner',
+      };
 
     // Scheduled reminders
     case 'resource.expiring':
-      return 'you and active claimants';
+      return {
+        to: 'you and active claimants',
+        because: 'because you are the owner',
+      };
     case 'event.starting':
-      return 'you and registered attendees';
+      return {
+        to: 'you and registered attendees',
+        because: 'because you are the owner',
+      };
 
     // Trust score and connections
     case 'trustlevel.changed':
-      return 'only you';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
     case 'connection.accepted':
-      return 'only you';
+      return {
+        to: 'only you',
+        because: 'because you are the owner',
+      };
 
     // Default fallback
     default:
-      return 'you';
+      return {
+        to: 'you',
+        because: 'because you are the owner',
+      };
   }
-}
-
-/**
- * Generate CTA text and URL based on notification
- */
-function generateCTA(
-  notification: Notification,
-  appUrl: string,
-): { ctaText: string; ctaUrl: string } {
-  const action = notification.action;
-
-  // Default fallback
-  let ctaText = 'View Notification';
-  let ctaUrl = `${appUrl}/notifications`;
-
-  // Generate specific CTAs based on notification action
-  if (
-    action.includes('resource.') ||
-    action.includes('event.') ||
-    action.includes('claim.')
-  ) {
-    if (notification.resource_id) {
-      ctaText = action.includes('event.') ? 'View Event' : 'View Resource';
-      ctaUrl = `${appUrl}/resources/${notification.resource_id}`;
-    }
-  } else if (action.includes('message.') || action.includes('conversation.')) {
-    if (notification.conversation_id) {
-      ctaText = 'View Conversation';
-      ctaUrl = `${appUrl}/messages/${notification.conversation_id}`;
-    }
-  } else if (action.includes('comment.')) {
-    if (notification.resource_id) {
-      ctaText = 'View Comment';
-      ctaUrl = `${appUrl}/resources/${notification.resource_id}${
-        notification.comment_id ? `#comment-${notification.comment_id}` : ''
-      }`;
-    }
-  } else if (action.includes('shoutout.')) {
-    if (notification.shoutout_id) {
-      ctaText = 'View Shoutout';
-      ctaUrl = `${appUrl}/shoutouts/${notification.shoutout_id}`;
-    }
-  } else if (action.includes('membership.')) {
-    if (notification.community_id) {
-      ctaText = 'View Community';
-      ctaUrl = `${appUrl}/communities/${notification.community_id}`;
-    }
-  }
-
-  return { ctaText, ctaUrl };
 }
