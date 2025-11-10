@@ -1168,6 +1168,7 @@ export type Database = {
           community_id: string | null
           created_at: string | null
           id: string
+          is_inversed: boolean | null
           metadata: Json | null
           points_change: number
           score_after: number
@@ -1180,6 +1181,7 @@ export type Database = {
           community_id?: string | null
           created_at?: string | null
           id?: string
+          is_inversed?: boolean | null
           metadata?: Json | null
           points_change: number
           score_after: number
@@ -1192,6 +1194,7 @@ export type Database = {
           community_id?: string | null
           created_at?: string | null
           id?: string
+          is_inversed?: boolean | null
           metadata?: Json | null
           points_change?: number
           score_after?: number

@@ -308,6 +308,73 @@ describe('Resource Claims - Basic Operations', () => {
       });
     });
 
+    describe('Updating commitment level', () => {
+      let testClaim2: ResourceClaim;
+
+      beforeEach(async () => {
+        testClaim2 = await resourcesApi.createResourceClaim(
+          supabase,
+          createFakeResourceClaimInput({
+            resourceId: testResource.id,
+            timeslotId: testTimeslot2.id,
+            commitmentLevel: 'interested',
+          }),
+        );
+      });
+
+      afterEach(async () => {
+        await cleanupResourceClaim(testClaim2.id);
+      });
+
+      it('updates commitment level from value to null', async () => {
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          commitmentLevel: null,
+        });
+
+        expect(updatedClaim.commitmentLevel).toBeNull();
+        expect(updatedClaim.status).toBe('approved');
+      });
+
+      it('updates commitment level from null to value', async () => {
+        // First set to null
+        await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          commitmentLevel: null,
+        });
+
+        // Then update to a value
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          commitmentLevel: 'committed',
+        });
+
+        expect(updatedClaim.commitmentLevel).toBe('committed');
+        expect(updatedClaim.status).toBe('approved');
+      });
+
+      it('updates commitment level from value to different value', async () => {
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          commitmentLevel: 'committed',
+        });
+
+        expect(updatedClaim.commitmentLevel).toBe('committed');
+        expect(updatedClaim.status).toBe('approved');
+      });
+
+      it('allows updating commitment level without changing status', async () => {
+        const updatedClaim = await resourcesApi.updateResourceClaim(supabase, {
+          id: testClaim2.id,
+          commitmentLevel: 'none',
+        });
+
+        expect(updatedClaim.commitmentLevel).toBe('none');
+        expect(updatedClaim.status).toBe('approved');
+        await verifyClaimInDatabase(supabase, updatedClaim);
+      });
+    });
+
     describe('Claim actions by resource owner', () => {
       let testClaim2: ResourceClaim;
       let testResource3: Resource;
