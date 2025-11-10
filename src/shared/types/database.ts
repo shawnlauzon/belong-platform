@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      action_points: {
+        Row: {
+          action_type: Database["public"]["Enums"]["action_type"]
+          points: number
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["action_type"]
+          points: number
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["action_type"]
+          points?: number
+        }
+        Relationships: []
+      }
       action_to_notification_type_mapping: {
         Row: {
           action: Database["public"]["Enums"]["action_type"]
@@ -671,24 +686,28 @@ export type Database = {
       player_levels: {
         Row: {
           emoji: string
-          level_index: number
-          max_score: number | null
-          min_score: number
+          level: number
           name: string
+          points_needed: number
+          unlocked_powers: Database["public"]["Enums"]["player_action"][] | null
         }
         Insert: {
           emoji: string
-          level_index: number
-          max_score?: number | null
-          min_score: number
+          level: number
           name: string
+          points_needed: number
+          unlocked_powers?:
+            | Database["public"]["Enums"]["player_action"][]
+            | null
         }
         Update: {
           emoji?: string
-          level_index?: number
-          max_score?: number | null
-          min_score?: number
+          level?: number
           name?: string
+          points_needed?: number
+          unlocked_powers?:
+            | Database["public"]["Enums"]["player_action"][]
+            | null
         }
         Relationships: []
       }
@@ -1657,6 +1676,21 @@ export type Database = {
           name: string
         }[]
       }
+      create_notification_base: {
+        Args: {
+          p_action: Database["public"]["Enums"]["action_type"]
+          p_actor_id?: string
+          p_changes?: string[]
+          p_claim_id?: string
+          p_comment_id?: string
+          p_community_id?: string
+          p_conversation_id?: string
+          p_resource_id?: string
+          p_shoutout_id?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_user_connection: {
         Args: { p_invitee_id: string; p_inviter_id: string }
         Returns: string
@@ -2506,6 +2540,17 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_trust_score: {
+        Args: {
+          p_action_id: string
+          p_action_type: Database["public"]["Enums"]["action_type"]
+          p_community_id: string
+          p_metadata?: Json
+          p_points_change: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -2554,6 +2599,45 @@ export type Database = {
         | "member.left"
         | "trustlevel.changed"
         | "connection.accepted"
+        | "community.created"
+        | "profile.picture.set"
+        | "profile.bio.written"
+        | "invitation.accepted"
+        | "resource.offer.created"
+        | "claim.offer.created"
+        | "claim.offer.received"
+        | "claim.offer.approved"
+        | "claim.offer.rejected"
+        | "claim.offer.ignored"
+        | "resource.offer.given"
+        | "resource.offer.recurring.created"
+        | "shoutout.offer.sent.claimant"
+        | "shoutout.offer.received.claimant"
+        | "shoutout.offer.sent.owner"
+        | "shoutout.offer.received.owner"
+        | "resource.event.created"
+        | "claim.event.going"
+        | "claim.event.attended"
+        | "claim.event.attendance"
+        | "resource.event.vote.created"
+        | "resource.event.recurring.created"
+        | "shoutout.event.sent.claimant"
+        | "shoutout.event.received.claimant"
+        | "shoutout.event.sent.owner"
+        | "shoutout.event.received.owner"
+        | "resource.request.created"
+        | "claim.request.created"
+        | "claim.request.completed"
+        | "claim.request.given"
+        | "claim.request.approved"
+        | "claim.request.rejected"
+        | "claim.request.ignored"
+        | "resource.request.received"
+        | "shoutout.request.sent.claimant"
+        | "shoutout.request.received.claimant"
+        | "shoutout.request.sent.owner"
+        | "shoutout.request.received.owner"
+        | "resource.image.added"
       commitment_level_enum: "interested" | "committed" | "none"
       community_membership_role: "member" | "organizer" | "founder"
       community_type: "neighbors" | "close" | "far" | "virtual"
@@ -2564,6 +2648,20 @@ export type Database = {
         | "negative"
         | "unknown"
       conversation_type: "direct" | "community"
+      player_action:
+        | "view_public_resources"
+        | "create_claims"
+        | "view_agenda"
+        | "create_offer"
+        | "create_single_event"
+        | "vote_event_time"
+        | "create_request"
+        | "create_recurring_event"
+        | "invite_friend"
+        | "send_cold_call_message"
+        | "send_community_message"
+        | "view_community_map"
+        | "join_another_community"
       resource_category:
         | "tools"
         | "skills"
@@ -2759,6 +2857,45 @@ export const Constants = {
         "member.left",
         "trustlevel.changed",
         "connection.accepted",
+        "community.created",
+        "profile.picture.set",
+        "profile.bio.written",
+        "invitation.accepted",
+        "resource.offer.created",
+        "claim.offer.created",
+        "claim.offer.received",
+        "claim.offer.approved",
+        "claim.offer.rejected",
+        "claim.offer.ignored",
+        "resource.offer.given",
+        "resource.offer.recurring.created",
+        "shoutout.offer.sent.claimant",
+        "shoutout.offer.received.claimant",
+        "shoutout.offer.sent.owner",
+        "shoutout.offer.received.owner",
+        "resource.event.created",
+        "claim.event.going",
+        "claim.event.attended",
+        "claim.event.attendance",
+        "resource.event.vote.created",
+        "resource.event.recurring.created",
+        "shoutout.event.sent.claimant",
+        "shoutout.event.received.claimant",
+        "shoutout.event.sent.owner",
+        "shoutout.event.received.owner",
+        "resource.request.created",
+        "claim.request.created",
+        "claim.request.completed",
+        "claim.request.given",
+        "claim.request.approved",
+        "claim.request.rejected",
+        "claim.request.ignored",
+        "resource.request.received",
+        "shoutout.request.sent.claimant",
+        "shoutout.request.received.claimant",
+        "shoutout.request.sent.owner",
+        "shoutout.request.received.owner",
+        "resource.image.added",
       ],
       commitment_level_enum: ["interested", "committed", "none"],
       community_membership_role: ["member", "organizer", "founder"],
@@ -2771,6 +2908,21 @@ export const Constants = {
         "unknown",
       ],
       conversation_type: ["direct", "community"],
+      player_action: [
+        "view_public_resources",
+        "create_claims",
+        "view_agenda",
+        "create_offer",
+        "create_single_event",
+        "vote_event_time",
+        "create_request",
+        "create_recurring_event",
+        "invite_friend",
+        "send_cold_call_message",
+        "send_community_message",
+        "view_community_map",
+        "join_another_community",
+      ],
       resource_category: [
         "tools",
         "skills",

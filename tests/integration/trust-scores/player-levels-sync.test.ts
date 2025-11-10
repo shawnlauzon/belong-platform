@@ -16,7 +16,7 @@ describe('Player Levels - Database Sync', () => {
     const { data: dbLevels, error } = await supabase
       .from('player_levels')
       .select('*')
-      .order('level_index', { ascending: true });
+      .order('level', { ascending: true });
 
     expect(error).toBeNull();
     expect(dbLevels).toBeDefined();
@@ -26,32 +26,32 @@ describe('Player Levels - Database Sync', () => {
     PLAYER_LEVELS.forEach((tsLevel, index) => {
       const dbLevel = dbLevels![index];
 
-      expect(dbLevel.level_index).toBe(tsLevel.index);
+      expect(dbLevel.level).toBe(tsLevel.level);
       expect(dbLevel.emoji).toBe(tsLevel.emoji);
       expect(dbLevel.name).toBe(tsLevel.name);
-      expect(dbLevel.min_score).toBe(tsLevel.minScore);
+      expect(dbLevel.points_needed).toBe(tsLevel.pointsNeeded);
 
-      // Handle undefined/null for max level
-      if (tsLevel.maxScore === undefined) {
-        expect(dbLevel.max_score).toBeNull();
+      // Handle undefined/null for unlocked_powers
+      if (tsLevel.unlockedPowers === undefined) {
+        expect(dbLevel.unlocked_powers).toBeNull();
       } else {
-        expect(dbLevel.max_score).toBe(tsLevel.maxScore);
+        expect(dbLevel.unlocked_powers).toEqual(tsLevel.unlockedPowers);
       }
     });
   });
 
-  it('should have calculate_trust_level function returning correct level indexes', async () => {
+  it('should have calculate_trust_level function returning correct level numbers', async () => {
     // Test various scores to ensure function works correctly
     const testCases = [
-      { score: 0, expectedLevel: 0 }, // Plankton
-      { score: 25, expectedLevel: 0 }, // Still Plankton
-      { score: 50, expectedLevel: 1 }, // Hermit Crab
-      { score: 100, expectedLevel: 2 }, // Shrimp
-      { score: 1500, expectedLevel: 8 }, // Clownfish
-      { score: 2000, expectedLevel: 9 }, // Tuna
-      { score: 35000, expectedLevel: 19 }, // Whale
-      { score: 100000, expectedLevel: 19 }, // Still Whale (max level)
-      { score: -100, expectedLevel: 0 }, // Negative scores default to 0
+      { score: 0, expectedLevel: 1 }, // Plankton
+      { score: 50, expectedLevel: 1 }, // Still Plankton
+      { score: 100, expectedLevel: 2 }, // Hatchling
+      { score: 240, expectedLevel: 3 }, // Shrimp
+      { score: 1632, expectedLevel: 7 }, // Angelfish
+      { score: 3439, expectedLevel: 9 }, // Big Tuna
+      { score: 6050108, expectedLevel: 31 }, // Infinity
+      { score: 10000000, expectedLevel: 31 }, // Still Infinity (max level)
+      { score: -100, expectedLevel: 1 }, // Negative scores default to level 1
     ];
 
     for (const { score, expectedLevel } of testCases) {

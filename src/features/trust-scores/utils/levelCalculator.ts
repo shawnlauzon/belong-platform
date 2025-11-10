@@ -12,9 +12,9 @@ export function calculateLevel(score: number): PlayerLevel {
     return PLAYER_LEVELS[0];
   }
 
-  // Find the appropriate level based on score
+  // Find the highest level where score >= pointsNeeded
   for (let i = PLAYER_LEVELS.length - 1; i >= 0; i--) {
-    if (score >= PLAYER_LEVELS[i].minScore) {
+    if (score >= PLAYER_LEVELS[i].pointsNeeded) {
       return PLAYER_LEVELS[i];
     }
   }
@@ -31,14 +31,13 @@ export function calculateLevel(score: number): PlayerLevel {
 export function getProgressToNextLevel(score: number): LevelProgress {
   // Ensure score is not negative for calculations
   const adjustedScore = Math.max(0, score);
-  
-  const currentLevel = calculateLevel(adjustedScore);
-  const nextLevel = 
-    currentLevel.index < PLAYER_LEVELS.length - 1 
-      ? PLAYER_LEVELS[currentLevel.index + 1]
-      : undefined;
 
-  if (!nextLevel || !currentLevel.maxScore) {
+  const currentLevel = calculateLevel(adjustedScore);
+
+  // Find next level (level number is currentLevel.level + 1)
+  const nextLevel = PLAYER_LEVELS.find(l => l.level === currentLevel.level + 1);
+
+  if (!nextLevel) {
     // Player is at max level
     return {
       currentLevel,
@@ -49,10 +48,10 @@ export function getProgressToNextLevel(score: number): LevelProgress {
     };
   }
 
-  const scoreInCurrentLevel = adjustedScore - currentLevel.minScore;
-  const levelRange = currentLevel.maxScore - currentLevel.minScore;
+  const scoreInCurrentLevel = adjustedScore - currentLevel.pointsNeeded;
+  const levelRange = nextLevel.pointsNeeded - currentLevel.pointsNeeded;
   const progress = Math.min(100, Math.max(0, (scoreInCurrentLevel / levelRange) * 100));
-  const pointsToNext = Math.max(0, currentLevel.maxScore - adjustedScore);
+  const pointsToNext = Math.max(0, nextLevel.pointsNeeded - adjustedScore);
 
   return {
     currentLevel,
@@ -64,15 +63,12 @@ export function getProgressToNextLevel(score: number): LevelProgress {
 }
 
 /**
- * Gets a level by its index
- * @param index - The level index (0-19)
- * @returns The level at the specified index, or undefined if index is out of bounds
+ * Gets a level by its level number
+ * @param level - The level number (1-31)
+ * @returns The level at the specified number, or undefined if not found
  */
-export function getLevelByIndex(index: number): PlayerLevel | undefined {
-  if (index < 0 || index >= PLAYER_LEVELS.length) {
-    return undefined;
-  }
-  return PLAYER_LEVELS[index];
+export function getLevelByIndex(level: number): PlayerLevel | undefined {
+  return PLAYER_LEVELS.find(l => l.level === level);
 }
 
 /**

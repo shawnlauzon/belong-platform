@@ -1,9 +1,9 @@
 export interface PlayerLevel {
-  index: number;
+  level: number;
   emoji: string;
   name: string;
-  minScore: number;
-  maxScore?: number;
+  pointsNeeded: number;
+  unlockedPowers?: string[];
 }
 
 export interface LevelProgress {

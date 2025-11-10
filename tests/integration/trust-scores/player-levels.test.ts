@@ -30,9 +30,9 @@ describe('Trust Scores - Player Levels', () => {
 
       expect(level).toMatchObject({
         name: expect.any(String),
-        minScore: 0,
+        pointsNeeded: 0,
         emoji: expect.any(String),
-        index: 0,
+        level: 1,
       });
 
       expect(progress).toMatchObject({
@@ -48,7 +48,7 @@ describe('Trust Scores - Player Levels', () => {
 
       expect(level).toMatchObject({
         name: expect.any(String),
-        minScore: expect.any(Number),
+        pointsNeeded: expect.any(Number),
         emoji: expect.any(String),
       });
 
@@ -56,7 +56,7 @@ describe('Trust Scores - Player Levels', () => {
         currentLevel: level,
         progress: expect.any(Number),
       });
-      expect(level.minScore).toBeLessThanOrEqual(activeUserScore);
+      expect(level.pointsNeeded).toBeLessThanOrEqual(activeUserScore);
     });
   });
 
@@ -89,7 +89,9 @@ describe('Trust Scores - Player Levels', () => {
       const newLevel = calculateLevel(newScore);
 
       // New level should be same or higher than initial
-      expect(newLevel.minScore).toBeGreaterThanOrEqual(initialLevel.minScore);
+      expect(newLevel.pointsNeeded).toBeGreaterThanOrEqual(
+        initialLevel.pointsNeeded
+      );
       expect(newScore).toBe(initialScore + pointsToAdd);
     });
   });
@@ -103,9 +105,9 @@ describe('Trust Scores - Player Levels', () => {
       // Verify level has all info needed for UI display
       expect(level).toMatchObject({
         name: expect.any(String),
-        minScore: expect.any(Number),
+        pointsNeeded: expect.any(Number),
         emoji: expect.any(String),
-        index: expect.any(Number),
+        level: expect.any(Number),
       });
 
       // Verify progress info for progress bar
