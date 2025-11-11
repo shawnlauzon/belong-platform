@@ -980,6 +980,7 @@ export type Database = {
           description: string
           duration_minutes: number | null
           id: string
+          image_crop_data: Json | null
           image_urls: string[]
           is_recurring: boolean
           last_renewed_at: string
@@ -1005,6 +1006,7 @@ export type Database = {
           description: string
           duration_minutes?: number | null
           id?: string
+          image_crop_data?: Json | null
           image_urls?: string[]
           is_recurring?: boolean
           last_renewed_at?: string
@@ -1028,6 +1030,7 @@ export type Database = {
           description?: string
           duration_minutes?: number | null
           id?: string
+          image_crop_data?: Json | null
           image_urls?: string[]
           is_recurring?: boolean
           last_renewed_at?: string
@@ -2019,10 +2022,6 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geom: unknown
               id?: string
@@ -2031,6 +2030,10 @@ export type Database = {
               options?: number
               version: number
             }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
             Returns: string
           }
         | {
@@ -2241,16 +2244,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
         | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -2513,11 +2516,11 @@ export type Database = {
           }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
         | {
             Args: { geom1: unknown; geom2: unknown; gridsize: number }
             Returns: unknown
           }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown

@@ -36,6 +36,13 @@ export enum ResourceTypeEnum {
 
 export type ClaimLimitPer = 'total' | 'timeslot';
 
+export type ImageCropData = {
+  x: number;      // Left edge position (0-1, percentage of original)
+  y: number;      // Top edge position (0-1, percentage of original)
+  width: number;  // Crop width (0-1, percentage of original)
+  height: number; // Crop height (0-1, percentage of original)
+};
+
 export type ResourceInput = {
   type: ResourceType;
   category?: ResourceCategory;
@@ -45,6 +52,7 @@ export type ResourceInput = {
   coordinates?: Coordinates;
   communityIds: string[];
   imageUrls?: string[];
+  imageCropData?: Array<ImageCropData | null>;
   status: ResourceStatus;
   claimLimit?: number;
   claimLimitPer?: ClaimLimitPer;

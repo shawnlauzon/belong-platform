@@ -10,11 +10,14 @@ import {
 } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 import { logger } from '@/shared';
+import { validateImageCropData } from './validateImageCropData';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
   resourceData: ResourceInput,
 ): Promise<Resource> {
+  // Validate imageCropData if provided
+  validateImageCropData(resourceData.imageCropData, resourceData.imageUrls);
   const withoutCommunityIds = {
     ...resourceData,
     communityIds: undefined,

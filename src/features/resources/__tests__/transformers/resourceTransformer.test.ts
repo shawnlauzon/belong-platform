@@ -183,5 +183,65 @@ describe('Resource Transformer', () => {
 
       expect(dbResource.is_recurring).toBe(false);
     });
+
+    it('should transform imageCropData field from domain to database', () => {
+      const cropData = [
+        { x: 0.1, y: 0.2, width: 0.5, height: 0.6 },
+        null,
+      ];
+      const resourceData = createFakeResourceInput({
+        imageCropData: cropData,
+      });
+
+      const dbResource = toResourceInsertRow(resourceData);
+
+      expect(dbResource.image_crop_data).toEqual(cropData);
+    });
+
+    it('should handle undefined imageCropData', () => {
+      const resourceData = createFakeResourceInput({
+        imageCropData: undefined,
+      });
+
+      const dbResource = toResourceInsertRow(resourceData);
+
+      expect(dbResource.image_crop_data).toBeUndefined();
+    });
+  });
+
+  describe('toDomainResource - imageCropData', () => {
+    it('should transform imageCropData from database to domain', () => {
+      const cropData = [
+        { x: 0.1, y: 0.2, width: 0.5, height: 0.6 },
+        null,
+      ];
+      const dbResource = createFakeResourceRow({
+        image_crop_data: cropData as unknown,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageCropData).toEqual(cropData);
+    });
+
+    it('should handle null imageCropData', () => {
+      const dbResource = createFakeResourceRow({
+        image_crop_data: null,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageCropData).toBeUndefined();
+    });
+
+    it('should handle undefined imageCropData', () => {
+      const dbResource = createFakeResourceRow({
+        image_crop_data: undefined,
+      });
+
+      const resource = toDomainResource(dbResource);
+
+      expect(resource.imageCropData).toBeUndefined();
+    });
   });
 });

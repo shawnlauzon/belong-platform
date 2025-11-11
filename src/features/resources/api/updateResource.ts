@@ -9,6 +9,7 @@ import {
   SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS,
 } from '../types/resourceRow';
 import { QueryError } from '@supabase/supabase-js';
+import { validateImageCropData } from './validateImageCropData';
 
 export async function updateResource(
   supabase: SupabaseClient<Database>,
@@ -20,6 +21,9 @@ export async function updateResource(
   });
 
   const { id, ...updates } = updateData;
+
+  // Validate imageCropData if provided
+  validateImageCropData(updates.imageCropData, updates.imageUrls);
   const dbData = forDbUpdate(updates);
 
   const { data, error } = (await supabase
