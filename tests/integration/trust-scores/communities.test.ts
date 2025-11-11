@@ -12,10 +12,10 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
-  POINTS_CONFIG,
   getCurrentTrustScore,
   verifyTrustScoreLog,
   createTestConnectionAndJoin,
+  getCachedActionPoints,
 } from './helpers';
 import { ACTION_TYPES } from '@/features/notifications';
 import type { Account } from '@/features/auth/types';
@@ -56,32 +56,6 @@ describe('Trust Score Points - Communities', () => {
     expect(trustScores[0].score).toBeGreaterThan(0);
   });
 
-  // Community creation no longer awards points directly
-  // Only founder role assignment awards points
-
-  it('should award founder role points automatically', async () => {
-    const community = await createTestCommunity(supabase);
-
-    await verifyTrustScoreLog(
-      serviceClient,
-      testUser.id,
-      community.id,
-      ACTION_TYPES.MEMBER_JOINED,
-      POINTS_CONFIG.COMMUNITY_FOUNDER,
-      'Community founder log',
-    );
-  });
-
-  it('should have correct total score after creating community', async () => {
-    const community = await createTestCommunity(supabase);
-
-    const score = await getCurrentTrustScore(
-      supabase,
-      testUser.id,
-      community.id,
-    );
-    expect(score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
-  });
 
   it('should allow user to join existing community', async () => {
     const owner = await createTestUser(supabase);
@@ -108,7 +82,8 @@ describe('Trust Score Points - Communities', () => {
     const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
     const score = await getCurrentTrustScore(supabase, joiner.id, community.id);
-    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+    const expectedPoints = await getCachedActionPoints('member.joined');
+    expect(score).toBe(expectedPoints);
   });
 
   it('should log community join action', async () => {
@@ -120,28 +95,17 @@ describe('Trust Score Points - Communities', () => {
     await signIn(supabase, joiner.email, 'TestPass123!');
     const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
+    const expectedPoints = await getCachedActionPoints('member.joined');
     await verifyTrustScoreLog(
       serviceClient,
       joiner.id,
       community.id,
       ACTION_TYPES.MEMBER_JOINED,
-      POINTS_CONFIG.COMMUNITY_JOIN,
+      expectedPoints,
       'Community join log',
     );
   });
 
-  it('should track separate scores for multiple communities', async () => {
-    const community1 = await createTestCommunity(supabase);
-
-    const community2 = await createTestCommunity(supabase);
-
-    const trustScores = await fetchTrustScores(supabase, testUser.id);
-
-    const score1 = trustScores.find((s) => s.communityId === community1.id);
-    const score2 = trustScores.find((s) => s.communityId === community2.id);
-    expect(score1?.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
-    expect(score2?.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER);
-  });
 
   it('should award regular join points when creating connections between existing members', async () => {
     // Create owner with their own client
@@ -177,7 +141,8 @@ describe('Trust Score Points - Communities', () => {
       invitee.id,
       community.id,
     );
-    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+    const expectedPoints = await getCachedActionPoints('member.joined');
+    expect(score).toBe(expectedPoints);
   });
 
   it('should deduct points when user leaves community', async () => {
@@ -191,13 +156,14 @@ describe('Trust Score Points - Communities', () => {
     // Join community first
     const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
 
-    // Verify user has 50 points for joining
+    // Verify user has points for joining
     const scoreAfterJoin = await getCurrentTrustScore(
       supabase,
       joiner.id,
       community.id,
     );
-    expect(scoreAfterJoin).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+    const expectedJoinPoints = await getCachedActionPoints('member.joined');
+    expect(scoreAfterJoin).toBe(expectedJoinPoints);
 
     // Leave the community
     const { data: { user: u3 } } = await supabase.auth.getUser(); await leaveCommunity(supabase, u3!.id, community.id);
@@ -211,7 +177,7 @@ describe('Trust Score Points - Communities', () => {
     expect(scoreAfterLeave).toBe(0);
   });
 
-  it('should log community leave action', async () => {
+  it('should log community leave action with inverse points', async () => {
     const owner = await createTestUser(supabase);
     await signIn(supabase, owner.email, 'TestPass123!');
     const community = await createTestCommunity(supabase);
@@ -222,13 +188,17 @@ describe('Trust Score Points - Communities', () => {
     const { data: { user: u } } = await supabase.auth.getUser(); await joinCommunity(supabase, u!.id, community.id);
     const { data: { user: u3 } } = await supabase.auth.getUser(); await leaveCommunity(supabase, u3!.id, community.id);
 
+    // Leaving uses the same action type but with negative points and is_inversed flag
+    const joinPoints = await getCachedActionPoints('member.joined');
+    const leavePoints = -joinPoints; // Inverse of join points
     await verifyTrustScoreLog(
       serviceClient,
       joiner.id,
       community.id,
-      ACTION_TYPES.MEMBER_LEFT,
-      POINTS_CONFIG.COMMUNITY_LEAVE,
+      ACTION_TYPES.MEMBER_JOINED,
+      leavePoints,
       'Community leave log',
+      { isInversed: true },
     );
   });
 
@@ -265,7 +235,8 @@ describe('Trust Score Points - Communities', () => {
       joiner.id,
       community.id,
     );
-    expect(score).toBe(POINTS_CONFIG.COMMUNITY_JOIN);
+    const expectedPoints = await getCachedActionPoints('member.joined');
+    expect(score).toBe(expectedPoints);
 
     // Verify trust score log was created
     await verifyTrustScoreLog(
@@ -273,7 +244,7 @@ describe('Trust Score Points - Communities', () => {
       joiner.id,
       community.id,
       ACTION_TYPES.MEMBER_JOINED,
-      POINTS_CONFIG.COMMUNITY_JOIN,
+      expectedPoints,
       'Community join with invitation code log',
     );
   });

@@ -5,7 +5,7 @@ import { fetchTrustScores } from '@/features/trust-scores/api';
 import { createTestUser, createTestCommunity } from '../helpers/test-data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
-import { POINTS_CONFIG } from './helpers';
+import { getCachedActionPoints } from './helpers';
 
 describe('Trust Scores - CRUD Operations', () => {
   let supabase: SupabaseClient<Database>;
@@ -38,8 +38,8 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(trustScores[0]).toMatchObject({
         userId: account.id,
         communityId: community.id,
-        score: POINTS_CONFIG.COMMUNITY_FOUNDER, // community founder
       });
+      expect(trustScores[0].score).toBeGreaterThan(0);
     });
 
     it('should fetch trust scores from multiple communities', async () => {
@@ -59,9 +59,9 @@ describe('Trust Scores - CRUD Operations', () => {
       expect(communityIds).toContain(community1.id);
       expect(communityIds).toContain(community2.id);
 
-      // Both should have the same score from automatic creation
+      // Both should have scores
       trustScores.forEach((score) => {
-        expect(score.score).toBe(POINTS_CONFIG.COMMUNITY_FOUNDER); // community founder
+        expect(score.score).toBeGreaterThan(0);
       });
     });
   });

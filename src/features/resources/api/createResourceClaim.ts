@@ -53,9 +53,14 @@ export async function createResourceClaim(
     initialStatus = resource.requiresApproval ? 'pending' : 'approved';
   }
 
+  // Default commitment level to 'interested' for event claims if not provided
+  const commitmentLevel = resource.type === 'event' && claimInput.commitmentLevel === undefined
+    ? 'interested'
+    : claimInput.commitmentLevel;
+
   // Transform to database format and add the determined status
   const insertData = {
-    ...toResourceClaimInsertRow(claimInput),
+    ...toResourceClaimInsertRow({ ...claimInput, commitmentLevel }),
     status: initialStatus,
   };
 

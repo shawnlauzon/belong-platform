@@ -16,9 +16,9 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
-  POINTS_CONFIG,
   getCurrentTrustScore,
   verifyTrustScoreLog,
+  getCachedActionPoints,
 } from './helpers';
 import { ACTION_TYPES } from '@/features/notifications';
 import {
@@ -108,8 +108,9 @@ describe('Trust Score Points - Events', () => {
       participant.id,
       community.id,
     );
+    const expectedPoints = await getCachedActionPoints('claim.event.going');
     expect(scoreAfterRegistration - scoreBeforeRegistration).toBe(
-      POINTS_CONFIG.EVENT_CLAIM_INITIAL,
+      expectedPoints,
     );
   });
 
@@ -121,12 +122,13 @@ describe('Trust Score Points - Events', () => {
       timeslotId: testTimeslot.id,
     });
 
+    const expectedPoints = await getCachedActionPoints('claim.event.going');
     await verifyTrustScoreLog(
       serviceClient,
       participant.id,
       community.id,
-      ACTION_TYPES.CLAIM_CREATED,
-      POINTS_CONFIG.EVENT_CLAIM_INITIAL,
+      'claim.event.going',
+      expectedPoints,
       'Event registration log',
     );
   });
@@ -170,7 +172,8 @@ describe('Trust Score Points - Events', () => {
       participant.id,
       community.id,
     );
-    expect(scoreAfterGoing - scoreBeforeGoing).toBe(POINTS_CONFIG.EVENT_GOING);
+    const expectedPoints = await getCachedActionPoints('claim.event.going');
+    expect(scoreAfterGoing - scoreBeforeGoing).toBe(expectedPoints);
   });
 
   it('should allow organizer to mark attendance', async () => {
@@ -222,9 +225,8 @@ describe('Trust Score Points - Events', () => {
       participant.id,
       community.id,
     );
-    expect(scoreAfterAttended - scoreBeforeAttended).toBe(
-      POINTS_CONFIG.EVENT_ATTENDED,
-    );
+    const expectedPoints = await getCachedActionPoints('claim.event.attended');
+    expect(scoreAfterAttended - scoreBeforeAttended).toBe(expectedPoints);
     // afterEach will ensure participant is signed in for next test
   });
 
@@ -243,12 +245,13 @@ describe('Trust Score Points - Events', () => {
       status: 'attended',
     });
 
+    const expectedPoints = await getCachedActionPoints('claim.event.attended');
     await verifyTrustScoreLog(
       serviceClient,
       participant.id,
       community.id,
-      ACTION_TYPES.CLAIM_COMPLETED,
-      POINTS_CONFIG.EVENT_ATTENDED,
+      'claim.event.attended',
+      expectedPoints,
       'Event attendance log',
     );
   });
@@ -386,9 +389,8 @@ describe('Trust Score Points - Events', () => {
         participant.id,
         community.id,
       );
-      expect(scoreAfterApproval - scoreBeforeApproval).toBe(
-        POINTS_CONFIG.EVENT_CLAIM_APPROVED,
-      );
+      const expectedPoints = await getCachedActionPoints('claim.event.going');
+      expect(scoreAfterApproval - scoreBeforeApproval).toBe(expectedPoints);
     });
   });
 });

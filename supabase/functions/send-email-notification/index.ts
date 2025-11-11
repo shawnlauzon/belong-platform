@@ -388,6 +388,13 @@ function actions(notification: NotificationDetail, appUrl: string) {
           url: `${appUrl}/claims/${notification.claim_id}`,
         },
       ];
+    case 'member.joined':
+      return [
+        {
+          name: 'Say hi!',
+          url: `${appUrl}/users/${notification.actor_id}`,
+        },
+      ];
     default:
       return undefined;
   }

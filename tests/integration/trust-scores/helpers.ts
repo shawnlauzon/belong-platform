@@ -3,27 +3,44 @@ import { fetchTrustScores } from '@/features/trust-scores/api';
 import { createTestConnection } from '../helpers/test-data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
+import { createServiceClient } from '../helpers/test-client';
+import type { ActionType } from '@/features/trust-scores';
 
-// Configurable points constants for easy adjustment
-export const POINTS_CONFIG = {
-  COMMUNITY_CREATION: 0, // No points for creating community itself
-  COMMUNITY_FOUNDER: 2000, // Points for being founder (community creator)
-  COMMUNITY_ORGANIZER: 1000, // Points for being organizer
-  COMMUNITY_JOIN: 50, // Points for joining as member
-  COMMUNITY_LEAVE: -50, // Points deducted when leaving a community
-  COMMUNITY_JOIN_WITH_INVITATION: 50, // Same as regular join currently
-  RESOURCE_OFFER: 50,
-  EVENT_CLAIM_INITIAL: 5,
-  EVENT_CLAIM_APPROVED: 25,
-  EVENT_GOING: 25,
-  EVENT_ATTENDED: 50,
-  OFFER_APPROVED: 25,
-  OFFER_COMPLETED: 50,
-  REQUEST_APPROVED: 25,
-  REQUEST_COMPLETED: 50,
-  SHOUTOUT_SENT: 10,
-  SHOUTOUT_RECEIVED: 100,
-} as const;
+/**
+ * Query action_points table for the points value of a specific action_type
+ */
+export async function getActionPoints(actionType: ActionType): Promise<number> {
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient
+    .from('action_points')
+    .select('points')
+    .eq('action_type', actionType)
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to fetch points for action_type '${actionType}': ${error.message}`,
+    );
+  }
+
+  return data.points;
+}
+
+// Cache for action points to avoid repeated database queries within a test run
+const actionPointsCache = new Map<ActionType, number>();
+
+/**
+ * Get action points with caching
+ */
+export async function getCachedActionPoints(
+  actionType: ActionType,
+): Promise<number> {
+  if (!actionPointsCache.has(actionType)) {
+    const points = await getActionPoints(actionType);
+    actionPointsCache.set(actionType, points);
+  }
+  return actionPointsCache.get(actionType)!;
+}
 
 /**
  * Helper function to verify a user's trust score in a specific community
@@ -116,6 +133,7 @@ export async function verifyTrustScoreLog(
   actionType: string,
   pointsChange: number,
   description: string,
+  options?: { isInversed?: boolean },
 ) {
   // Get all logs for this user/community combination to provide better debugging info
   const { data: allLogs, error: allLogsError } = await serviceClient
@@ -176,6 +194,13 @@ export async function verifyTrustScoreLog(
     `${description} - Log should have created_at timestamp`,
   ).not.toBeNull();
 
+  // Optionally verify is_inversed flag
+  if (options?.isInversed !== undefined) {
+    expect(
+      logEntry.is_inversed,
+      `${description} - Log is_inversed should be ${options.isInversed}`,
+    ).toBe(options.isInversed);
+  }
 }
 
 /**

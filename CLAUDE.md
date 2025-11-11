@@ -146,3 +146,4 @@ The platform is organized into feature modules in `src/features/`. Each feature 
 - When you believe you have fixed a problem, run the test to confirm before continuing
 - Use supabase-local mcp for supabase commands except for gen:db-types to generate types into database.ts
 - In migrations, always start with the current definition from the live database. DO NOT RELY ON OLD MIGRATIONS.
+- NEVER SEARCH THROUGH MIGRATIONS TO DETERMINE CURRENT FUNCTIONALITY

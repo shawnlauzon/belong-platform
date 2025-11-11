@@ -12,10 +12,10 @@ import { joinCommunity } from '@/features/communities/api';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
-  POINTS_CONFIG,
   getCurrentTrustScore,
   verifyTrustScoreIncrement,
   verifyTrustScoreLog,
+  getCachedActionPoints,
 } from './helpers';
 import { ACTION_TYPES } from '@/features/notifications';
 import type { User } from '@/features/users/types';
@@ -86,13 +86,18 @@ describe('Trust Score Points - Shoutouts', () => {
         resourceId: resource.id,
       });
 
+      // Sender is claimant (not owner), receiver is owner
+      const expectedPoints = await getCachedActionPoints(
+        'shoutout.offer.sent.claimant',
+      );
+
       // Verify sender increment (only shoutout sent, no new resource)
       await verifyTrustScoreIncrement(
         supabase,
         sender.id,
         community.id,
         senderScoreBefore,
-        POINTS_CONFIG.SHOUTOUT_SENT,
+        expectedPoints,
         'Shoutout sender increment',
       );
 
@@ -101,8 +106,8 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         sender.id,
         community.id,
-        ACTION_TYPES.SHOUTOUT_SENT,
-        POINTS_CONFIG.SHOUTOUT_SENT,
+        'shoutout.offer.sent.claimant',
+        expectedPoints,
         'Shoutout sent log',
       );
     });
@@ -134,13 +139,18 @@ describe('Trust Score Points - Shoutouts', () => {
         resourceId: resource.id,
       });
 
+      // Receiver is owner (created the offer)
+      const expectedPoints = await getCachedActionPoints(
+        'shoutout.offer.received.owner',
+      );
+
       // Verify receiver increment (shoutout received)
       await verifyTrustScoreIncrement(
         supabase,
         receiver.id,
         community.id,
         receiverScoreBefore,
-        POINTS_CONFIG.SHOUTOUT_RECEIVED,
+        expectedPoints,
         'Shoutout receiver increment',
       );
 
@@ -149,8 +159,8 @@ describe('Trust Score Points - Shoutouts', () => {
         serviceClient,
         receiver.id,
         community.id,
-        ACTION_TYPES.SHOUTOUT_RECEIVED,
-        POINTS_CONFIG.SHOUTOUT_RECEIVED,
+        'shoutout.offer.received.owner',
+        expectedPoints,
         'Shoutout received log',
       );
     });
@@ -191,13 +201,18 @@ describe('Trust Score Points - Shoutouts', () => {
         resourceId: existingResource.id,
       });
 
+      // Sender is claimant (not owner)
+      const expectedPoints = await getCachedActionPoints(
+        'shoutout.offer.sent.claimant',
+      );
+
       // Verify sender increment (only shoutout sent, no new resource)
       await verifyTrustScoreIncrement(
         supabase,
         sender.id,
         community.id,
         senderScoreBefore,
-        POINTS_CONFIG.SHOUTOUT_SENT,
+        expectedPoints,
         'Shoutout sender increment (existing resource)',
       );
     });
@@ -238,13 +253,18 @@ describe('Trust Score Points - Shoutouts', () => {
         resourceId: existingResource.id,
       });
 
+      // Receiver is owner (created the offer)
+      const expectedPoints = await getCachedActionPoints(
+        'shoutout.offer.received.owner',
+      );
+
       // Verify receiver increment (shoutout received)
       await verifyTrustScoreIncrement(
         supabase,
         receiver.id,
         community.id,
         receiverScoreBefore,
-        POINTS_CONFIG.SHOUTOUT_RECEIVED,
+        expectedPoints,
         'Shoutout receiver increment (existing resource)',
       );
     });

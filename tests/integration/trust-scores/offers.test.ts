@@ -24,9 +24,9 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
-  POINTS_CONFIG,
   getCurrentTrustScore,
   verifyTrustScoreLog,
+  getCachedActionPoints,
 } from './helpers';
 import { ACTION_TYPES } from '@/features/notifications';
 import type { Account } from '@/features/auth/types';
@@ -100,9 +100,8 @@ describe('Trust Score Points - Offers', () => {
       owner.id,
       community.id,
     );
-    expect(scoreAfterOffer - scoreAfterCommunity).toBe(
-      POINTS_CONFIG.RESOURCE_OFFER,
-    );
+    const expectedPoints = await getCachedActionPoints('resource.offer.created');
+    expect(scoreAfterOffer - scoreAfterCommunity).toBe(expectedPoints);
   });
 
   it('should log offer creation action', async () => {
@@ -111,12 +110,13 @@ describe('Trust Score Points - Offers', () => {
 
     await createTestResource(supabase, community.id, 'offer');
 
+    const expectedPoints = await getCachedActionPoints('resource.offer.created');
     await verifyTrustScoreLog(
       serviceClient,
       owner.id,
       community.id,
-      ACTION_TYPES.RESOURCE_CREATED,
-      POINTS_CONFIG.RESOURCE_OFFER,
+      'resource.offer.created',
+      expectedPoints,
       'Resource offer creation log',
     );
   });
@@ -160,9 +160,8 @@ describe('Trust Score Points - Offers', () => {
       claimant.id,
       community.id,
     );
-    expect(scoreAfterClaim - scoreBeforeClaim).toBe(
-      POINTS_CONFIG.OFFER_APPROVED,
-    );
+    const expectedPoints = await getCachedActionPoints('claim.offer.created');
+    expect(scoreAfterClaim - scoreBeforeClaim).toBe(expectedPoints);
   });
 
   it('should not award points for given status', async () => {
@@ -267,9 +266,8 @@ describe('Trust Score Points - Offers', () => {
       claimant.id,
       community.id,
     );
-    expect(scoreAfterCompleted - scoreBeforeCompleted).toBe(
-      POINTS_CONFIG.OFFER_COMPLETED,
-    );
+    const expectedPoints = await getCachedActionPoints('resource.offer.given');
+    expect(scoreAfterCompleted - scoreBeforeCompleted).toBe(expectedPoints);
   });
 
   it('should log completed action', async () => {
@@ -290,12 +288,13 @@ describe('Trust Score Points - Offers', () => {
       status: 'completed',
     });
 
+    const expectedPoints = await getCachedActionPoints('resource.offer.given');
     await verifyTrustScoreLog(
       serviceClient,
       claimant.id,
       community.id,
-      ACTION_TYPES.CLAIM_COMPLETED,
-      POINTS_CONFIG.OFFER_COMPLETED,
+      'resource.offer.given',
+      expectedPoints,
       'Offer completion log',
     );
   });

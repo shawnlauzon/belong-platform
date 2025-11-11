@@ -8,16 +8,3 @@ export type TrustScoreData = {
   score: number;
   lastCalculatedAt: Date;
 };
-
-export type TrustScoreLog = IsPersisted<TrustScoreLogData>;
-
-export type TrustScoreLogData = {
-  userId: string;
-  communityId: string;
-  actionType: string;
-  actionId?: string;
-  pointsChange: number;
-  scoreBefore: number;
-  scoreAfter: number;
-  metadata?: Record<string, unknown>;
-};

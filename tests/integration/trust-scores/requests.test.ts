@@ -24,9 +24,9 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/shared/types/database';
 import {
-  POINTS_CONFIG,
   getCurrentTrustScore,
   verifyTrustScoreLog,
+  getCachedActionPoints,
 } from './helpers';
 import { ACTION_TYPES } from '@/features/notifications';
 import type { User } from '@/features/users/types';
@@ -123,9 +123,8 @@ describe('Trust Score Points - Requests', () => {
       claimant.id,
       community.id,
     );
-    expect(scoreAfterClaim - scoreBeforeClaim).toBe(
-      POINTS_CONFIG.REQUEST_APPROVED,
-    );
+    const expectedPoints = await getCachedActionPoints('claim.request.created');
+    expect(scoreAfterClaim - scoreBeforeClaim).toBe(expectedPoints);
   });
 
   it('should not award points for given status', async () => {
@@ -179,9 +178,10 @@ describe('Trust Score Points - Requests', () => {
       claimant.id,
       community.id,
     );
-    expect(scoreAfterCompleted - scoreBeforeCompleted).toBe(
-      POINTS_CONFIG.REQUEST_COMPLETED,
+    const expectedPoints = await getCachedActionPoints(
+      'claim.request.completed',
     );
+    expect(scoreAfterCompleted - scoreBeforeCompleted).toBe(expectedPoints);
   });
 
   it('should log completed action', async () => {
@@ -201,12 +201,15 @@ describe('Trust Score Points - Requests', () => {
       status: 'completed',
     });
 
+    const expectedPoints = await getCachedActionPoints(
+      'claim.request.completed',
+    );
     await verifyTrustScoreLog(
       serviceClient,
       claimant.id,
       community.id,
-      ACTION_TYPES.CLAIM_COMPLETED,
-      POINTS_CONFIG.REQUEST_COMPLETED,
+      'claim.request.completed',
+      expectedPoints,
       'Request completion log',
     );
   });

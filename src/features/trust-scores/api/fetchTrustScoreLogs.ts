@@ -13,7 +13,7 @@ export interface TrustScoreLogRow {
   id: string;
   user_id: string | null;
   community_id: string | null;
-  action_type: string;
+  action_type: Database['public']['Enums']['action_type'];
   action_id: string | null;
   points_change: number;
   score_before: number;
