@@ -494,6 +494,7 @@ export type Database = {
           comment_replied: Json
           connection_accepted: Json
           created_at: string
+          email_enabled: boolean
           event_cancelled: Json
           event_created: Json
           event_starting: Json
@@ -501,7 +502,7 @@ export type Database = {
           id: string
           membership_updated: Json
           message_received: Json
-          notifications_enabled: boolean
+          push_enabled: boolean
           resource_commented: Json
           resource_created: Json
           resource_expiring: Json
@@ -520,6 +521,7 @@ export type Database = {
           comment_replied?: Json
           connection_accepted?: Json
           created_at?: string
+          email_enabled?: boolean
           event_cancelled?: Json
           event_created?: Json
           event_starting?: Json
@@ -527,7 +529,7 @@ export type Database = {
           id?: string
           membership_updated?: Json
           message_received?: Json
-          notifications_enabled?: boolean
+          push_enabled?: boolean
           resource_commented?: Json
           resource_created?: Json
           resource_expiring?: Json
@@ -546,6 +548,7 @@ export type Database = {
           comment_replied?: Json
           connection_accepted?: Json
           created_at?: string
+          email_enabled?: boolean
           event_cancelled?: Json
           event_created?: Json
           event_starting?: Json
@@ -553,7 +556,7 @@ export type Database = {
           id?: string
           membership_updated?: Json
           message_received?: Json
-          notifications_enabled?: boolean
+          push_enabled?: boolean
           resource_commented?: Json
           resource_created?: Json
           resource_expiring?: Json
@@ -2037,6 +2040,7 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -2047,7 +2051,6 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -2246,8 +2249,8 @@ export type Database = {
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
         | { Args: { geom: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -2445,8 +2448,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geog: unknown; srid: number }; Returns: unknown }
         | { Args: { geom: unknown; srid: number }; Returns: unknown }
+        | { Args: { geog: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -2469,8 +2472,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geog: unknown }; Returns: number }
         | { Args: { geom: unknown }; Returns: number }
+        | { Args: { geog: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]

@@ -60,7 +60,8 @@ describe("isChannelEnabled", () => {
   const mockPreferences: TypedNotificationPreferences = {
     id: "test-id",
     user_id: "test-user",
-    notifications_enabled: true,
+    push_enabled: true,
+    email_enabled: true,
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     "comment.replied": { in_app: true, push: true, email: false },
@@ -96,32 +97,47 @@ describe("isChannelEnabled", () => {
     expect(result).toBe(false);
   });
 
-  it("should return false when notifications are globally disabled", () => {
-    const prefsWithNotificationsDisabled = {
+  it("should return false when push is globally disabled", () => {
+    const prefsWithPushDisabled = {
       ...mockPreferences,
-      notifications_enabled: false,
+      push_enabled: false,
     };
 
     const result = isChannelEnabled(
-      prefsWithNotificationsDisabled,
+      prefsWithPushDisabled,
       "comment.replied",
       "push"
     );
     expect(result).toBe(false);
   });
 
-  it("should return false for any channel when notifications are globally disabled", () => {
-    const prefsWithNotificationsDisabled = {
+  it("should return false for email when email is globally disabled", () => {
+    const prefsWithEmailDisabled = {
       ...mockPreferences,
-      notifications_enabled: false,
+      email_enabled: false,
     };
 
     const result = isChannelEnabled(
-      prefsWithNotificationsDisabled,
+      prefsWithEmailDisabled,
       "resource.created",
       "email"
     );
     expect(result).toBe(false);
+  });
+
+  it("should return true for in_app even when push and email are disabled", () => {
+    const prefsWithPushEmailDisabled = {
+      ...mockPreferences,
+      push_enabled: false,
+      email_enabled: false,
+    };
+
+    const result = isChannelEnabled(
+      prefsWithPushEmailDisabled,
+      "comment.replied",
+      "in_app"
+    );
+    expect(result).toBe(true);
   });
 });
 
@@ -129,7 +145,8 @@ describe("getChannelPreferences", () => {
   const mockPreferences: TypedNotificationPreferences = {
     id: "test-id",
     user_id: "test-user",
-    notifications_enabled: true,
+    push_enabled: true,
+    email_enabled: true,
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     "comment.replied": { in_app: true, push: true, email: false },
@@ -167,7 +184,8 @@ describe("toTypedPreferences", () => {
     const dbRow: NotificationPreferences = {
       id: "test-id",
       user_id: "test-user",
-      notifications_enabled: true,
+      push_enabled: true,
+      email_enabled: true,
       created_at: "2024-01-01",
       updated_at: "2024-01-01",
       comment_replied: { in_app: true, push: true, email: false },
@@ -195,7 +213,8 @@ describe("toTypedPreferences", () => {
 
     expect(result.id).toBe("test-id");
     expect(result.user_id).toBe("test-user");
-    expect(result.notifications_enabled).toBe(true);
+    expect(result.push_enabled).toBe(true);
+    expect(result.email_enabled).toBe(true);
     expect(result["comment.replied"]).toEqual({
       in_app: true,
       push: true,

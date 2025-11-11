@@ -42,8 +42,8 @@ interface PostmarkTemplateRequest {
     notification_title?: string;
     timeslot?: string;
     sent_to: string;
-    sent_because: string;
-    actions: {
+    sent_because?: string;
+    actions?: {
       name: string;
       url: string;
     }[];
@@ -365,6 +365,9 @@ function actions(notification: NotificationDetail, appUrl: string) {
         },
       ];
     case 'claim.created':
+      if (resourceType === 'event') {
+        return undefined;
+      }
       return [
         {
           name:
@@ -386,7 +389,7 @@ function actions(notification: NotificationDetail, appUrl: string) {
         },
       ];
     default:
-      return [];
+      return undefined;
   }
 }
 
@@ -476,6 +479,13 @@ function actorOperation(notification: NotificationDetail): string {
   }
   if (action.startsWith('membership.')) {
     return 'updated your membership';
+  }
+
+  if (action === 'member.joined') {
+    return 'joined your community';
+  }
+  if (action === 'member.left') {
+    return 'left your community';
   }
 
   // Default fallback
@@ -606,8 +616,8 @@ function sentText(notification: NotificationDetail): {
     case 'member.joined':
     case 'member.left':
       return {
-        to: `community admins of ${community_data?.name || 'the community'}`,
-        because: 'because you are the owner',
+        to: `community organizers of ${community_data?.name || 'the community'}`,
+        because: `because you are an organizer`,
       };
 
     // Scheduled reminders

@@ -32,8 +32,9 @@ export type NotificationPreferencesInsert =
  * Type-safe notification preferences with proper typing for each notification type preference
  */
 export interface TypedNotificationPreferences {
-  // Global switch - master toggle for all notifications
-  notifications_enabled: boolean;
+  // Global switches - master toggles for push and email notifications
+  push_enabled: boolean;
+  email_enabled: boolean;
 
   // Per-type preferences (notification type categories, not actions)
   // Note: trustlevel.changed has no preference column (always enabled)
@@ -88,7 +89,8 @@ export function toTypedPreferences(
   return {
     id: row.id,
     user_id: row.user_id,
-    notifications_enabled: row.notifications_enabled,
+    push_enabled: row.push_enabled,
+    email_enabled: row.email_enabled,
     created_at: row.created_at,
     updated_at: row.updated_at,
 
@@ -130,10 +132,16 @@ export function isChannelEnabled(
   type: NotificationTypePreference,
   channel: keyof ChannelPreferences
 ): boolean {
-  // Check global master switch first
-  if (!preferences.notifications_enabled) {
+  // For push channel, check global push_enabled switch
+  if (channel === "push" && !preferences.push_enabled) {
     return false;
   }
 
+  // For email channel, check global email_enabled switch
+  if (channel === "email" && !preferences.email_enabled) {
+    return false;
+  }
+
+  // For in_app channel, no global switch needed (always available)
   return preferences[type][channel];
 }

@@ -107,14 +107,14 @@ Per-type, per-channel notification preferences stored in separate table. Prefere
 - `comment_replied` - JSONB preferences
 - `claim_created` - JSONB preferences
 - ... (notification types, see mapping table for action→type relationships)
-- `push_enabled` - Global push master switch (default: false)
-- `email_enabled` - Global email master switch (default: false)
+- `push_enabled` - Global push master switch (default: true)
+- `email_enabled` - Global email master switch (default: true)
 
 **Notes:**
 
 - Preferences control **notification types**, which may map to multiple actions
-- All notifications default to enabled (true) for all channels
-- User must explicitly enable `push_enabled` to receive ANY push notifications
+- All per-type channel preferences default to enabled (true) for all channels
+- Both global switches (`push_enabled`, `email_enabled`) default to true for new users
 - Critical notifications (e.g., `event.cancelled`) have preferences but UI does not expose toggles
 - JSONB design allows future channel additions without schema changes
 - Adding new actions doesn't require changing preferences if they map to existing types
@@ -216,9 +216,9 @@ Both parties must independently confirm the transaction. Either party can initia
 
 Each notification type supports multiple delivery channels:
 
-1. **In-App** - Shown in notification center (default: ON)
-2. **Push** - Web Push API notifications (default: ON, requires `notifications_enabled=true`)
-3. **Email** - Email via Postmark (default: ON except messages, requires `notifications_enabled=true`)
+1. **In-App** - Shown in notification center (default: ON, always available)
+2. **Push** - Web Push API notifications (default: ON, requires `push_enabled=true`)
+3. **Email** - Email via Postmark (default: ON, requires `email_enabled=true`)
 
 **Channel Logic:**
 
@@ -227,11 +227,11 @@ Send in-app IF:
   notification_preferences->'type'->>'in_app' = 'true'
 
 Send push IF:
-  notifications_enabled = true
+  push_enabled = true
   AND notification_preferences->'type'->>'push' = 'true'
 
 Send email IF:
-  notifications_enabled = true
+  email_enabled = true
   AND notification_preferences->'type'->>'email' = 'true'
   AND user has valid email address
 ```
@@ -418,28 +418,28 @@ CREATE TABLE notification_preferences (
   user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
 
   -- 18 notification type columns (JSONB)
-  resource_commented JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  comment_replied JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  claim_created JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  claim_cancelled JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  claim_responded JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  resource_given JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  resource_received JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  resource_created JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  event_created JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  resource_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  event_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  event_cancelled JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  resource_expiring JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  event_starting JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  message_received JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  shoutout_received JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  membership_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
-  trustlevel_changed JSONB DEFAULT '{"in_app": true, "push": true, "email": false}',
+  resource_commented JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  comment_replied JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  claim_created JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  claim_cancelled JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  claim_responded JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  resource_given JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  resource_received JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  resource_created JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  event_created JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  resource_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  event_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  event_cancelled JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  resource_expiring JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  event_starting JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  message_received JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  shoutout_received JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  membership_updated JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
+  trustlevel_changed JSONB DEFAULT '{"in_app": true, "push": true, "email": true}',
 
   -- Global master switches
-  push_enabled BOOLEAN DEFAULT false,
-  email_enabled BOOLEAN DEFAULT false,
+  push_enabled BOOLEAN DEFAULT true,
+  email_enabled BOOLEAN DEFAULT true,
 
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
