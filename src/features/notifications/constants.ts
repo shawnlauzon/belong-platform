@@ -37,6 +37,10 @@ export const ACTION_TYPES = {
   MEMBER_LEFT: 'member.left',
   CONNECTION_ACCEPTED: 'connection.accepted',
 
+  // Profile
+  PROFILE_PICTURE_SET: 'profile.picture.set',
+  PROFILE_BIO_WRITTEN: 'profile.bio.written',
+
   // System
   TRUSTLEVEL_CHANGED: 'trustlevel.changed',
 } as const satisfies Record<string, ActionType>;
