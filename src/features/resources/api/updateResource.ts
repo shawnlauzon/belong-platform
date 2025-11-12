@@ -9,7 +9,6 @@ import {
   SELECT_RESOURCES_JOIN_COMMUNITIES_JOIN_TIMESLOTS,
 } from '../types/resourceRow';
 import { QueryError } from '@supabase/supabase-js';
-import { validateImageCropData } from './validateImageCropData';
 
 export async function updateResource(
   supabase: SupabaseClient<Database>,
@@ -22,8 +21,15 @@ export async function updateResource(
 
   const { id, ...updates } = updateData;
 
-  // Validate imageCropData if provided
-  validateImageCropData(updates.imageCropData, updates.imageUrls);
+  // Validate imageUrlsUncropped matches imageUrls length if both provided
+  if (updates.imageUrlsUncropped && updates.imageUrls) {
+    if (updates.imageUrlsUncropped.length !== updates.imageUrls.length) {
+      throw new Error(
+        `imageUrlsUncropped length (${updates.imageUrlsUncropped.length}) must match imageUrls length (${updates.imageUrls.length})`,
+      );
+    }
+  }
+
   const dbData = forDbUpdate(updates);
 
   const { data, error } = (await supabase

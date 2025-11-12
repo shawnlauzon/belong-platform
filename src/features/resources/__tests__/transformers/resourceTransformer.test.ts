@@ -184,64 +184,58 @@ describe('Resource Transformer', () => {
       expect(dbResource.is_recurring).toBe(false);
     });
 
-    it('should transform imageCropData field from domain to database', () => {
-      const cropData = [
-        { x: 0.1, y: 0.2, width: 0.5, height: 0.6 },
-        null,
-      ];
+    it('should transform imageUrlsUncropped field from domain to database', () => {
+      const uncropped = ['https://original1.jpg', '', 'https://original3.jpg'];
       const resourceData = createFakeResourceInput({
-        imageCropData: cropData,
+        imageUrlsUncropped: uncropped,
       });
 
       const dbResource = toResourceInsertRow(resourceData);
 
-      expect(dbResource.image_crop_data).toEqual(cropData);
+      expect(dbResource.image_urls_uncropped).toEqual(uncropped);
     });
 
-    it('should handle undefined imageCropData', () => {
+    it('should handle undefined imageUrlsUncropped', () => {
       const resourceData = createFakeResourceInput({
-        imageCropData: undefined,
+        imageUrlsUncropped: undefined,
       });
 
       const dbResource = toResourceInsertRow(resourceData);
 
-      expect(dbResource.image_crop_data).toBeUndefined();
+      expect(dbResource.image_urls_uncropped).toBeUndefined();
     });
   });
 
-  describe('toDomainResource - imageCropData', () => {
-    it('should transform imageCropData from database to domain', () => {
-      const cropData = [
-        { x: 0.1, y: 0.2, width: 0.5, height: 0.6 },
-        null,
-      ];
+  describe('toDomainResource - imageUrlsUncropped', () => {
+    it('should transform imageUrlsUncropped from database to domain', () => {
+      const uncropped = ['https://original1.jpg', '', 'https://original3.jpg'];
       const dbResource = createFakeResourceRow({
-        image_crop_data: cropData as unknown,
+        image_urls_uncropped: uncropped,
       });
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.imageCropData).toEqual(cropData);
+      expect(resource.imageUrlsUncropped).toEqual(uncropped);
     });
 
-    it('should handle null imageCropData', () => {
+    it('should handle null imageUrlsUncropped', () => {
       const dbResource = createFakeResourceRow({
-        image_crop_data: null,
+        image_urls_uncropped: null,
       });
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.imageCropData).toBeUndefined();
+      expect(resource.imageUrlsUncropped).toBeUndefined();
     });
 
-    it('should handle undefined imageCropData', () => {
+    it('should handle undefined imageUrlsUncropped', () => {
       const dbResource = createFakeResourceRow({
-        image_crop_data: undefined,
+        image_urls_uncropped: undefined,
       });
 
       const resource = toDomainResource(dbResource);
 
-      expect(resource.imageCropData).toBeUndefined();
+      expect(resource.imageUrlsUncropped).toBeUndefined();
     });
   });
 });

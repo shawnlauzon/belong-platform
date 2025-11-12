@@ -200,7 +200,7 @@ export function createFakeResourceRow(
       { length: faker.number.int({ min: 1, max: 5 }) },
       () => faker.image.urlLoremFlickr({ category: 'object' }),
     ),
-    image_crop_data: null,
+    image_urls_uncropped: null,
     location_name: faker.location.city(),
     coordinates: `POINT(${faker.location.longitude()} ${faker.location.latitude()})`,
     owner_id: faker.string.uuid(),

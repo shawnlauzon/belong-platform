@@ -3,14 +3,12 @@ import type {
   Resource,
   ResourceInput,
   ResourceSummary,
-  ImageCropData,
 } from '../types';
 import type {
   ResourceInsertDbData,
   ResourceUpdateDbData,
   ResourceRowJoinCommunitiesJoinTimeslots,
 } from '../types/resourceRow';
-import type { Json } from '@/shared/types/database';
 import { parsePostGisPoint, toPostGisPoint } from '../../../shared/utils';
 import { toDomainResourceTimeslot } from './resourceTimeslotTransformer';
 
@@ -22,7 +20,7 @@ export function toResourceInsertRow(
 ): ResourceInsertDbData {
   const {
     imageUrls,
-    imageCropData,
+    imageUrlsUncropped,
     locationName,
     coordinates,
     claimLimit,
@@ -41,7 +39,7 @@ export function toResourceInsertRow(
     ...rest,
     category: category || 'other',
     image_urls: imageUrls,
-    image_crop_data: imageCropData as Json | undefined,
+    image_urls_uncropped: imageUrlsUncropped,
     location_name: locationName,
     coordinates: coordinates ? toPostGisPoint(coordinates) : undefined,
     claim_limit: claimLimit,
@@ -67,7 +65,7 @@ export function forDbUpdate(
     category: resource.category,
     type: resource.type,
     image_urls: resource.imageUrls,
-    image_crop_data: resource.imageCropData as Json | undefined,
+    image_urls_uncropped: resource.imageUrlsUncropped,
     location_name: resource.locationName,
     coordinates: resource.coordinates
       ? toPostGisPoint(resource.coordinates)
@@ -103,7 +101,7 @@ export function toDomainResource(
       ? parsePostGisPoint(dbResource.coordinates)
       : undefined,
     imageUrls: dbResource.image_urls || [],
-    imageCropData: (dbResource.image_crop_data as Array<ImageCropData | null> | null) ?? undefined,
+    imageUrlsUncropped: dbResource.image_urls_uncropped ?? undefined,
     createdAt: new Date(dbResource.created_at),
     updatedAt: new Date(dbResource.updated_at),
     ownerId: dbResource.owner_id,

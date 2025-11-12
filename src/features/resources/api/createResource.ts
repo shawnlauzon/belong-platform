@@ -10,14 +10,20 @@ import {
 } from '../types/resourceRow';
 import { toDomainResource } from '@/features/resources/transformers/resourceTransformer';
 import { logger } from '@/shared';
-import { validateImageCropData } from './validateImageCropData';
 
 export async function createResource(
   supabase: SupabaseClient<Database>,
   resourceData: ResourceInput,
 ): Promise<Resource> {
-  // Validate imageCropData if provided
-  validateImageCropData(resourceData.imageCropData, resourceData.imageUrls);
+  // Validate imageUrlsUncropped matches imageUrls length if both provided
+  if (resourceData.imageUrlsUncropped && resourceData.imageUrls) {
+    if (resourceData.imageUrlsUncropped.length !== resourceData.imageUrls.length) {
+      throw new Error(
+        `imageUrlsUncropped length (${resourceData.imageUrlsUncropped.length}) must match imageUrls length (${resourceData.imageUrls.length})`,
+      );
+    }
+  }
+
   const withoutCommunityIds = {
     ...resourceData,
     communityIds: undefined,
